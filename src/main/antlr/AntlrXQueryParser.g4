@@ -1,9 +1,9 @@
-parser grammar AntlrXqueryParser;
+parser grammar AntlrXQueryParser2;
 options {
     tokenVocab = AntlrXQueryLexer;
 }
 query: expr;
-expr: exprSingle (',' exprSingle)*;
+expr: exprSingle (COMMA exprSingle)*;
 exprSingle: fLWORExpr
         | quantifiedExpr
         | ifExpr
@@ -15,73 +15,69 @@ intermediateClause: initialClause
                 | whereClause 
                 | orderByClause 
                 | countClause;
-forClause: 'for' forBinding (',' forBinding)*;
-forBinding: '$' varName typeDeclaration? allowingEmpty? positionalVar? 'in' exprSingle;
-allowingEmpty: 'allowing' 'empty';
-positionalVar: 'at' '$' varName;
-letClause: 'let' letBinding (',' letBinding)*;
-letBinding: '$' varName typeDeclaration? ':=' exprSingle;
-countClause: 'count' '$' varName;
-whereClause: 'where' exprSingle;
-orderByClause: (('order' 'by') | ('stable' 'order' 'by')) orderSpecList;
-orderSpecList: orderSpec (',' orderSpec)*;
+forClause: FOR forBinding (COMMA forBinding)*;
+forBinding: DOLLAR varName typeDeclaration? allowingEmpty? positionalVar? IN exprSingle;
+allowingEmpty: ALLOWING EMPTY;
+positionalVar: AT DOLLAR varName;
+letClause: LET letBinding (COMMA letBinding)*;
+letBinding: DOLLAR varName typeDeclaration? ASSIGNMENT_OP exprSingle;
+countClause: COUNT DOLLAR varName;
+whereClause: WHERE exprSingle;
+orderByClause: ((ORDER BY) | (STABLE ORDER BY)) orderSpecList;
+orderSpecList: orderSpec (COMMA orderSpec)*;
 orderSpec: exprSingle orderModifier;
-orderModifier: ('ascending' | 'descending')? ('empty' ('greatest' | 'least'))? ('collation' uRILiteral)?;
-returnClause: 'return' exprSingle;
-quantifiedExpr: ('some' | 'every') '$' varName typeDeclaration? 'in' exprSingle (',' '$' varName typeDeclaration? 'in' exprSingle)* 'satisfies' exprSingle;
-ifExpr: 'if' '(' expr ')' 'then' exprSingle 'else' exprSingle;
-orExpr: andExpr ( 'or' andExpr )*;
-andExpr: comparisonExpr ( 'and' comparisonExpr )*;
-comparisonExpr: stringConcatExpr ( (valueComp
-| generalComp
-| nodeComp) stringConcatExpr )?;
-stringConcatExpr: rangeExpr ( '||' rangeExpr )*;
-rangeExpr: additiveExpr ( 'to' additiveExpr )?;
-additiveExpr: multiplicativeExpr ( ('+' | '-') multiplicativeExpr )*;
-multiplicativeExpr: unionExpr ( ('*' | 'div' | 'idiv' | 'mod') unionExpr )*;
-unionExpr: intersectExceptExpr ( ('union' | '|') intersectExceptExpr )*;
-intersectExceptExpr: instanceofExpr ( ('intersect' | 'except') instanceofExpr)*;
-
-arrowExpr: unaryExpr ( '=>' arrowFunctionSpecifier argumentList )*;
-unaryExpr: ('-' | '+')* valueExpr;
-valueExpr: validateExpr | extensionExpr | simpleMapExpr;
-generalComp: '=' | '!=' | '<' | '<=' | '>' | '>=';
-valueComp: 'eq' | 'ne' | 'lt' | 'le' | 'gt' | 'ge';
-nodeComp: 'is' | '<<' | '>>';
-simpleMapExpr: pathExpr ('!' pathExpr)*;
-pathExpr: ('/' relativePathExpr?)
-        | ('//' relativePathExpr)
+orderModifier: (ASCENDING | DESCENDING)? (EMPTY (GREATEST | LEAST))? (COLLATION uRILiteral)?;
+returnClause: RETURN exprSingle;
+quantifiedExpr: (SOME | EVERY) DOLLAR varName typeDeclaration? IN exprSingle (COMMA DOLLAR varName typeDeclaration? IN exprSingle)* SATISFIES exprSingle;
+ifExpr: IF LPAREN expr RPAREN THEN exprSingle ELSE exprSingle;
+orExpr: orExpr ( OR orExpr )+
+        | orExpr ( AND orExpr )+
+        | orExpr  (valueComp | generalComp | nodeComp) orExpr 
+        | orExpr ( OR_LOGICAL_OP orExpr )+
+        | orExpr TO orExpr
+        | orExpr ( (PLUS | MINUS) orExpr )
+        | orExpr (STAR | DIV | IDIV | MOD) orExpr
+        | orExpr (UNION | UNION_OP) orExpr
+        | orExpr (INTERSECT | EXCEPT) orExpr
+        | orExpr ARROW arrowFunctionSpecifier argumentList
+        | (MINUS | PLUS) orExpr
+        | pathExpr (EXCLAMATION_MARK pathExpr)
+;
+generalComp: EQ_OP | NE_OP | LT_OP | LE_OP | GT_OP | GE_OP;
+valueComp: EQ | NE | LT | LE | GT | GE;
+nodeComp: IS | PRECEDING_OP | FOLLOWING_OP;
+pathExpr: (SLASH relativePathExpr?)
+        | (SLASHES relativePathExpr)
         | relativePathExpr; /* xgc: leading-lone-slash */
-relativePathExpr: stepExpr (('/' | '//') stepExpr)*;
+relativePathExpr: stepExpr ((SLASH | SLASHES) stepExpr)*;
 stepExpr: postfixExpr | axisStep;
 axisStep: (reverseStep | forwardStep) predicateList;
 forwardStep: (forwardAxis nodeTest) | abbrevForwardStep;
-forwardAxis: ('child' '::')
-| ('descendant' '::')
-| ('attribute' '::')
-| ('self' '::')
-| ('descendant-or-self' '::')
-| ('following-sibling' '::')
-| ('following' '::');
-abbrevForwardStep: '@'? nodeTest;
+
+forwardAxis: (CHILD COLONS)
+        | (DESCENDANT COLONS)
+        | (ATTRIBUTE COLONS)
+        | (SELF COLONS)
+        | (DESCENDANT_OR_SELF COLONS)
+        | (FOLLOWING_SIBLING COLONS)
+        | (FOLLOWING COLONS);
+abbrevForwardStep: AT_OP? nodeTest;
 reverseStep: (reverseAxis nodeTest) | abbrevReverseStep;
-reverseAxis: ('parent' '::')
-| ('ancestor' '::')
-| ('preceding-sibling' '::')
-| ('preceding' '::')
-| ('ancestor-or-self' '::');
-abbrevReverseStep: '..';
-nodeTest: kindTest | nameTest;
+reverseAxis: (PARENT COLONS)
+        | (ANCESTOR COLONS)
+        | (PRECEDING_SIBLING COLONS)
+        | (PRECEDING COLONS)
+        | (ANCESTOR_OR_SELF COLONS);
+abbrevReverseStep: DOTS;
+nodeTest: nameTest;
 nameTest: ID | wildcard;
-wildcard: '*'
-| (nCName ':*')
-| ('*:' nCName)
-| (bracedURILiteral '*');
+wildcard: STAR
+        | (ID COLONSTAR)
+        | (STARCOLON ID);
 postfixExpr: primaryExpr (predicate | argumentList)*;
-argumentList: '(' (argument (',' argument)*)? ')';
+argumentList: LPAREN (argument (COMMA argument)*)? RPAREN;
 predicateList: predicate*;
-predicate: '[' expr ']';
-keySpecifier: nCName | integerLiteral | parenthesizedExpr | '*';
+predicate: LBRACKET expr RBRACKET;
 arrowFunctionSpecifier: ID | varRef | parenthesizedExpr;
 primaryExpr: literal
 | varRef
@@ -90,14 +86,14 @@ primaryExpr: literal
 | functionCall;
 literal: numericLiteral | StringLiteral;
 numericLiteral: IntegerLiteral | DecimalLiteral | DoubleLiteral;
-varRef: '$' varName;
+varRef: DOLLAR varName;
 varName: ID;
-parenthesizedExpr: '(' expr? ')';
-contextItemExpr: '.';
+parenthesizedExpr: LPAREN expr? RPAREN;
+contextItemExpr: DOT;
 functionCall: ID argumentList; /* xgc: reserved-function-names */
 /* gn: parens */
 argument: exprSingle | argumentPlaceholder;
-argumentPlaceholder: '?';
+argumentPlaceholder: QUESTION_MARK;
 elementDeclaration: elementName;
 attributeName: ID;
 elementName: ID;
@@ -105,8 +101,6 @@ simpleTypeName: typeName;
 typeName: ID;
 uRILiteral: StringLiteral;
 
-typeDeclaration: 'as' SequenceType;
-SequenceType: ('empty-sequence' '(' ')')
-            | (ItemType OccurrenceIndicator?);
-OccurrenceIndicator: '?' | '*' | '+';
-ID: [\P{alpha}][\P{alnum}]*; /* Replace with antlr compatible */
+typeDeclaration: AS sequenceType;
+sequenceType: (ID occurrenceIndicator?);
+occurrenceIndicator: QUESTION_MARK | STAR | PLUS;

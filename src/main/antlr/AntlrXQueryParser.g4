@@ -1,4 +1,4 @@
-parser grammar AntlrXQueryParser2;
+parser grammar AntlrXQueryParser;
 options {
     tokenVocab = AntlrXQueryLexer;
 }

@@ -1,12 +1,12 @@
 lexer grammar AntlrXqueryLexer;
-IntegerLiteral: Digits;
-DecimalLiteral: ('.' Digits) | (Digits '.' [0-9]*)	/* ws: explicit */;
-DoubleLiteral: (('.' Digits) | (Digits ('.' [0-9]*)?)) [eE] [+-]? Digits	/* ws: explicit */;
-StringLiteral: ('"' (EscapeQuot | ~["&])* '"') 
-            | ('\'' (EscapeApos | ~['&])* '\'')	/* ws: explicit */;
-EscapeQuot: '""';
-EscapeApos: '\'\'';
-Comment: '(:' .*? ':)'	/* ws: explicit */;
+INTEGER: Digits;
+DECIMAL: (DOT Digits) | (Digits DOT Digits?);
+fragment Digits: [0-9]+;
+
+STRING: ('"' ('""' | ~["&])* '"') 
+    | ('\'' ('\'\'' | ~['&])* '\'');
+
+COMMENT: '(:' .*? ':)';
 ID: [\P{alpha}][\P{alnum}]*; /* Replace with antlr compatible */
 FOR: 'for';
 COMMA: ',';
@@ -93,4 +93,3 @@ IN: 'in';
 SATISFIES: 'satisfies';
 
 
-fragment Digits: [0-9]+;

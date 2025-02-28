@@ -1,6 +1,6 @@
 parser grammar AntlrXqueryParser;
 options {
-    tokenVocab = AntlrXQueryLexer;
+    tokenVocab = AntlrXqueryLexer;
 }
 query: expr;
 expr: exprSingle (COMMA exprSingle)*;
@@ -26,7 +26,7 @@ whereClause: WHERE exprSingle;
 orderByClause: ((ORDER BY) | (STABLE ORDER BY)) orderSpecList;
 orderSpecList: orderSpec (COMMA orderSpec)*;
 orderSpec: exprSingle orderModifier;
-orderModifier: (ASCENDING | DESCENDING)? (EMPTY (GREATEST | LEAST))? (COLLATION uRILiteral)?;
+orderModifier: (ASCENDING | DESCENDING)? (EMPTY (GREATEST | LEAST))?;
 returnClause: RETURN exprSingle;
 quantifiedExpr: (SOME | EVERY) DOLLAR varName typeDeclaration? IN exprSingle (COMMA DOLLAR varName typeDeclaration? IN exprSingle)* SATISFIES exprSingle;
 ifExpr: IF LPAREN expr RPAREN THEN exprSingle ELSE exprSingle;
@@ -84,8 +84,8 @@ primaryExpr: literal
         | parenthesizedExpr
         | contextItemExpr
         | functionCall;
-literal: numericLiteral | StringLiteral;
-numericLiteral: IntegerLiteral | DecimalLiteral | DoubleLiteral;
+literal: numericLiteral | STRING;
+numericLiteral: INTEGER | DECIMAL;
 varRef: DOLLAR varName;
 varName: ID;
 parenthesizedExpr: LPAREN expr? RPAREN;
@@ -99,7 +99,6 @@ attributeName: ID;
 elementName: ID;
 simpleTypeName: typeName;
 typeName: ID;
-uRILiteral: StringLiteral;
 
 typeDeclaration: AS sequenceType;
 sequenceType: (ID occurrenceIndicator?);

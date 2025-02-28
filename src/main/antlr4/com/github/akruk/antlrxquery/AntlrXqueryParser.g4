@@ -80,18 +80,18 @@ predicateList: predicate*;
 predicate: LBRACKET expr RBRACKET;
 arrowFunctionSpecifier: ID | varRef | parenthesizedExpr;
 primaryExpr: literal
-| varRef
-| parenthesizedExpr
-| contextItemExpr
-| functionCall;
+        | varRef
+        | parenthesizedExpr
+        | contextItemExpr
+        | functionCall;
 literal: numericLiteral | StringLiteral;
 numericLiteral: IntegerLiteral | DecimalLiteral | DoubleLiteral;
 varRef: DOLLAR varName;
 varName: ID;
 parenthesizedExpr: LPAREN expr? RPAREN;
 contextItemExpr: DOT;
-functionCall: ID argumentList; /* xgc: reserved-function-names */
-/* gn: parens */
+functionCall: ID argumentList;  /* xgc: reserved-function-names */
+                                /* gn: parens */
 argument: exprSingle | argumentPlaceholder;
 argumentPlaceholder: QUESTION_MARK;
 elementDeclaration: elementName;

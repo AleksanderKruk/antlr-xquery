@@ -1,8 +1,9 @@
 package com.github.akruk.antlrxquery;
 
 
-public final class XQuery {
-    private XQuery() {
+public final class XQueryRunner {
+    private XQueryRunner() {
+
     }
 
     public static void main(String[] args) {

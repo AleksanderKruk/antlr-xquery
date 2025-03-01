@@ -32,7 +32,7 @@ Sequence union|`(1,2,3) | (4, 5, 6)`<br>`(1,2,3) union (4, 5, 6)`|||
 Sequence subtraction|`(1,2,3) except (2, 3)`|||
 Sequence intersection|`(1,2,3) intersect (4, 5, 6)`|||
 Arithmetic Expressions|`4*5 + +10`<br>`5 div 5 - -1`<br>`10 idiv 2 + 10 mod 2`|||
-String Concatenation Expressions|`"a" || "b"`|||
+String Concatenation Expressions|`"a" \|\| "b"`|||
 Value comparisons|`$sequence[. eq "a"]`|||
 General comparisons|`$sequence = "a"`|||
 Node comparisons|`$x[. is y]`<br>`$x[. << after]`<br>`$x[. >> before]`|||

@@ -87,58 +87,67 @@ public interface XQueryValue {
 
 	}
 
-  public default XQueryValue concatenate(XQueryValue other) throws XQueryUnsupportedOperation {
-    throw new XQueryUnsupportedOperation();
+    public default XQueryValue concatenate(XQueryValue other) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
 
 	}
 
-  public default XQueryValue valueEqual(XQueryValue other) throws XQueryUnsupportedOperation {
-    throw new XQueryUnsupportedOperation();
+    public default XQueryValue valueEqual(XQueryValue other) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+	}
+
+    public default XQueryValue valueUnequal(XQueryValue other) throws XQueryUnsupportedOperation {
+        final var isUnequal = !valueEqual(other).booleanValue();
+        return new XQueryBoolean(isUnequal);
+	}
+
+    public default XQueryValue valueLessThan(XQueryValue other) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
 
 	}
 
-  public default XQueryValue valueLessThan(XQueryValue other) throws XQueryUnsupportedOperation {
-    throw new XQueryUnsupportedOperation();
+    public default XQueryValue valueLessEqual(XQueryValue other) throws XQueryUnsupportedOperation {
+        final var isLessEqual = valueEqual(other).booleanValue() || valueLessThan(other).booleanValue();
+        return new XQueryBoolean(isLessEqual);
+	}
+
+    public default XQueryValue valueGreaterThan(XQueryValue other) throws XQueryUnsupportedOperation {
+        final var isGreaterThan = !valueLessEqual(other).booleanValue();
+        return new XQueryBoolean(isGreaterThan);
+	}
+
+    public default XQueryValue valueGreaterEqual(XQueryValue other) throws XQueryUnsupportedOperation {
+        final var isGreaterEqual = !valueLessThan(other).booleanValue();
+        return new XQueryBoolean(isGreaterEqual);
+	}
+
+    public default XQueryValue generalEqual(XQueryValue other) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+	}
+
+    public default XQueryValue generalUnequal(XQueryValue other) throws XQueryUnsupportedOperation {
+        final var isUnequal = !generalEqual(other).booleanValue();
+        return new XQueryBoolean(isUnequal);
+	}
+
+    public default XQueryValue generalLessThan(XQueryValue other) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
 
 	}
 
-  public default XQueryValue valueLessEqual(XQueryValue other) throws XQueryUnsupportedOperation {
-    throw new XQueryUnsupportedOperation();
-
+    public default XQueryValue generalLessEqual(XQueryValue other) throws XQueryUnsupportedOperation {
+        final var isLessEqual = generalEqual(other).booleanValue() || generalLessThan(other).booleanValue();
+        return new XQueryBoolean(isLessEqual);
 	}
 
-  public default XQueryValue valueGreaterThan(XQueryValue other) throws XQueryUnsupportedOperation {
-    throw new XQueryUnsupportedOperation();
-
+    public default XQueryValue generalGreaterThan(XQueryValue other) throws XQueryUnsupportedOperation {
+        final var isGreaterThan = !generalLessEqual(other).booleanValue();
+        return new XQueryBoolean(isGreaterThan);
 	}
 
-  public default XQueryValue valueGreaterEqual(XQueryValue other) throws XQueryUnsupportedOperation {
-    throw new XQueryUnsupportedOperation();
-
-	}
-
-  public default XQueryValue generalEqual(XQueryValue other) throws XQueryUnsupportedOperation {
-    throw new XQueryUnsupportedOperation();
-
-	}
-
-  public default XQueryValue generalLessThan(XQueryValue other) throws XQueryUnsupportedOperation {
-    throw new XQueryUnsupportedOperation();
-
-	}
-
-  public default XQueryValue generalLessEqual(XQueryValue other) throws XQueryUnsupportedOperation {
-    throw new XQueryUnsupportedOperation();
-
-	}
-
-  public default XQueryValue generalGreaterThan(XQueryValue other) throws XQueryUnsupportedOperation {
-    throw new XQueryUnsupportedOperation();
-
-	}
-
-  public default XQueryValue generalGreaterEqual(XQueryValue other) throws XQueryUnsupportedOperation {
-    throw new XQueryUnsupportedOperation();
+    public default XQueryValue generalGreaterEqual(XQueryValue other) throws XQueryUnsupportedOperation {
+        final var isGreaterEqual = !generalLessThan(other).booleanValue();
+        return new XQueryBoolean(isGreaterEqual);
 
 	}
 

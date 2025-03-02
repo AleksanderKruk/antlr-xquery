@@ -6,6 +6,8 @@ import java.util.function.Predicate;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 
+import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
+
 public interface XQueryValue {
   // Function
   public default BigDecimal numericValue() {
@@ -56,21 +58,88 @@ public interface XQueryValue {
     return reference() != null;
   }
 
-  public XQueryValue add(XQueryValue other);
-  public XQueryValue subtract(XQueryValue other);
-  public XQueryValue multiply(XQueryValue other);
-  public XQueryValue divide(XQueryValue other);
-  public XQueryValue integerDivide(XQueryValue other);
-  public XQueryValue modulus(XQueryValue other);
-  public XQueryValue concatenate(XQueryValue other);
-  public XQueryValue valueEqual(XQueryValue other);
-  public XQueryValue valueLessThan(XQueryValue other);
-  public XQueryValue valueLessEqual(XQueryValue other);
-  public XQueryValue valueGreaterThan(XQueryValue other);
-  public XQueryValue valueGreaterEqual(XQueryValue other);
-  public XQueryValue generalEqual(XQueryValue other);
-  public XQueryValue generalLessThan(XQueryValue other);
-  public XQueryValue generalLessEqual(XQueryValue other);
-  public XQueryValue generalGreaterThan(XQueryValue other);
-  public XQueryValue generalGreaterEqual(XQueryValue other);
+  public default XQueryValue add(XQueryValue other) throws XQueryUnsupportedOperation {
+    throw new XQueryUnsupportedOperation();
+	}
+
+  public default XQueryValue subtract(XQueryValue other) throws XQueryUnsupportedOperation {
+    throw new XQueryUnsupportedOperation();
+
+	}
+
+  public default XQueryValue multiply(XQueryValue other) throws XQueryUnsupportedOperation {
+    throw new XQueryUnsupportedOperation();
+
+	}
+
+  public default XQueryValue divide(XQueryValue other) throws XQueryUnsupportedOperation {
+    throw new XQueryUnsupportedOperation();
+
+	}
+
+  public default XQueryValue integerDivide(XQueryValue other) throws XQueryUnsupportedOperation {
+    throw new XQueryUnsupportedOperation();
+
+	}
+
+  public default XQueryValue modulus(XQueryValue other) throws XQueryUnsupportedOperation {
+    throw new XQueryUnsupportedOperation();
+
+	}
+
+  public default XQueryValue concatenate(XQueryValue other) throws XQueryUnsupportedOperation {
+    throw new XQueryUnsupportedOperation();
+
+	}
+
+  public default XQueryValue valueEqual(XQueryValue other) throws XQueryUnsupportedOperation {
+    throw new XQueryUnsupportedOperation();
+
+	}
+
+  public default XQueryValue valueLessThan(XQueryValue other) throws XQueryUnsupportedOperation {
+    throw new XQueryUnsupportedOperation();
+
+	}
+
+  public default XQueryValue valueLessEqual(XQueryValue other) throws XQueryUnsupportedOperation {
+    throw new XQueryUnsupportedOperation();
+
+	}
+
+  public default XQueryValue valueGreaterThan(XQueryValue other) throws XQueryUnsupportedOperation {
+    throw new XQueryUnsupportedOperation();
+
+	}
+
+  public default XQueryValue valueGreaterEqual(XQueryValue other) throws XQueryUnsupportedOperation {
+    throw new XQueryUnsupportedOperation();
+
+	}
+
+  public default XQueryValue generalEqual(XQueryValue other) throws XQueryUnsupportedOperation {
+    throw new XQueryUnsupportedOperation();
+
+	}
+
+  public default XQueryValue generalLessThan(XQueryValue other) throws XQueryUnsupportedOperation {
+    throw new XQueryUnsupportedOperation();
+
+	}
+
+  public default XQueryValue generalLessEqual(XQueryValue other) throws XQueryUnsupportedOperation {
+    throw new XQueryUnsupportedOperation();
+
+	}
+
+  public default XQueryValue generalGreaterThan(XQueryValue other) throws XQueryUnsupportedOperation {
+    throw new XQueryUnsupportedOperation();
+
+	}
+
+  public default XQueryValue generalGreaterEqual(XQueryValue other) throws XQueryUnsupportedOperation {
+    throw new XQueryUnsupportedOperation();
+
+	}
+
 }

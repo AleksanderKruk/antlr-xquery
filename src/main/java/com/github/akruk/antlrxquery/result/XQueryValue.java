@@ -28,6 +28,10 @@ public interface XQueryValue {
     return null;
   }
 
+  public default XQueryValue reference() {
+    return null;
+  }
+
   public default boolean isNumericValue() {
     return numericValue() != null;
   }
@@ -48,7 +52,10 @@ public interface XQueryValue {
     return filter() != null;
   }
 
-  public XQueryValue reference();
+  public default boolean isReference() {
+    return reference() != null;
+  }
+
   public XQueryValue add(XQueryValue other);
   public XQueryValue subtract(XQueryValue other);
   public XQueryValue multiply(XQueryValue other);

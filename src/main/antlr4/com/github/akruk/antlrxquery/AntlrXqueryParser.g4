@@ -41,7 +41,7 @@ orExpr: orExpr ( OR orExpr )+
         | orExpr (INTERSECT | EXCEPT) orExpr
         | orExpr ARROW arrowFunctionSpecifier argumentList
         | (MINUS | PLUS) orExpr
-        | pathExpr (EXCLAMATION_MARK pathExpr)
+        | pathExpr (EXCLAMATION_MARK pathExpr)?
 ;
 generalComp: EQ_OP | NE_OP | LT_OP | LE_OP | GT_OP | GE_OP;
 valueComp: EQ | NE | LT | LE | GT | GE;
@@ -89,8 +89,7 @@ varRef: DOLLAR varName;
 varName: ID;
 parenthesizedExpr: LPAREN expr? RPAREN;
 contextItemExpr: DOT;
-functionCall: ID argumentList;  /* xgc: reserved-function-names */
-                                /* gn: parens */
+functionCall: ID argumentList;
 argument: exprSingle | argumentPlaceholder;
 argumentPlaceholder: QUESTION_MARK;
 elementDeclaration: elementName;

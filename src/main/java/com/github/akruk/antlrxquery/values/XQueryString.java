@@ -1,4 +1,4 @@
-package com.github.akruk.antlrxquery.result;
+package com.github.akruk.antlrxquery.values;
 
 public class XQueryString  extends XQueryValueBase<String> {
     public XQueryString(String string) {

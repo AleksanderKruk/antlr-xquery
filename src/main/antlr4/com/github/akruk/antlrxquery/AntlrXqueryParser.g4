@@ -35,10 +35,10 @@ orExpr: orExpr ( OR orExpr )+
         | orExpr  (valueComp | generalComp | nodeComp) orExpr
         | orExpr ( OR_LOGICAL_OP orExpr )+
         | orExpr TO orExpr
-        | orExpr ( (PLUS | MINUS) orExpr )
-        | orExpr (STAR | DIV | IDIV | MOD) orExpr
-        | orExpr (UNION | UNION_OP) orExpr
-        | orExpr (INTERSECT | EXCEPT) orExpr
+        | orExpr ( (PLUS | MINUS) orExpr )+
+        | orExpr ((STAR | DIV | IDIV | MOD) orExpr)+
+        | orExpr ((UNION | UNION_OP) orExpr)+
+        | orExpr ((INTERSECT | EXCEPT) orExpr)+
         | orExpr ARROW arrowFunctionSpecifier argumentList
         | (MINUS | PLUS) orExpr
         | pathExpr (EXCLAMATION_MARK pathExpr)?
@@ -48,7 +48,7 @@ valueComp: EQ | NE | LT | LE | GT | GE;
 nodeComp: IS | PRECEDING_OP | FOLLOWING_OP;
 pathExpr: (SLASH relativePathExpr?)
         | (SLASHES relativePathExpr)
-        | relativePathExpr; /* xgc: leading-lone-slash */
+        | relativePathExpr;
 relativePathExpr: stepExpr ((SLASH | SLASHES) stepExpr)*;
 stepExpr: postfixExpr | axisStep;
 axisStep: (reverseStep | forwardStep) predicateList;

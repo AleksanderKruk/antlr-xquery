@@ -8,6 +8,11 @@ public class XQueryBoolean extends XQueryValueBase<Boolean> {
     }
 
     @Override
+    public Boolean booleanValue() {
+        return value;
+    }
+
+    @Override
     public XQueryValue not(XQueryValue other) throws XQueryUnsupportedOperation {
         return new XQueryBoolean(!booleanValue());
     }

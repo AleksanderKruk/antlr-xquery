@@ -2,18 +2,18 @@ parser grammar AntlrXqueryParser;
 options {
     tokenVocab = AntlrXqueryLexer;
 }
-query: expr;
+xquery: expr;
 expr: exprSingle (COMMA exprSingle)*;
 exprSingle: fLWORExpr
         | quantifiedExpr
         | ifExpr
         | orExpr;
 fLWORExpr: initialClause intermediateClause* returnClause;
-initialClause: forClause 
+initialClause: forClause
             | letClause;
-intermediateClause: initialClause 
-                | whereClause 
-                | orderByClause 
+intermediateClause: initialClause
+                | whereClause
+                | orderByClause
                 | countClause;
 forClause: FOR forBinding (COMMA forBinding)*;
 forBinding: DOLLAR varName typeDeclaration? allowingEmpty? positionalVar? IN exprSingle;
@@ -32,7 +32,7 @@ quantifiedExpr: (SOME | EVERY) DOLLAR varName typeDeclaration? IN exprSingle (CO
 ifExpr: IF LPAREN expr RPAREN THEN exprSingle ELSE exprSingle;
 orExpr: orExpr ( OR orExpr )+
         | orExpr ( AND orExpr )+
-        | orExpr  (valueComp | generalComp | nodeComp) orExpr 
+        | orExpr  (valueComp | generalComp | nodeComp) orExpr
         | orExpr ( OR_LOGICAL_OP orExpr )+
         | orExpr TO orExpr
         | orExpr ( (PLUS | MINUS) orExpr )

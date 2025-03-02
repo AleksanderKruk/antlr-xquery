@@ -9,61 +9,74 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 
 public interface XQueryValue {
-  // Function
-  public default BigDecimal numericValue() {
-    return null;
-  };
+    // Function
+    public default BigDecimal numericValue() {
+        return null;
+    };
 
-  public default String stringValue() {
-    return null;
-  };
+    public default String stringValue() {
+        return null;
+    };
 
-  public default Boolean booleanValue() {
-    return null;
-  };
+    public default Boolean booleanValue() {
+        return null;
+    };
 
-  public default List<XQueryValue> collection() {
-    return null;
-  }
+    public default List<XQueryValue> collection() {
+        return null;
+    }
 
-  public default Predicate<ParseTree> filter() {
-    return null;
-  }
+    public default Predicate<ParseTree> filter() {
+        return null;
+    }
 
-  public default XQueryValue reference() {
-    return null;
-  }
+    public default XQueryValue reference() {
+        return null;
+    }
 
-  public default boolean isNumericValue() {
-    return numericValue() != null;
-  }
+    public default boolean isNumericValue() {
+        return numericValue() != null;
+    }
 
-  public default boolean isStringValue() {
-    return stringValue() != null;
-  }
+    public default boolean isStringValue() {
+        return stringValue() != null;
+    }
 
-  public default boolean isBooleanValue() {
-    return booleanValue() != null;
-  }
+    public default boolean isBooleanValue() {
+        return booleanValue() != null;
+    }
 
-  public default boolean isCollection() {
-    return collection() != null;
-  }
+    public default boolean isCollection() {
+        return collection() != null;
+    }
 
-  public default boolean isFilter() {
-    return filter() != null;
-  }
+    public default boolean isFilter() {
+        return filter() != null;
+    }
 
-  public default boolean isReference() {
-    return reference() != null;
-  }
+    public default boolean isReference() {
+        return reference() != null;
+    }
 
-  public default XQueryValue add(XQueryValue other) throws XQueryUnsupportedOperation {
-    throw new XQueryUnsupportedOperation();
+    public default XQueryValue not(XQueryValue other) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
 	}
 
-  public default XQueryValue subtract(XQueryValue other) throws XQueryUnsupportedOperation {
-    throw new XQueryUnsupportedOperation();
+    public default XQueryValue and(XQueryValue other) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+	}
+
+    public default XQueryValue or(XQueryValue other) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+	}
+
+
+    public default XQueryValue add(XQueryValue other) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+	}
+
+    public default XQueryValue subtract(XQueryValue other) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
 
 	}
 
@@ -148,7 +161,6 @@ public interface XQueryValue {
     public default XQueryValue generalGreaterEqual(XQueryValue other) throws XQueryUnsupportedOperation {
         final var isGreaterEqual = !generalLessThan(other).booleanValue();
         return new XQueryBoolean(isGreaterEqual);
-
 	}
 
 }

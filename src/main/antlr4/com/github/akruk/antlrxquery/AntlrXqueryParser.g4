@@ -84,8 +84,7 @@ primaryExpr: literal
         | parenthesizedExpr
         | contextItemExpr
         | functionCall;
-literal: numericLiteral | STRING;
-numericLiteral: INTEGER | DECIMAL;
+literal: INTEGER | DECIMAL | STRING;
 varRef: DOLLAR varName;
 varName: ID;
 parenthesizedExpr: LPAREN expr? RPAREN;

@@ -12,7 +12,9 @@ import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionCallContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.LiteralContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.OrExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
+import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 import com.github.akruk.antlrxquery.values.XQueryNumber;
 import com.github.akruk.antlrxquery.values.XQuerySequence;
 import com.github.akruk.antlrxquery.values.XQueryString;
@@ -93,11 +95,48 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     @Override
     public XQueryValue visitFunctionCall(FunctionCallContext ctx) {
         var functionName = ctx.ID().getText();
-        if (!noArgumentCalls.containsKey(functionName) ) {
+        if (!noArgumentCalls.containsKey(functionName)) {
             // TODO: error handling missing function
             return null;
         }
         Supplier<XQueryValue> function = noArgumentCalls.get(functionName);
         return function.get();
+    }
+
+    @Override
+    public XQueryValue visitOrExpr(OrExprContext ctx) {
+        try {
+            XQueryValue value = null;
+            if (ctx.orExpr().size() == 0) {
+                value = ctx.pathExpr(0).accept(this);
+            } else {
+                value = ctx.orExpr(0).accept(this);
+            }
+            var hasOr = !ctx.OR().isEmpty();
+            if (!hasOr)
+                return value;
+            if (hasOr && !value.isBooleanValue()) {
+                // TODO: type error
+            }
+            // Short circuit
+            if (value.booleanValue()) {
+                return XQueryBoolean.TRUE;
+            }
+
+            var orCount = ctx.OR().size();
+            for (int i = 1; i <= orCount; i++) {
+                var visitedExpression = ctx.orExpr(i).accept(this);
+                value = value.or(visitedExpression);
+                // Short circuit
+                if (value.booleanValue()) {
+                    return XQueryBoolean.TRUE;
+                }
+                i++;
+            }
+            return value;
+        } catch (XQueryUnsupportedOperation e) {
+            // TODO: error handling
+            return null;
+        }
     }
 }

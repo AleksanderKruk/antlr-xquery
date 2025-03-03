@@ -5,6 +5,9 @@ import org.junit.Test;
 import com.github.akruk.antlrxquery.evaluator.XQuery;
 
 import static org.junit.Assert.assertEquals;
+
+import java.math.BigDecimal;
+
 import static org.junit.Assert.*;
 
 public class XQueryTest {
@@ -45,6 +48,23 @@ public class XQueryTest {
         assertEquals("a\"b", value.stringValue());
     }
 
+    @Test
+    public void integerLiteral() {
+        String xquery = """
+                    1
+                """;
+        var value = XQuery.evaluate(null, xquery, null);
+        assertEquals(BigDecimal.ONE, value.numericValue());
+    }
+
+    @Test
+    public void floatLiteral() {
+        String xquery = """
+                    1.2
+                """;
+        var value = XQuery.evaluate(null, xquery, null);
+        assertEquals(new BigDecimal("1.2"), value.numericValue());
+    }
 
 
 }

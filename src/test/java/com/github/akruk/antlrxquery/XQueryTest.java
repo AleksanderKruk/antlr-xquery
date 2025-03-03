@@ -3,10 +3,14 @@ package com.github.akruk.antlrxquery;
 import org.junit.Test;
 
 import com.github.akruk.antlrxquery.evaluator.XQuery;
+import com.github.akruk.antlrxquery.values.XQueryNumber;
+import com.github.akruk.antlrxquery.values.XQueryValue;
 
 import static org.junit.Assert.assertEquals;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -64,6 +68,49 @@ public class XQueryTest {
                 """;
         var value = XQuery.evaluate(null, xquery, null);
         assertEquals(new BigDecimal("1.2"), value.numericValue());
+    }
+
+    @Test
+    public void sequenceLiteral() {
+        String xquery = """
+                    (1, 2, 3)
+                """;
+        var value = XQuery.evaluate(null, xquery, null);
+        List<XQueryValue> expected = List.of(
+            new XQueryNumber(BigDecimal.ONE),
+            new XQueryNumber(BigDecimal.valueOf(2)),
+            new XQueryNumber(BigDecimal.valueOf(3))
+        );
+        assertNotNull(value);
+        assertNotNull(value.sequence());
+        var sequence = value.sequence();
+        assertEquals(expected.size(), sequence.size());
+        assertTrue(expected.get(0).numericValue().equals(sequence.get(0).numericValue()));
+        assertTrue(expected.get(0).numericValue().equals(sequence.get(0).numericValue()));
+        assertTrue(expected.get(0).numericValue().equals(sequence.get(0).numericValue()));
+
+    }
+
+
+    @Test
+    public void atomization() {
+        String xquery = """
+                    (1, (2,3,4), ((5, 6), 7))
+                """;
+        var value = XQuery.evaluate(null, xquery, null);
+        List<XQueryValue> expected = List.of(
+            new XQueryNumber(BigDecimal.ONE),
+            new XQueryNumber(BigDecimal.valueOf(2)),
+            new XQueryNumber(BigDecimal.valueOf(3)),
+            new XQueryNumber(BigDecimal.valueOf(4)),
+            new XQueryNumber(BigDecimal.valueOf(5)),
+            new XQueryNumber(BigDecimal.valueOf(6)),
+            new XQueryNumber(BigDecimal.valueOf(7))
+        );
+        assertArrayEquals(
+            expected.stream().map(XQueryValue::numericValue).toArray(),
+            value.sequence().stream().map(XQueryValue::numericValue).toArray()
+        );
     }
 
 

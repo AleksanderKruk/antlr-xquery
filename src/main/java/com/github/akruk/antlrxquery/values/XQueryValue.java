@@ -120,7 +120,7 @@ public interface XQueryValue {
 
     public default XQueryValue valueUnequal(XQueryValue other) throws XQueryUnsupportedOperation {
         final var isUnequal = !valueEqual(other).booleanValue();
-        return new XQueryBoolean(isUnequal);
+        return XQueryBoolean.of(isUnequal);
 	}
 
     public default XQueryValue valueLessThan(XQueryValue other) throws XQueryUnsupportedOperation {
@@ -130,17 +130,17 @@ public interface XQueryValue {
 
     public default XQueryValue valueLessEqual(XQueryValue other) throws XQueryUnsupportedOperation {
         final var isLessEqual = valueEqual(other).booleanValue() || valueLessThan(other).booleanValue();
-        return new XQueryBoolean(isLessEqual);
+        return XQueryBoolean.of(isLessEqual);
 	}
 
     public default XQueryValue valueGreaterThan(XQueryValue other) throws XQueryUnsupportedOperation {
         final var isGreaterThan = !valueLessEqual(other).booleanValue();
-        return new XQueryBoolean(isGreaterThan);
+        return XQueryBoolean.of(isGreaterThan);
 	}
 
     public default XQueryValue valueGreaterEqual(XQueryValue other) throws XQueryUnsupportedOperation {
         final var isGreaterEqual = !valueLessThan(other).booleanValue();
-        return new XQueryBoolean(isGreaterEqual);
+        return XQueryBoolean.of(isGreaterEqual);
 	}
 
     public default XQueryValue generalEqual(XQueryValue other) throws XQueryUnsupportedOperation {
@@ -149,7 +149,7 @@ public interface XQueryValue {
 
     public default XQueryValue generalUnequal(XQueryValue other) throws XQueryUnsupportedOperation {
         final var isUnequal = !generalEqual(other).booleanValue();
-        return new XQueryBoolean(isUnequal);
+        return XQueryBoolean.of(isUnequal);
 	}
 
     public default XQueryValue generalLessThan(XQueryValue other) throws XQueryUnsupportedOperation {
@@ -159,17 +159,17 @@ public interface XQueryValue {
 
     public default XQueryValue generalLessEqual(XQueryValue other) throws XQueryUnsupportedOperation {
         final var isLessEqual = generalEqual(other).booleanValue() || generalLessThan(other).booleanValue();
-        return new XQueryBoolean(isLessEqual);
+        return XQueryBoolean.of(isLessEqual);
 	}
 
     public default XQueryValue generalGreaterThan(XQueryValue other) throws XQueryUnsupportedOperation {
         final var isGreaterThan = !generalLessEqual(other).booleanValue();
-        return new XQueryBoolean(isGreaterThan);
+        return XQueryBoolean.of(isGreaterThan);
 	}
 
     public default XQueryValue generalGreaterEqual(XQueryValue other) throws XQueryUnsupportedOperation {
         final var isGreaterEqual = !generalLessThan(other).booleanValue();
-        return new XQueryBoolean(isGreaterEqual);
+        return XQueryBoolean.of(isGreaterEqual);
 	}
 
 }

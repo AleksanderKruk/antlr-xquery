@@ -6,9 +6,17 @@ public class XQueryBoolean extends XQueryValueBase<Boolean> {
     public static final XQueryBoolean TRUE = new XQueryBoolean(true);
     public static final XQueryBoolean FALSE = new XQueryBoolean(false);
 
-    public XQueryBoolean(boolean bool) {
+    private XQueryBoolean(boolean bool) {
         value = bool;
     }
+
+    public static XQueryBoolean of(boolean bool) {
+        if (bool)
+            return TRUE;
+        else
+            return FALSE;
+    }
+
 
     @Override
     public Boolean booleanValue() {

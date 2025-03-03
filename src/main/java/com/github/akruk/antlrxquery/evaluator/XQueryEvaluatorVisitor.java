@@ -110,33 +110,69 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             if (ctx.orExpr().size() == 0) {
                 value = ctx.pathExpr(0).accept(this);
             } else {
-                value = ctx.orExpr(0).accept(this);
             }
             var hasOr = !ctx.OR().isEmpty();
-            if (!hasOr)
-                return value;
-            if (hasOr && !value.isBooleanValue()) {
-                // TODO: type error
-            }
-            // Short circuit
-            if (value.booleanValue()) {
-                return XQueryBoolean.TRUE;
-            }
+            if (hasOr)
+                return handleOrExpr(ctx);
+            var hasAnd = !ctx.AND().isEmpty();
+            if (hasAnd)
+                return handleAndExpr(ctx);
 
-            var orCount = ctx.OR().size();
-            for (int i = 1; i <= orCount; i++) {
-                var visitedExpression = ctx.orExpr(i).accept(this);
-                value = value.or(visitedExpression);
-                // Short circuit
-                if (value.booleanValue()) {
-                    return XQueryBoolean.TRUE;
-                }
-                i++;
-            }
             return value;
         } catch (XQueryUnsupportedOperation e) {
             // TODO: error handling
             return null;
         }
     }
+
+    private XQueryValue handleOrExpr(OrExprContext ctx) throws XQueryUnsupportedOperation {
+        var value = ctx.orExpr(0).accept(this);
+        if (!value.isBooleanValue()) {
+            // TODO: type error
+        }
+        // Short circuit
+        if (value.booleanValue()) {
+            return XQueryBoolean.TRUE;
+        }
+        var orCount = ctx.OR().size();
+        for (int i = 1; i <= orCount; i++) {
+            var visitedExpression = ctx.orExpr(i).accept(this);
+            value = value.or(visitedExpression);
+            // Short circuit
+            if (value.booleanValue()) {
+                return XQueryBoolean.TRUE;
+            }
+            i++;
+        }
+
+        return value;
+    }
+
+
+    private XQueryValue handleAndExpr(OrExprContext ctx) throws XQueryUnsupportedOperation {
+        var value = ctx.orExpr(0).accept(this);
+        if (!value.isBooleanValue()) {
+            // TODO: type error
+        }
+        // Short circuit
+        if (!value.booleanValue()) {
+            return XQueryBoolean.FALSE;
+        }
+        var orCount = ctx.AND().size();
+        for (int i = 1; i <= orCount; i++) {
+            var visitedExpression = ctx.orExpr(i).accept(this);
+            value = value.and(visitedExpression);
+            // Short circuit
+            if (!value.booleanValue()) {
+                return XQueryBoolean.FALSE;
+            }
+            i++;
+        }
+
+        return value;
+    }
+
+
+
+
 }

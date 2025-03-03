@@ -118,7 +118,9 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         var savedArgs = saveVisitedArguments();
         ctx.argumentList().accept(this);
         XQueryFunction function = functions.get(functionName);
-        return function.call(savedArgs);
+        var value = function.call(visitedArgumentList);
+        visitedArgumentList = savedArgs;
+        return value;
     }
 
     @Override

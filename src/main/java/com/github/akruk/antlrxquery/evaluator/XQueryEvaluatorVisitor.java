@@ -191,8 +191,9 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     @Override
     public XQueryValue visitArgument(ArgumentContext ctx) {
-
-        return super.visitArgument(ctx);
+        var value =  super.visitArgument(ctx);
+        visitedArgumentList.add(value);
+        return value;
     }
 
     private List<XQueryValue> saveVisitedArguments() {

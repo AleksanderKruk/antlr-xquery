@@ -3,6 +3,7 @@ package com.github.akruk.antlrxquery;
 import org.junit.Test;
 
 import com.github.akruk.antlrxquery.evaluator.XQuery;
+import com.github.akruk.antlrxquery.values.XQueryBoolean;
 import com.github.akruk.antlrxquery.values.XQueryNumber;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 
@@ -112,6 +113,26 @@ public class XQueryTest {
             value.sequence().stream().map(XQueryValue::numericValue).toArray()
         );
     }
+
+    @Test
+    public void trueConstant() {
+        String xquery = """
+            true()
+        """;
+        var value = XQuery.evaluate(null, xquery, null);
+        assertTrue(value == XQueryBoolean.TRUE);
+    }
+
+
+    @Test
+    public void falseConstant() {
+        String xquery = """
+            false()
+        """;
+        var value = XQuery.evaluate(null, xquery, null);
+        assertTrue(value == XQueryBoolean.FALSE);
+    }
+
 
 
 }

@@ -3,21 +3,30 @@ package com.github.akruk.antlrxquery.evaluator;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
 
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.tree.ParseTree;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionCallContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.LiteralContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
 import com.github.akruk.antlrxquery.values.XQueryNumber;
 import com.github.akruk.antlrxquery.values.XQuerySequence;
 import com.github.akruk.antlrxquery.values.XQueryString;
 import com.github.akruk.antlrxquery.values.XQueryValue;
+import com.github.akruk.antlrxquery.values.XQueryBoolean;
 
 class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     ParseTree tree;
     Parser parser;
+
+    static final Map<String, Supplier<XQueryValue>> noArgumentCalls = Map.of(
+        "true", (()->{return XQueryBoolean.TRUE;}),
+        "false", (()->{return XQueryBoolean.FALSE;})
+    );
 
     public XQueryEvaluatorVisitor(ParseTree tree, Parser parser) {
         this.tree = tree;
@@ -81,6 +90,14 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         return str.replace("\"\"", "\"").replace("''", "'");
     }
 
-
-
+    @Override
+    public XQueryValue visitFunctionCall(FunctionCallContext ctx) {
+        var functionName = ctx.ID().getText();
+        if (!noArgumentCalls.containsKey(functionName) ) {
+            // TODO: error handling missing function
+            return null;
+        }
+        Supplier<XQueryValue> function = noArgumentCalls.get(functionName);
+        return function.get();
+    }
 }

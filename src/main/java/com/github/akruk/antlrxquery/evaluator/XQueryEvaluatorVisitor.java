@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -135,6 +134,11 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                 return handleOrExpr(ctx);
             if (!ctx.AND().isEmpty())
                 return handleAndExpr(ctx);
+            if (!ctx.additiveOperator().isEmpty())
+                return handleAdditiveExpr(ctx);
+            if (!ctx.multiplicativeOperator().isEmpty())
+                return handleMultiplicativeExpr(ctx);
+
             return value;
         } catch (XQueryUnsupportedOperation e) {
             // TODO: error handling
@@ -188,6 +192,47 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
         return value;
     }
+
+
+    private XQueryValue handleAdditiveExpr(OrExprContext ctx) throws XQueryUnsupportedOperation {
+        var value = ctx.orExpr(0).accept(this);
+        if (!value.isNumericValue()) {
+            // TODO: type error
+        }
+        var orCount = ctx.additiveOperator().size();
+        for (int i = 1; i <= orCount; i++) {
+            var visitedExpression = ctx.orExpr(i).accept(this);
+            value = switch (ctx.additiveOperator(i-1).getText()) {
+                case "+" -> value.add(visitedExpression);
+                case "-" -> value.subtract(visitedExpression);
+                default -> null;
+            };
+            i++;
+        }
+        return value;
+    }
+
+
+    private XQueryValue handleMultiplicativeExpr(OrExprContext ctx) throws XQueryUnsupportedOperation {
+        var value = ctx.orExpr(0).accept(this);
+        if (!value.isNumericValue()) {
+            // TODO: type error
+        }
+        var orCount = ctx.multiplicativeOperator().size();
+        for (int i = 1; i <= orCount; i++) {
+            var visitedExpression = ctx.orExpr(i).accept(this);
+            value = switch (ctx.multiplicativeOperator(i-1).getText()) {
+                case "*" -> value.multiply(visitedExpression);
+                case "div" -> value.divide(visitedExpression);
+                case "idiv" -> value.integerDivide(visitedExpression);
+                case "mod" -> value.modulus(visitedExpression);
+                default -> null;
+            };
+            i++;
+        }
+        return value;
+    }
+
 
     @Override
     public XQueryValue visitArgument(ArgumentContext ctx) {

@@ -35,14 +35,16 @@ orExpr: orExpr ( OR orExpr )+
         | orExpr  (valueComp | generalComp | nodeComp) orExpr
         | orExpr ( OR_LOGICAL_OP orExpr )+
         | orExpr TO orExpr
-        | orExpr ( (PLUS | MINUS) orExpr )+
-        | orExpr ((STAR | DIV | IDIV | MOD) orExpr)+
+        | orExpr (additiveOperator orExpr )+
+        | orExpr (multiplicativeOperator orExpr)+
         | orExpr ((UNION | UNION_OP) orExpr)+
         | orExpr ((INTERSECT | EXCEPT) orExpr)+
         | orExpr ARROW arrowFunctionSpecifier argumentList
         | (MINUS | PLUS) orExpr
         | pathExpr (EXCLAMATION_MARK pathExpr)?
 ;
+additiveOperator: PLUS | MINUS;
+multiplicativeOperator: STAR | DIV | IDIV | MOD;
 generalComp: EQ_OP | NE_OP | LT_OP | LE_OP | GT_OP | GE_OP;
 valueComp: EQ | NE | LT | LE | GT | GE;
 nodeComp: IS | PRECEDING_OP | FOLLOWING_OP;

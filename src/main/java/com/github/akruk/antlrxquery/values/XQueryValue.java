@@ -22,7 +22,8 @@ public interface XQueryValue {
         return null;
     };
 
-    public default List<XQueryValue> collection() {
+    public default List<XQueryValue> sequence() {
+
         return null;
     }
 
@@ -46,8 +47,8 @@ public interface XQueryValue {
         return booleanValue() != null;
     }
 
-    public default boolean isCollection() {
-        return collection() != null;
+    public default boolean isSequence() {
+        return sequence() != null;
     }
 
     public default boolean isFilter() {

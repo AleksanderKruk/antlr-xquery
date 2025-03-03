@@ -59,7 +59,7 @@ public interface XQueryValue {
     }
 
     public default boolean isAtomic() {
-        return sequence() != null;
+        return sequence() == null;
     }
 
     public default List<XQueryValue> atomize() {

@@ -23,7 +23,6 @@ public interface XQueryValue {
     };
 
     public default List<XQueryValue> sequence() {
-
         return null;
     }
 
@@ -58,6 +57,15 @@ public interface XQueryValue {
     public default boolean isReference() {
         return reference() != null;
     }
+
+    public default boolean isAtomic() {
+        return sequence() != null;
+    }
+
+    public default List<XQueryValue> atomize() {
+        return List.of(this);
+    }
+
 
     public default XQueryValue not(XQueryValue other) throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();

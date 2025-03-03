@@ -163,6 +163,20 @@ public class XQueryTest {
         assertTrue(value.booleanValue());
     }
 
+    @Test
+    public void not() {
+        String xquery = """
+            not(true())
+        """;
+        var value = XQuery.evaluate(null, xquery, null);
+        assertFalse(value.booleanValue());
+        xquery = """
+            not(false())
+        """;
+        value = XQuery.evaluate(null, xquery, null);
+        assertTrue(value.booleanValue());
+    }
+
 
 
 }

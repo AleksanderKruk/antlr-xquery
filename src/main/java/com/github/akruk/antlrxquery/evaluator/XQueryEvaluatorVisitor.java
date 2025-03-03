@@ -9,6 +9,7 @@ import java.util.function.Supplier;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.tree.ParseTree;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.ArgumentContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionCallContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.LiteralContext;
@@ -20,15 +21,30 @@ import com.github.akruk.antlrxquery.values.XQuerySequence;
 import com.github.akruk.antlrxquery.values.XQueryString;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.XQueryBoolean;
+import com.github.akruk.antlrxquery.values.XQueryFunction;
 
 class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     ParseTree tree;
     Parser parser;
 
-    static final Map<String, Supplier<XQueryValue>> noArgumentCalls = Map.of(
-        "true", (()->{return XQueryBoolean.TRUE;}),
-        "false", (()->{return XQueryBoolean.FALSE;})
+    List<XQueryValue> visitedArgumentList;
+
+    private static final Map<String, XQueryFunction> functions = Map.of(
+        "true", ((List<XQueryValue> args)->{return XQueryBoolean.TRUE;}),
+        "false", ((List<XQueryValue> args)->{return XQueryBoolean.FALSE;}),
+        "not", XQueryEvaluatorVisitor::not
     );
+
+    private static final XQueryValue not(List<XQueryValue> args) {
+        assert args.size() == 1;
+        try {
+            return args.get(0).not();
+        } catch (XQueryUnsupportedOperation e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            return null;
+        }
+    }
 
     public XQueryEvaluatorVisitor(ParseTree tree, Parser parser) {
         this.tree = tree;
@@ -95,12 +111,14 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     @Override
     public XQueryValue visitFunctionCall(FunctionCallContext ctx) {
         var functionName = ctx.ID().getText();
-        if (!noArgumentCalls.containsKey(functionName)) {
+        if (!functions.containsKey(functionName)) {
             // TODO: error handling missing function
             return null;
         }
-        Supplier<XQueryValue> function = noArgumentCalls.get(functionName);
-        return function.get();
+        var savedArgs = saveVisitedArguments();
+        ctx.argumentList().accept(this);
+        XQueryFunction function = functions.get(functionName);
+        return function.call(savedArgs);
     }
 
     @Override
@@ -111,13 +129,10 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                 value = ctx.pathExpr(0).accept(this);
             } else {
             }
-            var hasOr = !ctx.OR().isEmpty();
-            if (hasOr)
+            if (!ctx.OR().isEmpty())
                 return handleOrExpr(ctx);
-            var hasAnd = !ctx.AND().isEmpty();
-            if (hasAnd)
+            if (!ctx.AND().isEmpty())
                 return handleAndExpr(ctx);
-
             return value;
         } catch (XQueryUnsupportedOperation e) {
             // TODO: error handling
@@ -172,7 +187,16 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         return value;
     }
 
+    @Override
+    public XQueryValue visitArgument(ArgumentContext ctx) {
 
+        return super.visitArgument(ctx);
+    }
 
+    private List<XQueryValue> saveVisitedArguments() {
+        var saved = visitedArgumentList;
+        visitedArgumentList = new ArrayList<>();
+        return saved;
+    }
 
 }

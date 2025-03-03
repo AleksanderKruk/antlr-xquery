@@ -24,7 +24,7 @@ public class XQueryBoolean extends XQueryValueBase<Boolean> {
     }
 
     @Override
-    public XQueryValue not(XQueryValue other) throws XQueryUnsupportedOperation {
+    public XQueryValue not() throws XQueryUnsupportedOperation {
         return new XQueryBoolean(!value);
     }
 

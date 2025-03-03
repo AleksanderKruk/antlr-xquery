@@ -67,7 +67,7 @@ public interface XQueryValue {
     }
 
 
-    public default XQueryValue not(XQueryValue other) throws XQueryUnsupportedOperation {
+    public default XQueryValue not() throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
 	}
 

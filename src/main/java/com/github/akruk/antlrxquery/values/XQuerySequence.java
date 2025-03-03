@@ -30,6 +30,7 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
         for (XQueryValue element : value) {
             if (element.isAtomic()) {
                 result.add(element);
+                continue;
             }
             // If the result is not atomic we atomize it
             // and extend the result list

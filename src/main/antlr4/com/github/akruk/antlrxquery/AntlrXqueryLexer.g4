@@ -3,11 +3,12 @@ INTEGER: Digits;
 DECIMAL: (DOT Digits) | (Digits DOT Digits?);
 fragment Digits: [0-9]+;
 
-STRING: ('"' ('""' | ~["&])* '"') 
+STRING: ('"' ('""' | ~["&])* '"')
     | ('\'' ('\'\'' | ~['&])* '\'');
 
 COMMENT: '(:' .*? ':)';
-ID: [\P{alpha}][\P{alnum}]*; /* Replace with antlr compatible */
+WS: [\p{White_Space}]+ -> skip;
+ID: [\p{alpha}][\p{alnum}]+; /* Replace with antlr compatible */
 FOR: 'for';
 COMMA: ',';
 AT: 'at';

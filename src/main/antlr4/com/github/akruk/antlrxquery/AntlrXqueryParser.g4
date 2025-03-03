@@ -2,18 +2,18 @@ parser grammar AntlrXqueryParser;
 options {
     tokenVocab = AntlrXqueryLexer;
 }
-query: expr;
+xquery: expr;
 expr: exprSingle (COMMA exprSingle)*;
 exprSingle: fLWORExpr
         | quantifiedExpr
         | ifExpr
         | orExpr;
 fLWORExpr: initialClause intermediateClause* returnClause;
-initialClause: forClause 
+initialClause: forClause
             | letClause;
-intermediateClause: initialClause 
-                | whereClause 
-                | orderByClause 
+intermediateClause: initialClause
+                | whereClause
+                | orderByClause
                 | countClause;
 forClause: FOR forBinding (COMMA forBinding)*;
 forBinding: DOLLAR varName typeDeclaration? allowingEmpty? positionalVar? IN exprSingle;
@@ -32,23 +32,23 @@ quantifiedExpr: (SOME | EVERY) DOLLAR varName typeDeclaration? IN exprSingle (CO
 ifExpr: IF LPAREN expr RPAREN THEN exprSingle ELSE exprSingle;
 orExpr: orExpr ( OR orExpr )+
         | orExpr ( AND orExpr )+
-        | orExpr  (valueComp | generalComp | nodeComp) orExpr 
+        | orExpr  (valueComp | generalComp | nodeComp) orExpr
         | orExpr ( OR_LOGICAL_OP orExpr )+
         | orExpr TO orExpr
-        | orExpr ( (PLUS | MINUS) orExpr )
-        | orExpr (STAR | DIV | IDIV | MOD) orExpr
-        | orExpr (UNION | UNION_OP) orExpr
-        | orExpr (INTERSECT | EXCEPT) orExpr
+        | orExpr ( (PLUS | MINUS) orExpr )+
+        | orExpr ((STAR | DIV | IDIV | MOD) orExpr)+
+        | orExpr ((UNION | UNION_OP) orExpr)+
+        | orExpr ((INTERSECT | EXCEPT) orExpr)+
         | orExpr ARROW arrowFunctionSpecifier argumentList
         | (MINUS | PLUS) orExpr
-        | pathExpr (EXCLAMATION_MARK pathExpr)
+        | pathExpr (EXCLAMATION_MARK pathExpr)?
 ;
 generalComp: EQ_OP | NE_OP | LT_OP | LE_OP | GT_OP | GE_OP;
 valueComp: EQ | NE | LT | LE | GT | GE;
 nodeComp: IS | PRECEDING_OP | FOLLOWING_OP;
 pathExpr: (SLASH relativePathExpr?)
         | (SLASHES relativePathExpr)
-        | relativePathExpr; /* xgc: leading-lone-slash */
+        | relativePathExpr;
 relativePathExpr: stepExpr ((SLASH | SLASHES) stepExpr)*;
 stepExpr: postfixExpr | axisStep;
 axisStep: (reverseStep | forwardStep) predicateList;
@@ -84,14 +84,12 @@ primaryExpr: literal
         | parenthesizedExpr
         | contextItemExpr
         | functionCall;
-literal: numericLiteral | STRING;
-numericLiteral: INTEGER | DECIMAL;
+literal: INTEGER | DECIMAL | STRING;
 varRef: DOLLAR varName;
 varName: ID;
 parenthesizedExpr: LPAREN expr? RPAREN;
 contextItemExpr: DOT;
-functionCall: ID argumentList;  /* xgc: reserved-function-names */
-                                /* gn: parens */
+functionCall: ID argumentList;
 argument: exprSingle | argumentPlaceholder;
 argumentPlaceholder: QUESTION_MARK;
 elementDeclaration: elementName;

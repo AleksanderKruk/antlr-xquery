@@ -7,7 +7,7 @@ STRING: ('"' ('""' | ~["&])* '"')
     | ('\'' ('\'\'' | ~['&])* '\'');
 
 COMMENT: '(:' .*? ':)';
-WS: [\p{White_Space}]+ -> skip;
+WS: [\p{White_Space}]+ -> channel(HIDDEN);
 FOR: 'for';
 COMMA: ',';
 AT: 'at';

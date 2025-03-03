@@ -8,7 +8,6 @@ STRING: ('"' ('""' | ~["&])* '"')
 
 COMMENT: '(:' .*? ':)';
 WS: [\p{White_Space}]+ -> skip;
-ID: [\p{alpha}][\p{alnum}]+; /* Replace with antlr compatible */
 FOR: 'for';
 COMMA: ',';
 AT: 'at';
@@ -92,5 +91,6 @@ COLLATION: 'collation';
 IF: 'if';
 IN: 'in';
 SATISFIES: 'satisfies';
+ID: [\p{alpha}][\p{alnum}]+; /* Replace with antlr compatible */
 
 

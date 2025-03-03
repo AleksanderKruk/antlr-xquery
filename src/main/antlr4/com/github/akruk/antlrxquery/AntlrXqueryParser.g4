@@ -95,8 +95,6 @@ argumentPlaceholder: QUESTION_MARK;
 elementDeclaration: elementName;
 attributeName: ID;
 elementName: ID;
-simpleTypeName: typeName;
-typeName: ID;
 
 typeDeclaration: AS sequenceType;
 sequenceType: (ID occurrenceIndicator?);

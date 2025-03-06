@@ -70,6 +70,16 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             return new XQueryNumber(arg.numericValue().setScale(0, RoundingMode.FLOOR));
         }
 
+        private static final XQueryValue round(List<XQueryValue> args) {
+            assert args.size() == 1 || args.size() == 2;
+            var arg1 = args.get(0);
+            if (args.size() == 1) {
+                return new XQueryNumber(arg1.numericValue().setScale(0, RoundingMode.HALF_UP));
+            }
+            var arg2 = args.get(1);
+            int scale = arg2.numericValue().intValue();
+            return new XQueryNumber(arg1.numericValue().setScale(scale, RoundingMode.HALF_UP));
+        }
         private static final XQueryValue numeric_add(List<XQueryValue> args) {
             assert args.size() == 2;
             var val1 = args.get(0);
@@ -105,6 +115,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         functions.put("abs", XQueryEvaluatorVisitor.Functions::abs);
         functions.put("ceiling", XQueryEvaluatorVisitor.Functions::ceiling);
         functions.put("floor", XQueryEvaluatorVisitor.Functions::floor);
+        functions.put("round", XQueryEvaluatorVisitor.Functions::round);
         functions.put("numeric-add", XQueryEvaluatorVisitor.Functions::numeric_add);
     }
 

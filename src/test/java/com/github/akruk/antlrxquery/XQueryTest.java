@@ -17,6 +17,12 @@ import static org.junit.Assert.*;
 
 public class XQueryTest {
 
+    public void assertResult(String xquery, BigDecimal result) {
+        var value = XQuery.evaluate(null, xquery, null);
+        assertNotNull(value);
+        assertEquals(result, value.numericValue());
+    }
+
     @Test
     public void stringLiteralsDoubleQuote() {
         String xquery = """
@@ -270,6 +276,16 @@ public class XQueryTest {
         var value = XQuery.evaluate(null, xquery, null);
         assertNotNull(value);
         assertEquals(BigDecimal.valueOf(3), value.numericValue());
+    }
+
+    @Test
+    public void round() {
+        // From https://www.w3.org/TR/xpath-functions-3/#func-round
+        assertResult("round(3.3)", BigDecimal.valueOf(3));
+        assertResult("round(3.5)", BigDecimal.valueOf(4));
+        assertResult("round(-2.5)", BigDecimal.valueOf(-2));
+        assertResult("round(1.125, 2)", new BigDecimal("1.13"));
+        assertResult("round(8452, -2)", new BigDecimal("8500"));
     }
 
     @Test

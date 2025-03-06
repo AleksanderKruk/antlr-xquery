@@ -1,13 +1,13 @@
 # Supported expressions
 Expression                                   | Example                                                 | Is implemented                         | Comment
 ----------                                   | --------                                                |-------------                           |-----
-Float literals                               | `123.4`                                                 |                                        |        | 
-Integer literals                             | `123`                                                   |                                        |        |
-String literals                              | `"string"`<br>`'string'`                                |                                        |        |
+Float literals                               | `123.4`                                                 | yes                                    |        |
+Integer literals                             | `123`                                                   | yes                                    |        |
+String literals                              | `"string"`<br>`'string'`                                | yes                                    |        |
 Variable References                          | `$x`                                                    |                                        |        |
-Parenthesized Expressions                    | `(...)`                                                 |                                        |        |
+Parenthesized Expressions                    | `(...)`                                                 | yes                                    |        |
 Context Item Expression                      | `.`                                                     |                                        |        |
-Static Function Calls                        | `string-length("string")`                               |                                        |        |
+Static Function Calls                        | `string-length("string")`                               | yes                                    | listed |
 Named Function References                    | `abs#1` /* abs function with arity of 1 */              |                                        |        |
 Inline Function Expressions                  | `function() as xs:integer+ { 2, 3, 5, 7, 11, 13 }`      |                                        |        |
 Enclosed Expressions                         | `{ ... }`                                               |                                        |        |
@@ -36,7 +36,7 @@ String Concatenation Expressions             |`"a" || "b"`                      
 Value comparisons                            |`$sequence[. eq "a"]`                                    |                                        |        |
 General comparisons                          |`$sequence = "a"`                                        |                                        |        |
 Node comparisons                             |`$x[. is y]`<br>`$x[. << after]`<br>`$x[. >> before]`    |                                        |        |
-Logical Expressions                          |`false() or true() and false()`                          |                                        |        |
+Logical Expressions                          |`false() or true() and false()`                          | yes                                    |        |
 Node Constructors                            |                                                         |                                        |        |
 Direct Element Constructors                  |                                                         |                                        |        |
 Attributes                                   |                                                         |                                        |        |

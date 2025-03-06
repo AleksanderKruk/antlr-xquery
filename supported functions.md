@@ -19,7 +19,7 @@ Function                                           | Is implemented | Comment
 `op:numeric-equal`                                 |                |
 `op:numeric-less-than`                             |                |
 `op:numeric-greater-than`                          |                |
-`fn:abs`                                           |                |
+`fn:abs`                                           | yes            |
 `fn:ceiling`                                       |                |
 `fn:floor`                                         |                |
 `fn:round`                                         |                |

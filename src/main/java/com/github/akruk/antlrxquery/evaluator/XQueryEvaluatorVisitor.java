@@ -152,6 +152,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                 return handleAdditiveExpr(ctx);
             if (!ctx.multiplicativeOperator().isEmpty())
                 return handleMultiplicativeExpr(ctx);
+            if (ctx.MINUS() != null)
+                return handleUnaryArithmeticExpr(ctx);
 
             return value;
         } catch (XQueryUnsupportedOperation e) {
@@ -245,6 +247,15 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             i++;
         }
         return value;
+    }
+
+
+    private XQueryValue handleUnaryArithmeticExpr(OrExprContext ctx) throws XQueryUnsupportedOperation {
+        var value = ctx.orExpr(0).accept(this);
+        if (!value.isNumericValue()) {
+            // TODO: type error
+        }
+        return value.multiply(new XQueryNumber(new BigDecimal(-1)));
     }
 
 

@@ -243,5 +243,23 @@ public class XQueryTest {
         var value = XQuery.evaluate(null, xquery, null);
         assertNotNull(value);
         assertEquals(BigDecimal.valueOf(3), value.numericValue());
+        xquery = """
+            abs(-3)
+        """;
+        value = XQuery.evaluate(null, xquery, null);
+        assertNotNull(value);
+        assertEquals(BigDecimal.valueOf(3), value.numericValue());
     }
+
+
+    @Test
+    public void numeric_add() {
+        String xquery = """
+            numeric-add(3)
+        """;
+        var value = XQuery.evaluate(null, xquery, null);
+        assertNotNull(value);
+        assertEquals(BigDecimal.valueOf(3), value.numericValue());
+    }
+
 }

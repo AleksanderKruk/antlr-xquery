@@ -253,6 +253,26 @@ public class XQueryTest {
 
 
     @Test
+    public void ceiling() {
+        String xquery = """
+            ceiling(3.3)
+        """;
+        var value = XQuery.evaluate(null, xquery, null);
+        assertNotNull(value);
+        assertEquals(BigDecimal.valueOf(4), value.numericValue());
+    }
+
+    @Test
+    public void floor() {
+        String xquery = """
+            floor(3.3)
+        """;
+        var value = XQuery.evaluate(null, xquery, null);
+        assertNotNull(value);
+        assertEquals(BigDecimal.valueOf(3), value.numericValue());
+    }
+
+    @Test
     public void numeric_add() {
         String xquery = """
             numeric-add(3)

@@ -20,8 +20,8 @@ Function                                           | Is implemented | Comment
 `op:numeric-less-than`                             |                |
 `op:numeric-greater-than`                          |                |
 `fn:abs`                                           | yes            |
-`fn:ceiling`                                       |                |
-`fn:floor`                                         |                |
+`fn:ceiling`                                       | yes            |
+`fn:floor`                                         | yes            |
 `fn:round`                                         |                |
 `fn:round-half-to-even`                            |                |
 `fn:number`                                        |                |

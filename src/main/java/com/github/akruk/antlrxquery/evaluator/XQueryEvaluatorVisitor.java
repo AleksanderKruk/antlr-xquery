@@ -1,6 +1,8 @@
 package com.github.akruk.antlrxquery.evaluator;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,35 +30,82 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     Parser parser;
 
     List<XQueryValue> visitedArgumentList;
+    private final class Functions {
+        private static final XQueryValue not(List<XQueryValue> args) {
+            assert args.size() == 1;
+            try {
+                return args.get(0).not();
+            } catch (XQueryUnsupportedOperation e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+                return null;
+            }
+        }
+        
+        // fn:abs($arg as xs:numeric?) as xs:numeric?
+        private static final XQueryValue abs(List<XQueryValue> args) {
+            assert args.size() == 1;
+            var arg = args.get(0);
+            // TODO: Add type check failure
+            if (!arg.isNumericValue())
+                return null;
+            return new XQueryNumber(arg.numericValue().negate());
+        }
+
+        private static final XQueryValue ceiling(List<XQueryValue> args) {
+            assert args.size() == 1;
+            var arg = args.get(0);
+            // TODO: Add type check failure
+            if (!arg.isNumericValue())
+                return null;
+            return new XQueryNumber(arg.numericValue().setScale(0, RoundingMode.CEILING));
+        }
+
+        private static final XQueryValue floor(List<XQueryValue> args) {
+            assert args.size() == 1;
+            var arg = args.get(0);
+            // TODO: Add type check failure
+            if (!arg.isNumericValue())
+                return null;
+            return new XQueryNumber(arg.numericValue().setScale(0, RoundingMode.FLOOR));
+        }
+
+        private static final XQueryValue numeric_add(List<XQueryValue> args) {
+            assert args.size() == 2;
+            var val1 = args.get(0);
+            var val2 = args.get(1);
+            // TODO: Add type check failure
+            if (!val1.isNumericValue() || !val2.isNumericValue())
+                return null;
+            try {
+                return val1.add(val2);
+            } catch (XQueryUnsupportedOperation e) {
+                return null;
+            }
+        }
+
+        private static XQueryValue true_(List<XQueryValue> args) {
+            assert args.size() == 0;
+            return XQueryBoolean.TRUE;
+        }
+
+        private static XQueryValue false_(List<XQueryValue> args) {
+            assert args.size() == 0;
+            return XQueryBoolean.FALSE;
+        } 
+
+    }
     
     private static final Map<String, XQueryFunction> functions;    
     static {
         functions = new HashMap<>();
-        functions.put("true", (List<XQueryValue> args)->{return XQueryBoolean.TRUE;});
-        functions.put("false", (List<XQueryValue> args)->{return XQueryBoolean.FALSE;});
-        functions.put("not", XQueryEvaluatorVisitor::not);
-        functions.put("abs", XQueryEvaluatorVisitor::abs);
-    }
-
-    private static final XQueryValue not(List<XQueryValue> args) {
-        assert args.size() == 1;
-        try {
-            return args.get(0).not();
-        } catch (XQueryUnsupportedOperation e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    // fn:abs($arg as xs:numeric?) as xs:numeric?
-    private static final XQueryValue abs(List<XQueryValue> args) {
-        assert args.size() == 1;
-        var arg = args.get(0);
-        // TODO:
-        if (!arg.isNumericValue())
-            return null;
-        return new XQueryNumber(arg.numericValue().abs());
+        functions.put("true", XQueryEvaluatorVisitor.Functions::true_);
+        functions.put("false", XQueryEvaluatorVisitor.Functions::false_);
+        functions.put("not", XQueryEvaluatorVisitor.Functions::not);
+        functions.put("abs", XQueryEvaluatorVisitor.Functions::abs);
+        functions.put("ceiling", XQueryEvaluatorVisitor.Functions::ceiling);
+        functions.put("floor", XQueryEvaluatorVisitor.Functions::floor);
+        functions.put("numeric-add", XQueryEvaluatorVisitor.Functions::numeric_add);
     }
 
     public XQueryEvaluatorVisitor(ParseTree tree, Parser parser) {

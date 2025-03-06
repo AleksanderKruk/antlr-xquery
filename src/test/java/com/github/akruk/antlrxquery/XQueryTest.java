@@ -10,7 +10,7 @@ import com.github.akruk.antlrxquery.values.XQueryValue;
 import static org.junit.Assert.assertEquals;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
+import java.math.MathContext;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -178,5 +178,60 @@ public class XQueryTest {
     }
 
 
+    @Test
+    public void addition() {
+        String xquery = """
+            5 + 3.10
+        """;
+        var value = XQuery.evaluate(null, xquery, null);
+        assertEquals(new BigDecimal("8.10"), value.numericValue());
+    }
 
+
+    @Test
+    public void subtraction() {
+        String xquery = """
+            5 - 3.10
+        """;
+        var value = XQuery.evaluate(null, xquery, null);
+        assertEquals(new BigDecimal("1.9").setScale(2), value.numericValue().setScale(2));
+    }
+
+
+    @Test
+    public void multiplication() {
+        String xquery = """
+            5 * 3.0
+        """;
+        var value = XQuery.evaluate(null, xquery, null);
+        assertEquals(new BigDecimal(15).setScale(2), value.numericValue().setScale(2));
+    }
+
+
+    @Test
+    public void division() {
+        String xquery = """
+            5 div 2.0
+        """;
+        var value = XQuery.evaluate(null, xquery, null);
+        assertEquals(new BigDecimal(2.5, MathContext.UNLIMITED), value.numericValue());
+    }
+
+    @Test
+    public void integerDivision() {
+        String xquery = """
+                    5 idiv 2
+                """;
+        var value = XQuery.evaluate(null, xquery, null);
+        assertEquals(new BigDecimal(2).setScale(2), value.numericValue().setScale(2));
+    }
+
+    @Test
+    public void modulus() {
+        String xquery = """
+            4 mod 2
+        """;
+        var value = XQuery.evaluate(null, xquery, null);
+        assertEquals(BigDecimal.ZERO.setScale(2), value.numericValue().setScale(2));
+    }
 }

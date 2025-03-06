@@ -2,6 +2,7 @@ package com.github.akruk.antlrxquery.evaluator;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -27,12 +28,14 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     Parser parser;
 
     List<XQueryValue> visitedArgumentList;
-
-    private static final Map<String, XQueryFunction> functions = Map.of(
-        "true", ((List<XQueryValue> args)->{return XQueryBoolean.TRUE;}),
-        "false", ((List<XQueryValue> args)->{return XQueryBoolean.FALSE;}),
-        "not", XQueryEvaluatorVisitor::not
-    );
+    
+    private static final Map<String, XQueryFunction> functions;    
+    static {
+        functions = new HashMap<>();
+        functions.put("true", (List<XQueryValue> args)->{return XQueryBoolean.TRUE;});
+        functions.put("false", (List<XQueryValue> args)->{return XQueryBoolean.FALSE;});
+        functions.put("not", XQueryEvaluatorVisitor::not);
+    }
 
     private static final XQueryValue not(List<XQueryValue> args) {
         assert args.size() == 1;

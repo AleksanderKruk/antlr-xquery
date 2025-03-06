@@ -234,4 +234,14 @@ public class XQueryTest {
         var value = XQuery.evaluate(null, xquery, null);
         assertEquals(BigDecimal.ZERO.setScale(2), value.numericValue().setScale(2));
     }
+
+    @Test
+    public void abs() {
+        String xquery = """
+            abs(3)
+        """;
+        var value = XQuery.evaluate(null, xquery, null);
+        assertNotNull(value);
+        assertEquals(BigDecimal.valueOf(3), value.numericValue());
+    }
 }

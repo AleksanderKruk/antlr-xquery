@@ -35,6 +35,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         functions.put("true", (List<XQueryValue> args)->{return XQueryBoolean.TRUE;});
         functions.put("false", (List<XQueryValue> args)->{return XQueryBoolean.FALSE;});
         functions.put("not", XQueryEvaluatorVisitor::not);
+        functions.put("abs", XQueryEvaluatorVisitor::abs);
     }
 
     private static final XQueryValue not(List<XQueryValue> args) {
@@ -46,6 +47,16 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             e.printStackTrace();
             return null;
         }
+    }
+
+    // fn:abs($arg as xs:numeric?) as xs:numeric?
+    private static final XQueryValue abs(List<XQueryValue> args) {
+        assert args.size() == 1;
+        var arg = args.get(0);
+        // TODO:
+        if (!arg.isNumericValue())
+            return null;
+        return new XQueryNumber(arg.numericValue().abs());
     }
 
     public XQueryEvaluatorVisitor(ParseTree tree, Parser parser) {

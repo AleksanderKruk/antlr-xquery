@@ -8,17 +8,17 @@ Function                                           | Is implemented | Comment
 `fn:document-uri`                                  |                |
 `fn:error`                                         |                |
 `fn:trace`                                         |                |
-`op:numeric-add`                                   |                |
-`op:numeric-subtract`                              |                |
-`op:numeric-multiply`                              |                |
-`op:numeric-divide`                                |                |
-`op:numeric-integer-divide`                        |                |
-`op:numeric-mod`                                   |                |
-`op:numeric-unary-plus`                            |                |
-`op:numeric-unary-minus`                           |                |
-`op:numeric-equal`                                 |                |
-`op:numeric-less-than`                             |                |
-`op:numeric-greater-than`                          |                |
+`op:numeric-add`                                   | yes            |
+`op:numeric-subtract`                              | yes            |
+`op:numeric-multiply`                              | yes            |
+`op:numeric-divide`                                | yes            |
+`op:numeric-integer-divide`                        | yes            |
+`op:numeric-mod`                                   | yes            |
+`op:numeric-unary-plus`                            | yes            |
+`op:numeric-unary-minus`                           | yes            |
+`op:numeric-equal`                                 | yes            |
+`op:numeric-less-than`                             | yes            |
+`op:numeric-greater-than`                          | yes            |
 `fn:abs`                                           | yes            |
 `fn:ceiling`                                       | yes            |
 `fn:floor`                                         | yes            |
@@ -27,7 +27,7 @@ Function                                           | Is implemented | Comment
 `fn:number`                                        |                |
 `fn:format-integer`                                |                |
 `fn:format-number`                                 |                |
-`math:pi`                                          |                |
+`math:pi`                                          | yes            |
 `math:exp`                                         |                |
 `math:exp10`                                       |                |
 `math:log`                                         |                |

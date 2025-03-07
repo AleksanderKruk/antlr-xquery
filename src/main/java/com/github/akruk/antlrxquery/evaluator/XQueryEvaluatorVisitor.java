@@ -236,6 +236,11 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             return XQueryBoolean.FALSE;
         } 
 
+        private static XQueryValue pi(final List<XQueryValue> args) {
+            assert args.size() == 0;
+            return new XQueryNumber(new BigDecimal(Math.PI));
+        } 
+
     }
     
     private static final Map<String, XQueryFunction> functions;    
@@ -247,6 +252,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         functions.put("abs", XQueryEvaluatorVisitor.Functions::abs);
         functions.put("ceiling", XQueryEvaluatorVisitor.Functions::ceiling);
         functions.put("floor", XQueryEvaluatorVisitor.Functions::floor);
+        functions.put("round", XQueryEvaluatorVisitor.Functions::round);
+        functions.put("pi", XQueryEvaluatorVisitor.Functions::pi);
         functions.put("round", XQueryEvaluatorVisitor.Functions::round);
         functions.put("numeric-add", XQueryEvaluatorVisitor.Functions::numericAdd);
         functions.put("numeric-subtract", XQueryEvaluatorVisitor.Functions::numericSubtract);

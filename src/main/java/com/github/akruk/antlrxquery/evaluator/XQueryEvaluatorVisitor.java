@@ -31,11 +31,11 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     List<XQueryValue> visitedArgumentList;
     private final class Functions {
-        private static final XQueryValue not(List<XQueryValue> args) {
+        private static final XQueryValue not(final List<XQueryValue> args) {
             assert args.size() == 1;
             try {
                 return args.get(0).not();
-            } catch (XQueryUnsupportedOperation e) {
+            } catch (final XQueryUnsupportedOperation e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
                 return null;
@@ -43,79 +43,195 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         }
         
         // fn:abs($arg as xs:numeric?) as xs:numeric?
-        private static final XQueryValue abs(List<XQueryValue> args) {
+        private static final XQueryValue abs(final List<XQueryValue> args) {
             assert args.size() == 1;
-            var arg = args.get(0);
+            final var arg = args.get(0);
             // TODO: Add type check failure
             if (!arg.isNumericValue())
                 return null;
             return new XQueryNumber(arg.numericValue().negate());
         }
 
-        private static final XQueryValue ceiling(List<XQueryValue> args) {
+        private static final XQueryValue ceiling(final List<XQueryValue> args) {
             assert args.size() == 1;
-            var arg = args.get(0);
+            final var arg = args.get(0);
             // TODO: Add type check failure
             if (!arg.isNumericValue())
                 return null;
             return new XQueryNumber(arg.numericValue().setScale(0, RoundingMode.CEILING));
         }
 
-        private static final XQueryValue floor(List<XQueryValue> args) {
+        private static final XQueryValue floor(final List<XQueryValue> args) {
             assert args.size() == 1;
-            var arg = args.get(0);
+            final var arg = args.get(0);
             // TODO: Add type check failure
             if (!arg.isNumericValue())
                 return null;
             return new XQueryNumber(arg.numericValue().setScale(0, RoundingMode.FLOOR));
         }
 
-        private static final XQueryValue round(List<XQueryValue> args) {
+        private static final XQueryValue round(final List<XQueryValue> args) {
             assert args.size() == 1 || args.size() == 2;
-            var arg1 = args.get(0);
-            var number1 = arg1.numericValue();
-            var negativeNumber = number1.compareTo(BigDecimal.ZERO) == -1;
-            var oneArg = args.size() == 1;
+            final var arg1 = args.get(0);
+            final var number1 = arg1.numericValue();
+            final var negativeNumber = number1.compareTo(BigDecimal.ZERO) == -1;
+            final var oneArg = args.size() == 1;
             if (oneArg && negativeNumber) {
                 return new XQueryNumber(number1.setScale(0, RoundingMode.HALF_DOWN));
             }
             if (oneArg) {
                 return new XQueryNumber(number1.setScale(0, RoundingMode.HALF_UP));
             }
-            var number2 = args.get(1).numericValue();
-            int scale = number2.intValue();
+            final var number2 = args.get(1).numericValue();
+            final int scale = number2.intValue();
             if (negativeNumber) {
                 return new XQueryNumber(arg1.numericValue().setScale(scale, RoundingMode.HALF_DOWN));
             }
             if (scale > 0) {
-                var roundedNumberNormalNotation = number1.setScale(scale, RoundingMode.HALF_UP);
+                final var roundedNumberNormalNotation = number1.setScale(scale, RoundingMode.HALF_UP);
                 return new XQueryNumber(roundedNumberNormalNotation);
             }
-            var roundedNumber = number1.setScale(scale, RoundingMode.HALF_UP);
-            var roundedNumberNormalNotation = roundedNumber.setScale(0, RoundingMode.HALF_UP);
+            final var roundedNumber = number1.setScale(scale, RoundingMode.HALF_UP);
+            final var roundedNumberNormalNotation = roundedNumber.setScale(0, RoundingMode.HALF_UP);
             return new XQueryNumber(roundedNumberNormalNotation);
         }
 
-        private static final XQueryValue numeric_add(List<XQueryValue> args) {
+        private static final XQueryValue roundHaftToEven(final List<XQueryValue> args) {
+            assert args.size() == 1 || args.size() == 2;
+            final var arg1 = args.get(0);
+            final var number1 = arg1.numericValue();
+            final var negativeNumber = number1.compareTo(BigDecimal.ZERO) == -1;
+            final var oneArg = args.size() == 1;
+            if (oneArg && negativeNumber) {
+                return new XQueryNumber(number1.setScale(0, RoundingMode.HALF_DOWN));
+            }
+            if (oneArg) {
+                return new XQueryNumber(number1.setScale(0, RoundingMode.HALF_UP));
+            }
+            final var number2 = args.get(1).numericValue();
+            final int scale = number2.intValue();
+            if (negativeNumber) {
+                return new XQueryNumber(arg1.numericValue().setScale(scale, RoundingMode.HALF_DOWN));
+            }
+            if (scale > 0) {
+                final var roundedNumberNormalNotation = number1.setScale(scale, RoundingMode.HALF_UP);
+                return new XQueryNumber(roundedNumberNormalNotation);
+            }
+            final var roundedNumber = number1.setScale(scale, RoundingMode.HALF_UP);
+            final var roundedNumberNormalNotation = roundedNumber.setScale(0, RoundingMode.HALF_UP);
+            return new XQueryNumber(roundedNumberNormalNotation);
+        }
+
+        private static final XQueryValue numericAdd(final List<XQueryValue> args) {
             assert args.size() == 2;
-            var val1 = args.get(0);
-            var val2 = args.get(1);
+            final var val1 = args.get(0);
+            final var val2 = args.get(1);
             // TODO: Add type check failure
             if (!val1.isNumericValue() || !val2.isNumericValue())
                 return null;
             try {
                 return val1.add(val2);
-            } catch (XQueryUnsupportedOperation e) {
+            } catch (final XQueryUnsupportedOperation e) {
                 return null;
             }
         }
 
-        private static XQueryValue true_(List<XQueryValue> args) {
+        private static final XQueryValue numericSubtract(final List<XQueryValue> args) {
+            assert args.size() == 2;
+            final var val1 = args.get(0);
+            final var val2 = args.get(1);
+            // TODO: Add type check failure
+            if (!val1.isNumericValue() || !val2.isNumericValue())
+                return null;
+            try {
+                return val1.subtract(val2);
+            } catch (final XQueryUnsupportedOperation e) {
+                return null;
+            }
+        }
+
+        private static final XQueryValue numericMultiply(final List<XQueryValue> args) {
+            assert args.size() == 2;
+            final var val1 = args.get(0);
+            final var val2 = args.get(1);
+            // TODO: Add type check failure
+            if (!val1.isNumericValue() || !val2.isNumericValue())
+                return null;
+            try {
+                return val1.multiply(val2);
+            } catch (final XQueryUnsupportedOperation e) {
+                return null;
+            }
+        }
+
+
+        private static final XQueryValue numericDivide(final List<XQueryValue> args) {
+            assert args.size() == 2;
+            final var val1 = args.get(0);
+            final var val2 = args.get(1);
+            // TODO: Add type check failure
+            if (!val1.isNumericValue() || !val2.isNumericValue())
+                return null;
+            try {
+                return val1.divide(val2);
+            } catch (final XQueryUnsupportedOperation e) {
+                return null;
+            }
+        }
+
+        private static final XQueryValue numericIntegerDivide(final List<XQueryValue> args) {
+            assert args.size() == 2;
+            final var val1 = args.get(0);
+            final var val2 = args.get(1);
+            // TODO: Add type check failure
+            if (!val1.isNumericValue() || !val2.isNumericValue())
+                return null;
+            try {
+                return val1.integerDivide(val2);
+            } catch (final XQueryUnsupportedOperation e) {
+                return null;
+            }
+        }
+
+
+        private static final XQueryValue numericMod(final List<XQueryValue> args) {
+            assert args.size() == 2;
+            final var val1 = args.get(0);
+            final var val2 = args.get(1);
+            // TODO: Add type check failure
+            if (!val1.isNumericValue() || !val2.isNumericValue())
+                return null;
+            try {
+                return val1.modulus(val2);
+            } catch (final XQueryUnsupportedOperation e) {
+                return null;
+            }
+        }
+
+        private static final XQueryValue numericUnaryPlus(final List<XQueryValue> args) {
+            assert args.size() == 1;
+            final var val1 = args.get(0);
+            // TODO: Add type check failure
+            if (!val1.isNumericValue())
+                return null;
+            return val1;
+        }
+
+        private static final XQueryValue numericUnaryMinus(final List<XQueryValue> args) {
+            assert args.size() == 1;
+            final var val1 = args.get(0);
+            // TODO: Add type check failure
+            if (!val1.isNumericValue())
+                return null;
+            return new XQueryNumber(val1.numericValue().negate());
+        }
+
+        private static XQueryValue true_(final List<XQueryValue> args) {
             assert args.size() == 0;
             return XQueryBoolean.TRUE;
         }
 
-        private static XQueryValue false_(List<XQueryValue> args) {
+        private static XQueryValue false_(final List<XQueryValue> args) {
             assert args.size() == 0;
             return XQueryBoolean.FALSE;
         } 
@@ -132,21 +248,28 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         functions.put("ceiling", XQueryEvaluatorVisitor.Functions::ceiling);
         functions.put("floor", XQueryEvaluatorVisitor.Functions::floor);
         functions.put("round", XQueryEvaluatorVisitor.Functions::round);
-        functions.put("numeric-add", XQueryEvaluatorVisitor.Functions::numeric_add);
+        functions.put("numeric-add", XQueryEvaluatorVisitor.Functions::numericAdd);
+        functions.put("numeric-subtract", XQueryEvaluatorVisitor.Functions::numericSubtract);
+        functions.put("numeric-multiply", XQueryEvaluatorVisitor.Functions::numericMultiply);
+        functions.put("numeric-divide", XQueryEvaluatorVisitor.Functions::numericDivide);
+        functions.put("numeric-integer-divide", XQueryEvaluatorVisitor.Functions::numericIntegerDivide);
+        functions.put("numeric-mod", XQueryEvaluatorVisitor.Functions::numericMod);
+        functions.put("numeric-unary-plus", XQueryEvaluatorVisitor.Functions::numericUnaryPlus);
+        functions.put("numeric-unary-minus", XQueryEvaluatorVisitor.Functions::numericUnaryMinus);
     }
 
-    public XQueryEvaluatorVisitor(ParseTree tree, Parser parser) {
+    public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser) {
         this.tree = tree;
         this.parser = parser;
     }
 
     @Override
-    public XQueryValue visitLiteral(LiteralContext ctx) {
+    public XQueryValue visitLiteral(final LiteralContext ctx) {
 
         if (ctx.STRING() != null) {
-            String text = ctx.getText();
-            String removepars = ctx.getText().substring(1, text.length() - 1);
-            String string = unescapeString(removepars);
+            final String text = ctx.getText();
+            final String removepars = ctx.getText().substring(1, text.length() - 1);
+            final String string = unescapeString(removepars);
             return new XQueryString(string);
         }
 
@@ -158,7 +281,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
     @Override
-    public XQueryValue visitParenthesizedExpr(ParenthesizedExprContext ctx) {
+    public XQueryValue visitParenthesizedExpr(final ParenthesizedExprContext ctx) {
         // Empty parentheses mean an empty sequence '()'
         if (ctx.expr() == null) {
             return new XQuerySequence();
@@ -167,7 +290,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
     @Override
-    public XQueryValue visitExpr(ExprContext ctx) {
+    public XQueryValue visitExpr(final ExprContext ctx) {
         // Only one expression
         // e.g. 13
         if (ctx.exprSingle().size() == 1) {
@@ -175,16 +298,16 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         }
         // More than one expression
         // are turned into a flattened list
-        List<XQueryValue> result = new ArrayList<>();
-        for (var exprSingle : ctx.exprSingle()) {
-            var expressionValue = exprSingle.accept(this);
+        final List<XQueryValue> result = new ArrayList<>();
+        for (final var exprSingle : ctx.exprSingle()) {
+            final var expressionValue = exprSingle.accept(this);
             if (expressionValue.isAtomic()) {
                 result.add(expressionValue);
                 continue;
             }
             // If the result is not atomic we atomize it
             // and extend the result list
-            var atomizedValues = expressionValue.atomize();
+            final var atomizedValues = expressionValue.atomize();
             result.addAll(atomizedValues);
         }
         return new XQuerySequence(result);
@@ -193,27 +316,27 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     // TODO: ESCAPE characters
     // &lt ...
-    private String unescapeString(String str) {
+    private String unescapeString(final String str) {
         return str.replace("\"\"", "\"").replace("''", "'");
     }
 
     @Override
-    public XQueryValue visitFunctionCall(FunctionCallContext ctx) {
-        var functionName = ctx.ID().getText();
+    public XQueryValue visitFunctionCall(final FunctionCallContext ctx) {
+        final var functionName = ctx.ID().getText();
         if (!functions.containsKey(functionName)) {
             // TODO: error handling missing function
             return null;
         }
-        var savedArgs = saveVisitedArguments();
+        final var savedArgs = saveVisitedArguments();
         ctx.argumentList().accept(this);
-        XQueryFunction function = functions.get(functionName);
-        var value = function.call(visitedArgumentList);
+        final XQueryFunction function = functions.get(functionName);
+        final var value = function.call(visitedArgumentList);
         visitedArgumentList = savedArgs;
         return value;
     }
 
     @Override
-    public XQueryValue visitOrExpr(OrExprContext ctx) {
+    public XQueryValue visitOrExpr(final OrExprContext ctx) {
         try {
             XQueryValue value = null;
             if (ctx.orExpr().size() == 0) {
@@ -232,13 +355,13 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                 return handleUnaryArithmeticExpr(ctx);
 
             return value;
-        } catch (XQueryUnsupportedOperation e) {
+        } catch (final XQueryUnsupportedOperation e) {
             // TODO: error handling
             return null;
         }
     }
 
-    private XQueryValue handleOrExpr(OrExprContext ctx) throws XQueryUnsupportedOperation {
+    private XQueryValue handleOrExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
         var value = ctx.orExpr(0).accept(this);
         if (!value.isBooleanValue()) {
             // TODO: type error
@@ -247,9 +370,9 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         if (value.booleanValue()) {
             return XQueryBoolean.TRUE;
         }
-        var orCount = ctx.OR().size();
+        final var orCount = ctx.OR().size();
         for (int i = 1; i <= orCount; i++) {
-            var visitedExpression = ctx.orExpr(i).accept(this);
+            final var visitedExpression = ctx.orExpr(i).accept(this);
             value = value.or(visitedExpression);
             // Short circuit
             if (value.booleanValue()) {
@@ -262,7 +385,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
 
-    private XQueryValue handleAndExpr(OrExprContext ctx) throws XQueryUnsupportedOperation {
+    private XQueryValue handleAndExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
         var value = ctx.orExpr(0).accept(this);
         if (!value.isBooleanValue()) {
             // TODO: type error
@@ -271,9 +394,9 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         if (!value.booleanValue()) {
             return XQueryBoolean.FALSE;
         }
-        var orCount = ctx.AND().size();
+        final var orCount = ctx.AND().size();
         for (int i = 1; i <= orCount; i++) {
-            var visitedExpression = ctx.orExpr(i).accept(this);
+            final var visitedExpression = ctx.orExpr(i).accept(this);
             value = value.and(visitedExpression);
             // Short circuit
             if (!value.booleanValue()) {
@@ -286,14 +409,14 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
 
-    private XQueryValue handleAdditiveExpr(OrExprContext ctx) throws XQueryUnsupportedOperation {
+    private XQueryValue handleAdditiveExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
         var value = ctx.orExpr(0).accept(this);
         if (!value.isNumericValue()) {
             // TODO: type error
         }
-        var orCount = ctx.additiveOperator().size();
+        final var orCount = ctx.additiveOperator().size();
         for (int i = 1; i <= orCount; i++) {
-            var visitedExpression = ctx.orExpr(i).accept(this);
+            final var visitedExpression = ctx.orExpr(i).accept(this);
             value = switch (ctx.additiveOperator(i-1).getText()) {
                 case "+" -> value.add(visitedExpression);
                 case "-" -> value.subtract(visitedExpression);
@@ -305,14 +428,14 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
 
-    private XQueryValue handleMultiplicativeExpr(OrExprContext ctx) throws XQueryUnsupportedOperation {
+    private XQueryValue handleMultiplicativeExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
         var value = ctx.orExpr(0).accept(this);
         if (!value.isNumericValue()) {
             // TODO: type error
         }
-        var orCount = ctx.multiplicativeOperator().size();
+        final var orCount = ctx.multiplicativeOperator().size();
         for (int i = 1; i <= orCount; i++) {
-            var visitedExpression = ctx.orExpr(i).accept(this);
+            final var visitedExpression = ctx.orExpr(i).accept(this);
             value = switch (ctx.multiplicativeOperator(i-1).getText()) {
                 case "*" -> value.multiply(visitedExpression);
                 case "div" -> value.divide(visitedExpression);
@@ -326,8 +449,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
 
-    private XQueryValue handleUnaryArithmeticExpr(OrExprContext ctx) throws XQueryUnsupportedOperation {
-        var value = ctx.orExpr(0).accept(this);
+    private XQueryValue handleUnaryArithmeticExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
+        final var value = ctx.orExpr(0).accept(this);
         if (!value.isNumericValue()) {
             // TODO: type error
         }
@@ -336,14 +459,14 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
 
     @Override
-    public XQueryValue visitArgument(ArgumentContext ctx) {
-        var value =  super.visitArgument(ctx);
+    public XQueryValue visitArgument(final ArgumentContext ctx) {
+        final var value =  super.visitArgument(ctx);
         visitedArgumentList.add(value);
         return value;
     }
 
     private List<XQueryValue> saveVisitedArguments() {
-        var saved = visitedArgumentList;
+        final var saved = visitedArgumentList;
         visitedArgumentList = new ArrayList<>();
         return saved;
     }

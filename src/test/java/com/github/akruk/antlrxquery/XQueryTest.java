@@ -281,13 +281,33 @@ public class XQueryTest {
     }
 
     @Test
-    public void numeric_add() {
-        String xquery = """
-            numeric-add(3)
-        """;
-        var value = XQuery.evaluate(null, xquery, null);
-        assertNotNull(value);
-        assertEquals(BigDecimal.valueOf(3), value.numericValue());
+    public void numericAdd() {
+        assertResult("numeric-add(3, 5)", BigDecimal.valueOf(8));
+    }
+
+    @Test
+    public void numericSubtract() {
+        assertResult("numeric-subtract(3, 5)", BigDecimal.valueOf(-2));
+    }
+
+    @Test
+    public void numericMultiply() {
+        assertResult("numeric-multiply(3, 5)", BigDecimal.valueOf(15));
+    }
+
+    @Test
+    public void numericDivide() {
+        assertResult("numeric-divide(5, 5)", BigDecimal.ONE);
+    }
+
+    @Test
+    public void numericIntegerDivide() {
+        assertResult("numeric-integer-divide(5, 2)", BigDecimal.valueOf(2));
+    }
+
+    @Test
+    public void numericMod() {
+        assertResult("numeric-mod(5, 2)", BigDecimal.ONE);
     }
 
 }

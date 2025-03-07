@@ -73,13 +73,29 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         private static final XQueryValue round(List<XQueryValue> args) {
             assert args.size() == 1 || args.size() == 2;
             var arg1 = args.get(0);
-            if (args.size() == 1) {
-                return new XQueryNumber(arg1.numericValue().setScale(0, RoundingMode.HALF_UP));
+            var number1 = arg1.numericValue();
+            var negativeNumber = number1.compareTo(BigDecimal.ZERO) == -1;
+            var oneArg = args.size() == 1;
+            if (oneArg && negativeNumber) {
+                return new XQueryNumber(number1.setScale(0, RoundingMode.HALF_DOWN));
             }
-            var arg2 = args.get(1);
-            int scale = arg2.numericValue().intValue();
-            return new XQueryNumber(arg1.numericValue().setScale(scale, RoundingMode.HALF_UP));
+            if (oneArg) {
+                return new XQueryNumber(number1.setScale(0, RoundingMode.HALF_UP));
+            }
+            var number2 = args.get(1).numericValue();
+            int scale = number2.intValue();
+            if (negativeNumber) {
+                return new XQueryNumber(arg1.numericValue().setScale(scale, RoundingMode.HALF_DOWN));
+            }
+            if (scale > 0) {
+                var roundedNumberNormalNotation = number1.setScale(scale, RoundingMode.HALF_UP);
+                return new XQueryNumber(roundedNumberNormalNotation);
+            }
+            var roundedNumber = number1.setScale(scale, RoundingMode.HALF_UP);
+            var roundedNumberNormalNotation = roundedNumber.setScale(0, RoundingMode.HALF_UP);
+            return new XQueryNumber(roundedNumberNormalNotation);
         }
+
         private static final XQueryValue numeric_add(List<XQueryValue> args) {
             assert args.size() == 2;
             var val1 = args.get(0);

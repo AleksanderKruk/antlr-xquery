@@ -61,20 +61,12 @@ public class XQueryTest {
 
     @Test
     public void integerLiteral() {
-        String xquery = """
-                    1
-                """;
-        var value = XQuery.evaluate(null, xquery, null);
-        assertEquals(BigDecimal.ONE, value.numericValue());
+        assertResult("1", BigDecimal.ONE);
     }
 
     @Test
     public void floatLiteral() {
-        String xquery = """
-                    1.2
-                """;
-        var value = XQuery.evaluate(null, xquery, null);
-        assertEquals(new BigDecimal("1.2"), value.numericValue());
+        assertResult("1.2", new BigDecimal("1.2"));
     }
 
     @Test

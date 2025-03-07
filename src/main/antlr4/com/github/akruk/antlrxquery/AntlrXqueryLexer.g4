@@ -91,6 +91,6 @@ COLLATION: 'collation';
 IF: 'if';
 IN: 'in';
 SATISFIES: 'satisfies';
-ID: [\p{alpha}][\p{alnum}]+; /* Replace with antlr compatible */
+ID: [\p{alpha}][\p{alnum}][\p{alpha}\p{alnum}-]*; /* Replace with antlr compatible */
 
 

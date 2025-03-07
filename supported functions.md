@@ -22,7 +22,7 @@ Function                                           | Is implemented | Comment
 `fn:abs`                                           | yes            |
 `fn:ceiling`                                       | yes            |
 `fn:floor`                                         | yes            |
-`fn:round`                                         |                |
+`fn:round`                                         | yes            |
 `fn:round-half-to-even`                            |                |
 `fn:number`                                        |                |
 `fn:format-integer`                                |                |

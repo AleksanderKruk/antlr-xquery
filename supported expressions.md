@@ -1,10 +1,11 @@
 Expression                                    | Example                                                 | Is implemented | Comment
-----------------------------------------------|---------------------------------------------------------|----------------|---------
+----------------------------------------------|---------------------------------------------------------|----------------|--------------------------------------------------------------------
 Float literals                                | `123.4`                                                 | yes            |
 Integer literals                              | `123`                                                   | yes            |
 String literals                               | `"string"`<br>`'string'`                                | yes            |
 Variable References                           | `$x`                                                    |                |
-Parenthesized Expressions                     | `(...)`                                                 | yes            |
+Grouping parentheses                          | `(...)`                                                 | yes            |
+Empty list                                    | `()`                                                    | yes            |
 Context Item Expression                       | `.`                                                     |                |
 Static Function Calls                         | `string-length("string")`                               | yes            | listed in <a href="supported functions.md">supported functions</a>
 Named Function References                     | `abs#1` /* abs function with arity of 1 */              |                |
@@ -27,42 +28,22 @@ Preceding axis                                | `//preceding::*`                
 Ancestor or self axis                         | `//ancestor-or-self::*`                                 |                |
 Predicates within Steps                       | `//div[@class="header"]`                                |                |
 Sequence Expressions                          | `(1, 2, 3)`                                             |                |
-Sequence union                                | `(1,2,3) | (4, 5, 6)`<br>`(1,2,3) union (4, 5, 6)`      |                |
+Sequence union                                | `(1,2,3) \| (4, 5, 6)`<br>`(1,2,3) union (4, 5, 6)`      |                |
 Sequence subtraction                          | `(1,2,3) except (2, 3)`                                 |                |
 Sequence intersection                         | `(1,2,3) intersect (4, 5, 6)`                           |                |
 Arithmetic Expressions                        | `4*5 + +10`<br>`5 div 5 - -1`<br>`10 idiv 2 + 10 mod 2` |                |
-String Concatenation Expressions              | `"a" || "b"`                                            |                |
+String Concatenation Expressions              | `"a" \|\| "b"`                                          |                |
 Value comparisons                             | `$sequence[. eq "a"]`                                   |                |
 General comparisons                           | `$sequence = "a"`                                       |                |
 Node comparisons                              | `$x[. is y]`<br>`$x[. << after]`<br>`$x[. >> before]`   |                |
 Logical Expressions                           | `false() or true() and false()`                         | yes            |
-Node Constructors                             |                                                         |                |
-Direct Element Constructors                   |                                                         |                |
-Attributes                                    |                                                         |                |
-Namespace Declaration Attributes              |                                                         |                |
-Content                                       |                                                         |                |
-Boundary Whitespace                           |                                                         |                |
-Other Direct Constructors                     |                                                         |                |
-Computed Constructors                         |                                                         |                |
-Computed Element Constructors                 |                                                         |                |
-Computed Attribute Constructors               |                                                         |                |
-Document Node Constructors                    |                                                         |                |
-Text Node Constructors                        |                                                         |                |
-Computed Processing Instruction Constructors  |                                                         |                |
-Computed Comment Constructors                 |                                                         |                |
-Computed Namespace Constructors               |                                                         |                |
-In-scope Namespaces of a Constructed Element  |                                                         |                |
-String Constructors                           |                                                         |                |
-Maps and Arrays                               |                                                         |                |
-Maps                                          |                                                         |                |
-Map Constructors                              |                                                         |                |
-Map Lookup using Function Call Syntax         |                                                         |                |
-Arrays                                        |                                                         |                |
-Array Constructors                            |                                                         |                |
-Array Lookup using Function Call Syntax       |                                                         |                |
-The Lookup Operator ("?") for Maps and Arrays |                                                         |                |
-Unary Lookup                                  |                                                         |                |
-Postfix Lookup                                |                                                         |                |
+String Constructors (string interpolation)    | ``` ``[`{$s}` fish]``  ```                              |                |
+Map Constructors                              | ``` map { "a": "x", "b": "y"  } ```                     |                |
+Map Lookup using Function Call Syntax         | ``` $map("key") ```                                     |                |
+Array Constructors                            | ``` [ 1, 2, (3, 4, 5)  ] ```                            |                |
+Array Lookup using Function Call Syntax       | ``` $array(1) ```                                       |                |
+The Lookup Operator ("?") for Maps and Arrays | ``` $map ?key ```<br>```$array ? 1```                   |                |
+Unary Lookup                                  | ``` ?key ```                                            |                |
 FLWOR Expressions                             |                                                         |                |
 Variable Bindings                             |                                                         |                |
 For Clause                                    |                                                         |                |

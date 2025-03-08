@@ -172,4 +172,8 @@ public interface XQueryValue {
         return XQueryBoolean.of(isGreaterEqual);
 	}
 
+    public default XQueryValue union(XQueryValue otherSequence) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
+
 }

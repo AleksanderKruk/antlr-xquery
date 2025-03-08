@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
+
 public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
     @Override
     public List<XQueryValue> sequence() {
@@ -38,6 +40,15 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
             result.addAll(atomizedValues);
         }
         return result;
+    }
+
+
+    @Override
+    public XQueryValue union(XQueryValue otherSequence) throws XQueryUnsupportedOperation {
+        var newSequence = new ArrayList<XQueryValue>();
+        newSequence.addAll(value);
+        newSequence.addAll(otherSequence.sequence());
+        return new XQuerySequence(newSequence);
     }
 
 

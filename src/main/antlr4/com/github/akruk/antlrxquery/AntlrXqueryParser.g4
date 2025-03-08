@@ -37,13 +37,14 @@ orExpr: orExpr ( OR orExpr )+
         | orExpr TO orExpr
         | orExpr (additiveOperator orExpr )+
         | orExpr (multiplicativeOperator orExpr)+
-        | orExpr ((UNION | UNION_OP) orExpr)+
+        | orExpr (unionOperator orExpr)+
         | orExpr ((INTERSECT | EXCEPT) orExpr)+
         | orExpr ARROW arrowFunctionSpecifier argumentList
         | (MINUS | PLUS) orExpr
         | pathExpr (EXCLAMATION_MARK pathExpr)?
 ;
 additiveOperator: PLUS | MINUS;
+unionOperator: UNION | UNION_OP;
 multiplicativeOperator: STAR | DIV | IDIV | MOD;
 generalComp: EQ_OP | NE_OP | LT_OP | LE_OP | GT_OP | GE_OP;
 valueComp: EQ | NE | LT | LE | GT | GE;

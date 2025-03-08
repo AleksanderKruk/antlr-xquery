@@ -233,6 +233,43 @@ public class XQueryTest {
         assertEquals(BigDecimal.ZERO.setScale(2), value.numericValue().setScale(2));
     }
 
+
+    @Test
+    public void sequenceUnion() {
+        String xquery = """
+            (1, 2, 3) | (4, 5, 6)
+        """;
+        var value = XQuery.evaluate(null, xquery, null);
+        var expected = List.of(
+                new XQueryNumber(BigDecimal.valueOf(1)),
+                new XQueryNumber(BigDecimal.valueOf(2)),
+                new XQueryNumber(BigDecimal.valueOf(3)),
+                new XQueryNumber(BigDecimal.valueOf(4)),
+                new XQueryNumber(BigDecimal.valueOf(5)),
+                new XQueryNumber(BigDecimal.valueOf(6))
+        );
+        assertEquals(expected.size(), value.sequence().size());
+        var sequence = value.sequence();
+        for (int i = 0; i< expected.size(); i++) {
+            var element = expected.get(i);
+            var received = sequence.get(i);
+            assertEquals(element.numericValue(), received.numericValue());
+        }
+        xquery = """
+            (1, 2, 3) union (4, 5, 6)
+        """;
+        value = XQuery.evaluate(null, xquery, null);
+        assertEquals(expected.size(), value.sequence().size());
+        sequence = value.sequence();
+        for (int i = 0; i< expected.size(); i++) {
+            var element = expected.get(i);
+            var received = sequence.get(i);
+            assertEquals(element.numericValue(), received.numericValue());
+        }
+    }
+
+
+
     @Test
     public void abs() {
         String xquery = """

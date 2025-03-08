@@ -41,7 +41,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                 return null;
             }
         }
-        
+
         // fn:abs($arg as xs:numeric?) as xs:numeric?
         private static final XQueryValue abs(final List<XQueryValue> args) {
             assert args.size() == 1;
@@ -234,16 +234,16 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         private static XQueryValue false_(final List<XQueryValue> args) {
             assert args.size() == 0;
             return XQueryBoolean.FALSE;
-        } 
+        }
 
         private static XQueryValue pi(final List<XQueryValue> args) {
             assert args.size() == 0;
             return new XQueryNumber(new BigDecimal(Math.PI));
-        } 
+        }
 
     }
-    
-    private static final Map<String, XQueryFunction> functions;    
+
+    private static final Map<String, XQueryFunction> functions;
     static {
         functions = new HashMap<>();
         functions.put("true", XQueryEvaluatorVisitor.Functions::true_);
@@ -358,8 +358,11 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                 return handleAdditiveExpr(ctx);
             if (!ctx.multiplicativeOperator().isEmpty())
                 return handleMultiplicativeExpr(ctx);
+            if (!ctx.unionOperator().isEmpty())
+                return handleUnionExpr(ctx);
             if (ctx.MINUS() != null)
                 return handleUnaryArithmeticExpr(ctx);
+
 
             return value;
         } catch (final XQueryUnsupportedOperation e) {
@@ -450,6 +453,20 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                 case "mod" -> value.modulus(visitedExpression);
                 default -> null;
             };
+            i++;
+        }
+        return value;
+    }
+
+    private XQueryValue handleUnionExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
+        var value = ctx.orExpr(0).accept(this);
+        if (!value.isSequence()) {
+            // TODO: type error
+        }
+        final var unionCount = ctx.unionOperator().size();
+        for (int i = 1; i <= unionCount; i++) {
+            final var visitedExpression = ctx.orExpr(i).accept(this);
+            value = value.union(visitedExpression);
             i++;
         }
         return value;

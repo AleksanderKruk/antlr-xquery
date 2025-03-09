@@ -9,6 +9,8 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 
 public interface XQueryValue {
+    public XQueryValue copy();
+
     // Function
     public default BigDecimal numericValue() {
         return null;
@@ -181,7 +183,8 @@ public interface XQueryValue {
         throw new XQueryUnsupportedOperation();
     }
 
-    public XQueryValue copy();
 
-
+    public default XQueryValue except(XQueryValue visitedExpression) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
 }

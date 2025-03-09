@@ -278,7 +278,24 @@ public class XQueryTest {
                 (BigDecimal.valueOf(2)),
                 (BigDecimal.valueOf(4)),
         };
-        assertEquals(expected.length, value.sequence().size());
+        BigDecimal[] numbersFromSequence = value.sequence()
+            .stream()
+            .map(XQueryValue::numericValue)
+            .toArray(BigDecimal[]::new);
+        assertArrayEquals(expected, numbersFromSequence);
+    }
+
+
+    @Test
+    public void sequenceSubtraction() {
+        String xquery = """
+            (1, 2, 3, 4) except (2, 4)
+        """;
+        var value = XQuery.evaluate(null, xquery, null);
+        BigDecimal[] expected = {
+                BigDecimal.valueOf(1),
+                BigDecimal.valueOf(3),
+        };
         BigDecimal[] numbersFromSequence = value.sequence()
             .stream()
             .map(XQueryValue::numericValue)

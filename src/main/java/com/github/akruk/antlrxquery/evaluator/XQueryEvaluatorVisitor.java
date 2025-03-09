@@ -360,6 +360,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                 return handleMultiplicativeExpr(ctx);
             if (!ctx.unionOperator().isEmpty())
                 return handleUnionExpr(ctx);
+            if (!ctx.INTERSECT().isEmpty())
+                return handleIntersectionExpr(ctx);
             if (ctx.MINUS() != null)
                 return handleUnaryArithmeticExpr(ctx);
 
@@ -467,6 +469,21 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         for (int i = 1; i <= unionCount; i++) {
             final var visitedExpression = ctx.orExpr(i).accept(this);
             value = value.union(visitedExpression);
+            i++;
+        }
+        return value;
+    }
+
+    private XQueryValue handleIntersectionExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
+        var value = ctx.orExpr(0).accept(this);
+        if (!value.isSequence()) {
+            // TODO: type error
+            return null;
+        }
+        final var operatorCount = ctx.INTERSECT().size();
+        for (int i = 1; i <= operatorCount; i++) {
+            final var visitedExpression = ctx.orExpr(i).accept(this);
+            value = value.intersect(visitedExpression);
             i++;
         }
         return value;

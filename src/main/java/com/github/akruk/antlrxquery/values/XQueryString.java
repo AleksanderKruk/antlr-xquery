@@ -24,4 +24,11 @@ public class XQueryString  extends XQueryValueBase<String> {
     public XQueryValue valueLessThan(XQueryValue other) {
         return XQueryBoolean.of(stringValue().compareTo(other.stringValue()) == -1);
     }
+
+    @Override
+    public XQueryValue copy() {
+        return new XQueryString(value);
+    }
+
+
 }

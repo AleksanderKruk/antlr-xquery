@@ -176,4 +176,12 @@ public interface XQueryValue {
         throw new XQueryUnsupportedOperation();
     }
 
+
+    public default XQueryValue intersect(XQueryValue otherSequence) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
+
+    public XQueryValue copy();
+
+
 }

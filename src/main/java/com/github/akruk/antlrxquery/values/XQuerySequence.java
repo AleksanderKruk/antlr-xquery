@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 
@@ -50,6 +51,28 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
         newSequence.addAll(otherSequence.sequence());
         return new XQuerySequence(newSequence);
     }
+
+    @Override
+    public XQueryValue intersect(XQueryValue otherSequence) throws XQueryUnsupportedOperation {
+        var newSequence = new ArrayList<XQueryValue>();
+        var otherSequenceValue = otherSequence.sequence();
+        for (var element : value) {
+            for (var otherElement : otherSequenceValue) {
+                if (element.valueEqual(otherElement).booleanValue()) {
+                    newSequence.add(element);
+                }
+            }
+        }
+        return new XQuerySequence(newSequence);
+    }
+
+
+
+    @Override
+    public XQueryValue copy() {
+        return new XQuerySequence(List.copyOf(value));
+    }
+
 
 
 }

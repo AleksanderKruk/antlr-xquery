@@ -268,6 +268,24 @@ public class XQueryTest {
         }
     }
 
+    @Test
+    public void sequenceIntersection() {
+        String xquery = """
+            (1, 2, 3, 4) intersect (0, 2, 4, 8)
+        """;
+        var value = XQuery.evaluate(null, xquery, null);
+        BigDecimal[] expected = {
+                (BigDecimal.valueOf(2)),
+                (BigDecimal.valueOf(4)),
+        };
+        assertEquals(expected.length, value.sequence().size());
+        BigDecimal[] numbersFromSequence = value.sequence()
+            .stream()
+            .map(XQueryValue::numericValue)
+            .toArray(BigDecimal[]::new);
+        assertArrayEquals(expected, numbersFromSequence);
+    }
+
 
 
     @Test

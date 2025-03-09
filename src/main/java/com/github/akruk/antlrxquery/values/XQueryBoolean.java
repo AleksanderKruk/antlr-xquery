@@ -42,4 +42,10 @@ public class XQueryBoolean extends XQueryValueBase<Boolean> {
     public XQueryValue valueEqual(XQueryValue other) throws XQueryUnsupportedOperation {
         return new XQueryBoolean(value == booleanValue());
     }
+
+
+    @Override
+    public XQueryValue copy() {
+        return this;
+    }
 }

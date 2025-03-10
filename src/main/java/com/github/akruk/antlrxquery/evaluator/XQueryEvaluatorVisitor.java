@@ -364,6 +364,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                 return handleIntersectionExpr(ctx);
             if (ctx.MINUS() != null)
                 return handleUnaryArithmeticExpr(ctx);
+            if (ctx.generalComp() != null)
+                return handleGeneralComparison(ctx);
 
 
             return value;
@@ -437,6 +439,21 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             i++;
         }
         return value;
+    }
+
+
+    private XQueryValue handleGeneralComparison(final OrExprContext ctx) throws XQueryUnsupportedOperation {
+        final var value = ctx.orExpr(0).accept(this);
+        final var visitedExpression = ctx.orExpr(1).accept(this);
+        return switch(ctx.generalComp().getText()) {
+            case "=" -> value.generalEqual(visitedExpression);
+            case "!=" -> value.generalUnequal(visitedExpression);
+            case ">" -> value.generalGreaterThan(visitedExpression);
+            case "<" -> value.generalLessThan(visitedExpression);
+            case "<=" -> value.generalLessEqual(visitedExpression);
+            case ">=" -> value.generalGreaterEqual(visitedExpression);
+            default -> null;
+        };
     }
 
 

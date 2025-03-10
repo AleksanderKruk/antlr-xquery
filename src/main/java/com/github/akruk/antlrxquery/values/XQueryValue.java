@@ -141,35 +141,86 @@ public interface XQueryValue {
     public default XQueryValue valueGreaterEqual(XQueryValue other) throws XQueryUnsupportedOperation {
         final var isGreaterEqual = !valueLessThan(other).booleanValue();
         return XQueryBoolean.of(isGreaterEqual);
-	}
+    }
 
     public default XQueryValue generalEqual(XQueryValue other) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
+        var thisAtomized = atomize();
+        var otherAtomized = atomize();
+        for (var thisElement : thisAtomized) {
+            for (var otherElement : otherAtomized) {
+                if (thisElement.valueEqual(otherElement).booleanValue()) {
+                    return XQueryBoolean.TRUE;
+                }
+            }
+        }
+        return XQueryBoolean.of(thisAtomized.size() == 0 && otherAtomized.size() == 0);
 	}
 
     public default XQueryValue generalUnequal(XQueryValue other) throws XQueryUnsupportedOperation {
-        final var isUnequal = !generalEqual(other).booleanValue();
-        return XQueryBoolean.of(isUnequal);
+        var thisAtomized = atomize();
+        var otherAtomized = atomize();
+        for (var thisElement : thisAtomized) {
+            for (var otherElement : otherAtomized) {
+                if (thisElement.valueUnequal(otherElement).booleanValue()) {
+                    return XQueryBoolean.TRUE;
+                }
+            }
+        }
+        return XQueryBoolean.of(thisAtomized.size() == 0 && otherAtomized.size() == 0);
 	}
 
     public default XQueryValue generalLessThan(XQueryValue other) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
+        var thisAtomized = atomize();
+        var otherAtomized = atomize();
+        for (var thisElement : thisAtomized) {
+            for (var otherElement : otherAtomized) {
+                if (thisElement.valueLessThan(otherElement).booleanValue()) {
+                    return XQueryBoolean.TRUE;
+                }
+            }
+        }
+        return XQueryBoolean.of(thisAtomized.size() == 0 && otherAtomized.size() == 0);
 
 	}
 
     public default XQueryValue generalLessEqual(XQueryValue other) throws XQueryUnsupportedOperation {
-        final var isLessEqual = generalEqual(other).booleanValue() || generalLessThan(other).booleanValue();
-        return XQueryBoolean.of(isLessEqual);
+        var thisAtomized = atomize();
+        var otherAtomized = atomize();
+        for (var thisElement : thisAtomized) {
+            for (var otherElement : otherAtomized) {
+                if (thisElement.valueLessEqual(otherElement).booleanValue()) {
+                    return XQueryBoolean.TRUE;
+                }
+            }
+        }
+        return XQueryBoolean.of(thisAtomized.size() == 0 && otherAtomized.size() == 0);
+
 	}
 
     public default XQueryValue generalGreaterThan(XQueryValue other) throws XQueryUnsupportedOperation {
-        final var isGreaterThan = !generalLessEqual(other).booleanValue();
-        return XQueryBoolean.of(isGreaterThan);
+        var thisAtomized = atomize();
+        var otherAtomized = atomize();
+        for (var thisElement : thisAtomized) {
+            for (var otherElement : otherAtomized) {
+                if (thisElement.valueGreaterThan(otherElement).booleanValue()) {
+                    return XQueryBoolean.TRUE;
+                }
+            }
+        }
+        return XQueryBoolean.of(thisAtomized.size() == 0 && otherAtomized.size() == 0);
 	}
 
     public default XQueryValue generalGreaterEqual(XQueryValue other) throws XQueryUnsupportedOperation {
-        final var isGreaterEqual = !generalLessThan(other).booleanValue();
-        return XQueryBoolean.of(isGreaterEqual);
+        var thisAtomized = atomize();
+        var otherAtomized = atomize();
+        for (var thisElement : thisAtomized) {
+            for (var otherElement : otherAtomized) {
+                if (thisElement.valueGreaterEqual(otherElement).booleanValue()) {
+                    return XQueryBoolean.TRUE;
+                }
+            }
+        }
+        return XQueryBoolean.of(thisAtomized.size() == 0 && otherAtomized.size() == 0);
 	}
 
     public default XQueryValue union(XQueryValue otherSequence) throws XQueryUnsupportedOperation {
@@ -180,6 +231,9 @@ public interface XQueryValue {
     public default XQueryValue intersect(XQueryValue otherSequence) throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
     }
+
+
+
 
     public XQueryValue copy();
 

@@ -3,6 +3,7 @@ package com.github.akruk.antlrxquery;
 import org.junit.Test;
 
 import com.github.akruk.antlrxquery.evaluator.XQuery;
+import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 import com.github.akruk.antlrxquery.values.XQueryBoolean;
 import com.github.akruk.antlrxquery.values.XQueryNumber;
 import com.github.akruk.antlrxquery.values.XQueryValue;
@@ -21,6 +22,12 @@ public class XQueryTest {
         var value = XQuery.evaluate(null, xquery, null);
         assertNotNull(value);
         assertEquals(result, value.numericValue());
+    }
+
+    public void assertResult(String xquery, XQueryValue result) throws XQueryUnsupportedOperation  {
+        XQueryValue value = XQuery.evaluate(null, xquery, null);
+        assertNotNull(value);
+        assertTrue(result.valueEqual(value).booleanValue());
     }
 
     @Test
@@ -287,6 +294,21 @@ public class XQueryTest {
     }
 
 
+    @Test
+    public void generalComparison() throws XQueryUnsupportedOperation {
+        assertResult("(1, 2) = (2, 3)", XQueryBoolean.TRUE);
+        assertResult("(1, 2) != (2, 3)", XQueryBoolean.TRUE);
+        assertResult("(1, 2) < (2, 3)", XQueryBoolean.TRUE);
+        assertResult("(1, 2) <= (2, 3)", XQueryBoolean.TRUE);
+        assertResult("(1, 2) > (2, 3)", XQueryBoolean.FALSE);
+        assertResult("(1, 2) >= (2, 3)", XQueryBoolean.TRUE);
+    }
+
+
+
+
+
+
 
     @Test
     public void abs() {
@@ -407,7 +429,7 @@ public class XQueryTest {
 
     @Test
     public void cos() {
-        assertResult("sin(5, 2)", BigDecimal.ONE);
+        assertResult("cos(5, 2)", BigDecimal.ONE);
     }
 
     @Test

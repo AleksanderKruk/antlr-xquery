@@ -12,17 +12,17 @@ public class XQueryString  extends XQueryValueBase<String> {
 
     @Override
     public XQueryValue concatenate(XQueryValue other) {
-        return new XQueryString(stringValue() + other.stringValue());
+        return new XQueryString(value + other.stringValue());
     }
 
     @Override
     public XQueryValue valueEqual(XQueryValue other) {
-        return XQueryBoolean.of(stringValue().equals(other.stringValue()));
+        return XQueryBoolean.of(value.compareTo(other.stringValue()) == 0);
     }
 
     @Override
     public XQueryValue valueLessThan(XQueryValue other) {
-        return XQueryBoolean.of(stringValue().compareTo(other.stringValue()) == -1);
+        return XQueryBoolean.of(value.compareTo(other.stringValue()) == -1);
     }
 
     @Override

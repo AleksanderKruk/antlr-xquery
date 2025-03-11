@@ -312,28 +312,7 @@ public class XQueryTest {
         assertResult("true() eq true()", XQueryBoolean.TRUE);
         // A eq B 	xs:string 	xs:string 	op:numeric-equal(fn:compare(A, B), 0) 	xs:boolean
         assertResult("'abcd' eq 'abcd'", XQueryBoolean.TRUE);
-        // A lt B 	numeric 	numeric 	op:numeric-less-than(A, B) 	xs:boolean
-        // A lt B 	xs:boolean 	xs:boolean 	op:boolean-less-than(A, B) 	xs:boolean
-        // A lt B 	xs:string 	xs:string 	op:numeric-less-than(fn:compare(A, B), 0) 	xs:boolean
-        // A lt B 	xs:date 	xs:date 	op:date-less-than(A, B) 	xs:boolean
-        // A lt B 	xs:time 	xs:time 	op:time-less-than(A, B) 	xs:boolean
-        // A lt B 	xs:dateTime 	xs:dateTime 	op:dateTime-less-than(A, B) 	xs:boolean
-        // A lt B 	xs:yearMonthDuration 	xs:yearMonthDuration 	op:yearMonthDuration-less-than(A, B) 	xs:boolean
-        // A lt B 	xs:dayTimeDuration 	xs:dayTimeDuration 	op:dayTimeDuration-less-than(A, B) 	xs:boolean
-        // A lt B 	xs:hexBinary 	xs:hexBinary 	op:hexBinary-less-than(A, B) 	xs:boolean
-        // A lt B 	xs:base64Binary 	xs:base64Binary 	op:base64Binary-less-than(A, B) 	xs:boolean
-        // A ge B 	numeric 	numeric 	op:numeric-greater-than(A, B) or op:numeric-equal(A, B) 	xs:boolean
-        // A ge B 	xs:boolean 	xs:boolean 	fn:not(op:boolean-less-than(A, B)) 	xs:boolean
-        // A ge B 	xs:string 	xs:string 	op:numeric-greater-than(fn:compare(A, B), -1) 	xs:boolean
-        assertResult("'abed' ge 'abcd", XQueryBoolean.TRUE);
         // A le B 	xs:boolean 	xs:boolean 	fn:not(op:boolean-greater-than(A, B)) 	xs:boolean
-        assertResult("true() le false()", XQueryBoolean.FALSE);
-        assertResult("false() le true()", XQueryBoolean.TRUE);
-        assertResult("true() le true()", XQueryBoolean.TRUE);
-        assertResult("false() le false()", XQueryBoolean.TRUE);
-        // A le B 	xs:string 	xs:string 	op:numeric-less-than(fn:compare(A, B), 1) 	xs:boolean
-        assertResult("'abcd' le 'abed", XQueryBoolean.TRUE);
-        assertResult("'abcd' le 'abcd", XQueryBoolean.TRUE);
     }
 
     @Test
@@ -361,15 +340,53 @@ public class XQueryTest {
 
     @Test
     public void valueComparisonsGreaterOrEqual() throws XQueryUnsupportedOperation {
-        // A gt B 	numeric 	numeric 	op:numeric-greater-than(A, B) 	xs:boolean
-        assertResult("3 gt 1", XQueryBoolean.TRUE);
-        // A gt B 	xs:boolean 	xs:boolean 	op:boolean-greater-than(A, B) 	xs:boolean
-        assertResult("true() gt false()", XQueryBoolean.TRUE);
-        assertResult("false() gt true()", XQueryBoolean.FALSE);
-        assertResult("true() gt true()", XQueryBoolean.FALSE);
-        assertResult("false() gt false()", XQueryBoolean.FALSE);
-        // A gt B 	xs:string 	xs:string 	op:numeric-greater-than(fn:compare(A, B), 0) 	xs:boolean
-        assertResult("'abed' gt 'abcd'", XQueryBoolean.FALSE);
+        // A ge B 	numeric 	numeric 	op:numeric-greater-than(A, B) or op:numeric-equal(A, B) 	xs:boolean
+        assertResult("3 ge 1", XQueryBoolean.TRUE);
+        assertResult("1 ge 1", XQueryBoolean.TRUE);
+        assertResult("0 ge 1", XQueryBoolean.FALSE);
+        // A ge B 	xs:boolean 	xs:boolean 	xs:boolean
+        assertResult("true() ge false()", XQueryBoolean.TRUE);
+        assertResult("false() ge true()", XQueryBoolean.FALSE);
+        assertResult("true() ge true()", XQueryBoolean.FALSE);
+        assertResult("false() ge false()", XQueryBoolean.FALSE);
+        // A ge B 	xs:string 	xs:string   xs:boolean
+        assertResult("'abcd' ge 'abcd", XQueryBoolean.TRUE);
+        assertResult("'abed' ge 'abcd", XQueryBoolean.TRUE);
+    }
+
+    @Test
+    public void valueComparisonsLessOrEqual() throws XQueryUnsupportedOperation {
+        // A le B 	numeric 	numeric
+        assertResult("1 le 3", XQueryBoolean.TRUE);
+        assertResult("1 le 1", XQueryBoolean.TRUE);
+        assertResult("1 le 0", XQueryBoolean.FALSE);
+        // A le B 	xs:boolean 	xs:boolean
+        assertResult("true() le false()", XQueryBoolean.FALSE);
+        assertResult("false() le true()", XQueryBoolean.TRUE);
+        assertResult("true() le true()", XQueryBoolean.TRUE);
+        assertResult("false() le false()", XQueryBoolean.TRUE);
+        // A le B 	xs:string 	xs:string
+        assertResult("'abed' le 'abcd'", XQueryBoolean.FALSE);
+        assertResult("'abcd' le 'abed'", XQueryBoolean.TRUE);
+        assertResult("'abcd' le 'abcd'", XQueryBoolean.TRUE);
+    }
+
+
+    @Test
+    public void valueComparisonsLessThan() throws XQueryUnsupportedOperation {
+        // A lt B 	numeric 	numeric 	op:numeric-less-than(A, B) 	xs:boolean
+        assertResult("1 lt 3", XQueryBoolean.TRUE);
+        assertResult("1 lt 1", XQueryBoolean.FALSE);
+        assertResult("1 lt 0", XQueryBoolean.FALSE);
+        // A lt B 	xs:boolean 	xs:boolean 	op:boolean-less-than(A, B) 	xs:boolean
+        assertResult("true() lt false()", XQueryBoolean.FALSE);
+        assertResult("false() lt true()", XQueryBoolean.TRUE);
+        assertResult("true() lt true()", XQueryBoolean.FALSE);
+        assertResult("false() lt false()", XQueryBoolean.TRUE);
+        // A lt B 	xs:string 	xs:string 	op:numeric-less-than(fn:compare(A, B), 0) 	xs:boolean
+        assertResult("'abed' lt 'abcd'", XQueryBoolean.FALSE);
+        assertResult("'abcd' lt 'abed'", XQueryBoolean.TRUE);
+        assertResult("'abcd' lt 'abcd'", XQueryBoolean.FALSE);
     }
 
 

@@ -25,22 +25,25 @@ public class XQueryBoolean extends XQueryValueBase<Boolean> {
 
     @Override
     public XQueryValue not() throws XQueryUnsupportedOperation {
-        return new XQueryBoolean(!value);
+        return XQueryBoolean.of(!value);
     }
 
     @Override
     public XQueryValue and(XQueryValue other) throws XQueryUnsupportedOperation {
-        return new XQueryBoolean(value && other.booleanValue());
+        return XQueryBoolean.of(value && other.booleanValue());
     }
 
     @Override
     public XQueryValue or(XQueryValue other) throws XQueryUnsupportedOperation {
-        return new XQueryBoolean(value || other.booleanValue());
+        return XQueryBoolean.of(value || other.booleanValue());
     }
 
     @Override
     public XQueryValue valueEqual(XQueryValue other) throws XQueryUnsupportedOperation {
-        return new XQueryBoolean(value == booleanValue());
+        // Identity comparison is used because
+        // we maintain just 2 XQueryBoolean instances
+        // TRUE and FALSE
+        return XQueryBoolean.of(this == other);
     }
 
 

@@ -349,6 +349,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             if (ctx.orExpr().size() == 0) {
                 value = ctx.pathExpr(0).accept(this);
             } else {
+                // TODO path expr
             }
             if (!ctx.OR().isEmpty())
                 return handleOrExpr(ctx);
@@ -366,6 +367,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                 return handleUnaryArithmeticExpr(ctx);
             if (ctx.generalComp() != null)
                 return handleGeneralComparison(ctx);
+            if (ctx.valueComp() != null)
+                return handleValueComparison(ctx);
 
 
             return value;
@@ -452,6 +455,20 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             case "<" -> value.generalLessThan(visitedExpression);
             case "<=" -> value.generalLessEqual(visitedExpression);
             case ">=" -> value.generalGreaterEqual(visitedExpression);
+            default -> null;
+        };
+    }
+
+    private XQueryValue handleValueComparison(final OrExprContext ctx) throws XQueryUnsupportedOperation {
+        final var value = ctx.orExpr(0).accept(this);
+        final var visitedExpression = ctx.orExpr(1).accept(this);
+        return switch(ctx.valueComp().getText()) {
+            case "eq" -> value.valueEqual(visitedExpression);
+            case "ne" -> value.valueUnequal(visitedExpression);
+            case "lt" -> value.valueGreaterThan(visitedExpression);
+            case "gt" -> value.valueLessThan(visitedExpression);
+            case "le" -> value.valueLessEqual(visitedExpression);
+            case "ge" -> value.valueGreaterEqual(visitedExpression);
             default -> null;
         };
     }

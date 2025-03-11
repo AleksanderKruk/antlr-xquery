@@ -369,6 +369,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                 return handleGeneralComparison(ctx);
             if (ctx.valueComp() != null)
                 return handleValueComparison(ctx);
+            if (!ctx.CONCATENATION().isEmpty())
+                return handleConcatenation(ctx);
 
 
             return value;
@@ -376,6 +378,22 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             // TODO: error handling
             return null;
         }
+    }
+
+
+    private XQueryValue handleConcatenation(final OrExprContext ctx) throws XQueryUnsupportedOperation {
+        var value = ctx.orExpr(0).accept(this);
+        if (!value.isStringValue()) {
+            // TODO: type error
+        }
+        final var operationCount = ctx.CONCATENATION().size();
+        for (int i = 1; i <= operationCount; i++) {
+            final var visitedExpression = ctx.orExpr(i).accept(this);
+            value = value.concatenate(visitedExpression);
+            i++;
+        }
+
+        return value;
     }
 
     private XQueryValue handleOrExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {

@@ -6,6 +6,7 @@ import com.github.akruk.antlrxquery.evaluator.XQuery;
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 import com.github.akruk.antlrxquery.values.XQueryBoolean;
 import com.github.akruk.antlrxquery.values.XQueryNumber;
+import com.github.akruk.antlrxquery.values.XQueryString;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 
 import static org.junit.Assert.assertEquals;
@@ -390,9 +391,10 @@ public class XQueryTest {
     }
 
 
-
-
-
+    @Test
+    public void concatenationExperssions() throws XQueryUnsupportedOperation {
+        assertResult("'abc' || 'def' || 'ghi'", new XQueryString("abcdefghi"));
+    }
 
     @Test
     public void abs() {

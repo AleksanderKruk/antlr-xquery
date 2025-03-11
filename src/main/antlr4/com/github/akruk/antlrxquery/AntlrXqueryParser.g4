@@ -33,7 +33,7 @@ ifExpr: IF LPAREN expr RPAREN THEN exprSingle ELSE exprSingle;
 orExpr: orExpr ( OR orExpr )+
         | orExpr ( AND orExpr )+
         | orExpr  (valueComp | generalComp | nodeComp) orExpr
-        | orExpr ( OR_LOGICAL_OP orExpr )+
+        | orExpr ( CONCATENATION orExpr )+
         | orExpr TO orExpr
         | orExpr (additiveOperator orExpr )+
         | orExpr (multiplicativeOperator orExpr)+

@@ -382,7 +382,7 @@ public class XQueryTest {
         assertResult("true() lt false()", XQueryBoolean.FALSE);
         assertResult("false() lt true()", XQueryBoolean.TRUE);
         assertResult("true() lt true()", XQueryBoolean.FALSE);
-        assertResult("false() lt false()", XQueryBoolean.TRUE);
+        assertResult("false() lt false()", XQueryBoolean.FALSE);
         // A lt B 	xs:string 	xs:string 	op:numeric-less-than(fn:compare(A, B), 0) 	xs:boolean
         assertResult("'abed' lt 'abcd'", XQueryBoolean.FALSE);
         assertResult("'abcd' lt 'abed'", XQueryBoolean.TRUE);

@@ -350,8 +350,8 @@ public class XQueryTest {
         assertResult("true() ge true()", XQueryBoolean.TRUE);
         assertResult("false() ge false()", XQueryBoolean.TRUE);
         // A ge B 	xs:string 	xs:string   xs:boolean
-        assertResult("'abcd' ge 'abcd", XQueryBoolean.TRUE);
-        assertResult("'abed' ge 'abcd", XQueryBoolean.TRUE);
+        assertResult("'abcd' ge 'abcd'", XQueryBoolean.TRUE);
+        assertResult("'abed' ge 'abcd'", XQueryBoolean.TRUE);
     }
 
     @Test

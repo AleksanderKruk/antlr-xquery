@@ -67,6 +67,23 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
     }
 
 
+    @Override
+    public XQueryValue except(XQueryValue otherSequence) throws XQueryUnsupportedOperation {
+        var newSequence = new ArrayList<XQueryValue>();
+        var otherSequenceValue = otherSequence.sequence();
+        NEXT_ELEMENT: 
+        for (var element : value) {
+            for (var otherElement : otherSequenceValue) {
+                if (element.valueEqual(otherElement).booleanValue()) {
+                    continue NEXT_ELEMENT;
+                }
+            }
+            newSequence.add(element);
+        }
+        return new XQuerySequence(newSequence);
+    }
+
+
 
     @Override
     public XQueryValue copy() {

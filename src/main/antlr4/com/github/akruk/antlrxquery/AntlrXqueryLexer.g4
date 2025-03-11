@@ -69,7 +69,7 @@ LE: 'le';
 GT: 'gt';
 GE: 'ge';
 MINUS: '-';
-OR_LOGICAL_OP: '||';
+CONCATENATION: '||';
 UNION_OP: '|';
 EXCLAMATION_MARK: '!';
 ARROW: '=>';

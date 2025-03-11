@@ -49,7 +49,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             // TODO: Add type check failure
             if (!arg.isNumericValue())
                 return null;
-            return new XQueryNumber(arg.numericValue().negate());
+            return new XQueryNumber(arg.numericValue().abs());
         }
 
         private static final XQueryValue ceiling(final List<XQueryValue> args) {

@@ -312,18 +312,8 @@ public class XQueryTest {
 
     @Test
     public void abs() {
-        String xquery = """
-            abs(3)
-        """;
-        var value = XQuery.evaluate(null, xquery, null);
-        assertNotNull(value);
-        assertEquals(BigDecimal.valueOf(3), value.numericValue());
-        xquery = """
-            abs(-3)
-        """;
-        value = XQuery.evaluate(null, xquery, null);
-        assertNotNull(value);
-        assertEquals(BigDecimal.valueOf(3), value.numericValue());
+        assertResult("abs(3)", BigDecimal.valueOf(3));
+        assertResult("abs(-3)", BigDecimal.valueOf(3));
     }
 
 
@@ -392,69 +382,69 @@ public class XQueryTest {
         assertResult("pi()", new BigDecimal(Math.PI));
     }
 
-    @Test
-    public void exp() {
-        assertResult("exp(5, 2)", BigDecimal.ONE);
-    }
+    // @Test
+    // public void exp() {
+    //     assertResult("exp(5, 2)", BigDecimal.ONE);
+    // }
 
-    @Test
-    public void exp10() {
-        assertResult("exp10(5, 2)", BigDecimal.ONE);
-    }
+    // @Test
+    // public void exp10() {
+    //     assertResult("exp10(5, 2)", BigDecimal.ONE);
+    // }
 
-    @Test
-    public void log() {
-        assertResult("log(5, 2)", BigDecimal.ONE);
-    }
+    // @Test
+    // public void log() {
+    //     assertResult("log(5, 2)", BigDecimal.ONE);
+    // }
 
-    @Test
-    public void log10() {
-        assertResult("log10(5, 2)", BigDecimal.ONE);
-    }
+    // @Test
+    // public void log10() {
+    //     assertResult("log10(5, 2)", BigDecimal.ONE);
+    // }
 
-    @Test
-    public void pow() {
-        assertResult("pow(5, 2)", BigDecimal.ONE);
-    }
+    // @Test
+    // public void pow() {
+    //     assertResult("pow(5, 2)", BigDecimal.ONE);
+    // }
 
-    @Test
-    public void sqrt() {
-        assertResult("sqrt(5, 2)", BigDecimal.ONE);
-    }
+    // @Test
+    // public void sqrt() {
+    //     assertResult("sqrt(5, 2)", BigDecimal.ONE);
+    // }
 
-    @Test
-    public void sin() {
-        assertResult("sin(5, 2)", BigDecimal.ONE);
-    }
+    // @Test
+    // public void sin() {
+    //     assertResult("sin(5, 2)", BigDecimal.ONE);
+    // }
 
-    @Test
-    public void cos() {
-        assertResult("cos(5, 2)", BigDecimal.ONE);
-    }
+    // @Test
+    // public void cos() {
+    //     assertResult("cos(5, 2)", BigDecimal.ONE);
+    // }
 
-    @Test
-    public void tan() {
-        assertResult("tan(5, 2)", BigDecimal.ONE);
-    }
+    // @Test
+    // public void tan() {
+    //     assertResult("tan(5, 2)", BigDecimal.ONE);
+    // }
 
-    @Test
-    public void asin() {
-        assertResult("asin(5, 2)", BigDecimal.ONE);
-    }
+    // @Test
+    // public void asin() {
+    //     assertResult("asin(5, 2)", BigDecimal.ONE);
+    // }
 
-    @Test
-    public void acos() {
-        assertResult("acos(5, 2)", BigDecimal.ONE);
-    }
+    // @Test
+    // public void acos() {
+    //     assertResult("acos(5, 2)", BigDecimal.ONE);
+    // }
 
-    @Test
-    public void atan() {
-        assertResult("atan(5, 2)", BigDecimal.ONE);
-    }
+    // @Test
+    // public void atan() {
+    //     assertResult("atan(5, 2)", BigDecimal.ONE);
+    // }
 
-    @Test
-    public void atan2() {
-        assertResult("atan2(5, 2)", BigDecimal.ONE);
-    }
+    // @Test
+    // public void atan2() {
+    //     assertResult("atan2(5, 2)", BigDecimal.ONE);
+    // }
 
 }

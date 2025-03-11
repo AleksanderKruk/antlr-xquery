@@ -1,5 +1,7 @@
 package com.github.akruk.antlrxquery.values;
 
+import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
+
 public class XQueryString  extends XQueryValueBase<String> {
     public XQueryString(String string) {
         value = string;
@@ -22,7 +24,22 @@ public class XQueryString  extends XQueryValueBase<String> {
 
     @Override
     public XQueryValue valueLessThan(XQueryValue other) {
-        return XQueryBoolean.of(value.compareTo(other.stringValue()) == -1);
+        return XQueryBoolean.of(value.compareTo(other.stringValue()) < 0);
+    }
+
+    @Override
+    public XQueryValue valueGreaterThan(XQueryValue other) throws XQueryUnsupportedOperation {
+        return XQueryBoolean.of(value.compareTo(other.stringValue()) > 0);
+    }
+
+    @Override
+    public XQueryValue valueGreaterEqual(XQueryValue other) throws XQueryUnsupportedOperation {
+        return XQueryBoolean.of(value.compareTo(other.stringValue()) >= 0);
+    }
+
+    @Override
+    public XQueryValue valueLessEqual(XQueryValue other) throws XQueryUnsupportedOperation {
+        return XQueryBoolean.of(value.compareTo(other.stringValue()) <= 0);
     }
 
     @Override

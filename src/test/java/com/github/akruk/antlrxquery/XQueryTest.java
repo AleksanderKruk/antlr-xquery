@@ -335,7 +335,7 @@ public class XQueryTest {
         assertResult("true() gt true()", XQueryBoolean.FALSE);
         assertResult("false() gt false()", XQueryBoolean.FALSE);
         // A gt B 	xs:string 	xs:string 	op:numeric-greater-than(fn:compare(A, B), 0) 	xs:boolean
-        assertResult("'abed' gt 'abcd'", XQueryBoolean.FALSE);
+        assertResult("'abed' gt 'abcd'", XQueryBoolean.TRUE);
     }
 
     @Test
@@ -347,8 +347,8 @@ public class XQueryTest {
         // A ge B 	xs:boolean 	xs:boolean 	xs:boolean
         assertResult("true() ge false()", XQueryBoolean.TRUE);
         assertResult("false() ge true()", XQueryBoolean.FALSE);
-        assertResult("true() ge true()", XQueryBoolean.FALSE);
-        assertResult("false() ge false()", XQueryBoolean.FALSE);
+        assertResult("true() ge true()", XQueryBoolean.TRUE);
+        assertResult("false() ge false()", XQueryBoolean.TRUE);
         // A ge B 	xs:string 	xs:string   xs:boolean
         assertResult("'abcd' ge 'abcd", XQueryBoolean.TRUE);
         assertResult("'abed' ge 'abcd", XQueryBoolean.TRUE);

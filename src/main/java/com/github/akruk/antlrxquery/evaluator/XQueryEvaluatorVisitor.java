@@ -465,8 +465,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         return switch(ctx.valueComp().getText()) {
             case "eq" -> value.valueEqual(visitedExpression);
             case "ne" -> value.valueUnequal(visitedExpression);
-            case "lt" -> value.valueGreaterThan(visitedExpression);
-            case "gt" -> value.valueLessThan(visitedExpression);
+            case "lt" -> value.valueLessThan(visitedExpression);
+            case "gt" -> value.valueGreaterThan(visitedExpression);
             case "le" -> value.valueLessEqual(visitedExpression);
             case "ge" -> value.valueGreaterEqual(visitedExpression);
             default -> null;

@@ -46,6 +46,14 @@ public class XQueryBoolean extends XQueryValueBase<Boolean> {
         return XQueryBoolean.of(this == other);
     }
 
+    @Override
+    public XQueryValue valueLessThan(XQueryValue other) throws XQueryUnsupportedOperation {
+        // Identity comparison is used because
+        // we maintain just 2 XQueryBoolean instances
+        // TRUE and FALSE
+        return XQueryBoolean.of(this == FALSE && other != FALSE);
+    }
+
 
     @Override
     public XQueryValue copy() {

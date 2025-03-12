@@ -16,13 +16,17 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ArgumentContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.ForwardAxisContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.ForwardStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionCallContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.LiteralContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.OrExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PathExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.PathOperatorContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PostfixExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.RelativePathExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseAxisContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.StepExprContext;
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 import com.github.akruk.antlrxquery.values.XQueryNumber;
@@ -472,6 +476,35 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         return new XQuerySequence(matchedNodes);
     }
 
+    @Override
+    public XQueryValue visitForwardStep(ForwardStepContext ctx) {
+        if (ctx.abbrevForwardStep() != null) {
+            return ctx.abbrevForwardStep().accept(this);
+        }
+        return ctx.forwardAxis().accept(this);
+    }
+
+    @Override
+    public XQueryValue visitForwardAxis(ForwardAxisContext ctx) {
+        if (ctx.CHILD() != null) currentAxis = XQueryAxis.CHILD;
+        if (ctx.DESCENDANT() != null) currentAxis = XQueryAxis.DESCENDANT;
+        if (ctx.ATTRIBUTE() != null) currentAxis = XQueryAxis.ATTRIBUTE;
+        if (ctx.SELF() != null) currentAxis = XQueryAxis.SELF;
+        if (ctx.DESCENDANT_OR_SELF() != null) currentAxis = XQueryAxis.DESCENDANT_OR_SELF;
+        if (ctx.FOLLOWING_SIBLING() != null) currentAxis = XQueryAxis.FOLLOWING_SIBLING;
+        if (ctx.FOLLOWING() != null) currentAxis = XQueryAxis.FOLLOWING;
+        return null;
+    }
+
+    @Override
+    public XQueryValue visitReverseAxis(ReverseAxisContext ctx) {
+        if (ctx.PARENT() != null) currentAxis = XQueryAxis.PARENT;
+        if (ctx.ANCESTOR() != null) currentAxis = XQueryAxis.ANCESTOR;
+        if (ctx.PRECEDING_SIBLING() != null) currentAxis = XQueryAxis.PRECEDING_SIBLING;
+        if (ctx.PRECEDING() != null) currentAxis = XQueryAxis.PRECEDING;
+        if (ctx.ANCESTOR_OR_SELF() != null) currentAxis = XQueryAxis.ANCESTOR_OR_SELF;
+        return null;
+    }
 
     private XQueryValue handleConcatenation(final OrExprContext ctx) throws XQueryUnsupportedOperation {
         var value = ctx.orExpr(0).accept(this);

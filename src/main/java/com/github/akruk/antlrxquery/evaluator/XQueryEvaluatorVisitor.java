@@ -1,20 +1,17 @@
 package com.github.akruk.antlrxquery.evaluator;
 
 import java.math.BigDecimal;
-import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.tree.ParseTree;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.AbbrevForwardStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.AbbrevReverseStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ArgumentContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ExprContext;
@@ -26,12 +23,9 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.NameTestContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.OrExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PathExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.PathOperatorContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.PostfixExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.RelativePathExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseAxisContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseStepContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.StepExprContext;
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 import com.github.akruk.antlrxquery.values.XQueryNumber;
 import com.github.akruk.antlrxquery.values.XQuerySequence;
@@ -462,14 +456,14 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         var operationCount = ctx.pathOperator().size();
         for (int i = 1; i <= operationCount; i++) {
             matchedNodes = switch (ctx.pathOperator(i).getText()) {
-                case "//" -> { 
+                case "//" -> {
                     var matchedInStep = new ArrayList<XQueryValue>();
                     for (var parent: matchedNodes) {
                         var descendantsOrSelf = getDescendantsOrSelf(parent);
                         matchedInStep.addAll(descendantsOrSelf);
                     }
                     matchedNodes = matchedInStep;
-                    yield ctx.stepExpr(i).accept(this).sequence(); 
+                    yield ctx.stepExpr(i).accept(this).sequence();
                 }
                 case "/" -> ctx.stepExpr(i).accept(this).sequence();
                 default -> null;
@@ -481,19 +475,13 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     @Override
     public XQueryValue visitForwardStep(ForwardStepContext ctx) {
-        if (ctx.abbrevForwardStep() != null) {
-            return ctx.abbrevForwardStep().accept(this);
+        if (ctx.forwardAxis() != null) {
+            ctx.forwardAxis().accept(this);
         }
-        ctx.forwardAxis().accept(this);
+        else {
+            currentAxis = XQueryAxis.CHILD;
+        }
         return ctx.nodeTest().accept(this);
-    }
-
-    @Override
-    public XQueryValue visitAbbrevForwardStep(AbbrevForwardStepContext ctx) {
-        if (ctx.AT_OP() != null) {
-            currentAxis = XQueryAxis.ATTRIBUTE;
-        }
-        return ctx.nodeTest().accept(null);
     }
 
     @Override
@@ -504,7 +492,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         ctx.reverseAxis().accept(this);
         return ctx.nodeTest().accept(this);
     }
-    
+
     @Override
     public XQueryValue visitAbbrevReverseStep(AbbrevReverseStepContext ctx) {
         matchedNodes = matchedNodes.stream()
@@ -535,9 +523,10 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             // case PARENT ->
             // case PRECEDING ->
             // case PRECEDING_SIBLING ->
-            // case SELF ->
+            case SELF -> matchedNodes;
             default -> matchedNodes;
         };
+        return new XQuerySequence(matchedNodes);
 
     }
 
@@ -562,7 +551,6 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     public XQueryValue visitForwardAxis(ForwardAxisContext ctx) {
         if (ctx.CHILD() != null) currentAxis = XQueryAxis.CHILD;
         if (ctx.DESCENDANT() != null) currentAxis = XQueryAxis.DESCENDANT;
-        if (ctx.ATTRIBUTE() != null) currentAxis = XQueryAxis.ATTRIBUTE;
         if (ctx.SELF() != null) currentAxis = XQueryAxis.SELF;
         if (ctx.DESCENDANT_OR_SELF() != null) currentAxis = XQueryAxis.DESCENDANT_OR_SELF;
         if (ctx.FOLLOWING_SIBLING() != null) currentAxis = XQueryAxis.FOLLOWING_SIBLING;

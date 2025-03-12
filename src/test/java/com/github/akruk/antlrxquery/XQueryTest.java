@@ -216,11 +216,7 @@ public class XQueryTest {
 
     @Test
     public void division() {
-        String xquery = """
-            5 div 2.0
-        """;
-        var value = XQuery.evaluate(null, xquery, null);
-        assertEquals(new BigDecimal(2.5, MathContext.UNLIMITED), value.numericValue());
+        assertResult("5 div 2.0", new BigDecimal(2.5, MathContext.UNLIMITED));
     }
 
     @Test
@@ -301,7 +297,8 @@ public class XQueryTest {
         assertResult("(1, 2) != (2, 3)", XQueryBoolean.TRUE);
         assertResult("(1, 2) < (2, 3)", XQueryBoolean.TRUE);
         assertResult("(1, 2) <= (2, 3)", XQueryBoolean.TRUE);
-        assertResult("(1, 2) > (2, 3)", XQueryBoolean.TRUE);
+        // FALSE
+        assertResult("(1, 2) > (2, 3)", XQueryBoolean.FALSE);
         assertResult("(1, 2) >= (2, 3)", XQueryBoolean.TRUE);
     }
 
@@ -405,22 +402,12 @@ public class XQueryTest {
 
     @Test
     public void ceiling() {
-        String xquery = """
-            ceiling(3.3)
-        """;
-        var value = XQuery.evaluate(null, xquery, null);
-        assertNotNull(value);
-        assertEquals(BigDecimal.valueOf(4), value.numericValue());
+        assertResult("ceiling(3.3)", BigDecimal.valueOf(4));
     }
 
     @Test
     public void floor() {
-        String xquery = """
-            floor(3.3)
-        """;
-        var value = XQuery.evaluate(null, xquery, null);
-        assertNotNull(value);
-        assertEquals(BigDecimal.valueOf(3), value.numericValue());
+        assertResult("floor(3.3)", BigDecimal.valueOf(3));
     }
 
     @Test

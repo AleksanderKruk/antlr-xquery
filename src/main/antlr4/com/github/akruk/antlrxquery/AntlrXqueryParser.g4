@@ -60,7 +60,6 @@ forwardStep: (forwardAxis nodeTest) | abbrevForwardStep;
 
 forwardAxis: (CHILD COLONS)
         | (DESCENDANT COLONS)
-        | (ATTRIBUTE COLONS)
         | (SELF COLONS)
         | (DESCENDANT_OR_SELF COLONS)
         | (FOLLOWING_SIBLING COLONS)

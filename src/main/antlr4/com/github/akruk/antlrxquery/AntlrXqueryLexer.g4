@@ -17,7 +17,6 @@ WHERE: 'where';
 DOLLAR: '$';
 CHILD: 'child';
 DESCENDANT: 'descendant';
-ATTRIBUTE: 'attribute';
 SELF: 'self';
 DESCENDANT_OR_SELF: 'descendant-or-self';
 ANCESTOR_OR_SELF: 'ancestor-or-self';

@@ -52,7 +52,6 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     private enum XQueryAxis {
         CHILD,
         DESCENDANT,
-        ATTRIBUTE,
         SELF,
         DESCENDANT_OR_SELF,
         FOLLOWING_SIBLING,
@@ -528,7 +527,6 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         matchedNodes = switch (currentAxis) {
             case ANCESTOR -> getAncestors();
             case ANCESTOR_OR_SELF -> getAncestorsOrSelf();
-            // case ATTRIBUTE -> getAttributes();
             // case CHILD ->
             // case DESCENDANT ->
             // case DESCENDANT_OR_SELF ->

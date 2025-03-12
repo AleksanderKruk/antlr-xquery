@@ -40,7 +40,6 @@ COLONSTAR: ':*';
 STARCOLON: '*:';
 ALLOWING: 'allowing';
 EMPTY: 'empty';
-AT_OP: '@';
 ORDER: 'order';
 BY: 'by';
 STABLE: 'stable';

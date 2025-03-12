@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -36,7 +37,7 @@ import com.github.akruk.antlrxquery.values.XQueryBoolean;
 import com.github.akruk.antlrxquery.values.XQueryFunction;
 
 class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
-    ParseTree tree;
+    XQueryValue root;
     Parser parser;
     List<XQueryValue> visitedArgumentList;
     List<XQueryValue> matchedNodes;
@@ -295,7 +296,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser) {
-        this.tree = tree;
+        this.root = new XQueryTreeNode(tree);
         this.parser = parser;
     }
 
@@ -428,7 +429,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             final var savedNodes = saveMatchedModes();
             final var savedAxis = saveAxis();
             currentAxis = XQueryAxis.DESCENDANT_OR_SELF;
-            matchedNodes = getDescendantsOrSelf(new XQueryTreeNode(tree));
+            matchedNodes = getDescendantsOrSelf(root);
             ctx.relativePathExpr().accept(this);
             var resultingNodes = matchedNodes;
             matchedNodes = savedNodes;
@@ -515,12 +516,12 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         matchedNodes = switch (currentAxis) {
             case ANCESTOR -> getAncestors();
             case ANCESTOR_OR_SELF -> getAncestorsOrSelf();
-            // case CHILD ->
-            // case DESCENDANT ->
+            case CHILD -> getChildren(matchedNodes);
+            case DESCENDANT -> getDescendants(matchedNodes)
             // case DESCENDANT_OR_SELF ->
             // case FOLLOWING ->
             // case FOLLOWING_SIBLING ->
-            // case PARENT ->
+            case PARENT -> getParents();
             // case PRECEDING ->
             // case PRECEDING_SIBLING ->
             case SELF -> matchedNodes;
@@ -530,7 +531,48 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     }
 
+    private List<XQueryValue> getDescendants(List<XQueryValue> nodes) {
+        var newMatched = new ArrayList<XQueryValue>();
+        var children = getChildren(nodes);
+        newMatched.addAll(children);
+        while (children.size() != 0) {
+            children = getChildren(children);
+            newMatched.addAll(children);
+        }
+        return newMatched;
+    }
+
+
+    private List<XQueryValue> getChildren(List<XQueryValue> nodes) {
+        var newMatched = new ArrayList<XQueryValue>();
+        for (var node : nodes) {
+            var treenode = node.node();
+            var children = IntStream.range(0, treenode.getChildCount())
+                .mapToObj(i->treenode.getChild(i))
+                .map(XQueryTreeNode::new)
+                .collect(Collectors.toList());
+            newMatched.addAll(children);
+        }
+        return newMatched;
+    }
+
+
     private List<XQueryValue> getAncestors() {
+        var newMatched = new ArrayList<XQueryValue>();
+        for (var valueNode : matchedNodes) {
+            var treenode = valueNode.node();
+            newMatched.add(root);
+            var parent = treenode.getParent();
+            newMatched.add(new XQueryTreeNode(parent));
+            while (parent != root) {
+                parent = treenode.getParent();
+                newMatched.add(new XQueryTreeNode(parent));
+            }
+        }
+        return matchedNodes;
+    }
+
+    private List<XQueryValue> getParents() {
         matchedNodes = matchedNodes.stream()
             .map(value->value.node().getParent())
             .map(XQueryTreeNode::new)

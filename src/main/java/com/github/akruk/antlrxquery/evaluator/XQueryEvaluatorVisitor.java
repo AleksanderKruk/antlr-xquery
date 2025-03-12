@@ -517,7 +517,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             case ANCESTOR -> getAncestors();
             case ANCESTOR_OR_SELF -> getAncestorsOrSelf();
             case CHILD -> getChildren(matchedNodes);
-            case DESCENDANT -> getDescendants(matchedNodes)
+            case DESCENDANT -> getDescendants(matchedNodes);
             // case DESCENDANT_OR_SELF ->
             // case FOLLOWING ->
             // case FOLLOWING_SIBLING ->

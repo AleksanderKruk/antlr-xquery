@@ -52,7 +52,8 @@ nodeComp: IS | PRECEDING_OP | FOLLOWING_OP;
 pathExpr: (SLASH relativePathExpr?)
         | (SLASHES relativePathExpr)
         | relativePathExpr;
-relativePathExpr: stepExpr ((SLASH | SLASHES) stepExpr)*;
+relativePathExpr: stepExpr (pathOperator stepExpr)*;
+pathOperator: SLASH | SLASHES;
 stepExpr: postfixExpr | axisStep;
 axisStep: (reverseStep | forwardStep) predicateList;
 forwardStep: (forwardAxis nodeTest) | abbrevForwardStep;

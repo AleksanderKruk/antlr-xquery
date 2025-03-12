@@ -313,7 +313,7 @@ public class XQueryTest {
         assertResult("(1, 2) != (2, 3)", XQueryBoolean.TRUE);
         assertResult("(1, 2) < (2, 3)", XQueryBoolean.TRUE);
         assertResult("(1, 2) <= (2, 3)", XQueryBoolean.TRUE);
-        assertResult("(1, 2) > (2, 3)", XQueryBoolean.TRUE);
+        assertResult("(1, 2) > (2, 3)", XQueryBoolean.FALSE);
         assertResult("(1, 2) >= (2, 3)", XQueryBoolean.TRUE);
     }
 

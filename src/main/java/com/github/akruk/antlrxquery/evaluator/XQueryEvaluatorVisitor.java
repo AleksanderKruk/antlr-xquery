@@ -14,12 +14,15 @@ import java.util.stream.IntStream;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.tree.ParseTree;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.AbbrevForwardStepContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.AbbrevReverseStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ArgumentContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ForwardAxisContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ForwardStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionCallContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.LiteralContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.NameTestContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.OrExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PathExprContext;
@@ -27,6 +30,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.PathOperatorContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PostfixExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.RelativePathExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseAxisContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.StepExprContext;
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 import com.github.akruk.antlrxquery.values.XQueryNumber;
@@ -481,7 +485,79 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         if (ctx.abbrevForwardStep() != null) {
             return ctx.abbrevForwardStep().accept(this);
         }
-        return ctx.forwardAxis().accept(this);
+        ctx.forwardAxis().accept(this);
+        return ctx.nodeTest().accept(this);
+    }
+
+    @Override
+    public XQueryValue visitAbbrevForwardStep(AbbrevForwardStepContext ctx) {
+        if (ctx.AT_OP() != null) {
+            currentAxis = XQueryAxis.ATTRIBUTE;
+        }
+        return ctx.nodeTest().accept(null);
+    }
+
+    @Override
+    public XQueryValue visitReverseStep(ReverseStepContext ctx) {
+        if (ctx.abbrevReverseStep() != null) {
+            return ctx.abbrevReverseStep().accept(this);
+        }
+        ctx.reverseAxis().accept(this);
+        return ctx.nodeTest().accept(this);
+    }
+    
+    @Override
+    public XQueryValue visitAbbrevReverseStep(AbbrevReverseStepContext ctx) {
+        matchedNodes = matchedNodes.stream()
+            .map(node->node.node().getParent())
+            .map(XQueryTreeNode::new)
+            .collect(Collectors.toList());
+        return new XQuerySequence(matchedNodes);
+    }
+
+    @Override
+    public XQueryValue visitNameTest(NameTestContext ctx) {
+        // if (ctx.wildcard() != null) {
+        //     return switch(ctx.wildcard().getText()) {
+        //         "*" -> ;
+        //         "*:" -> ;
+        //         ":*" -> ;
+        //         default -> null;
+        //     };
+        // }
+        matchedNodes = switch (currentAxis) {
+            case ANCESTOR -> getAncestors();
+            case ANCESTOR_OR_SELF -> getAncestorsOrSelf();
+            // case ATTRIBUTE -> getAttributes();
+            // case CHILD ->
+            // case DESCENDANT ->
+            // case DESCENDANT_OR_SELF ->
+            // case FOLLOWING ->
+            // case FOLLOWING_SIBLING ->
+            // case PARENT ->
+            // case PRECEDING ->
+            // case PRECEDING_SIBLING ->
+            // case SELF ->
+            default -> matchedNodes;
+        };
+
+    }
+
+    private List<XQueryValue> getAncestors() {
+        matchedNodes = matchedNodes.stream()
+            .map(value->value.node().getParent())
+            .map(XQueryTreeNode::new)
+            .collect(Collectors.toList())
+            ;
+        return matchedNodes;
+    }
+
+    private List<XQueryValue> getAncestorsOrSelf() {
+        var selfPart = matchedNodes;
+        var ancestorPart = getAncestors();
+        selfPart.addAll(ancestorPart);
+        matchedNodes = selfPart;
+        return matchedNodes;
     }
 
     @Override

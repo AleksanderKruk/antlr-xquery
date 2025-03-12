@@ -11,6 +11,10 @@ import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 public interface XQueryValue {
     public XQueryValue copy();
 
+    public default ParseTree node() {
+        return null;
+    }
+
     // Function
     public default BigDecimal numericValue() {
         return null;
@@ -62,6 +66,10 @@ public interface XQueryValue {
 
     public default boolean isAtomic() {
         return sequence() == null;
+    }
+
+    public default boolean isNode() {
+        return node() != null;
     }
 
     public default List<XQueryValue> atomize() {

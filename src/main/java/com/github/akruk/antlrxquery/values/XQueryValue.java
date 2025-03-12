@@ -9,6 +9,12 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 
 public interface XQueryValue {
+    public XQueryValue copy();
+
+    public default ParseTree node() {
+        return null;
+    }
+
     // Function
     public default BigDecimal numericValue() {
         return null;
@@ -60,6 +66,10 @@ public interface XQueryValue {
 
     public default boolean isAtomic() {
         return sequence() == null;
+    }
+
+    public default boolean isNode() {
+        return node() != null;
     }
 
     public default List<XQueryValue> atomize() {
@@ -145,7 +155,7 @@ public interface XQueryValue {
 
     public default XQueryValue generalEqual(XQueryValue other) throws XQueryUnsupportedOperation {
         var thisAtomized = atomize();
-        var otherAtomized = atomize();
+        var otherAtomized = other.atomize();
         for (var thisElement : thisAtomized) {
             for (var otherElement : otherAtomized) {
                 if (thisElement.valueEqual(otherElement).booleanValue()) {
@@ -158,7 +168,7 @@ public interface XQueryValue {
 
     public default XQueryValue generalUnequal(XQueryValue other) throws XQueryUnsupportedOperation {
         var thisAtomized = atomize();
-        var otherAtomized = atomize();
+        var otherAtomized = other.atomize();
         for (var thisElement : thisAtomized) {
             for (var otherElement : otherAtomized) {
                 if (thisElement.valueUnequal(otherElement).booleanValue()) {
@@ -171,7 +181,7 @@ public interface XQueryValue {
 
     public default XQueryValue generalLessThan(XQueryValue other) throws XQueryUnsupportedOperation {
         var thisAtomized = atomize();
-        var otherAtomized = atomize();
+        var otherAtomized = other.atomize();
         for (var thisElement : thisAtomized) {
             for (var otherElement : otherAtomized) {
                 if (thisElement.valueLessThan(otherElement).booleanValue()) {
@@ -185,7 +195,7 @@ public interface XQueryValue {
 
     public default XQueryValue generalLessEqual(XQueryValue other) throws XQueryUnsupportedOperation {
         var thisAtomized = atomize();
-        var otherAtomized = atomize();
+        var otherAtomized = other.atomize();
         for (var thisElement : thisAtomized) {
             for (var otherElement : otherAtomized) {
                 if (thisElement.valueLessEqual(otherElement).booleanValue()) {
@@ -199,7 +209,7 @@ public interface XQueryValue {
 
     public default XQueryValue generalGreaterThan(XQueryValue other) throws XQueryUnsupportedOperation {
         var thisAtomized = atomize();
-        var otherAtomized = atomize();
+        var otherAtomized = other.atomize();
         for (var thisElement : thisAtomized) {
             for (var otherElement : otherAtomized) {
                 if (thisElement.valueGreaterThan(otherElement).booleanValue()) {
@@ -212,7 +222,7 @@ public interface XQueryValue {
 
     public default XQueryValue generalGreaterEqual(XQueryValue other) throws XQueryUnsupportedOperation {
         var thisAtomized = atomize();
-        var otherAtomized = atomize();
+        var otherAtomized = other.atomize();
         for (var thisElement : thisAtomized) {
             for (var otherElement : otherAtomized) {
                 if (thisElement.valueGreaterEqual(otherElement).booleanValue()) {
@@ -232,10 +242,7 @@ public interface XQueryValue {
         throw new XQueryUnsupportedOperation();
     }
 
-
-
-
-    public XQueryValue copy();
-
-
+    public default XQueryValue except(XQueryValue visitedExpression) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
 }

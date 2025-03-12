@@ -1,26 +1,36 @@
 package com.github.akruk.antlrxquery.evaluator;
 
 import java.math.BigDecimal;
-import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.tree.ParseTree;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.AbbrevReverseStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ArgumentContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.ForwardAxisContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.ForwardStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionCallContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.LiteralContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.NameTestContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.OrExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.PathExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.RelativePathExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseAxisContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseStepContext;
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 import com.github.akruk.antlrxquery.values.XQueryNumber;
 import com.github.akruk.antlrxquery.values.XQuerySequence;
 import com.github.akruk.antlrxquery.values.XQueryString;
+import com.github.akruk.antlrxquery.values.XQueryTreeNode;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.XQueryBoolean;
 import com.github.akruk.antlrxquery.values.XQueryFunction;
@@ -28,8 +38,27 @@ import com.github.akruk.antlrxquery.values.XQueryFunction;
 class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     ParseTree tree;
     Parser parser;
-
     List<XQueryValue> visitedArgumentList;
+    List<XQueryValue> matchedNodes;
+    XQueryAxis currentAxis;
+
+
+    private enum XQueryAxis {
+        CHILD,
+        DESCENDANT,
+        SELF,
+        DESCENDANT_OR_SELF,
+        FOLLOWING_SIBLING,
+        FOLLOWING,
+        PARENT,
+        ANCESTOR,
+        PRECEDING_SIBLING,
+        PRECEDING,
+        ANCESTOR_OR_SELF,
+    }
+
+
+
     private final class Functions {
         private static final XQueryValue not(final List<XQueryValue> args) {
             assert args.size() == 1;
@@ -363,6 +392,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                 return handleUnionExpr(ctx);
             if (!ctx.INTERSECT().isEmpty())
                 return handleIntersectionExpr(ctx);
+            if (!ctx.EXCEPT().isEmpty())
+                return handleSequenceSubtractionExpr(ctx);
             if (ctx.MINUS() != null)
                 return handleUnaryArithmeticExpr(ctx);
             if (ctx.generalComp() != null)
@@ -380,6 +411,162 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         }
     }
 
+    @Override
+    public XQueryValue visitPathExpr(PathExprContext ctx) {
+        boolean pathExpressionFromRoot = ctx.SLASH() != null;
+        if (pathExpressionFromRoot) {
+            final var savedNodes = saveMatchedModes();
+            final var savedAxis = saveAxis();
+            ctx.relativePathExpr().accept(this);
+            var resultingNodes = matchedNodes;
+            matchedNodes = savedNodes;
+            currentAxis = savedAxis;
+            return new XQuerySequence(resultingNodes);
+        }
+        boolean useDescendantOrSelfAxis = ctx.SLASHES() != null;
+        if (useDescendantOrSelfAxis) {
+            final var savedNodes = saveMatchedModes();
+            final var savedAxis = saveAxis();
+            currentAxis = XQueryAxis.DESCENDANT_OR_SELF;
+            matchedNodes = getDescendantsOrSelf(new XQueryTreeNode(tree));
+            ctx.relativePathExpr().accept(this);
+            var resultingNodes = matchedNodes;
+            matchedNodes = savedNodes;
+            currentAxis = savedAxis;
+            return new XQuerySequence(resultingNodes);
+        }
+        return ctx.relativePathExpr().accept(this);
+    }
+
+    private List<XQueryValue> getDescendantsOrSelf(XQueryValue node) {
+        List<XQueryValue> matchedNodes_ = IntStream.range(0, node.node().getChildCount())
+            .mapToObj(index->new XQueryTreeNode(node.node().getChild(index)))
+            .collect(Collectors.toList());
+        matchedNodes_.add(node);
+        return matchedNodes_;
+
+    }
+
+    @Override
+    public XQueryValue visitRelativePathExpr(RelativePathExprContext ctx) {
+        if (ctx.pathOperator().isEmpty()) {
+            return ctx.stepExpr(0).accept(this);
+        }
+        matchedNodes = ctx.stepExpr(0).accept(this).sequence();
+        var operationCount = ctx.pathOperator().size();
+        for (int i = 1; i <= operationCount; i++) {
+            matchedNodes = switch (ctx.pathOperator(i).getText()) {
+                case "//" -> {
+                    var matchedInStep = new ArrayList<XQueryValue>();
+                    for (var parent: matchedNodes) {
+                        var descendantsOrSelf = getDescendantsOrSelf(parent);
+                        matchedInStep.addAll(descendantsOrSelf);
+                    }
+                    matchedNodes = matchedInStep;
+                    yield ctx.stepExpr(i).accept(this).sequence();
+                }
+                case "/" -> ctx.stepExpr(i).accept(this).sequence();
+                default -> null;
+            };
+            i++;
+        }
+        return new XQuerySequence(matchedNodes);
+    }
+
+    @Override
+    public XQueryValue visitForwardStep(ForwardStepContext ctx) {
+        if (ctx.forwardAxis() != null) {
+            ctx.forwardAxis().accept(this);
+        }
+        else {
+            currentAxis = XQueryAxis.CHILD;
+        }
+        return ctx.nodeTest().accept(this);
+    }
+
+    @Override
+    public XQueryValue visitReverseStep(ReverseStepContext ctx) {
+        if (ctx.abbrevReverseStep() != null) {
+            return ctx.abbrevReverseStep().accept(this);
+        }
+        ctx.reverseAxis().accept(this);
+        return ctx.nodeTest().accept(this);
+    }
+
+    @Override
+    public XQueryValue visitAbbrevReverseStep(AbbrevReverseStepContext ctx) {
+        matchedNodes = matchedNodes.stream()
+            .map(node->node.node().getParent())
+            .map(XQueryTreeNode::new)
+            .collect(Collectors.toList());
+        return new XQuerySequence(matchedNodes);
+    }
+
+    @Override
+    public XQueryValue visitNameTest(NameTestContext ctx) {
+        // if (ctx.wildcard() != null) {
+        //     return switch(ctx.wildcard().getText()) {
+        //         "*" -> ;
+        //         "*:" -> ;
+        //         ":*" -> ;
+        //         default -> null;
+        //     };
+        // }
+        matchedNodes = switch (currentAxis) {
+            case ANCESTOR -> getAncestors();
+            case ANCESTOR_OR_SELF -> getAncestorsOrSelf();
+            // case CHILD ->
+            // case DESCENDANT ->
+            // case DESCENDANT_OR_SELF ->
+            // case FOLLOWING ->
+            // case FOLLOWING_SIBLING ->
+            // case PARENT ->
+            // case PRECEDING ->
+            // case PRECEDING_SIBLING ->
+            case SELF -> matchedNodes;
+            default -> matchedNodes;
+        };
+        return new XQuerySequence(matchedNodes);
+
+    }
+
+    private List<XQueryValue> getAncestors() {
+        matchedNodes = matchedNodes.stream()
+            .map(value->value.node().getParent())
+            .map(XQueryTreeNode::new)
+            .collect(Collectors.toList())
+            ;
+        return matchedNodes;
+    }
+
+    private List<XQueryValue> getAncestorsOrSelf() {
+        var selfPart = matchedNodes;
+        var ancestorPart = getAncestors();
+        selfPart.addAll(ancestorPart);
+        matchedNodes = selfPart;
+        return matchedNodes;
+    }
+
+    @Override
+    public XQueryValue visitForwardAxis(ForwardAxisContext ctx) {
+        if (ctx.CHILD() != null) currentAxis = XQueryAxis.CHILD;
+        if (ctx.DESCENDANT() != null) currentAxis = XQueryAxis.DESCENDANT;
+        if (ctx.SELF() != null) currentAxis = XQueryAxis.SELF;
+        if (ctx.DESCENDANT_OR_SELF() != null) currentAxis = XQueryAxis.DESCENDANT_OR_SELF;
+        if (ctx.FOLLOWING_SIBLING() != null) currentAxis = XQueryAxis.FOLLOWING_SIBLING;
+        if (ctx.FOLLOWING() != null) currentAxis = XQueryAxis.FOLLOWING;
+        return null;
+    }
+
+    @Override
+    public XQueryValue visitReverseAxis(ReverseAxisContext ctx) {
+        if (ctx.PARENT() != null) currentAxis = XQueryAxis.PARENT;
+        if (ctx.ANCESTOR() != null) currentAxis = XQueryAxis.ANCESTOR;
+        if (ctx.PRECEDING_SIBLING() != null) currentAxis = XQueryAxis.PRECEDING_SIBLING;
+        if (ctx.PRECEDING() != null) currentAxis = XQueryAxis.PRECEDING;
+        if (ctx.ANCESTOR_OR_SELF() != null) currentAxis = XQueryAxis.ANCESTOR_OR_SELF;
+        return null;
+    }
 
     private XQueryValue handleConcatenation(final OrExprContext ctx) throws XQueryUnsupportedOperation {
         var value = ctx.orExpr(0).accept(this);
@@ -542,6 +729,22 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
 
+    private XQueryValue handleSequenceSubtractionExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
+        var value = ctx.orExpr(0).accept(this);
+        if (!value.isSequence()) {
+            // TODO: type error
+            return null;
+        }
+        final var operatorCount = ctx.EXCEPT().size();
+        for (int i = 1; i <= operatorCount; i++) {
+            final var visitedExpression = ctx.orExpr(i).accept(this);
+            value = value.except(visitedExpression);
+            i++;
+        }
+        return value;
+    }
+
+
     private XQueryValue handleUnaryArithmeticExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
         final var value = ctx.orExpr(0).accept(this);
         if (!value.isNumericValue()) {
@@ -561,6 +764,18 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     private List<XQueryValue> saveVisitedArguments() {
         final var saved = visitedArgumentList;
         visitedArgumentList = new ArrayList<>();
+        return saved;
+    }
+
+    private List<XQueryValue> saveMatchedModes() {
+        final var saved = matchedNodes;
+        matchedNodes = new ArrayList<>();
+        return saved;
+    }
+
+    private XQueryAxis saveAxis() {
+        final var saved = currentAxis;
+        currentAxis = null;
         return saved;
     }
 

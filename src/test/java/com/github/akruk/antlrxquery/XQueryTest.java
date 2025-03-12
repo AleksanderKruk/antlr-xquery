@@ -19,6 +19,13 @@ import static org.junit.Assert.*;
 
 public class XQueryTest {
 
+
+    public void assertResult(String xquery, String result) {
+        var value = XQuery.evaluate(null, xquery, null);
+        assertNotNull(value);
+        assertEquals(result, value.stringValue());
+    }
+
     public void assertResult(String xquery, BigDecimal result) {
         var value = XQuery.evaluate(null, xquery, null);
         assertNotNull(value);
@@ -33,29 +40,17 @@ public class XQueryTest {
 
     @Test
     public void stringLiteralsDoubleQuote() {
-        String xquery = """
-            "string"
-        """;
-        var value = XQuery.evaluate(null, xquery, null);
-        assertEquals("string", value.stringValue());
+        assertResult("\"string\"", "string");
     }
 
     @Test
     public void stringLiteralsSingleQuote() {
-        String xquery = """
-                    'string'
-                """;
-        var value = XQuery.evaluate(null, xquery, null);
-        assertEquals("string", value.stringValue());
+        assertResult("'string'", "string");
     }
 
     @Test
     public void stringLiteralsEscapeCharsSingle() {
-        String xquery = """
-                    'a''b'
-                """;
-        var value = XQuery.evaluate(null, xquery, null);
-        assertEquals("a'b", value.stringValue());
+        assertResult("'a''b'", "a'b");
     }
 
     @Test
@@ -282,7 +277,24 @@ public class XQueryTest {
                 (BigDecimal.valueOf(2)),
                 (BigDecimal.valueOf(4)),
         };
-        assertEquals(expected.length, value.sequence().size());
+        BigDecimal[] numbersFromSequence = value.sequence()
+            .stream()
+            .map(XQueryValue::numericValue)
+            .toArray(BigDecimal[]::new);
+        assertArrayEquals(expected, numbersFromSequence);
+    }
+
+
+    @Test
+    public void sequenceSubtraction() {
+        String xquery = """
+            (1, 2, 3, 4) except (2, 4)
+        """;
+        var value = XQuery.evaluate(null, xquery, null);
+        BigDecimal[] expected = {
+                BigDecimal.valueOf(1),
+                BigDecimal.valueOf(3),
+        };
         BigDecimal[] numbersFromSequence = value.sequence()
             .stream()
             .map(XQueryValue::numericValue)
@@ -297,7 +309,6 @@ public class XQueryTest {
         assertResult("(1, 2) != (2, 3)", XQueryBoolean.TRUE);
         assertResult("(1, 2) < (2, 3)", XQueryBoolean.TRUE);
         assertResult("(1, 2) <= (2, 3)", XQueryBoolean.TRUE);
-        // FALSE
         assertResult("(1, 2) > (2, 3)", XQueryBoolean.FALSE);
         assertResult("(1, 2) >= (2, 3)", XQueryBoolean.TRUE);
     }

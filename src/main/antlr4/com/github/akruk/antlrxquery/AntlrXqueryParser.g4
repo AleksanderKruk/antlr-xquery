@@ -52,19 +52,18 @@ nodeComp: IS | PRECEDING_OP | FOLLOWING_OP;
 pathExpr: (SLASH relativePathExpr?)
         | (SLASHES relativePathExpr)
         | relativePathExpr;
-relativePathExpr: stepExpr ((SLASH | SLASHES) stepExpr)*;
+relativePathExpr: stepExpr (pathOperator stepExpr)*;
+pathOperator: SLASH | SLASHES;
 stepExpr: postfixExpr | axisStep;
 axisStep: (reverseStep | forwardStep) predicateList;
-forwardStep: (forwardAxis nodeTest) | abbrevForwardStep;
+forwardStep: (forwardAxis nodeTest) | nodeTest;
 
 forwardAxis: (CHILD COLONS)
         | (DESCENDANT COLONS)
-        | (ATTRIBUTE COLONS)
         | (SELF COLONS)
         | (DESCENDANT_OR_SELF COLONS)
         | (FOLLOWING_SIBLING COLONS)
         | (FOLLOWING COLONS);
-abbrevForwardStep: AT_OP? nodeTest;
 reverseStep: (reverseAxis nodeTest) | abbrevReverseStep;
 reverseAxis: (PARENT COLONS)
         | (ANCESTOR COLONS)

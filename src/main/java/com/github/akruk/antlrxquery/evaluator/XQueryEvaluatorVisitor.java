@@ -503,14 +503,6 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     @Override
     public XQueryValue visitNameTest(NameTestContext ctx) {
-        // if (ctx.wildcard() != null) {
-        //     return switch(ctx.wildcard().getText()) {
-        //         "*" -> ;
-        //         "*:" -> ;
-        //         ":*" -> ;
-        //         default -> null;
-        //     };
-        // }
         var matchedTreeNodes = matchedTreeNodes();
         List<ParseTree> stepNodes = switch (currentAxis) {
             case ANCESTOR -> getAllAncestors(matchedTreeNodes);
@@ -526,11 +518,19 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             case SELF -> matchedTreeNodes;
             default -> matchedTreeNodes;
         };
-        List<XQueryValue> nodes = stepNodes.stream()
-                .map(XQueryTreeNode::new)
-                .collect(Collectors.toList());
-        return new XQuerySequence(nodes);
+        if (ctx.wildcard() != null) {
+            return switch(ctx.wildcard().getText()) {
+                case "*" -> nodeSequence(stepNodes);
+                // case "*:" -> ;
+                // case ":*" -> ;
+                default -> null;
+            };
+        }
 
+        List<XQueryValue> nodes = stepNodes.stream()
+            .map(XQueryTreeNode::new)
+            .collect(Collectors.toList());
+        return new XQuerySequence(nodes);
     }
 
     private List<ParseTree> getAllFollowing(List<ParseTree> nodes) {

@@ -3,6 +3,7 @@ package com.github.akruk.antlrxquery.evaluator;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -429,7 +430,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             final var savedNodes = saveMatchedModes();
             final var savedAxis = saveAxis();
             currentAxis = XQueryAxis.DESCENDANT_OR_SELF;
-            matchedNodes = getDescendantsOrSelf(root);
+            matchedNodes = getAllDescendantsOrSelf(List.of(root));
             ctx.relativePathExpr().accept(this);
             var resultingNodes = matchedNodes;
             matchedNodes = savedNodes;
@@ -438,14 +439,12 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         }
         return ctx.relativePathExpr().accept(this);
     }
-
-    private List<XQueryValue> getDescendantsOrSelf(XQueryValue node) {
-        List<XQueryValue> matchedNodes_ = IntStream.range(0, node.node().getChildCount())
-            .mapToObj(index->new XQueryTreeNode(node.node().getChild(index)))
-            .collect(Collectors.toList());
-        matchedNodes_.add(node);
-        return matchedNodes_;
-
+    private List<XQueryValue> getAllDescendantsOrSelf(List<XQueryValue> nodes) {
+        var newMatched = new ArrayList<XQueryValue>();
+        var descendants = getAllDescendants(nodes);
+        newMatched.addAll(nodes);
+        newMatched.addAll(descendants);
+        return newMatched;
     }
 
     @Override
@@ -458,12 +457,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         for (int i = 1; i <= operationCount; i++) {
             matchedNodes = switch (ctx.pathOperator(i).getText()) {
                 case "//" -> {
-                    var matchedInStep = new ArrayList<XQueryValue>();
-                    for (var parent: matchedNodes) {
-                        var descendantsOrSelf = getDescendantsOrSelf(parent);
-                        matchedInStep.addAll(descendantsOrSelf);
-                    }
-                    matchedNodes = matchedInStep;
+                    var descendantsOrSelf = getAllDescendantsOrSelf(List.of(root));
+                    matchedNodes = descendantsOrSelf;
                     yield ctx.stepExpr(i).accept(this).sequence();
                 }
                 case "/" -> ctx.stepExpr(i).accept(this).sequence();
@@ -496,10 +491,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     @Override
     public XQueryValue visitAbbrevReverseStep(AbbrevReverseStepContext ctx) {
-        matchedNodes = matchedNodes.stream()
-            .map(node->node.node().getParent())
-            .map(XQueryTreeNode::new)
-            .collect(Collectors.toList());
+        matchedNodes = getAllParents(matchedNodes);
         return new XQuerySequence(matchedNodes);
     }
 
@@ -514,14 +506,14 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         //     };
         // }
         matchedNodes = switch (currentAxis) {
-            case ANCESTOR -> getAncestors();
-            case ANCESTOR_OR_SELF -> getAncestorsOrSelf();
-            case CHILD -> getChildren(matchedNodes);
-            case DESCENDANT -> getDescendants(matchedNodes);
-            // case DESCENDANT_OR_SELF ->
-            // case FOLLOWING ->
-            // case FOLLOWING_SIBLING ->
-            case PARENT -> getParents();
+            case ANCESTOR -> getAllAncestors(matchedNodes);
+            case ANCESTOR_OR_SELF -> getAllAncestorsOrSelf(matchedNodes);
+            case CHILD -> getAllChildren(matchedNodes);
+            case DESCENDANT -> getAllDescendants(matchedNodes);
+            case DESCENDANT_OR_SELF -> getAllDescendantsOrSelf(matchedNodes);
+            // case FOLLOWING -> getFollowing(matchedNodes);
+            // case FOLLOWING_SIBLING -> getFollowingSibling(matchedNodes);
+            case PARENT -> getAllParents(matchedNodes);
             // case PRECEDING ->
             // case PRECEDING_SIBLING ->
             case SELF -> matchedNodes;
@@ -531,7 +523,16 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     }
 
-    private List<XQueryValue> getDescendants(List<XQueryValue> nodes) {
+    private List<XQueryValue> getFollowingSibling(XQueryValue node) {
+        var newMatched = new ArrayList<XQueryValue>();
+        var parent = node.node().getParent();
+        var children = getChildren(new XQueryTreeNode(parent));
+        var nodeIndex = children.sequence().indexOf(node);
+
+        return newMatched;
+    }
+
+    private List<XQueryValue> getAllDescendants(List<XQueryValue> nodes) {
         var newMatched = new ArrayList<XQueryValue>();
         var children = getChildren(nodes);
         newMatched.addAll(children);
@@ -542,24 +543,29 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         return newMatched;
     }
 
+    private XQueryValue getChildren(XQueryValue node) {
+        ParseTree treenode = node.node();
+        List<XQueryValue> children = IntStream.range(0, treenode.getChildCount())
+            .mapToObj(i->treenode.getChild(i))
+            .map(XQueryTreeNode::new)
+            .collect(Collectors.toList());
+        return new XQuerySequence(children);
+    }
 
-    private List<XQueryValue> getChildren(List<XQueryValue> nodes) {
+
+    private List<XQueryValue> getAllChildren(List<XQueryValue> nodes) {
         var newMatched = new ArrayList<XQueryValue>();
         for (var node : nodes) {
-            var treenode = node.node();
-            var children = IntStream.range(0, treenode.getChildCount())
-                .mapToObj(i->treenode.getChild(i))
-                .map(XQueryTreeNode::new)
-                .collect(Collectors.toList());
-            newMatched.addAll(children);
+            var children = getChildren(node);
+            newMatched.addAll(children.sequence());
         }
         return newMatched;
     }
 
 
-    private List<XQueryValue> getAncestors() {
+    private List<XQueryValue> getAllAncestors(List<XQueryValue> nodes) {
         var newMatched = new ArrayList<XQueryValue>();
-        for (var valueNode : matchedNodes) {
+        for (var valueNode : nodes) {
             var treenode = valueNode.node();
             newMatched.add(root);
             var parent = treenode.getParent();
@@ -569,24 +575,24 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                 newMatched.add(new XQueryTreeNode(parent));
             }
         }
-        return matchedNodes;
+        return newMatched;
     }
 
-    private List<XQueryValue> getParents() {
-        matchedNodes = matchedNodes.stream()
+    private List<XQueryValue> getAllParents(List<XQueryValue> nodes) {
+        List<XQueryValue> newMatched = nodes.stream()
             .map(value->value.node().getParent())
             .map(XQueryTreeNode::new)
             .collect(Collectors.toList())
             ;
-        return matchedNodes;
+        return newMatched;
     }
 
-    private List<XQueryValue> getAncestorsOrSelf() {
-        var selfPart = matchedNodes;
-        var ancestorPart = getAncestors();
-        selfPart.addAll(ancestorPart);
-        matchedNodes = selfPart;
-        return matchedNodes;
+    private List<XQueryValue> getAllAncestorsOrSelf(List<XQueryValue> nodes) {
+        var newMatched = new ArrayList<XQueryValue>();
+        var ancestorPart = getAllAncestors(nodes);
+        newMatched.addAll(ancestorPart);
+        newMatched.addAll(nodes);
+        return newMatched;
     }
 
     @Override

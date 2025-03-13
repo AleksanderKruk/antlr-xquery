@@ -439,7 +439,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         }
         return ctx.relativePathExpr().accept(this);
     }
-    private List<XQueryValue> getAllDescendantsOrSelf(List<XQueryValue> nodes) {
+
+    private List<ParseTree> getAllDescendantsOrSelf(List<ParseTree> nodes) {
         var newMatched = new ArrayList<XQueryValue>();
         var descendants = getAllDescendants(nodes);
         newMatched.addAll(nodes);

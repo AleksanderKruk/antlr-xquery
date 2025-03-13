@@ -7,12 +7,19 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.antlr.v4.runtime.Parser;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.TerminalNode;
+import org.antlr.v4.runtime.tree.Trees;
+
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.AbbrevReverseStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ArgumentContext;
@@ -419,23 +426,22 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         if (pathExpressionFromRoot) {
             final var savedNodes = saveMatchedModes();
             final var savedAxis = saveAxis();
-            ctx.relativePathExpr().accept(this);
-            var resultingNodes = matchedNodes;
+            var resultingNodeSequence = ctx.relativePathExpr().accept(this);
             matchedNodes = savedNodes;
             currentAxis = savedAxis;
-            return new XQuerySequence(resultingNodes);
+            return resultingNodeSequence;
         }
         boolean useDescendantOrSelfAxis = ctx.SLASHES() != null;
         if (useDescendantOrSelfAxis) {
             final var savedNodes = saveMatchedModes();
             final var savedAxis = saveAxis();
             currentAxis = XQueryAxis.DESCENDANT_OR_SELF;
-            matchedNodes = getAllDescendantsOrSelf(List.of(root));
-            ctx.relativePathExpr().accept(this);
-            var resultingNodes = matchedNodes;
+            List<ParseTree> matchedTreeNodes = getDescendantsOrSelf(root.node());
+            matchedNodes = nodeSequence(matchedTreeNodes);
+            var resultingNodeSequence = ctx.relativePathExpr().accept(this);
             matchedNodes = savedNodes;
             currentAxis = savedAxis;
-            return new XQuerySequence(resultingNodes);
+            return resultingNodeSequence;
         }
         return ctx.relativePathExpr().accept(this);
     }
@@ -497,10 +503,11 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     @Override
     public XQueryValue visitAbbrevReverseStep(AbbrevReverseStepContext ctx) {
-        matchedNodes = getAllParents(matchedNodes);
-        return new XQuerySequence(matchedNodes);
+        var matchedParents = getAllParents(matchedTreeNodes());
+        return nodeSequence(matchedParents);
     }
 
+    private Predicate<String> canBeTokenName = Pattern.compile("^[[:upper:]]").asPredicate();
     @Override
     public XQueryValue visitNameTest(NameTestContext ctx) {
         var matchedTreeNodes = matchedTreeNodes();
@@ -523,14 +530,34 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                 case "*" -> nodeSequence(stepNodes);
                 // case "*:" -> ;
                 // case ":*" -> ;
-                default -> null;
+                default -> throw new AssertionError("Invalid wildcard");
             };
         }
-
-        List<XQueryValue> nodes = stepNodes.stream()
-            .map(XQueryTreeNode::new)
-            .collect(Collectors.toList());
-        return new XQuerySequence(nodes);
+        matchedTreeNodes = new ArrayList<>(stepNodes.size());
+        for (ParseTree node : stepNodes) {
+            String name = ctx.ID().toString();
+            if (canBeTokenName.test(name)) {
+                // test for tokens
+                int tokenType = parser.getTokenType(name);
+                // TODO: error values
+                if (tokenType == Token.INVALID_TYPE) return null;
+                TerminalNode tokenNode = (TerminalNode) node;
+                Token token = tokenNode.getSymbol();
+                if (token.getType() == tokenType) {
+                    matchedTreeNodes.add(tokenNode);
+                }
+            }
+            else { // test for rule
+                int ruleIndex = parser.getRuleIndex(name);
+                // TODO: error values
+                if (ruleIndex == -1) return null;
+                ParserRuleContext testedRule = (ParserRuleContext) node;
+                if (testedRule.getRuleIndex() == ruleIndex) {
+                    matchedTreeNodes.add(testedRule);
+                }
+            }
+        }
+        return nodeSequence(stepNodes);
     }
 
     private List<ParseTree> getAllFollowing(List<ParseTree> nodes) {
@@ -912,9 +939,9 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         return saved;
     }
 
-    private List<XQueryValue> saveMatchedModes() {
-        final var saved = matchedNodes;
-        matchedNodes = new ArrayList<>();
+    private XQueryValue saveMatchedModes() {
+        final XQueryValue saved = matchedNodes;
+        matchedNodes = new XQuerySequence();
         return saved;
     }
 

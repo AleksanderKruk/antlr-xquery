@@ -6,9 +6,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 
+import org.antlr.runtime.tree.ParseTree;
+
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 
 public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
+
     @Override
     public List<XQueryValue> sequence() {
         return value;

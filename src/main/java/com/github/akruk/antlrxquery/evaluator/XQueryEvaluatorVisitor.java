@@ -591,11 +591,10 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         return newMatched;
     }
 
-    private List<ParseTree> getAllParents(List<XQueryValue> nodes) {
+    private List<ParseTree> getAllParents(List<ParseTree> nodes) {
         List<ParseTree> newMatched = nodes.stream()
-            .map(value->value.node().getParent())
-            .collect(Collectors.toList())
-            ;
+            .map(ParseTree::getParent)
+            .toList();
         return newMatched;
     }
 

@@ -94,10 +94,6 @@ contextItemExpr: DOT;
 functionCall: ID argumentList;
 argument: exprSingle | argumentPlaceholder;
 argumentPlaceholder: QUESTION_MARK;
-elementDeclaration: elementName;
-attributeName: ID;
-elementName: ID;
-
 typeDeclaration: AS sequenceType;
 sequenceType: (ID occurrenceIndicator?);
 occurrenceIndicator: QUESTION_MARK | STAR | PLUS;

@@ -505,7 +505,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         //         default -> null;
         //     };
         // }
-        matchedNodes = switch (currentAxis) {
+        List<ParseTree> stepNodes = switch (currentAxis) {
             case ANCESTOR -> getAllAncestors(matchedNodes);
             case ANCESTOR_OR_SELF -> getAllAncestorsOrSelf(matchedNodes);
             case CHILD -> getAllChildren(matchedNodes);
@@ -519,76 +519,87 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             case SELF -> matchedNodes;
             default -> matchedNodes;
         };
-        return new XQuerySequence(matchedNodes);
+        List<XQueryValue> nodes = stepNodes.stream()
+                .map(XQueryTreeNode::new)
+                .collect(Collectors.toList());
+        return new XQuerySequence(nodes);
 
     }
 
-    private List<XQueryValue> getFollowingSibling(XQueryValue node) {
-        var newMatched = new ArrayList<XQueryValue>();
-        var parent = node.node().getParent();
-        var children = getChildren(new XQueryTreeNode(parent));
-        var nodeIndex = children.sequence().indexOf(node);
-
+    private List<ParseTree> getFollowingSibling(ParseTree node) {
+        var newMatched = new ArrayList<ParseTree>();
+        var parent = node.getParent();
+        var children = getChildren(parent);
+        var nodeIndex = children.indexOf(node);
         return newMatched;
     }
 
-    private List<XQueryValue> getAllDescendants(List<XQueryValue> nodes) {
-        var newMatched = new ArrayList<XQueryValue>();
-        var children = getChildren(nodes);
-        newMatched.addAll(children);
+
+    private List<ParseTree> getAllDescendants(List<ParseTree> nodes) {
+        var allDescendants = new ArrayList<ParseTree>();
+        for (var node : nodes) {
+            var descendants = getDescendants(node);
+            allDescendants.addAll(descendants);
+        }
+        return allDescendants;
+    }
+
+
+    private List<ParseTree> getDescendants(ParseTree treenode) {
+        List<ParseTree> allDescendants = new ArrayList<>();
+        List<ParseTree> children = getChildren(treenode);
         while (children.size() != 0) {
-            children = getChildren(children);
+            var child = children.removeFirst();
+            allDescendants.add(child);
+            var descendants = getChildren(child);
+            descendants.forEach(descendant->allDescendants.addFirst(descendant));
+        }
+        return allDescendants;
+    }
+
+
+    private List<ParseTree> getChildren(ParseTree treenode) {
+        List<ParseTree> children = IntStream.range(0, treenode.getChildCount())
+            .mapToObj(i->treenode.getChild(i))
+            .collect(Collectors.toList());
+        return children;
+    }
+
+
+    private List<ParseTree> getAllChildren(List<ParseTree> nodes) {
+        var newMatched = new ArrayList<ParseTree>();
+        for (var node : nodes) {
+            var children = getChildren(node);
             newMatched.addAll(children);
         }
         return newMatched;
     }
 
-    private XQueryValue getChildren(XQueryValue node) {
-        ParseTree treenode = node.node();
-        List<XQueryValue> children = IntStream.range(0, treenode.getChildCount())
-            .mapToObj(i->treenode.getChild(i))
-            .map(XQueryTreeNode::new)
-            .collect(Collectors.toList());
-        return new XQuerySequence(children);
-    }
 
-
-    private List<XQueryValue> getAllChildren(List<XQueryValue> nodes) {
-        var newMatched = new ArrayList<XQueryValue>();
-        for (var node : nodes) {
-            var children = getChildren(node);
-            newMatched.addAll(children.sequence());
-        }
-        return newMatched;
-    }
-
-
-    private List<XQueryValue> getAllAncestors(List<XQueryValue> nodes) {
-        var newMatched = new ArrayList<XQueryValue>();
+    private List<ParseTree> getAllAncestors(List<ParseTree> nodes) {
+        var newMatched = new ArrayList<ParseTree>();
         for (var valueNode : nodes) {
-            var treenode = valueNode.node();
-            newMatched.add(root);
-            var parent = treenode.getParent();
-            newMatched.add(new XQueryTreeNode(parent));
+            newMatched.add(root.node());
+            var parent = valueNode.getParent();
+            newMatched.add(parent);
             while (parent != root) {
-                parent = treenode.getParent();
-                newMatched.add(new XQueryTreeNode(parent));
+                parent = valueNode.getParent();
+                newMatched.add(parent);
             }
         }
         return newMatched;
     }
 
-    private List<XQueryValue> getAllParents(List<XQueryValue> nodes) {
-        List<XQueryValue> newMatched = nodes.stream()
+    private List<ParseTree> getAllParents(List<XQueryValue> nodes) {
+        List<ParseTree> newMatched = nodes.stream()
             .map(value->value.node().getParent())
-            .map(XQueryTreeNode::new)
             .collect(Collectors.toList())
             ;
         return newMatched;
     }
 
-    private List<XQueryValue> getAllAncestorsOrSelf(List<XQueryValue> nodes) {
-        var newMatched = new ArrayList<XQueryValue>();
+    private List<ParseTree> getAllAncestorsOrSelf(List<ParseTree> nodes) {
+        var newMatched = new ArrayList<ParseTree>();
         var ancestorPart = getAllAncestors(nodes);
         newMatched.addAll(ancestorPart);
         newMatched.addAll(nodes);

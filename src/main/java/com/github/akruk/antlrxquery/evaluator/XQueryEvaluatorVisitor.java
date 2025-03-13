@@ -18,6 +18,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.antlr.v4.runtime.tree.Trees;
 
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.AbbrevReverseStepContext;
@@ -425,23 +426,22 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         if (pathExpressionFromRoot) {
             final var savedNodes = saveMatchedModes();
             final var savedAxis = saveAxis();
-            ctx.relativePathExpr().accept(this);
-            var resultingNodes = matchedNodes;
+            var resultingNodeSequence = ctx.relativePathExpr().accept(this);
             matchedNodes = savedNodes;
             currentAxis = savedAxis;
-            return new XQuerySequence(resultingNodes);
+            return resultingNodeSequence;
         }
         boolean useDescendantOrSelfAxis = ctx.SLASHES() != null;
         if (useDescendantOrSelfAxis) {
             final var savedNodes = saveMatchedModes();
             final var savedAxis = saveAxis();
             currentAxis = XQueryAxis.DESCENDANT_OR_SELF;
-            matchedNodes = getAllDescendantsOrSelf(List.of(root));
-            ctx.relativePathExpr().accept(this);
-            var resultingNodes = matchedNodes;
+            List<ParseTree> matchedTreeNodes = getDescendantsOrSelf(root.node());
+            matchedNodes = nodeSequence(matchedTreeNodes);
+            var resultingNodeSequence = ctx.relativePathExpr().accept(this);
             matchedNodes = savedNodes;
             currentAxis = savedAxis;
-            return new XQuerySequence(resultingNodes);
+            return resultingNodeSequence;
         }
         return ctx.relativePathExpr().accept(this);
     }
@@ -503,8 +503,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     @Override
     public XQueryValue visitAbbrevReverseStep(AbbrevReverseStepContext ctx) {
-        matchedNodes = getAllParents(matchedNodes);
-        return new XQuerySequence(matchedNodes);
+        var matchedParents = getAllParents(matchedTreeNodes());
+        return nodeSequence(matchedParents);
     }
 
     private Predicate<String> canBeTokenName = Pattern.compile("^[[:upper:]]").asPredicate();
@@ -557,8 +557,6 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                 }
             }
         }
-
-
         return nodeSequence(stepNodes);
     }
 
@@ -941,9 +939,9 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         return saved;
     }
 
-    private List<XQueryValue> saveMatchedModes() {
-        final var saved = matchedNodes;
-        matchedNodes = new ArrayList<>();
+    private XQueryValue saveMatchedModes() {
+        final XQueryValue saved = matchedNodes;
+        matchedNodes = new XQuerySequence();
         return saved;
     }
 

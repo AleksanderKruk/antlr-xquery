@@ -3,13 +3,11 @@ package com.github.akruk.antlrxquery.evaluator;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -18,8 +16,6 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
-import org.antlr.v4.runtime.tree.Trees;
-
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.AbbrevReverseStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ArgumentContext;
@@ -134,31 +130,31 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             return new XQueryNumber(roundedNumberNormalNotation);
         }
 
-        private static final XQueryValue roundHaftToEven(final List<XQueryValue> args) {
-            assert args.size() == 1 || args.size() == 2;
-            final var arg1 = args.get(0);
-            final var number1 = arg1.numericValue();
-            final var negativeNumber = number1.compareTo(BigDecimal.ZERO) == -1;
-            final var oneArg = args.size() == 1;
-            if (oneArg && negativeNumber) {
-                return new XQueryNumber(number1.setScale(0, RoundingMode.HALF_DOWN));
-            }
-            if (oneArg) {
-                return new XQueryNumber(number1.setScale(0, RoundingMode.HALF_UP));
-            }
-            final var number2 = args.get(1).numericValue();
-            final int scale = number2.intValue();
-            if (negativeNumber) {
-                return new XQueryNumber(arg1.numericValue().setScale(scale, RoundingMode.HALF_DOWN));
-            }
-            if (scale > 0) {
-                final var roundedNumberNormalNotation = number1.setScale(scale, RoundingMode.HALF_UP);
-                return new XQueryNumber(roundedNumberNormalNotation);
-            }
-            final var roundedNumber = number1.setScale(scale, RoundingMode.HALF_UP);
-            final var roundedNumberNormalNotation = roundedNumber.setScale(0, RoundingMode.HALF_UP);
-            return new XQueryNumber(roundedNumberNormalNotation);
-        }
+        // private static final XQueryValue roundHaftToEven(final List<XQueryValue> args) {
+        //     assert args.size() == 1 || args.size() == 2;
+        //     final var arg1 = args.get(0);
+        //     final var number1 = arg1.numericValue();
+        //     final var negativeNumber = number1.compareTo(BigDecimal.ZERO) == -1;
+        //     final var oneArg = args.size() == 1;
+        //     if (oneArg && negativeNumber) {
+        //         return new XQueryNumber(number1.setScale(0, RoundingMode.HALF_DOWN));
+        //     }
+        //     if (oneArg) {
+        //         return new XQueryNumber(number1.setScale(0, RoundingMode.HALF_UP));
+        //     }
+        //     final var number2 = args.get(1).numericValue();
+        //     final int scale = number2.intValue();
+        //     if (negativeNumber) {
+        //         return new XQueryNumber(arg1.numericValue().setScale(scale, RoundingMode.HALF_DOWN));
+        //     }
+        //     if (scale > 0) {
+        //         final var roundedNumberNormalNotation = number1.setScale(scale, RoundingMode.HALF_UP);
+        //         return new XQueryNumber(roundedNumberNormalNotation);
+        //     }
+        //     final var roundedNumber = number1.setScale(scale, RoundingMode.HALF_UP);
+        //     final var roundedNumberNormalNotation = roundedNumber.setScale(0, RoundingMode.HALF_UP);
+        //     return new XQueryNumber(roundedNumberNormalNotation);
+        // }
 
         private static final XQueryValue numericAdd(final List<XQueryValue> args) {
             assert args.size() == 2;
@@ -587,7 +583,6 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
 
     private List<ParseTree> getPreceding(ParseTree node) {
-        var result = new ArrayList<ParseTree>();
         var precedingSiblings = getPrecedingSiblings(node);
         var preceding = getAllDescendantsOrSelf(precedingSiblings);
         return preceding;

@@ -304,7 +304,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser) {
         ParserRuleContext root = new ParserRuleContext();
-		root.children = Collections.singletonList(tree); // don't set t's parent.
+		root.children = List.of(tree);
         this.root = new XQueryTreeNode(root);
         this.parser = parser;
     }

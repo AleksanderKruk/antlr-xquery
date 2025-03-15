@@ -16,7 +16,7 @@ public final class XQuery {
     var xqueryTokens = new CommonTokenStream(xqueryLexer);
     var xqueryParser = new AntlrXqueryParser(xqueryTokens);
     var xqueryTree = xqueryParser.xquery();
-    XQueryEvaluatorVisitor visitor = new XQueryEvaluatorVisitor(xqueryTree, parser);
+    XQueryEvaluatorVisitor visitor = new XQueryEvaluatorVisitor(tree, parser);
     XQueryValue evaluated = visitor.visit(xqueryTree);
     return evaluated;
   }

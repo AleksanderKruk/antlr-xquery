@@ -2,7 +2,6 @@ package com.github.akruk.antlrxquery;
 
 import org.antlr.v4.runtime.tree.*;
 import org.antlr.v4.runtime.tree.xpath.XPath;
-import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;

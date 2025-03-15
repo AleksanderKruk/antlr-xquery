@@ -530,15 +530,39 @@ public class XQueryTest {
         return new TestParserAndTree(parser, tree);
     }
 
+
+    public void assertSameResultsAsAntlrXPath(String textualTree, String xquery) {
+        TestParserAndTree parserAndTree = parseTestTree(textualTree);
+        var nodes = XPath.findAll(parserAndTree.tree, xquery, parserAndTree.parser).toArray();
+        var value = XQuery.evaluate(parserAndTree.tree, xquery, parserAndTree.parser);
+        Object[] xqueryNodes = value.sequence().stream().map(val->val.node()).toArray();
+        assertArrayEquals(nodes, xqueryNodes);
+    }
+
     @Test
     public void rootPath() {
         // assert false;
-        TestParserAndTree parserAndTree = parseTestTree("a bc a d");
-        var nodes = XPath.findAll(parserAndTree.tree, "/test", parserAndTree.parser).toArray();
-        var value = XQuery.evaluate(parserAndTree.tree, "/test", parserAndTree.parser);
-        Object[] xqueryNodes = value.sequence().stream().map(val->val.node()).toArray();
-        assertArrayEquals(nodes, xqueryNodes);
-
+        assertSameResultsAsAntlrXPath("a bc a d",  "/test");
     }
+
+
+    @Test
+    public void rulePath() {
+        // assert false;
+        assertSameResultsAsAntlrXPath("a bc a d",  "/test/rule");
+        assertSameResultsAsAntlrXPath("a bc a d",  "/test//rule");
+    }
+
+
+    @Test
+    public void tokenPath() {
+        // assert false;
+        assertSameResultsAsAntlrXPath("a bc a d",  "//A");
+        assertSameResultsAsAntlrXPath("a bc a d",  "//B");
+        assertSameResultsAsAntlrXPath("a bc a d",  "//C");
+        assertSameResultsAsAntlrXPath("a bc a d",  "//D");
+    }
+
+// Wildcards
 
 }

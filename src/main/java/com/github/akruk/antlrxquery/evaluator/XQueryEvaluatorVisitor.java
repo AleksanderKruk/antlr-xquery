@@ -381,6 +381,9 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         return value;
     }
 
+
+
+
     @Override
     public XQueryValue visitOrExpr(final OrExprContext ctx) {
         try {
@@ -458,7 +461,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         matchedNodes = visitedNodeSequence;
         var operationCount = ctx.pathOperator().size();
         for (int i = 1; i <= operationCount; i++) {
-            matchedNodes = switch (ctx.pathOperator(i).getText()) {
+            matchedNodes = switch (ctx.pathOperator(i-1).getText()) {
                 case "//" -> {
                     List<ParseTree> descendantsOrSelf = getAllDescendantsOrSelf(matchedTreeNodes());
                     matchedNodes = nodeSequence(descendantsOrSelf);
@@ -537,7 +540,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
 
-    private Predicate<String> canBeTokenName = Pattern.compile("^[[:upper:]]").asPredicate();
+    private Predicate<String> canBeTokenName = Pattern.compile("^[\\p{IsUppercase}].*").asPredicate();
     @Override
     public XQueryValue visitNameTest(NameTestContext ctx) {
         var matchedTreeNodes = matchedTreeNodes();
@@ -564,30 +567,40 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             };
         }
         matchedTreeNodes = new ArrayList<>(stepNodes.size());
-        for (ParseTree node : stepNodes) {
-            String name = ctx.ID().toString();
-            if (canBeTokenName.test(name)) {
-                // test for tokens
-                int tokenType = parser.getTokenType(name);
-                // TODO: error values
-                if (tokenType == Token.INVALID_TYPE) return null;
+        String name = ctx.ID().toString();
+        if (canBeTokenName.test(name)) {
+            // test for token type
+            int tokenType = parser.getTokenType(name);
+            // TODO: error values
+            if (tokenType == Token.INVALID_TYPE)
+                return null;
+            for (ParseTree node : stepNodes) {
+                // We skip nodes that are not terminal
+                // i.e. are not tokens
+                if (!(node instanceof TerminalNode))
+                    continue;
                 TerminalNode tokenNode = (TerminalNode) node;
                 Token token = tokenNode.getSymbol();
                 if (token.getType() == tokenType) {
                     matchedTreeNodes.add(tokenNode);
                 }
             }
-            else { // test for rule
-                int ruleIndex = parser.getRuleIndex(name);
-                // TODO: error values
-                if (ruleIndex == -1) return null;
+        }
+        else { // test for rule
+            int ruleIndex = parser.getRuleIndex(name);
+            // TODO: error values
+            if (ruleIndex == -1) return null;
+            for (ParseTree node : stepNodes) {
+                // Token nodes are being skipped
+                if (!(node instanceof ParserRuleContext))
+                    continue;
                 ParserRuleContext testedRule = (ParserRuleContext) node;
                 if (testedRule.getRuleIndex() == ruleIndex) {
                     matchedTreeNodes.add(testedRule);
                 }
             }
         }
-        return nodeSequence(stepNodes);
+        return nodeSequence(matchedTreeNodes);
     }
 
     private List<ParseTree> getAllFollowing(List<ParseTree> nodes) {

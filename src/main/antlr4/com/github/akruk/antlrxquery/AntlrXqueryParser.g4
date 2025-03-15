@@ -49,7 +49,7 @@ multiplicativeOperator: STAR | DIV | IDIV | MOD;
 generalComp: EQ_OP | NE_OP | LT_OP | LE_OP | GT_OP | GE_OP;
 valueComp: EQ | NE | LT | LE | GT | GE;
 nodeComp: IS | PRECEDING_OP | FOLLOWING_OP;
-pathExpr: (SLASH relativePathExpr?)
+pathExpr: (SLASH relativePathExpr?) // TODO: verify optionality
         | (SLASHES relativePathExpr)
         | relativePathExpr;
 relativePathExpr: stepExpr (pathOperator stepExpr)*;

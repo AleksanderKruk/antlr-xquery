@@ -30,6 +30,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.NodeTestContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.OrExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PathExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.PostfixExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.RelativePathExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseAxisContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseStepContext;
@@ -304,7 +305,9 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser) {
         ParserRuleContext root = new ParserRuleContext();
-		root.children = List.of(tree);
+        if (tree != null) {
+            root.children = List.of(tree);
+        }
         this.root = new XQueryTreeNode(root);
         this.parser = parser;
     }
@@ -503,6 +506,13 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             stepResult = ctx.forwardStep().accept(this);
         // TODO: add predicate list
         return stepResult;
+    }
+
+    @Override
+    public XQueryValue visitPostfixExpr(PostfixExprContext ctx) {
+        // TODO: predicates
+        // TODO: dynamic function calls
+        return ctx.primaryExpr().accept(this);
     }
 
     @Override

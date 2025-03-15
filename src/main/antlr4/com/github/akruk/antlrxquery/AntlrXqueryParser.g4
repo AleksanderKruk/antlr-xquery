@@ -56,7 +56,7 @@ relativePathExpr: stepExpr (pathOperator stepExpr)*;
 pathOperator: SLASH | SLASHES;
 stepExpr: postfixExpr | axisStep;
 axisStep: (reverseStep | forwardStep) predicateList;
-forwardStep: (forwardAxis nodeTest) | nodeTest;
+forwardStep: forwardAxis? nodeTest;
 
 forwardAxis: (CHILD COLONS)
         | (DESCENDANT COLONS)

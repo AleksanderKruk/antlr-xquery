@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -18,23 +17,24 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
-import org.antlr.v4.runtime.tree.Trees;
-
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.AbbrevReverseStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ArgumentContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.AxisStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ForwardAxisContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ForwardStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionCallContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.LiteralContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.NameTestContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.NodeTestContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.OrExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PathExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.RelativePathExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseAxisContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseStepContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.StepExprContext;
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 import com.github.akruk.antlrxquery.values.XQueryNumber;
 import com.github.akruk.antlrxquery.values.XQuerySequence;
@@ -304,7 +304,9 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser) {
-        this.root = new XQueryTreeNode(tree);
+        ParserRuleContext root = new ParserRuleContext();
+		root.children = Collections.singletonList(tree); // don't set t's parent.
+        this.root = new XQueryTreeNode(root);
         this.parser = parser;
     }
 
@@ -426,6 +428,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         if (pathExpressionFromRoot) {
             final var savedNodes = saveMatchedModes();
             final var savedAxis = saveAxis();
+            // TODO: Context nodes
+            matchedNodes = nodeSequence(List.of(root.node()));
             var resultingNodeSequence = ctx.relativePathExpr().accept(this);
             matchedNodes = savedNodes;
             currentAxis = savedAxis;
@@ -480,6 +484,24 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         return matchedNodes.sequence().stream().map(XQueryValue::node).toList();
     }
 
+    @Override
+    public XQueryValue visitStepExpr(StepExprContext ctx) {
+        if (ctx.postfixExpr() != null)
+            return ctx.postfixExpr().accept(this);
+        return ctx.axisStep().accept(this);
+    }
+
+
+    @Override
+    public XQueryValue visitAxisStep(AxisStepContext ctx) {
+        XQueryValue stepResult = null;
+        if (ctx.reverseStep() != null)
+            stepResult = ctx.reverseStep().accept(this);
+        else if (ctx.forwardStep() != null)
+            stepResult = ctx.forwardStep().accept(this);
+        // TODO: add predicate list
+        return stepResult;
+    }
 
     @Override
     public XQueryValue visitForwardStep(ForwardStepContext ctx) {
@@ -487,6 +509,9 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             ctx.forwardAxis().accept(this);
         }
         else {
+            // the first slash will work
+            // because of the fake root
+            // '/*' will return the real root
             currentAxis = XQueryAxis.CHILD;
         }
         return ctx.nodeTest().accept(this);
@@ -506,6 +531,12 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         var matchedParents = getAllParents(matchedTreeNodes());
         return nodeSequence(matchedParents);
     }
+
+    @Override
+    public XQueryValue visitNodeTest(NodeTestContext ctx) {
+        return ctx.nameTest().accept(this);
+    }
+
 
     private Predicate<String> canBeTokenName = Pattern.compile("^[[:upper:]]").asPredicate();
     @Override

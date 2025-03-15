@@ -1,9 +1,17 @@
 package com.github.akruk.antlrxquery;
 
+import org.antlr.v4.runtime.tree.*;
+import org.antlr.v4.runtime.tree.xpath.XPath;
+import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CodePointCharStream;
+import org.antlr.v4.runtime.CommonTokenStream;
 import org.junit.Test;
 
 import com.github.akruk.antlrxquery.evaluator.XQuery;
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
+import com.github.akruk.antlrxquery.testgrammars.TestLexer;
+import com.github.akruk.antlrxquery.testgrammars.TestParser;
 import com.github.akruk.antlrxquery.values.XQueryBoolean;
 import com.github.akruk.antlrxquery.values.XQueryNumber;
 import com.github.akruk.antlrxquery.values.XQueryString;
@@ -19,7 +27,6 @@ import static org.junit.Assert.*;
 
 public class XQueryTest {
 
-
     public void assertResult(String xquery, String result) {
         var value = XQuery.evaluate(null, xquery, null);
         assertNotNull(value);
@@ -32,7 +39,7 @@ public class XQueryTest {
         assertEquals(result, value.numericValue());
     }
 
-    public void assertResult(String xquery, XQueryValue result) throws XQueryUnsupportedOperation  {
+    public void assertResult(String xquery, XQueryValue result) throws XQueryUnsupportedOperation {
         XQueryValue value = XQuery.evaluate(null, xquery, null);
         assertNotNull(value);
         assertTrue(result.valueEqual(value).booleanValue());
@@ -79,10 +86,9 @@ public class XQueryTest {
                 """;
         var value = XQuery.evaluate(null, xquery, null);
         List<XQueryValue> expected = List.of(
-            new XQueryNumber(BigDecimal.ONE),
-            new XQueryNumber(BigDecimal.valueOf(2)),
-            new XQueryNumber(BigDecimal.valueOf(3))
-        );
+                new XQueryNumber(BigDecimal.ONE),
+                new XQueryNumber(BigDecimal.valueOf(2)),
+                new XQueryNumber(BigDecimal.valueOf(3)));
         assertNotNull(value);
         assertNotNull(value.sequence());
         var sequence = value.sequence();
@@ -93,7 +99,6 @@ public class XQueryTest {
 
     }
 
-
     @Test
     public void atomization() {
         String xquery = """
@@ -101,65 +106,60 @@ public class XQueryTest {
                 """;
         var value = XQuery.evaluate(null, xquery, null);
         List<XQueryValue> expected = List.of(
-            new XQueryNumber(BigDecimal.ONE),
-            new XQueryNumber(BigDecimal.valueOf(2)),
-            new XQueryNumber(BigDecimal.valueOf(3)),
-            new XQueryNumber(BigDecimal.valueOf(4)),
-            new XQueryNumber(BigDecimal.valueOf(5)),
-            new XQueryNumber(BigDecimal.valueOf(6)),
-            new XQueryNumber(BigDecimal.valueOf(7))
-        );
+                new XQueryNumber(BigDecimal.ONE),
+                new XQueryNumber(BigDecimal.valueOf(2)),
+                new XQueryNumber(BigDecimal.valueOf(3)),
+                new XQueryNumber(BigDecimal.valueOf(4)),
+                new XQueryNumber(BigDecimal.valueOf(5)),
+                new XQueryNumber(BigDecimal.valueOf(6)),
+                new XQueryNumber(BigDecimal.valueOf(7)));
         assertArrayEquals(
-            expected.stream().map(XQueryValue::numericValue).toArray(),
-            value.sequence().stream().map(XQueryValue::numericValue).toArray()
-        );
+                expected.stream().map(XQueryValue::numericValue).toArray(),
+                value.sequence().stream().map(XQueryValue::numericValue).toArray());
     }
 
     @Test
     public void trueConstant() {
         String xquery = """
-            true()
-        """;
+                    true()
+                """;
         var value = XQuery.evaluate(null, xquery, null);
         assertTrue(value.booleanValue().equals(XQueryBoolean.TRUE.booleanValue()));
     }
 
-
     @Test
     public void falseConstant() {
         String xquery = """
-            false()
-        """;
+                    false()
+                """;
         var value = XQuery.evaluate(null, xquery, null);
         assertTrue(value.booleanValue().equals(XQueryBoolean.FALSE.booleanValue()));
     }
 
-
     @Test
     public void or() {
         String xquery = """
-            false() or false() or true()
-        """;
+                    false() or false() or true()
+                """;
         var value = XQuery.evaluate(null, xquery, null);
         assertTrue(value.booleanValue());
         xquery = """
-            false() or false() or false()
-        """;
+                    false() or false() or false()
+                """;
         value = XQuery.evaluate(null, xquery, null);
         assertFalse(value.booleanValue());
     }
 
-
     @Test
     public void and() {
         String xquery = """
-            true() and true() and false()
-        """;
+                    true() and true() and false()
+                """;
         var value = XQuery.evaluate(null, xquery, null);
         assertFalse(value.booleanValue());
         xquery = """
-            true() and true() and true()
-        """;
+                    true() and true() and true()
+                """;
         value = XQuery.evaluate(null, xquery, null);
         assertTrue(value.booleanValue());
     }
@@ -167,47 +167,43 @@ public class XQueryTest {
     @Test
     public void not() {
         String xquery = """
-            not(true())
-        """;
+                    not(true())
+                """;
         var value = XQuery.evaluate(null, xquery, null);
         assertFalse(value.booleanValue());
         xquery = """
-            not(false())
-        """;
+                    not(false())
+                """;
         value = XQuery.evaluate(null, xquery, null);
         assertTrue(value.booleanValue());
     }
 
-
     @Test
     public void addition() {
         String xquery = """
-            5 + 3.10
-        """;
+                    5 + 3.10
+                """;
         var value = XQuery.evaluate(null, xquery, null);
         assertEquals(new BigDecimal("8.10"), value.numericValue());
     }
 
-
     @Test
     public void subtraction() {
         String xquery = """
-            5 - 3.10
-        """;
+                    5 - 3.10
+                """;
         var value = XQuery.evaluate(null, xquery, null);
         assertEquals(new BigDecimal("1.9").setScale(2), value.numericValue().setScale(2));
     }
 
-
     @Test
     public void multiplication() {
         String xquery = """
-            5 * 3.0
-        """;
+                    5 * 3.0
+                """;
         var value = XQuery.evaluate(null, xquery, null);
         assertEquals(new BigDecimal(15).setScale(2), value.numericValue().setScale(2));
     }
-
 
     @Test
     public void division() {
@@ -226,18 +222,17 @@ public class XQueryTest {
     @Test
     public void modulus() {
         String xquery = """
-            4 mod 2
-        """;
+                    4 mod 2
+                """;
         var value = XQuery.evaluate(null, xquery, null);
         assertEquals(BigDecimal.ZERO.setScale(2), value.numericValue().setScale(2));
     }
 
-
     @Test
     public void sequenceUnion() {
         String xquery = """
-            (1, 2, 3) | (4, 5, 6)
-        """;
+                    (1, 2, 3) | (4, 5, 6)
+                """;
         var value = XQuery.evaluate(null, xquery, null);
         var expected = List.of(
                 new XQueryNumber(BigDecimal.valueOf(1)),
@@ -245,22 +240,21 @@ public class XQueryTest {
                 new XQueryNumber(BigDecimal.valueOf(3)),
                 new XQueryNumber(BigDecimal.valueOf(4)),
                 new XQueryNumber(BigDecimal.valueOf(5)),
-                new XQueryNumber(BigDecimal.valueOf(6))
-        );
+                new XQueryNumber(BigDecimal.valueOf(6)));
         assertEquals(expected.size(), value.sequence().size());
         var sequence = value.sequence();
-        for (int i = 0; i< expected.size(); i++) {
+        for (int i = 0; i < expected.size(); i++) {
             var element = expected.get(i);
             var received = sequence.get(i);
             assertEquals(element.numericValue(), received.numericValue());
         }
         xquery = """
-            (1, 2, 3) union (4, 5, 6)
-        """;
+                    (1, 2, 3) union (4, 5, 6)
+                """;
         value = XQuery.evaluate(null, xquery, null);
         assertEquals(expected.size(), value.sequence().size());
         sequence = value.sequence();
-        for (int i = 0; i< expected.size(); i++) {
+        for (int i = 0; i < expected.size(); i++) {
             var element = expected.get(i);
             var received = sequence.get(i);
             assertEquals(element.numericValue(), received.numericValue());
@@ -270,38 +264,36 @@ public class XQueryTest {
     @Test
     public void sequenceIntersection() {
         String xquery = """
-            (1, 2, 3, 4) intersect (0, 2, 4, 8)
-        """;
+                    (1, 2, 3, 4) intersect (0, 2, 4, 8)
+                """;
         var value = XQuery.evaluate(null, xquery, null);
         BigDecimal[] expected = {
                 (BigDecimal.valueOf(2)),
                 (BigDecimal.valueOf(4)),
         };
         BigDecimal[] numbersFromSequence = value.sequence()
-            .stream()
-            .map(XQueryValue::numericValue)
-            .toArray(BigDecimal[]::new);
+                .stream()
+                .map(XQueryValue::numericValue)
+                .toArray(BigDecimal[]::new);
         assertArrayEquals(expected, numbersFromSequence);
     }
-
 
     @Test
     public void sequenceSubtraction() {
         String xquery = """
-            (1, 2, 3, 4) except (2, 4)
-        """;
+                    (1, 2, 3, 4) except (2, 4)
+                """;
         var value = XQuery.evaluate(null, xquery, null);
         BigDecimal[] expected = {
                 BigDecimal.valueOf(1),
                 BigDecimal.valueOf(3),
         };
         BigDecimal[] numbersFromSequence = value.sequence()
-            .stream()
-            .map(XQueryValue::numericValue)
-            .toArray(BigDecimal[]::new);
+                .stream()
+                .map(XQueryValue::numericValue)
+                .toArray(BigDecimal[]::new);
         assertArrayEquals(expected, numbersFromSequence);
     }
-
 
     @Test
     public void generalComparison() throws XQueryUnsupportedOperation {
@@ -380,7 +372,6 @@ public class XQueryTest {
         assertResult("'abcd' le 'abcd'", XQueryBoolean.TRUE);
     }
 
-
     @Test
     public void valueComparisonsLessThan() throws XQueryUnsupportedOperation {
         // A lt B 	numeric 	numeric 	op:numeric-less-than(A, B) 	xs:boolean
@@ -398,7 +389,6 @@ public class XQueryTest {
         assertResult("'abcd' lt 'abcd'", XQueryBoolean.FALSE);
     }
 
-
     @Test
     public void concatenationExperssions() throws XQueryUnsupportedOperation {
         assertResult("'abc' || 'def' || 'ghi'", new XQueryString("abcdefghi"));
@@ -409,7 +399,6 @@ public class XQueryTest {
         assertResult("abs(3)", BigDecimal.valueOf(3));
         assertResult("abs(-3)", BigDecimal.valueOf(3));
     }
-
 
     @Test
     public void ceiling() {
@@ -530,5 +519,27 @@ public class XQueryTest {
     // public void atan2() {
     //     assertResult("atan2(5, 2)", BigDecimal.ONE);
     // }
+
+    record TestParserAndTree(TestParser parser, ParseTree tree) {}
+
+    TestParserAndTree parseTestTree(String text) {
+        CodePointCharStream stream = CharStreams.fromString(text);
+        TestLexer lexer = new TestLexer(stream);
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        TestParser parser = new TestParser(tokens);
+        ParseTree tree = parser.test();
+        return new TestParserAndTree(parser, tree);
+    }
+
+    @Test
+    public void rootPath() {
+        // assert false;
+        TestParserAndTree parserAndTree = parseTestTree("a bc a d");
+        var nodes = XPath.findAll(parserAndTree.tree, "/test", parserAndTree.parser).toArray();
+        var value = XQuery.evaluate(parserAndTree.tree, "/test", parserAndTree.parser);
+        Object[] xqueryNodes = value.sequence().stream().map(val->val.node()).toArray();
+        assertArrayEquals(nodes, xqueryNodes);
+
+    }
 
 }

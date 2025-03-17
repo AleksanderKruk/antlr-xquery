@@ -5,6 +5,7 @@ import org.antlr.v4.runtime.tree.xpath.XPath;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.misc.NotNull;
 import org.junit.Test;
 
 import com.github.akruk.antlrxquery.evaluator.XQuery;
@@ -20,7 +21,10 @@ import static org.junit.Assert.assertEquals;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
@@ -533,9 +537,11 @@ public class XQueryTest {
 
     public void assertSameResultsAsAntlrXPath(String textualTree, String xquery) {
         TestParserAndTree parserAndTree = parseTestTree(textualTree);
-        var nodes = XPath.findAll(parserAndTree.tree, xquery, parserAndTree.parser).toArray();
+        ParseTree[] nodes = XPath.findAll(parserAndTree.tree, xquery, parserAndTree.parser)
+            .toArray(ParseTree[]::new);
         var value = XQuery.evaluate(parserAndTree.tree, xquery, parserAndTree.parser);
-        Object[] xqueryNodes = value.sequence().stream().map(val->val.node()).toArray();
+        ParseTree[] xqueryNodes = value.sequence().stream().map(val->val.node())
+            .toArray(ParseTree[]::new);
         assertArrayEquals(nodes, xqueryNodes);
     }
 
@@ -563,6 +569,21 @@ public class XQueryTest {
         assertSameResultsAsAntlrXPath("a bc a d",  "//D");
     }
 
+    @Test
+    public void wildcards() {
+        String textualTree = "a bc a d";
+        String xquery = "//*";
+        TestParserAndTree parserAndTree = parseTestTree(textualTree);
+        ParseTree[] nodes = XPath.findAll(parserAndTree.tree, xquery, parserAndTree.parser)
+            .toArray(ParseTree[]::new);
+        var value = XQuery.evaluate(parserAndTree.tree, xquery, parserAndTree.parser);
+        ParseTree[] xqueryNodes = value.sequence().stream().map(val->val.node())
+            .toArray(ParseTree[]::new);
+        assertEquals(nodes.length, xqueryNodes.length);
+        for (int i = 1; i < xqueryNodes.length; i++) {
+            assertEquals(nodes[i], xqueryNodes[i]);
+        }
+    }
 // Wildcards
 
 }

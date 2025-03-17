@@ -307,6 +307,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         ParserRuleContext root = new ParserRuleContext();
         if (tree != null) {
             root.children = List.of(tree);
+            // tree.setParent(root);
         }
         this.root = new XQueryTreeNode(root);
         this.parser = parser;
@@ -435,6 +436,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             final var savedAxis = saveAxis();
             // TODO: Context nodes
             matchedNodes = nodeSequence(List.of(root.node()));
+            currentAxis = XQueryAxis.CHILD;
             var resultingNodeSequence = ctx.relativePathExpr().accept(this);
             matchedNodes = savedNodes;
             currentAxis = savedAxis;
@@ -444,9 +446,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         if (useDescendantOrSelfAxis) {
             final var savedNodes = saveMatchedModes();
             final var savedAxis = saveAxis();
+            matchedNodes = nodeSequence(List.of(root.node()));
             currentAxis = XQueryAxis.DESCENDANT_OR_SELF;
-            List<ParseTree> matchedTreeNodes = getDescendantsOrSelf(root.node());
-            matchedNodes = nodeSequence(matchedTreeNodes);
             var resultingNodeSequence = ctx.relativePathExpr().accept(this);
             matchedNodes = savedNodes;
             currentAxis = savedAxis;
@@ -524,7 +525,9 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             // the first slash will work
             // because of the fake root
             // '/*' will return the real root
-            currentAxis = XQueryAxis.CHILD;
+            if (currentAxis == null) {
+                currentAxis = XQueryAxis.CHILD;
+            }
         }
         return ctx.nodeTest().accept(this);
     }
@@ -698,6 +701,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         var descendants = getDescendants(node);
         newMatched.add(node);
         newMatched.addAll(descendants);
+
         return newMatched;
     }
 
@@ -718,7 +722,9 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             var child = children.removeFirst();
             allDescendants.add(child);
             var descendants = getChildren(child);
-            descendants.forEach(descendant->allDescendants.addFirst(descendant));
+            for (ParseTree descendantTree : descendants.reversed()) {
+                children.addFirst(descendantTree);
+            }
         }
         return allDescendants;
     }
@@ -764,6 +770,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
     private List<ParseTree> getAllAncestorsOrSelf(List<ParseTree> nodes) {
+        // TODO: Correct sequence
         var newMatched = new ArrayList<ParseTree>();
         var ancestorPart = getAllAncestors(nodes);
         newMatched.addAll(ancestorPart);

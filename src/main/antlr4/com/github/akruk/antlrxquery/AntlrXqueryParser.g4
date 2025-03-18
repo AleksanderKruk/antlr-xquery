@@ -91,9 +91,12 @@ varRef: DOLLAR varName;
 varName: ID;
 parenthesizedExpr: LPAREN expr? RPAREN;
 contextItemExpr: DOT;
-functionCall: ID argumentList;
+functionCall: functionName argumentList;
 argument: exprSingle | argumentPlaceholder;
 argumentPlaceholder: QUESTION_MARK;
 typeDeclaration: AS sequenceType;
 sequenceType: (ID occurrenceIndicator?);
 occurrenceIndicator: QUESTION_MARK | STAR | PLUS;
+functionName: ID
+            | EMPTY
+            ;

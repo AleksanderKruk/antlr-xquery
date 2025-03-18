@@ -308,6 +308,19 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             }
         }
 
+
+        private static XQueryValue insertBefore(final List<XQueryValue> args) {
+            assert args.size() == 3;
+            try {
+                var target = args.get(0);
+                var position = args.get(1);
+                var inserts = args.get(2);
+                return args.get(0).insertBefore(position, inserts);
+            } catch (XQueryUnsupportedOperation e) {
+                return null;
+            }
+        }
+
     }
 
     private static final Map<String, XQueryFunction> functions;
@@ -334,6 +347,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         functions.put("exists", XQueryEvaluatorVisitor.Functions::exists);
         functions.put("head", XQueryEvaluatorVisitor.Functions::head);
         functions.put("tail", XQueryEvaluatorVisitor.Functions::tail);
+        functions.put("insert-before", XQueryEvaluatorVisitor.Functions::insertBefore);
     }
 
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser) {

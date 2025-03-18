@@ -26,7 +26,7 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
 
 
     public XQuerySequence() {
-        value = Collections.emptyList();
+        value = List.of();
     }
 
     @Override
@@ -113,5 +113,27 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
             return XQuerySequence.EMPTY;
         return new XQuerySequence(value.subList(1, value.size()));
     }
+
+    @Override
+    public XQueryValue insertBefore(XQueryValue position,
+            XQueryValue inserted) throws XQueryUnsupportedOperation
+    {
+        var newSequence = new ArrayList<XQueryValue>(value.size());
+        newSequence.addAll(value);
+        if (!position.isNumericValue())
+            throw new XQueryUnsupportedOperation();
+        int positionIndex = position.numericValue().intValue();
+        if (positionIndex > value.size()) {
+            newSequence.addAll(inserted.atomize());
+            return new XQuerySequence(newSequence);
+        }
+        if (positionIndex <= 0) {
+            newSequence.addAll(0, inserted.atomize());
+            return new XQuerySequence(newSequence);
+        }
+        newSequence.addAll(positionIndex - 1, inserted.atomize());
+        return new XQuerySequence(newSequence);
+    }
+
 
 }

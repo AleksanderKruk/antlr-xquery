@@ -643,6 +643,34 @@ public class XQueryTest {
         // The expression fn:head([1,2,3]) returns [1,2,3].
     }
 
+    @Test
+    public void insertBefore() throws XQueryUnsupportedOperation {
+        // The expression fn:insert-before(("a", "b", "c"), 0, "z") returns ("z", "a", "b", "c").
+        // The expression fn:insert-before(("a", "b", "c"), 1, "z") returns ("z", "a", "b", "c").
+        // The expression fn:insert-before(("a", "b", "c"), 2, "z") returns ("a", "z", "b", "c").
+        // The expression fn:insert-before(("a", "b", "c"), 3, "z") returns ("a", "b", "z", "c").
+        // The expression fn:insert-before(("a", "b", "c"), 4, "z") returns ("a", "b", "c", "z").
+        var a = new XQueryString("a");
+        var b = new XQueryString("b");
+        var c = new XQueryString("c");
+        var z = new XQueryString("z");
+        assertResult("""
+            insert-before(("a", "b", "c"), 0, "z")
+            """, List.of(z, a, b, c));
+        assertResult("""
+            insert-before(("a", "b", "c"), 1, "z")
+            """, List.of(z, a, b, c));
+        assertResult("""
+            insert-before(("a", "b", "c"), 2, "z")
+            """, List.of(a, z, b, c));
+        assertResult("""
+            insert-before(("a", "b", "c"), 3, "z")
+            """, List.of(a, b, z, c));
+        assertResult("""
+            insert-before(("a", "b", "c"), 4, "z")
+            """, List.of(a, b, c, z));
+    }
+
 // Wildcards
 
 }

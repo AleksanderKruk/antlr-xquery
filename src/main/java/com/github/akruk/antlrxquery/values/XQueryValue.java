@@ -259,6 +259,14 @@ public interface XQueryValue {
         throw new XQueryUnsupportedOperation();
     }
 
+    public default XQueryValue insertBefore(XQueryValue position, XQueryValue inserted) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
+
+    public default XQueryValue insertAfter(XQueryValue position, XQueryValue inserted) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
+
 
 
 

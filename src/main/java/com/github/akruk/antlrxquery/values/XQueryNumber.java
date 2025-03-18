@@ -14,6 +14,10 @@ public class XQueryNumber extends XQueryValueBase<BigDecimal> {
         value = n;
     }
 
+    public XQueryNumber(int i) {
+        value = new BigDecimal(i);
+    }
+
     @Override
     public BigDecimal numericValue() {
         return value;

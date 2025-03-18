@@ -105,4 +105,13 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
             return XQuerySequence.EMPTY;
         return value.get(0);
     }
+
+
+    @Override
+    public XQueryValue tail() throws XQueryUnsupportedOperation {
+        if (value.isEmpty())
+            return XQuerySequence.EMPTY;
+        return new XQuerySequence(value.subList(1, value.size()));
+    }
+
 }

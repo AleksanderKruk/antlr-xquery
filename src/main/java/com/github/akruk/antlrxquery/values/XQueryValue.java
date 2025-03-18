@@ -255,6 +255,11 @@ public interface XQueryValue {
         throw new XQueryUnsupportedOperation();
     }
 
+    public default XQueryValue tail() throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
+
+
 
 
 }

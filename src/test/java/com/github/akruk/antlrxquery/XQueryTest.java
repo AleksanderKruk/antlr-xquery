@@ -44,7 +44,9 @@ public class XQueryTest {
         assertNotNull(value);
         assertEquals(result.size(), value.sequence().size());
         for (int i = 0; i < result.size(); i++) {
-            assertEquals(XQueryBoolean.TRUE, result.get(i).valueEqual(value));
+            var expected = result.get(i);
+            var received = value.sequence().get(i);
+            assertEquals(XQueryBoolean.TRUE, expected.valueEqual(received));
         }
     }
 
@@ -628,6 +630,18 @@ public class XQueryTest {
         // The expression fn:head([1,2,3]) returns [1,2,3].
     }
 
+
+    @Test
+    public void tail() throws XQueryUnsupportedOperation {
+        assertResult("tail(())", XQuerySequence.EMPTY.sequence());
+        assertResult("tail((1,2,3))", List.of(new XQueryNumber(2), new XQueryNumber(3)));
+        assertResult("tail(\"\")", XQuerySequence.EMPTY.sequence());
+        assertResult("tail(\"abcd\")", new XQueryString("bcd"));
+        // The expression fn:head(1 to 5) returns 1.
+        // The expression fn:head(("a", "b", "c")) returns "a".
+        // The expression fn:head(()) returns ().
+        // The expression fn:head([1,2,3]) returns [1,2,3].
+    }
 
 // Wildcards
 

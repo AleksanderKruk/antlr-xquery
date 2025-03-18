@@ -5,7 +5,6 @@ import org.antlr.v4.runtime.tree.xpath.XPath;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.misc.NotNull;
 import org.junit.Test;
 
 import com.github.akruk.antlrxquery.evaluator.XQuery;
@@ -21,11 +20,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
-
 import static org.junit.Assert.*;
 
 public class XQueryTest {

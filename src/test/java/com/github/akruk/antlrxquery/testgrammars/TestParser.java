@@ -1,4 +1,4 @@
-// Generated from ./src/test/testgrammars/Test.g4 by ANTLR 4.13.2
+// Generated from D:/Programowanie/antlr-xquery/src/test/testgrammars/Test.g4 by ANTLR 4.13.2
 package com.github.akruk.antlrxquery.testgrammars;
 import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
@@ -17,7 +17,7 @@ public class TestParser extends Parser {
 	protected static final PredictionContextCache _sharedContextCache =
 		new PredictionContextCache();
 	public static final int
-		A=1, B=2, C=3, D=4;
+		A=1, B=2, C=3, D=4, WS=5;
 	public static final int
 		RULE_test = 0, RULE_rule = 1;
 	private static String[] makeRuleNames() {
@@ -35,7 +35,7 @@ public class TestParser extends Parser {
 	private static final String[] _LITERAL_NAMES = makeLiteralNames();
 	private static String[] makeSymbolicNames() {
 		return new String[] {
-			null, "A", "B", "C", "D"
+			null, "A", "B", "C", "D", "WS"
 		};
 	}
 	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
@@ -91,9 +91,15 @@ public class TestParser extends Parser {
 
 	@SuppressWarnings("CheckReturnValue")
 	public static class TestContext extends ParserRuleContext {
-		public TerminalNode A() { return getToken(TestParser.A, 0); }
-		public RuleContext rule_() {
-			return getRuleContext(RuleContext.class,0);
+		public List<TerminalNode> A() { return getTokens(TestParser.A); }
+		public TerminalNode A(int i) {
+			return getToken(TestParser.A, i);
+		}
+		public List<RuleContext> rule_() {
+			return getRuleContexts(RuleContext.class);
+		}
+		public RuleContext rule_(int i) {
+			return getRuleContext(RuleContext.class,i);
 		}
 		public TestContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -112,27 +118,39 @@ public class TestParser extends Parser {
 	public final TestContext test() throws RecognitionException {
 		TestContext _localctx = new TestContext(_ctx, getState());
 		enterRule(_localctx, 0, RULE_test);
+		int _la;
 		try {
+			enterOuterAlt(_localctx, 1);
+			{
 			setState(6);
 			_errHandler.sync(this);
-			switch (_input.LA(1)) {
-			case A:
-				enterOuterAlt(_localctx, 1);
+			_la = _input.LA(1);
+			do {
 				{
-				setState(4);
-				match(A);
+				setState(6);
+				_errHandler.sync(this);
+				switch (_input.LA(1)) {
+				case A:
+					{
+					setState(4);
+					match(A);
+					}
+					break;
+				case B:
+				case D:
+					{
+					setState(5);
+					rule_();
+					}
+					break;
+				default:
+					throw new NoViableAltException(this);
 				}
-				break;
-			case B:
-			case D:
-				enterOuterAlt(_localctx, 2);
-				{
-				setState(5);
-				rule_();
 				}
-				break;
-			default:
-				throw new NoViableAltException(this);
+				setState(8);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
+			} while ( (((_la) & ~0x3f) == 0 && ((1L << _la) & 22L) != 0) );
 			}
 		}
 		catch (RecognitionException re) {
@@ -169,22 +187,22 @@ public class TestParser extends Parser {
 		RuleContext _localctx = new RuleContext(_ctx, getState());
 		enterRule(_localctx, 2, RULE_rule);
 		try {
-			setState(11);
+			setState(13);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case B:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(8);
+				setState(10);
 				match(B);
-				setState(9);
+				setState(11);
 				match(C);
 				}
 				break;
 			case D:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(10);
+				setState(12);
 				match(D);
 				}
 				break;
@@ -204,16 +222,18 @@ public class TestParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\u0004\u0001\u0004\u000e\u0002\u0000\u0007\u0000\u0002\u0001\u0007\u0001"+
-		"\u0001\u0000\u0001\u0000\u0003\u0000\u0007\b\u0000\u0001\u0001\u0001\u0001"+
-		"\u0001\u0001\u0003\u0001\f\b\u0001\u0001\u0001\u0000\u0000\u0002\u0000"+
-		"\u0002\u0000\u0000\r\u0000\u0006\u0001\u0000\u0000\u0000\u0002\u000b\u0001"+
-		"\u0000\u0000\u0000\u0004\u0007\u0005\u0001\u0000\u0000\u0005\u0007\u0003"+
-		"\u0002\u0001\u0000\u0006\u0004\u0001\u0000\u0000\u0000\u0006\u0005\u0001"+
-		"\u0000\u0000\u0000\u0007\u0001\u0001\u0000\u0000\u0000\b\t\u0005\u0002"+
-		"\u0000\u0000\t\f\u0005\u0003\u0000\u0000\n\f\u0005\u0004\u0000\u0000\u000b"+
-		"\b\u0001\u0000\u0000\u0000\u000b\n\u0001\u0000\u0000\u0000\f\u0003\u0001"+
-		"\u0000\u0000\u0000\u0002\u0006\u000b";
+		"\u0004\u0001\u0005\u0010\u0002\u0000\u0007\u0000\u0002\u0001\u0007\u0001"+
+		"\u0001\u0000\u0001\u0000\u0004\u0000\u0007\b\u0000\u000b\u0000\f\u0000"+
+		"\b\u0001\u0001\u0001\u0001\u0001\u0001\u0003\u0001\u000e\b\u0001\u0001"+
+		"\u0001\u0000\u0000\u0002\u0000\u0002\u0000\u0000\u0010\u0000\u0006\u0001"+
+		"\u0000\u0000\u0000\u0002\r\u0001\u0000\u0000\u0000\u0004\u0007\u0005\u0001"+
+		"\u0000\u0000\u0005\u0007\u0003\u0002\u0001\u0000\u0006\u0004\u0001\u0000"+
+		"\u0000\u0000\u0006\u0005\u0001\u0000\u0000\u0000\u0007\b\u0001\u0000\u0000"+
+		"\u0000\b\u0006\u0001\u0000\u0000\u0000\b\t\u0001\u0000\u0000\u0000\t\u0001"+
+		"\u0001\u0000\u0000\u0000\n\u000b\u0005\u0002\u0000\u0000\u000b\u000e\u0005"+
+		"\u0003\u0000\u0000\f\u000e\u0005\u0004\u0000\u0000\r\n\u0001\u0000\u0000"+
+		"\u0000\r\f\u0001\u0000\u0000\u0000\u000e\u0003\u0001\u0000\u0000\u0000"+
+		"\u0003\u0006\b\r";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {

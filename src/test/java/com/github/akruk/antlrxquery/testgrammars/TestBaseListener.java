@@ -1,4 +1,4 @@
-// Generated from ./src/test/testgrammars/Test.g4 by ANTLR 4.13.2
+// Generated from D:/Programowanie/antlr-xquery/src/test/testgrammars/Test.g4 by ANTLR 4.13.2
 package com.github.akruk.antlrxquery.testgrammars;
 
 import org.antlr.v4.runtime.ParserRuleContext;

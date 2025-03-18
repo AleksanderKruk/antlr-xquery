@@ -1,4 +1,4 @@
-// Generated from ./src/test/testgrammars/Test.g4 by ANTLR 4.13.2
+// Generated from D:/Programowanie/antlr-xquery/src/test/testgrammars/Test.g4 by ANTLR 4.13.2
 package com.github.akruk.antlrxquery.testgrammars;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;
@@ -17,7 +17,7 @@ public class TestLexer extends Lexer {
 	protected static final PredictionContextCache _sharedContextCache =
 		new PredictionContextCache();
 	public static final int
-		A=1, B=2, C=3, D=4;
+		A=1, B=2, C=3, D=4, WS=5;
 	public static String[] channelNames = {
 		"DEFAULT_TOKEN_CHANNEL", "HIDDEN"
 	};
@@ -28,7 +28,7 @@ public class TestLexer extends Lexer {
 
 	private static String[] makeRuleNames() {
 		return new String[] {
-			"A", "B", "C", "D"
+			"A", "B", "C", "D", "WS"
 		};
 	}
 	public static final String[] ruleNames = makeRuleNames();
@@ -41,7 +41,7 @@ public class TestLexer extends Lexer {
 	private static final String[] _LITERAL_NAMES = makeLiteralNames();
 	private static String[] makeSymbolicNames() {
 		return new String[] {
-			null, "A", "B", "C", "D"
+			null, "A", "B", "C", "D", "WS"
 		};
 	}
 	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
@@ -103,18 +103,27 @@ public class TestLexer extends Lexer {
 	public ATN getATN() { return _ATN; }
 
 	public static final String _serializedATN =
-		"\u0004\u0000\u0004\u0011\u0006\uffff\uffff\u0002\u0000\u0007\u0000\u0002"+
-		"\u0001\u0007\u0001\u0002\u0002\u0007\u0002\u0002\u0003\u0007\u0003\u0001"+
-		"\u0000\u0001\u0000\u0001\u0001\u0001\u0001\u0001\u0002\u0001\u0002\u0001"+
-		"\u0003\u0001\u0003\u0000\u0000\u0004\u0001\u0001\u0003\u0002\u0005\u0003"+
-		"\u0007\u0004\u0001\u0000\u0000\u0010\u0000\u0001\u0001\u0000\u0000\u0000"+
-		"\u0000\u0003\u0001\u0000\u0000\u0000\u0000\u0005\u0001\u0000\u0000\u0000"+
-		"\u0000\u0007\u0001\u0000\u0000\u0000\u0001\t\u0001\u0000\u0000\u0000\u0003"+
-		"\u000b\u0001\u0000\u0000\u0000\u0005\r\u0001\u0000\u0000\u0000\u0007\u000f"+
-		"\u0001\u0000\u0000\u0000\t\n\u0005a\u0000\u0000\n\u0002\u0001\u0000\u0000"+
-		"\u0000\u000b\f\u0005b\u0000\u0000\f\u0004\u0001\u0000\u0000\u0000\r\u000e"+
-		"\u0005c\u0000\u0000\u000e\u0006\u0001\u0000\u0000\u0000\u000f\u0010\u0005"+
-		"d\u0000\u0000\u0010\b\u0001\u0000\u0000\u0000\u0001\u0000\u0000";
+		"\u0004\u0000\u0005\u001a\u0006\uffff\uffff\u0002\u0000\u0007\u0000\u0002"+
+		"\u0001\u0007\u0001\u0002\u0002\u0007\u0002\u0002\u0003\u0007\u0003\u0002"+
+		"\u0004\u0007\u0004\u0001\u0000\u0001\u0000\u0001\u0001\u0001\u0001\u0001"+
+		"\u0002\u0001\u0002\u0001\u0003\u0001\u0003\u0001\u0004\u0004\u0004\u0015"+
+		"\b\u0004\u000b\u0004\f\u0004\u0016\u0001\u0004\u0001\u0004\u0000\u0000"+
+		"\u0005\u0001\u0001\u0003\u0002\u0005\u0003\u0007\u0004\t\u0005\u0001\u0000"+
+		"\u0001\n\u0000\t\r  \u0085\u0085\u00a0\u00a0\u1680\u1680\u2000\u200a\u2028"+
+		"\u2029\u202f\u202f\u205f\u205f\u3000\u3000\u001a\u0000\u0001\u0001\u0000"+
+		"\u0000\u0000\u0000\u0003\u0001\u0000\u0000\u0000\u0000\u0005\u0001\u0000"+
+		"\u0000\u0000\u0000\u0007\u0001\u0000\u0000\u0000\u0000\t\u0001\u0000\u0000"+
+		"\u0000\u0001\u000b\u0001\u0000\u0000\u0000\u0003\r\u0001\u0000\u0000\u0000"+
+		"\u0005\u000f\u0001\u0000\u0000\u0000\u0007\u0011\u0001\u0000\u0000\u0000"+
+		"\t\u0014\u0001\u0000\u0000\u0000\u000b\f\u0005a\u0000\u0000\f\u0002\u0001"+
+		"\u0000\u0000\u0000\r\u000e\u0005b\u0000\u0000\u000e\u0004\u0001\u0000"+
+		"\u0000\u0000\u000f\u0010\u0005c\u0000\u0000\u0010\u0006\u0001\u0000\u0000"+
+		"\u0000\u0011\u0012\u0005d\u0000\u0000\u0012\b\u0001\u0000\u0000\u0000"+
+		"\u0013\u0015\u0007\u0000\u0000\u0000\u0014\u0013\u0001\u0000\u0000\u0000"+
+		"\u0015\u0016\u0001\u0000\u0000\u0000\u0016\u0014\u0001\u0000\u0000\u0000"+
+		"\u0016\u0017\u0001\u0000\u0000\u0000\u0017\u0018\u0001\u0000\u0000\u0000"+
+		"\u0018\u0019\u0006\u0004\u0000\u0000\u0019\n\u0001\u0000\u0000\u0000\u0002"+
+		"\u0000\u0016\u0001\u0006\u0000\u0000";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {

@@ -581,8 +581,26 @@ public class XQueryTest {
         assertResult("empty(\"abcd\")", XQueryBoolean.FALSE);
         // The expression fn:empty([]) returns false().
         // The expression fn:empty(map{}) returns false().
+        // Assuming $in is an element with no children:
+        //        let $break := <br/>
+        //        return fn:empty($break)
+        // The result is false().
     }
 
+
+    @Test
+    public void exists() throws XQueryUnsupportedOperation {
+        assertResult("exists(())", XQueryBoolean.FALSE);
+        assertResult("exists((1,2,3))", XQueryBoolean.TRUE);
+        assertResult("exists(\"\")", XQueryBoolean.FALSE);
+        assertResult("exists(\"abcd\")", XQueryBoolean.TRUE);
+        // The expression fn:exists([]) returns true().
+        // The expression fn:exists(map{}) returns true().
+        // Assuming $in is an element with no children:
+        //                let $break :=
+        //                return fn:exists($break)
+        // The result is true().
+    }
 
 
 // Wildcards

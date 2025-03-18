@@ -285,6 +285,11 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             return arg.isEmpty();
         }
 
+        private static XQueryValue exists(final List<XQueryValue> args) {
+            assert args.size() == 1;
+            return XQueryBoolean.of(!empty(args).booleanValue());
+        }
+
     }
 
     private static final Map<String, XQueryFunction> functions;
@@ -308,6 +313,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         functions.put("numeric-unary-plus", XQueryEvaluatorVisitor.Functions::numericUnaryPlus);
         functions.put("numeric-unary-minus", XQueryEvaluatorVisitor.Functions::numericUnaryMinus);
         functions.put("empty", XQueryEvaluatorVisitor.Functions::empty);
+        functions.put("exists", XQueryEvaluatorVisitor.Functions::exists);
     }
 
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser) {

@@ -117,21 +117,13 @@ public class XQueryTest {
     }
 
     @Test
-    public void trueConstant() {
-        String xquery = """
-                    true()
-                """;
-        var value = XQuery.evaluate(null, xquery, null);
-        assertTrue(value.booleanValue().equals(XQueryBoolean.TRUE.booleanValue()));
+    public void trueConstant() throws XQueryUnsupportedOperation {
+        assertResult("true()", XQueryBoolean.TRUE);
     }
 
     @Test
-    public void falseConstant() {
-        String xquery = """
-                    false()
-                """;
-        var value = XQuery.evaluate(null, xquery, null);
-        assertTrue(value.booleanValue().equals(XQueryBoolean.FALSE.booleanValue()));
+    public void falseConstant() throws XQueryUnsupportedOperation {
+        assertResult("false()", XQueryBoolean.FALSE);
     }
 
     @Test
@@ -570,15 +562,25 @@ public class XQueryTest {
         String xquery = "//*";
         TestParserAndTree parserAndTree = parseTestTree(textualTree);
         ParseTree[] nodes = XPath.findAll(parserAndTree.tree, xquery, parserAndTree.parser)
-            .toArray(ParseTree[]::new);
+                .toArray(ParseTree[]::new);
         var value = XQuery.evaluate(parserAndTree.tree, xquery, parserAndTree.parser);
-        ParseTree[] xqueryNodes = value.sequence().stream().map(val->val.node())
-            .toArray(ParseTree[]::new);
+        ParseTree[] xqueryNodes = value.sequence().stream().map(val -> val.node())
+                .toArray(ParseTree[]::new);
         assertEquals(nodes.length, xqueryNodes.length);
         for (int i = 1; i < xqueryNodes.length; i++) {
             assertEquals(nodes[i], xqueryNodes[i]);
         }
     }
+
+
+    @Test
+    public void empty() throws XQueryUnsupportedOperation {
+        assertResult("empty(())", XQueryBoolean.TRUE);
+        assertResult("empty((1,2,3))", XQueryBoolean.FALSE);
+    }
+
+
+
 // Wildcards
 
 }

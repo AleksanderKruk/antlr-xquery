@@ -279,6 +279,15 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             return new XQueryNumber(new BigDecimal(Math.PI));
         }
 
+        private static XQueryValue empty(final List<XQueryValue> args) {
+            assert args.size() == 1;
+            var arg = args.get(0);
+            if (!arg.isSequence()) {
+                return null;
+            }
+            return XQueryBoolean.of(arg.sequence().isEmpty());
+        }
+
     }
 
     private static final Map<String, XQueryFunction> functions;
@@ -301,6 +310,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         functions.put("numeric-mod", XQueryEvaluatorVisitor.Functions::numericMod);
         functions.put("numeric-unary-plus", XQueryEvaluatorVisitor.Functions::numericUnaryPlus);
         functions.put("numeric-unary-minus", XQueryEvaluatorVisitor.Functions::numericUnaryMinus);
+        functions.put("empty", XQueryEvaluatorVisitor.Functions::empty);
     }
 
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser) {
@@ -372,7 +382,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     @Override
     public XQueryValue visitFunctionCall(final FunctionCallContext ctx) {
-        final var functionName = ctx.ID().getText();
+        final var functionName = ctx.functionName().getText();
         if (!functions.containsKey(functionName)) {
             // TODO: error handling missing function
             return null;

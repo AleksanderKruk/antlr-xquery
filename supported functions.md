@@ -41,7 +41,7 @@ Function                                           | Is implemented | Comment
 `math:acos`                                        |                |
 `math:atan`                                        |                |
 `math:atan2`                                       |                |
-`fn:random-number-generato`r                       |                |
+`fn:random-number-generator`                       |                |
 `fn:codepoints-to-string`                          |                |
 `fn:string-to-codepoints`                          |                |
 `fn:compare`                                       |                |
@@ -172,11 +172,11 @@ Function                                           | Is implemented | Comment
 `fn:has-children`                                  |                |
 `fn:innermost`                                     |                |
 `fn:outermost`                                     |                |
-`fn:empty`                                         |                |
-`fn:exists`                                        |                |
-`fn:head`                                          |                |
-`fn:tail`                                          |                |
-`fn:insert-before`                                 |                |
+`fn:empty`                                         | yes            |
+`fn:exists`                                        | yes            |
+`fn:head`                                          | yes            |
+`fn:tail`                                          | yes            |
+`fn:insert-before`                                 | yes            |
 `fn:remove`                                        |                |
 `fn:reverse`                                       |                |
 `fn:subsequence`                                   |                |

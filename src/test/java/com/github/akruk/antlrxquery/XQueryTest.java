@@ -13,6 +13,7 @@ import com.github.akruk.antlrxquery.testgrammars.TestLexer;
 import com.github.akruk.antlrxquery.testgrammars.TestParser;
 import com.github.akruk.antlrxquery.values.XQueryBoolean;
 import com.github.akruk.antlrxquery.values.XQueryNumber;
+import com.github.akruk.antlrxquery.values.XQuerySequence;
 import com.github.akruk.antlrxquery.values.XQueryString;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 
@@ -20,6 +21,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
+import java.util.Collection;
 import java.util.List;
 import static org.junit.Assert.*;
 
@@ -37,11 +39,22 @@ public class XQueryTest {
         assertEquals(result, value.numericValue());
     }
 
+    public void assertResult(String xquery, List<XQueryValue> result) throws XQueryUnsupportedOperation {
+        XQueryValue value = XQuery.evaluate(null, xquery, null);
+        assertNotNull(value);
+        assertEquals(result.size(), value.sequence().size());
+        for (int i = 0; i < result.size(); i++) {
+            assertEquals(XQueryBoolean.TRUE, result.get(i).valueEqual(value));
+        }
+    }
+
+
     public void assertResult(String xquery, XQueryValue result) throws XQueryUnsupportedOperation {
         XQueryValue value = XQuery.evaluate(null, xquery, null);
         assertNotNull(value);
         assertTrue(result.valueEqual(value).booleanValue());
     }
+
 
     @Test
     public void stringLiteralsDoubleQuote() {
@@ -600,6 +613,19 @@ public class XQueryTest {
         //                let $break :=
         //                return fn:exists($break)
         // The result is true().
+    }
+
+
+    @Test
+    public void head() throws XQueryUnsupportedOperation {
+        assertResult("head(())", XQuerySequence.EMPTY.sequence());
+        assertResult("head((1,2,3))", XQueryNumber.ONE);
+        assertResult("head(\"\")", XQuerySequence.EMPTY.sequence());
+        assertResult("head(\"abcd\")", new XQueryString("a"));
+        // The expression fn:head(1 to 5) returns 1.
+        // The expression fn:head(("a", "b", "c")) returns "a".
+        // The expression fn:head(()) returns ().
+        // The expression fn:head([1,2,3]) returns [1,2,3].
     }
 
 

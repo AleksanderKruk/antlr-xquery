@@ -6,6 +6,10 @@ import java.math.MathContext;
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 
 public class XQueryNumber extends XQueryValueBase<BigDecimal> {
+    public static final XQueryNumber ZERO = new XQueryNumber(BigDecimal.ZERO);
+    public static final XQueryNumber ONE = new XQueryNumber(BigDecimal.ONE);
+
+
     public XQueryNumber(BigDecimal n) {
         value = n;
     }

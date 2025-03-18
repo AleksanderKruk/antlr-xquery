@@ -246,8 +246,15 @@ public interface XQueryValue {
         throw new XQueryUnsupportedOperation();
     }
 
-    public default XQueryValue except(XQueryValue visitedExpression) throws XQueryUnsupportedOperation {
+    public default XQueryValue except(XQueryValue other) throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
     }
+
+
+    public default XQueryValue head() throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
+
+
 
 }

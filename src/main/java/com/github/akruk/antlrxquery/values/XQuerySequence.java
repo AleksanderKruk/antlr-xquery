@@ -8,6 +8,9 @@ import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 
 public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
 
+    public static final XQuerySequence EMPTY = new XQuerySequence();
+
+
     @Override
     public List<XQueryValue> sequence() {
         return value;
@@ -95,4 +98,11 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
         return XQueryBoolean.of(value.isEmpty());
     }
 
+
+    @Override
+    public XQueryValue head() throws XQueryUnsupportedOperation {
+        if (value.isEmpty())
+            return XQuerySequence.EMPTY;
+        return value.get(0);
+    }
 }

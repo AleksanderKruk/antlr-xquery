@@ -52,5 +52,11 @@ public class XQueryString  extends XQueryValueBase<String> {
         return XQueryBoolean.of(value.isEmpty());
     }
 
+    @Override
+    public XQueryValue head() throws XQueryUnsupportedOperation {
+        if (value.isEmpty())
+            return XQuerySequence.EMPTY;
+        return new XQueryString(value.substring(0, 1));
+    }
 
 }

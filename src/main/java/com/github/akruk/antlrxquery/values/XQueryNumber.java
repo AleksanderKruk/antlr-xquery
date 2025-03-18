@@ -60,5 +60,5 @@ public class XQueryNumber extends XQueryValueBase<BigDecimal> {
     public XQueryValue copy() {
         return new XQueryNumber(value.plus());
     }
-    
+
 }

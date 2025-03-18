@@ -577,6 +577,10 @@ public class XQueryTest {
     public void empty() throws XQueryUnsupportedOperation {
         assertResult("empty(())", XQueryBoolean.TRUE);
         assertResult("empty((1,2,3))", XQueryBoolean.FALSE);
+        assertResult("empty(\"\")", XQueryBoolean.TRUE);
+        assertResult("empty(\"abcd\")", XQueryBoolean.FALSE);
+        // The expression fn:empty([]) returns false().
+        // The expression fn:empty(map{}) returns false().
     }
 
 

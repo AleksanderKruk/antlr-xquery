@@ -54,7 +54,6 @@ public class XQueryBoolean extends XQueryValueBase<Boolean> {
         return XQueryBoolean.of(this == FALSE && other != FALSE);
     }
 
-
     @Override
     public XQueryValue copy() {
         return this;

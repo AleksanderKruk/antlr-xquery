@@ -11,6 +11,10 @@ import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 public interface XQueryValue {
     public XQueryValue copy();
 
+    public default XQueryValue isEmpty() throws UnsupportedOperationException {
+        throw new UnsupportedOperationException();
+    }
+
     public default ParseTree node() {
         return null;
     }
@@ -245,4 +249,5 @@ public interface XQueryValue {
     public default XQueryValue except(XQueryValue visitedExpression) throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
     }
+
 }

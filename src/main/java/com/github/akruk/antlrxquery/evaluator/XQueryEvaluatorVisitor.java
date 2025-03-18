@@ -282,10 +282,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         private static XQueryValue empty(final List<XQueryValue> args) {
             assert args.size() == 1;
             var arg = args.get(0);
-            if (!arg.isSequence()) {
-                return null;
-            }
-            return XQueryBoolean.of(arg.sequence().isEmpty());
+            return arg.isEmpty();
         }
 
     }

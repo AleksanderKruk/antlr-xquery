@@ -345,6 +345,30 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             }
         }
 
+
+        private static XQueryValue subsequence(final List<XQueryValue> args) {
+            try {
+                return switch (args.size()) {
+                    case 3 -> {
+                        var target = args.get(0);
+                        var position = args.get(1).numericValue().intValue();
+                        var length = args.get(2).numericValue().intValue();
+                        yield target.subsequence(position, length);
+                    }
+                    case 2 -> {
+                        var target = args.get(0);
+                        var position = args.get(1).numericValue().intValue();
+                        yield target.subsequence(position);
+                    }
+                    default -> null;
+                };
+            } catch (XQueryUnsupportedOperation e) {
+                return null;
+            }
+        }
+
+
+
     }
 
     private static final Map<String, XQueryFunction> functions;
@@ -374,6 +398,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         functions.put("insert-before", XQueryEvaluatorVisitor.Functions::insertBefore);
         functions.put("remove", XQueryEvaluatorVisitor.Functions::remove);
         functions.put("reverse", XQueryEvaluatorVisitor.Functions::reverse);
+        functions.put("subsequence", XQueryEvaluatorVisitor.Functions::subsequence);
     }
 
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser) {

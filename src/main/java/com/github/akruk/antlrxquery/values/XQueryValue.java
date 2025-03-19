@@ -275,6 +275,14 @@ public interface XQueryValue {
         throw new XQueryUnsupportedOperation();
     }
 
+    public default XQueryValue subsequence(int startingLoc) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
+
+    public default XQueryValue subsequence(int startingLoc, int length) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
+
 
 
 

@@ -162,4 +162,22 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
     }
 
 
+
+    @Override
+    public XQueryValue subsequence(int startingLoc) throws XQueryUnsupportedOperation {
+        return subsequence(startingLoc, value.size()-startingLoc+1);
+    }
+
+    @Override
+    public XQueryValue subsequence(int startingLoc, int length) throws XQueryUnsupportedOperation {
+        int currentLength = value.size();
+        if (startingLoc > currentLength) {
+            return XQuerySequence.EMPTY;
+        }
+        int startIndexIncluded = Math.max(startingLoc - 1, 0);
+        int endIndexExcluded = Math.min(startingLoc + length - 1, currentLength);
+        var newSequence = value.subList(startIndexIncluded, endIndexExcluded);
+        return new XQuerySequence(newSequence);
+    }
+
 }

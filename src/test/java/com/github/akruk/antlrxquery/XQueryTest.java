@@ -709,6 +709,24 @@ public class XQueryTest {
         // The expression fn:reverse(([1,2,3],[4,5,6])) returns ([4,5,6],[1,2,3]).
     }
 
+    @Test
+    public void subsequence() throws XQueryUnsupportedOperation {
+        // var i1 = new XQueryString("item1");
+        // var i2 = new XQueryString("item2");
+        var i3 = new XQueryString("item3");
+        var i4 = new XQueryString("item4");
+        var i5 = new XQueryString("item5");
+        // The expression fn:subsequence($seq, 4) returns ("item4", "item5").
+        // The expression fn:subsequence($seq, 3, 2) returns ("item3", "item4").
+        assertResult("""
+                subsequence(("item1", "item2", "item3", "item4", "item5"), 4)
+            """, List.of(i4, i5));
+        assertResult("""
+                subsequence(("item1", "item2", "item3", "item4", "item5"), 3, 2)
+            """, List.of(i3, i4));
+    }
+
+
 // Wildcards
 
 }

@@ -128,36 +128,31 @@ public interface XQueryValue {
 
 	}
 
-    public default XQueryValue valueEqual(XQueryValue other) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-	}
+    public XQueryValue valueEqual(XQueryValue other);
 
-    public default XQueryValue valueUnequal(XQueryValue other) throws XQueryUnsupportedOperation {
+    public default XQueryValue valueUnequal(XQueryValue other) {
         final var isUnequal = !valueEqual(other).booleanValue();
         return XQueryBoolean.of(isUnequal);
 	}
 
-    public default XQueryValue valueLessThan(XQueryValue other) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
+    public XQueryValue valueLessThan(XQueryValue other);
 
-	}
-
-    public default XQueryValue valueLessEqual(XQueryValue other) throws XQueryUnsupportedOperation {
+    public default XQueryValue valueLessEqual(XQueryValue other) {
         final var isLessEqual = valueEqual(other).booleanValue() || valueLessThan(other).booleanValue();
         return XQueryBoolean.of(isLessEqual);
 	}
 
-    public default XQueryValue valueGreaterThan(XQueryValue other) throws XQueryUnsupportedOperation {
+    public default XQueryValue valueGreaterThan(XQueryValue other) {
         final var isGreaterThan = !valueLessEqual(other).booleanValue();
         return XQueryBoolean.of(isGreaterThan);
 	}
 
-    public default XQueryValue valueGreaterEqual(XQueryValue other) throws XQueryUnsupportedOperation {
+    public default XQueryValue valueGreaterEqual(XQueryValue other) {
         final var isGreaterEqual = !valueLessThan(other).booleanValue();
         return XQueryBoolean.of(isGreaterEqual);
     }
 
-    public default XQueryValue generalEqual(XQueryValue other) throws XQueryUnsupportedOperation {
+    public default XQueryValue generalEqual(XQueryValue other) {
         var thisAtomized = atomize();
         var otherAtomized = other.atomize();
         for (var thisElement : thisAtomized) {
@@ -170,7 +165,7 @@ public interface XQueryValue {
         return XQueryBoolean.of(thisAtomized.size() == 0 && otherAtomized.size() == 0);
 	}
 
-    public default XQueryValue generalUnequal(XQueryValue other) throws XQueryUnsupportedOperation {
+    public default XQueryValue generalUnequal(XQueryValue other) {
         var thisAtomized = atomize();
         var otherAtomized = other.atomize();
         for (var thisElement : thisAtomized) {
@@ -183,7 +178,7 @@ public interface XQueryValue {
         return XQueryBoolean.of(thisAtomized.size() == 0 && otherAtomized.size() == 0);
 	}
 
-    public default XQueryValue generalLessThan(XQueryValue other) throws XQueryUnsupportedOperation {
+    public default XQueryValue generalLessThan(XQueryValue other) {
         var thisAtomized = atomize();
         var otherAtomized = other.atomize();
         for (var thisElement : thisAtomized) {
@@ -197,7 +192,7 @@ public interface XQueryValue {
 
 	}
 
-    public default XQueryValue generalLessEqual(XQueryValue other) throws XQueryUnsupportedOperation {
+    public default XQueryValue generalLessEqual(XQueryValue other) {
         var thisAtomized = atomize();
         var otherAtomized = other.atomize();
         for (var thisElement : thisAtomized) {
@@ -211,7 +206,7 @@ public interface XQueryValue {
 
 	}
 
-    public default XQueryValue generalGreaterThan(XQueryValue other) throws XQueryUnsupportedOperation {
+    public default XQueryValue generalGreaterThan(XQueryValue other) {
         var thisAtomized = atomize();
         var otherAtomized = other.atomize();
         for (var thisElement : thisAtomized) {
@@ -224,7 +219,7 @@ public interface XQueryValue {
         return XQueryBoolean.of(thisAtomized.size() == 0 && otherAtomized.size() == 0);
 	}
 
-    public default XQueryValue generalGreaterEqual(XQueryValue other) throws XQueryUnsupportedOperation {
+    public default XQueryValue generalGreaterEqual(XQueryValue other) {
         var thisAtomized = atomize();
         var otherAtomized = other.atomize();
         for (var thisElement : thisAtomized) {
@@ -283,7 +278,7 @@ public interface XQueryValue {
         throw new XQueryUnsupportedOperation();
     }
 
-
-
-
+    public default XQueryValue distinctValues() throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
 }

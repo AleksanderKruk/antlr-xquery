@@ -2,7 +2,6 @@ package com.github.akruk.antlrxquery.values;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 
@@ -45,6 +44,16 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
         return result;
     }
 
+
+    @Override
+    public XQueryValue valueEqual(XQueryValue other) {
+        return XQueryBoolean.FALSE;
+    }
+
+    @Override
+    public XQueryValue valueLessThan(XQueryValue other) {
+        return XQueryBoolean.FALSE;
+    }
 
     @Override
     public XQueryValue union(XQueryValue otherSequence) throws XQueryUnsupportedOperation {
@@ -177,6 +186,24 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
         int startIndexIncluded = Math.max(startingLoc - 1, 0);
         int endIndexExcluded = Math.min(startingLoc + length - 1, currentLength);
         var newSequence = value.subList(startIndexIncluded, endIndexExcluded);
+        return new XQuerySequence(newSequence);
+    }
+
+    @Override
+    public XQueryValue distinctValues() throws XQueryUnsupportedOperation {
+        int currentLength = value.size();
+        if (currentLength == 0) {
+            return EMPTY;
+        }
+        var newSequence = new ArrayList<XQueryValue>(value.size());
+        for (var element : value) {
+            var exists = newSequence.stream().filter(
+                    v -> v == element || v.valueEqual(element).booleanValue()
+                ).findFirst().isPresent();
+            if (exists) {
+                newSequence.add(element);
+            }
+        }
         return new XQuerySequence(newSequence);
     }
 

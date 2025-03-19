@@ -28,17 +28,17 @@ public class XQueryString  extends XQueryValueBase<String> {
     }
 
     @Override
-    public XQueryValue valueGreaterThan(XQueryValue other) throws XQueryUnsupportedOperation {
+    public XQueryValue valueGreaterThan(XQueryValue other) {
         return XQueryBoolean.of(value.compareTo(other.stringValue()) > 0);
     }
 
     @Override
-    public XQueryValue valueGreaterEqual(XQueryValue other) throws XQueryUnsupportedOperation {
+    public XQueryValue valueGreaterEqual(XQueryValue other) {
         return XQueryBoolean.of(value.compareTo(other.stringValue()) >= 0);
     }
 
     @Override
-    public XQueryValue valueLessEqual(XQueryValue other) throws XQueryUnsupportedOperation {
+    public XQueryValue valueLessEqual(XQueryValue other) {
         return XQueryBoolean.of(value.compareTo(other.stringValue()) <= 0);
     }
 

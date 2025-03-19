@@ -39,7 +39,7 @@ public class XQueryBoolean extends XQueryValueBase<Boolean> {
     }
 
     @Override
-    public XQueryValue valueEqual(XQueryValue other) throws XQueryUnsupportedOperation {
+    public XQueryValue valueEqual(XQueryValue other) {
         // Identity comparison is used because
         // we maintain just 2 XQueryBoolean instances
         // TRUE and FALSE
@@ -47,7 +47,7 @@ public class XQueryBoolean extends XQueryValueBase<Boolean> {
     }
 
     @Override
-    public XQueryValue valueLessThan(XQueryValue other) throws XQueryUnsupportedOperation {
+    public XQueryValue valueLessThan(XQueryValue other) {
         // Identity comparison is used because
         // we maintain just 2 XQueryBoolean instances
         // TRUE and FALSE

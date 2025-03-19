@@ -54,12 +54,12 @@ public class XQueryNumber extends XQueryValueBase<BigDecimal> {
     }
 
     @Override
-    public XQueryValue valueEqual(XQueryValue other) throws XQueryUnsupportedOperation {
+    public XQueryValue valueEqual(XQueryValue other) {
         return XQueryBoolean.of(value.compareTo(other.numericValue()) == 0);
     }
 
     @Override
-    public XQueryValue valueLessThan(XQueryValue other) throws XQueryUnsupportedOperation {
+    public XQueryValue valueLessThan(XQueryValue other) {
         return XQueryBoolean.of(value.compareTo(other.numericValue()) == -1);
     }
 

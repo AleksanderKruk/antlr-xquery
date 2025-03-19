@@ -178,10 +178,10 @@ Function                                           | Is implemented | Comment
 `fn:tail`                                          | yes            |
 `fn:insert-before`                                 | yes            |
 `fn:remove`                                        | yes            |
-`fn:reverse`                                       |                |
-`fn:subsequence`                                   |                |
-`fn:unordered`                                     |                |
-`fn:distinct-values`                               |                |
+`fn:reverse`                                       | yes            |
+`fn:subsequence`                                   | yes            |
+`fn:unordered`                                     | yes            |
+`fn:distinct-values`                               | yes            |
 `fn:index-of`                                      |                |
 `fn:deep-equal`                                    |                |
 `fn:zero-or-one`                                   |                |

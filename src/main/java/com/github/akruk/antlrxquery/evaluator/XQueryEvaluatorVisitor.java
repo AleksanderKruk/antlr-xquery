@@ -332,6 +332,19 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             }
         }
 
+        private static XQueryValue reverse(final List<XQueryValue> args) {
+            assert args.size() == 1;
+            try {
+                var target = args.get(0);
+                if (target.isAtomic()) {
+                    return new XQuerySequence(target);
+                }
+                return target.reverse();
+            } catch (XQueryUnsupportedOperation e) {
+                return null;
+            }
+        }
+
     }
 
     private static final Map<String, XQueryFunction> functions;
@@ -360,6 +373,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         functions.put("tail", XQueryEvaluatorVisitor.Functions::tail);
         functions.put("insert-before", XQueryEvaluatorVisitor.Functions::insertBefore);
         functions.put("remove", XQueryEvaluatorVisitor.Functions::remove);
+        functions.put("reverse", XQueryEvaluatorVisitor.Functions::reverse);
     }
 
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser) {

@@ -271,6 +271,10 @@ public interface XQueryValue {
         throw new XQueryUnsupportedOperation();
     }
 
+    public default XQueryValue reverse() throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
+
 
 
 

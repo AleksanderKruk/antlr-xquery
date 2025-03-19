@@ -154,4 +154,12 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
     }
 
 
+    @Override
+    public XQueryValue reverse() throws XQueryUnsupportedOperation
+    {
+        var newSequence = List.copyOf(value);
+        return new XQuerySequence(newSequence.reversed());
+    }
+
+
 }

@@ -692,6 +692,23 @@ public class XQueryTest {
         assertResult("remove((), 3)", List.of());
     }
 
+    @Test
+    public void reverse() throws XQueryUnsupportedOperation {
+        var a = new XQueryString("a");
+        var b = new XQueryString("b");
+        var c = new XQueryString("c");
+        // The expression fn:reverse($abc) returns ("c", "b", "a").
+        assertResult("""
+                reverse(("a", "b", "c"))
+                """, List.of(c, b, a));
+        // The expression fn:reverse(("hello")) returns ("hello").
+        assertResult("reverse((\"Hello\"))", List.of(new XQueryString("Hello")));
+        // The expression fn:reverse(()) returns ().
+        assertResult("reverse(())", List.of());
+        // The expression fn:reverse([1,2,3]) returns [1,2,3]. (The input is a sequence containing a single item (the array)).
+        // The expression fn:reverse(([1,2,3],[4,5,6])) returns ([4,5,6],[1,2,3]).
+    }
+
 // Wildcards
 
 }

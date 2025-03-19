@@ -737,6 +737,15 @@ public class XQueryTest {
             """, List.of());
     }
 
+    @Test
+    public void zeroOrOne() throws XQueryUnsupportedOperation {
+        var value = XQuery.evaluate(null, "zero-or-one((1, 2))", null);
+        assertNull(value);
+        assertResult("""
+                zero-or-one(())
+            """, List.of());
+    }
+
 
 // Wildcards
 

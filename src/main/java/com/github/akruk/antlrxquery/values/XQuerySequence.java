@@ -198,8 +198,7 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
         var newSequence = new ArrayList<XQueryValue>(value.size());
         for (var element : value) {
             var exists = newSequence.stream().filter(
-                    v -> v == element || v.valueEqual(element).booleanValue()
-                ).findFirst().isPresent();
+                    v -> v == element || v.valueEqual(element).booleanValue()).findFirst().isPresent();
             if (!exists) {
                 newSequence.add(element);
             }
@@ -207,4 +206,11 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
         return new XQuerySequence(newSequence);
     }
 
+    @Override
+    public XQueryValue zeroOrOne() throws XQueryUnsupportedOperation {
+        return switch (value.size()) {
+            case 0, 1 -> this;
+            default -> null;
+        };
+    }
 }

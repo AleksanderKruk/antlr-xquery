@@ -281,4 +281,9 @@ public interface XQueryValue {
     public default XQueryValue distinctValues() throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
     }
+
+
+    public default XQueryValue zeroOrOne() throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
 }

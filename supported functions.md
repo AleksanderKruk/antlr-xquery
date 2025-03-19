@@ -76,7 +76,7 @@ Function                                           | Is implemented | Comment
 `op:boolean-less-than`                             |                |
 `op:boolean-greater-than`                          |                |
 `fn:boolean`                                       |                |
-`fn:not`                                           | yes               |
+`fn:not`                                           | yes            |
 `op:yearMonthDuration-less-than`                   |                |
 `op:yearMonthDuration-greater-than`                |                |
 `op:dayTimeDuration-less-than`                     |                |
@@ -177,7 +177,7 @@ Function                                           | Is implemented | Comment
 `fn:head`                                          | yes            |
 `fn:tail`                                          | yes            |
 `fn:insert-before`                                 | yes            |
-`fn:remove`                                        |                |
+`fn:remove`                                        | yes            |
 `fn:reverse`                                       |                |
 `fn:subsequence`                                   |                |
 `fn:unordered`                                     |                |

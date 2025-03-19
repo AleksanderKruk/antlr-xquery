@@ -135,5 +135,23 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
         return new XQuerySequence(newSequence);
     }
 
+    @Override
+    public XQueryValue remove(XQueryValue position) throws XQueryUnsupportedOperation
+    {
+        var newSequence = new ArrayList<XQueryValue>(value.size());
+        newSequence.addAll(value);
+        if (!position.isNumericValue())
+            throw new XQueryUnsupportedOperation();
+        int positionIndex = position.numericValue().intValue();
+        if (positionIndex > value.size()) {
+            return new XQuerySequence(newSequence);
+        }
+        if (positionIndex <= 0) {
+            return new XQuerySequence(newSequence);
+        }
+        newSequence.remove(positionIndex-1);
+        return new XQuerySequence(newSequence);
+    }
+
 
 }

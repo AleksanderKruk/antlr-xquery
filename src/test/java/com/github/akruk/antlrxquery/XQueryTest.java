@@ -651,24 +651,45 @@ public class XQueryTest {
         var z = new XQueryString("z");
         // The expression fn:insert-before(("a", "b", "c"), 0, "z") returns ("z", "a", "b", "c").
         assertResult("""
-            insert-before(("a", "b", "c"), 0, "z")
-            """, List.of(z, a, b, c));
+                insert-before(("a", "b", "c"), 0, "z")
+                """, List.of(z, a, b, c));
         // The expression fn:insert-before(("a", "b", "c"), 1, "z") returns ("z", "a", "b", "c").
         assertResult("""
-            insert-before(("a", "b", "c"), 1, "z")
-            """, List.of(z, a, b, c));
+                insert-before(("a", "b", "c"), 1, "z")
+                """, List.of(z, a, b, c));
         // The expression fn:insert-before(("a", "b", "c"), 2, "z") returns ("a", "z", "b", "c").
         assertResult("""
-            insert-before(("a", "b", "c"), 2, "z")
-            """, List.of(a, z, b, c));
+                insert-before(("a", "b", "c"), 2, "z")
+                """, List.of(a, z, b, c));
         // The expression fn:insert-before(("a", "b", "c"), 3, "z") returns ("a", "b", "z", "c").
         assertResult("""
-            insert-before(("a", "b", "c"), 3, "z")
-            """, List.of(a, b, z, c));
+                insert-before(("a", "b", "c"), 3, "z")
+                """, List.of(a, b, z, c));
         // The expression fn:insert-before(("a", "b", "c"), 4, "z") returns ("a", "b", "c", "z").
         assertResult("""
-            insert-before(("a", "b", "c"), 4, "z")
-            """, List.of(a, b, c, z));
+                insert-before(("a", "b", "c"), 4, "z")
+                """, List.of(a, b, c, z));
+    }
+
+    @Test
+    public void remove() throws XQueryUnsupportedOperation {
+        var a = new XQueryString("a");
+        var b = new XQueryString("b");
+        var c = new XQueryString("c");
+        // The expression fn:remove($abc, 0) returns ("a", "b", "c").
+        assertResult("""
+                remove(("a", "b", "c"), 0)
+                """, List.of(a, b, c));
+        // The expression fn:remove($abc, 1) returns ("b", "c").
+        assertResult("""
+                remove(("a", "b", "c"), 1)
+                """, List.of(b, c));
+        // The expression fn:remove($abc, 6) returns ("a", "b", "c").
+        assertResult("""
+                remove(("a", "b", "c"), 6)
+                """, List.of(a, b, c));
+        // The expression fn:remove((), 3) returns ().
+        assertResult("remove((), 3)", List.of());
     }
 
 // Wildcards

@@ -267,6 +267,10 @@ public interface XQueryValue {
         throw new XQueryUnsupportedOperation();
     }
 
+    public default XQueryValue remove(XQueryValue position) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
+
 
 
 

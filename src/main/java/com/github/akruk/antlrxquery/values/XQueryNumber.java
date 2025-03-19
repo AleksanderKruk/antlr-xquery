@@ -55,11 +55,15 @@ public class XQueryNumber extends XQueryValueBase<BigDecimal> {
 
     @Override
     public XQueryValue valueEqual(XQueryValue other) {
+        if (!other.isNumericValue())
+            return XQueryBoolean.FALSE;
         return XQueryBoolean.of(value.compareTo(other.numericValue()) == 0);
     }
 
     @Override
     public XQueryValue valueLessThan(XQueryValue other) {
+        if (!other.isNumericValue())
+            return XQueryBoolean.FALSE;
         return XQueryBoolean.of(value.compareTo(other.numericValue()) == -1);
     }
 

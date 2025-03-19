@@ -200,7 +200,7 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
             var exists = newSequence.stream().filter(
                     v -> v == element || v.valueEqual(element).booleanValue()
                 ).findFirst().isPresent();
-            if (exists) {
+            if (!exists) {
                 newSequence.add(element);
             }
         }

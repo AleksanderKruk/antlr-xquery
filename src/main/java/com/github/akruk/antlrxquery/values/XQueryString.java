@@ -19,26 +19,41 @@ public class XQueryString  extends XQueryValueBase<String> {
 
     @Override
     public XQueryValue valueEqual(XQueryValue other) {
+        if (!other.isStringValue()) {
+            return XQueryBoolean.FALSE;
+        }
         return XQueryBoolean.of(value.compareTo(other.stringValue()) == 0);
     }
 
     @Override
     public XQueryValue valueLessThan(XQueryValue other) {
+        if (!other.isStringValue()) {
+            return XQueryBoolean.FALSE;
+        }
         return XQueryBoolean.of(value.compareTo(other.stringValue()) < 0);
     }
 
     @Override
     public XQueryValue valueGreaterThan(XQueryValue other) {
+        if (!other.isStringValue()) {
+            return XQueryBoolean.FALSE;
+        }
         return XQueryBoolean.of(value.compareTo(other.stringValue()) > 0);
     }
 
     @Override
     public XQueryValue valueGreaterEqual(XQueryValue other) {
+        if (!other.isStringValue()) {
+            return XQueryBoolean.FALSE;
+        }
         return XQueryBoolean.of(value.compareTo(other.stringValue()) >= 0);
     }
 
     @Override
     public XQueryValue valueLessEqual(XQueryValue other) {
+        if (!other.isStringValue()) {
+            return XQueryBoolean.FALSE;
+        }
         return XQueryBoolean.of(value.compareTo(other.stringValue()) <= 0);
     }
 

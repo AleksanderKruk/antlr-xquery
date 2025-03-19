@@ -367,6 +367,16 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             }
         }
 
+        private static XQueryValue distinctValues(final List<XQueryValue> args) {
+            assert args.size() == 1;
+            try {
+                var target = args.get(0);
+                return target.distinctValues();
+            } catch (XQueryUnsupportedOperation e) {
+                return null;
+            }
+        }
+
 
 
     }
@@ -399,6 +409,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         functions.put("remove", XQueryEvaluatorVisitor.Functions::remove);
         functions.put("reverse", XQueryEvaluatorVisitor.Functions::reverse);
         functions.put("subsequence", XQueryEvaluatorVisitor.Functions::subsequence);
+        functions.put("distinct-values", XQueryEvaluatorVisitor.Functions::distinctValues);
     }
 
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser) {

@@ -21,7 +21,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
-import java.util.Collection;
 import java.util.List;
 import static org.junit.Assert.*;
 
@@ -724,6 +723,18 @@ public class XQueryTest {
         assertResult("""
                 subsequence(("item1", "item2", "item3", "item4", "item5"), 3, 2)
             """, List.of(i3, i4));
+    }
+
+    @Test
+    public void distinctValues() throws XQueryUnsupportedOperation {
+        var i1 = new XQueryString("1");
+        var i2 = new XQueryString("2");
+        assertResult("""
+                distinct-values((1, "1", 1, "1", "2", false(), false(), true(), true()))
+            """, List.of(XQueryNumber.ONE, i1, i2, XQueryBoolean.FALSE, XQueryBoolean.TRUE));
+        assertResult("""
+                distinct-values(())
+            """, List.of());
     }
 
 

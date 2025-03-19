@@ -103,7 +103,7 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
 
 
     @Override
-    public XQueryValue isEmpty() throws UnsupportedOperationException {
+    public XQueryValue empty() throws UnsupportedOperationException {
         return XQueryBoolean.of(value.isEmpty());
     }
 

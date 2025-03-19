@@ -11,7 +11,7 @@ import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 public interface XQueryValue {
     public XQueryValue copy();
 
-    public default XQueryValue isEmpty() throws UnsupportedOperationException {
+    public default XQueryValue empty() throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
     }
 

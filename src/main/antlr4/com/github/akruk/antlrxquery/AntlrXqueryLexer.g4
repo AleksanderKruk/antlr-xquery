@@ -89,7 +89,11 @@ COLLATION: 'collation';
 IF: 'if';
 IN: 'in';
 SATISFIES: 'satisfies';
-ID: [\p{Alpha}][\p{Alpha}\p{Alnum}-]*
+ID: NAME_START (DASH NAME_MIDDLE)*
+// [\p{Alpha}][\p{Alpha}\p{Alnum}-]*
     ; /* Replace with antlr compatible */
 
+fragment NAME_START: [\p{Alpha}][\p{Alpha}\p{Alnum}]*;
+fragment NAME_MIDDLE: [\p{Alpha}\p{Alnum}]+;
+fragment DASH: '-';
 

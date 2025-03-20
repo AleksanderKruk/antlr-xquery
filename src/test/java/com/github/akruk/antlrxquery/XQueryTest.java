@@ -755,6 +755,11 @@ public class XQueryTest {
                 """, List.of(XQueryNumber.ONE, new XQueryNumber(2)));
     }
 
+    @Test
+    public void data() throws XQueryUnsupportedOperation {
+        assertResult("data(1)", List.of(XQueryNumber.ONE));
+        assertResult("data('a')", List.of(new XQueryString("a")));
+    }
 
 
 // Wildcards

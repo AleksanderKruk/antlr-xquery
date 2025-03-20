@@ -397,6 +397,16 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             }
         }
 
+        private static XQueryValue exactlyOne(final List<XQueryValue> args) {
+            assert args.size() == 1;
+            try {
+                var target = args.get(0);
+                return target.exactlyOne();
+            } catch (XQueryUnsupportedOperation e) {
+                return null;
+            }
+        }
+
 
 
     }
@@ -432,7 +442,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         functions.put("distinct-values", XQueryEvaluatorVisitor.Functions::distinctValues);
         functions.put("zero-or-one", XQueryEvaluatorVisitor.Functions::zeroOrOne);
         functions.put("one-or-more", XQueryEvaluatorVisitor.Functions::oneOrMore);
-        functions.put("exactly-one", XQueryEvaluatorVisitor.Functions::distinctValues);
+        functions.put("exactly-one", XQueryEvaluatorVisitor.Functions::exactlyOne);
     }
 
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser) {

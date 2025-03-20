@@ -291,4 +291,7 @@ public interface XQueryValue {
     public default XQueryValue oneOrMore() throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
     }
+    public default XQueryValue exactlyOne() throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
 }

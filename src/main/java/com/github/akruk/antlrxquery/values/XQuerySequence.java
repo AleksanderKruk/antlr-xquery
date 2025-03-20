@@ -222,11 +222,11 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
         };
     }
 
-    // @Override
-    // public XQueryValue oneOrMore() throws XQueryUnsupportedOperation {
-    //     return switch (value.size()) {
-    //         case 0 -> null;
-    //         default -> this;
-    //     };
-    // }
+    @Override
+    public XQueryValue exactlyOne() throws XQueryUnsupportedOperation {
+        return switch (value.size()) {
+            case 1 -> this;
+            default -> null;
+        };
+    }
 }

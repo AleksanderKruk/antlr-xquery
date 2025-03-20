@@ -21,6 +21,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.AbbrevReverseStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ArgumentContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.AxisStepContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.ContextItemExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ForwardAxisContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ForwardStepContext;
@@ -31,7 +32,9 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.NodeTestContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.OrExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PathExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.PostfixContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PostfixExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.PredicateContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.RelativePathExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseAxisContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseStepContext;
@@ -49,6 +52,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     XQueryValue root;
     Parser parser;
     List<XQueryValue> visitedArgumentList;
+    XQueryValue contextValue;
     XQueryValue matchedNodes;
     XQueryAxis currentAxis;
 
@@ -637,8 +641,45 @@ public XQueryValue visitPathExpr(PathExprContext ctx) {
     @Override
     public XQueryValue visitPostfixExpr(PostfixExprContext ctx) {
         // TODO: predicates
+
         // TODO: dynamic function calls
-        return ctx.primaryExpr().accept(this);
+
+        if (ctx.postfix().isEmpty()) {
+            return ctx.primaryExpr().accept(this);
+        }
+
+        final var savedContextValue = saveContextValue();
+        var value = ctx.primaryExpr().accept(this);
+        for (var postfix : ctx.postfix()) {
+            contextValue = value;
+            value = postfix.accept(this);
+        }
+        contextValue = savedContextValue;
+        return value;
+    }
+
+    @Override
+    public XQueryValue visitPredicate(PredicateContext ctx) {
+        if (contextValue.isAtomic()) {
+            // TODO: error
+            return null;
+        }
+        var sequence = contextValue.sequence();
+        var filteredValues = new ArrayList<XQueryValue>(sequence.size());
+        for (var contextItem : sequence) {
+            contextValue = contextItem;
+            final var visitedExpression = ctx.expr().accept(this);
+            if (visitedExpression.effectiveBooleanValue()) {
+                filteredValues.add(contextItem);
+            }
+        }
+        return new XQuerySequence(filteredValues);
+    }
+
+
+    @Override
+    public XQueryValue visitContextItemExpr(ContextItemExprContext ctx) {
+        return contextValue;
     }
 
     @Override
@@ -1126,6 +1167,13 @@ public XQueryValue visitPathExpr(PathExprContext ctx) {
     private XQueryValue saveMatchedModes() {
         final XQueryValue saved = matchedNodes;
         matchedNodes = new XQuerySequence();
+        return saved;
+    }
+
+
+    private XQueryValue saveContextValue() {
+        final XQueryValue saved = contextValue;
+        contextValue = null;
         return saved;
     }
 

@@ -750,6 +750,17 @@ public class XQueryTest {
     }
 
 
+    @Test
+    public void predicateExpression() throws XQueryUnsupportedOperation {
+        // var i1 = new XQueryNumber(1);
+        // var i2 = new XQueryNumber(2);
+        // var i3 = new XQueryNumber(3);
+        var i4 = new XQueryNumber(4);
+        var i5 = new XQueryNumber(5);
+        assertResult("(1, 2, 3, 4, 5)[. gt 3]", List.of(i4, i5));
+    }
+
+
 // Wildcards
 
 }

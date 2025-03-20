@@ -746,6 +746,16 @@ public class XQueryTest {
             """, List.of());
     }
 
+    @Test
+    public void oneOrMore() throws XQueryUnsupportedOperation {
+        var value = XQuery.evaluate(null, "one-or-more(())", null);
+        assertNull(value);
+        assertResult("""
+                    one-or-more((1, 2))
+                """, List.of(XQueryNumber.ONE, new XQueryNumber(2)));
+    }
+
+
 
 // Wildcards
 

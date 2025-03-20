@@ -17,6 +17,11 @@ public class XQueryBoolean extends XQueryValueBase<Boolean> {
             return FALSE;
     }
 
+    @Override
+    public Boolean effectiveBooleanValue() {
+        return value;
+    }
+
 
     @Override
     public Boolean booleanValue() {

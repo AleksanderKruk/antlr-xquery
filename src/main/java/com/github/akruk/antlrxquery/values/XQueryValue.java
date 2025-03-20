@@ -301,4 +301,29 @@ public interface XQueryValue {
         throw new XQueryUnsupportedOperation();
     }
 
+
+    public default XQueryValue substring(XQueryValue other) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
+
+    public default XQueryValue contains(XQueryValue other) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
+
+
+    public default XQueryValue startsWith(XQueryValue other) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
+
+    public default XQueryValue endsWith(XQueryValue other) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
+
+    public default XQueryValue substringBefore() throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
+
+    public default XQueryValue substringAfter() throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
 }

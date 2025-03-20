@@ -417,6 +417,17 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             }
         }
 
+        private static XQueryValue contains(final List<XQueryValue> args) {
+            assert args.size() == 2;
+            try {
+                var target = args.get(0);
+                var what = args.get(1);
+                return target.contains(what);
+            } catch (XQueryUnsupportedOperation e) {
+                return null;
+            }
+        }
+
 
 
     }
@@ -454,6 +465,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         functions.put("one-or-more", XQueryEvaluatorVisitor.Functions::oneOrMore);
         functions.put("exactly-one", XQueryEvaluatorVisitor.Functions::exactlyOne);
         functions.put("data", XQueryEvaluatorVisitor.Functions::data);
+        functions.put("contains", XQueryEvaluatorVisitor.Functions::contains);
     }
 
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser) {

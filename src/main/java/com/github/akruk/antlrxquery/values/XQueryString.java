@@ -86,4 +86,16 @@ public class XQueryString  extends XQueryValueBase<String> {
         var atomized = atomize();
         return new XQuerySequence(atomized);
     }
+
+    @Override
+    public XQueryValue contains(XQueryValue other) throws XQueryUnsupportedOperation {
+        if (value.isEmpty())
+            return XQueryBoolean.FALSE;
+        if (other.stringValue().isEmpty())
+            return XQueryBoolean.TRUE;
+        return XQueryBoolean.of(value.contains(other.stringValue()));
+    }
+
+
+
 }

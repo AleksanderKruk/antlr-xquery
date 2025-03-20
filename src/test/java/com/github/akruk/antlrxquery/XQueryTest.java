@@ -761,6 +761,13 @@ public class XQueryTest {
         assertResult("data('a')", List.of(new XQueryString("a")));
     }
 
+    @Test
+    public void contains() throws XQueryUnsupportedOperation {
+        assertResult("contains('abc', 'bc')", XQueryBoolean.TRUE);
+        assertResult("contains('', 'bc')", XQueryBoolean.FALSE);
+        assertResult("contains('abc', '')", XQueryBoolean.TRUE);
+    }
+
 
 // Wildcards
 

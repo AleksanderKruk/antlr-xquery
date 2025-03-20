@@ -57,11 +57,11 @@ Function                                           | Is implemented | Comment
 `fn:upper-case`                                    |                |
 `fn:lower-case`                                    |                |
 `fn:translate`                                     |                |
-`fn:contains`                                      |                |
-`fn:starts-with`                                   |                |
-`fn:ends-with`                                     |                |
-`fn:substring-before`                              |                |
-`fn:substring-after`                               |                |
+`fn:contains`                                      | yes            |
+`fn:starts-with`                                   | yes            |
+`fn:ends-with`                                     | yes            |
+`fn:substring-before`                              | yes            |
+`fn:substring-after`                               | yes            |
 `fn:matches`                                       |                |
 `fn:replace`                                       |                |
 `fn:tokenize`                                      |                |
@@ -98,56 +98,6 @@ Function                                           | Is implemented | Comment
 `op:multiply-dayTimeDuration`                      |                |
 `op:divide-dayTimeDuration`                        |                |
 `op:divide-dayTimeDuration-by-dayTimeDuration`     |                |
-`fn:dateTime`                                      |                |
-`op:dateTime-equal`                                |                |
-`op:dateTime-less-than`                            |                |
-`op:dateTime-greater-than`                         |                |
-`op:date-equal`                                    |                |
-`op:date-less-than`                                |                |
-`op:date-greater-than`                             |                |
-`op:time-equal`                                    |                |
-`op:time-less-than`                                |                |
-`op:time-greater-than`                             |                |
-`op:gYearMonth-equal`                              |                |
-`op:gYear-equal`                                   |                |
-`op:gMonthDay-equal`                               |                |
-`op:gMonth-equal`                                  |                |
-`op:gDay-equal`                                    |                |
-`fn:year-from-dateTime`                            |                |
-`fn:month-from-dateTime`                           |                |
-`fn:day-from-dateTime`                             |                |
-`fn:hours-from-dateTime`                           |                |
-`fn:minutes-from-dateTime`                         |                |
-`fn:seconds-from-dateTime`                         |                |
-`fn:timezone-from-dateTime`                        |                |
-`fn:year-from-date`                                |                |
-`fn:month-from-date`                               |                |
-`fn:day-from-date`                                 |                |
-`fn:timezone-from-date`                            |                |
-`fn:hours-from-time`                               |                |
-`fn:minutes-from-time`                             |                |
-`fn:seconds-from-time`                             |                |
-`fn:timezone-from-time`                            |                |
-`fn:adjust-dateTime-to-timezone`                   |                |
-`fn:adjust-date-to-timezone`                       |                |
-`fn:adjust-time-to-timezone`                       |                |
-`op:subtract-dateTimes`                            |                |
-`op:subtract-dates`                                |                |
-`op:subtract-times`                                |                |
-`op:add-yearMonthDuration-to-dateTime`             |                |
-`op:add-dayTimeDuration-to-dateTime`               |                |
-`op:subtract-yearMonthDuration-from-dateTime`      |                |
-`op:subtract-dayTimeDuration-from-dateTime`        |                |
-`op:add-yearMonthDuration-to-date`                 |                |
-`op:add-dayTimeDuration-to-date`                   |                |
-`op:subtract-yearMonthDuration-from-date`          |                |
-`op:subtract-dayTimeDuration-from-date `           |                |
-`op:add-dayTimeDuration-to-time`                   |                |
-`op:subtract-dayTimeDuration-from-time`            |                |
-`fn:format-dateTime`                               |                |
-`fn:format-date`                                   |                |
-`fn:format-time`                                   |                |
-`fn:parse-ietf-date`                               |                |
 `fn:resolve-QName`                                 |                |
 `fn:QName`                                         |                |
 `op:QName-equal`                                   |                |
@@ -264,3 +214,54 @@ Function                                           | Is implemented | Comment
 `fn:xml-to-json`                                   |                |
 `fn:analyze-string`                                |                |
 `fn:json-to-xml`                                   |                |
+
+<!-- `fn:dateTime`                                      |                |
+`op:dateTime-equal`                                |                |
+`op:dateTime-less-than`                            |                |
+`op:dateTime-greater-than`                         |                |
+`op:date-equal`                                    |                |
+`op:date-less-than`                                |                |
+`op:date-greater-than`                             |                |
+`op:time-equal`                                    |                |
+`op:time-less-than`                                |                |
+`op:time-greater-than`                             |                |
+`op:gYearMonth-equal`                              |                |
+`op:gYear-equal`                                   |                |
+`op:gMonthDay-equal`                               |                |
+`op:gMonth-equal`                                  |                |
+`op:gDay-equal`                                    |                |
+`fn:year-from-dateTime`                            |                |
+`fn:month-from-dateTime`                           |                |
+`fn:day-from-dateTime`                             |                |
+`fn:hours-from-dateTime`                           |                |
+`fn:minutes-from-dateTime`                         |                |
+`fn:seconds-from-dateTime`                         |                |
+`fn:timezone-from-dateTime`                        |                |
+`fn:year-from-date`                                |                |
+`fn:month-from-date`                               |                |
+`fn:day-from-date`                                 |                |
+`fn:timezone-from-date`                            |                |
+`fn:hours-from-time`                               |                |
+`fn:minutes-from-time`                             |                |
+`fn:seconds-from-time`                             |                |
+`fn:timezone-from-time`                            |                |
+`fn:adjust-dateTime-to-timezone`                   |                |
+`fn:adjust-date-to-timezone`                       |                |
+`fn:adjust-time-to-timezone`                       |                |
+`op:subtract-dateTimes`                            |                |
+`op:subtract-dates`                                |                |
+`op:subtract-times`                                |                |
+`op:add-yearMonthDuration-to-dateTime`             |                |
+`op:add-dayTimeDuration-to-dateTime`               |                |
+`op:subtract-yearMonthDuration-from-dateTime`      |                |
+`op:subtract-dayTimeDuration-from-dateTime`        |                |
+`op:add-yearMonthDuration-to-date`                 |                |
+`op:add-dayTimeDuration-to-date`                   |                |
+`op:subtract-yearMonthDuration-from-date`          |                |
+`op:subtract-dayTimeDuration-from-date `           |                |
+`op:add-dayTimeDuration-to-time`                   |                |
+`op:subtract-dayTimeDuration-from-time`            |                |
+`fn:format-dateTime`                               |                |
+`fn:format-date`                                   |                |
+`fn:format-time`                                   |                |
+`fn:parse-ietf-date`                               |                | -->

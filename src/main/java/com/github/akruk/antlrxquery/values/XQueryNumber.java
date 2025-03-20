@@ -73,4 +73,9 @@ public class XQueryNumber extends XQueryValueBase<BigDecimal> {
         return new XQueryNumber(value.plus());
     }
 
+    @Override
+    public XQueryValue data() throws XQueryUnsupportedOperation {
+        var atomized = atomize();
+        return new XQuerySequence(atomized);
+    }
 }

@@ -81,4 +81,9 @@ public class XQueryString  extends XQueryValueBase<String> {
         return new XQueryString(value.substring(1));
     }
 
+    @Override
+    public XQueryValue data() throws XQueryUnsupportedOperation {
+        var atomized = atomize();
+        return new XQuerySequence(atomized);
+    }
 }

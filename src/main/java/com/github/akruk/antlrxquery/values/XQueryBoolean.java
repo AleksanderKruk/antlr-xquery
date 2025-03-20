@@ -58,4 +58,12 @@ public class XQueryBoolean extends XQueryValueBase<Boolean> {
     public XQueryValue copy() {
         return this;
     }
+
+    @Override
+    public XQueryValue data() throws XQueryUnsupportedOperation {
+        var atomized = atomize();
+        return new XQuerySequence(atomized);
+    }
+
+
 }

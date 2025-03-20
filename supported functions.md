@@ -184,9 +184,9 @@ Function                                           | Is implemented | Comment
 `fn:distinct-values`                               | yes            |
 `fn:index-of`                                      |                |
 `fn:deep-equal`                                    |                |
-`fn:zero-or-one`                                   |                |
-`fn:one-or-more`                                   |                |
-`fn:exactly-one`                                   |                |
+`fn:zero-or-one`                                   | yes            |
+`fn:one-or-more`                                   | yes            |
+`fn:exactly-one`                                   | yes            |
 `fn:count`                                         |                |
 `fn:avg`                                           |                |
 `fn:max`                                           |                |

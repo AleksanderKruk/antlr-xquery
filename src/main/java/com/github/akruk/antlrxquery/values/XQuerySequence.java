@@ -229,4 +229,10 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
             default -> null;
         };
     }
+
+    @Override
+    public XQueryValue data() throws XQueryUnsupportedOperation {
+        var atomized = atomize();
+        return new XQuerySequence(atomized);
+    }
 }

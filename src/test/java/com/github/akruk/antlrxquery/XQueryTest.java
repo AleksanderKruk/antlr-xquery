@@ -780,6 +780,20 @@ public class XQueryTest {
         assertResult("ends-with('tattoo', 'tatt')", XQueryBoolean.FALSE);
     }
 
+    @Test
+    public void substringBefore() throws XQueryUnsupportedOperation {
+        assertResult("substring-before('tattoo', 'attoo')", new XQueryString("t"));
+        assertResult("substring-before('tattoo', 'tatto')", new XQueryString(""));
+        assertResult("substring-before('abcde', 'f')", new XQueryString(""));
+    }
+
+    @Test
+    public void substringAfter() throws XQueryUnsupportedOperation {
+        assertResult("substring-after('tattoo', 'tat')", new XQueryString("too"));
+        assertResult("substring-after('tattoo', 'tattoo')", new XQueryString(""));
+        assertResult("substring-after('abcde', 'f')", new XQueryString(""));
+    }
+
 
 // Wildcards
 

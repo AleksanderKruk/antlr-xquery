@@ -451,6 +451,30 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         }
 
 
+        private static XQueryValue substringAfter(final List<XQueryValue> args) {
+            assert args.size() == 2;
+            try {
+                var target = args.get(0);
+                var what = args.get(1);
+                return target.substringAfter(what);
+            } catch (XQueryUnsupportedOperation e) {
+                return null;
+            }
+        }
+
+
+        private static XQueryValue substringBefore(final List<XQueryValue> args) {
+            assert args.size() == 2;
+            try {
+                var target = args.get(0);
+                var what = args.get(1);
+                return target.substringBefore(what);
+            } catch (XQueryUnsupportedOperation e) {
+                return null;
+            }
+        }
+
+
 
     }
 
@@ -490,6 +514,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         functions.put("contains", XQueryEvaluatorVisitor.Functions::contains);
         functions.put("starts-with", XQueryEvaluatorVisitor.Functions::startsWith);
         functions.put("ends-with", XQueryEvaluatorVisitor.Functions::endsWith);
+        functions.put("substring-after", XQueryEvaluatorVisitor.Functions::substringAfter);
+        functions.put("substring-before", XQueryEvaluatorVisitor.Functions::substringBefore);
     }
 
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser) {

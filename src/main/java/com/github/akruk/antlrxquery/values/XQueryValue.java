@@ -319,11 +319,11 @@ public interface XQueryValue {
         throw new XQueryUnsupportedOperation();
     }
 
-    public default XQueryValue substringBefore() throws XQueryUnsupportedOperation {
+    public default XQueryValue substringBefore(XQueryValue splitstring) throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
     }
 
-    public default XQueryValue substringAfter() throws XQueryUnsupportedOperation {
+    public default XQueryValue substringAfter(XQueryValue splitstring) throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
     }
 }

@@ -1,5 +1,7 @@
 package com.github.akruk.antlrxquery.values;
 
+import java.util.regex.Pattern;
+
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 
 public class XQueryString  extends XQueryValueBase<String> {
@@ -115,5 +117,26 @@ public class XQueryString  extends XQueryValueBase<String> {
         return XQueryBoolean.of(value.endsWith(other.stringValue()));
     }
 
+    @Override
+    public XQueryValue substringBefore(XQueryValue splitstring) throws XQueryUnsupportedOperation {
+        if (splitstring.empty().booleanValue())
+            return new XQueryString("");
+        var escapedSplitstring = Pattern.quote(splitstring.stringValue());
+        String[] splitString = value.split(escapedSplitstring, 2);
+        if (splitString.length == 1)
+            return new XQueryString("");
+        return new XQueryString(splitString[0]);
+    }
 
+    @Override
+    public XQueryValue substringAfter(XQueryValue splitstring) throws XQueryUnsupportedOperation {
+        if (splitstring.empty().booleanValue())
+            return new XQueryString("");
+        var splitstringValue = splitstring.stringValue();
+        var escapedSplitstring = Pattern.quote(splitstringValue);
+        String[] splitString = value.split(escapedSplitstring, 2);
+        if (splitString.length == 1)
+            return new XQueryString("");
+        return new XQueryString(splitString[1]);
+    }
 }

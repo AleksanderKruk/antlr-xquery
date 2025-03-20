@@ -774,11 +774,11 @@ public class XQueryTest {
         assertResult("starts-with('tattoo', 'att')", XQueryBoolean.FALSE);
     }
 
-    // @Test
-    // public void endsWith() throws XQueryUnsupportedOperation {
-    //     assertResult("ends-with('tattoo', 'oo')", XQueryBoolean.TRUE);
-    //     assertResult("ends-with('tattoo', 'tatt')", XQueryBoolean.FALSE);
-    // }
+    @Test
+    public void endsWith() throws XQueryUnsupportedOperation {
+        assertResult("ends-with('tattoo', 'oo')", XQueryBoolean.TRUE);
+        assertResult("ends-with('tattoo', 'tatt')", XQueryBoolean.FALSE);
+    }
 
 
 // Wildcards

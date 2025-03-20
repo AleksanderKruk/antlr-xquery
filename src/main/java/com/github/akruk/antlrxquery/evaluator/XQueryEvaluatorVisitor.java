@@ -3,6 +3,7 @@ package com.github.akruk.antlrxquery.evaluator;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -510,6 +511,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                 return handleOrExpr(ctx);
             if (!ctx.AND().isEmpty())
                 return handleAndExpr(ctx);
+            if (ctx.TO() != null)
+                return handleRangeExpr(ctx);
             if (!ctx.additiveOperator().isEmpty())
                 return handleAdditiveExpr(ctx);
             if (!ctx.multiplicativeOperator().isEmpty())
@@ -537,8 +540,21 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         }
     }
 
+    private XQueryValue handleRangeExpr(OrExprContext ctx) {
+        var fromValue = ctx.orExpr(0).accept(this);
+        var toValue = ctx.orExpr(1).accept(this);
+        int fromInt = fromValue.numericValue().intValue();
+        int toInt = toValue.numericValue().intValue();
+        if (fromInt > toInt)
+            return XQuerySequence.EMPTY;
+        List<XQueryValue> values = IntStream.rangeClosed(fromInt, toInt)
+            .mapToObj(i->new XQueryNumber(i))
+            .collect(Collectors.toList());
+        return new XQuerySequence(values);
+    }
+
     @Override
-    public XQueryValue visitPathExpr(PathExprContext ctx) {
+public XQueryValue visitPathExpr(PathExprContext ctx) {
         boolean pathExpressionFromRoot = ctx.SLASH() != null;
         if (pathExpressionFromRoot) {
             final var savedNodes = saveMatchedModes();

@@ -428,6 +428,17 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             }
         }
 
+        private static XQueryValue startsWith(final List<XQueryValue> args) {
+            assert args.size() == 2;
+            try {
+                var target = args.get(0);
+                var what = args.get(1);
+                return target.startsWith(what);
+            } catch (XQueryUnsupportedOperation e) {
+                return null;
+            }
+        }
+
 
 
     }
@@ -466,6 +477,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         functions.put("exactly-one", XQueryEvaluatorVisitor.Functions::exactlyOne);
         functions.put("data", XQueryEvaluatorVisitor.Functions::data);
         functions.put("contains", XQueryEvaluatorVisitor.Functions::contains);
+        functions.put("starts-with", XQueryEvaluatorVisitor.Functions::startsWith);
     }
 
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser) {

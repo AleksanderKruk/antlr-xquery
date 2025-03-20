@@ -96,6 +96,24 @@ public class XQueryString  extends XQueryValueBase<String> {
         return XQueryBoolean.of(value.contains(other.stringValue()));
     }
 
+    @Override
+    public XQueryValue startsWith(XQueryValue other) throws XQueryUnsupportedOperation {
+        if (value.isEmpty())
+            return XQueryBoolean.FALSE;
+        if (other.stringValue().isEmpty())
+            return XQueryBoolean.TRUE;
+        return XQueryBoolean.of(value.startsWith(other.stringValue()));
+    }
+
+
+    // @Override
+    // public XQueryValue endsWith(XQueryValue other) throws XQueryUnsupportedOperation {
+    //     if (value.isEmpty())
+    //         return XQueryBoolean.FALSE;
+    //     if (other.stringValue().isEmpty())
+    //         return XQueryBoolean.TRUE;
+    //     return XQueryBoolean.of(value.endsWith(other.stringValue()));
+    // }
 
 
 }

@@ -768,6 +768,18 @@ public class XQueryTest {
         assertResult("contains('abc', '')", XQueryBoolean.TRUE);
     }
 
+    @Test
+    public void startsWith() throws XQueryUnsupportedOperation {
+        assertResult("starts-with('tattoo', 'tat')", XQueryBoolean.TRUE);
+        assertResult("starts-with('tattoo', 'att')", XQueryBoolean.FALSE);
+    }
+
+    // @Test
+    // public void endsWith() throws XQueryUnsupportedOperation {
+    //     assertResult("ends-with('tattoo', 'oo')", XQueryBoolean.TRUE);
+    //     assertResult("ends-with('tattoo', 'tatt')", XQueryBoolean.FALSE);
+    // }
+
 
 // Wildcards
 

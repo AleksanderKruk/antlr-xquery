@@ -76,7 +76,8 @@ nameTest: ID | wildcard;
 wildcard: STAR
         | (ID COLONSTAR)
         | (STARCOLON ID);
-postfixExpr: primaryExpr (predicate | argumentList)*;
+postfixExpr: primaryExpr (postfix)*;
+postfix: predicate | argumentList;
 argumentList: LPAREN (argument (COMMA argument)*)? RPAREN;
 predicateList: predicate*;
 predicate: LBRACKET expr RBRACKET;

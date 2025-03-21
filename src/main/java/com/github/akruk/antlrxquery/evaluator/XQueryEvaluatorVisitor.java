@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -541,16 +540,17 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         private static XQueryValue stringJoin(XQueryVisitingContext context, final List<XQueryValue> args) {
             return switch (args.size()) {
                 case 1 -> {
-                    String joined = args.stream().map(XQueryValue::stringValue).collect(Collectors.joining());
+                    var sequence = args.get(0).sequence();
+                    String joined = sequence.stream().map(XQueryValue::stringValue).collect(Collectors.joining());
                     yield new XQueryString(joined);
-                };
+                }
                 case 2 -> {
                     var sequence = args.get(0).sequence();
                     var delimiter = args.get(1).stringValue();
                     String joined = sequence.stream().map(XQueryValue::stringValue).collect(Collectors.joining(delimiter));
                     yield new XQueryString(joined);
 
-                };
+                }
                 default -> null;
             };
         }
@@ -601,6 +601,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         functions.put("lower-case", XQueryEvaluatorVisitor.Functions::lowercase);
         functions.put("string", XQueryEvaluatorVisitor.Functions::string);
         functions.put("concat", XQueryEvaluatorVisitor.Functions::concat);
+        functions.put("string-join", XQueryEvaluatorVisitor.Functions::stringJoin);
     }
 
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser) {

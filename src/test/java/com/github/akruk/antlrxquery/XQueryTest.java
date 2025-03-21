@@ -854,6 +854,17 @@ public class XQueryTest {
     }
 
 
+    @Test
+    public void concat() throws XQueryUnsupportedOperation {
+        assertResult("concat('a', 'b', 'c')", new XQueryString("abc"));
+    }
+
+    @Test
+    public void stringJoin() throws XQueryUnsupportedOperation {
+        assertResult("string-join(('a', 'b', 'c'))", new XQueryString("abc"));
+        assertResult("string-join(('a', 'b', 'c'), '-')", new XQueryString("a-b-c"));
+    }
+
 
 
 // Wildcards

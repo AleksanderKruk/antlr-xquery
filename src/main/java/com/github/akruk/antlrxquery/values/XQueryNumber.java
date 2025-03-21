@@ -24,6 +24,12 @@ public class XQueryNumber extends XQueryValueBase<BigDecimal> {
     }
 
     @Override
+    public String stringValue() {
+        return value.toString();
+    }
+
+
+    @Override
     public Boolean effectiveBooleanValue() {
         return value.equals(BigDecimal.ZERO);
     }

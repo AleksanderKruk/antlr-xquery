@@ -29,6 +29,11 @@ public class XQueryBoolean extends XQueryValueBase<Boolean> {
     }
 
     @Override
+    public String stringValue() {
+        return (value)? "true" : "false";
+    }
+
+    @Override
     public XQueryValue not() throws XQueryUnsupportedOperation {
         return XQueryBoolean.of(!value);
     }

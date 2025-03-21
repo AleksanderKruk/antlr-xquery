@@ -16,6 +16,12 @@ public class XQueryTreeNode extends XQueryValueBase<ParseTree> {
     public ParseTree node() {
         return value;
     }
+
+    @Override
+    public String stringValue() {
+        return value.toString();
+    }
+
     @Override
     public XQueryValue valueEqual(XQueryValue other) {
         // TODO Auto-generated method stub

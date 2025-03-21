@@ -2,6 +2,7 @@ package com.github.akruk.antlrxquery.evaluator;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -589,6 +590,63 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             };
         }
 
+        record ParseFlagsResult(int flags, String newPattern, String newReplacement) {}
+
+        private static int parseFlags(String flags, String pattern, String replacement) {
+            int result = 0;
+
+            for (char c : flags.toCharArray()) {
+                result = switch (c) {
+                    case 'q' -> {
+                        pattern = Pattern.quote(pattern);
+                        // TODO: more direct
+                        replacement = Pattern.quote(replacement);
+                        yield result;
+                    }
+                    case 's' -> result & ~Pattern.MULTILINE;
+                    case 'm' -> result | Pattern.MULTILINE;
+                    case 'i' -> result | Pattern.UNICODE_CASE;
+                    case 'x' -> result | Pattern.COMMENTS;
+                    // case '0' -> ;
+                    // case '1' -> ;
+                    // case '2' -> ;
+                    // case '3' -> ;
+                    // case '4' -> ;
+                    // case '5' -> ;
+                    // case '6' -> ;
+                    // case '7' -> ;
+                    // case '8' -> ;
+                    // case '9' -> ;
+                    // default -> ;
+                };
+            }
+            return 0;
+        }
+
+        private static XQueryValue replace(XQueryVisitingContext context, final List<XQueryValue> args) {
+            return switch (args.size()) {
+                case 3 -> {
+                    String input = args.get(0).stringValue();
+                    String pattern = args.get(1).stringValue();
+                    String replacement = args.get(2).stringValue();
+                    String result = input.replaceAll(pattern, replacement);
+                    yield new XQueryString(result);
+                }
+                case 4 -> {
+                    String input = args.get(0).stringValue();
+                    String pattern = args.get(1).stringValue();
+                    String replacement = args.get(2).stringValue();
+                    String flags = args.get(3).stringValue();
+                    int intFlags = parseFlags(flags);
+                    var matcher = Pattern.compile(pattern, intFlags).matcher(input);
+                    String result = matcher.replaceAll(replacement);
+                    var x = Pattern.UNIX_LINES + Pattern.CANON_EQ;
+                    yield new XQueryString(result);
+                }
+                default -> null;
+            };
+        }
+
     }
 
     private static final Map<String, XQueryFunction> functions;
@@ -637,6 +695,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         functions.put("string-join", XQueryEvaluatorVisitor.Functions::stringJoin);
         functions.put("string-length", XQueryEvaluatorVisitor.Functions::stringLength);
         functions.put("normalize-space", XQueryEvaluatorVisitor.Functions::normalizeSpace);
+        functions.put("replace", XQueryEvaluatorVisitor.Functions::replace);
     }
 
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser) {

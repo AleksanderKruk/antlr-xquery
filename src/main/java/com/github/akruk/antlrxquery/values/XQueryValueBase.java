@@ -318,6 +318,14 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
         throw new XQueryUnsupportedOperation();
     }
 
+    public XQueryValue lowercase() throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
+
+    public XQueryValue uppercase() throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
+
     public XQueryValue substringBefore(XQueryValue splitstring) throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
     }

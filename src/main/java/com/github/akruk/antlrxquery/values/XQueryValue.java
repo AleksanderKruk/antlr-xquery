@@ -65,6 +65,8 @@ public interface XQueryValue {
     public XQueryValue contains(XQueryValue other) throws XQueryUnsupportedOperation;
     public XQueryValue startsWith(XQueryValue other) throws XQueryUnsupportedOperation;
     public XQueryValue endsWith(XQueryValue other) throws XQueryUnsupportedOperation;
+    public XQueryValue uppercase() throws XQueryUnsupportedOperation;
+    public XQueryValue lowercase() throws XQueryUnsupportedOperation;
     public XQueryValue substring(int startingLoc) throws XQueryUnsupportedOperation;
     public XQueryValue substring(int startingLoc, int length) throws XQueryUnsupportedOperation;
     public XQueryValue substringBefore(XQueryValue splitstring) throws XQueryUnsupportedOperation;

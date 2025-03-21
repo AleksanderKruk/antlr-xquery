@@ -780,6 +780,17 @@ public class XQueryTest {
         assertResult("ends-with('tattoo', 'tatt')", XQueryBoolean.FALSE);
     }
 
+
+    @Test
+    public void lowercase() throws XQueryUnsupportedOperation {
+        assertResult("lower-case('AbCdE')", new XQueryString("abcde"));
+    }
+
+    @Test
+    public void uppercase() throws XQueryUnsupportedOperation {
+        assertResult("upper-case('AbCdE')", new XQueryString("ABCDE"));
+    }
+
     @Test
     public void substring() throws XQueryUnsupportedOperation {
         assertResult("""

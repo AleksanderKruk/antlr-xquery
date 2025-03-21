@@ -501,6 +501,27 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         }
 
 
+        private static XQueryValue uppercase(final List<XQueryValue> args) {
+            assert args.size() == 1;
+            try {
+                var target = args.get(0);
+                return target.uppercase();
+            } catch (XQueryUnsupportedOperation e) {
+                return null;
+            }
+        }
+
+
+        private static XQueryValue lowercase(final List<XQueryValue> args) {
+            assert args.size() == 1;
+            try {
+                var target = args.get(0);
+                return target.lowercase();
+            } catch (XQueryUnsupportedOperation e) {
+                return null;
+            }
+        }
+
 
     }
 
@@ -543,6 +564,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         functions.put("ends-with", XQueryEvaluatorVisitor.Functions::endsWith);
         functions.put("substring-after", XQueryEvaluatorVisitor.Functions::substringAfter);
         functions.put("substring-before", XQueryEvaluatorVisitor.Functions::substringBefore);
+        functions.put("upper-case", XQueryEvaluatorVisitor.Functions::uppercase);
+        functions.put("lower-case", XQueryEvaluatorVisitor.Functions::lowercase);
     }
 
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser) {

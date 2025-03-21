@@ -163,4 +163,16 @@ public class XQueryString  extends XQueryValueBase<String> {
             return new XQueryString("");
         return new XQueryString(splitString[1]);
     }
+
+    @Override
+    public XQueryValue uppercase() throws XQueryUnsupportedOperation {
+        return new XQueryString(value.toUpperCase());
+    }
+
+    @Override
+    public XQueryValue lowercase() throws XQueryUnsupportedOperation {
+        return new XQueryString(value.toLowerCase());
+    }
+
+
 }

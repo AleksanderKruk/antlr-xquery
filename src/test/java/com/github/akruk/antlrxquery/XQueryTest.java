@@ -590,8 +590,9 @@ public class XQueryTest {
     @Test
     public void empty() throws XQueryUnsupportedOperation {
         assertResult("empty(())", XQueryBoolean.TRUE);
+        assertResult("empty(1)", XQueryBoolean.FALSE);
         assertResult("empty((1,2,3))", XQueryBoolean.FALSE);
-        assertResult("empty(\"\")", XQueryBoolean.TRUE);
+        assertResult("empty(\"\")", XQueryBoolean.FALSE);
         assertResult("empty(\"abcd\")", XQueryBoolean.FALSE);
         // The expression fn:empty([]) returns false().
         // The expression fn:empty(map{}) returns false().
@@ -606,7 +607,7 @@ public class XQueryTest {
     public void exists() throws XQueryUnsupportedOperation {
         assertResult("exists(())", XQueryBoolean.FALSE);
         assertResult("exists((1,2,3))", XQueryBoolean.TRUE);
-        assertResult("exists(\"\")", XQueryBoolean.FALSE);
+        assertResult("exists(\"\")", XQueryBoolean.TRUE);
         assertResult("exists(\"abcd\")", XQueryBoolean.TRUE);
         // The expression fn:exists([]) returns true().
         // The expression fn:exists(map{}) returns true().

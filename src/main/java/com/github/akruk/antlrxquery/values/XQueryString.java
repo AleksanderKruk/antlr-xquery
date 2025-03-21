@@ -14,6 +14,11 @@ public class XQueryString  extends XQueryValueBase<String> {
         return value;
     }
 
+
+    @Override
+    public Boolean effectiveBooleanValue() {
+        return value.isEmpty();
+    }
     @Override
     public XQueryValue concatenate(XQueryValue other) {
         return new XQueryString(value + other.stringValue());

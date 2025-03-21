@@ -32,11 +32,11 @@ public interface XQueryValue {
         return null;
     };
 
-    public default List<XQueryValue> sequence() {
+    public default Boolean effectiveBooleanValue() {
         return null;
-    }
+    };
 
-    public default Predicate<ParseTree> filter() {
+    public default List<XQueryValue> sequence() {
         return null;
     }
 
@@ -58,10 +58,6 @@ public interface XQueryValue {
 
     public default boolean isSequence() {
         return sequence() != null;
-    }
-
-    public default boolean isFilter() {
-        return filter() != null;
     }
 
     public default boolean isReference() {

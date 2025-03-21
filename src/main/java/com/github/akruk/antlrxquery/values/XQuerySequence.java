@@ -29,6 +29,11 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
     }
 
     @Override
+    public Boolean effectiveBooleanValue() {
+        return value.isEmpty();
+    }
+
+    @Override
     public List<XQueryValue> atomize() {
         List<XQueryValue> result = new ArrayList<>();
         for (XQueryValue element : value) {

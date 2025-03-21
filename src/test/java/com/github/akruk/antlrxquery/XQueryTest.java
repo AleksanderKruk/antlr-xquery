@@ -792,6 +792,26 @@ public class XQueryTest {
         assertResult("substring-after('tattoo', 'tat')", new XQueryString("too"));
         assertResult("substring-after('tattoo', 'tattoo')", new XQueryString(""));
         assertResult("substring-after('abcde', 'f')", new XQueryString(""));
+    public void rangeExpression() throws XQueryUnsupportedOperation {
+        var i1 = new XQueryNumber(1);
+        var i2 = new XQueryNumber(2);
+        var i3 = new XQueryNumber(3);
+        var i4 = new XQueryNumber(4);
+        var i5 = new XQueryNumber(5);
+        assertResult("1 to 5", List.of(i1, i2, i3, i4, i5));
+        assertResult("4 to 3", List.of());
+        assertResult("3 to 3", List.of(i3));
+    }
+
+
+    @Test
+    public void predicateExpression() throws XQueryUnsupportedOperation {
+        // var i1 = new XQueryNumber(1);
+        // var i2 = new XQueryNumber(2);
+        // var i3 = new XQueryNumber(3);
+        var i4 = new XQueryNumber(4);
+        var i5 = new XQueryNumber(5);
+        assertResult("(1, 2, 3, 4, 5)[. gt 3]", List.of(i4, i5));
     }
 
 

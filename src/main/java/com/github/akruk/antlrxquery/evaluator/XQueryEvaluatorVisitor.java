@@ -3,7 +3,6 @@ package com.github.akruk.antlrxquery.evaluator;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +31,6 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.NodeTestContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.OrExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PathExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.PostfixContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PostfixExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PredicateContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.RelativePathExprContext;
@@ -52,9 +50,10 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     XQueryValue root;
     Parser parser;
     List<XQueryValue> visitedArgumentList;
-    XQueryValue contextValue;
     XQueryValue matchedNodes;
     XQueryAxis currentAxis;
+    XQueryVisitingContext context;
+
 
 
     private enum XQueryAxis {
@@ -74,7 +73,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
 
     private final class Functions {
-        private static final XQueryValue not(final List<XQueryValue> args) {
+        private static final XQueryValue not(final XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 1;
             try {
                 return args.get(0).not();
@@ -86,7 +85,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         }
 
         // fn:abs($arg as xs:numeric?) as xs:numeric?
-        private static final XQueryValue abs(final List<XQueryValue> args) {
+        private static final XQueryValue abs(final XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 1;
             final var arg = args.get(0);
             // TODO: Add type check failure
@@ -95,7 +94,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             return new XQueryNumber(arg.numericValue().abs());
         }
 
-        private static final XQueryValue ceiling(final List<XQueryValue> args) {
+        private static final XQueryValue ceiling(final XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 1;
             final var arg = args.get(0);
             // TODO: Add type check failure
@@ -104,7 +103,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             return new XQueryNumber(arg.numericValue().setScale(0, RoundingMode.CEILING));
         }
 
-        private static final XQueryValue floor(final List<XQueryValue> args) {
+        private static final XQueryValue floor(final XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 1;
             final var arg = args.get(0);
             // TODO: Add type check failure
@@ -113,7 +112,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             return new XQueryNumber(arg.numericValue().setScale(0, RoundingMode.FLOOR));
         }
 
-        private static final XQueryValue round(final List<XQueryValue> args) {
+        private static final XQueryValue round(final XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 1 || args.size() == 2;
             final var arg1 = args.get(0);
             final var number1 = arg1.numericValue();
@@ -165,7 +164,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         //     return new XQueryNumber(roundedNumberNormalNotation);
         // }
 
-        private static final XQueryValue numericAdd(final List<XQueryValue> args) {
+        private static final XQueryValue numericAdd(final XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 2;
             final var val1 = args.get(0);
             final var val2 = args.get(1);
@@ -179,7 +178,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             }
         }
 
-        private static final XQueryValue numericSubtract(final List<XQueryValue> args) {
+        private static final XQueryValue numericSubtract(final XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 2;
             final var val1 = args.get(0);
             final var val2 = args.get(1);
@@ -193,7 +192,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             }
         }
 
-        private static final XQueryValue numericMultiply(final List<XQueryValue> args) {
+        private static final XQueryValue numericMultiply(final XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 2;
             final var val1 = args.get(0);
             final var val2 = args.get(1);
@@ -208,7 +207,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         }
 
 
-        private static final XQueryValue numericDivide(final List<XQueryValue> args) {
+        private static final XQueryValue numericDivide(XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 2;
             final var val1 = args.get(0);
             final var val2 = args.get(1);
@@ -222,7 +221,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             }
         }
 
-        private static final XQueryValue numericIntegerDivide(final List<XQueryValue> args) {
+        private static final XQueryValue numericIntegerDivide(XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 2;
             final var val1 = args.get(0);
             final var val2 = args.get(1);
@@ -237,7 +236,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         }
 
 
-        private static final XQueryValue numericMod(final List<XQueryValue> args) {
+        private static final XQueryValue numericMod(XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 2;
             final var val1 = args.get(0);
             final var val2 = args.get(1);
@@ -251,7 +250,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             }
         }
 
-        private static final XQueryValue numericUnaryPlus(final List<XQueryValue> args) {
+        private static final XQueryValue numericUnaryPlus(XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 1;
             final var val1 = args.get(0);
             // TODO: Add type check failure
@@ -260,7 +259,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             return val1;
         }
 
-        private static final XQueryValue numericUnaryMinus(final List<XQueryValue> args) {
+        private static final XQueryValue numericUnaryMinus(XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 1;
             final var val1 = args.get(0);
             // TODO: Add type check failure
@@ -269,33 +268,33 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             return new XQueryNumber(val1.numericValue().negate());
         }
 
-        private static XQueryValue true_(final List<XQueryValue> args) {
+        private static XQueryValue true_(XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 0;
             return XQueryBoolean.TRUE;
         }
 
-        private static XQueryValue false_(final List<XQueryValue> args) {
+        private static XQueryValue false_(XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 0;
             return XQueryBoolean.FALSE;
         }
 
-        private static XQueryValue pi(final List<XQueryValue> args) {
+        private static XQueryValue pi(XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 0;
             return new XQueryNumber(new BigDecimal(Math.PI));
         }
 
-        private static XQueryValue empty(final List<XQueryValue> args) {
+        private static XQueryValue empty(XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 1;
             var arg = args.get(0);
             return arg.empty();
         }
 
-        private static XQueryValue exists(final List<XQueryValue> args) {
+        private static XQueryValue exists(XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 1;
-            return XQueryBoolean.of(!empty(args).booleanValue());
+            return XQueryBoolean.of(!empty(context, args).booleanValue());
         }
 
-        private static XQueryValue head(final List<XQueryValue> args) {
+        private static XQueryValue head(XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 1;
             try {
                 return args.get(0).head();
@@ -304,7 +303,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             }
         }
 
-        private static XQueryValue tail(final List<XQueryValue> args) {
+        private static XQueryValue tail(XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 1;
             try {
                 return args.get(0).tail();
@@ -314,7 +313,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         }
 
 
-        private static XQueryValue insertBefore(final List<XQueryValue> args) {
+        private static XQueryValue insertBefore(XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 3;
             try {
                 var target = args.get(0);
@@ -326,7 +325,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             }
         }
 
-        private static XQueryValue remove(final List<XQueryValue> args) {
+        private static XQueryValue remove(XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 2;
             try {
                 var target = args.get(0);
@@ -337,7 +336,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             }
         }
 
-        private static XQueryValue reverse(final List<XQueryValue> args) {
+        private static XQueryValue reverse(XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 1;
             try {
                 var target = args.get(0);
@@ -351,7 +350,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         }
 
 
-        private static XQueryValue subsequence(final List<XQueryValue> args) {
+        private static XQueryValue subsequence(XQueryVisitingContext context, final List<XQueryValue> args) {
             try {
                 return switch (args.size()) {
                     case 3 -> {
@@ -372,7 +371,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             }
         }
 
-        private static XQueryValue substring(final List<XQueryValue> args) {
+        private static XQueryValue substring(XQueryVisitingContext context, final List<XQueryValue> args) {
             try {
                 return switch (args.size()) {
                     case 3 -> {
@@ -393,7 +392,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             }
         }
 
-        private static XQueryValue distinctValues(final List<XQueryValue> args) {
+        private static XQueryValue distinctValues(XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 1;
             try {
                 var target = args.get(0);
@@ -403,7 +402,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             }
         }
 
-        private static XQueryValue zeroOrOne(final List<XQueryValue> args) {
+        private static XQueryValue zeroOrOne(XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 1;
             try {
                 var target = args.get(0);
@@ -413,7 +412,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             }
         }
 
-        private static XQueryValue oneOrMore(final List<XQueryValue> args) {
+        private static XQueryValue oneOrMore(XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 1;
             try {
                 var target = args.get(0);
@@ -423,7 +422,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             }
         }
 
-        private static XQueryValue exactlyOne(final List<XQueryValue> args) {
+        private static XQueryValue exactlyOne(XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 1;
             try {
                 var target = args.get(0);
@@ -433,7 +432,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             }
         }
 
-        private static XQueryValue data(final List<XQueryValue> args) {
+        private static XQueryValue data(XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 1;
             try {
                 var target = args.get(0);
@@ -443,7 +442,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             }
         }
 
-        private static XQueryValue contains(final List<XQueryValue> args) {
+        private static XQueryValue contains(XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 2;
             try {
                 var target = args.get(0);
@@ -454,7 +453,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             }
         }
 
-        private static XQueryValue startsWith(final List<XQueryValue> args) {
+        private static XQueryValue startsWith(XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 2;
             try {
                 var target = args.get(0);
@@ -465,7 +464,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             }
         }
 
-        private static XQueryValue endsWith(final List<XQueryValue> args) {
+        private static XQueryValue endsWith(XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 2;
             try {
                 var target = args.get(0);
@@ -477,7 +476,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         }
 
 
-        private static XQueryValue substringAfter(final List<XQueryValue> args) {
+        private static XQueryValue substringAfter(XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 2;
             try {
                 var target = args.get(0);
@@ -489,7 +488,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         }
 
 
-        private static XQueryValue substringBefore(final List<XQueryValue> args) {
+        private static XQueryValue substringBefore(XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 2;
             try {
                 var target = args.get(0);
@@ -501,7 +500,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         }
 
 
-        private static XQueryValue uppercase(final List<XQueryValue> args) {
+        private static XQueryValue uppercase(XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 1;
             try {
                 var target = args.get(0);
@@ -512,7 +511,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         }
 
 
-        private static XQueryValue lowercase(final List<XQueryValue> args) {
+        private static XQueryValue lowercase(XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 1;
             try {
                 var target = args.get(0);
@@ -520,6 +519,12 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             } catch (XQueryUnsupportedOperation e) {
                 return null;
             }
+        }
+
+        private static XQueryValue string(XQueryVisitingContext context, final List<XQueryValue> args) {
+            assert args.size() == 1;
+            var target = args.get(0);
+            return new XQueryString(target.stringValue());
         }
 
 
@@ -566,6 +571,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         functions.put("substring-before", XQueryEvaluatorVisitor.Functions::substringBefore);
         functions.put("upper-case", XQueryEvaluatorVisitor.Functions::uppercase);
         functions.put("lower-case", XQueryEvaluatorVisitor.Functions::lowercase);
+        functions.put("string", XQueryEvaluatorVisitor.Functions::string);
     }
 
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser) {
@@ -575,6 +581,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             // tree.setParent(root);
         }
         this.root = new XQueryTreeNode(root);
+        context = new XQueryVisitingContext();
         this.parser = parser;
     }
 
@@ -645,7 +652,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         final var savedArgs = saveVisitedArguments();
         ctx.argumentList().accept(this);
         final XQueryFunction function = functions.get(functionName);
-        final var value = function.call(visitedArgumentList);
+        final var value = function.call(context, visitedArgumentList);
         visitedArgumentList = savedArgs;
         return value;
     }
@@ -799,38 +806,41 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             return ctx.primaryExpr().accept(this);
         }
 
-        final var savedContextValue = saveContextValue();
+        final var savedContext = saveContext();
         var value = ctx.primaryExpr().accept(this);
         for (var postfix : ctx.postfix()) {
-            contextValue = value;
+            context.setItem(value);
             value = postfix.accept(this);
         }
-        contextValue = savedContextValue;
+        context = savedContext;
         return value;
     }
 
     @Override
     public XQueryValue visitPredicate(PredicateContext ctx) {
+        final var contextValue = context.getItem();
         if (contextValue.isAtomic()) {
             // TODO: error
             return null;
         }
-        var sequence = contextValue.sequence();
-        var filteredValues = new ArrayList<XQueryValue>(sequence.size());
-        for (var contextItem : sequence) {
-            contextValue = contextItem;
+        final var sequence = contextValue.sequence();
+        final var filteredValues = new ArrayList<XQueryValue>(sequence.size());
+        final var savedContext = saveContext();
+        for (final var contextItem : sequence) {
+            context.setItem(contextItem);
             final var visitedExpression = ctx.expr().accept(this);
             if (visitedExpression.effectiveBooleanValue()) {
                 filteredValues.add(contextItem);
             }
         }
+        context = savedContext;
         return new XQuerySequence(filteredValues);
     }
 
 
     @Override
     public XQueryValue visitContextItemExpr(ContextItemExprContext ctx) {
-        return contextValue;
+        return context.getItem();
     }
 
     @Override
@@ -1322,9 +1332,9 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
 
-    private XQueryValue saveContextValue() {
-        final XQueryValue saved = contextValue;
-        contextValue = null;
+    private XQueryVisitingContext  saveContext() {
+        final XQueryVisitingContext saved = context;
+        context = new XQueryVisitingContext();
         return saved;
     }
 

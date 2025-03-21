@@ -71,7 +71,7 @@ public class XQueryString  extends XQueryValueBase<String> {
 
     @Override
     public XQueryValue empty() {
-        return XQueryBoolean.of(value.isEmpty());
+        return XQueryBoolean.FALSE;
     }
 
     @Override

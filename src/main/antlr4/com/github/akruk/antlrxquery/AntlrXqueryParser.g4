@@ -58,18 +58,18 @@ stepExpr: postfixExpr | axisStep;
 axisStep: (reverseStep | forwardStep) predicateList;
 forwardStep: forwardAxis? nodeTest;
 
-forwardAxis: (CHILD COLONS)
-        | (DESCENDANT COLONS)
-        | (SELF COLONS)
-        | (DESCENDANT_OR_SELF COLONS)
-        | (FOLLOWING_SIBLING COLONS)
-        | (FOLLOWING COLONS);
+forwardAxis: CHILD COLONS
+        | DESCENDANT COLONS
+        | SELF COLONS
+        | DESCENDANT_OR_SELF COLONS
+        | FOLLOWING_SIBLING COLONS
+        | FOLLOWING COLONS;
 reverseStep: (reverseAxis nodeTest) | abbrevReverseStep;
-reverseAxis: (PARENT COLONS)
-        | (ANCESTOR COLONS)
-        | (PRECEDING_SIBLING COLONS)
-        | (PRECEDING COLONS)
-        | (ANCESTOR_OR_SELF COLONS);
+reverseAxis: PARENT COLONS
+        | ANCESTOR COLONS
+        | PRECEDING_SIBLING COLONS
+        | PRECEDING COLONS
+        | ANCESTOR_OR_SELF COLONS;
 abbrevReverseStep: DOTS;
 nodeTest: nameTest;
 nameTest: ID | wildcard;

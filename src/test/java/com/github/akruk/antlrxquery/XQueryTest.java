@@ -837,6 +837,24 @@ public class XQueryTest {
         assertResult("(1, 2, 3, 4, 5)[. gt 3]", List.of(i4, i5));
     }
 
+    @Test
+    public void booleanToString() throws XQueryUnsupportedOperation {
+        assertResult("string(true())", new XQueryString("true"));
+        assertResult("string(false())", new XQueryString("false"));
+    }
+
+    @Test
+    public void stringToString() throws XQueryUnsupportedOperation {
+        assertResult("string('abc')", new XQueryString("abc"));
+    }
+
+    @Test
+    public void numberToString() throws XQueryUnsupportedOperation {
+        assertResult("string(1.2)", new XQueryString("1.2"));
+    }
+
+
+
 
 // Wildcards
 

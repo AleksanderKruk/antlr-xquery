@@ -522,8 +522,11 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         }
 
         private static XQueryValue string(XQueryVisitingContext context, final List<XQueryValue> args) {
-            assert args.size() == 1;
-            var target = args.get(0);
+            var target = switch (args.size()) {
+                case 0 -> context.getItem();
+                case 1 -> args.get(0);
+                default -> null;
+            };
             return new XQueryString(target.stringValue());
         }
 

@@ -536,7 +536,6 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             return new XQueryString(joined);
         }
 
-
         private static XQueryValue stringJoin(XQueryVisitingContext context, final List<XQueryValue> args) {
             return switch (args.size()) {
                 case 1 -> {
@@ -549,12 +548,24 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                     var delimiter = args.get(1).stringValue();
                     String joined = sequence.stream().map(XQueryValue::stringValue).collect(Collectors.joining(delimiter));
                     yield new XQueryString(joined);
-
                 }
                 default -> null;
             };
         }
 
+        private static XQueryValue stringLength(XQueryVisitingContext context, final List<XQueryValue> args) {
+            return switch (args.size()) {
+                case 0 -> {
+                    var string = context.getItem().stringValue();
+                    yield new XQueryNumber(string.length());
+                }
+                case 1 -> {
+                    var string = args.get(0).stringValue();
+                    yield new XQueryNumber(string.length());
+                }
+                default -> null;
+            };
+        }
 
     }
 
@@ -602,6 +613,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         functions.put("string", XQueryEvaluatorVisitor.Functions::string);
         functions.put("concat", XQueryEvaluatorVisitor.Functions::concat);
         functions.put("string-join", XQueryEvaluatorVisitor.Functions::stringJoin);
+        functions.put("string-length", XQueryEvaluatorVisitor.Functions::stringLength);
     }
 
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser) {

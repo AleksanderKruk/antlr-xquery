@@ -865,6 +865,12 @@ public class XQueryTest {
         assertResult("string-join(('a', 'b', 'c'), '-')", new XQueryString("a-b-c"));
     }
 
+    @Test
+    public void stringLength() throws XQueryUnsupportedOperation {
+        assertResult("string-length('abcde')", new XQueryNumber(5));
+        assertResult("string-length('')", new XQueryNumber(0));
+    }
+
 
 
 // Wildcards

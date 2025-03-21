@@ -52,7 +52,7 @@ Tumbling Windows | ``` for tumbling window $w in (2, 4, 6, 8, 10, 12, 14) start 
 Sliding Windows | ``` for sliding window $w in (2, 4, 6, 8, 10, 12, 14) start at $s when fn:true() only end at $e when $e - $s eq 2 return $w``` | |
 Where Clause | ``` for $x at $i in $inputvalues where $i mod 100 = 0 return $x ``` | |
 Count Clause | ```... count $counter ``` | |
-Group By Clause | ``` let $g2 := $expr1, let $g3 := $expr2 group by $g1, $g2, $g3 ``` | |
+Group By Clause | ``` let $g2 := $expr1, $g3 := $expr2 group by $g1, $g2, $g3 ``` | |
 Order By Clause | ``` for $b in $books/book[price < 100] order by $b/title return $b ``` | |
 Conditional Expressions | ``` if ($part/@discounted) then $part/wholesale else $part/retail ``` | |
 Switch Expression | ``` switch ($animal) case "Cow" return "Moo" case "Cat" return "Meow" case "Duck" return "Quack" default return "What's that odd noise?" ``` | |

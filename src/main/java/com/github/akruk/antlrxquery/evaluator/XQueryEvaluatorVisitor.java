@@ -2,11 +2,11 @@ package com.github.akruk.antlrxquery.evaluator;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
@@ -592,21 +592,21 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
         record ParseFlagsResult(int flags, String newPattern, String newReplacement) {}
 
-        private static int parseFlags(String flags, String pattern, String replacement) {
-            int result = 0;
-
-            for (char c : flags.toCharArray()) {
-                result = switch (c) {
+        private static ParseFlagsResult parseFlags(String flags, String pattern, String replacement) {
+            int flagBitMap = 0;
+            Set<Character> uniqueFlags = flags.chars().mapToObj(i->(char) i).collect(Collectors.toSet());
+            for (char c : uniqueFlags) {
+                flagBitMap = switch (c) {
                     case 'q' -> {
                         pattern = Pattern.quote(pattern);
                         // TODO: more direct
                         replacement = Pattern.quote(replacement);
-                        yield result;
+                        yield flagBitMap;
                     }
-                    case 's' -> result & ~Pattern.MULTILINE;
-                    case 'm' -> result | Pattern.MULTILINE;
-                    case 'i' -> result | Pattern.UNICODE_CASE;
-                    case 'x' -> result | Pattern.COMMENTS;
+                    case 's' -> flagBitMap & ~Pattern.MULTILINE;
+                    case 'm' -> flagBitMap | Pattern.MULTILINE;
+                    case 'i' -> flagBitMap | Pattern.UNICODE_CASE;
+                    case 'x' -> flagBitMap | Pattern.COMMENTS;
                     // case '0' -> ;
                     // case '1' -> ;
                     // case '2' -> ;
@@ -617,10 +617,10 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                     // case '7' -> ;
                     // case '8' -> ;
                     // case '9' -> ;
-                    // default -> ;
+                    default -> flagBitMap;
                 };
             }
-            return 0;
+            return new ParseFlagsResult(flagBitMap, pattern, replacement);
         }
 
         private static XQueryValue replace(XQueryVisitingContext context, final List<XQueryValue> args) {
@@ -637,10 +637,9 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                     String pattern = args.get(1).stringValue();
                     String replacement = args.get(2).stringValue();
                     String flags = args.get(3).stringValue();
-                    int intFlags = parseFlags(flags);
-                    var matcher = Pattern.compile(pattern, intFlags).matcher(input);
-                    String result = matcher.replaceAll(replacement);
-                    var x = Pattern.UNIX_LINES + Pattern.CANON_EQ;
+                    ParseFlagsResult parsedFlags = parseFlags(flags, pattern, replacement);
+                    var matcher = Pattern.compile(parsedFlags.newPattern(), parsedFlags.flags()).matcher(input);
+                    String result = matcher.replaceAll(parsedFlags.newReplacement());
                     yield new XQueryString(result);
                 }
                 default -> null;

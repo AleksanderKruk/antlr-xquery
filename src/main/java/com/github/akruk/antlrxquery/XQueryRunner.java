@@ -19,6 +19,5 @@ public final class XQueryRunner {
         var parser = new AntlrXqueryParser(tokens);
         var evaluator = new AntlrXqueryParserBaseVisitor<XQueryValue>();
         evaluator.visit(null);
-        System.out.println("Hello World!");
     }
 }

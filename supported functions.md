@@ -41,6 +41,7 @@ Function                                           | Is implemented | Comment
 `fn:concat`                                        |                |
 `fn:string-join`                                   |                |
 `fn:string-length`                                 |                |
+`fn:string-empty`                                  |                | Non-standard
 `fn:normalize-space`                               |                |
 `fn:normalize-unicode`                             |                |
 `fn:upper-case`                                    |                |

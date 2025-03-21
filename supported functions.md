@@ -31,20 +31,20 @@ Function                                           | Is implemented | Comment
 ## String functions
 Function                                           | Is implemented | Comment
 ---------------------------------------------------|----------------|---------
-`fn:string`                                        |                |
+`fn:string`                                        | yes            |
 `fn:codepoints-to-string`                          |                |
 `fn:string-to-codepoints`                          |                |
 `fn:compare`                                       |                |
 `fn:codepoint-equal`                               |                |
 `fn:collation-key`                                 |                |
 `fn:contains-token`                                |                |
-`fn:concat`                                        |                |
-`fn:string-join`                                   |                |
+`fn:concat`                                        | yes            |
+`fn:string-join`                                   | yes            |
 `fn:string-length`                                 |                |
 `fn:normalize-space`                               |                |
 `fn:normalize-unicode`                             |                |
-`fn:upper-case`                                    |                |
-`fn:lower-case`                                    |                |
+`fn:upper-case`                                    | yes            |
+`fn:lower-case`                                    | yes            |
 `fn:translate`                                     |                |
 `fn:contains`                                      | yes            |
 `fn:starts-with`                                   | yes            |

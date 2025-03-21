@@ -792,6 +792,8 @@ public class XQueryTest {
         assertResult("substring-after('tattoo', 'tat')", new XQueryString("too"));
         assertResult("substring-after('tattoo', 'tattoo')", new XQueryString(""));
         assertResult("substring-after('abcde', 'f')", new XQueryString(""));
+    }
+
     public void rangeExpression() throws XQueryUnsupportedOperation {
         var i1 = new XQueryNumber(1);
         var i2 = new XQueryNumber(2);

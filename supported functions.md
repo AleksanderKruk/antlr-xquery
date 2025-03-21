@@ -49,7 +49,7 @@ Function                                           | Is implemented | Comment
 `fn:contains`                                      | yes            |
 `fn:starts-with`                                   | yes            |
 `fn:ends-with`                                     | yes            |
-`fn:substring`                                     |                |
+`fn:substring`                                     | yes            |
 `fn:substring-before`                              | yes            |
 `fn:substring-after`                               | yes            |
 `fn:matches`                                       |                |

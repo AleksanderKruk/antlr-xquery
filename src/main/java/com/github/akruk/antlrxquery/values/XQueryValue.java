@@ -62,10 +62,11 @@ public interface XQueryValue {
     public XQueryValue oneOrMore() throws XQueryUnsupportedOperation;
     public XQueryValue exactlyOne() throws XQueryUnsupportedOperation;
     public XQueryValue data() throws XQueryUnsupportedOperation;
-    public XQueryValue substring(XQueryValue other) throws XQueryUnsupportedOperation;
     public XQueryValue contains(XQueryValue other) throws XQueryUnsupportedOperation;
     public XQueryValue startsWith(XQueryValue other) throws XQueryUnsupportedOperation;
     public XQueryValue endsWith(XQueryValue other) throws XQueryUnsupportedOperation;
+    public XQueryValue substring(int startingLoc) throws XQueryUnsupportedOperation;
+    public XQueryValue substring(int startingLoc, int length) throws XQueryUnsupportedOperation;
     public XQueryValue substringBefore(XQueryValue splitstring) throws XQueryUnsupportedOperation;
     public XQueryValue substringAfter(XQueryValue splitstring) throws XQueryUnsupportedOperation;
 }

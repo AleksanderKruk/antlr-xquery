@@ -297,7 +297,11 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
     }
 
 
-    public XQueryValue substring(XQueryValue other) throws XQueryUnsupportedOperation {
+    public XQueryValue substring(int other) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
+
+    public XQueryValue substring(int startingLoc, int length) throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
     }
 

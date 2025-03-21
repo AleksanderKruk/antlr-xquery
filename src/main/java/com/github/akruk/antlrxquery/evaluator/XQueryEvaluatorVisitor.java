@@ -372,6 +372,27 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             }
         }
 
+        private static XQueryValue substring(final List<XQueryValue> args) {
+            try {
+                return switch (args.size()) {
+                    case 3 -> {
+                        var target = args.get(0);
+                        var position = args.get(1).numericValue().intValue();
+                        var length = args.get(2).numericValue().intValue();
+                        yield target.substring(position, length);
+                    }
+                    case 2 -> {
+                        var target = args.get(0);
+                        var position = args.get(1).numericValue().intValue();
+                        yield target.substring(position);
+                    }
+                    default -> null;
+                };
+            } catch (XQueryUnsupportedOperation e) {
+                return null;
+            }
+        }
+
         private static XQueryValue distinctValues(final List<XQueryValue> args) {
             assert args.size() == 1;
             try {
@@ -511,6 +532,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         functions.put("remove", XQueryEvaluatorVisitor.Functions::remove);
         functions.put("reverse", XQueryEvaluatorVisitor.Functions::reverse);
         functions.put("subsequence", XQueryEvaluatorVisitor.Functions::subsequence);
+        functions.put("substring", XQueryEvaluatorVisitor.Functions::substring);
         functions.put("distinct-values", XQueryEvaluatorVisitor.Functions::distinctValues);
         functions.put("zero-or-one", XQueryEvaluatorVisitor.Functions::zeroOrOne);
         functions.put("one-or-more", XQueryEvaluatorVisitor.Functions::oneOrMore);
@@ -664,7 +686,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
     @Override
-public XQueryValue visitPathExpr(PathExprContext ctx) {
+    public XQueryValue visitPathExpr(PathExprContext ctx) {
         boolean pathExpressionFromRoot = ctx.SLASH() != null;
         if (pathExpressionFromRoot) {
             final var savedNodes = saveMatchedModes();

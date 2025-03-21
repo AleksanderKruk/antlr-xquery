@@ -781,6 +781,16 @@ public class XQueryTest {
     }
 
     @Test
+    public void substring() throws XQueryUnsupportedOperation {
+        assertResult("""
+                substring("abcde", 4)
+            """, new XQueryString("de"));
+        assertResult("""
+                substring("abcde", 3, 2)
+            """, new XQueryString("cd"));
+    }
+
+    @Test
     public void substringBefore() throws XQueryUnsupportedOperation {
         assertResult("substring-before('tattoo', 'attoo')", new XQueryString("t"));
         assertResult("substring-before('tattoo', 'tatto')", new XQueryString(""));

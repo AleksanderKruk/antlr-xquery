@@ -123,6 +123,25 @@ public class XQueryString  extends XQueryValueBase<String> {
     }
 
     @Override
+    public XQueryValue substring(int startingLoc) throws XQueryUnsupportedOperation {
+        return substring(startingLoc, value.length()-startingLoc+1);
+    }
+
+    @Override
+    public XQueryValue substring(int startingLoc, int length) throws XQueryUnsupportedOperation {
+        int currentLength = value.length();
+        if (startingLoc > currentLength) {
+            return XQuerySequence.EMPTY;
+        }
+        int startIndexIncluded = Math.max(startingLoc - 1, 0);
+        int endIndexExcluded = Math.min(startingLoc + length - 1, currentLength);
+        String newSequence = value.substring(startIndexIncluded, endIndexExcluded);
+        return new XQueryString(newSequence);
+    }
+
+
+
+    @Override
     public XQueryValue substringBefore(XQueryValue splitstring) throws XQueryUnsupportedOperation {
         if (splitstring.empty().booleanValue())
             return new XQueryString("");

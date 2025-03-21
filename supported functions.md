@@ -15,6 +15,9 @@ Function                                           | Is implemented | Comment
 `op:numeric-equal`                                 | yes            |
 `op:numeric-less-than`                             | yes            |
 `op:numeric-greater-than`                          | yes            |
+`op:boolean-equal`                                 |                |
+`op:boolean-less-than`                             |                |
+`op:boolean-greater-than`                          |                |
 `op:hexBinary-equal`                               |                |
 `op:hexBinary-less-than`                           |                |
 `op:hexBinary-greater-than`                        |                |

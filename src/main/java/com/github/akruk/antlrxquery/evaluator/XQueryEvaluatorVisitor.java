@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -567,6 +568,27 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             };
         }
 
+        private static Pattern whitespace = Pattern.compile("\\s+");
+        private static UnaryOperator<String> normalize = (String s) -> {
+            var trimmed = s.trim();
+            return whitespace.matcher(trimmed).replaceAll(" ");
+        };
+        private static XQueryValue normalizeSpace(XQueryVisitingContext context, final List<XQueryValue> args) {
+            return switch (args.size()) {
+                case 0 -> {
+                    String string = context.getItem().stringValue();
+                    String normalized = normalize.apply(string);
+                    yield new XQueryString(normalized);
+                }
+                case 1 -> {
+                    String string = args.get(0).stringValue();
+                    String normalized = normalize.apply(string);
+                    yield new XQueryString(normalized);
+                }
+                default -> null;
+            };
+        }
+
     }
 
     private static final Map<String, XQueryFunction> functions;
@@ -614,6 +636,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         functions.put("concat", XQueryEvaluatorVisitor.Functions::concat);
         functions.put("string-join", XQueryEvaluatorVisitor.Functions::stringJoin);
         functions.put("string-length", XQueryEvaluatorVisitor.Functions::stringLength);
+        functions.put("normalize-space", XQueryEvaluatorVisitor.Functions::normalizeSpace);
     }
 
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser) {

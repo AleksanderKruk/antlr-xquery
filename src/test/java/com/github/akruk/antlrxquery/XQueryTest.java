@@ -871,6 +871,11 @@ public class XQueryTest {
         assertResult("string-length('')", new XQueryNumber(0));
     }
 
+    @Test
+    public void normalization() throws XQueryUnsupportedOperation {
+        assertResult("normalize-space(' \t\n\r a    b \t \t c   \t')", new XQueryString("a b c"));
+    }
+
 
 
 // Wildcards

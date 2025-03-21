@@ -40,8 +40,8 @@ Function                                           | Is implemented | Comment
 `fn:contains-token`                                |                |
 `fn:concat`                                        | yes            |
 `fn:string-join`                                   | yes            |
-`fn:string-length`                                 |                |
-`fn:normalize-space`                               |                |
+`fn:string-length`                                 | yes            |
+`fn:normalize-space`                               | yes            |
 `fn:normalize-unicode`                             |                |
 `fn:upper-case`                                    | yes            |
 `fn:lower-case`                                    | yes            |

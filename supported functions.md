@@ -15,48 +15,6 @@ Function                                           | Is implemented | Comment
 `op:numeric-equal`                                 | yes            |
 `op:numeric-less-than`                             | yes            |
 `op:numeric-greater-than`                          | yes            |
-`op:yearMonthDuration-less-than`                   |                |
-`op:yearMonthDuration-greater-than`                |                |
-`op:dayTimeDuration-less-than`                     |                |
-`op:dayTimeDuration-greater-than`                  |                |
-`op:duration-equal`                                |                |
-`op:add-yearMonthDurations`                        |                |
-`op:subtract-yearMonthDurations`                   |                |
-`op:multiply-yearMonthDuration`                    |                |
-`op:divide-yearMonthDuration`                      |                |
-`op:divide-yearMonthDuration-by-yearMonthDuration` |                |
-`op:add-dayTimeDurations`                          |                |
-`op:subtract-dayTimeDurations`                     |                |
-`op:multiply-dayTimeDuration`                      |                |
-`op:divide-dayTimeDuration`                        |                |
-`op:divide-dayTimeDuration-by-dayTimeDuration`     |                |
-`op:dateTime-equal`                                |                |
-`op:dateTime-less-than`                            |                |
-`op:dateTime-greater-than`                         |                |
-`op:date-equal`                                    |                |
-`op:date-less-than`                                |                |
-`op:date-greater-than`                             |                |
-`op:time-equal`                                    |                |
-`op:time-less-than`                                |                |
-`op:time-greater-than`                             |                |
-`op:gYearMonth-equal`                              |                |
-`op:gYear-equal`                                   |                |
-`op:gMonthDay-equal`                               |                |
-`op:gMonth-equal`                                  |                |
-`op:gDay-equal`                                    |                |
-`op:subtract-dateTimes`                            |                |
-`op:subtract-dates`                                |                |
-`op:subtract-times`                                |                |
-`op:add-yearMonthDuration-to-dateTime`             |                |
-`op:add-dayTimeDuration-to-dateTime`               |                |
-`op:subtract-yearMonthDuration-from-dateTime`      |                |
-`op:subtract-dayTimeDuration-from-dateTime`        |                |
-`op:add-yearMonthDuration-to-date`                 |                |
-`op:add-dayTimeDuration-to-date`                   |                |
-`op:subtract-yearMonthDuration-from-date`          |                |
-`op:subtract-dayTimeDuration-from-date `           |                |
-`op:add-dayTimeDuration-to-time`                   |                |
-`op:subtract-dayTimeDuration-from-time`            |                |
 `op:hexBinary-equal`                               |                |
 `op:hexBinary-less-than`                           |                |
 `op:hexBinary-greater-than`                        |                |
@@ -401,10 +359,51 @@ Function                                           | Is implemented | Comment
 
 ## Other
 Function                                           | Is implemented | Comment
-
 ---------------------------------------------------|----------------|---------
 `fn:lang`                                          |                |
 `fn:serialize`                                     |                |
 `fn:default-language`                              |                |
 `fn:load-xquery-module`                            |                |
 `fn:transform`                                     |                |
+`op:yearMonthDuration-less-than`                   |                |
+`op:yearMonthDuration-greater-than`                |                |
+`op:dayTimeDuration-less-than`                     |                |
+`op:dayTimeDuration-greater-than`                  |                |
+`op:duration-equal`                                |                |
+`op:add-yearMonthDurations`                        |                |
+`op:subtract-yearMonthDurations`                   |                |
+`op:multiply-yearMonthDuration`                    |                |
+`op:divide-yearMonthDuration`                      |                |
+`op:divide-yearMonthDuration-by-yearMonthDuration` |                |
+`op:add-dayTimeDurations`                          |                |
+`op:subtract-dayTimeDurations`                     |                |
+`op:multiply-dayTimeDuration`                      |                |
+`op:divide-dayTimeDuration`                        |                |
+`op:divide-dayTimeDuration-by-dayTimeDuration`     |                |
+`op:dateTime-equal`                                |                |
+`op:dateTime-less-than`                            |                |
+`op:dateTime-greater-than`                         |                |
+`op:date-equal`                                    |                |
+`op:date-less-than`                                |                |
+`op:date-greater-than`                             |                |
+`op:time-equal`                                    |                |
+`op:time-less-than`                                |                |
+`op:time-greater-than`                             |                |
+`op:gYearMonth-equal`                              |                |
+`op:gYear-equal`                                   |                |
+`op:gMonthDay-equal`                               |                |
+`op:gMonth-equal`                                  |                |
+`op:gDay-equal`                                    |                |
+`op:subtract-dateTimes`                            |                |
+`op:subtract-dates`                                |                |
+`op:subtract-times`                                |                |
+`op:add-yearMonthDuration-to-dateTime`             |                |
+`op:add-dayTimeDuration-to-dateTime`               |                |
+`op:subtract-yearMonthDuration-from-dateTime`      |                |
+`op:subtract-dayTimeDuration-from-dateTime`        |                |
+`op:add-yearMonthDuration-to-date`                 |                |
+`op:add-dayTimeDuration-to-date`                   |                |
+`op:subtract-yearMonthDuration-from-date`          |                |
+`op:subtract-dayTimeDuration-from-date `           |                |
+`op:add-dayTimeDuration-to-time`                   |                |
+`op:subtract-dayTimeDuration-from-time`            |                |

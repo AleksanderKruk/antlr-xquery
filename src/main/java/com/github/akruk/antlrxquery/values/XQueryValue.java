@@ -2,324 +2,70 @@ package com.github.akruk.antlrxquery.values;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.function.Predicate;
-
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 
 public interface XQueryValue {
     public XQueryValue copy();
-
-    public default XQueryValue empty() throws UnsupportedOperationException {
-        throw new UnsupportedOperationException();
-    }
-
-    public default ParseTree node() {
-        return null;
-    }
-
-    // Function
-    public default BigDecimal numericValue() {
-        return null;
-    };
-
-    public default String stringValue() {
-        return null;
-    };
-
-    public default Boolean booleanValue() {
-        return null;
-    };
-
-    public default Boolean effectiveBooleanValue() {
-        return null;
-    };
-
-    public default List<XQueryValue> sequence() {
-        return null;
-    }
-
-    public default XQueryValue reference() {
-        return null;
-    }
-
-    public default boolean isNumericValue() {
-        return numericValue() != null;
-    }
-
-    public default boolean isStringValue() {
-        return stringValue() != null;
-    }
-
-    public default boolean isBooleanValue() {
-        return booleanValue() != null;
-    }
-
-    public default boolean isSequence() {
-        return sequence() != null;
-    }
-
-    public default boolean isReference() {
-        return reference() != null;
-    }
-
-    public default boolean isAtomic() {
-        return sequence() == null;
-    }
-
-    public default boolean isNode() {
-        return node() != null;
-    }
-
-    public default List<XQueryValue> atomize() {
-        return List.of(this);
-    }
-
-
-    public default XQueryValue not() throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-	}
-
-    public default XQueryValue and(XQueryValue other) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-	}
-
-    public default XQueryValue or(XQueryValue other) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-	}
-
-
-    public default XQueryValue add(XQueryValue other) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-	}
-
-    public default XQueryValue subtract(XQueryValue other) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-
-	}
-
-  public default XQueryValue multiply(XQueryValue other) throws XQueryUnsupportedOperation {
-    throw new XQueryUnsupportedOperation();
-
-	}
-
-  public default XQueryValue divide(XQueryValue other) throws XQueryUnsupportedOperation {
-    throw new XQueryUnsupportedOperation();
-
-	}
-
-  public default XQueryValue integerDivide(XQueryValue other) throws XQueryUnsupportedOperation {
-    throw new XQueryUnsupportedOperation();
-
-	}
-
-  public default XQueryValue modulus(XQueryValue other) throws XQueryUnsupportedOperation {
-    throw new XQueryUnsupportedOperation();
-
-	}
-
-    public default XQueryValue concatenate(XQueryValue other) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-
-	}
-
+    public XQueryValue empty() throws UnsupportedOperationException;
+    public ParseTree node();
+    public BigDecimal numericValue();
+    public String stringValue();
+    public Boolean booleanValue();
+    public Boolean effectiveBooleanValue();
+    public List<XQueryValue> sequence();
+    public XQueryValue reference();
+    public boolean isNumericValue();
+    public boolean isStringValue();
+    public boolean isBooleanValue();
+    public boolean isSequence();
+    public boolean isReference();
+    public boolean isAtomic();
+    public boolean isNode();
+    public List<XQueryValue> atomize();
+    public XQueryValue not() throws XQueryUnsupportedOperation;
+    public XQueryValue and(XQueryValue other) throws XQueryUnsupportedOperation;
+    public XQueryValue or(XQueryValue other) throws XQueryUnsupportedOperation;
+    public XQueryValue add(XQueryValue other) throws XQueryUnsupportedOperation;
+    public XQueryValue subtract(XQueryValue other) throws XQueryUnsupportedOperation;
+    public XQueryValue multiply(XQueryValue other) throws XQueryUnsupportedOperation;
+    public XQueryValue divide(XQueryValue other) throws XQueryUnsupportedOperation;
+    public XQueryValue integerDivide(XQueryValue other) throws XQueryUnsupportedOperation;
+    public XQueryValue modulus(XQueryValue other) throws XQueryUnsupportedOperation;
+    public XQueryValue concatenate(XQueryValue other) throws XQueryUnsupportedOperation;
     public XQueryValue valueEqual(XQueryValue other);
-
-    public default XQueryValue valueUnequal(XQueryValue other) {
-        final var isUnequal = !valueEqual(other).booleanValue();
-        return XQueryBoolean.of(isUnequal);
-	}
-
+    public XQueryValue valueUnequal(XQueryValue other);
     public XQueryValue valueLessThan(XQueryValue other);
-
-    public default XQueryValue valueLessEqual(XQueryValue other) {
-        final var isLessEqual = valueEqual(other).booleanValue() || valueLessThan(other).booleanValue();
-        return XQueryBoolean.of(isLessEqual);
-	}
-
-    public default XQueryValue valueGreaterThan(XQueryValue other) {
-        final var isGreaterThan = !valueLessEqual(other).booleanValue();
-        return XQueryBoolean.of(isGreaterThan);
-	}
-
-    public default XQueryValue valueGreaterEqual(XQueryValue other) {
-        final var isGreaterEqual = !valueLessThan(other).booleanValue();
-        return XQueryBoolean.of(isGreaterEqual);
-    }
-
-    public default XQueryValue generalEqual(XQueryValue other) {
-        var thisAtomized = atomize();
-        var otherAtomized = other.atomize();
-        for (var thisElement : thisAtomized) {
-            for (var otherElement : otherAtomized) {
-                if (thisElement.valueEqual(otherElement).booleanValue()) {
-                    return XQueryBoolean.TRUE;
-                }
-            }
-        }
-        return XQueryBoolean.of(thisAtomized.size() == 0 && otherAtomized.size() == 0);
-	}
-
-    public default XQueryValue generalUnequal(XQueryValue other) {
-        var thisAtomized = atomize();
-        var otherAtomized = other.atomize();
-        for (var thisElement : thisAtomized) {
-            for (var otherElement : otherAtomized) {
-                if (thisElement.valueUnequal(otherElement).booleanValue()) {
-                    return XQueryBoolean.TRUE;
-                }
-            }
-        }
-        return XQueryBoolean.of(thisAtomized.size() == 0 && otherAtomized.size() == 0);
-	}
-
-    public default XQueryValue generalLessThan(XQueryValue other) {
-        var thisAtomized = atomize();
-        var otherAtomized = other.atomize();
-        for (var thisElement : thisAtomized) {
-            for (var otherElement : otherAtomized) {
-                if (thisElement.valueLessThan(otherElement).booleanValue()) {
-                    return XQueryBoolean.TRUE;
-                }
-            }
-        }
-        return XQueryBoolean.of(thisAtomized.size() == 0 && otherAtomized.size() == 0);
-
-	}
-
-    public default XQueryValue generalLessEqual(XQueryValue other) {
-        var thisAtomized = atomize();
-        var otherAtomized = other.atomize();
-        for (var thisElement : thisAtomized) {
-            for (var otherElement : otherAtomized) {
-                if (thisElement.valueLessEqual(otherElement).booleanValue()) {
-                    return XQueryBoolean.TRUE;
-                }
-            }
-        }
-        return XQueryBoolean.of(thisAtomized.size() == 0 && otherAtomized.size() == 0);
-
-	}
-
-    public default XQueryValue generalGreaterThan(XQueryValue other) {
-        var thisAtomized = atomize();
-        var otherAtomized = other.atomize();
-        for (var thisElement : thisAtomized) {
-            for (var otherElement : otherAtomized) {
-                if (thisElement.valueGreaterThan(otherElement).booleanValue()) {
-                    return XQueryBoolean.TRUE;
-                }
-            }
-        }
-        return XQueryBoolean.of(thisAtomized.size() == 0 && otherAtomized.size() == 0);
-	}
-
-    public default XQueryValue generalGreaterEqual(XQueryValue other) {
-        var thisAtomized = atomize();
-        var otherAtomized = other.atomize();
-        for (var thisElement : thisAtomized) {
-            for (var otherElement : otherAtomized) {
-                if (thisElement.valueGreaterEqual(otherElement).booleanValue()) {
-                    return XQueryBoolean.TRUE;
-                }
-            }
-        }
-        return XQueryBoolean.of(thisAtomized.size() == 0 && otherAtomized.size() == 0);
-	}
-
-    public default XQueryValue union(XQueryValue otherSequence) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-
-    public default XQueryValue intersect(XQueryValue otherSequence) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    public default XQueryValue except(XQueryValue other) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-
-    public default XQueryValue head() throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    public default XQueryValue tail() throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    public default XQueryValue insertBefore(XQueryValue position, XQueryValue inserted) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    public default XQueryValue insertAfter(XQueryValue position, XQueryValue inserted) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    public default XQueryValue remove(XQueryValue position) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    public default XQueryValue reverse() throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    public default XQueryValue subsequence(int startingLoc) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    public default XQueryValue subsequence(int startingLoc, int length) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    public default XQueryValue distinctValues() throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-
-    public default XQueryValue zeroOrOne() throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-
-    public default XQueryValue oneOrMore() throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    public default XQueryValue exactlyOne() throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-
-    public default XQueryValue data() throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-
-    public default XQueryValue substring(XQueryValue other) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    public default XQueryValue contains(XQueryValue other) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-
-    public default XQueryValue startsWith(XQueryValue other) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    public default XQueryValue endsWith(XQueryValue other) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    public default XQueryValue substringBefore(XQueryValue splitstring) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    public default XQueryValue substringAfter(XQueryValue splitstring) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
+    public XQueryValue valueLessEqual(XQueryValue other);
+    public XQueryValue valueGreaterThan(XQueryValue other);
+    public XQueryValue valueGreaterEqual(XQueryValue other);
+    public XQueryValue generalEqual(XQueryValue other);
+    public XQueryValue generalUnequal(XQueryValue other);
+    public XQueryValue generalLessThan(XQueryValue other);
+    public XQueryValue generalLessEqual(XQueryValue other);
+    public XQueryValue generalGreaterThan(XQueryValue other);
+    public XQueryValue generalGreaterEqual(XQueryValue other);
+    public XQueryValue union(XQueryValue otherSequence) throws XQueryUnsupportedOperation;
+    public XQueryValue intersect(XQueryValue otherSequence) throws XQueryUnsupportedOperation;
+    public XQueryValue except(XQueryValue other) throws XQueryUnsupportedOperation;
+    public XQueryValue head() throws XQueryUnsupportedOperation;
+    public XQueryValue tail() throws XQueryUnsupportedOperation;
+    public XQueryValue insertBefore(XQueryValue position, XQueryValue inserted) throws XQueryUnsupportedOperation;
+    public XQueryValue insertAfter(XQueryValue position, XQueryValue inserted) throws XQueryUnsupportedOperation;
+    public XQueryValue remove(XQueryValue position) throws XQueryUnsupportedOperation;
+    public XQueryValue reverse() throws XQueryUnsupportedOperation;
+    public XQueryValue subsequence(int startingLoc) throws XQueryUnsupportedOperation;
+    public XQueryValue subsequence(int startingLoc, int length) throws XQueryUnsupportedOperation;
+    public XQueryValue distinctValues() throws XQueryUnsupportedOperation;
+    public XQueryValue zeroOrOne() throws XQueryUnsupportedOperation;
+    public XQueryValue oneOrMore() throws XQueryUnsupportedOperation;
+    public XQueryValue exactlyOne() throws XQueryUnsupportedOperation;
+    public XQueryValue data() throws XQueryUnsupportedOperation;
+    public XQueryValue substring(XQueryValue other) throws XQueryUnsupportedOperation;
+    public XQueryValue contains(XQueryValue other) throws XQueryUnsupportedOperation;
+    public XQueryValue startsWith(XQueryValue other) throws XQueryUnsupportedOperation;
+    public XQueryValue endsWith(XQueryValue other) throws XQueryUnsupportedOperation;
+    public XQueryValue substringBefore(XQueryValue splitstring) throws XQueryUnsupportedOperation;
+    public XQueryValue substringAfter(XQueryValue splitstring) throws XQueryUnsupportedOperation;
 }

@@ -70,7 +70,7 @@ public class XQueryString  extends XQueryValueBase<String> {
     }
 
     @Override
-    public XQueryValue empty() throws UnsupportedOperationException {
+    public XQueryValue empty() {
         return XQueryBoolean.of(value.isEmpty());
     }
 

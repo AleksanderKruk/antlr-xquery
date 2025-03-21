@@ -8,7 +8,7 @@ import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 
 public interface XQueryValue {
     public XQueryValue copy();
-    public XQueryValue empty() throws UnsupportedOperationException;
+    public XQueryValue empty();
     public ParseTree node();
     public BigDecimal numericValue();
     public String stringValue();

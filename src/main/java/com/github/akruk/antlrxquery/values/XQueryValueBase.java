@@ -10,8 +10,8 @@ import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 public abstract class XQueryValueBase<T> implements XQueryValue {
     T value;
     @Override
-    public XQueryValue empty() throws UnsupportedOperationException {
-        throw new UnsupportedOperationException();
+    public XQueryValue empty() {
+        return XQueryBoolean.FALSE;
     }
 
     @Override

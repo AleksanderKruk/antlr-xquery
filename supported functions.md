@@ -29,8 +29,6 @@ Function                                           | Is implemented | Comment
 Function                                           | Is implemented | Comment
 ---------------------------------------------------|----------------|---------
 `fn:string`                                        |                |
-`fn:format-integer`                                |                |
-`fn:format-number`                                 |                |
 `fn:codepoints-to-string`                          |                |
 `fn:string-to-codepoints`                          |                |
 `fn:compare`                                       |                |
@@ -39,7 +37,6 @@ Function                                           | Is implemented | Comment
 `fn:contains-token`                                |                |
 `fn:concat`                                        |                |
 `fn:string-join`                                   |                |
-`fn:substring`                                     |                |
 `fn:string-length`                                 |                |
 `fn:normalize-space`                               |                |
 `fn:normalize-unicode`                             |                |
@@ -49,63 +46,21 @@ Function                                           | Is implemented | Comment
 `fn:contains`                                      | yes            |
 `fn:starts-with`                                   | yes            |
 `fn:ends-with`                                     | yes            |
+`fn:substring`                                     |                |
 `fn:substring-before`                              | yes            |
 `fn:substring-after`                               | yes            |
 `fn:matches`                                       |                |
 `fn:replace`                                       |                |
 `fn:tokenize`                                      |                |
 `fn:analyze-string`                                |                |
+`fn:format-integer`                                |                |
+`fn:format-number`                                 |                |
 `fn:format-dateTime`                               |                |
 `fn:format-date`                                   |                |
 `fn:format-time`                                   |                |
-`fn:parse-ietf-date`                               |                |
-`fn:namespace-uri-for-prefix`                      |                |
-`fn:in-scope-prefixes`                             |                |
-`fn:name`                                          |                |
-`fn:local-name`                                    |                |
-`fn:namespace-uri`                                 |                |
-`fn:lang`                                          |                |
-`fn:root`                                          |                |
-`fn:path`                                          |                |
-`fn:has-children`                                  |                |
-`fn:id`                                            |                |
-`fn:element-with-id`                               |                |
-`fn:idref`                                         |                |
-`fn:generate-id`                                   |                |
-`fn:doc`                                           |                |
-`fn:doc-available`                                 |                |
-`fn:collection`                                    |                |
-`fn:uri-collection`                                |                |
-`fn:unparsed-text`                                 |                |
-`fn:unparsed-text-lines`                           |                |
-`fn:unparsed-text-available`                       |                |
-`fn:environment-variable`                          |                |
-`fn:available-environment-variables`               |                |
 `fn:serialize`                                     |                |
-`fn:position`                                      |                |
-`fn:last`                                          |                |
-`fn:current-dateTime`                              |                |
-`fn:current-date`                                  |                |
-`fn:current-time`                                  |                |
-`fn:implicit-timezone`                             |                |
 `fn:default-collation`                             |                |
 `fn:default-language`                              |                |
-`fn:static-base-uri`                               |                |
-`fn:function-lookup`                               |                |
-`fn:function-name`                                 |                |
-`fn:function-arity`                                |                |
-`fn:for-each`                                      |                |
-`fn:filter`                                        |                |
-`fn:fold-left`                                     |                |
-`fn:fold-right`                                    |                |
-`fn:for-each-pair`                                 |                |
-`fn:sort`                                          |                |
-`fn:apply`                                         |                |
-`fn:load-xquery-module`                            |                |
-`fn:transform`                                     |                |
-`fn:parse-json`                                    |                |
-`fn:json-doc`                                      |                |
-`fn:analyze-string`                                |                |
 
 
 ## Node functions
@@ -114,6 +69,12 @@ Function                                           | Is implemented | Comment
 ---------------------------------------------------|----------------|---------
 `fn:node-name`                                     |                |
 `fn:has-children`                                  |                |
+`fn:name`                                          |                |
+`fn:local-name`                                    |                |
+`fn:lang`                                          |                |
+`fn:id`                                            |                |
+`fn:element-with-id`                               |                |
+`fn:idref`                                         |                |
 
 ## Sequence functions
 

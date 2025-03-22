@@ -60,4 +60,4 @@ Quantified Expressions | ``` some $emp in /emps/employee satisfies ($emp/bonus >
 Quantified Expressions | ``` every $x in (1, 2, 3), $y in (2, 3, 4) satisfies $x + $y = 4 ``` | |
 Try/Catch Expressions | ``` try { ... } catch * { ... } ``` | |
 Simple map operator (!) | ``` child::div1 / child::para / string() ! concat("id-", .) ``` | |
-Arrow operator (=>) | ``` $string => upper-case() => normalize-unicode() => tokenize("\s+") ``` | |
+Arrow operator (=>) | ``` $string => upper-case() => normalize-unicode() => tokenize("\s+") ``` | yes |

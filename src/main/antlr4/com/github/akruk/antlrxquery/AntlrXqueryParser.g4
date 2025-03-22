@@ -39,7 +39,7 @@ orExpr: orExpr ( OR orExpr )+
         | orExpr (multiplicativeOperator orExpr)+
         | orExpr (unionOperator orExpr)+
         | orExpr ((INTERSECT | EXCEPT) orExpr)+
-        | orExpr ARROW arrowFunctionSpecifier argumentList
+        | orExpr (ARROW arrowFunctionSpecifier argumentList)+
         | (MINUS | PLUS) orExpr
         | pathExpr (EXCLAMATION_MARK pathExpr)?
 ;

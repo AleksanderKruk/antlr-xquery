@@ -975,6 +975,14 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             context.setItem(contextItem);
             context.setPosition(index);
             final var visitedExpression = ctx.expr().accept(this);
+            if (visitedExpression.isNumericValue()) {
+                context = savedContext;
+                int i = visitedExpression.numericValue().intValue() - 1;
+                if (i >= sequence.size() || i < 0) {
+                    return XQuerySequence.EMPTY;
+                }
+                return sequence.get(i);
+            }
             if (visitedExpression.effectiveBooleanValue()) {
                 filteredValues.add(contextItem);
             }

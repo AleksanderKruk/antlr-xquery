@@ -877,6 +877,16 @@ public class XQueryTest {
         assertResult("normalize-space(' \t\n\r a    b \t \t c   \t')", new XQueryString("a b c"));
     }
 
+    @Test
+    public void itemGetter() throws XQueryUnsupportedOperation {
+        assertResult("(1, 2, 3)[2]",  new XQueryNumber(2));
+    }
+
+    @Test
+    public void positionFunction() throws XQueryUnsupportedOperation {
+        assertResult("(1, 2, 3)[position() eq 2]", new XQueryNumber(2));
+    }
+
 
 
 // Wildcards

@@ -884,7 +884,8 @@ public class XQueryTest {
 
     @Test
     public void positionFunction() throws XQueryUnsupportedOperation {
-        assertResult("(1, 2, 3)[position() eq 2]", new XQueryNumber(2));
+        assertResult("(1, 2, 3)[position() eq 2][1]", new XQueryNumber(2));
+        assertResult("(1, 2, 3)[position() eq 2]", List.of(new XQueryNumber(2)));
     }
 
 

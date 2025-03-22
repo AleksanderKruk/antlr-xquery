@@ -556,6 +556,16 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             };
         }
 
+        private static XQueryValue position(final XQueryVisitingContext context, final List<XQueryValue> args) {
+            assert args.size() == 0;
+            return new XQueryNumber(context.getPosition());
+        }
+
+        private static XQueryValue last(XQueryVisitingContext context, final List<XQueryValue> args) {
+            assert args.size() == 0;
+            return new XQueryNumber(context.getSize());
+        }
+
         private static XQueryValue stringLength(XQueryVisitingContext context, final List<XQueryValue> args) {
             return switch (args.size()) {
                 case 0 -> {
@@ -696,6 +706,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         functions.put("string-length", XQueryEvaluatorVisitor.Functions::stringLength);
         functions.put("normalize-space", XQueryEvaluatorVisitor.Functions::normalizeSpace);
         functions.put("replace", XQueryEvaluatorVisitor.Functions::replace);
+        functions.put("position", XQueryEvaluatorVisitor.Functions::position);
+        functions.put("last", XQueryEvaluatorVisitor.Functions::last);
     }
 
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser) {

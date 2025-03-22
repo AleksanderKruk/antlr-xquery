@@ -21,6 +21,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.AbbrevReverseStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ArgumentContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.ArrowFunctionSpecifierContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.AxisStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ContextItemExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ExprContext;
@@ -48,6 +49,7 @@ import com.github.akruk.antlrxquery.values.XQueryTreeNode;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.XQueryBoolean;
 import com.github.akruk.antlrxquery.values.XQueryFunction;
+import com.github.akruk.antlrxquery.values.XQueryFunctionReference;
 
 class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     XQueryValue root;
@@ -829,8 +831,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                 return handleValueComparison(ctx);
             if (!ctx.CONCATENATION().isEmpty())
                 return handleConcatenation(ctx);
-
-
+            if (!ctx.ARROW().isEmpty())
+                return handleArrowExpr(ctx);
             return value;
         } catch (final XQueryUnsupportedOperation e) {
             // TODO: error handling
@@ -1308,6 +1310,39 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
         return value;
     }
+
+
+    private XQueryValue handleArrowExpr(final OrExprContext ctx)
+            throws XQueryUnsupportedOperation {
+        final var savedArgs = saveVisitedArguments();
+        var contextArgument = ctx.orExpr(0).accept(this);
+        visitedArgumentList.add(contextArgument);
+        // var isString = !value.isStringValue();
+        // var isFunction = !func
+        final var arrowCount = ctx.ARROW().size();
+        for (int i = 0; i < arrowCount; i++) {
+            final var visitedFunction = ctx.arrowFunctionSpecifier(i).accept(this);
+            ctx.argumentList(i).accept(this); // visitedArgumentList is set to function's args
+            contextArgument = visitedFunction.functionValue().call(context, visitedArgumentList);
+            visitedArgumentList = new ArrayList<>();
+            visitedArgumentList.add(contextArgument);
+            i++;
+        }
+        visitedArgumentList = savedArgs;
+        return contextArgument;
+    }
+
+    @Override
+    public XQueryValue visitArrowFunctionSpecifier(ArrowFunctionSpecifierContext ctx) {
+        if (ctx.ID() != null)
+            return new XQueryFunctionReference(functions.get(ctx.ID().getText()));
+        if (ctx.varRef() != null)
+            return ctx.varRef().accept(this);
+        return ctx.parenthesizedExpr().accept(this);
+
+    }
+
+
 
     private XQueryValue handleOrExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
         var value = ctx.orExpr(0).accept(this);

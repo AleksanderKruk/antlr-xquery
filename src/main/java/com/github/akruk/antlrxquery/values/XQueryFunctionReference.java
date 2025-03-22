@@ -2,9 +2,18 @@ package com.github.akruk.antlrxquery.values;
 
 public class XQueryFunctionReference extends XQueryValueBase<XQueryFunction> {
 
+  public XQueryFunctionReference(XQueryFunction xQueryFunction) {
+    value = xQueryFunction;
+  }
+
   @Override
   public XQueryValue valueEqual(XQueryValue other) {
     return XQueryBoolean.of(value == other.functionValue());
+  }
+
+  @Override
+  public XQueryFunction functionValue() {
+    return value;
   }
 
   @Override

@@ -893,6 +893,12 @@ public class XQueryTest {
         assertResult("(1, 2, 3)[last()]", new XQueryNumber(3));
     }
 
+    @Test
+    public void arrowExpression() throws XQueryUnsupportedOperation {
+        assertResult("'a' => string-length()", new XQueryNumber(1));
+        assertResult("'a' => string-length() => string()", new XQueryString("1"));
+    }
+
 
 
 // Wildcards

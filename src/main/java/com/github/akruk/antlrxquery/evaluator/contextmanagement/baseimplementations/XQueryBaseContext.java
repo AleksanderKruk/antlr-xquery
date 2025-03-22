@@ -11,6 +11,10 @@ public class XQueryBaseContext implements XQueryContext {
     final List<XQueryScope> scopes;
     final Supplier<XQueryScope> scopeFactory;
 
+    public XQueryBaseContext() {
+        this(XQueryBaseScope::new);
+    }
+
     public XQueryBaseContext(Supplier<XQueryScope> scopeFactory) {
         this.scopeFactory = scopeFactory;
         this.scopes = new ArrayList<>();
@@ -28,6 +32,6 @@ public class XQueryBaseContext implements XQueryContext {
 
     @Override
     public XQueryScope currentScope() {
-        scopes.getLast();
+        return scopes.getLast();
     }
 }

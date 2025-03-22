@@ -4,7 +4,7 @@ import java.util.regex.Pattern;
 
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 
-public class XQueryString  extends XQueryValueBase<String> {
+public class XQueryString extends XQueryValueBase<String> {
     public XQueryString(String string) {
         value = string;
     }

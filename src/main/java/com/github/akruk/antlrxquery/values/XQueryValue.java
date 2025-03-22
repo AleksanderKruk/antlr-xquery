@@ -13,6 +13,7 @@ public interface XQueryValue {
     public BigDecimal numericValue();
     public String stringValue();
     public Boolean booleanValue();
+    public XQueryFunction functionValue();
     public Boolean effectiveBooleanValue();
     public List<XQueryValue> sequence();
     public XQueryValue reference();
@@ -23,6 +24,7 @@ public interface XQueryValue {
     public boolean isReference();
     public boolean isAtomic();
     public boolean isNode();
+    public boolean isFunction();
     public List<XQueryValue> atomize();
     public XQueryValue not() throws XQueryUnsupportedOperation;
     public XQueryValue and(XQueryValue other) throws XQueryUnsupportedOperation;

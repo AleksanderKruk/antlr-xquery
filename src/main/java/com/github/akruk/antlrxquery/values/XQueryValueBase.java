@@ -43,6 +43,16 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
         return null;
     }
 
+    @Override
+    public XQueryFunction functionValue() {
+        return null;
+    }
+
+    @Override
+    public boolean isFunction() {
+        return functionValue() != null;
+    }
+
     public boolean isNumericValue() {
         return numericValue() != null;
     }

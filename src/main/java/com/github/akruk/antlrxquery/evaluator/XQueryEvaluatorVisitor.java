@@ -33,6 +33,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.NodeTestContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.OrExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PathExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.PostfixContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PostfixExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PredicateContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.RelativePathExprContext;
@@ -928,6 +929,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         }
 
         final var savedContext = saveContext();
+        final var savedArgs = saveVisitedArguments();
         var value = ctx.primaryExpr().accept(this);
         int index = 1;
         context.setSize(ctx.postfix().size());
@@ -938,6 +940,22 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             index++;
         }
         context = savedContext;
+        visitedArgumentList = savedArgs;
+        return value;
+    }
+
+    @Override
+    public XQueryValue visitPostfix(PostfixContext ctx) {
+        if (ctx.predicate() != null) {
+            return ctx.predicate().accept(this);
+        }
+        final var contextItem = context.getItem();
+        if (!contextItem.isFunction()) {
+            // TODO: error
+            return null;
+        }
+        final var function = contextItem.functionValue();
+        final var value = function.call(context, visitedArgumentList);
         return value;
     }
 
@@ -965,6 +983,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         context = savedContext;
         return new XQuerySequence(filteredValues);
     }
+
 
 
     @Override

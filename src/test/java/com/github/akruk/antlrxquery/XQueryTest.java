@@ -888,6 +888,11 @@ public class XQueryTest {
         assertResult("(1, 2, 3)[position() eq 2]", List.of(new XQueryNumber(2)));
     }
 
+    @Test
+    public void lastFunction() throws XQueryUnsupportedOperation {
+        assertResult("(1, 2, 3)[last()]", new XQueryNumber(3));
+    }
+
 
 
 // Wildcards

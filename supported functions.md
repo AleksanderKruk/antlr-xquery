@@ -98,11 +98,11 @@ Function                                           | Is implemented | Comment
 `fn:outermost`                                     |                |
 `fn:index-of`                                      |                |
 `fn:deep-equal`                                    |                |
-`fn:zero-or-one`                                   |                |
-`fn:one-or-more`                                   |                |
-`fn:exactly-one`                                   |                |
-`fn:position`                                      |                |
-`fn:last`                                          |                |
+`fn:zero-or-one`                                   | yes            |
+`fn:one-or-more`                                   | yes            |
+`fn:exactly-one`                                   | yes            |
+`fn:position`                                      | yes            |
+`fn:last`                                          | yes            |
 `fn:data`                                          |                |
 
 

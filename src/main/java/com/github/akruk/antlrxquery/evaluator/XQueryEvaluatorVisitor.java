@@ -951,12 +951,16 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         final var sequence = contextValue.sequence();
         final var filteredValues = new ArrayList<XQueryValue>(sequence.size());
         final var savedContext = saveContext();
+        int index = 1;
+        context.setSize(sequence.size());
         for (final var contextItem : sequence) {
             context.setItem(contextItem);
+            context.setPosition(index);
             final var visitedExpression = ctx.expr().accept(this);
             if (visitedExpression.effectiveBooleanValue()) {
                 filteredValues.add(contextItem);
             }
+            index++;
         }
         context = savedContext;
         return new XQuerySequence(filteredValues);

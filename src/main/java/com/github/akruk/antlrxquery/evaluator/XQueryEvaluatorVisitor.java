@@ -921,8 +921,6 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     @Override
     public XQueryValue visitPostfixExpr(PostfixExprContext ctx) {
-        // TODO: predicates
-
         // TODO: dynamic function calls
 
         if (ctx.postfix().isEmpty()) {
@@ -931,9 +929,13 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
         final var savedContext = saveContext();
         var value = ctx.primaryExpr().accept(this);
+        int index = 1;
+        context.setSize(ctx.postfix().size());
         for (var postfix : ctx.postfix()) {
             context.setItem(value);
+            context.setPosition(index);
             value = postfix.accept(this);
+            index++;
         }
         context = savedContext;
         return value;

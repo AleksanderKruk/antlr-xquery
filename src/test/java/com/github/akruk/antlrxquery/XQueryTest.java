@@ -878,6 +878,12 @@ public class XQueryTest {
     }
 
 
+    @Test
+    public void dynamicFunctionCalls() throws XQueryUnsupportedOperation {
+        assertResult("'normalize-space'(' \t\n\r a    b \t \t c   \t')", new XQueryString("a b c"));
+    }
+
+
 
 // Wildcards
 

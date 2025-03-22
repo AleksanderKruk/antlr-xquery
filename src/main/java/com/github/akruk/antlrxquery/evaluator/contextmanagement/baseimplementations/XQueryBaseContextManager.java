@@ -12,6 +12,10 @@ public class XQueryBaseContextManager implements XQueryContextManager {
     final List<XQueryContext> contexts;
     final Supplier<XQueryContext> contextFactory;
 
+    public XQueryBaseContextManager() {
+        this(XQueryBaseContext::new);
+    }
+
     public XQueryBaseContextManager(Supplier<XQueryContext> contextFactory) {
         this.contexts = new ArrayList<>();
         this.contextFactory = contextFactory;

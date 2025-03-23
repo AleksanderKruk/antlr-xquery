@@ -25,6 +25,7 @@ public class XQueryBaseContextManager implements XQueryContextManager {
     @Override
     public void enterContext() {
         contexts.add(contextFactory.get());
+        enterScope();
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.github.akruk.antlrxquery.evaluator;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +13,7 @@ import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -40,6 +42,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.PathExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PostfixContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PostfixExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PredicateContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.QuantifiedExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.RelativePathExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReturnClauseContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseAxisContext;
@@ -836,6 +839,56 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
 
+    public static <T> Stream<List<T>> cartesianProduct(List<List<T>> lists) {
+        if (lists.isEmpty()) {
+            return Stream.of(Collections.emptyList());
+        }
+
+        final int size = lists.size();
+        return lists.get(0).stream()
+                .flatMap(firstElement -> cartesianProduct(lists.subList(1, size))
+                        .map(rest -> {
+                            List<T> combination = new ArrayList<>(size);
+                            combination.add(firstElement);
+                            combination.addAll(rest);
+                            return combination;
+                        }));
+    }
+
+
+    @Override
+    public XQueryValue visitQuantifiedExpr(QuantifiedExprContext ctx) {
+        List<String> variableNames = ctx.varName().stream().map(VarNameContext::ID)
+                                                        .map(TerminalNode::getText)
+                                                        .toList();
+        int variableExpressionCount = ctx.exprSingle().size()-1;
+        List<List<XQueryValue>> sequences = new ArrayList<>(variableExpressionCount);
+        for (var expr : ctx.exprSingle().subList(0, variableExpressionCount)) {
+            var sequenceValue = expr.accept(this);
+            sequences.add(sequenceValue.sequence());
+        }
+
+        final var criterionNode = ctx.exprSingle().getLast();
+        if (ctx.EVERY() != null) {
+            boolean every = cartesianProduct(sequences).allMatch(variableProduct -> {
+                for (int i = 0; i < variableNames.size(); i++) {
+                    contextManager.provideVariable(variableNames.get(i), variableProduct.get(i));
+                }
+                return criterionNode.accept(this).booleanValue();
+            });
+            return XQueryBoolean.of(every);
+        }
+        if (ctx.SOME() != null) {
+            boolean some = cartesianProduct(sequences).anyMatch(variableProduct -> {
+                for (int i = 0; i < variableNames.size(); i++) {
+                    contextManager.provideVariable(variableNames.get(i), variableProduct.get(i));
+                }
+                return criterionNode.accept(this).booleanValue();
+            });
+            return XQueryBoolean.of(some);
+        }
+        return null;
+    }
 
 
     @Override

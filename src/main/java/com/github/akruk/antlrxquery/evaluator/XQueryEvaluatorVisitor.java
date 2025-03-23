@@ -25,9 +25,12 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.ArrowFunctionSpecifierCont
 import com.github.akruk.antlrxquery.AntlrXqueryParser.AxisStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ContextItemExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.FLWORExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ForwardAxisContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ForwardStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionCallContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.LetBindingContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.LetClauseContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.LiteralContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.NameTestContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.NodeTestContext;
@@ -38,9 +41,14 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.PostfixContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PostfixExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PredicateContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.RelativePathExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.ReturnClauseContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseAxisContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.StepExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.VarRefContext;
+import com.github.akruk.antlrxquery.evaluator.contextmanagement.XQueryContextManager;
+import com.github.akruk.antlrxquery.evaluator.contextmanagement.baseimplementations.XQueryBaseContextManager;
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 import com.github.akruk.antlrxquery.values.XQueryNumber;
 import com.github.akruk.antlrxquery.values.XQuerySequence;
@@ -58,8 +66,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     XQueryValue matchedNodes;
     XQueryAxis currentAxis;
     XQueryVisitingContext context;
-
-
+    XQueryContextManager contextManager;
 
     private enum XQueryAxis {
         CHILD,
@@ -74,8 +81,6 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         PRECEDING,
         ANCESTOR_OR_SELF,
     }
-
-
 
     private final class Functions {
         private static final XQueryValue not(final XQueryVisitingContext context, final List<XQueryValue> args) {
@@ -713,6 +718,11 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser) {
+        this(tree, parser, new XQueryBaseContextManager());
+    }
+
+    public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser,
+            final XQueryContextManager contextManager) {
         ParserRuleContext root = new ParserRuleContext();
         if (tree != null) {
             root.children = List.of(tree);
@@ -721,6 +731,36 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         this.root = new XQueryTreeNode(root);
         context = new XQueryVisitingContext();
         this.parser = parser;
+        this.contextManager = contextManager;
+        contextManager.enterContext();
+    }
+
+    @Override
+    public XQueryValue visitFLWORExpr(FLWORExprContext ctx) {
+        contextManager.enterScope();
+        var standardValue = super.visitFLWORExpr(ctx);
+        contextManager.leaveScope();
+        return standardValue;
+    }
+
+    @Override
+    public XQueryValue visitLetBinding(LetBindingContext ctx) {
+        String variableName = ctx.varName().getText();
+        XQueryValue assignedValue = ctx.exprSingle().accept(this);
+        contextManager.provideVariable(variableName, assignedValue);
+        return assignedValue;
+    }
+
+    @Override
+    public XQueryValue visitVarRef(VarRefContext ctx) {
+        String variableName = ctx.varName().getText();
+        XQueryValue variableValue = contextManager.getVariable(variableName);
+        return variableValue;
+    }
+
+    @Override
+    public XQueryValue visitReturnClause(ReturnClauseContext ctx) {
+        return ctx.exprSingle().accept(this);
     }
 
     @Override
@@ -1409,6 +1449,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         }
         return value;
     }
+
 
 
     private XQueryValue handleGeneralComparison(final OrExprContext ctx) throws XQueryUnsupportedOperation {

@@ -899,6 +899,13 @@ public class XQueryTest {
         assertResult("'a' => string-length() => string()", new XQueryString("1"));
     }
 
+    @Test
+    public void variableBinding() throws XQueryUnsupportedOperation {
+        assertResult("let $x := 1 return $x", new XQueryNumber(1));
+        assertResult("let $x := 'abc', $y := 1 return ($x, $y)",
+                        List.of(new XQueryString("abc"), new XQueryNumber(1)));
+    }
+
 
 
 // Wildcards

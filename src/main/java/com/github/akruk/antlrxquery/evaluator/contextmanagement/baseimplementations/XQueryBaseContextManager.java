@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 import com.github.akruk.antlrxquery.evaluator.contextmanagement.XQueryContext;
 import com.github.akruk.antlrxquery.evaluator.contextmanagement.XQueryContextManager;
 import com.github.akruk.antlrxquery.evaluator.contextmanagement.XQueryScope;
+import com.github.akruk.antlrxquery.values.XQueryValue;
 
 public class XQueryBaseContextManager implements XQueryContextManager {
     final List<XQueryContext> contexts;
@@ -51,5 +52,14 @@ public class XQueryBaseContextManager implements XQueryContextManager {
         return currentContext().currentScope();
     }
 
+    @Override
+    public boolean provideVariable(String variableName, XQueryValue assignedValue) {
+        return currentContext().provideVariable(variableName, assignedValue);
+    }
+
+    @Override
+    public XQueryValue getVariable(String variableName) {
+        return currentContext().getVariable(variableName);
+    }
 
 }

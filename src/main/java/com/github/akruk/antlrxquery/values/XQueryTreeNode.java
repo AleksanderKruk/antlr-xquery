@@ -3,6 +3,7 @@ package com.github.akruk.antlrxquery.values;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
+import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
 public class XQueryTreeNode extends XQueryValueBase<ParseTree> {
     public XQueryTreeNode(ParseTree node) {
@@ -23,20 +24,20 @@ public class XQueryTreeNode extends XQueryValueBase<ParseTree> {
     }
 
     @Override
-    public XQueryValue valueEqual(XQueryValue other) {
+    public XQueryValue valueEqual(XQueryValueFactory factoryValue, XQueryValue other) {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public XQueryValue valueLessThan(XQueryValue other) {
+    public XQueryValue valueLessThan(XQueryValueFactory factoryValue, XQueryValue other) {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public XQueryValue data() throws XQueryUnsupportedOperation {
+    public XQueryValue data(XQueryValueFactory factoryValue) throws XQueryUnsupportedOperation {
         var atomized = atomize();
-        return new XQuerySequence(atomized);
+        return factoryValue.sequence(atomized);
     }
 }

@@ -3,6 +3,7 @@ package com.github.akruk.antlrxquery.values;
 import java.util.regex.Pattern;
 
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
+import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
 public class XQueryString extends XQueryValueBase<String> {
     public XQueryString(String string) {
@@ -20,12 +21,12 @@ public class XQueryString extends XQueryValueBase<String> {
         return value.isEmpty();
     }
     @Override
-    public XQueryValue concatenate(XQueryValue other) {
+    public XQueryValue concatenate(XQueryValueFactory valueFactory, XQueryValue other) {
         return new XQueryString(value + other.stringValue());
     }
 
     @Override
-    public XQueryValue valueEqual(XQueryValue other) {
+    public XQueryValue valueEqual(XQueryValueFactory valueFactory, XQueryValue other) {
         if (!other.isStringValue()) {
             return XQueryBoolean.FALSE;
         }
@@ -33,7 +34,7 @@ public class XQueryString extends XQueryValueBase<String> {
     }
 
     @Override
-    public XQueryValue valueLessThan(XQueryValue other) {
+    public XQueryValue valueLessThan(XQueryValueFactory valueFactory, XQueryValue other) {
         if (!other.isStringValue()) {
             return XQueryBoolean.FALSE;
         }
@@ -41,7 +42,7 @@ public class XQueryString extends XQueryValueBase<String> {
     }
 
     @Override
-    public XQueryValue valueGreaterThan(XQueryValue other) {
+    public XQueryValue valueGreaterThan(XQueryValueFactory valueFactory, XQueryValue other) {
         if (!other.isStringValue()) {
             return XQueryBoolean.FALSE;
         }
@@ -49,7 +50,7 @@ public class XQueryString extends XQueryValueBase<String> {
     }
 
     @Override
-    public XQueryValue valueGreaterEqual(XQueryValue other) {
+    public XQueryValue valueGreaterEqual(XQueryValueFactory valueFactory, XQueryValue other) {
         if (!other.isStringValue()) {
             return XQueryBoolean.FALSE;
         }
@@ -57,7 +58,7 @@ public class XQueryString extends XQueryValueBase<String> {
     }
 
     @Override
-    public XQueryValue valueLessEqual(XQueryValue other) {
+    public XQueryValue valueLessEqual(XQueryValueFactory valueFactory, XQueryValue other) {
         if (!other.isStringValue()) {
             return XQueryBoolean.FALSE;
         }
@@ -65,37 +66,37 @@ public class XQueryString extends XQueryValueBase<String> {
     }
 
     @Override
-    public XQueryValue copy() {
-        return new XQueryString(value);
+    public XQueryValue copy(XQueryValueFactory valueFactory) {
+        return valueFactory.string(value);
     }
 
     @Override
-    public XQueryValue empty() {
+    public XQueryValue empty(XQueryValueFactory valueFactory) {
         return XQueryBoolean.FALSE;
     }
 
     @Override
-    public XQueryValue head() throws XQueryUnsupportedOperation {
+    public XQueryValue head(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation {
         if (value.isEmpty())
             return XQuerySequence.EMPTY;
         return new XQueryString(value.substring(0, 1));
     }
 
     @Override
-    public XQueryValue tail() throws XQueryUnsupportedOperation {
+    public XQueryValue tail(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation {
         if (value.isEmpty())
             return XQuerySequence.EMPTY;
         return new XQueryString(value.substring(1));
     }
 
     @Override
-    public XQueryValue data() throws XQueryUnsupportedOperation {
+    public XQueryValue data(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation {
         var atomized = atomize();
         return new XQuerySequence(atomized);
     }
 
     @Override
-    public XQueryValue contains(XQueryValue other) throws XQueryUnsupportedOperation {
+    public XQueryValue contains(XQueryValueFactory valueFactory, XQueryValue other) throws XQueryUnsupportedOperation {
         if (value.isEmpty())
             return XQueryBoolean.FALSE;
         if (other.stringValue().isEmpty())
@@ -104,7 +105,7 @@ public class XQueryString extends XQueryValueBase<String> {
     }
 
     @Override
-    public XQueryValue startsWith(XQueryValue other) throws XQueryUnsupportedOperation {
+    public XQueryValue startsWith(XQueryValueFactory valueFactory, XQueryValue other) throws XQueryUnsupportedOperation {
         if (value.isEmpty())
             return XQueryBoolean.FALSE;
         if (other.stringValue().isEmpty())
@@ -114,7 +115,7 @@ public class XQueryString extends XQueryValueBase<String> {
 
 
     @Override
-    public XQueryValue endsWith(XQueryValue other) throws XQueryUnsupportedOperation {
+    public XQueryValue endsWith(XQueryValueFactory valueFactory, XQueryValue other) throws XQueryUnsupportedOperation {
         if (value.isEmpty())
             return XQueryBoolean.FALSE;
         if (other.stringValue().isEmpty())
@@ -123,12 +124,12 @@ public class XQueryString extends XQueryValueBase<String> {
     }
 
     @Override
-    public XQueryValue substring(int startingLoc) throws XQueryUnsupportedOperation {
-        return substring(startingLoc, value.length()-startingLoc+1);
+    public XQueryValue substring(XQueryValueFactory valueFactory, int startingLoc) throws XQueryUnsupportedOperation {
+        return substring(valueFactory, startingLoc, value.length()-startingLoc+1);
     }
 
     @Override
-    public XQueryValue substring(int startingLoc, int length) throws XQueryUnsupportedOperation {
+    public XQueryValue substring(XQueryValueFactory valueFactory, int startingLoc, int length) throws XQueryUnsupportedOperation {
         int currentLength = value.length();
         if (startingLoc > currentLength) {
             return XQuerySequence.EMPTY;
@@ -142,8 +143,8 @@ public class XQueryString extends XQueryValueBase<String> {
 
 
     @Override
-    public XQueryValue substringBefore(XQueryValue splitstring) throws XQueryUnsupportedOperation {
-        if (splitstring.empty().booleanValue())
+    public XQueryValue substringBefore(XQueryValueFactory valueFactory, XQueryValue splitstring) throws XQueryUnsupportedOperation {
+        if (splitstring.empty(valueFactory).booleanValue())
             return new XQueryString("");
         var escapedSplitstring = Pattern.quote(splitstring.stringValue());
         String[] splitString = value.split(escapedSplitstring, 2);
@@ -153,8 +154,8 @@ public class XQueryString extends XQueryValueBase<String> {
     }
 
     @Override
-    public XQueryValue substringAfter(XQueryValue splitstring) throws XQueryUnsupportedOperation {
-        if (splitstring.empty().booleanValue())
+    public XQueryValue substringAfter(XQueryValueFactory valueFactory, XQueryValue splitstring) throws XQueryUnsupportedOperation {
+        if (splitstring.empty(valueFactory).booleanValue())
             return new XQueryString("");
         var splitstringValue = splitstring.stringValue();
         var escapedSplitstring = Pattern.quote(splitstringValue);
@@ -165,12 +166,12 @@ public class XQueryString extends XQueryValueBase<String> {
     }
 
     @Override
-    public XQueryValue uppercase() throws XQueryUnsupportedOperation {
+    public XQueryValue uppercase(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation {
         return new XQueryString(value.toUpperCase());
     }
 
     @Override
-    public XQueryValue lowercase() throws XQueryUnsupportedOperation {
+    public XQueryValue lowercase(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation {
         return new XQueryString(value.toLowerCase());
     }
 

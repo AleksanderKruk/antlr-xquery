@@ -55,6 +55,8 @@ import com.github.akruk.antlrxquery.values.XQuerySequence;
 import com.github.akruk.antlrxquery.values.XQueryString;
 import com.github.akruk.antlrxquery.values.XQueryTreeNode;
 import com.github.akruk.antlrxquery.values.XQueryValue;
+import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
+import com.github.akruk.antlrxquery.values.factories.defaults.XQueryBaseValueFactory;
 import com.github.akruk.antlrxquery.values.XQueryBoolean;
 import com.github.akruk.antlrxquery.values.XQueryFunction;
 import com.github.akruk.antlrxquery.values.XQueryFunctionReference;
@@ -67,6 +69,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     XQueryAxis currentAxis;
     XQueryVisitingContext context;
     XQueryContextManager contextManager;
+    XQueryValueFactory valueFactory;
 
     private enum XQueryAxis {
         CHILD,
@@ -718,11 +721,14 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser) {
-        this(tree, parser, new XQueryBaseContextManager());
+        this(tree, parser, new XQueryBaseContextManager(), new XQueryBaseValueFactory());
     }
 
-    public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser,
-            final XQueryContextManager contextManager) {
+    public XQueryEvaluatorVisitor(
+            final ParseTree tree,
+            final Parser parser,
+            final XQueryContextManager contextManager,
+            final XQueryValueFactory valueFactory) {
         ParserRuleContext root = new ParserRuleContext();
         if (tree != null) {
             root.children = List.of(tree);
@@ -731,6 +737,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         this.root = new XQueryTreeNode(root);
         context = new XQueryVisitingContext();
         this.parser = parser;
+        this.valueFactory = valueFactory;
         this.contextManager = contextManager;
         contextManager.enterContext();
     }

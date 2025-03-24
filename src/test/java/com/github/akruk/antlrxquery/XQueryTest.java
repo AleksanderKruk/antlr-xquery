@@ -144,42 +144,30 @@ public class XQueryTest {
 
     @Test
     public void or() {
-        String xquery = """
-                    false() or false() or true()
-                """;
+        String xquery = "false() or false() or true()";
         var value = XQuery.evaluate(null, xquery, null);
         assertTrue(value.booleanValue());
-        xquery = """
-                    false() or false() or false()
-                """;
+        xquery = "false() or false() or false()";
         value = XQuery.evaluate(null, xquery, null);
         assertFalse(value.booleanValue());
     }
 
     @Test
     public void and() {
-        String xquery = """
-                    true() and true() and false()
-                """;
+        String xquery = "true() and true() and false()";
         var value = XQuery.evaluate(null, xquery, null);
         assertFalse(value.booleanValue());
-        xquery = """
-                    true() and true() and true()
-                """;
+        xquery = "true() and true() and true()";
         value = XQuery.evaluate(null, xquery, null);
         assertTrue(value.booleanValue());
     }
 
     @Test
     public void not() {
-        String xquery = """
-                    not(true())
-                """;
+        String xquery = "not(true())";
         var value = XQuery.evaluate(null, xquery, null);
         assertFalse(value.booleanValue());
-        xquery = """
-                    not(false())
-                """;
+        xquery = "not(false())";
         value = XQuery.evaluate(null, xquery, null);
         assertTrue(value.booleanValue());
     }

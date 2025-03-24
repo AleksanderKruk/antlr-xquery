@@ -6,39 +6,42 @@ import java.util.List;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
+import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
 public abstract class XQueryValueBase<T> implements XQueryValue {
     T value;
-    @Override
-    public XQueryValue empty() {
-        return XQueryBoolean.FALSE;
-    }
 
     @Override
     public ParseTree node() {
         return null;
     }
 
+    @Override
     public BigDecimal numericValue() {
         return null;
     };
 
+    @Override
     public String stringValue() {
         return null;
     };
 
+    @Override
     public Boolean booleanValue() {
         return null;
     };
 
+    @Override
     public Boolean effectiveBooleanValue() {
         return null;
     };
 
+    @Override
     public List<XQueryValue> sequence() {
         return null;
     }
 
+    @Override
     public XQueryValue reference() {
         return null;
     }
@@ -53,116 +56,141 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
         return functionValue() != null;
     }
 
+    @Override
     public boolean isNumericValue() {
         return numericValue() != null;
     }
 
+    @Override
     public boolean isStringValue() {
         return stringValue() != null;
     }
 
+    @Override
     public boolean isBooleanValue() {
         return booleanValue() != null;
     }
 
+    @Override
     public boolean isSequence() {
         return sequence() != null;
     }
 
+    @Override
     public boolean isReference() {
         return reference() != null;
     }
 
+    @Override
     public boolean isAtomic() {
         return sequence() == null;
     }
 
+    @Override
     public boolean isNode() {
         return node() != null;
     }
 
+    @Override
     public List<XQueryValue> atomize() {
         return List.of(this);
     }
 
 
-    public XQueryValue not() throws XQueryUnsupportedOperation {
+    @Override
+    public XQueryValue not(XQueryValueFactory factoryValue) throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
 	}
 
-    public XQueryValue and(XQueryValue other) throws XQueryUnsupportedOperation {
+    @Override
+    public XQueryValue and(XQueryValueFactory factoryValue, XQueryValue other) throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
 	}
 
-    public XQueryValue or(XQueryValue other) throws XQueryUnsupportedOperation {
+    @Override
+    public XQueryValue or(XQueryValueFactory factoryValue, XQueryValue other) throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
 	}
 
 
-    public XQueryValue add(XQueryValue other) throws XQueryUnsupportedOperation {
+    @Override
+    public XQueryValue add(XQueryValueFactory factoryValue, XQueryValue other) throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
 	}
 
-    public XQueryValue subtract(XQueryValue other) throws XQueryUnsupportedOperation {
+    @Override
+    public XQueryValue subtract(XQueryValueFactory factoryValue, XQueryValue other) throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
 
 	}
 
-  public XQueryValue multiply(XQueryValue other) throws XQueryUnsupportedOperation {
+  @Override
+  public XQueryValue multiply(XQueryValueFactory factoryValue, XQueryValue other) throws XQueryUnsupportedOperation {
     throw new XQueryUnsupportedOperation();
 
 	}
 
-  public XQueryValue divide(XQueryValue other) throws XQueryUnsupportedOperation {
+  @Override
+  public XQueryValue divide(XQueryValueFactory factoryValue, XQueryValue other) throws XQueryUnsupportedOperation {
     throw new XQueryUnsupportedOperation();
 
 	}
 
-  public XQueryValue integerDivide(XQueryValue other) throws XQueryUnsupportedOperation {
+  @Override
+  public XQueryValue integerDivide(XQueryValueFactory factoryValue, XQueryValue other) throws XQueryUnsupportedOperation {
     throw new XQueryUnsupportedOperation();
 
 	}
 
-  public XQueryValue modulus(XQueryValue other) throws XQueryUnsupportedOperation {
+  @Override
+  public XQueryValue modulus(XQueryValueFactory factoryValue, XQueryValue other) throws XQueryUnsupportedOperation {
     throw new XQueryUnsupportedOperation();
 
 	}
 
-    public XQueryValue concatenate(XQueryValue other) throws XQueryUnsupportedOperation {
+    @Override
+    public XQueryValue concatenate(XQueryValueFactory factoryValue, XQueryValue other) throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
 
 	}
 
-    public abstract XQueryValue valueEqual(XQueryValue other);
+    @Override
+    public abstract XQueryValue valueEqual(XQueryValueFactory factoryValue, XQueryValue other);
 
-    public XQueryValue valueUnequal(XQueryValue other) {
-        final var isUnequal = !valueEqual(other).booleanValue();
+    @Override
+    public XQueryValue valueUnequal(XQueryValueFactory factoryValue, XQueryValue other) {
+        final var isUnequal = !valueEqual(factoryValue, other).booleanValue();
         return XQueryBoolean.of(isUnequal);
 	}
 
-    public abstract XQueryValue valueLessThan(XQueryValue other);
+    @Override
+    public abstract XQueryValue valueLessThan(XQueryValueFactory factoryValue, XQueryValue other);
 
-    public XQueryValue valueLessEqual(XQueryValue other) {
-        final var isLessEqual = valueEqual(other).booleanValue() || valueLessThan(other).booleanValue();
+    @Override
+    public XQueryValue valueLessEqual(XQueryValueFactory factoryValue, XQueryValue other) {
+        final var isLessEqual = valueEqual(factoryValue, other).booleanValue() || valueLessThan(factoryValue, other).booleanValue();
         return XQueryBoolean.of(isLessEqual);
 	}
 
-    public XQueryValue valueGreaterThan(XQueryValue other) {
-        final var isGreaterThan = !valueLessEqual(other).booleanValue();
+    @Override
+    public XQueryValue valueGreaterThan(XQueryValueFactory factoryValue, XQueryValue other) {
+        final var isGreaterThan = !valueLessEqual(factoryValue, other).booleanValue();
         return XQueryBoolean.of(isGreaterThan);
 	}
 
-    public XQueryValue valueGreaterEqual(XQueryValue other) {
-        final var isGreaterEqual = !valueLessThan(other).booleanValue();
+    @Override
+    public XQueryValue valueGreaterEqual(XQueryValueFactory factoryValue, XQueryValue other) {
+        final var isGreaterEqual = !valueLessThan(factoryValue, other).booleanValue();
         return XQueryBoolean.of(isGreaterEqual);
     }
 
-    public XQueryValue generalEqual(XQueryValue other) {
+    @Override
+    public XQueryValue generalEqual(XQueryValueFactory factoryValue, XQueryValue other) {
         var thisAtomized = atomize();
         var otherAtomized = other.atomize();
         for (var thisElement : thisAtomized) {
             for (var otherElement : otherAtomized) {
-                if (thisElement.valueEqual(otherElement).booleanValue()) {
+                if (thisElement.valueEqual(factoryValue, otherElement).booleanValue()) {
                     return XQueryBoolean.TRUE;
                 }
             }
@@ -170,12 +198,13 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
         return XQueryBoolean.of(thisAtomized.size() == 0 && otherAtomized.size() == 0);
 	}
 
-    public XQueryValue generalUnequal(XQueryValue other) {
+    @Override
+    public XQueryValue generalUnequal(XQueryValueFactory factoryValue, XQueryValue other) {
         var thisAtomized = atomize();
         var otherAtomized = other.atomize();
         for (var thisElement : thisAtomized) {
             for (var otherElement : otherAtomized) {
-                if (thisElement.valueUnequal(otherElement).booleanValue()) {
+                if (thisElement.valueUnequal(factoryValue, otherElement).booleanValue()) {
                     return XQueryBoolean.TRUE;
                 }
             }
@@ -183,26 +212,13 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
         return XQueryBoolean.of(thisAtomized.size() == 0 && otherAtomized.size() == 0);
 	}
 
-    public XQueryValue generalLessThan(XQueryValue other) {
+    @Override
+    public XQueryValue generalLessThan(XQueryValueFactory factoryValue, XQueryValue other) {
         var thisAtomized = atomize();
         var otherAtomized = other.atomize();
         for (var thisElement : thisAtomized) {
             for (var otherElement : otherAtomized) {
-                if (thisElement.valueLessThan(otherElement).booleanValue()) {
-                    return XQueryBoolean.TRUE;
-                }
-            }
-        }
-        return XQueryBoolean.of(thisAtomized.size() == 0 && otherAtomized.size() == 0);
-
-	}
-
-    public XQueryValue generalLessEqual(XQueryValue other) {
-        var thisAtomized = atomize();
-        var otherAtomized = other.atomize();
-        for (var thisElement : thisAtomized) {
-            for (var otherElement : otherAtomized) {
-                if (thisElement.valueLessEqual(otherElement).booleanValue()) {
+                if (thisElement.valueLessThan(factoryValue, otherElement).booleanValue()) {
                     return XQueryBoolean.TRUE;
                 }
             }
@@ -211,12 +227,28 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
 
 	}
 
-    public XQueryValue generalGreaterThan(XQueryValue other) {
+    @Override
+    public XQueryValue generalLessEqual(XQueryValueFactory factoryValue, XQueryValue other) {
         var thisAtomized = atomize();
         var otherAtomized = other.atomize();
         for (var thisElement : thisAtomized) {
             for (var otherElement : otherAtomized) {
-                if (thisElement.valueGreaterThan(otherElement).booleanValue()) {
+                if (thisElement.valueLessEqual(factoryValue, otherElement).booleanValue()) {
+                    return XQueryBoolean.TRUE;
+                }
+            }
+        }
+        return XQueryBoolean.of(thisAtomized.size() == 0 && otherAtomized.size() == 0);
+
+	}
+
+    @Override
+    public XQueryValue generalGreaterThan(XQueryValueFactory factoryValue, XQueryValue other) {
+        var thisAtomized = atomize();
+        var otherAtomized = other.atomize();
+        for (var thisElement : thisAtomized) {
+            for (var otherElement : otherAtomized) {
+                if (thisElement.valueGreaterThan(factoryValue, otherElement).booleanValue()) {
                     return XQueryBoolean.TRUE;
                 }
             }
@@ -224,12 +256,13 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
         return XQueryBoolean.of(thisAtomized.size() == 0 && otherAtomized.size() == 0);
 	}
 
-    public XQueryValue generalGreaterEqual(XQueryValue other) {
+    @Override
+    public XQueryValue generalGreaterEqual(XQueryValueFactory factoryValue, XQueryValue other) {
         var thisAtomized = atomize();
         var otherAtomized = other.atomize();
         for (var thisElement : thisAtomized) {
             for (var otherElement : otherAtomized) {
-                if (thisElement.valueGreaterEqual(otherElement).booleanValue()) {
+                if (thisElement.valueGreaterEqual(factoryValue, otherElement).booleanValue()) {
                     return XQueryBoolean.TRUE;
                 }
             }
@@ -237,110 +270,135 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
         return XQueryBoolean.of(thisAtomized.size() == 0 && otherAtomized.size() == 0);
 	}
 
-    public XQueryValue union(XQueryValue otherSequence) throws XQueryUnsupportedOperation {
+    @Override
+    public XQueryValue union(XQueryValueFactory factoryValue, XQueryValue otherSequence) throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
     }
 
 
-    public XQueryValue intersect(XQueryValue otherSequence) throws XQueryUnsupportedOperation {
+    @Override
+    public XQueryValue intersect(XQueryValueFactory factoryValue, XQueryValue otherSequence) throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
     }
 
-    public XQueryValue except(XQueryValue other) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-
-    public XQueryValue head() throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    public XQueryValue tail() throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    public XQueryValue insertBefore(XQueryValue position, XQueryValue inserted) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    public XQueryValue insertAfter(XQueryValue position, XQueryValue inserted) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    public XQueryValue remove(XQueryValue position) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    public XQueryValue reverse() throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    public XQueryValue subsequence(int startingLoc) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    public XQueryValue subsequence(int startingLoc, int length) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    public XQueryValue distinctValues() throws XQueryUnsupportedOperation {
+    @Override
+    public XQueryValue except(XQueryValueFactory factoryValue, XQueryValue other) throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
     }
 
 
-    public XQueryValue zeroOrOne() throws XQueryUnsupportedOperation {
+    @Override
+    public XQueryValue head(XQueryValueFactory factoryValue) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
+
+    @Override
+    public XQueryValue tail(XQueryValueFactory factoryValue) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
+
+    @Override
+    public XQueryValue insertBefore(XQueryValueFactory factoryValue, XQueryValue position, XQueryValue inserted) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
+
+    @Override
+    public XQueryValue insertAfter(XQueryValueFactory factoryValue, XQueryValue position, XQueryValue inserted) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
+
+    @Override
+    public XQueryValue remove(XQueryValueFactory factoryValue, XQueryValue position) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
+
+    @Override
+    public XQueryValue reverse(XQueryValueFactory factoryValue) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
+
+    @Override
+    public XQueryValue subsequence(XQueryValueFactory factoryValue, int startingLoc) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
+
+    @Override
+    public XQueryValue subsequence(XQueryValueFactory factoryValue, int startingLoc, int length) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
+
+    @Override
+    public XQueryValue distinctValues(XQueryValueFactory factoryValue) throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
     }
 
 
-    public XQueryValue oneOrMore() throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    public XQueryValue exactlyOne() throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-
-    public XQueryValue data() throws XQueryUnsupportedOperation {
+    @Override
+    public XQueryValue zeroOrOne(XQueryValueFactory factoryValue) throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
     }
 
 
-    public XQueryValue substring(int other) throws XQueryUnsupportedOperation {
+    @Override
+    public XQueryValue oneOrMore(XQueryValueFactory factoryValue) throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
     }
 
-    public XQueryValue substring(int startingLoc, int length) throws XQueryUnsupportedOperation {
+    @Override
+    public XQueryValue exactlyOne(XQueryValueFactory factoryValue) throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
     }
 
-    public XQueryValue contains(XQueryValue other) throws XQueryUnsupportedOperation {
+
+    @Override
+    public XQueryValue data(XQueryValueFactory factoryValue) throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
     }
 
 
-    public XQueryValue startsWith(XQueryValue other) throws XQueryUnsupportedOperation {
+    @Override
+    public XQueryValue substring(XQueryValueFactory factoryValue, int other) throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
     }
 
-    public XQueryValue endsWith(XQueryValue other) throws XQueryUnsupportedOperation {
+    @Override
+    public XQueryValue substring(XQueryValueFactory factoryValue, int startingLoc, int length) throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
     }
 
-    public XQueryValue lowercase() throws XQueryUnsupportedOperation {
+    @Override
+    public XQueryValue contains(XQueryValueFactory factoryValue, XQueryValue other) throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
     }
 
-    public XQueryValue uppercase() throws XQueryUnsupportedOperation {
+
+    @Override
+    public XQueryValue startsWith(XQueryValueFactory factoryValue, XQueryValue other) throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
     }
 
-    public XQueryValue substringBefore(XQueryValue splitstring) throws XQueryUnsupportedOperation {
+    @Override
+    public XQueryValue endsWith(XQueryValueFactory factoryValue, XQueryValue other) throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
     }
 
-    public XQueryValue substringAfter(XQueryValue splitstring) throws XQueryUnsupportedOperation {
+    @Override
+    public XQueryValue lowercase(XQueryValueFactory factoryValue) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
+
+    @Override
+    public XQueryValue uppercase(XQueryValueFactory factoryValue) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
+
+    @Override
+    public XQueryValue substringBefore(XQueryValueFactory factoryValue, XQueryValue splitstring) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
+    }
+
+    @Override
+    public XQueryValue substringAfter(XQueryValueFactory factoryValue, XQueryValue splitstring) throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
     }
 }

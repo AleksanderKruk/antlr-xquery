@@ -8,8 +8,6 @@ import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
 public interface XQueryValue {
-    public XQueryValue copy();
-    public XQueryValue empty();
     public ParseTree node();
     public BigDecimal numericValue();
     public String stringValue();
@@ -27,6 +25,8 @@ public interface XQueryValue {
     public boolean isNode();
     public boolean isFunction();
     public List<XQueryValue> atomize();
+    public XQueryValue copy(XQueryValueFactory valueFactory);
+    public XQueryValue empty(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation;
     public XQueryValue not(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation;
     public XQueryValue and(XQueryValueFactory valueFactory, XQueryValue other) throws XQueryUnsupportedOperation;
     public XQueryValue or(XQueryValueFactory valueFactory, XQueryValue other) throws XQueryUnsupportedOperation;

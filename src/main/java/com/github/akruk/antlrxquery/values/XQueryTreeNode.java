@@ -9,10 +9,12 @@ public class XQueryTreeNode extends XQueryValueBase<ParseTree> {
     public XQueryTreeNode(ParseTree node) {
         value = node;
     }
+
     @Override
-    public XQueryValue copy() {
-        return new XQueryTreeNode(value);
+    public XQueryValue copy(XQueryValueFactory valueFactory) {
+        return valueFactory.node(value);
     }
+
     @Override
     public ParseTree node() {
         return value;
@@ -39,5 +41,10 @@ public class XQueryTreeNode extends XQueryValueBase<ParseTree> {
     public XQueryValue data(XQueryValueFactory factoryValue) throws XQueryUnsupportedOperation {
         var atomized = atomize();
         return factoryValue.sequence(atomized);
+    }
+
+    @Override
+    public XQueryValue empty(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
     }
 }

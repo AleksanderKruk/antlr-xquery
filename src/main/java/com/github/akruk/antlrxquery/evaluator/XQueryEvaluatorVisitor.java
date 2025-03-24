@@ -298,12 +298,20 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         private static XQueryValue empty(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 1;
             var arg = args.get(0);
-            return arg.empty();
+            try {
+                return arg.empty(valueFactory);
+            } catch (XQueryUnsupportedOperation e) {
+                return null;
+            }
         }
 
         private static XQueryValue exists(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
             assert args.size() == 1;
-            return XQueryBoolean.of(!empty(valueFactory, context, args).booleanValue());
+            try {
+                return empty(valueFactory, context, args).not(valueFactory);
+            } catch (XQueryUnsupportedOperation e) {
+                return null;
+            }
         }
 
         private static XQueryValue head(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {

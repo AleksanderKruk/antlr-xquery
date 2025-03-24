@@ -66,7 +66,7 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
         var newSequence = new ArrayList<XQueryValue>();
         newSequence.addAll(value);
         newSequence.addAll(otherSequence.sequence());
-        return new XQuerySequence(newSequence);
+        return valueFactory.sequence(newSequence);
     }
 
     @Override
@@ -80,7 +80,7 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
                 }
             }
         }
-        return new XQuerySequence(newSequence);
+        return valueFactory.sequence(newSequence);
     }
 
 
@@ -97,14 +97,14 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
             }
             newSequence.add(element);
         }
-        return new XQuerySequence(newSequence);
+        return valueFactory.sequence(newSequence);
     }
 
 
 
     @Override
     public XQueryValue copy(XQueryValueFactory valueFactory) {
-        return new XQuerySequence(List.copyOf(value));
+        return valueFactory.sequence(List.copyOf(value));
     }
 
 
@@ -126,7 +126,7 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
     public XQueryValue tail(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation {
         if (value.isEmpty())
             return XQuerySequence.EMPTY;
-        return new XQuerySequence(value.subList(1, value.size()));
+        return valueFactory.sequence(value.subList(1, value.size()));
     }
 
     @Override
@@ -142,14 +142,14 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
         int positionIndex = position.numericValue().intValue();
         if (positionIndex > value.size()) {
             newSequence.addAll(inserted.atomize());
-            return new XQuerySequence(newSequence);
+            return valueFactory.sequence(newSequence);
         }
         if (positionIndex <= 0) {
             newSequence.addAll(0, inserted.atomize());
-            return new XQuerySequence(newSequence);
+            return valueFactory.sequence(newSequence);
         }
         newSequence.addAll(positionIndex - 1, inserted.atomize());
-        return new XQuerySequence(newSequence);
+        return valueFactory.sequence(newSequence);
     }
 
     @Override
@@ -161,13 +161,13 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
             throw new XQueryUnsupportedOperation();
         int positionIndex = position.numericValue().intValue();
         if (positionIndex > value.size()) {
-            return new XQuerySequence(newSequence);
+            return valueFactory.sequence(newSequence);
         }
         if (positionIndex <= 0) {
-            return new XQuerySequence(newSequence);
+            return valueFactory.sequence(newSequence);
         }
         newSequence.remove(positionIndex-1);
-        return new XQuerySequence(newSequence);
+        return valueFactory.sequence(newSequence);
     }
 
 
@@ -175,7 +175,7 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
     public XQueryValue reverse(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation
     {
         var newSequence = List.copyOf(value);
-        return new XQuerySequence(newSequence.reversed());
+        return valueFactory.sequence(newSequence.reversed());
     }
 
 
@@ -194,7 +194,7 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
         int startIndexIncluded = Math.max(startingLoc - 1, 0);
         int endIndexExcluded = Math.min(startingLoc + length - 1, currentLength);
         var newSequence = value.subList(startIndexIncluded, endIndexExcluded);
-        return new XQuerySequence(newSequence);
+        return valueFactory.sequence(newSequence);
     }
 
     @Override
@@ -211,7 +211,7 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
                 newSequence.add(element);
             }
         }
-        return new XQuerySequence(newSequence);
+        return valueFactory.sequence(newSequence);
     }
 
     @Override

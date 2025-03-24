@@ -37,32 +37,32 @@ public class XQueryNumber extends XQueryValueBase<BigDecimal> {
 
     @Override
     public XQueryValue add(XQueryValueFactory valueFactory, XQueryValue other) throws XQueryUnsupportedOperation {
-        return new XQueryNumber(value.add(other.numericValue(), MathContext.UNLIMITED));
+        return valueFactory.number(value.add(other.numericValue(), MathContext.UNLIMITED));
     }
 
     @Override
     public XQueryValue subtract(XQueryValueFactory valueFactory, XQueryValue other) throws XQueryUnsupportedOperation {
-        return new XQueryNumber(value.subtract(other.numericValue(), MathContext.UNLIMITED));
+        return valueFactory.number(value.subtract(other.numericValue(), MathContext.UNLIMITED));
     }
 
     @Override
     public XQueryValue multiply(XQueryValueFactory valueFactory, XQueryValue other) throws XQueryUnsupportedOperation {
-        return new XQueryNumber(value.multiply(other.numericValue(), MathContext.UNLIMITED));
+        return valueFactory.number(value.multiply(other.numericValue(), MathContext.UNLIMITED));
     }
 
     @Override
     public XQueryValue divide(XQueryValueFactory valueFactory, XQueryValue other) throws XQueryUnsupportedOperation {
-        return new XQueryNumber(value.divide(other.numericValue(), MathContext.UNLIMITED));
+        return valueFactory.number(value.divide(other.numericValue(), MathContext.UNLIMITED));
     }
 
     @Override
     public XQueryValue integerDivide(XQueryValueFactory valueFactory, XQueryValue other) throws XQueryUnsupportedOperation {
-        return new XQueryNumber(value.divideToIntegralValue(other.numericValue()));
+        return valueFactory.number(value.divideToIntegralValue(other.numericValue()));
     }
 
     @Override
     public XQueryValue modulus(XQueryValueFactory valueFactory, XQueryValue other) throws XQueryUnsupportedOperation {
-        return new XQueryNumber(value.remainder(other.numericValue()));
+        return valueFactory.number(value.remainder(other.numericValue()));
     }
 
     @Override
@@ -87,7 +87,7 @@ public class XQueryNumber extends XQueryValueBase<BigDecimal> {
     @Override
     public XQueryValue data(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation {
         var atomized = atomize();
-        return new XQuerySequence(atomized);
+        return valueFactory.sequence(atomized);
     }
 
     @Override

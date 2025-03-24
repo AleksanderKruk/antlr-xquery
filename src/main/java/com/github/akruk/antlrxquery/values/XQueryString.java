@@ -22,7 +22,7 @@ public class XQueryString extends XQueryValueBase<String> {
     }
     @Override
     public XQueryValue concatenate(XQueryValueFactory valueFactory, XQueryValue other) {
-        return new XQueryString(value + other.stringValue());
+        return valueFactory.string(value + other.stringValue());
     }
 
     @Override
@@ -79,20 +79,20 @@ public class XQueryString extends XQueryValueBase<String> {
     public XQueryValue head(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation {
         if (value.isEmpty())
             return XQuerySequence.EMPTY;
-        return new XQueryString(value.substring(0, 1));
+        return valueFactory.string(value.substring(0, 1));
     }
 
     @Override
     public XQueryValue tail(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation {
         if (value.isEmpty())
             return XQuerySequence.EMPTY;
-        return new XQueryString(value.substring(1));
+        return valueFactory.string(value.substring(1));
     }
 
     @Override
     public XQueryValue data(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation {
         var atomized = atomize();
-        return new XQuerySequence(atomized);
+        return valueFactory.sequence(atomized);
     }
 
     @Override
@@ -137,7 +137,7 @@ public class XQueryString extends XQueryValueBase<String> {
         int startIndexIncluded = Math.max(startingLoc - 1, 0);
         int endIndexExcluded = Math.min(startingLoc + length - 1, currentLength);
         String newSequence = value.substring(startIndexIncluded, endIndexExcluded);
-        return new XQueryString(newSequence);
+        return valueFactory.string(newSequence);
     }
 
 
@@ -145,34 +145,34 @@ public class XQueryString extends XQueryValueBase<String> {
     @Override
     public XQueryValue substringBefore(XQueryValueFactory valueFactory, XQueryValue splitstring) throws XQueryUnsupportedOperation {
         if (splitstring.empty(valueFactory).booleanValue())
-            return new XQueryString("");
+            return valueFactory.string("");
         var escapedSplitstring = Pattern.quote(splitstring.stringValue());
         String[] splitString = value.split(escapedSplitstring, 2);
         if (splitString.length == 1)
-            return new XQueryString("");
-        return new XQueryString(splitString[0]);
+            return valueFactory.string("");
+        return valueFactory.string(splitString[0]);
     }
 
     @Override
     public XQueryValue substringAfter(XQueryValueFactory valueFactory, XQueryValue splitstring) throws XQueryUnsupportedOperation {
         if (splitstring.empty(valueFactory).booleanValue())
-            return new XQueryString("");
+            return valueFactory.string("");
         var splitstringValue = splitstring.stringValue();
         var escapedSplitstring = Pattern.quote(splitstringValue);
         String[] splitString = value.split(escapedSplitstring, 2);
         if (splitString.length == 1)
-            return new XQueryString("");
-        return new XQueryString(splitString[1]);
+            return valueFactory.string("");
+        return valueFactory.string(splitString[1]);
     }
 
     @Override
     public XQueryValue uppercase(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation {
-        return new XQueryString(value.toUpperCase());
+        return valueFactory.string(value.toUpperCase());
     }
 
     @Override
     public XQueryValue lowercase(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation {
-        return new XQueryString(value.toLowerCase());
+        return valueFactory.string(value.toLowerCase());
     }
 
 

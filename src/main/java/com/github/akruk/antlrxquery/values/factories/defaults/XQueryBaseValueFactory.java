@@ -22,6 +22,7 @@ import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 public class XQueryBaseValueFactory implements XQueryValueFactory{
     private Map<ParseTree, XQueryValue> createdNodes = new HashMap<>();
     private Map<BigDecimal, XQueryValue> createdNumbers = new HashMap<>();
+    private Map<Integer, XQueryValue> createdIntegers = new HashMap<>();
     private Map<String, XQueryValue> createdStrings = new HashMap<>();
     private Map<List<XQueryValue>, XQueryValue> createdSequences = new HashMap<>();
     @Override
@@ -43,6 +44,11 @@ public class XQueryBaseValueFactory implements XQueryValueFactory{
     @Override
     public XQueryValue number(BigDecimal d) {
         XQueryValue returnedNumber = createdNumbers.computeIfAbsent(d, t -> new XQueryNumber(d));
+        return returnedNumber;
+    }
+    @Override
+    public XQueryValue number(int integer) {
+        XQueryValue returnedNumber = createdIntegers.computeIfAbsent(integer, t -> new XQueryNumber(integer));
         return returnedNumber;
     }
 

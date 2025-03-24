@@ -65,7 +65,7 @@ public class XQueryBoolean extends XQueryValueBase<Boolean> {
     }
 
     @Override
-    public XQueryValue copy() {
+    public XQueryValue copy(XQueryValueFactory valueFactory) {
         return this;
     }
 
@@ -73,6 +73,11 @@ public class XQueryBoolean extends XQueryValueBase<Boolean> {
     public XQueryValue data(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation {
         var atomized = atomize();
         return valueFactory.sequence(atomized);
+    }
+
+    @Override
+    public XQueryValue empty(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation {
+        throw new XQueryUnsupportedOperation();
     }
 
 

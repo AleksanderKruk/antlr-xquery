@@ -888,26 +888,15 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         }
     }
 
+
+
+
     private XQueryValue handleNodeComp(OrExprContext ctx) {
         try {
             final var visitedLeft = ctx.orExpr(0).accept(this);
-            ParseTree nodeLeft = null;
-            if (visitedLeft.isAtomic()) {
-                nodeLeft = visitedLeft.node();
-            } else {
-                List<XQueryValue> sequenceLeft = visitedLeft.exactlyOne(valueFactory).sequence();
-                nodeLeft = sequenceLeft.get(0).node();
-            }
+            ParseTree nodeLeft = getSingleNode(visitedLeft);
             final var visitedRight = ctx.orExpr(1).accept(this);
-            ParseTree nodeRight = null;
-            if (visitedRight.isAtomic()) {
-                nodeRight = visitedRight.node();
-            }
-            else {
-                List<XQueryValue> sequenceRight = visitedRight.exactlyOne(valueFactory).sequence();
-                nodeRight = sequenceRight.get(0).node();
-            }
-
+            ParseTree nodeRight = getSingleNode(visitedRight);
             boolean result = switch (ctx.nodeComp().getText()) {
                 case "is" -> nodeLeft == nodeRight;
                 case "<<" -> getFollowing(nodeLeft).contains(nodeRight);
@@ -919,6 +908,17 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             return null;
         }
 
+    }
+
+    private ParseTree getSingleNode(final XQueryValue visitedLeft) throws XQueryUnsupportedOperation {
+        ParseTree nodeLeft;
+        if (visitedLeft.isAtomic()) {
+            nodeLeft = visitedLeft.node();
+        } else {
+            List<XQueryValue> sequenceLeft = visitedLeft.exactlyOne(valueFactory).sequence();
+            nodeLeft = sequenceLeft.get(0).node();
+        }
+        return nodeLeft;
     }
 
 

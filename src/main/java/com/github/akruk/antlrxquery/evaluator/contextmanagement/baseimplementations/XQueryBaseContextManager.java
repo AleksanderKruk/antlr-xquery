@@ -62,5 +62,4 @@ public class XQueryBaseContextManager implements XQueryContextManager {
     public XQueryValue getVariable(String variableName) {
         return currentContext().getVariable(variableName);
     }
-
 }

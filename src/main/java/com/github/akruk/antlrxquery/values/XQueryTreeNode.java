@@ -27,13 +27,11 @@ public class XQueryTreeNode extends XQueryValueBase<ParseTree> {
 
     @Override
     public XQueryValue valueEqual(XQueryValueFactory factoryValue, XQueryValue other) {
-        // TODO Auto-generated method stub
-        return null;
+        return factoryValue.bool(this == other);
     }
 
     @Override
     public XQueryValue valueLessThan(XQueryValueFactory factoryValue, XQueryValue other) {
-        // TODO Auto-generated method stub
         return null;
     }
 
@@ -47,4 +45,5 @@ public class XQueryTreeNode extends XQueryValueBase<ParseTree> {
     public XQueryValue empty(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
     }
+
 }

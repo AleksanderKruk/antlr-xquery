@@ -11,7 +11,7 @@ import com.github.akruk.antlrxquery.values.XQueryValue;
 public interface XQueryValueFactory {
     public XQueryValue bool(boolean v);
     public XQueryValue number(BigDecimal d);
-    public XQueryValue number(int position);
+    public XQueryValue number(int integer);
     public XQueryValue string(String s);
     public XQueryValue sequence(List<XQueryValue> v);
     public XQueryValue functionReference(XQueryFunction f);

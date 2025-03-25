@@ -59,6 +59,14 @@ public class XQueryTest {
     }
 
 
+    public void assertResult(String xquery, String textualTree, XQueryValue result) throws XQueryUnsupportedOperation {
+        TestParserAndTree parserAndTree = parseTestTree(textualTree);
+        var value = XQuery.evaluate(parserAndTree.tree, xquery, parserAndTree.parser);
+        assertNotNull(value);
+        assertTrue(result.valueEqual(baseFactory, value).booleanValue());
+    }
+
+
     @Test
     public void stringLiteralsDoubleQuote() {
         assertResult("\"string\"", "string");
@@ -100,9 +108,9 @@ public class XQueryTest {
                 """;
         var value = XQuery.evaluate(null, xquery, null);
         List<XQueryValue> expected = List.of(
-                new XQueryNumber(BigDecimal.ONE),
-                new XQueryNumber(BigDecimal.valueOf(2)),
-                new XQueryNumber(BigDecimal.valueOf(3)));
+                baseFactory.number(1),
+                baseFactory.number(2),
+                baseFactory.number(3));
         assertNotNull(value);
         assertNotNull(value.sequence());
         var sequence = value.sequence();
@@ -120,13 +128,13 @@ public class XQueryTest {
                 """;
         var value = XQuery.evaluate(null, xquery, null);
         List<XQueryValue> expected = List.of(
-                new XQueryNumber(BigDecimal.ONE),
-                new XQueryNumber(BigDecimal.valueOf(2)),
-                new XQueryNumber(BigDecimal.valueOf(3)),
-                new XQueryNumber(BigDecimal.valueOf(4)),
-                new XQueryNumber(BigDecimal.valueOf(5)),
-                new XQueryNumber(BigDecimal.valueOf(6)),
-                new XQueryNumber(BigDecimal.valueOf(7)));
+                baseFactory.number(1),
+                baseFactory.number(2),
+                baseFactory.number(3),
+                baseFactory.number(4),
+                baseFactory.number(5),
+                baseFactory.number(6),
+                baseFactory.number(7));
         assertArrayEquals(
                 expected.stream().map(XQueryValue::numericValue).toArray(),
                 value.sequence().stream().map(XQueryValue::numericValue).toArray());
@@ -229,12 +237,12 @@ public class XQueryTest {
                 """;
         var value = XQuery.evaluate(null, xquery, null);
         var expected = List.of(
-                new XQueryNumber(BigDecimal.valueOf(1)),
-                new XQueryNumber(BigDecimal.valueOf(2)),
-                new XQueryNumber(BigDecimal.valueOf(3)),
-                new XQueryNumber(BigDecimal.valueOf(4)),
-                new XQueryNumber(BigDecimal.valueOf(5)),
-                new XQueryNumber(BigDecimal.valueOf(6)));
+                baseFactory.number(1),
+                baseFactory.number(2),
+                baseFactory.number(3),
+                baseFactory.number(4),
+                baseFactory.number(5),
+                baseFactory.number(6));
         assertEquals(expected.size(), value.sequence().size());
         var sequence = value.sequence();
         for (int i = 0; i < expected.size(); i++) {
@@ -543,6 +551,8 @@ public class XQueryTest {
     }
 
 
+
+
     @Test
     public void rulePath() {
         // assert false;
@@ -558,6 +568,24 @@ public class XQueryTest {
         assertSameResultsAsAntlrXPath("a bc a d",  "//B");
         assertSameResultsAsAntlrXPath("a bc a d",  "//C");
         assertSameResultsAsAntlrXPath("a bc a d",  "//D");
+    }
+
+
+    @Test
+    public void identityNodeComparison() throws XQueryUnsupportedOperation {
+        assertResult("/test is /test", "a bc a d", XQueryBoolean.TRUE);
+    }
+
+    @Test
+    public void beforeNode() throws XQueryUnsupportedOperation {
+        assertResult("/test << /test", "a bc a d", XQueryBoolean.FALSE);
+        assertResult("/test << /test/A[1]", "a bc a d", XQueryBoolean.TRUE);
+    }
+
+    @Test
+    public void afterNode() throws XQueryUnsupportedOperation {
+        assertResult("/test >> /test", "a bc a d", XQueryBoolean.FALSE);
+        assertResult("/test/A >> /test", "a bc a d", XQueryBoolean.TRUE);
     }
 
     @Test
@@ -784,12 +812,8 @@ public class XQueryTest {
 
     @Test
     public void substring() throws XQueryUnsupportedOperation {
-        assertResult("""
-                substring("abcde", 4)
-            """, new XQueryString("de"));
-        assertResult("""
-                substring("abcde", 3, 2)
-            """, new XQueryString("cd"));
+        assertResult("substring('abcde', 4)", new XQueryString("de"));
+        assertResult("substring('abcde', 3, 2)", new XQueryString("cd"));
     }
 
     @Test
@@ -807,11 +831,11 @@ public class XQueryTest {
     }
 
     public void rangeExpression() throws XQueryUnsupportedOperation {
-        var i1 = new XQueryNumber(1);
-        var i2 = new XQueryNumber(2);
-        var i3 = new XQueryNumber(3);
-        var i4 = new XQueryNumber(4);
-        var i5 = new XQueryNumber(5);
+        var i1 = baseFactory.number(1);
+        var i2 = baseFactory.number(2);
+        var i3 = baseFactory.number(3);
+        var i4 = baseFactory.number(4);
+        var i5 = baseFactory.number(5);
         assertResult("1 to 5", List.of(i1, i2, i3, i4, i5));
         assertResult("4 to 3", List.of());
         assertResult("3 to 3", List.of(i3));

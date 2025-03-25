@@ -30,9 +30,9 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.ForwardAxisContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ForwardStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionCallContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.LetBindingContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.LetClauseContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.LiteralContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.NameTestContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.NodeCompContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.NodeTestContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.OrExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
@@ -40,6 +40,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.PathExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PostfixContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PostfixExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PredicateContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.PredicateListContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.RelativePathExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReturnClauseContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseAxisContext;
@@ -49,10 +50,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.VarRefContext;
 import com.github.akruk.antlrxquery.evaluator.contextmanagement.XQueryContextManager;
 import com.github.akruk.antlrxquery.evaluator.contextmanagement.baseimplementations.XQueryBaseContextManager;
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
-import com.github.akruk.antlrxquery.values.XQueryNumber;
 import com.github.akruk.antlrxquery.values.XQuerySequence;
-import com.github.akruk.antlrxquery.values.XQueryString;
-import com.github.akruk.antlrxquery.values.XQueryTreeNode;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.values.factories.defaults.XQueryBaseValueFactory;
@@ -736,12 +734,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             final Parser parser,
             final XQueryContextManager contextManager,
             final XQueryValueFactory valueFactory) {
-        ParserRuleContext root = new ParserRuleContext();
-        if (tree != null) {
-            root.children = List.of(tree);
-            // tree.setParent(root);
-        }
-        this.root = new XQueryTreeNode(root);
+        this.root = valueFactory.node(tree);
         context = new XQueryVisitingContext();
         this.parser = parser;
         this.valueFactory = valueFactory;
@@ -779,7 +772,6 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     @Override
     public XQueryValue visitLiteral(final LiteralContext ctx) {
-
         if (ctx.STRING() != null) {
             final String text = ctx.getText();
             final String removepars = ctx.getText().substring(1, text.length() - 1);
@@ -887,12 +879,48 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                 return handleConcatenation(ctx);
             if (!ctx.ARROW().isEmpty())
                 return handleArrowExpr(ctx);
+            if (ctx.nodeComp() != null)
+                return handleNodeComp(ctx);
             return value;
         } catch (final XQueryUnsupportedOperation e) {
             // TODO: error handling
             return null;
         }
     }
+
+    private XQueryValue handleNodeComp(OrExprContext ctx) {
+        try {
+            final var visitedLeft = ctx.orExpr(0).accept(this);
+            ParseTree nodeLeft = null;
+            if (visitedLeft.isAtomic()) {
+                nodeLeft = visitedLeft.node();
+            } else {
+                List<XQueryValue> sequenceLeft = visitedLeft.exactlyOne(valueFactory).sequence();
+                nodeLeft = sequenceLeft.get(0).node();
+            }
+            final var visitedRight = ctx.orExpr(1).accept(this);
+            ParseTree nodeRight;
+            if (visitedRight.isAtomic()) {
+                nodeRight = visitedRight.node();
+            }
+            else {
+                List<XQueryValue> sequenceRight = visitedRight.exactlyOne(valueFactory).sequence();
+                nodeRight = sequenceRight.get(0).node();
+            }
+
+            boolean result = switch (ctx.nodeComp().getText()) {
+                case "is" -> nodeLeft == nodeRight;
+                case "<<" -> getFollowing(nodeLeft).contains(nodeRight);
+                case ">>" -> getPreceding(nodeLeft).contains(nodeRight);
+                default -> false;
+            };
+            return valueFactory.bool(result);
+        } catch (XQueryUnsupportedOperation e) {
+            return null;
+        }
+
+    }
+
 
     private XQueryValue handleRangeExpr(OrExprContext ctx) {
         var fromValue = ctx.orExpr(0).accept(this);
@@ -960,7 +988,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     private XQueryValue nodeSequence(List<ParseTree> treenodes) {
         List<XQueryValue> nodeSequence = treenodes.stream()
-            .map(XQueryTreeNode::new)
+            .map(valueFactory::node)
             .collect(Collectors.toList());
         return valueFactory.sequence(nodeSequence);
     }
@@ -984,14 +1012,35 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             stepResult = ctx.reverseStep().accept(this);
         else if (ctx.forwardStep() != null)
             stepResult = ctx.forwardStep().accept(this);
-        // TODO: add predicate list
+        if (ctx.predicateList().predicate().isEmpty()) {
+            return stepResult;
+        }
+        final var savedContext = saveContext();
+        final var savedArgs = saveVisitedArguments();
+        int index = 1;
+        context.setSize(stepResult.sequence().size());
+        for (var predicate : ctx.predicateList().predicate()) {
+            context.setItem(stepResult);
+            context.setPosition(index);
+            stepResult = predicate.accept(this);
+            index++;
+        }
+        context = savedContext;
+        visitedArgumentList = savedArgs;
         return stepResult;
     }
 
+    // @Override
+    // public XQueryValue visitPredicateList(PredicateListContext ctx) {
+    //     var result = match;
+    //     for (var predicate : ctx.predicate()) {
+    //         predicate.accept(this);
+    //     }
+    //     return matchedTreeNodes();
+    // }
+
     @Override
     public XQueryValue visitPostfixExpr(PostfixExprContext ctx) {
-        // TODO: dynamic function calls
-
         if (ctx.postfix().isEmpty()) {
             return ctx.primaryExpr().accept(this);
         }
@@ -1103,7 +1152,6 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         return ctx.nameTest().accept(this);
     }
 
-
     private Predicate<String> canBeTokenName = Pattern.compile("^[\\p{IsUppercase}].*").asPredicate();
     @Override
     public XQueryValue visitNameTest(NameTestContext ctx) {
@@ -1177,8 +1225,12 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
     private List<ParseTree> getFollowing(ParseTree node) {
+        var descendants = getDescendants(node);
         var followingSiblings = getFollowingSiblings(node);
-        var following = getAllDescendantsOrSelf(followingSiblings);
+        var followingSiblingDescendants = getAllDescendantsOrSelf(followingSiblings);
+        List<ParseTree> following = new ArrayList<>(descendants.size() + followingSiblings.size() + followingSiblingDescendants.size());
+        following.addAll(descendants);
+        following.addAll(followingSiblingDescendants);
         return following;
     }
 
@@ -1210,9 +1262,11 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     private List<ParseTree> getFollowingSiblings(ParseTree node) {
         var parent = node.getParent();
+        if (parent == null)
+            return List.of();
         var parentsChildren = getChildren(parent);
         var nodeIndex = parentsChildren.indexOf(node);
-        var followingSibling = parentsChildren.subList(nodeIndex, parentsChildren.size());
+        var followingSibling = parentsChildren.subList(nodeIndex+1, parentsChildren.size());
         return followingSibling;
     }
 
@@ -1230,6 +1284,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     private List<ParseTree> getPrecedingSiblings(ParseTree node) {
         var parent = node.getParent();
+        if (parent == null)
+            return List.of();
         var parentsChildren = getChildren(parent);
         var nodeIndex = parentsChildren.indexOf(node);
         var precedingSibling = parentsChildren.subList(0, nodeIndex);
@@ -1302,13 +1358,20 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     private List<ParseTree> getAllAncestors(List<ParseTree> nodes) {
         var newMatched = new ArrayList<ParseTree>();
         for (var valueNode : nodes) {
-            newMatched.add(root.node());
-            var parent = valueNode.getParent();
+            var ancestors = getAncestors(valueNode);
+            newMatched.addAll(ancestors);
+        }
+        return newMatched;
+    }
+
+    private List<ParseTree> getAncestors(ParseTree node) {
+        var newMatched = new ArrayList<ParseTree>();
+        newMatched.add(root.node());
+        var parent = node.getParent();
+        newMatched.add(parent);
+        while (parent != root) {
+            parent = node.getParent();
             newMatched.add(parent);
-            while (parent != root) {
-                parent = valueNode.getParent();
-                newMatched.add(parent);
-            }
         }
         return newMatched;
     }

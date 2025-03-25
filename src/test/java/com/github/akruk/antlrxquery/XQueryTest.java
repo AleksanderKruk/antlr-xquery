@@ -16,6 +16,8 @@ import com.github.akruk.antlrxquery.values.XQueryNumber;
 import com.github.akruk.antlrxquery.values.XQuerySequence;
 import com.github.akruk.antlrxquery.values.XQueryString;
 import com.github.akruk.antlrxquery.values.XQueryValue;
+import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
+import com.github.akruk.antlrxquery.values.factories.defaults.XQueryBaseValueFactory;
 
 import static org.junit.Assert.assertEquals;
 
@@ -25,7 +27,7 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class XQueryTest {
-
+    XQueryValueFactory baseFactory = new XQueryBaseValueFactory();
     public void assertResult(String xquery, String result) {
         var value = XQuery.evaluate(null, xquery, null);
         assertNotNull(value);
@@ -45,7 +47,7 @@ public class XQueryTest {
         for (int i = 0; i < result.size(); i++) {
             var expected = result.get(i);
             var received = value.sequence().get(i);
-            assertEquals(XQueryBoolean.TRUE, expected.valueEqual(received));
+            assertEquals(XQueryBoolean.TRUE, expected.valueEqual(baseFactory, received));
         }
     }
 
@@ -53,7 +55,7 @@ public class XQueryTest {
     public void assertResult(String xquery, XQueryValue result) throws XQueryUnsupportedOperation {
         XQueryValue value = XQuery.evaluate(null, xquery, null);
         assertNotNull(value);
-        assertTrue(result.valueEqual(value).booleanValue());
+        assertTrue(result.valueEqual(baseFactory, value).booleanValue());
     }
 
 
@@ -142,42 +144,30 @@ public class XQueryTest {
 
     @Test
     public void or() {
-        String xquery = """
-                    false() or false() or true()
-                """;
+        String xquery = "false() or false() or true()";
         var value = XQuery.evaluate(null, xquery, null);
         assertTrue(value.booleanValue());
-        xquery = """
-                    false() or false() or false()
-                """;
+        xquery = "false() or false() or false()";
         value = XQuery.evaluate(null, xquery, null);
         assertFalse(value.booleanValue());
     }
 
     @Test
     public void and() {
-        String xquery = """
-                    true() and true() and false()
-                """;
+        String xquery = "true() and true() and false()";
         var value = XQuery.evaluate(null, xquery, null);
         assertFalse(value.booleanValue());
-        xquery = """
-                    true() and true() and true()
-                """;
+        xquery = "true() and true() and true()";
         value = XQuery.evaluate(null, xquery, null);
         assertTrue(value.booleanValue());
     }
 
     @Test
     public void not() {
-        String xquery = """
-                    not(true())
-                """;
+        String xquery = "not(true())";
         var value = XQuery.evaluate(null, xquery, null);
         assertFalse(value.booleanValue());
-        xquery = """
-                    not(false())
-                """;
+        xquery = "not(false())";
         value = XQuery.evaluate(null, xquery, null);
         assertTrue(value.booleanValue());
     }

@@ -2,11 +2,8 @@ package com.github.akruk.antlrxquery.values.factories.defaults;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import com.github.akruk.antlrxquery.values.XQueryBoolean;

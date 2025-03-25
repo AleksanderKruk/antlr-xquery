@@ -48,6 +48,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.ReturnClauseContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseAxisContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.StepExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarRefContext;
 import com.github.akruk.antlrxquery.evaluator.contextmanagement.XQueryContextManager;
 import com.github.akruk.antlrxquery.evaluator.contextmanagement.baseimplementations.XQueryBaseContextManager;
@@ -1363,7 +1364,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                 newMatched.add(parent);
             }
         }
-        return newMatched;
+        return newMatched.reversed();
     }
 
     private List<ParseTree> getAllParents(List<ParseTree> nodes) {

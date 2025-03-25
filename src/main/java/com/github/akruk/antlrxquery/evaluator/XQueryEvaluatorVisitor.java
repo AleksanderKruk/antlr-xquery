@@ -255,8 +255,6 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             XQueryValue value = null;
             if (ctx.orExpr().size() == 0) {
                 value = ctx.pathExpr(0).accept(this);
-            } else {
-                // TODO path expr
             }
             if (!ctx.OR().isEmpty())
                 return handleOrExpr(ctx);

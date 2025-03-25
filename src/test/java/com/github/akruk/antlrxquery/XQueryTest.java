@@ -920,6 +920,15 @@ public class XQueryTest {
                         List.of(new XQueryString("abc"), new XQueryNumber(1)));
     }
 
+    @Test
+    public void quantifiedExpression() throws XQueryUnsupportedOperation {
+        assertResult("some $v in (1, 2, 3, 4) satisfies $v eq 3", XQueryBoolean.TRUE);
+        assertResult("some $v in (1, 2, 3, 4) satisfies $v eq -1", XQueryBoolean.FALSE);
+        assertResult("every $v in (1, 2, 3, 4) satisfies $v gt 0", XQueryBoolean.TRUE);
+        assertResult("every $v in (1, 2, 3, 4) satisfies $v lt 4", XQueryBoolean.FALSE);
+    }
+
+
 
 
 // Wildcards

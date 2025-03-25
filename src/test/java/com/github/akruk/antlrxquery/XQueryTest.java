@@ -585,7 +585,7 @@ public class XQueryTest {
     @Test
     public void afterNode() throws XQueryUnsupportedOperation {
         assertResult("/test >> /test", "a bc a d", XQueryBoolean.FALSE);
-        assertResult("/test/A >> /test", "a bc a d", XQueryBoolean.TRUE);
+        assertResult("/test/A[1] >> /test", "a bc a d", XQueryBoolean.TRUE);
     }
 
     @Test

@@ -899,7 +899,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                 nodeLeft = sequenceLeft.get(0).node();
             }
             final var visitedRight = ctx.orExpr(1).accept(this);
-            ParseTree nodeRight;
+            ParseTree nodeRight = null;
             if (visitedRight.isAtomic()) {
                 nodeRight = visitedRight.node();
             }
@@ -1225,12 +1225,21 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
     private List<ParseTree> getFollowing(ParseTree node) {
-        var descendants = getDescendants(node);
-        var followingSiblings = getFollowingSiblings(node);
-        var followingSiblingDescendants = getAllDescendantsOrSelf(followingSiblings);
-        List<ParseTree> following = new ArrayList<>(descendants.size() + followingSiblings.size() + followingSiblingDescendants.size());
-        following.addAll(descendants);
+        var ancestors = getAncestors(node);
+        var ancestorFollowingSiblings = getAllFollowingSiblings(ancestors);
+        var followingSiblingDescendants =  getAllDescendants(ancestorFollowingSiblings);
+        var thisNodeDescendants = getDescendants(node);
+        var thisNodefollowingSiblings = getFollowingSiblings(node);
+        var thisNodeFollowingSiblingDescendants = getAllDescendantsOrSelf(thisNodefollowingSiblings);
+        List<ParseTree> following = new ArrayList<>(ancestorFollowingSiblings.size()
+                                                    + followingSiblingDescendants.size()
+                                                    + followingSiblingDescendants.size()
+                                                    + thisNodeDescendants.size()
+                                                    + thisNodeFollowingSiblingDescendants.size());
+        following.addAll(ancestorFollowingSiblings);
         following.addAll(followingSiblingDescendants);
+        following.addAll(thisNodeDescendants);
+        following.addAll(thisNodeFollowingSiblingDescendants);
         return following;
     }
 
@@ -1246,9 +1255,18 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
 
     private List<ParseTree> getPreceding(ParseTree node) {
-        var precedingSiblings = getPrecedingSiblings(node);
-        var preceding = getAllDescendantsOrSelf(precedingSiblings);
-        return preceding;
+        List<ParseTree> ancestors = getAncestors(node);
+        List<ParseTree> ancestorPrecedingSiblings = getAllPrecedingSiblings(ancestors);
+        List<ParseTree> precedingSiblingDescendants =  getAllDescendantsOrSelf(ancestorPrecedingSiblings);
+        List<ParseTree> thisNodePrecedingSiblings = getPrecedingSiblings(node);
+        List<ParseTree> thisNodePrecedingSiblingDescendants = getAllDescendantsOrSelf(thisNodePrecedingSiblings);
+        List<ParseTree> following = new ArrayList<>(ancestors.size()
+                                                    + precedingSiblingDescendants.size()
+                                                    + thisNodePrecedingSiblingDescendants.size());
+        following.addAll(ancestors);
+        following.addAll(precedingSiblingDescendants);
+        following.addAll(thisNodePrecedingSiblingDescendants);
+        return following;
     }
 
     private List<ParseTree> getAllFollowingSiblings(List<ParseTree> nodes) {
@@ -1365,15 +1383,13 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
     private List<ParseTree> getAncestors(ParseTree node) {
-        var newMatched = new ArrayList<ParseTree>();
-        newMatched.add(root.node());
-        var parent = node.getParent();
-        newMatched.add(parent);
-        while (parent != root) {
-            parent = node.getParent();
+        List<ParseTree> newMatched = new ArrayList<ParseTree>();
+        ParseTree parent = node.getParent();
+        while (parent != null) {
             newMatched.add(parent);
+            parent = parent.getParent();
         }
-        return newMatched;
+        return newMatched.reversed();
     }
 
     private List<ParseTree> getAllParents(List<ParseTree> nodes) {

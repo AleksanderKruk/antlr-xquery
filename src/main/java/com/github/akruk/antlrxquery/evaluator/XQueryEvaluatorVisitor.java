@@ -36,6 +36,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.NodeTestContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.OrExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PathExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.PositionalVarContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PostfixContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PostfixExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PredicateContext;
@@ -142,23 +143,67 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
 
-    // @Override
-    // public XQueryValue visitForClause(ForClauseContext ctx) {
-    //     final int newVariableCount = ctx.forBinding().size() * 2;
-    //     visitedTupleStream = visitedTupleStream.map(tuple -> {
-    //         var newTuple = new ArrayList<TupleElement>(tuple.size() + newVariableCount);
-    //         newTuple.addAll(tuple);
-    //         for (ForBindingContext streamVariable : ctx.forBinding()) {
-    //             String variableName = streamVariable.varName().getText();
-    //             XQueryValue assignedValue = streamVariable.exprSingle().accept(this);
-    //             var element = new TupleElement(variableName, assignedValue);
-    //             newTuple.add(element);
-    //             contextManager.provideVariable(variableName, assignedValue);
-    //         }
-    //         return newTuple;
-    //     });
-    //     return null;
-    // }
+
+    @Override
+    public XQueryValue visitForClause(ForClauseContext ctx) {
+        // final var variableNames = ctx.forBinding()
+        //         .stream()
+        //         .map(ForBindingContext::varName)
+        //         .map(VarNameContext::ID)
+        //         .map(TerminalNode::getText)
+        //         .collect(Collectors.toList());
+        // final List<List<XQueryValue>> sequences = ctx.forBinding()
+        //         .stream()
+        //         .map(ForBindingContext::exprSingle)
+        //         .map(n -> n.accept(this))
+        //         .map(XQueryValue::sequence)
+        //         .collect(Collectors.toList());
+        // final List<PositionalVarContext> positionalVarnames = ctx.forBinding()
+        //         .stream()
+        //         .map(ForBindingContext::positionalVar)
+        //         .collect(Collectors.toList());
+        // for (int i = 0, j = 0; i < positionalVarnames.size(); i++, j++) {
+        //     if (positionalVarnames.get(i) != null) {
+        //         List<XQueryValue> indices = IntStream.rangeClosed(1, sequences.get(j).size())
+        //                 .mapToObj(valueFactory::number)
+        //                 .collect(Collectors.toList());
+        //         variableNames.add(j + 1, positionalVarnames.get(i).varName().getText());
+        //         sequences.add(j + 1, indices);
+        //         j++;
+        //     }
+        // }
+        // visitedTupleStream = cartesianProduct(sequences);
+        // cartesianProduct(sequences).forEach(variableProduct -> {
+        //     for (int i = 0; i < variableNames.size(); i++) {
+        //         contextManager.provideVariable(variableNames.get(i), variableProduct.get(i));
+        //     }
+        // });
+        var partitionedByPositional = ctx.forBinding()
+                .stream()
+                .collect(Collectors.partitioningBy(node -> node.positionalVar() != null));
+        final int addedVariables = partitionedByPositional.get(true).size() * 2
+                                    + partitionedByPositional.get(false).size();
+        visitedTupleStream = visitedTupleStream.flatMap(tuple -> {
+            var newTupleLike = tuple.stream().map(e->List.of(e)).collect(Collectors.toList());
+            for (ForBindingContext streamVariable : ctx.forBinding()) {
+                String variableName = streamVariable.varName().getText();
+                List<XQueryValue> sequence = streamVariable.exprSingle().accept(this).sequence();
+                PositionalVarContext positional = streamVariable.positionalVar();
+                if (positional != null) {
+                    var positionalName = positional.varName().getText();
+                    var indexSequence = IntStream.rangeClosed(1, sequence.size());
+                }
+                var list = new ArrayList<TupleElement>(sequence.size());
+                for (var iterator : sequence) {
+                    var element = new TupleElement(variableName, iterator);
+                    list.add(element);
+                }
+                contextManager.provideVariable(variableName, assignedValue);
+            }
+            return newTuple;
+        });
+        return null;
+    }
 
     @Override
     public XQueryValue visitVarRef(VarRefContext ctx) {
@@ -242,7 +287,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     public static <T> Stream<List<T>> cartesianProduct(List<List<T>> lists) {
         if (lists.isEmpty()) {
-            return Stream.of(Collections.emptyList());
+            return Stream.of(List.of());
         }
 
         final int size = lists.size();

@@ -181,7 +181,15 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     @Override
     public XQueryValue visitReturnClause(ReturnClauseContext ctx) {
-        return ctx.exprSingle().accept(this);
+        List<XQueryValue> results = visitedTupleStream.map((tuple) -> {
+            XQueryValue value = ctx.exprSingle().accept(this);
+            return value;
+        }).toList();
+        if (results.size() == 1) {
+            var value = results.get(0);
+            return value;
+        }
+        return valueFactory.sequence(results);
     }
 
     @Override

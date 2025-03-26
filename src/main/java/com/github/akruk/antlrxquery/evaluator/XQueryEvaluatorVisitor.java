@@ -71,7 +71,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     XQueryFunctionCaller functionCaller;
     Stream<List<TupleElement>> visitedTupleStream;
 
-    private record TupleElement(String name, XQueryValue value){};
+    private record TupleElement(String name, XQueryValue value, String positionalName, XQueryValue index){};
 
     private enum XQueryAxis {
         CHILD,
@@ -133,7 +133,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             for (LetBindingContext streamVariable : ctx.letBinding()) {
                 String variableName = streamVariable.varName().getText();
                 XQueryValue assignedValue = streamVariable.exprSingle().accept(this);
-                var element = new TupleElement(variableName, assignedValue);
+                var element = new TupleElement(variableName, assignedValue, null, null);
                 newTuple.add(element);
                 contextManager.provideVariable(variableName, assignedValue);
             }
@@ -146,27 +146,43 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     @Override
     public XQueryValue visitForClause(ForClauseContext ctx) {
+        final int numberOfVariables = (int)ctx.forBinding().size();
+        final int numberOfPositionalVariables = (int)ctx.forBinding()
+            .stream()
+            .filter(forBinding->forBinding.positionalVar()!=null)
+            .count();
         visitedTupleStream = visitedTupleStream.flatMap(tuple -> {
             List<List<TupleElement>> newTupleLike = tuple.stream().map(e->List.of(e)).collect(Collectors.toList());
             for (ForBindingContext streamVariable : ctx.forBinding()) {
                 String variableName = streamVariable.varName().getText();
                 List<XQueryValue> sequence = streamVariable.exprSingle().accept(this).sequence();
-                List<TupleElement> elements = sequence.stream().map(value->new TupleElement(variableName, value)).toList();
                 PositionalVarContext positional = streamVariable.positionalVar();
-                newTupleLike.add(elements);
+                int sequenceSize = sequence.size();
                 if (positional != null) {
+                    List<TupleElement> elementsWithIndex = new ArrayList<>(numberOfVariables);
                     String positionalName = positional.varName().getText();
-                    List<TupleElement> indexSequence = IntStream.rangeClosed(1, sequence.size())
-                        .mapToObj(valueFactory::number)
-                        .map(v->new TupleElement(positionalName, v))
+                    for (int i = 0; i < sequenceSize; i++) {
+                        var value = sequence.get(i);
+                        var element = new TupleElement(variableName, value, positionalName, valueFactory.number(i+1));
+                        elementsWithIndex.add(element);
+                    }
+                    newTupleLike.add(elementsWithIndex);
+                }
+                else {
+                    List<TupleElement> elementsWithoutIndex = sequence.stream()
+                        .map(value->new TupleElement(variableName, value, null, null))
                         .toList();
-                    newTupleLike.add(indexSequence);
+                    newTupleLike.add(elementsWithoutIndex);
                 }
             }
             return cartesianProduct(newTupleLike);
-        }).map(tuple->{
-            for (TupleElement element: tuple)
+        })
+        .map(tuple->{
+            for (TupleElement element: tuple) {
                 contextManager.provideVariable(element.name, element.value);
+                if (element.positionalName != null)
+                    contextManager.provideVariable(element.positionalName, element.index);
+            }
             return tuple;
         });
         return null;

@@ -628,12 +628,12 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
     private List<ParseTree> getFollowing(ParseTree node) {
-        var ancestors = getAncestors(node);
-        var ancestorFollowingSiblings = getAllFollowingSiblings(ancestors);
-        var followingSiblingDescendants =  getAllDescendants(ancestorFollowingSiblings);
-        var thisNodeDescendants = getDescendants(node);
-        var thisNodefollowingSiblings = getFollowingSiblings(node);
-        var thisNodeFollowingSiblingDescendants = getAllDescendantsOrSelf(thisNodefollowingSiblings);
+        List<ParseTree> ancestors = getAncestors(node);
+        List<ParseTree> ancestorFollowingSiblings = getAllFollowingSiblings(ancestors);
+        List<ParseTree> followingSiblingDescendants =  getAllDescendants(ancestorFollowingSiblings);
+        List<ParseTree> thisNodeDescendants = getDescendants(node);
+        List<ParseTree> thisNodefollowingSiblings = getFollowingSiblings(node);
+        List<ParseTree> thisNodeFollowingSiblingDescendants = getAllDescendantsOrSelf(thisNodefollowingSiblings);
         List<ParseTree> following = new ArrayList<>(ancestorFollowingSiblings.size()
                                                     + followingSiblingDescendants.size()
                                                     + followingSiblingDescendants.size()

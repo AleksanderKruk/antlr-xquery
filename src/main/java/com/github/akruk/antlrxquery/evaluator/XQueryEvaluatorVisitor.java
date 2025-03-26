@@ -23,10 +23,13 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.AxisStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ContextItemExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FLWORExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.ForBindingContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.ForClauseContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ForwardAxisContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ForwardStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionCallContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.LetBindingContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.LetClauseContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.LiteralContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.NameTestContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.NodeTestContext;
@@ -106,21 +109,56 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     @Override
     public XQueryValue visitFLWORExpr(FLWORExprContext ctx) {
-        var savedTupleStream = saveVisitedTupleStream();
+        final var savedTupleStream = saveVisitedTupleStream();
         contextManager.enterScope();
+        // visitedTupleStream will be manipulated to prepare result stream
         ctx.initialClause().accept(this);
+        for (final var clause : ctx.intermediateClause()) {
+            clause.accept(this);
+        }
+        // at this point visitedTupleStream should contain all tuples
         final var expressionValue = ctx.returnClause().accept(this);
         contextManager.leaveScope();
+        visitedTupleStream = savedTupleStream;
         return expressionValue;
     }
 
     @Override
-    public XQueryValue visitLetBinding(LetBindingContext ctx) {
-        String variableName = ctx.varName().getText();
-        XQueryValue assignedValue = ctx.exprSingle().accept(this);
-        contextManager.provideVariable(variableName, assignedValue);
-        return assignedValue;
+    public XQueryValue visitLetClause(LetClauseContext ctx) {
+        final int newVariableCount = ctx.letBinding().size();
+        visitedTupleStream = visitedTupleStream.map(tuple -> {
+            var newTuple = new ArrayList<TupleElement>(tuple.size() + newVariableCount);
+            newTuple.addAll(tuple);
+            for (LetBindingContext streamVariable : ctx.letBinding()) {
+                String variableName = streamVariable.varName().getText();
+                XQueryValue assignedValue = streamVariable.exprSingle().accept(this);
+                var element = new TupleElement(variableName, assignedValue);
+                newTuple.add(element);
+                contextManager.provideVariable(variableName, assignedValue);
+            }
+            return newTuple;
+        });
+        return null;
     }
+
+
+    // @Override
+    // public XQueryValue visitForClause(ForClauseContext ctx) {
+    //     final int newVariableCount = ctx.forBinding().size() * 2;
+    //     visitedTupleStream = visitedTupleStream.map(tuple -> {
+    //         var newTuple = new ArrayList<TupleElement>(tuple.size() + newVariableCount);
+    //         newTuple.addAll(tuple);
+    //         for (ForBindingContext streamVariable : ctx.forBinding()) {
+    //             String variableName = streamVariable.varName().getText();
+    //             XQueryValue assignedValue = streamVariable.exprSingle().accept(this);
+    //             var element = new TupleElement(variableName, assignedValue);
+    //             newTuple.add(element);
+    //             contextManager.provideVariable(variableName, assignedValue);
+    //         }
+    //         return newTuple;
+    //     });
+    //     return null;
+    // }
 
     @Override
     public XQueryValue visitVarRef(VarRefContext ctx) {
@@ -1078,7 +1116,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     private Stream<List<TupleElement>> saveVisitedTupleStream() {
         final Stream<List<TupleElement>> saved = visitedTupleStream;
-        visitedTupleStream = null;
+        visitedTupleStream = Stream.of(List.of());
         return  saved;
     }
 

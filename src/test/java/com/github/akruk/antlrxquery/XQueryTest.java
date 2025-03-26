@@ -929,6 +929,38 @@ public class XQueryTest {
     }
 
 
+    @Test
+    public void forClause() throws XQueryUnsupportedOperation {
+        assertResult("for $x in (1 to 5) return $x + 1",
+                List.of(baseFactory.number(2),
+                        baseFactory.number(3),
+                        baseFactory.number(4),
+                        baseFactory.number(5),
+                        baseFactory.number(6)));
+        assertResult("for $x in (1 to 5), for $y in (1, 2) return $x * $y",
+                List.of(baseFactory.number(1),
+                        baseFactory.number(2),
+                        baseFactory.number(2),
+                        baseFactory.number(4),
+                        baseFactory.number(3),
+                        baseFactory.number(6),
+                        baseFactory.number(4),
+                        baseFactory.number(8),
+                        baseFactory.number(5),
+                        baseFactory.number(10))
+            );
+    }
+
+
+    @Test
+    public void forClausePositionalVar() throws XQueryUnsupportedOperation {
+        assertResult("for $x at $i in (1 to 5) return $i",
+                List.of(baseFactory.number(1),
+                        baseFactory.number(2),
+                        baseFactory.number(3),
+                        baseFactory.number(4),
+                        baseFactory.number(5)));
+    }
 
 
 // Wildcards

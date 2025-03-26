@@ -146,61 +146,28 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     @Override
     public XQueryValue visitForClause(ForClauseContext ctx) {
-        // final var variableNames = ctx.forBinding()
-        //         .stream()
-        //         .map(ForBindingContext::varName)
-        //         .map(VarNameContext::ID)
-        //         .map(TerminalNode::getText)
-        //         .collect(Collectors.toList());
-        // final List<List<XQueryValue>> sequences = ctx.forBinding()
-        //         .stream()
-        //         .map(ForBindingContext::exprSingle)
-        //         .map(n -> n.accept(this))
-        //         .map(XQueryValue::sequence)
-        //         .collect(Collectors.toList());
-        // final List<PositionalVarContext> positionalVarnames = ctx.forBinding()
-        //         .stream()
-        //         .map(ForBindingContext::positionalVar)
-        //         .collect(Collectors.toList());
-        // for (int i = 0, j = 0; i < positionalVarnames.size(); i++, j++) {
-        //     if (positionalVarnames.get(i) != null) {
-        //         List<XQueryValue> indices = IntStream.rangeClosed(1, sequences.get(j).size())
-        //                 .mapToObj(valueFactory::number)
-        //                 .collect(Collectors.toList());
-        //         variableNames.add(j + 1, positionalVarnames.get(i).varName().getText());
-        //         sequences.add(j + 1, indices);
-        //         j++;
-        //     }
-        // }
-        // visitedTupleStream = cartesianProduct(sequences);
-        // cartesianProduct(sequences).forEach(variableProduct -> {
-        //     for (int i = 0; i < variableNames.size(); i++) {
-        //         contextManager.provideVariable(variableNames.get(i), variableProduct.get(i));
-        //     }
-        // });
-        var partitionedByPositional = ctx.forBinding()
-                .stream()
-                .collect(Collectors.partitioningBy(node -> node.positionalVar() != null));
-        final int addedVariables = partitionedByPositional.get(true).size() * 2
-                                    + partitionedByPositional.get(false).size();
         visitedTupleStream = visitedTupleStream.flatMap(tuple -> {
-            var newTupleLike = tuple.stream().map(e->List.of(e)).collect(Collectors.toList());
+            List<List<TupleElement>> newTupleLike = tuple.stream().map(e->List.of(e)).collect(Collectors.toList());
             for (ForBindingContext streamVariable : ctx.forBinding()) {
                 String variableName = streamVariable.varName().getText();
                 List<XQueryValue> sequence = streamVariable.exprSingle().accept(this).sequence();
+                List<TupleElement> elements = sequence.stream().map(value->new TupleElement(variableName, value)).toList();
                 PositionalVarContext positional = streamVariable.positionalVar();
+                newTupleLike.add(elements);
                 if (positional != null) {
-                    var positionalName = positional.varName().getText();
-                    var indexSequence = IntStream.rangeClosed(1, sequence.size());
+                    String positionalName = positional.varName().getText();
+                    List<TupleElement> indexSequence = IntStream.rangeClosed(1, sequence.size())
+                        .mapToObj(valueFactory::number)
+                        .map(v->new TupleElement(positionalName, v))
+                        .toList();
+                    newTupleLike.add(indexSequence);
                 }
-                var list = new ArrayList<TupleElement>(sequence.size());
-                for (var iterator : sequence) {
-                    var element = new TupleElement(variableName, iterator);
-                    list.add(element);
-                }
-                contextManager.provideVariable(variableName, assignedValue);
             }
-            return newTuple;
+            return cartesianProduct(newTupleLike);
+        }).map(tuple->{
+            for (TupleElement element: tuple)
+                contextManager.provideVariable(element.name, element.value);
+            return tuple;
         });
         return null;
     }

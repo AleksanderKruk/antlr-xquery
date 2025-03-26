@@ -65,6 +65,9 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     XQueryContextManager contextManager;
     XQueryValueFactory valueFactory;
     XQueryFunctionCaller functionCaller;
+    Stream<List<TupleElement>> visitedTupleStream;
+
+    private record TupleElement(String name, XQueryValue value){};
 
     private enum XQueryAxis {
         CHILD,
@@ -103,10 +106,12 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     @Override
     public XQueryValue visitFLWORExpr(FLWORExprContext ctx) {
+        var savedTupleStream = saveVisitedTupleStream();
         contextManager.enterScope();
-        var standardValue = super.visitFLWORExpr(ctx);
+        ctx.initialClause().accept(this);
+        final var expressionValue = ctx.returnClause().accept(this);
         contextManager.leaveScope();
-        return standardValue;
+        return expressionValue;
     }
 
     @Override
@@ -1071,8 +1076,14 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         return saved;
     }
 
+    private Stream<List<TupleElement>> saveVisitedTupleStream() {
+        final Stream<List<TupleElement>> saved = visitedTupleStream;
+        visitedTupleStream = null;
+        return  saved;
+    }
 
-    private XQueryVisitingContext  saveContext() {
+
+    private XQueryVisitingContext saveContext() {
         final XQueryVisitingContext saved = context;
         context = new XQueryVisitingContext();
         return saved;

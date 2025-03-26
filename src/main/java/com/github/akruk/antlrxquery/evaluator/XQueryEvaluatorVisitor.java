@@ -191,7 +191,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     @Override
     public XQueryValue visitWhereClause(WhereClauseContext ctx) {
         final var filteringExpression = ctx.exprSingle();
-        visitedTupleStream.filter(tuple -> {
+        visitedTupleStream = visitedTupleStream.filter(tuple -> {
             XQueryValue filter = filteringExpression.accept(this);
             return filter.effectiveBooleanValue();
         });

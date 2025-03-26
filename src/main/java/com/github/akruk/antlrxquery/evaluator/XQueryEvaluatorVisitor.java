@@ -48,6 +48,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.StepExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarRefContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.WhereClauseContext;
 import com.github.akruk.antlrxquery.evaluator.contextmanagement.XQueryContextManager;
 import com.github.akruk.antlrxquery.evaluator.contextmanagement.baseimplementations.XQueryBaseContextManager;
 import com.github.akruk.antlrxquery.evaluator.functioncaller.XQueryFunctionCaller;
@@ -101,6 +102,9 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             final XQueryFunctionCaller functionCaller) {
         this.root = valueFactory.node(tree);
         this.context = new XQueryVisitingContext();
+        this.context.setItem(root);
+        this.context.setPosition(0);
+        this.context.setSize(0);
         this.parser = parser;
         this.valueFactory = valueFactory;
         this.functionCaller = functionCaller;
@@ -147,10 +151,6 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     @Override
     public XQueryValue visitForClause(ForClauseContext ctx) {
         final int numberOfVariables = (int)ctx.forBinding().size();
-        final int numberOfPositionalVariables = (int)ctx.forBinding()
-            .stream()
-            .filter(forBinding->forBinding.positionalVar()!=null)
-            .count();
         visitedTupleStream = visitedTupleStream.flatMap(tuple -> {
             List<List<TupleElement>> newTupleLike = tuple.stream().map(e->List.of(e)).collect(Collectors.toList());
             for (ForBindingContext streamVariable : ctx.forBinding()) {
@@ -184,6 +184,16 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                     contextManager.provideVariable(element.positionalName, element.index);
             }
             return tuple;
+        });
+        return null;
+    }
+
+    @Override
+    public XQueryValue visitWhereClause(WhereClauseContext ctx) {
+        final var filteringExpression = ctx.exprSingle();
+        visitedTupleStream.filter(tuple -> {
+            XQueryValue filter = filteringExpression.accept(this);
+            return filter.effectiveBooleanValue();
         });
         return null;
     }

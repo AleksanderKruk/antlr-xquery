@@ -962,6 +962,13 @@ public class XQueryTest {
                         baseFactory.number(5)));
     }
 
+    @Test
+    public void whereClause() throws XQueryUnsupportedOperation {
+        assertResult("for $x in (1 to 5) where ($x mod 2) eq 0 return $x",
+                List.of(baseFactory.number(2),
+                        baseFactory.number(4)));
+    }
+
 
 // Wildcards
 

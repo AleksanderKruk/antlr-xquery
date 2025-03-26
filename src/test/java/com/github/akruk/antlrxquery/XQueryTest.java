@@ -937,7 +937,7 @@ public class XQueryTest {
                         baseFactory.number(4),
                         baseFactory.number(5),
                         baseFactory.number(6)));
-        assertResult("for $x in (1 to 5), for $y in (1, 2) return $x * $y",
+        assertResult("for $x in (1 to 5), $y in (1, 2) return $x * $y",
                 List.of(baseFactory.number(1),
                         baseFactory.number(2),
                         baseFactory.number(2),

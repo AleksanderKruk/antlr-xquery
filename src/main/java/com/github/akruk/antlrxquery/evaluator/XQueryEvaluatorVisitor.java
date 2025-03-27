@@ -17,10 +17,12 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.AbbrevReverseStepContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.AnyIdContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ArgumentContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ArrowFunctionSpecifierContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.AxisStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ContextItemExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.CountClauseContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FLWORExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ForBindingContext;
@@ -59,6 +61,7 @@ import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.values.factories.defaults.XQueryBaseValueFactory;
 import com.github.akruk.antlrxquery.values.XQueryBoolean;
+import com.github.akruk.antlrxquery.values.XQueryNumber;
 
 class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     XQueryValue root;
@@ -150,9 +153,9 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     @Override
     public XQueryValue visitForClause(ForClauseContext ctx) {
-        final int numberOfVariables = (int)ctx.forBinding().size();
+        final int numberOfVariables = (int) ctx.forBinding().size();
         visitedTupleStream = visitedTupleStream.flatMap(tuple -> {
-            List<List<TupleElement>> newTupleLike = tuple.stream().map(e->List.of(e)).collect(Collectors.toList());
+            List<List<TupleElement>> newTupleLike = tuple.stream().map(e -> List.of(e)).collect(Collectors.toList());
             for (ForBindingContext streamVariable : ctx.forBinding()) {
                 String variableName = streamVariable.varName().getText();
                 List<XQueryValue> sequence = streamVariable.exprSingle().accept(this).sequence();
@@ -163,27 +166,46 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                     String positionalName = positional.varName().getText();
                     for (int i = 0; i < sequenceSize; i++) {
                         var value = sequence.get(i);
-                        var element = new TupleElement(variableName, value, positionalName, valueFactory.number(i+1));
+                        var element = new TupleElement(variableName, value, positionalName, valueFactory.number(i + 1));
                         elementsWithIndex.add(element);
                     }
                     newTupleLike.add(elementsWithIndex);
-                }
-                else {
+                } else {
                     List<TupleElement> elementsWithoutIndex = sequence.stream()
-                        .map(value->new TupleElement(variableName, value, null, null))
-                        .toList();
+                            .map(value -> new TupleElement(variableName, value, null, null))
+                            .toList();
                     newTupleLike.add(elementsWithoutIndex);
                 }
             }
             return cartesianProduct(newTupleLike);
-        })
-        .map(tuple->{
-            for (TupleElement element: tuple) {
+        }).map(tuple -> {
+            // the newly declared variables need to be provided to the context
+            List<TupleElement> addedVariables = tuple.subList(tuple.size() - numberOfVariables, tuple.size());
+            for (TupleElement element : addedVariables) {
                 contextManager.provideVariable(element.name, element.value);
                 if (element.positionalName != null)
                     contextManager.provideVariable(element.positionalName, element.index);
             }
             return tuple;
+        });
+        return null;
+    }
+
+    private class MutableInt {
+        public int i = 0;
+    }
+    @Override
+    public XQueryValue visitCountClause(CountClauseContext ctx) {
+        final String countVariableName = ctx.varName().getText();
+        final MutableInt index = new MutableInt();
+        index.i = 1;
+        visitedTupleStream = visitedTupleStream.map(tuple -> {
+            var newTuple = new ArrayList<TupleElement>(tuple.size() + 1);
+            newTuple.addAll(tuple);
+            var element = new TupleElement(countVariableName, valueFactory.number(index.i++), null, null);
+            contextManager.provideVariable(element.name, element.value);
+            newTuple.add(element);
+            return newTuple;
         });
         return null;
     }
@@ -305,8 +327,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     @Override
     public XQueryValue visitQuantifiedExpr(QuantifiedExprContext ctx) {
-        List<String> variableNames = ctx.varName().stream().map(VarNameContext::ID)
-                                                        .map(TerminalNode::getText)
+        List<String> variableNames = ctx.varName().stream().map(VarNameContext::anyId)
+                                                        .map(AnyIdContext::getText)
                                                         .toList();
         int variableExpressionCount = ctx.exprSingle().size()-1;
         List<List<XQueryValue>> sequences = new ArrayList<>(variableExpressionCount);

@@ -963,6 +963,16 @@ public class XQueryTest {
     }
 
     @Test
+    public void countClause() throws XQueryUnsupportedOperation {
+        assertResult("for $x in (1 to 5) count $count return $count",
+                List.of(baseFactory.number(1),
+                        baseFactory.number(2),
+                        baseFactory.number(3),
+                        baseFactory.number(4),
+                        baseFactory.number(5)));
+    }
+
+    @Test
     public void whereClause() throws XQueryUnsupportedOperation {
         assertResult("for $x in (1 to 5) where ($x mod 2) eq 0 return $x",
                 List.of(baseFactory.number(2),

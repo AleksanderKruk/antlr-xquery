@@ -89,7 +89,7 @@ primaryExpr: literal
         | functionCall;
 literal: INTEGER | DECIMAL | STRING;
 varRef: DOLLAR varName;
-varName: ID;
+varName: anyId;
 parenthesizedExpr: LPAREN expr? RPAREN;
 contextItemExpr: DOT;
 functionCall: functionName argumentList;
@@ -98,6 +98,7 @@ argumentPlaceholder: QUESTION_MARK;
 typeDeclaration: AS sequenceType;
 sequenceType: (ID occurrenceIndicator?);
 occurrenceIndicator: QUESTION_MARK | STAR | PLUS;
-functionName: ID
-            | EMPTY
-            ;
+functionName: anyId;
+
+
+anyId: ID | EMPTY | COUNT;

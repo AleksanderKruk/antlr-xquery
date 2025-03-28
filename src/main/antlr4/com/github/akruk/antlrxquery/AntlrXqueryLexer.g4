@@ -89,6 +89,10 @@ COLLATION: 'collation';
 IF: 'if';
 IN: 'in';
 SATISFIES: 'satisfies';
+SWITCH: 'switch';
+DEFAULT: 'default';
+CASE: 'case';
+
 ID: NAME_START (DASH NAME_MIDDLE)*
 // [\p{Alpha}][\p{Alpha}\p{Alnum}-]*
     ; /* Replace with antlr compatible */

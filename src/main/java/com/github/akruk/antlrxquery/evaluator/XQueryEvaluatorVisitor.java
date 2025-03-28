@@ -1222,6 +1222,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     };
 
     private Comparator<List<TupleElement>> ascendingEmptyLeast(ParseTree expr) {
+        return null;
         return (tuple1, tuple2) -> {
             provideVariables(tuple1);
             XQueryValue value1 = expr.accept(this);

@@ -2,7 +2,9 @@ package com.github.akruk.antlrxquery.evaluator;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -24,6 +26,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.AxisStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ContextItemExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.CountClauseContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.ExprSingleContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FLWORExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ForBindingContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ForClauseContext;
@@ -36,6 +39,8 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.LiteralContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.NameTestContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.NodeTestContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.OrExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.OrderByClauseContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.OrderSpecContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PathExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PositionalVarContext;
@@ -181,11 +186,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         }).map(tuple -> {
             // the newly declared variables need to be provided to the context
             List<TupleElement> addedVariables = tuple.subList(tuple.size() - numberOfVariables, tuple.size());
-            for (TupleElement element : addedVariables) {
-                contextManager.provideVariable(element.name, element.value);
-                if (element.positionalName != null)
-                    contextManager.provideVariable(element.positionalName, element.index);
-            }
+            provideVariables(addedVariables);
             return tuple;
         });
         return null;
@@ -1201,4 +1202,136 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         return saved;
     }
 
+
+
+
+    private Comparator<List<TupleElement>> ascendingEmptyGreatest(ParseTree expr) {
+        return (tuple1, tuple2) -> {
+            provideVariables(tuple1);
+            XQueryValue value1 = expr.accept(this);
+            provideVariables(tuple2);
+            XQueryValue value2 = expr.accept(this);
+            boolean value1IsEmptySequence = value1.isSequence() && value1.sequence().isEmpty();
+            boolean value2IsEmptySequence = value2.isSequence() && value2.sequence().isEmpty();
+            if (value1IsEmptySequence && !value2IsEmptySequence) {
+                //  empty greatest
+                return 1;
+            }
+            return compareValues(value1, value2);
+        };
+    };
+
+    private Comparator<List<TupleElement>> ascendingEmptyLeast(ParseTree expr) {
+        return (tuple1, tuple2) -> {
+            provideVariables(tuple1);
+            XQueryValue value1 = expr.accept(this);
+            provideVariables(tuple2);
+            XQueryValue value2 = expr.accept(this);
+            boolean value1IsEmptySequence = value1.isSequence() && value1.sequence().isEmpty();
+            boolean value2IsEmptySequence = value2.isSequence() && value2.sequence().isEmpty();
+            if (value1IsEmptySequence && !value2IsEmptySequence) {
+                //  empty greatest
+                return -1;
+            }
+            return compareValues(value1, value2);
+        };
+    };
+
+    private Comparator<List<TupleElement>> descendingEmptyGreatest(ParseTree expr) {
+        return null;
+        return (tuple1, tuple2) -> {
+            provideVariables(tuple1);
+            XQueryValue value1 = expr.accept(this);
+            provideVariables(tuple2);
+            XQueryValue value2 = expr.accept(this);
+            boolean value1IsEmptySequence = value1.isSequence() && value1.sequence().isEmpty();
+            boolean value2IsEmptySequence = value2.isSequence() && value2.sequence().isEmpty();
+            if (value1IsEmptySequence && !value2IsEmptySequence) {
+                //  empty greatest
+                return -1;
+            }
+            return compareValues(value1, value2);
+        };
+    };
+
+    private Comparator<List<TupleElement>> descendingEmptyLeast(ParseTree expr) {
+        return (tuple1, tuple2) -> {
+            provideVariables(tuple1);
+            XQueryValue value1 = expr.accept(this);
+            provideVariables(tuple2);
+            XQueryValue value2 = expr.accept(this);
+            boolean value1IsEmptySequence = value1.isSequence() && value1.sequence().isEmpty();
+            boolean value2IsEmptySequence = value2.isSequence() && value2.sequence().isEmpty();
+            if (value1IsEmptySequence && !value2IsEmptySequence) {
+                //  empty greatest
+                return -1;
+            }
+            return compareValues(value1, value2);
+        };
+    };
+
+
+    private Comparator<List<TupleElement>> comparatorFromNthOrderSpec(List<OrderSpecContext> orderSpecs, int[] modifierMaskArray, int i) {
+        final OrderSpecContext orderSpec = orderSpecs.get(0);
+        final ExprSingleContext expr = orderSpec.exprSingle();
+        int modifierMask = modifierMaskArray[i];
+        return switch (modifierMask) {
+            // ascending, empty greatest
+            case 0b00 -> ascendingEmptyGreatest(expr);
+            // ascending, empty least
+            case 0b01 -> ascendingEmptyLeast(expr);
+            // descending, empty greatest
+            case 0b10 -> descendingEmptyGreatest(expr);
+            // descending, empty least
+            case 0b11 -> descendingEmptyLeast(expr);
+            default -> null;
+        };
+    }
+
+    @Override
+    public XQueryValue visitOrderByClause(OrderByClauseContext ctx) {
+        final int sortingExprCount = ctx.orderSpecList().orderSpec().size();
+        final var orderSpecs = ctx.orderSpecList().orderSpec();
+        final int[] modifierMaskArray = orderSpecs.stream()
+            .map(OrderSpecContext::orderModifier)
+            .mapToInt(m->{
+                int isDescending = m.DESCENDING() != null? 1 : 0;
+                int isEmptyLeast = m.LEAST() != null? 1 : 0;
+                int mask = (isDescending << 1) | isEmptyLeast;
+                return mask;
+            })
+            .toArray();
+        visitedTupleStream = visitedTupleStream.sorted((tuple1, tuple2) -> {
+            var comparator = comparatorFromNthOrderSpec(orderSpecs, modifierMaskArray, 0);
+            for (int i = 1; i < sortingExprCount; i++) {
+                var nextComparator = comparatorFromNthOrderSpec(orderSpecs, modifierMaskArray, i);
+                comparator = comparator.thenComparing(nextComparator);
+            }
+            return comparator.compare(tuple1, tuple2);
+        }).map(tuple->{
+            provideVariables(tuple);
+            return tuple;
+        });
+        return null;
+    }
+
+    private int compareValues(XQueryValue value1, XQueryValue value2) {
+        if (value1.valueEqual(valueFactory, value2).booleanValue()) {
+            return 0;
+        } else {
+            if (value1.valueLessThan(valueFactory, value2).booleanValue()) {
+                return -1;
+            }
+            ;
+            return 1;
+        }
+    }
+
+    private void provideVariables(List<TupleElement> tuple) {
+        for (var e : tuple) {
+            contextManager.provideVariable(e.name, e.value);
+            if (e.positionalName != null)
+                contextManager.provideVariable(e.positionalName, e.index);
+        }
+    }
 }

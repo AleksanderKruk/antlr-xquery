@@ -1249,7 +1249,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                 //  empty greatest
                 return -1;
             }
-            return !compareValues(value1, value2);
+            return -compareValues(value1, value2);
         };
     };
 
@@ -1265,8 +1265,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                 //  empty greatest
                 return -1;
             }
-            return !compareValues(value1, value2);
-
+            return -compareValues(value1, value2);
         };
     };
 

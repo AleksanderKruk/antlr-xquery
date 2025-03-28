@@ -33,6 +33,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.ForClauseContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ForwardAxisContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ForwardStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionCallContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.IfExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.LetBindingContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.LetClauseContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.LiteralContext;
@@ -1285,6 +1286,15 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             case 0b11 -> descendingEmptyLeast(expr);
             default -> null;
         };
+    }
+
+    @Override
+    public XQueryValue visitIfExpr(IfExprContext ctx) {
+        var visitedExpression = ctx.condition.accept(this);
+        if (visitedExpression.effectiveBooleanValue())
+            return ctx.ifValue.accept(this);
+        else
+            return ctx.elseValue.accept(this);
     }
 
     @Override

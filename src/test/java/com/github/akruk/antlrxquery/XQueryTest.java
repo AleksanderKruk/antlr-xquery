@@ -1004,6 +1004,12 @@ public class XQueryTest {
     }
 
 
+    @Test
+    public void ifExpression() throws XQueryUnsupportedOperation {
+        assertResult("if ('non-empty-string') then 1 else 2", baseFactory.number(1));
+        assertResult("if ('') then 1 else 2", baseFactory.number(2));
+    }
+
 // Wildcards
 
 }

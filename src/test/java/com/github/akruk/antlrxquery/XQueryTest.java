@@ -1031,6 +1031,27 @@ public class XQueryTest {
         """, XQueryBoolean.TRUE);
     }
 
+
+    @Test
+    public void switchMulticaseExpression() throws XQueryUnsupportedOperation {
+        assertResult("""
+            switch (4)
+                case 3 return false()
+                case 1 return false()
+                case 5 return false()
+                case 4 case 0 return true()
+                default return false()
+        """, XQueryBoolean.TRUE);
+        assertResult("""
+            switch (0)
+                case 3 return false()
+                case 1 case 6 return false()
+                case 5 return false()
+                case 4 case 0 return true()
+                default return false()
+        """, XQueryBoolean.TRUE);
+    }
+
 // Wildcards
 
 }

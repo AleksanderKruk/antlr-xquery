@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -1172,8 +1173,9 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     public XQueryValue visitSwitchExpr(SwitchExprContext ctx) {
         Map<XQueryValue, ParseTree> valueToExpression = ctx.switchCaseClause()
             .stream()
-            .collect(Collectors.toMap(c -> c.switchCaseOperand(0).accept(this),
-                                      c-> c.exprSingle()));
+                .collect(Collectors.flatMapping(c -> c.switchCaseOperand().stream(),
+                        Collectors.toMap(operand -> operand.accept(this),
+                                         operand -> ((SwitchCaseClauseContext) operand.getParent()).exprSingle())));
         XQueryValue switchedValue = ctx.switchedExpr.accept(this);
         ParseTree toBeExecuted = valueToExpression.getOrDefault(switchedValue, ctx.defaultExpr);
         return toBeExecuted.accept(this);

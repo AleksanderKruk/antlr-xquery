@@ -6,6 +6,7 @@ import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -54,6 +55,9 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.ReturnClauseContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseAxisContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.StepExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.SwitchCaseClauseContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.SwitchCaseOperandContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.SwitchExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarRefContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.WhereClauseContext;
@@ -1162,6 +1166,17 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             // TODO: type error
         }
         return value.multiply(valueFactory, valueFactory.number(new BigDecimal(-1)));
+    }
+
+    @Override
+    public XQueryValue visitSwitchExpr(SwitchExprContext ctx) {
+        Map<XQueryValue, ParseTree> valueToExpression = ctx.switchCaseClause()
+            .stream()
+            .collect(Collectors.toMap(c -> c.switchCaseOperand(0).accept(this),
+                                      c-> c.exprSingle()));
+        XQueryValue switchedValue = ctx.switchedExpr.accept(this);
+        ParseTree toBeExecuted = valueToExpression.getOrDefault(switchedValue, ctx.defaultExpr);
+        return toBeExecuted.accept(this);
     }
 
 

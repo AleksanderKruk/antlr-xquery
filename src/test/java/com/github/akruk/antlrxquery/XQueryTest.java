@@ -1010,6 +1010,27 @@ public class XQueryTest {
         assertResult("if ('') then 1 else 2", baseFactory.number(2));
     }
 
+
+    @Test
+    public void switchExpression() throws XQueryUnsupportedOperation {
+        assertResult("""
+            switch (4)
+                case 3 return false()
+                case 1 return false()
+                case 5 return false()
+                case 4 return true()
+                default return false()
+        """, XQueryBoolean.TRUE);
+        assertResult("""
+            switch (0)
+                case 3 return false()
+                case 1 return false()
+                case 5 return false()
+                case 4 return false()
+                default return true()
+        """, XQueryBoolean.TRUE);
+    }
+
 // Wildcards
 
 }

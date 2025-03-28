@@ -7,6 +7,7 @@ expr: exprSingle (COMMA exprSingle)*;
 exprSingle: fLWORExpr
         | quantifiedExpr
         | ifExpr
+        | switchExpr
         | orExpr;
 fLWORExpr: initialClause intermediateClause* returnClause;
 initialClause: forClause
@@ -31,7 +32,7 @@ returnClause: RETURN exprSingle;
 quantifiedExpr: (SOME | EVERY) DOLLAR varName typeDeclaration? IN exprSingle (COMMA DOLLAR varName typeDeclaration? IN exprSingle)* SATISFIES exprSingle;
 ifExpr: IF LPAREN condition=expr RPAREN THEN ifValue=exprSingle ELSE elseValue=exprSingle;
 
-switchExpr: SWITCH  LPAREN expr RPAREN switchCaseClause+ DEFAULT RETURN exprSingle;
+switchExpr: SWITCH  LPAREN switchedExpr=expr RPAREN switchCaseClause+ DEFAULT RETURN defaultExpr=exprSingle;
 switchCaseClause: (CASE switchCaseOperand)+ RETURN exprSingle;
 switchCaseOperand: exprSingle;
 

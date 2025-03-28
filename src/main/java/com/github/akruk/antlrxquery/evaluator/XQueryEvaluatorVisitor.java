@@ -1171,11 +1171,10 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     @Override
     public XQueryValue visitSwitchExpr(SwitchExprContext ctx) {
-        Map<XQueryValue, ParseTree> valueToExpression = ctx.switchCaseClause()
-            .stream()
-                .collect(Collectors.flatMapping(c -> c.switchCaseOperand().stream(),
-                        Collectors.toMap(operand -> operand.accept(this),
-                                         operand -> ((SwitchCaseClauseContext) operand.getParent()).exprSingle())));
+        Map<XQueryValue, ParseTree> valueToExpression = ctx.switchCaseClause().stream()
+                .flatMap(clause -> clause.switchCaseOperand()
+                                            .stream().map(operand -> Map.entry(operand.accept(this), clause.exprSingle())))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         XQueryValue switchedValue = ctx.switchedExpr.accept(this);
         ParseTree toBeExecuted = valueToExpression.getOrDefault(switchedValue, ctx.defaultExpr);
         return toBeExecuted.accept(this);

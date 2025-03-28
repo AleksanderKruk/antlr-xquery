@@ -47,7 +47,7 @@ public class XQueryTest {
         for (int i = 0; i < result.size(); i++) {
             var expected = result.get(i);
             var received = value.sequence().get(i);
-            assertEquals(XQueryBoolean.TRUE, expected.valueEqual(baseFactory, received));
+            assertTrue(expected.valueEqual(baseFactory, received).booleanValue());
         }
     }
 
@@ -988,10 +988,10 @@ public class XQueryTest {
                         baseFactory.number(3),
                         baseFactory.number(4)));
         assertResult("for $x in (2, 4, 3, 1) order by $x ascending return $x",
-                List.of(baseFactory.number(4),
-                        baseFactory.number(3),
+                List.of(baseFactory.number(1),
                         baseFactory.number(2),
-                        baseFactory.number(1)));
+                        baseFactory.number(3),
+                        baseFactory.number(4)));
     }
 
     @Test

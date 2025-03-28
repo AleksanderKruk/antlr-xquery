@@ -6,8 +6,10 @@ import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -33,6 +35,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.ForClauseContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ForwardAxisContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ForwardStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionCallContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.IfExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.LetBindingContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.LetClauseContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.LiteralContext;
@@ -53,6 +56,9 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.ReturnClauseContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseAxisContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.StepExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.SwitchCaseClauseContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.SwitchCaseOperandContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.SwitchExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarRefContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.WhereClauseContext;
@@ -1163,6 +1169,17 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         return value.multiply(valueFactory, valueFactory.number(new BigDecimal(-1)));
     }
 
+    @Override
+    public XQueryValue visitSwitchExpr(SwitchExprContext ctx) {
+        Map<XQueryValue, ParseTree> valueToExpression = ctx.switchCaseClause().stream()
+                .flatMap(clause -> clause.switchCaseOperand()
+                                            .stream().map(operand -> Map.entry(operand.accept(this), clause.exprSingle())))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        XQueryValue switchedValue = ctx.switchedExpr.accept(this);
+        ParseTree toBeExecuted = valueToExpression.getOrDefault(switchedValue, ctx.defaultExpr);
+        return toBeExecuted.accept(this);
+    }
+
 
     @Override
     public XQueryValue visitArgument(final ArgumentContext ctx) {
@@ -1285,6 +1302,15 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             case 0b11 -> descendingEmptyLeast(expr);
             default -> null;
         };
+    }
+
+    @Override
+    public XQueryValue visitIfExpr(IfExprContext ctx) {
+        var visitedExpression = ctx.condition.accept(this);
+        if (visitedExpression.effectiveBooleanValue())
+            return ctx.ifValue.accept(this);
+        else
+            return ctx.elseValue.accept(this);
     }
 
     @Override

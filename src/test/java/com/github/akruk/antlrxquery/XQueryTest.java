@@ -47,7 +47,7 @@ public class XQueryTest {
         for (int i = 0; i < result.size(); i++) {
             var expected = result.get(i);
             var received = value.sequence().get(i);
-            assertEquals(XQueryBoolean.TRUE, expected.valueEqual(baseFactory, received));
+            assertTrue(expected.valueEqual(baseFactory, received).booleanValue());
         }
     }
 
@@ -988,10 +988,10 @@ public class XQueryTest {
                         baseFactory.number(3),
                         baseFactory.number(4)));
         assertResult("for $x in (2, 4, 3, 1) order by $x ascending return $x",
-                List.of(baseFactory.number(4),
-                        baseFactory.number(3),
+                List.of(baseFactory.number(1),
                         baseFactory.number(2),
-                        baseFactory.number(1)));
+                        baseFactory.number(3),
+                        baseFactory.number(4)));
     }
 
     @Test
@@ -1003,6 +1003,54 @@ public class XQueryTest {
                         baseFactory.number(1)));
     }
 
+
+    @Test
+    public void ifExpression() throws XQueryUnsupportedOperation {
+        assertResult("if ('non-empty-string') then 1 else 2", baseFactory.number(1));
+        assertResult("if ('') then 1 else 2", baseFactory.number(2));
+    }
+
+
+    @Test
+    public void switchExpression() throws XQueryUnsupportedOperation {
+        assertResult("""
+            switch (4)
+                case 3 return false()
+                case 1 return false()
+                case 5 return false()
+                case 4 return true()
+                default return false()
+        """, XQueryBoolean.TRUE);
+        assertResult("""
+            switch (0)
+                case 3 return false()
+                case 1 return false()
+                case 5 return false()
+                case 4 return false()
+                default return true()
+        """, XQueryBoolean.TRUE);
+    }
+
+
+    @Test
+    public void switchMulticaseExpression() throws XQueryUnsupportedOperation {
+        assertResult("""
+            switch (4)
+                case 3 return false()
+                case 1 return false()
+                case 5 return false()
+                case 4 case 0 return true()
+                default return false()
+        """, XQueryBoolean.TRUE);
+        assertResult("""
+            switch (0)
+                case 3 return false()
+                case 1 case 6 return false()
+                case 5 return false()
+                case 4 case 0 return true()
+                default return false()
+        """, XQueryBoolean.TRUE);
+    }
 
 // Wildcards
 

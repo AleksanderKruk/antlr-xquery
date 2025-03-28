@@ -980,6 +980,30 @@ public class XQueryTest {
     }
 
 
+    @Test
+    public void orderByAscending() throws XQueryUnsupportedOperation {
+        assertResult("for $x in (2, 4, 3, 1) order by $x return $x",
+                List.of(baseFactory.number(1),
+                        baseFactory.number(2),
+                        baseFactory.number(3),
+                        baseFactory.number(4)));
+        assertResult("for $x in (2, 4, 3, 1) order by $x ascending return $x",
+                List.of(baseFactory.number(4),
+                        baseFactory.number(3),
+                        baseFactory.number(2),
+                        baseFactory.number(1)));
+    }
+
+    @Test
+    public void orderByDescending() throws XQueryUnsupportedOperation {
+        assertResult("for $x in (2, 4, 3, 1) order by $x descending return $x",
+                List.of(baseFactory.number(4),
+                        baseFactory.number(3),
+                        baseFactory.number(2),
+                        baseFactory.number(1)));
+    }
+
+
 // Wildcards
 
 }

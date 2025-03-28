@@ -1222,7 +1222,6 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     };
 
     private Comparator<List<TupleElement>> ascendingEmptyLeast(ParseTree expr) {
-        return null;
         return (tuple1, tuple2) -> {
             provideVariables(tuple1);
             XQueryValue value1 = expr.accept(this);
@@ -1239,7 +1238,6 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     };
 
     private Comparator<List<TupleElement>> descendingEmptyGreatest(ParseTree expr) {
-        return null;
         return (tuple1, tuple2) -> {
             provideVariables(tuple1);
             XQueryValue value1 = expr.accept(this);
@@ -1251,7 +1249,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                 //  empty greatest
                 return -1;
             }
-            return compareValues(value1, value2);
+            return !compareValues(value1, value2);
         };
     };
 

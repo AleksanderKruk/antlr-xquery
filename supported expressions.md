@@ -13,8 +13,11 @@ Inline Function Expressions | `function() as xs:integer+ { 2, 3, 5, 7, 11, 13 }`
 Enclosed Expressions | `{ ... }` | |
 Filter Expressions | `$x[filter]` | yes |
 Dynamic Function Calls | `$x($arg)` | yes |
-Path Expressions | `/`<br>`//element`<br>`/x//y` | yes |
-Path wildcards | `/`<br>`//element`<br>`/x//y` | yes |
+Root path expression | `/` | ? | see
+Grammar rule path expressions | `//element` | yes |
+Token path expressions | `//TOKEN` | yes |
+Literal token path expressions | `//';'` | |
+Path wildcards | `/rule/*` | yes |
 Child axis | `//child::*` | yes |
 Descendant axis | `//descendant::*` | yes |
 Self axis | `//self::*` | yes |

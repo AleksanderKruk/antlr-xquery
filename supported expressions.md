@@ -54,9 +54,9 @@ Where Clause | ``` for $x at $i in $inputvalues where $i mod 100 = 0 return $x `
 Count Clause | ```... count $counter ``` | yes |
 Group By Clause | ``` let $g2 := $expr1, $g3 := $expr2 group by $g1, $g2, $g3 ``` | yes |
 Order By Clause | ``` for $b in $books/book[price < 100] order by $b/title return $b ``` | yes |
-                | ``` for $b in $books/book[price < 100] order by $b/title ascending return $b ``` | yes |
-                | ``` for $b in $books/book[price < 100] order by $b/title descending return $b ``` | yes |
-                | ``` for $b in $books/book[price < 100] order by $b/title, $b/year return $b ``` | yes |
+Ascending ordering  | ``` for $b in $books/book[price < 100] order by $b/title ascending return $b ``` | yes |
+Descending ordering  | ``` for $b in $books/book[price < 100] order by $b/title descending return $b ``` | yes |
+Multikey ordering  | ``` for $b in $books/book[price < 100] order by $b/title, $b/year return $b ``` | yes |
 Conditional Expressions | ``` if ($part/discounted) then $part/wholesale else $part/retail ``` | |
 Switch Expression | ``` switch ($animal) case "Cow" return "Moo" case "Cat" return "Meow" case "Duck" return "Quack" default return "What's that odd noise?" ``` | |
 Quantified Expressions - some element in | ``` some $emp in /emps/employee satisfies ($emp/bonus > 0.25 * $emp/salary) ``` | yes |

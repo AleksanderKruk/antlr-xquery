@@ -13,7 +13,6 @@ import com.github.akruk.antlrxquery.testgrammars.TestLexer;
 import com.github.akruk.antlrxquery.testgrammars.TestParser;
 import com.github.akruk.antlrxquery.values.XQueryBoolean;
 import com.github.akruk.antlrxquery.values.XQueryNumber;
-import com.github.akruk.antlrxquery.values.XQuerySequence;
 import com.github.akruk.antlrxquery.values.XQueryString;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;

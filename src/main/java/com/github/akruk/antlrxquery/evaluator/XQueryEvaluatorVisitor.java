@@ -2,14 +2,11 @@ package com.github.akruk.antlrxquery.evaluator;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -56,8 +53,6 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.ReturnClauseContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseAxisContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.StepExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.SwitchCaseClauseContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.SwitchCaseOperandContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.SwitchExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarRefContext;
@@ -67,12 +62,10 @@ import com.github.akruk.antlrxquery.evaluator.contextmanagement.baseimplementati
 import com.github.akruk.antlrxquery.evaluator.functioncaller.XQueryFunctionCaller;
 import com.github.akruk.antlrxquery.evaluator.functioncaller.defaults.BaseFunctionCaller;
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
-import com.github.akruk.antlrxquery.values.XQuerySequence;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.values.factories.defaults.XQueryBaseValueFactory;
 import com.github.akruk.antlrxquery.values.XQueryBoolean;
-import com.github.akruk.antlrxquery.values.XQueryNumber;
 
 class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     XQueryValue root;

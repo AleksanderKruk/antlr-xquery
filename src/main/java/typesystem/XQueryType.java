@@ -4,9 +4,12 @@ public interface XQueryType {
     @Override
     boolean equals(Object obj);
     // subtype(A, B) judgement
-    boolean isSubtypeOf(Object obj);
+    boolean isSubtypeOf(XQueryType obj);
     // subtype-itemtype(A, B) judgement
-    boolean isSubtypeItemtypeOf(Object obj);
+    boolean isSubtypeItemtypeOf(XQueryType obj);
     // subtype-assertions(A, B) judgement
-    // boolean isSubtypeItemtype(Object obj);
+    // boolean isSubtypeAssertion(Object obj);
+    boolean derivesFrom(XQueryType other);
+    boolean isAtomicOrUnionTypes(XQueryType other);
+    boolean isPureUnionType();
 }

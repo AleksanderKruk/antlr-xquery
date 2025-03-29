@@ -10,6 +10,8 @@ import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.stringtemplate.v4.misc.MultiMap;
+
 import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
 import com.github.akruk.antlrxquery.evaluator.functioncaller.XQueryFunctionCaller;
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
@@ -22,7 +24,7 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
 
     private final Map<String, XQueryFunction> functions;
     public BaseFunctionCaller() {
-        functions = new HashMap<>(100);
+        functions = new HashMap<>(200);
         functions.put("true", this::true_);
         functions.put("false", this::false_);
         functions.put("not", this::not);
@@ -30,16 +32,6 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         functions.put("ceiling", this::ceiling);
         functions.put("floor", this::floor);
         functions.put("round", this::round);
-        functions.put("pi", this::pi);
-        functions.put("round", this::round);
-        functions.put("numeric-add", this::numericAdd);
-        functions.put("numeric-subtract", this::numericSubtract);
-        functions.put("numeric-multiply", this::numericMultiply);
-        functions.put("numeric-divide", this::numericDivide);
-        functions.put("numeric-integer-divide", this::numericIntegerDivide);
-        functions.put("numeric-mod", this::numericMod);
-        functions.put("numeric-unary-plus", this::numericUnaryPlus);
-        functions.put("numeric-unary-minus", this::numericUnaryMinus);
         functions.put("empty", this::empty);
         functions.put("exists", this::exists);
         functions.put("head", this::head);
@@ -69,6 +61,56 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         functions.put("replace", this::replace);
         functions.put("position", this::position);
         functions.put("last", this::last);
+        for (var key : functions.keySet()) {
+            functions.put("fn:" + key, functions.get(key));
+        }
+
+        // functions.put("pi", this::pi);
+        // functions.put("math:pi", this::pi);
+        // functions.put("exp", this::exp);
+        // functions.put("math:exp", this::exp);
+        // functions.put("exp10", this::exp10);
+        // functions.put("math:exp10", this::exp10);
+        // functions.put("log", this::log);
+        // functions.put("math:log", this::log);
+        // functions.put("log10", this::log10);
+        // functions.put("math:log10", this::log10);
+        // functions.put("pow", this::pow);
+        // functions.put("math:pow", this::pow);
+        // functions.put("sqrt", this::sqrt);
+        // functions.put("math:sqrt", this::sqrt);
+        // functions.put("sin", this::sin);
+        // functions.put("math:sin", this::sin);
+        // functions.put("cos", this::cos);
+        // functions.put("math:cos", this::cos);
+        // functions.put("tan", this::tan);
+        // functions.put("math:tan", this::tan);
+        // functions.put("asin", this::asin);
+        // functions.put("math:asin", this::asin);
+        // functions.put("acos", this::acos);
+        // functions.put("math:acos", this::acos);
+        // functions.put("atan", this::atan);
+        // functions.put("math:atan", this::atan);
+        // functions.put("atan2", this::atan2);
+        // functions.put("math:atan2", this::atan2);
+
+        functions.put("numeric-add", this::numericAdd);
+        functions.put("numeric-subtract", this::numericSubtract);
+        functions.put("numeric-multiply", this::numericMultiply);
+        functions.put("numeric-divide", this::numericDivide);
+        functions.put("numeric-integer-divide", this::numericIntegerDivide);
+        functions.put("numeric-mod", this::numericMod);
+        functions.put("numeric-unary-plus", this::numericUnaryPlus);
+        functions.put("numeric-unary-minus", this::numericUnaryMinus);
+        functions.put("op:numeric-add", this::numericAdd);
+        functions.put("op:numeric-subtract", this::numericSubtract);
+        functions.put("op:numeric-multiply", this::numericMultiply);
+        functions.put("op:numeric-divide", this::numericDivide);
+        functions.put("op:numeric-integer-divide", this::numericIntegerDivide);
+        functions.put("op:numeric-mod", this::numericMod);
+        functions.put("op:numeric-unary-plus", this::numericUnaryPlus);
+        functions.put("op:numeric-unary-minus", this::numericUnaryMinus);
+
     }
 
     public XQueryValue not(final XQueryValueFactory valueFactory, final XQueryVisitingContext context, final List<XQueryValue> args) {

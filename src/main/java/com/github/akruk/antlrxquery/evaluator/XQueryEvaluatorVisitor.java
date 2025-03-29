@@ -21,7 +21,6 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.AbbrevReverseStepContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.AnyIdContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ArgumentContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ArrowFunctionSpecifierContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.AxisStepContext;
@@ -50,6 +49,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.PositionalVarContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PostfixContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PostfixExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PredicateContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.QnameContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.QuantifiedExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.RelativePathExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReturnClauseContext;
@@ -334,9 +334,10 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     @Override
     public XQueryValue visitQuantifiedExpr(QuantifiedExprContext ctx) {
-        List<String> variableNames = ctx.varName().stream().map(VarNameContext::anyId)
-                                                        .map(AnyIdContext::getText)
-                                                        .toList();
+        List<String> variableNames = ctx.varName().stream()
+            .map(VarNameContext::qname)
+            .map(QnameContext::getText)
+            .toList();
         int variableExpressionCount = ctx.exprSingle().size()-1;
         List<List<XQueryValue>> sequences = new ArrayList<>(variableExpressionCount);
         for (var expr : ctx.exprSingle().subList(0, variableExpressionCount)) {

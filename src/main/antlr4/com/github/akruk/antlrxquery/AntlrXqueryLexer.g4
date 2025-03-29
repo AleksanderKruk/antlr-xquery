@@ -23,6 +23,7 @@ ANCESTOR_OR_SELF: 'ancestor-or-self';
 FOLLOWING_SIBLING: 'following-sibling';
 FOLLOWING: 'following';
 COLONS: '::';
+COLON: ':';
 DOTS: '..';
 DOT: '.';
 PRECEDING: 'preceding';
@@ -92,6 +93,7 @@ SATISFIES: 'satisfies';
 SWITCH: 'switch';
 DEFAULT: 'default';
 CASE: 'case';
+
 
 ID: NAME_START (DASH NAME_MIDDLE)*
 // [\p{Alpha}][\p{Alpha}\p{Alnum}-]*

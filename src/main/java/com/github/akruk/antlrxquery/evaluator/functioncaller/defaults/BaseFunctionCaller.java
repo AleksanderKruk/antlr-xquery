@@ -61,10 +61,42 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         functions.put("replace", this::replace);
         functions.put("position", this::position);
         functions.put("last", this::last);
-        for (var key : functions.keySet()) {
-            functions.put("fn:" + key, functions.get(key));
-        }
-
+        functions.put("fn:true", this::true_);
+        functions.put("fn:false", this::false_);
+        functions.put("fn:not", this::not);
+        functions.put("fn:abs", this::abs);
+        functions.put("fn:ceiling", this::ceiling);
+        functions.put("fn:floor", this::floor);
+        functions.put("fn:round", this::round);
+        functions.put("fn:empty", this::empty);
+        functions.put("fn:exists", this::exists);
+        functions.put("fn:head", this::head);
+        functions.put("fn:tail", this::tail);
+        functions.put("fn:insert-before", this::insertBefore);
+        functions.put("fn:remove", this::remove);
+        functions.put("fn:reverse", this::reverse);
+        functions.put("fn:subsequence", this::subsequence);
+        functions.put("fn:substring", this::substring);
+        functions.put("fn:distinct-values", this::distinctValues);
+        functions.put("fn:zero-or-one", this::zeroOrOne);
+        functions.put("fn:one-or-more", this::oneOrMore);
+        functions.put("fn:exactly-one", this::exactlyOne);
+        functions.put("fn:data", this::data);
+        functions.put("fn:contains", this::contains);
+        functions.put("fn:starts-with", this::startsWith);
+        functions.put("fn:ends-with", this::endsWith);
+        functions.put("fn:substring-after", this::substringAfter);
+        functions.put("fn:substring-before", this::substringBefore);
+        functions.put("fn:upper-case", this::uppercase);
+        functions.put("fn:lower-case", this::lowercase);
+        functions.put("fn:string", this::string);
+        functions.put("fn:concat", this::concat);
+        functions.put("fn:string-join", this::stringJoin);
+        functions.put("fn:string-length", this::stringLength);
+        functions.put("fn:normalize-space", this::normalizeSpace);
+        functions.put("fn:replace", this::replace);
+        functions.put("fn:position", this::position);
+        functions.put("fn:last", this::last);
         // functions.put("pi", this::pi);
         // functions.put("math:pi", this::pi);
         // functions.put("exp", this::exp);

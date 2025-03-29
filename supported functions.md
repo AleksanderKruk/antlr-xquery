@@ -41,7 +41,7 @@ Function                                           | Is implemented | Comment
 `fn:concat`                                        | yes            |
 `fn:string-join`                                   | yes            |
 `fn:string-length`                                 | yes            |
-`fn:string-empty`                                  |                | Non-standard
+`fn:string-empty`                                  |                | non-standard
 `fn:normalize-space`                               | yes            |
 `fn:normalize-unicode`                             |                |
 `fn:upper-case`                                    | yes            |
@@ -69,16 +69,19 @@ Function                                           | Is implemented | Comment
 
 ## Node functions
 
-Function                                           | Is implemented | Comment
----------------------------------------------------|----------------|---------
-`fn:node-name`                                     |                |
-`fn:has-children`                                  |                |
-`fn:name`                                          |                |
-`fn:local-name`                                    |                |
-`fn:lang`                                          |                |
-`fn:id`                                            |                |
-`fn:element-with-id`                               |                |
-`fn:idref`                                         |                |
+Function                                              | Is implemented | Comment
+------------------------------------------------------|----------------|---------
+`fn:node-name`                                        |                |
+`fn:has-children`                                     |                |
+`fn:name`                                             |                |
+`fn:local-name`                                       |                |
+`fn:lang`                                             |                |
+`fn:id`                                               |                |
+`fn:element-with-id`                                  |                |
+`fn:idref`                                            |                |
+`antlr:start`                                         |                | non-standard, equivalent to $start in grammar
+`antlr:stop`                                          |                | non-standard, equivalent to $stop in grammar
+`antlr:ctx`                                           |                | non-standard, equivalent to $ctx in grammar
 
 ## Sequence functions
 
@@ -206,6 +209,7 @@ Function                                           | Is implemented | Comment
 `fn:trace`                                         |                |
 
 ## Output format functions
+`fn:parse-antlr`                                   |                | non-standard
 `fn:parse-xml`                                     |                |
 `fn:parse-xml-fragment`                            |                |
 `fn:parse-json`                                    |                |

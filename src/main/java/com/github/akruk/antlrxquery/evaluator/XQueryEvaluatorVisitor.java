@@ -449,7 +449,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         int fromInt = fromValue.numericValue().intValue();
         int toInt = toValue.numericValue().intValue();
         if (fromInt > toInt)
-            return XQuerySequence.EMPTY;
+            return valueFactory.emptySequence();
         List<XQueryValue> values = IntStream.rangeClosed(fromInt, toInt)
             .mapToObj(i->valueFactory.number(i))
             .collect(Collectors.toList());
@@ -617,7 +617,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                 context = savedContext;
                 int i = visitedExpression.numericValue().intValue() - 1;
                 if (i >= sequence.size() || i < 0) {
-                    return XQuerySequence.EMPTY;
+                    return valueFactory.emptySequence();
                 }
                 return sequence.get(i);
             }

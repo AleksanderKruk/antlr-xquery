@@ -78,14 +78,14 @@ public class XQueryString extends XQueryValueBase<String> {
     @Override
     public XQueryValue head(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation {
         if (value.isEmpty())
-            return XQuerySequence.EMPTY;
+            return valueFactory.emptySequence();
         return valueFactory.string(value.substring(0, 1));
     }
 
     @Override
     public XQueryValue tail(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation {
         if (value.isEmpty())
-            return XQuerySequence.EMPTY;
+            return valueFactory.emptySequence();
         return valueFactory.string(value.substring(1));
     }
 
@@ -132,7 +132,7 @@ public class XQueryString extends XQueryValueBase<String> {
     public XQueryValue substring(XQueryValueFactory valueFactory, int startingLoc, int length) throws XQueryUnsupportedOperation {
         int currentLength = value.length();
         if (startingLoc > currentLength) {
-            return XQuerySequence.EMPTY;
+            return valueFactory.emptySequence();
         }
         int startIndexIncluded = Math.max(startingLoc - 1, 0);
         int endIndexExcluded = Math.min(startingLoc + length - 1, currentLength);
@@ -145,23 +145,23 @@ public class XQueryString extends XQueryValueBase<String> {
     @Override
     public XQueryValue substringBefore(XQueryValueFactory valueFactory, XQueryValue splitstring) throws XQueryUnsupportedOperation {
         if (splitstring.empty(valueFactory).booleanValue())
-            return valueFactory.string("");
+            return valueFactory.emptyString();
         var escapedSplitstring = Pattern.quote(splitstring.stringValue());
         String[] splitString = value.split(escapedSplitstring, 2);
         if (splitString.length == 1)
-            return valueFactory.string("");
+            return valueFactory.emptyString();
         return valueFactory.string(splitString[0]);
     }
 
     @Override
     public XQueryValue substringAfter(XQueryValueFactory valueFactory, XQueryValue splitstring) throws XQueryUnsupportedOperation {
         if (splitstring.empty(valueFactory).booleanValue())
-            return valueFactory.string("");
+            return valueFactory.emptyString();
         var splitstringValue = splitstring.stringValue();
         var escapedSplitstring = Pattern.quote(splitstringValue);
         String[] splitString = value.split(escapedSplitstring, 2);
         if (splitString.length == 1)
-            return valueFactory.string("");
+            return valueFactory.emptyString();
         return valueFactory.string(splitString[1]);
     }
 

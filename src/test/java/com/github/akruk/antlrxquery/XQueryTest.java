@@ -638,10 +638,10 @@ public class XQueryTest {
 
     @Test
     public void head() throws XQueryUnsupportedOperation {
-        assertResult("head(())", XQuerySequence.EMPTY.sequence());
-        assertResult("head((1,2,3))", XQueryNumber.ONE);
-        assertResult("head(\"\")", XQuerySequence.EMPTY.sequence());
-        assertResult("head(\"abcd\")", new XQueryString("a"));
+        assertResult("head(())", baseFactory.emptySequence().sequence());
+        assertResult("head((1,2,3))", baseFactory.number(1));
+        assertResult("head(\"\")", baseFactory.emptySequence().sequence());
+        assertResult("head(\"abcd\")", baseFactory.string("a"));
         // The expression fn:head(1 to 5) returns 1.
         // The expression fn:head(("a", "b", "c")) returns "a".
         // The expression fn:head(()) returns ().
@@ -651,10 +651,10 @@ public class XQueryTest {
 
     @Test
     public void tail() throws XQueryUnsupportedOperation {
-        assertResult("tail(())", XQuerySequence.EMPTY.sequence());
-        assertResult("tail((1,2,3))", List.of(new XQueryNumber(2), new XQueryNumber(3)));
-        assertResult("tail(\"\")", XQuerySequence.EMPTY.sequence());
-        assertResult("tail(\"abcd\")", new XQueryString("bcd"));
+        assertResult("tail(())", baseFactory.emptySequence().sequence());
+        assertResult("tail((1,2,3))", List.of(baseFactory.number(2), baseFactory.number(3)));
+        assertResult("tail(\"\")", baseFactory.emptySequence().sequence());
+        assertResult("tail(\"abcd\")", baseFactory.string("bcd"));
         // The expression fn:head(1 to 5) returns 1.
         // The expression fn:head(("a", "b", "c")) returns "a".
         // The expression fn:head(()) returns ().
@@ -750,7 +750,7 @@ public class XQueryTest {
         var i2 = new XQueryString("2");
         assertResult("""
                 distinct-values((1, "1", 1, "1", "2", false(), false(), true(), true()))
-            """, List.of(XQueryNumber.ONE, i1, i2, XQueryBoolean.FALSE, XQueryBoolean.TRUE));
+            """, List.of(baseFactory.number(1), i1, i2, XQueryBoolean.FALSE, XQueryBoolean.TRUE));
         assertResult("""
                 distinct-values(())
             """, List.of());
@@ -771,12 +771,12 @@ public class XQueryTest {
         assertNull(value);
         assertResult("""
                     one-or-more((1, 2))
-                """, List.of(XQueryNumber.ONE, new XQueryNumber(2)));
+                """, List.of(baseFactory.number(1), new XQueryNumber(2)));
     }
 
     @Test
     public void data() throws XQueryUnsupportedOperation {
-        assertResult("data(1)", List.of(XQueryNumber.ONE));
+        assertResult("data(1)", List.of(baseFactory.number(1)));
         assertResult("data('a')", List.of(new XQueryString("a")));
     }
 
@@ -1052,6 +1052,7 @@ public class XQueryTest {
         """, XQueryBoolean.TRUE);
     }
 
-// Wildcards
+    // Wildcards
+    // All effective boolean values
 
 }

@@ -13,7 +13,9 @@ public interface XQueryValueFactory {
     public XQueryValue number(BigDecimal d);
     public XQueryValue number(int integer);
     public XQueryValue string(String s);
+    public XQueryValue emptyString();
     public XQueryValue sequence(List<XQueryValue> v);
+    public XQueryValue emptySequence();
     public XQueryValue functionReference(XQueryFunction f);
     public XQueryValue node(ParseTree v);
 }

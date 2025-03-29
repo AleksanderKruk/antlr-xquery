@@ -61,5 +61,15 @@ public class XQueryBaseValueFactory implements XQueryValueFactory{
         return returnedString;
     }
 
+    @Override
+    public XQueryValue emptyString() {
+        return string("");
+    }
+
+    @Override
+    public XQueryValue emptySequence() {
+        return sequence(List.of());
+    }
+
 
 }

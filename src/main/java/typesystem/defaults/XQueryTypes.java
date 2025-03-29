@@ -12,6 +12,10 @@ public enum XQueryTypes {
     MAP,
     ARRAY;
     boolean isAtomic() {
+        return !isContainer();
+    }
+
+    boolean isContainer() {
         return this == SEQUENCE
             || this == ARRAY
             || this == MAP;

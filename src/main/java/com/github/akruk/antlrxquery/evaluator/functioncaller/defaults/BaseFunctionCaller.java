@@ -97,8 +97,9 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         functions.put("fn:replace", this::replace);
         functions.put("fn:position", this::position);
         functions.put("fn:last", this::last);
-        // functions.put("pi", this::pi);
-        // functions.put("math:pi", this::pi);
+
+        functions.put("pi", this::pi);
+        functions.put("math:pi", this::pi);
         // functions.put("exp", this::exp);
         // functions.put("math:exp", this::exp);
         // functions.put("exp10", this::exp10);

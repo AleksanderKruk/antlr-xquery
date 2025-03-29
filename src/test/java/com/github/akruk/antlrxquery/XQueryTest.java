@@ -457,6 +457,11 @@ public class XQueryTest {
         assertResult("pi()", new BigDecimal(Math.PI));
     }
 
+    @Test
+    public void namespaces() {
+        assertResult("math:pi()", new BigDecimal(Math.PI));
+    }
+
     // @Test
     // public void exp() {
     //     assertResult("exp(5, 2)", BigDecimal.ONE);

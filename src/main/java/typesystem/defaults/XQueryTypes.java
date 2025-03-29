@@ -1,13 +1,13 @@
 package typesystem.defaults;
 
 public enum XQueryTypes {
-    EMPTY_SEQUENCE,
     BOOLEAN,
     NODE,
     STRING,
     NUMBER,
     INTEGER,
     FUNCTION,
+    EMPTY_SEQUENCE,
     SEQUENCE,
     MAP,
     ARRAY;
@@ -17,6 +17,7 @@ public enum XQueryTypes {
 
     boolean isContainer() {
         return this == SEQUENCE
+            || this == EMPTY_SEQUENCE
             || this == ARRAY
             || this == MAP;
     }

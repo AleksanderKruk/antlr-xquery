@@ -1,5 +1,7 @@
 package typesystem;
 
+import java.util.List;
+
 public interface XQueryType {
     @Override
     boolean equals(Object obj);
@@ -7,9 +9,12 @@ public interface XQueryType {
     boolean isSubtypeOf(XQueryType obj);
     // subtype-itemtype(A, B) judgement
     boolean isSubtypeItemtypeOf(XQueryType obj);
-    // subtype-assertions(A, B) judgement
-    // boolean isSubtypeAssertion(Object obj);
-    boolean derivesFrom(XQueryType other);
-    boolean isAtomicOrUnionTypes(XQueryType other);
-    boolean isPureUnionType();
+    boolean isAtomic();
+    boolean isNode();
+    boolean isElement();
+    boolean isElement(String otherName);
+    boolean isFunction();
+    boolean isFunction(String otherName, XQueryType returnedType, List<XQueryType> argumentTypes);
+    boolean isMap();
+    boolean isArray();
 }

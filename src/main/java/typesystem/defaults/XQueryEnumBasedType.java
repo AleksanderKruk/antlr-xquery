@@ -1,24 +1,42 @@
 package typesystem.defaults;
 
+import java.util.List;
+
 import typesystem.XQueryType;
 
 public class XQueryEnumBasedType implements XQueryType {
-    private XQueryTypes type;
-    private XQueryEnumBasedType containedType;
-    private XQueryOccurence occurence;
+    private final XQueryTypes type;
+    private final XQueryEnumBasedType containedType;
+    private final List<XQueryType> argumentTypes;
+    private final XQueryEnumBasedType returnedType;
+    private final XQueryOccurence occurence;
+    public XQueryEnumBasedType getContainedType() {
+        return containedType;
+    }
 
-    private XQueryEnumBasedType(XQueryTypes type, XQueryEnumBasedType containedType, XQueryOccurence occurence) {
+    public List<XQueryType> getArgumentTypes() {
+        return argumentTypes;
+    }
+
+    public XQueryType getReturnedType() {
+        return returnedType;
+    }
+
+    private final String name;
+
+    public XQueryEnumBasedType(XQueryTypes type, XQueryEnumBasedType containedType,
+            List<XQueryEnumBasedType> argumentTypes, XQueryEnumBasedType returnedType, XQueryOccurence occurence,
+            String name) {
         this.type = type;
         this.containedType = containedType;
+        this.argumentTypes = argumentTypes;
+        this.returnedType = returnedType;
         this.occurence = occurence;
+        this.name = name;
     }
 
-    public static XQueryEnumBasedType containerType(XQueryTypes type, XQueryEnumBasedType containedType, XQueryOccurence occurence) {
-        return new XQueryEnumBasedType(type, containedType, occurence);
-    }
-
-    public static XQueryEnumBasedType atomicType(XQueryTypes type) {
-        return new XQueryEnumBasedType(type, null, XQueryOccurence.ATOMIC);
+    public String getName() {
+        return name;
     }
 
 
@@ -82,20 +100,34 @@ public class XQueryEnumBasedType implements XQueryType {
 
     @Override
     public boolean isSubtypeItemtypeOf(XQueryType  obj) {
-        if (isAtomicOrUnionTypes(obj) && derivesFrom(obj))
+        if (!(obj instanceof XQueryEnumBasedType))
+            return false;
+        XQueryEnumBasedType other = (XQueryEnumBasedType) obj;
+        if (type.isAtomic() && type == other.getType())
             return true;
-        if (isPureUnionType() && derivesFrom(obj))
-            return true;
+        return switch (other.getType()) {
+            case ERROR -> this.isAtomic();
+            case ANY_ITEM -> true;
+            case ANY_NODE -> this.isNode();
+            case ANY_ELEMENT -> this.isElement();
+            case ELEMENT -> this.isElement(other.getName());
+            case ANY_FUNCTION -> this.isFunction();
+            case FUNCTION -> this.isFunction(other.getName(), other.getReturnedType(), other.getArgumentTypes());
+            case ANY_MAP -> this.isMap();
+            // case MAP -> this.isMap();
+            case ANY_ARRAY -> this.isArray();
+            // case ARRAY -> this.isArray();
+            default -> false;
+        };
+    }
+
+
+    @Override
+    public boolean isAtomic() {
+        return type.isAtomic();
     }
 
     public XQueryOccurence getOccurence() {
         return occurence;
     }
-
-    public void setOccurence(XQueryOccurence occurence) {
-        this.occurence = occurence;
-    }
-
-
-
 }

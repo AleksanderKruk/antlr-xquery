@@ -1,24 +1,51 @@
 package typesystem.defaults;
 
 public enum XQueryTypes {
+    ERROR,
+
+    ANY_ITEM,
+    ANY_NODE,
+
+    ANY_ELEMENT,
+    ELEMENT,
+
+    ANY_MAP,
+    MAP,
+
+    ANY_ARRAY,
+    ARRAY,
+
+    ANY_FUNCTION,
+    FUNCTION,
+
+    EMPTY_SEQUENCE,
+    SEQUENCE,
+
     BOOLEAN,
     NODE,
     STRING,
     NUMBER,
     INTEGER,
-    FUNCTION,
-    EMPTY_SEQUENCE,
-    SEQUENCE,
-    MAP,
-    ARRAY;
+    ;
+
     boolean isAtomic() {
-        return !isContainer();
+        return switch (this) {
+            case BOOLEAN -> true;
+            case NODE -> true;
+            case STRING -> true;
+            case NUMBER -> true;
+            case INTEGER -> true;
+            default -> false;
+        };
     }
 
     boolean isContainer() {
-        return this == SEQUENCE
-            || this == EMPTY_SEQUENCE
-            || this == ARRAY
-            || this == MAP;
+        return switch (this) {
+            case SEQUENCE -> true;
+            case EMPTY_SEQUENCE -> true;
+            case ARRAY -> true;
+            case MAP -> true;
+            default -> false;
+        };
     }
 }

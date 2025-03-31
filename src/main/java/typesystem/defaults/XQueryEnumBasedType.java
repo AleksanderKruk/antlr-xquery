@@ -260,15 +260,17 @@ public class XQueryEnumBasedType implements XQueryType {
                             .allMatch(i -> this.argumentTypes.get(i).equals(otherArgumentTypes.get(i)));
     }
 
+    private static final boolean[] isMap = enumArray(XQueryTypes.MAP, XQueryTypes.ANY_MAP);
     @Override
     public boolean isMap() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'isMap'");
+        return isMap[type.ordinal()];
     }
 
+    private static final boolean[] isArray = enumArray(XQueryTypes.ARRAY, XQueryTypes.ANY_ARRAY);
     @Override
     public boolean isArray() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'isArray'");
+        return isArray[type.ordinal()];
     }
+
+
 }

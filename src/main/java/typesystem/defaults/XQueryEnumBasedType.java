@@ -1,6 +1,7 @@
 package typesystem.defaults;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 import typesystem.XQueryType;
 
@@ -243,16 +244,20 @@ public class XQueryEnumBasedType implements XQueryType {
         return isElement() && name.equals(otherName);
     }
 
+    private static final boolean[] isFunction = enumArray(XQueryTypes.ANY_FUNCTION, XQueryTypes.FUNCTION);
     @Override
     public boolean isFunction() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'isFunction'");
+        return isFunction[type.ordinal()];
     }
 
     @Override
-    public boolean isFunction(String otherName, XQueryType returnedType, List<XQueryType> argumentTypes) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'isFunction'");
+    public boolean isFunction(String otherName, XQueryType otherReturnedType, List<XQueryType> otherArgumentTypes) {
+        return isFunction[type.ordinal()]
+                && name.equals(otherName)
+                && this.returnedType.equals(otherReturnedType)
+                && this.argumentTypes.size() == otherArgumentTypes.size()
+                && IntStream.range(0, this.argumentTypes.size())
+                            .allMatch(i -> this.argumentTypes.get(i).equals(otherArgumentTypes.get(i)));
     }
 
     @Override

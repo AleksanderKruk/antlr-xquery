@@ -216,4 +216,54 @@ public class XQueryEnumBasedType implements XQueryType {
     public XQueryOccurence getOccurence() {
         return occurence;
     }
+
+
+    private static boolean[] enumArray(XQueryTypes... truevalues) {
+        var array = new boolean[XQueryTypes.values().length];
+        for (var v : truevalues) {
+            array[v.ordinal()] = true;
+        }
+        return array;
+    }
+
+    private static final boolean[] isNode = enumArray(XQueryTypes.ANY_NODE, XQueryTypes.NODE);
+    @Override
+    public boolean isNode() {
+        return isNode[type.ordinal()];
+    }
+
+    private static final boolean[] isElement = enumArray(XQueryTypes.ANY_ELEMENT, XQueryTypes.ELEMENT);
+    @Override
+    public boolean isElement() {
+        return isElement[type.ordinal()];
+    }
+
+    @Override
+    public boolean isElement(String otherName) {
+        return isElement() && name.equals(otherName);
+    }
+
+    @Override
+    public boolean isFunction() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'isFunction'");
+    }
+
+    @Override
+    public boolean isFunction(String otherName, XQueryType returnedType, List<XQueryType> argumentTypes) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'isFunction'");
+    }
+
+    @Override
+    public boolean isMap() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'isMap'");
+    }
+
+    @Override
+    public boolean isArray() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'isArray'");
+    }
 }

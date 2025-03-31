@@ -1,7 +1,7 @@
 package typesystem.defaults;
 
 public enum XQueryOccurence {
-    ATOMIC,
+    ONE,
     ZERO,
     ZERO_OR_ONE,
     ONE_OR_MORE,

@@ -24,8 +24,94 @@ public class XQueryEnumBasedType implements XQueryType {
 
     private final String name;
 
+    public static XQueryEnumBasedType string() {
+        return new XQueryEnumBasedType(XQueryTypes.STRING, null, null,
+                null, XQueryOccurence.ONE, null);
+    }
+
+    public static XQueryEnumBasedType number() {
+        return new XQueryEnumBasedType(XQueryTypes.NUMBER, null, null,
+                null, XQueryOccurence.ONE, null);
+    }
+
+    public static XQueryEnumBasedType integer() {
+        return new XQueryEnumBasedType(XQueryTypes.INTEGER, null, null,
+                null, XQueryOccurence.ONE, null);
+    }
+
+    public static XQueryEnumBasedType anyNode() {
+        return new XQueryEnumBasedType(XQueryTypes.ANY_NODE, null, null,
+                null, XQueryOccurence.ONE, null);
+    }
+
+    public static XQueryEnumBasedType anyArray() {
+        return new XQueryEnumBasedType(XQueryTypes.ANY_ARRAY, null, null,
+                null, XQueryOccurence.ONE, null);
+    }
+
+    public static XQueryEnumBasedType anyMap() {
+        return new XQueryEnumBasedType(XQueryTypes.ANY_MAP, null, null,
+                null, XQueryOccurence.ONE, null);
+    }
+
+    public static XQueryEnumBasedType anyElement() {
+        return new XQueryEnumBasedType(XQueryTypes.ANY_ELEMENT, null, null,
+                null, XQueryOccurence.ONE, null);
+    }
+
+    public static XQueryEnumBasedType anyFunction() {
+        return new XQueryEnumBasedType(XQueryTypes.ANY_FUNCTION, null, null,
+                null, XQueryOccurence.ONE, null);
+    }
+
+    public static XQueryEnumBasedType anyItem() {
+        return new XQueryEnumBasedType(XQueryTypes.ANY_ITEM, null, null,
+                null, XQueryOccurence.ONE, null);
+    }
+
+
+    public static XQueryEnumBasedType boolean_() {
+        return new XQueryEnumBasedType(XQueryTypes.BOOLEAN, null, null,
+                null, XQueryOccurence.ONE, null);
+    }
+
+    // public static XQueryEnumBasedType element() {
+    //     return new XQueryEnumBasedType(XQueryTypes.ELEMENT, null, null,
+    //             null, XQueryOccurence.ONE, null);
+    // }
+
+    // public static XQueryEnumBasedType error() {
+    //     return new XQueryEnumBasedType(XQueryTypes.ERROR, null, null,
+    //             null, XQueryOccurence.ONE, null);
+    // }
+
+
+    // public static XQueryEnumBasedType error() {
+    //     return new XQueryEnumBasedType(XQueryTypes.NODE, null, null,
+    //             null, XQueryOccurence.ONE, null);
+    // }
+
+    // public static XQueryEnumBasedType array() {
+    //     return new XQueryEnumBasedType(XQueryTypes.ARRAY, null, null,
+    //             null, XQueryOccurence.ONE, null);
+    // }
+
+
+    public static XQueryEnumBasedType sequence(XQueryEnumBasedType containedType, XQueryOccurence occurence) {
+        return new XQueryEnumBasedType(XQueryTypes.SEQUENCE, containedType, null,
+                null, occurence, null);
+    }
+
+    public static XQueryEnumBasedType emptySequence() {
+        return new XQueryEnumBasedType(XQueryTypes.EMPTY_SEQUENCE, null, null,
+                null, XQueryOccurence.ZERO, null);
+    }
+
+
+
+
     public XQueryEnumBasedType(XQueryTypes type, XQueryEnumBasedType containedType,
-            List<XQueryEnumBasedType> argumentTypes, XQueryEnumBasedType returnedType, XQueryOccurence occurence,
+            List<XQueryType> argumentTypes, XQueryEnumBasedType returnedType, XQueryOccurence occurence,
             String name) {
         this.type = type;
         this.containedType = containedType;
@@ -85,7 +171,7 @@ public class XQueryEnumBasedType implements XQueryType {
                 case ZERO_OR_MORE -> containedType.isSubtypeItemtypeOf(other.getSubType());
                 default -> false;
             };
-            case ATOMIC -> switch (otherOccurence) {
+            case ONE -> switch (otherOccurence) {
                 case ZERO -> false;
                 default -> containedType.isSubtypeItemtypeOf(other.getSubType());
             };

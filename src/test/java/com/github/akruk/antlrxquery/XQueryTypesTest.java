@@ -19,6 +19,7 @@ import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.values.factories.defaults.XQueryBaseValueFactory;
 
 import typesystem.defaults.XQueryEnumBasedType;
+import typesystem.defaults.XQueryOccurence;
 import typesystem.defaults.XQueryTypes;
 
 import static org.junit.Assert.assertEquals;
@@ -29,11 +30,24 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class XQueryTypesTest {
+
+    final XQueryEnumBasedType string = XQueryEnumBasedType.string();
+    final XQueryEnumBasedType integer = XQueryEnumBasedType.integer();
+    final XQueryEnumBasedType number = XQueryEnumBasedType.number();
+    final XQueryEnumBasedType anyNode = XQueryEnumBasedType.anyNode();
+    final XQueryEnumBasedType emptySequence = XQueryEnumBasedType.emptySequence();
+    final XQueryEnumBasedType stringSequenceOneOrMore = XQueryEnumBasedType.sequence(XQueryEnumBasedType.string(), XQueryOccurence.ONE_OR_MORE);
+    final XQueryEnumBasedType stringSequenceZeroOrMore = XQueryEnumBasedType.sequence(XQueryEnumBasedType.string(), XQueryOccurence.ZERO_OR_MORE);
+    final XQueryEnumBasedType stringSequenceZeroOrOne = XQueryEnumBasedType.sequence(XQueryEnumBasedType.string(), XQueryOccurence.ZERO_OR_ONE);
     @Test
-    public void directEquality() throws XQueryUnsupportedOperation {
-        var type1 = new XQueryEnumBasedType(XQueryTypes.STRING,
-                null, null, null,
-                        null, null);
-        assertTrue();
+    public void stringDirectEquality() throws XQueryUnsupportedOperation {
+        assertEquals(string, XQueryEnumBasedType.string());
+        assertNotEquals(string, integer);
+        assertNotEquals(string, number);
+        assertNotEquals(string, emptySequence);
+        assertNotEquals(string, emptySequence);
+        assertNotEquals(string, stringSequenceOneOrMore);
+        assertNotEquals(string, stringSequenceZeroOrMore);
+        assertNotEquals(string, stringSequenceZeroOrOne);
     }
 }

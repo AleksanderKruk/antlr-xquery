@@ -764,18 +764,14 @@ public class XQueryTest {
     public void zeroOrOne() throws XQueryUnsupportedOperation {
         var value = XQuery.evaluate(null, "zero-or-one((1, 2))", null);
         assertNull(value);
-        assertResult("""
-                zero-or-one(())
-            """, List.of());
+        assertResult("zero-or-one(())", List.of());
     }
 
     @Test
     public void oneOrMore() throws XQueryUnsupportedOperation {
         var value = XQuery.evaluate(null, "one-or-more(())", null);
         assertNull(value);
-        assertResult("""
-                    one-or-more((1, 2))
-                """, List.of(baseFactory.number(1), new XQueryNumber(2)));
+        assertResult(" one-or-more((1, 2)) ", List.of(baseFactory.number(1), new XQueryNumber(2)));
     }
 
     @Test
@@ -1058,10 +1054,10 @@ public class XQueryTest {
 
 
     @Test
-    public void prec() throws XQueryUnsupportedOperation {
+    public void arithmeticPrecedence() throws XQueryUnsupportedOperation {
         assertResult("""
-            let $x := 5 return round($x div 3 + 2, 2)
-        """, baseFactory.number(new BigDecimal("3.67")));
+            2 + 3 * -4
+        """, baseFactory.number(-10));
     }
 
     // Wildcards

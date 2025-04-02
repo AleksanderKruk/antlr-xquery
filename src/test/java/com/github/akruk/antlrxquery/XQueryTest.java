@@ -1056,6 +1056,14 @@ public class XQueryTest {
         """, XQueryBoolean.TRUE);
     }
 
+
+    @Test
+    public void prec() throws XQueryUnsupportedOperation {
+        assertResult("""
+            let $x := 5 return round($x div 3 + 2, 2)
+        """, baseFactory.number(new BigDecimal("3.67")));
+    }
+
     // Wildcards
     // All effective boolean values
 

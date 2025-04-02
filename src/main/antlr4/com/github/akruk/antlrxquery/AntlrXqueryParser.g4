@@ -36,33 +36,39 @@ switchExpr: SWITCH  LPAREN switchedExpr=expr RPAREN switchCaseClause+ DEFAULT RE
 switchCaseClause: (CASE switchCaseOperand)+ RETURN exprSingle;
 switchCaseOperand: exprSingle;
 
-orExpr: orExpr ( OR orExpr )+
-        | orExpr ( AND orExpr )+
-        | orExpr  (valueComp | generalComp | nodeComp) orExpr
-        | orExpr ( CONCATENATION orExpr )+
-        | orExpr TO orExpr
-        | orExpr (additiveOperator orExpr )+
-        | orExpr (multiplicativeOperator orExpr)+
-        | orExpr (unionOperator orExpr)+
-        | orExpr ((INTERSECT | EXCEPT) orExpr)+
-        | orExpr (ARROW arrowFunctionSpecifier argumentList)+
-        | (MINUS | PLUS) orExpr
-        | pathExpr (EXCLAMATION_MARK pathExpr)?
-;
+orExpr: andExpr ( OR andExpr)*;
+andExpr: comparisonExpr ( AND comparisonExpr )*;
+comparisonExpr: stringConcatExpr  ((valueComp | generalComp | nodeComp) stringConcatExpr)?;
+stringConcatExpr: rangeExpr ( CONCATENATION rangeExpr )*;
+rangeExpr: additiveExpr (TO additiveExpr)?;
+additiveExpr: multiplicativeExpr (additiveOperator multiplicativeExpr)*;
+multiplicativeExpr: unionExpr (multiplicativeOperator unionExpr )*;
+unionExpr: intersectExpr (unionOperator intersectExpr)*;
+intersectExpr: instanceofExpr ((INTERSECT | EXCEPT) instanceofExpr)*;
+instanceofExpr: treatExpr (INSTANCE OF treatExpr)*;
+treatExpr: castableExpr (TREAT AS castableExpr)*;
+castableExpr: arrowExpr ((CAST AS) singleType)*;
+arrowExpr: unaryExpr (ARROW arrowFunctionSpecifier argumentList)*;
+unaryExpr: (MINUS | PLUS)? simpleMapExpr;
+simpleMapExpr: pathExpr (EXCLAMATION_MARK pathExpr)*;
+pathExpr: (SLASH relativePathExpr?) // TODO: verify optionality
+        | (SLASHES relativePathExpr)
+        | relativePathExpr;
+relativePathExpr: stepExpr (pathOperator stepExpr)*;
+stepExpr: postfixExpr | axisStep;
+axisStep: (reverseStep | forwardStep) predicateList;
+forwardStep: forwardAxis? nodeTest;
+
 additiveOperator: PLUS | MINUS;
 unionOperator: UNION | UNION_OP;
 multiplicativeOperator: STAR | DIV | IDIV | MOD;
 generalComp: EQ_OP | NE_OP | LT_OP | LE_OP | GT_OP | GE_OP;
 valueComp: EQ | NE | LT | LE | GT | GE;
 nodeComp: IS | PRECEDING_OP | FOLLOWING_OP;
-pathExpr: (SLASH relativePathExpr?) // TODO: verify optionality
-        | (SLASHES relativePathExpr)
-        | relativePathExpr;
-relativePathExpr: stepExpr (pathOperator stepExpr)*;
 pathOperator: SLASH | SLASHES;
-stepExpr: postfixExpr | axisStep;
-axisStep: (reverseStep | forwardStep) predicateList;
-forwardStep: forwardAxis? nodeTest;
+singleType: anyName '?';
+
+
 
 forwardAxis: CHILD COLONS
         | DESCENDANT COLONS

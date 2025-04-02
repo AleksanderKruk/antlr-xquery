@@ -93,6 +93,10 @@ SATISFIES: 'satisfies';
 SWITCH: 'switch';
 DEFAULT: 'default';
 CASE: 'case';
+INSTANCE: 'instance';
+OF: 'of';
+TREAT: 'treat';
+CAST: 'cast';
 
 
 ID: NAME_START (DASH NAME_MIDDLE)*

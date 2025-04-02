@@ -16,7 +16,7 @@ import com.github.akruk.antlrxquery.values.XQueryTreeNode;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
-public class XQueryBaseValueFactory implements XQueryValueFactory{
+public class XQueryMemoizedValueFactory implements XQueryValueFactory{
     private Map<ParseTree, XQueryValue> createdNodes = new HashMap<>();
     private Map<BigDecimal, XQueryValue> createdNumbers = new HashMap<>();
     private Map<Integer, XQueryValue> createdIntegers = new HashMap<>();

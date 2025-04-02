@@ -44,7 +44,7 @@ rangeExpr: additiveExpr (TO additiveExpr)?;
 additiveExpr: multiplicativeExpr (additiveOperator multiplicativeExpr)*;
 multiplicativeExpr: unionExpr (multiplicativeOperator unionExpr )*;
 unionExpr: intersectExpr (unionOperator intersectExpr)*;
-intersectExpr: instanceofExpr ((INTERSECT | EXCEPT) instanceofExpr)*;
+intersectExpr: instanceofExpr (exceptOrIntersect instanceofExpr)*;
 instanceofExpr: treatExpr (INSTANCE OF treatExpr)*;
 treatExpr: castableExpr (TREAT AS castableExpr)*;
 castableExpr: arrowExpr ((CAST AS) singleType)*;
@@ -69,6 +69,7 @@ pathOperator: SLASH | SLASHES;
 singleType: anyName '?';
 
 
+exceptOrIntersect: EXCEPT | INTERSECT;
 
 forwardAxis: CHILD COLONS
         | DESCENDANT COLONS

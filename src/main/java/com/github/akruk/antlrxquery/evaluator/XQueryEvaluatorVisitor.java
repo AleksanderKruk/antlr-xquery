@@ -18,9 +18,13 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.AbbrevReverseStepContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.AdditiveExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.AndExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ArgumentContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.ArrowExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ArrowFunctionSpecifierContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.AxisStepContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.ComparisonExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ContextItemExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.CountClauseContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ExprContext;
@@ -32,9 +36,11 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.ForwardAxisContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ForwardStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionCallContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.IfExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.IntersectExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.LetBindingContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.LetClauseContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.LiteralContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.MultiplicativeExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.NameTestContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.NodeTestContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.OrExprContext;
@@ -48,12 +54,16 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.PostfixExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PredicateContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.QnameContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.QuantifiedExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.RangeExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.RelativePathExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReturnClauseContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseAxisContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.StepExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.StringConcatExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.SwitchExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.UnaryExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.UnionExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarRefContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.WhereClauseContext;
@@ -364,38 +374,24 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     @Override
     public XQueryValue visitOrExpr(final OrExprContext ctx) {
         try {
-            XQueryValue value = null;
-            if (ctx.orExpr().size() == 0) {
-                value = ctx.pathExpr(0).accept(this);
+            var value = ctx.andExpr(0).accept(this);
+            if (!value.isBooleanValue()) {
+                // TODO: type error
             }
-            if (!ctx.OR().isEmpty())
-                return handleOrExpr(ctx);
-            if (!ctx.AND().isEmpty())
-                return handleAndExpr(ctx);
-            if (ctx.TO() != null)
-                return handleRangeExpr(ctx);
-            if (!ctx.additiveOperator().isEmpty())
-                return handleAdditiveExpr(ctx);
-            if (!ctx.multiplicativeOperator().isEmpty())
-                return handleMultiplicativeExpr(ctx);
-            if (!ctx.unionOperator().isEmpty())
-                return handleUnionExpr(ctx);
-            if (!ctx.INTERSECT().isEmpty())
-                return handleIntersectionExpr(ctx);
-            if (!ctx.EXCEPT().isEmpty())
-                return handleSequenceSubtractionExpr(ctx);
-            if (ctx.MINUS() != null)
-                return handleUnaryArithmeticExpr(ctx);
-            if (ctx.generalComp() != null)
-                return handleGeneralComparison(ctx);
-            if (ctx.valueComp() != null)
-                return handleValueComparison(ctx);
-            if (!ctx.CONCATENATION().isEmpty())
-                return handleConcatenation(ctx);
-            if (!ctx.ARROW().isEmpty())
-                return handleArrowExpr(ctx);
-            if (ctx.nodeComp() != null)
-                return handleNodeComp(ctx);
+            // Short circuit
+            if (value.booleanValue()) {
+                return XQueryBoolean.TRUE;
+            }
+            final var orCount = ctx.OR().size();
+            for (int i = 1; i <= orCount; i++) {
+                final var visitedExpression = ctx.andExpr(i).accept(this);
+                value = value.or(valueFactory, visitedExpression);
+                // Short circuit
+                if (value.booleanValue()) {
+                    return XQueryBoolean.TRUE;
+                }
+                i++;
+            }
             return value;
         } catch (final XQueryUnsupportedOperation e) {
             // TODO: error handling
@@ -406,11 +402,11 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
 
 
-    private XQueryValue handleNodeComp(OrExprContext ctx) {
+    private XQueryValue handleNodeComp(ComparisonExprContext ctx) {
         try {
-            final var visitedLeft = ctx.orExpr(0).accept(this);
+            final var visitedLeft = ctx.stringConcatExpr(0).accept(this);
             ParseTree nodeLeft = getSingleNode(visitedLeft);
-            final var visitedRight = ctx.orExpr(1).accept(this);
+            final var visitedRight = ctx.stringConcatExpr(1).accept(this);
             ParseTree nodeRight = getSingleNode(visitedRight);
             boolean result = switch (ctx.nodeComp().getText()) {
                 case "is" -> nodeLeft == nodeRight;
@@ -436,10 +432,10 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         return nodeLeft;
     }
 
-
-    private XQueryValue handleRangeExpr(OrExprContext ctx) {
-        var fromValue = ctx.orExpr(0).accept(this);
-        var toValue = ctx.orExpr(1).accept(this);
+    @Override
+    public XQueryValue visitRangeExpr(RangeExprContext ctx) {
+        var fromValue = ctx.additiveExpr(0).accept(this);
+        var toValue = ctx.additiveExpr(1).accept(this);
         int fromInt = fromValue.numericValue().intValue();
         int toInt = toValue.numericValue().intValue();
         if (fromInt > toInt)
@@ -944,26 +940,30 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         return null;
     }
 
-    private XQueryValue handleConcatenation(final OrExprContext ctx) throws XQueryUnsupportedOperation {
-        var value = ctx.orExpr(0).accept(this);
-        if (!value.isStringValue()) {
-            // TODO: type error
+    @Override
+    public XQueryValue visitStringConcatExpr(StringConcatExprContext ctx) {
+        try {
+            var value = ctx.rangeExpr(0).accept(this);
+            if (!value.isStringValue()) {
+                // TODO: type error
+            }
+            final var operationCount = ctx.CONCATENATION().size();
+            for (int i = 1; i <= operationCount; i++) {
+                final var visitedExpression = ctx.rangeExpr(i).accept(this);
+                value = value.concatenate(valueFactory, visitedExpression);
+                i++;
+            }
+            return value;
+        } catch (XQueryUnsupportedOperation e) {
+            // TODO: handle exception
+            return null;
         }
-        final var operationCount = ctx.CONCATENATION().size();
-        for (int i = 1; i <= operationCount; i++) {
-            final var visitedExpression = ctx.orExpr(i).accept(this);
-            value = value.concatenate(valueFactory, visitedExpression);
-            i++;
-        }
-
-        return value;
     }
 
-
-    private XQueryValue handleArrowExpr(final OrExprContext ctx)
-            throws XQueryUnsupportedOperation {
+    @Override
+    public XQueryValue visitArrowExpr(ArrowExprContext ctx) {
         final var savedArgs = saveVisitedArguments();
-        var contextArgument = ctx.orExpr(0).accept(this);
+        var contextArgument = ctx.unaryExpr().accept(this);
         visitedArgumentList.add(contextArgument);
         // var isString = !value.isStringValue();
         // var isFunction = !func
@@ -990,79 +990,77 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     }
 
-
-
-    private XQueryValue handleOrExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
-        var value = ctx.orExpr(0).accept(this);
-        if (!value.isBooleanValue()) {
-            // TODO: type error
-        }
-        // Short circuit
-        if (value.booleanValue()) {
-            return XQueryBoolean.TRUE;
-        }
-        final var orCount = ctx.OR().size();
-        for (int i = 1; i <= orCount; i++) {
-            final var visitedExpression = ctx.orExpr(i).accept(this);
-            value = value.or(valueFactory, visitedExpression);
-            // Short circuit
-            if (value.booleanValue()) {
-                return XQueryBoolean.TRUE;
+    @Override
+    public XQueryValue visitAndExpr(AndExprContext ctx) {
+        try {
+            var value = ctx.comparisonExpr(0).accept(this);
+            if (!value.isBooleanValue()) {
+                // TODO: type error
             }
-            i++;
-        }
-
-        return value;
-    }
-
-
-    private XQueryValue handleAndExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
-        var value = ctx.orExpr(0).accept(this);
-        if (!value.isBooleanValue()) {
-            // TODO: type error
-        }
-        // Short circuit
-        if (!value.booleanValue()) {
-            return XQueryBoolean.FALSE;
-        }
-        final var orCount = ctx.AND().size();
-        for (int i = 1; i <= orCount; i++) {
-            final var visitedExpression = ctx.orExpr(i).accept(this);
-            value = value.and(valueFactory, visitedExpression);
             // Short circuit
             if (!value.booleanValue()) {
                 return XQueryBoolean.FALSE;
             }
-            i++;
+            final var orCount = ctx.AND().size();
+            for (int i = 1; i <= orCount; i++) {
+                final var visitedExpression = ctx.comparisonExpr(i).accept(this);
+                value = value.and(valueFactory, visitedExpression);
+                // Short circuit
+                if (!value.booleanValue()) {
+                    return XQueryBoolean.FALSE;
+                }
+                i++;
+            }
+            return value;
+        } catch (XQueryUnsupportedOperation e) {
+            //TODO: add proper error support
+            return null;
         }
-
-        return value;
     }
 
-
-    private XQueryValue handleAdditiveExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
-        var value = ctx.orExpr(0).accept(this);
-        if (!value.isNumericValue()) {
-            // TODO: type error
+    @Override
+    public XQueryValue visitAdditiveExpr(AdditiveExprContext ctx) {
+        try {
+            var value = ctx.multiplicativeExpr(0).accept(this);
+            if (!value.isNumericValue()) {
+                // TODO: type error
+            }
+            final var orCount = ctx.additiveOperator().size();
+            for (int i = 1; i <= orCount; i++) {
+                final var visitedExpression = ctx.multiplicativeExpr(i).accept(this);
+                value = switch (ctx.additiveOperator(i-1).getText()) {
+                    case "+" -> value.add(valueFactory, visitedExpression);
+                    case "-" -> value.subtract(valueFactory, visitedExpression);
+                    default -> null;
+                };
+                i++;
+            }
+            return value;
+        } catch (XQueryUnsupportedOperation e) {
+            //TODO: add proper error support
+            return null;
         }
-        final var orCount = ctx.additiveOperator().size();
-        for (int i = 1; i <= orCount; i++) {
-            final var visitedExpression = ctx.orExpr(i).accept(this);
-            value = switch (ctx.additiveOperator(i-1).getText()) {
-                case "+" -> value.add(valueFactory, visitedExpression);
-                case "-" -> value.subtract(valueFactory, visitedExpression);
-                default -> null;
-            };
-            i++;
-        }
-        return value;
     }
 
+    @Override
+    public XQueryValue visitComparisonExpr(ComparisonExprContext ctx) {
+        try {
+            if (ctx.generalComp() != null)
+                return handleGeneralComparison(ctx);
+            if (ctx.valueComp() != null)
+                return handleValueComparison(ctx);
+            if (ctx.nodeComp() != null)
+                return handleNodeComp(ctx);
+            return null;
+        } catch (XQueryUnsupportedOperation e) {
+            //TODO: add proper error support
+            return null;
+        }
+    }
 
-
-    private XQueryValue handleGeneralComparison(final OrExprContext ctx) throws XQueryUnsupportedOperation {
-        final var value = ctx.orExpr(0).accept(this);
-        final var visitedExpression = ctx.orExpr(1).accept(this);
+    private XQueryValue handleGeneralComparison(final ComparisonExprContext ctx) throws XQueryUnsupportedOperation {
+        final var value = ctx.stringConcatExpr(0).accept(this);
+        final var visitedExpression = ctx.stringConcatExpr(1).accept(this);
         return switch(ctx.generalComp().getText()) {
             case "=" -> value.generalEqual(valueFactory, visitedExpression);
             case "!=" -> value.generalUnequal(valueFactory, visitedExpression);
@@ -1074,9 +1072,9 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         };
     }
 
-    private XQueryValue handleValueComparison(final OrExprContext ctx) throws XQueryUnsupportedOperation {
-        final var value = ctx.orExpr(0).accept(this);
-        final var visitedExpression = ctx.orExpr(1).accept(this);
+    private XQueryValue handleValueComparison(final ComparisonExprContext ctx) throws XQueryUnsupportedOperation {
+        final var value = ctx.stringConcatExpr(0).accept(this);
+        final var visitedExpression = ctx.stringConcatExpr(1).accept(this);
         return switch(ctx.valueComp().getText()) {
             case "eq" -> value.valueEqual(valueFactory, visitedExpression);
             case "ne" -> value.valueUnequal(valueFactory, visitedExpression);
@@ -1089,78 +1087,93 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
 
-    private XQueryValue handleMultiplicativeExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
-        var value = ctx.orExpr(0).accept(this);
-        if (!value.isNumericValue()) {
-            // TODO: type error
-        }
-        final var orCount = ctx.multiplicativeOperator().size();
-        for (int i = 1; i <= orCount; i++) {
-            final var visitedExpression = ctx.orExpr(i).accept(this);
-            value = switch (ctx.multiplicativeOperator(i-1).getText()) {
-                case "*" -> value.multiply(valueFactory, visitedExpression);
-                case "div" -> value.divide(valueFactory, visitedExpression);
-                case "idiv" -> value.integerDivide(valueFactory, visitedExpression);
-                case "mod" -> value.modulus(valueFactory, visitedExpression);
-                default -> null;
-            };
-            i++;
-        }
-        return value;
-    }
+    @Override
+    public XQueryValue visitMultiplicativeExpr(MultiplicativeExprContext ctx) {
+        try {
+            var value = ctx.unionExpr(0).accept(this);
+            if (!value.isNumericValue()) {
+                // TODO: type error
+            }
+            final var orCount = ctx.multiplicativeOperator().size();
+            for (int i = 1; i <= orCount; i++) {
+                final var visitedExpression = ctx.unionExpr(i).accept(this);
+                value = switch (ctx.multiplicativeOperator(i-1).getText()) {
+                    case "*" -> value.multiply(valueFactory, visitedExpression);
+                    case "div" -> value.divide(valueFactory, visitedExpression);
+                    case "idiv" -> value.integerDivide(valueFactory, visitedExpression);
+                    case "mod" -> value.modulus(valueFactory, visitedExpression);
+                    default -> null;
+                };
+                i++;
+            }
+            return value;
 
-    private XQueryValue handleUnionExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
-        var value = ctx.orExpr(0).accept(this);
-        if (!value.isSequence()) {
-            // TODO: type error
-        }
-        final var unionCount = ctx.unionOperator().size();
-        for (int i = 1; i <= unionCount; i++) {
-            final var visitedExpression = ctx.orExpr(i).accept(this);
-            value = value.union(valueFactory, visitedExpression);
-            i++;
-        }
-        return value;
-    }
-
-    private XQueryValue handleIntersectionExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
-        var value = ctx.orExpr(0).accept(this);
-        if (!value.isSequence()) {
-            // TODO: type error
+        } catch (XQueryUnsupportedOperation e) {
+            // TODO: handle exception
             return null;
         }
-        final var operatorCount = ctx.INTERSECT().size();
-        for (int i = 1; i <= operatorCount; i++) {
-            final var visitedExpression = ctx.orExpr(i).accept(this);
-            value = value.intersect(valueFactory, visitedExpression);
-            i++;
-        }
-        return value;
     }
 
 
-    private XQueryValue handleSequenceSubtractionExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
-        var value = ctx.orExpr(0).accept(this);
-        if (!value.isSequence()) {
-            // TODO: type error
+    @Override
+    public XQueryValue visitUnionExpr(UnionExprContext ctx) {
+        try {
+            var value = ctx.intersectExpr(0).accept(this);
+            if (!value.isSequence()) {
+                // TODO: type error
+            }
+            final var unionCount = ctx.unionOperator().size();
+            for (int i = 1; i <= unionCount; i++) {
+                final var visitedExpression = ctx.intersectExpr(i).accept(this);
+                value = value.union(valueFactory, visitedExpression);
+                i++;
+            }
+            return value;
+        } catch (XQueryUnsupportedOperation e) {
+            // TODO: handle exception
             return null;
         }
-        final var operatorCount = ctx.EXCEPT().size();
-        for (int i = 1; i <= operatorCount; i++) {
-            final var visitedExpression = ctx.orExpr(i).accept(this);
-            value = value.except(valueFactory, visitedExpression);
-            i++;
-        }
-        return value;
+
     }
 
-
-    private XQueryValue handleUnaryArithmeticExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
-        final var value = ctx.orExpr(0).accept(this);
-        if (!value.isNumericValue()) {
-            // TODO: type error
+    @Override
+    public XQueryValue visitIntersectExpr(IntersectExprContext ctx) {
+        try {
+            var value = ctx.instanceofExpr(0).accept(this);
+            if (!value.isSequence()) {
+                // TODO: type error
+                return null;
+            }
+            final var operatorCount = ctx.exceptOrIntersect().size();
+            for (int i = 1; i <= operatorCount; i++) {
+                final var visitedExpression = ctx.instanceofExpr(i).accept(this);
+                final boolean isExcept = ctx.exceptOrIntersect(i).EXCEPT() != null;
+                if (isExcept) {
+                    value = value.except(valueFactory, visitedExpression);
+                } else {
+                    value = value.intersect(valueFactory, visitedExpression);
+                }
+                i++;
+            }
+            return value;
+        } catch (XQueryUnsupportedOperation e) {
+            // TODO: handle exception
+            return null;
         }
-        return value.multiply(valueFactory, valueFactory.number(new BigDecimal(-1)));
+    }
+
+    @Override
+    public XQueryValue visitUnaryExpr(UnaryExprContext ctx) {
+        try {
+            final var value = ctx.simpleMapExpr().accept(this);
+            if (!value.isNumericValue()) {
+                // TODO: type error
+            }
+            return value.multiply(valueFactory, valueFactory.number(new BigDecimal(-1)));
+        } catch (XQueryUnsupportedOperation e) {
+            // TODO: handle exception
+            return null;
+        }
     }
 
     @Override

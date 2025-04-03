@@ -1,4 +1,4 @@
-package typesystem.defaults;
+package com.github.akruk.antlrxquery.typesystem.defaults;
 
 public enum XQueryOccurence {
     ONE,

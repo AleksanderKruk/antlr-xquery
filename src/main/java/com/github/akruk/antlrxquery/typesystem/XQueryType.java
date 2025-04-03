@@ -1,4 +1,4 @@
-package typesystem;
+package com.github.akruk.antlrxquery.typesystem;
 
 import java.util.List;
 

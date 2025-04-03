@@ -1,4 +1,4 @@
-package typesystem.defaults;
+package com.github.akruk.antlrxquery.typesystem.defaults;
 
 import java.util.Arrays;
 import java.util.List;
@@ -8,7 +8,7 @@ import java.util.stream.IntStream;
 
 import javax.print.DocFlavor.STRING;
 
-import typesystem.XQueryType;
+import com.github.akruk.antlrxquery.typesystem.XQueryType;
 
 public class XQueryEnumBasedType implements XQueryType {
     private final XQueryTypes type;

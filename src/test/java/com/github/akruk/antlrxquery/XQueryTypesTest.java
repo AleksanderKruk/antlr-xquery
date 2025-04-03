@@ -45,7 +45,6 @@ public class XQueryTypesTest {
         assertNotEquals(string, integer);
         assertNotEquals(string, number);
         assertNotEquals(string, emptySequence);
-        assertNotEquals(string, emptySequence);
         assertNotEquals(string, stringSequenceOneOrMore);
         assertNotEquals(string, stringSequenceZeroOrMore);
         assertNotEquals(string, stringSequenceZeroOrOne);

@@ -28,24 +28,4 @@ public enum XQueryTypes {
     INTEGER,
     ;
 
-    boolean isAtomic() {
-        return switch (this) {
-            case BOOLEAN -> true;
-            case NODE -> true;
-            case STRING -> true;
-            case NUMBER -> true;
-            case INTEGER -> true;
-            default -> false;
-        };
-    }
-
-    boolean isContainer() {
-        return switch (this) {
-            case SEQUENCE -> true;
-            case EMPTY_SEQUENCE -> true;
-            case ARRAY -> true;
-            case MAP -> true;
-            default -> false;
-        };
-    }
 }

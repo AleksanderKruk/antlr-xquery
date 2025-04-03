@@ -31,52 +31,52 @@ public class XQueryEnumBasedType implements XQueryType {
 
     private final String name;
 
-    private static final XQueryEnumBasedType string = new XQueryEnumBasedType(XQueryTypes.STRING, null, null, null, null, null);
+    public static final XQueryEnumBasedType string = new XQueryEnumBasedType(XQueryTypes.STRING, null, null, null, null, null);
     public static XQueryEnumBasedType string() {
         return sequence(string, XQueryOccurence.ONE);
     }
 
-    private static final XQueryEnumBasedType number = new XQueryEnumBasedType(XQueryTypes.NUMBER, null, null, null, null, null);
+    public static final XQueryEnumBasedType number = new XQueryEnumBasedType(XQueryTypes.NUMBER, null, null, null, null, null);
     public static XQueryEnumBasedType number() {
         return sequence(number, XQueryOccurence.ONE);
     }
 
-    private static final XQueryEnumBasedType integer = new XQueryEnumBasedType(XQueryTypes.INTEGER, null, null, null, null, null);
+    public static final XQueryEnumBasedType integer = new XQueryEnumBasedType(XQueryTypes.INTEGER, null, null, null, null, null);
     public static XQueryEnumBasedType integer() {
         return sequence(integer, XQueryOccurence.ONE);
     }
 
-    private static final XQueryEnumBasedType anynode = new XQueryEnumBasedType(XQueryTypes.ANY_NODE, null, null, null, null, null);
+    public static final XQueryEnumBasedType anynode = new XQueryEnumBasedType(XQueryTypes.ANY_NODE, null, null, null, null, null);
     public static XQueryEnumBasedType anyNode() {
         return sequence(anynode, XQueryOccurence.ONE);
     }
 
-    private static final XQueryEnumBasedType anyarray = new XQueryEnumBasedType(XQueryTypes.ANY_NODE, null, null, null, null, null);
+    public static final XQueryEnumBasedType anyarray = new XQueryEnumBasedType(XQueryTypes.ANY_NODE, null, null, null, null, null);
     public static XQueryEnumBasedType anyArray() {
         return sequence(anyarray, XQueryOccurence.ONE);
     }
 
-    private static final XQueryEnumBasedType anymap = new XQueryEnumBasedType(XQueryTypes.ANY_MAP, null, null, null, null, null);
+    public static final XQueryEnumBasedType anymap = new XQueryEnumBasedType(XQueryTypes.ANY_MAP, null, null, null, null, null);
     public static XQueryEnumBasedType anyMap() {
         return sequence(anymap, XQueryOccurence.ONE);
     }
 
-    private static final XQueryEnumBasedType anyelement = new XQueryEnumBasedType(XQueryTypes.ANY_ELEMENT, null, null, null, null, null);
+    public static final XQueryEnumBasedType anyelement = new XQueryEnumBasedType(XQueryTypes.ANY_ELEMENT, null, null, null, null, null);
     public static XQueryEnumBasedType anyElement() {
         return sequence(anyelement, XQueryOccurence.ONE);
     }
 
-    private static final XQueryEnumBasedType anyfunction = new XQueryEnumBasedType(XQueryTypes.ANY_ELEMENT, null, null, null, null, null);
+    public static final XQueryEnumBasedType anyfunction = new XQueryEnumBasedType(XQueryTypes.ANY_ELEMENT, null, null, null, null, null);
     public static XQueryEnumBasedType anyFunction() {
         return sequence(anyfunction, XQueryOccurence.ONE);
     }
 
-    private static final XQueryEnumBasedType anyitem = new XQueryEnumBasedType(XQueryTypes.ANY_ITEM, null, null, null, null, null);
+    public static final XQueryEnumBasedType anyitem = new XQueryEnumBasedType(XQueryTypes.ANY_ITEM, null, null, null, null, null);
     public static XQueryEnumBasedType anyItem() {
         return sequence(anyitem, XQueryOccurence.ONE);
     }
 
-    private static final XQueryEnumBasedType boolean_ = new XQueryEnumBasedType(XQueryTypes.BOOLEAN, null, null, null, null, null);
+    public static final XQueryEnumBasedType boolean_ = new XQueryEnumBasedType(XQueryTypes.BOOLEAN, null, null, null, null, null);
     public static XQueryEnumBasedType boolean_() {
         return sequence(boolean_, XQueryOccurence.ONE);
     }
@@ -212,7 +212,7 @@ public class XQueryEnumBasedType implements XQueryType {
             };
             case ONE -> switch (otherOccurence) {
                 case ZERO -> false;
-                default -> this.isSubtypeItemtypeOf(other.getSubType());
+                default -> containedType.isSubtypeItemtypeOf(other.getSubType());
             };
             case ONE_OR_MORE -> switch (otherOccurence) {
                 case ZERO_OR_MORE -> containedType.isSubtypeItemtypeOf(other.getSubType());
@@ -245,9 +245,7 @@ public class XQueryEnumBasedType implements XQueryType {
         };
     }
 
-    private static final boolean[] isAtomic = falseEnumArray(
-            XQueryTypes.SEQUENCE,
-            XQueryTypes.EMPTY_SEQUENCE);
+    private static final boolean[] isAtomic = booleanEnumArray(t -> t != XQueryTypes.SEQUENCE || t!= XQueryTypes.SEQUENCE);
 
     @Override
     public boolean isAtomic() {
@@ -258,30 +256,31 @@ public class XQueryEnumBasedType implements XQueryType {
         return occurence;
     }
 
-    private static boolean[] booleanEnumArray(boolean value, XQueryTypes... values) {
+    private static boolean[] booleanEnumArray(XQueryTypes... values) {
         var array = new boolean[XQueryTypes.values().length];
         for (var v : values) {
-            array[v.ordinal()] = value;
+            array[v.ordinal()] = true;
         }
         return array;
     }
 
-    private static boolean[] falseEnumArray(XQueryTypes... falsevalues) {
-        return booleanEnumArray(false, falsevalues);
+    private static boolean[] booleanEnumArray(Predicate<XQueryTypes> predicateForTrueValues) {
+        var array = new boolean[XQueryTypes.values().length];
+        for (int j = 0; j < array.length; j++) {
+            XQueryTypes tested = XQueryTypes.values()[j];
+            array[j] = predicateForTrueValues.test(tested);
+        }
+        return array;
     }
 
-    private static boolean[] trueEnumArray(XQueryTypes... truevalues) {
-        return booleanEnumArray(true, truevalues);
-    }
-
-    private static final boolean[] isNode = trueEnumArray(XQueryTypes.ANY_NODE, XQueryTypes.NODE);
+    private static final boolean[] isNode = booleanEnumArray(XQueryTypes.ANY_NODE, XQueryTypes.NODE);
 
     @Override
     public boolean isNode() {
         return isNode[type.ordinal()];
     }
 
-    private static final boolean[] isElement = trueEnumArray(XQueryTypes.ANY_ELEMENT, XQueryTypes.ELEMENT);
+    private static final boolean[] isElement = booleanEnumArray(XQueryTypes.ANY_ELEMENT, XQueryTypes.ELEMENT);
 
     @Override
     public boolean isElement() {
@@ -293,7 +292,7 @@ public class XQueryEnumBasedType implements XQueryType {
         return isElement() && name.equals(otherName);
     }
 
-    private static final boolean[] isFunction = trueEnumArray(XQueryTypes.ANY_FUNCTION, XQueryTypes.FUNCTION);
+    private static final boolean[] isFunction = booleanEnumArray(XQueryTypes.ANY_FUNCTION, XQueryTypes.FUNCTION);
 
     @Override
     public boolean isFunction() {
@@ -310,14 +309,14 @@ public class XQueryEnumBasedType implements XQueryType {
                         .allMatch(i -> this.argumentTypes.get(i).equals(otherArgumentTypes.get(i)));
     }
 
-    private static final boolean[] isMap = trueEnumArray(XQueryTypes.MAP, XQueryTypes.ANY_MAP);
+    private static final boolean[] isMap = booleanEnumArray(XQueryTypes.MAP, XQueryTypes.ANY_MAP);
 
     @Override
     public boolean isMap() {
         return isMap[type.ordinal()];
     }
 
-    private static final boolean[] isArray = trueEnumArray(XQueryTypes.ARRAY, XQueryTypes.ANY_ARRAY);
+    private static final boolean[] isArray = booleanEnumArray(XQueryTypes.ARRAY, XQueryTypes.ANY_ARRAY);
 
     @Override
     public boolean isArray() {

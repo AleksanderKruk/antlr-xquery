@@ -1,22 +1,21 @@
-package com.github.akruk.antlrxquery.evaluator.contextmanagement.baseimplementations;
+package com.github.akruk.antlrxquery.contextmanagement.dynamiccontext;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-import com.github.akruk.antlrxquery.evaluator.contextmanagement.XQueryContext;
-import com.github.akruk.antlrxquery.evaluator.contextmanagement.XQueryScope;
+import com.github.akruk.antlrxquery.contextmanagement.XQueryScope;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 
-public class XQueryBaseContext implements XQueryContext {
-    final List<XQueryScope> scopes;
-    final Supplier<XQueryScope> scopeFactory;
+public class XQueryBaseDynamicContext implements XQueryDynamicContext {
+    final List<XQueryDynamicScope> scopes;
+    final Supplier<XQueryDynamicScope> scopeFactory;
 
-    public XQueryBaseContext() {
-        this(XQueryBaseScope::new);
+    public XQueryBaseDynamicContext() {
+        this(XQueryBaseDynamicScope::new);
     }
 
-    public XQueryBaseContext(Supplier<XQueryScope> scopeFactory) {
+    public XQueryBaseDynamicContext(Supplier<XQueryDynamicScope> scopeFactory) {
         this.scopeFactory = scopeFactory;
         this.scopes = new ArrayList<>();
     }
@@ -32,7 +31,7 @@ public class XQueryBaseContext implements XQueryContext {
     }
 
     @Override
-    public XQueryScope currentScope() {
+    public XQueryDynamicScope currentScope() {
         return scopes.getLast();
     }
 

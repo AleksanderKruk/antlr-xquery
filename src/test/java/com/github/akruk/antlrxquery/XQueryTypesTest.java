@@ -3,8 +3,9 @@ package com.github.akruk.antlrxquery;
 import org.junit.Test;
 
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
-import typesystem.defaults.XQueryEnumBasedType;
-import typesystem.defaults.XQueryOccurence;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumBasedType;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryOccurence;
+
 import static org.junit.Assert.assertEquals;
 
 import javax.print.DocFlavor.STRING;

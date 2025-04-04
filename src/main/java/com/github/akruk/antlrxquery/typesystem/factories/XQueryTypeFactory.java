@@ -5,7 +5,6 @@ import com.github.akruk.antlrxquery.typesystem.XQueryType;
 public interface XQueryTypeFactory {
     public XQueryType string();
     public XQueryType number();
-    public XQueryType integer();
     public XQueryType anyNode();
     public XQueryType anyArray();
     public XQueryType anyMap();

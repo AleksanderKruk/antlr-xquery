@@ -1,4 +1,4 @@
-package com.github.akruk.antlrxquery.evaluator;
+package com.github.akruk.antlrxquery.semanticanalyzer;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -16,7 +16,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
-import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
+
 import com.github.akruk.antlrxquery.AntlrXqueryParser.AbbrevReverseStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ArgumentContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ArrowFunctionSpecifierContext;
@@ -59,29 +59,37 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.VarRefContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.WhereClauseContext;
 import com.github.akruk.antlrxquery.contextmanagement.XQueryContextManager;
 import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.XQueryBaseDynamicContextManager;
-import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.XQueryDynamicContext;
-import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.XQueryDynamicContextManager;
+import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
+import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
 import com.github.akruk.antlrxquery.evaluator.functioncaller.XQueryFunctionCaller;
 import com.github.akruk.antlrxquery.evaluator.functioncaller.defaults.BaseFunctionCaller;
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
-import com.github.akruk.antlrxquery.values.XQueryValue;
-import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
-import com.github.akruk.antlrxquery.values.factories.defaults.XQueryBaseValueFactory;
+import com.github.akruk.antlrxquery.typesystem.XQueryType;
+import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.values.XQueryBoolean;
+import com.github.akruk.antlrxquery.values.factories.defaults.XQueryBaseValueFactory;
 
-class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
-    XQueryValue root;
+public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<Boolean>  {
+    XQueryContextManager contextManager;
+
     Parser parser;
-    List<XQueryValue> visitedArgumentList;
-    XQueryValue matchedNodes;
-    XQueryAxis currentAxis;
-    XQueryVisitingContext context;
-    XQueryDynamicContextManager contextManager;
-    XQueryValueFactory valueFactory;
+    List<Boolean> visitedArgumentList;
+    // XQueryAxis currentAxis;
+    XQueryVisitingSemanticContext context;
+    XQueryTypeFactory typeFactory;
     XQueryFunctionCaller functionCaller;
     Stream<List<TupleElement>> visitedTupleStream;
+    List<String> errors;
 
-    private record TupleElement(String name, XQueryValue value, String positionalName, XQueryValue index){};
+    XQueryType visitedType;
+
+    private XQueryType saveVisitedType() {
+        var saved = visitedType;
+        visitedType = null;
+        return saved;
+    }
+
+    private record TupleElement(String name, Boolean value, String positionalName, Boolean index){};
 
     private enum XQueryAxis {
         CHILD,
@@ -97,32 +105,28 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         ANCESTOR_OR_SELF,
     }
 
+    // public XQuerySemanticAnalyzer(final ParseTree tree, final Parser parser) {
+    //     this(tree, parser, new XQueryBaseContextManager(), new XQueryBaseValueFactory(), new BaseFunctionCaller());
+    // }
 
-
-    public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser) {
-        this(tree, parser, new XQueryBaseDynamicContextManager(), new XQueryBaseValueFactory(), new BaseFunctionCaller());
-    }
-
-    public XQueryEvaluatorVisitor(
+    public XQuerySemanticAnalyzer(
             final ParseTree tree,
             final Parser parser,
-            final XQueryDynamicContextManager contextManager,
-            final XQueryValueFactory valueFactory,
+            final XQueryContextManager contextManager,
+            final XQueryTypeFactory valueFactory,
             final XQueryFunctionCaller functionCaller) {
-        this.root = valueFactory.node(tree);
-        this.context = new XQueryVisitingContext();
-        this.context.setItem(root);
-        this.context.setPosition(0);
-        this.context.setSize(0);
+        this.context = new XQueryVisitingSemanticContext();
         this.parser = parser;
-        this.valueFactory = valueFactory;
+        this.typeFactory = valueFactory;
         this.functionCaller = functionCaller;
         this.contextManager = contextManager;
         contextManager.enterContext();
+        this.context.setItemType(typeFactory.anyNode());
+        this.context.setPositionType(typeFactory.number());
     }
 
     @Override
-    public XQueryValue visitFLWORExpr(FLWORExprContext ctx) {
+    public Boolean visitFLWORExpr(FLWORExprContext ctx) {
         final var savedTupleStream = saveVisitedTupleStream();
         contextManager.enterScope();
         // visitedTupleStream will be manipulated to prepare result stream
@@ -138,14 +142,14 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
     @Override
-    public XQueryValue visitLetClause(LetClauseContext ctx) {
+    public Boolean visitLetClause(LetClauseContext ctx) {
         final int newVariableCount = ctx.letBinding().size();
         visitedTupleStream = visitedTupleStream.map(tuple -> {
             var newTuple = new ArrayList<TupleElement>(tuple.size() + newVariableCount);
             newTuple.addAll(tuple);
             for (LetBindingContext streamVariable : ctx.letBinding()) {
                 String variableName = streamVariable.varName().getText();
-                XQueryValue assignedValue = streamVariable.exprSingle().accept(this);
+                Boolean assignedValue = streamVariable.exprSingle().accept(this);
                 var element = new TupleElement(variableName, assignedValue, null, null);
                 newTuple.add(element);
                 contextManager.provideVariable(variableName, assignedValue);
@@ -158,13 +162,13 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
 
     @Override
-    public XQueryValue visitForClause(ForClauseContext ctx) {
+    public Boolean visitForClause(ForClauseContext ctx) {
         final int numberOfVariables = (int) ctx.forBinding().size();
         visitedTupleStream = visitedTupleStream.flatMap(tuple -> {
             List<List<TupleElement>> newTupleLike = tuple.stream().map(e -> List.of(e)).collect(Collectors.toList());
             for (ForBindingContext streamVariable : ctx.forBinding()) {
                 String variableName = streamVariable.varName().getText();
-                List<XQueryValue> sequence = streamVariable.exprSingle().accept(this).sequence();
+                List<Boolean> sequence = streamVariable.exprSingle().accept(this).sequence();
                 PositionalVarContext positional = streamVariable.positionalVar();
                 int sequenceSize = sequence.size();
                 if (positional != null) {
@@ -172,7 +176,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                     String positionalName = positional.varName().getText();
                     for (int i = 0; i < sequenceSize; i++) {
                         var value = sequence.get(i);
-                        var element = new TupleElement(variableName, value, positionalName, valueFactory.number(i + 1));
+                        var element = new TupleElement(variableName, value, positionalName, typeFactory.number(i + 1));
                         elementsWithIndex.add(element);
                     }
                     newTupleLike.add(elementsWithIndex);
@@ -197,14 +201,14 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         public int i = 0;
     }
     @Override
-    public XQueryValue visitCountClause(CountClauseContext ctx) {
+    public Boolean visitCountClause(CountClauseContext ctx) {
         final String countVariableName = ctx.varName().getText();
         final MutableInt index = new MutableInt();
         index.i = 1;
         visitedTupleStream = visitedTupleStream.map(tuple -> {
             var newTuple = new ArrayList<TupleElement>(tuple.size() + 1);
             newTuple.addAll(tuple);
-            var element = new TupleElement(countVariableName, valueFactory.number(index.i++), null, null);
+            var element = new TupleElement(countVariableName, typeFactory.number(index.i++), null, null);
             contextManager.provideVariable(element.name, element.value);
             newTuple.add(element);
             return newTuple;
@@ -213,62 +217,62 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
     @Override
-    public XQueryValue visitWhereClause(WhereClauseContext ctx) {
+    public Boolean visitWhereClause(WhereClauseContext ctx) {
         final var filteringExpression = ctx.exprSingle();
         visitedTupleStream = visitedTupleStream.filter(tuple -> {
-            XQueryValue filter = filteringExpression.accept(this);
+            Boolean filter = filteringExpression.accept(this);
             return filter.effectiveBooleanValue();
         });
         return null;
     }
 
     @Override
-    public XQueryValue visitVarRef(VarRefContext ctx) {
+    public Boolean visitVarRef(VarRefContext ctx) {
         String variableName = ctx.varName().getText();
-        XQueryValue variableValue = contextManager.getVariable(variableName);
+        Boolean variableValue = contextManager.getVariable(variableName);
         return variableValue;
     }
 
     @Override
-    public XQueryValue visitReturnClause(ReturnClauseContext ctx) {
-        List<XQueryValue> results = visitedTupleStream.map((tuple) -> {
-            XQueryValue value = ctx.exprSingle().accept(this);
+    public Boolean visitReturnClause(ReturnClauseContext ctx) {
+        List<Boolean> results = visitedTupleStream.map((tuple) -> {
+            Boolean value = ctx.exprSingle().accept(this);
             return value;
         }).toList();
         if (results.size() == 1) {
             var value = results.get(0);
             return value;
         }
-        return valueFactory.sequence(results);
+        return typeFactory.sequence(results);
     }
 
     @Override
-    public XQueryValue visitLiteral(final LiteralContext ctx) {
+    public Boolean visitLiteral(final LiteralContext ctx) {
         if (ctx.STRING() != null) {
             final String text = ctx.getText();
             final String removepars = ctx.getText().substring(1, text.length() - 1);
             final String string = unescapeString(removepars);
-            return valueFactory.string(string);
+            return typeFactory.string(string);
         }
 
         if (ctx.INTEGER() != null) {
-            return valueFactory.number(new BigDecimal(ctx.INTEGER().getText()));
+            return typeFactory.number(new BigDecimal(ctx.INTEGER().getText()));
         }
 
-        return valueFactory.number(new BigDecimal(ctx.DECIMAL().getText()));
+        return typeFactory.number(new BigDecimal(ctx.DECIMAL().getText()));
     }
 
     @Override
-    public XQueryValue visitParenthesizedExpr(final ParenthesizedExprContext ctx) {
+    public Boolean visitParenthesizedExpr(final ParenthesizedExprContext ctx) {
         // Empty parentheses mean an empty sequence '()'
         if (ctx.expr() == null) {
-            return valueFactory.sequence(List.of());
+            return typeFactory.sequence(List.of());
         }
         return ctx.expr().accept(this);
     }
 
     @Override
-    public XQueryValue visitExpr(final ExprContext ctx) {
+    public Boolean visitExpr(final ExprContext ctx) {
         // Only one expression
         // e.g. 13
         if (ctx.exprSingle().size() == 1) {
@@ -276,7 +280,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         }
         // More than one expression
         // are turned into a flattened list
-        final List<XQueryValue> result = new ArrayList<>();
+        final List<Boolean> result = new ArrayList<>();
         for (final var exprSingle : ctx.exprSingle()) {
             final var expressionValue = exprSingle.accept(this);
             if (expressionValue.isAtomic()) {
@@ -288,7 +292,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             final var atomizedValues = expressionValue.atomize();
             result.addAll(atomizedValues);
         }
-        return valueFactory.sequence(result);
+        return typeFactory.sequence(result);
     }
 
 
@@ -299,12 +303,12 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
     @Override
-    public XQueryValue visitFunctionCall(final FunctionCallContext ctx) {
+    public Boolean visitFunctionCall(final FunctionCallContext ctx) {
         final var functionName = ctx.functionName().getText();
         // TODO: error handling missing function
         final var savedArgs = saveVisitedArguments();
         ctx.argumentList().accept(this);
-        final var value = functionCaller.call(functionName, valueFactory, context, visitedArgumentList);
+        final var value = functionCaller.call(functionName, typeFactory, context, visitedArgumentList);
         visitedArgumentList = savedArgs;
         return value;
     }
@@ -328,13 +332,13 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
 
     @Override
-    public XQueryValue visitQuantifiedExpr(QuantifiedExprContext ctx) {
+    public Boolean visitQuantifiedExpr(QuantifiedExprContext ctx) {
         List<String> variableNames = ctx.varName().stream()
             .map(VarNameContext::qname)
             .map(QnameContext::getText)
             .toList();
         int variableExpressionCount = ctx.exprSingle().size()-1;
-        List<List<XQueryValue>> sequences = new ArrayList<>(variableExpressionCount);
+        List<List<Boolean>> sequences = new ArrayList<>(variableExpressionCount);
         for (var expr : ctx.exprSingle().subList(0, variableExpressionCount)) {
             var sequenceValue = expr.accept(this);
             sequences.add(sequenceValue.sequence());
@@ -364,9 +368,9 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
 
     @Override
-    public XQueryValue visitOrExpr(final OrExprContext ctx) {
+    public Boolean visitOrExpr(final OrExprContext ctx) {
         try {
-            XQueryValue value = null;
+            Boolean value = null;
             if (ctx.orExpr().size() == 0) {
                 value = ctx.pathExpr(0).accept(this);
             }
@@ -408,7 +412,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
 
 
-    private XQueryValue handleNodeComp(OrExprContext ctx) {
+    private Boolean handleNodeComp(OrExprContext ctx) {
         try {
             final var visitedLeft = ctx.orExpr(0).accept(this);
             ParseTree nodeLeft = getSingleNode(visitedLeft);
@@ -420,40 +424,40 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                 case ">>" -> getPreceding(nodeLeft).contains(nodeRight);
                 default -> false;
             };
-            return valueFactory.bool(result);
+            return typeFactory.bool(result);
         } catch (XQueryUnsupportedOperation e) {
             return null;
         }
 
     }
 
-    private ParseTree getSingleNode(final XQueryValue visitedLeft) throws XQueryUnsupportedOperation {
+    private ParseTree getSingleNode(final Boolean visitedLeft) throws XQueryUnsupportedOperation {
         ParseTree nodeLeft;
         if (visitedLeft.isAtomic()) {
             nodeLeft = visitedLeft.node();
         } else {
-            List<XQueryValue> sequenceLeft = visitedLeft.exactlyOne(valueFactory).sequence();
+            List<Boolean> sequenceLeft = visitedLeft.exactlyOne(typeFactory).sequence();
             nodeLeft = sequenceLeft.get(0).node();
         }
         return nodeLeft;
     }
 
 
-    private XQueryValue handleRangeExpr(OrExprContext ctx) {
+    private Boolean handleRangeExpr(OrExprContext ctx) {
         var fromValue = ctx.orExpr(0).accept(this);
         var toValue = ctx.orExpr(1).accept(this);
         int fromInt = fromValue.numericValue().intValue();
         int toInt = toValue.numericValue().intValue();
         if (fromInt > toInt)
-            return valueFactory.emptySequence();
-        List<XQueryValue> values = IntStream.rangeClosed(fromInt, toInt)
-            .mapToObj(i->valueFactory.number(i))
+            return typeFactory.emptySequence();
+        List<Boolean> values = IntStream.rangeClosed(fromInt, toInt)
+            .mapToObj(i->typeFactory.number(i))
             .collect(Collectors.toList());
-        return valueFactory.sequence(values);
+        return typeFactory.sequence(values);
     }
 
     @Override
-    public XQueryValue visitPathExpr(PathExprContext ctx) {
+    public Boolean visitPathExpr(PathExprContext ctx) {
         boolean pathExpressionFromRoot = ctx.SLASH() != null;
         if (pathExpressionFromRoot) {
             final var savedNodes = saveMatchedModes();
@@ -481,11 +485,11 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
     @Override
-    public XQueryValue visitRelativePathExpr(RelativePathExprContext ctx) {
+    public Boolean visitRelativePathExpr(RelativePathExprContext ctx) {
         if (ctx.pathOperator().isEmpty()) {
             return ctx.stepExpr(0).accept(this);
         }
-        XQueryValue visitedNodeSequence = ctx.stepExpr(0).accept(this);
+        Boolean visitedNodeSequence = ctx.stepExpr(0).accept(this);
         matchedNodes = visitedNodeSequence;
         var operationCount = ctx.pathOperator().size();
         for (int i = 1; i <= operationCount; i++) {
@@ -503,19 +507,19 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         return matchedNodes;
     }
 
-    private XQueryValue nodeSequence(List<ParseTree> treenodes) {
-        List<XQueryValue> nodeSequence = treenodes.stream()
-            .map(valueFactory::node)
+    private Boolean nodeSequence(List<ParseTree> treenodes) {
+        List<Boolean> nodeSequence = treenodes.stream()
+            .map(typeFactory::node)
             .collect(Collectors.toList());
-        return valueFactory.sequence(nodeSequence);
+        return typeFactory.sequence(nodeSequence);
     }
 
     private List<ParseTree> matchedTreeNodes() {
-        return matchedNodes.sequence().stream().map(XQueryValue::node).toList();
+        return matchedNodes.sequence().stream().map(Boolean::node).toList();
     }
 
     @Override
-    public XQueryValue visitStepExpr(StepExprContext ctx) {
+    public Boolean visitStepExpr(StepExprContext ctx) {
         if (ctx.postfixExpr() != null)
             return ctx.postfixExpr().accept(this);
         return ctx.axisStep().accept(this);
@@ -523,8 +527,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
 
     @Override
-    public XQueryValue visitAxisStep(AxisStepContext ctx) {
-        XQueryValue stepResult = null;
+    public Boolean visitAxisStep(AxisStepContext ctx) {
+        Boolean stepResult = null;
         if (ctx.reverseStep() != null)
             stepResult = ctx.reverseStep().accept(this);
         else if (ctx.forwardStep() != null)
@@ -548,7 +552,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
     // @Override
-    // public XQueryValue visitPredicateList(PredicateListContext ctx) {
+    // public Boolean visitPredicateList(PredicateListContext ctx) {
     //     var result = match;
     //     for (var predicate : ctx.predicate()) {
     //         predicate.accept(this);
@@ -557,7 +561,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     // }
 
     @Override
-    public XQueryValue visitPostfixExpr(PostfixExprContext ctx) {
+    public Boolean visitPostfixExpr(PostfixExprContext ctx) {
         if (ctx.postfix().isEmpty()) {
             return ctx.primaryExpr().accept(this);
         }
@@ -568,7 +572,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         int index = 1;
         context.setSize(ctx.postfix().size());
         for (var postfix : ctx.postfix()) {
-            context.setItem(value);
+            context.setItemType(value);
             context.setPosition(index);
             value = postfix.accept(this);
             index++;
@@ -579,7 +583,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
     @Override
-    public XQueryValue visitPostfix(PostfixContext ctx) {
+    public Boolean visitPostfix(PostfixContext ctx) {
         if (ctx.predicate() != null) {
             return ctx.predicate().accept(this);
         }
@@ -589,19 +593,19 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             return null;
         }
         final var function = contextItem.functionValue();
-        final var value = function.call(valueFactory, context, visitedArgumentList);
+        final var value = function.call(typeFactory, context, visitedArgumentList);
         return value;
     }
 
     @Override
-    public XQueryValue visitPredicate(PredicateContext ctx) {
+    public Boolean visitPredicate(PredicateContext ctx) {
         final var contextValue = context.getItem();
         if (contextValue.isAtomic()) {
             // TODO: error
             return null;
         }
         final var sequence = contextValue.sequence();
-        final var filteredValues = new ArrayList<XQueryValue>(sequence.size());
+        final var filteredValues = new ArrayList<Boolean>(sequence.size());
         final var savedContext = saveContext();
         int index = 1;
         context.setSize(sequence.size());
@@ -613,7 +617,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                 context = savedContext;
                 int i = visitedExpression.numericValue().intValue() - 1;
                 if (i >= sequence.size() || i < 0) {
-                    return valueFactory.emptySequence();
+                    return typeFactory.emptySequence();
                 }
                 return sequence.get(i);
             }
@@ -623,18 +627,18 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             index++;
         }
         context = savedContext;
-        return valueFactory.sequence(filteredValues);
+        return typeFactory.sequence(filteredValues);
     }
 
 
 
     @Override
-    public XQueryValue visitContextItemExpr(ContextItemExprContext ctx) {
+    public Boolean visitContextItemExpr(ContextItemExprContext ctx) {
         return context.getItem();
     }
 
     @Override
-    public XQueryValue visitForwardStep(ForwardStepContext ctx) {
+    public Boolean visitForwardStep(ForwardStepContext ctx) {
         if (ctx.forwardAxis() != null) {
             ctx.forwardAxis().accept(this);
         }
@@ -650,7 +654,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
     @Override
-    public XQueryValue visitReverseStep(ReverseStepContext ctx) {
+    public Boolean visitReverseStep(ReverseStepContext ctx) {
         if (ctx.abbrevReverseStep() != null) {
             return ctx.abbrevReverseStep().accept(this);
         }
@@ -659,19 +663,19 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
     @Override
-    public XQueryValue visitAbbrevReverseStep(AbbrevReverseStepContext ctx) {
+    public Boolean visitAbbrevReverseStep(AbbrevReverseStepContext ctx) {
         var matchedParents = getAllParents(matchedTreeNodes());
         return nodeSequence(matchedParents);
     }
 
     @Override
-    public XQueryValue visitNodeTest(NodeTestContext ctx) {
+    public Boolean visitNodeTest(NodeTestContext ctx) {
         return ctx.nameTest().accept(this);
     }
 
     private Predicate<String> canBeTokenName = Pattern.compile("^[\\p{IsUppercase}].*").asPredicate();
     @Override
-    public XQueryValue visitNameTest(NameTestContext ctx) {
+    public Boolean visitNameTest(NameTestContext ctx) {
         var matchedTreeNodes = matchedTreeNodes();
         List<ParseTree> stepNodes = switch (currentAxis) {
             case ANCESTOR -> getAllAncestors(matchedTreeNodes);
@@ -926,7 +930,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
     @Override
-    public XQueryValue visitForwardAxis(ForwardAxisContext ctx) {
+    public Boolean visitForwardAxis(ForwardAxisContext ctx) {
         if (ctx.CHILD() != null) currentAxis = XQueryAxis.CHILD;
         if (ctx.DESCENDANT() != null) currentAxis = XQueryAxis.DESCENDANT;
         if (ctx.SELF() != null) currentAxis = XQueryAxis.SELF;
@@ -937,7 +941,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
     @Override
-    public XQueryValue visitReverseAxis(ReverseAxisContext ctx) {
+    public Boolean visitReverseAxis(ReverseAxisContext ctx) {
         if (ctx.PARENT() != null) currentAxis = XQueryAxis.PARENT;
         if (ctx.ANCESTOR() != null) currentAxis = XQueryAxis.ANCESTOR;
         if (ctx.PRECEDING_SIBLING() != null) currentAxis = XQueryAxis.PRECEDING_SIBLING;
@@ -946,7 +950,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         return null;
     }
 
-    private XQueryValue handleConcatenation(final OrExprContext ctx) throws XQueryUnsupportedOperation {
+    private Boolean handleConcatenation(final OrExprContext ctx) throws XQueryUnsupportedOperation {
         var value = ctx.orExpr(0).accept(this);
         if (!value.isStringValue()) {
             // TODO: type error
@@ -954,7 +958,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         final var operationCount = ctx.CONCATENATION().size();
         for (int i = 1; i <= operationCount; i++) {
             final var visitedExpression = ctx.orExpr(i).accept(this);
-            value = value.concatenate(valueFactory, visitedExpression);
+            value = value.concatenate(typeFactory, visitedExpression);
             i++;
         }
 
@@ -962,7 +966,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
 
-    private XQueryValue handleArrowExpr(final OrExprContext ctx)
+    private Boolean handleArrowExpr(final OrExprContext ctx)
             throws XQueryUnsupportedOperation {
         final var savedArgs = saveVisitedArguments();
         var contextArgument = ctx.orExpr(0).accept(this);
@@ -973,7 +977,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         for (int i = 0; i < arrowCount; i++) {
             final var visitedFunction = ctx.arrowFunctionSpecifier(i).accept(this);
             ctx.argumentList(i).accept(this); // visitedArgumentList is set to function's args
-            contextArgument = visitedFunction.functionValue().call(valueFactory, context, visitedArgumentList);
+            contextArgument = visitedFunction.functionValue().call(typeFactory, context, visitedArgumentList);
             visitedArgumentList = new ArrayList<>();
             visitedArgumentList.add(contextArgument);
             i++;
@@ -983,9 +987,9 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
     @Override
-    public XQueryValue visitArrowFunctionSpecifier(ArrowFunctionSpecifierContext ctx) {
+    public Boolean visitArrowFunctionSpecifier(ArrowFunctionSpecifierContext ctx) {
         if (ctx.ID() != null)
-            return functionCaller.getFunctionReference(ctx.ID().getText(), valueFactory);
+            return functionCaller.getFunctionReference(ctx.ID().getText(), typeFactory);
         if (ctx.varRef() != null)
             return ctx.varRef().accept(this);
         return ctx.parenthesizedExpr().accept(this);
@@ -994,7 +998,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
 
 
-    private XQueryValue handleOrExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
+    private Boolean handleOrExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
         var value = ctx.orExpr(0).accept(this);
         if (!value.isBooleanValue()) {
             // TODO: type error
@@ -1006,7 +1010,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         final var orCount = ctx.OR().size();
         for (int i = 1; i <= orCount; i++) {
             final var visitedExpression = ctx.orExpr(i).accept(this);
-            value = value.or(valueFactory, visitedExpression);
+            value = value.or(typeFactory, visitedExpression);
             // Short circuit
             if (value.booleanValue()) {
                 return XQueryBoolean.TRUE;
@@ -1018,7 +1022,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
 
-    private XQueryValue handleAndExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
+    private Boolean handleAndExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
         var value = ctx.orExpr(0).accept(this);
         if (!value.isBooleanValue()) {
             // TODO: type error
@@ -1030,7 +1034,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         final var orCount = ctx.AND().size();
         for (int i = 1; i <= orCount; i++) {
             final var visitedExpression = ctx.orExpr(i).accept(this);
-            value = value.and(valueFactory, visitedExpression);
+            value = value.and(typeFactory, visitedExpression);
             // Short circuit
             if (!value.booleanValue()) {
                 return XQueryBoolean.FALSE;
@@ -1042,7 +1046,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
 
-    private XQueryValue handleAdditiveExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
+    private Boolean handleAdditiveExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
         var value = ctx.orExpr(0).accept(this);
         if (!value.isNumericValue()) {
             // TODO: type error
@@ -1051,8 +1055,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         for (int i = 1; i <= orCount; i++) {
             final var visitedExpression = ctx.orExpr(i).accept(this);
             value = switch (ctx.additiveOperator(i-1).getText()) {
-                case "+" -> value.add(valueFactory, visitedExpression);
-                case "-" -> value.subtract(valueFactory, visitedExpression);
+                case "+" -> value.add(typeFactory, visitedExpression);
+                case "-" -> value.subtract(typeFactory, visitedExpression);
                 default -> null;
             };
             i++;
@@ -1062,36 +1066,36 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
 
 
-    private XQueryValue handleGeneralComparison(final OrExprContext ctx) throws XQueryUnsupportedOperation {
+    private Boolean handleGeneralComparison(final OrExprContext ctx) throws XQueryUnsupportedOperation {
         final var value = ctx.orExpr(0).accept(this);
         final var visitedExpression = ctx.orExpr(1).accept(this);
         return switch(ctx.generalComp().getText()) {
-            case "=" -> value.generalEqual(valueFactory, visitedExpression);
-            case "!=" -> value.generalUnequal(valueFactory, visitedExpression);
-            case ">" -> value.generalGreaterThan(valueFactory, visitedExpression);
-            case "<" -> value.generalLessThan(valueFactory, visitedExpression);
-            case "<=" -> value.generalLessEqual(valueFactory, visitedExpression);
-            case ">=" -> value.generalGreaterEqual(valueFactory, visitedExpression);
+            case "=" -> value.generalEqual(typeFactory, visitedExpression);
+            case "!=" -> value.generalUnequal(typeFactory, visitedExpression);
+            case ">" -> value.generalGreaterThan(typeFactory, visitedExpression);
+            case "<" -> value.generalLessThan(typeFactory, visitedExpression);
+            case "<=" -> value.generalLessEqual(typeFactory, visitedExpression);
+            case ">=" -> value.generalGreaterEqual(typeFactory, visitedExpression);
             default -> null;
         };
     }
 
-    private XQueryValue handleValueComparison(final OrExprContext ctx) throws XQueryUnsupportedOperation {
+    private Boolean handleValueComparison(final OrExprContext ctx) throws XQueryUnsupportedOperation {
         final var value = ctx.orExpr(0).accept(this);
         final var visitedExpression = ctx.orExpr(1).accept(this);
         return switch(ctx.valueComp().getText()) {
-            case "eq" -> value.valueEqual(valueFactory, visitedExpression);
-            case "ne" -> value.valueUnequal(valueFactory, visitedExpression);
-            case "lt" -> value.valueLessThan(valueFactory, visitedExpression);
-            case "gt" -> value.valueGreaterThan(valueFactory, visitedExpression);
-            case "le" -> value.valueLessEqual(valueFactory, visitedExpression);
-            case "ge" -> value.valueGreaterEqual(valueFactory, visitedExpression);
+            case "eq" -> value.valueEqual(typeFactory, visitedExpression);
+            case "ne" -> value.valueUnequal(typeFactory, visitedExpression);
+            case "lt" -> value.valueLessThan(typeFactory, visitedExpression);
+            case "gt" -> value.valueGreaterThan(typeFactory, visitedExpression);
+            case "le" -> value.valueLessEqual(typeFactory, visitedExpression);
+            case "ge" -> value.valueGreaterEqual(typeFactory, visitedExpression);
             default -> null;
         };
     }
 
 
-    private XQueryValue handleMultiplicativeExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
+    private Boolean handleMultiplicativeExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
         var value = ctx.orExpr(0).accept(this);
         if (!value.isNumericValue()) {
             // TODO: type error
@@ -1100,10 +1104,10 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         for (int i = 1; i <= orCount; i++) {
             final var visitedExpression = ctx.orExpr(i).accept(this);
             value = switch (ctx.multiplicativeOperator(i-1).getText()) {
-                case "*" -> value.multiply(valueFactory, visitedExpression);
-                case "div" -> value.divide(valueFactory, visitedExpression);
-                case "idiv" -> value.integerDivide(valueFactory, visitedExpression);
-                case "mod" -> value.modulus(valueFactory, visitedExpression);
+                case "*" -> value.multiply(typeFactory, visitedExpression);
+                case "div" -> value.divide(typeFactory, visitedExpression);
+                case "idiv" -> value.integerDivide(typeFactory, visitedExpression);
+                case "mod" -> value.modulus(typeFactory, visitedExpression);
                 default -> null;
             };
             i++;
@@ -1111,7 +1115,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         return value;
     }
 
-    private XQueryValue handleUnionExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
+    private Boolean handleUnionExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
         var value = ctx.orExpr(0).accept(this);
         if (!value.isSequence()) {
             // TODO: type error
@@ -1119,13 +1123,13 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         final var unionCount = ctx.unionOperator().size();
         for (int i = 1; i <= unionCount; i++) {
             final var visitedExpression = ctx.orExpr(i).accept(this);
-            value = value.union(valueFactory, visitedExpression);
+            value = value.union(typeFactory, visitedExpression);
             i++;
         }
         return value;
     }
 
-    private XQueryValue handleIntersectionExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
+    private Boolean handleIntersectionExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
         var value = ctx.orExpr(0).accept(this);
         if (!value.isSequence()) {
             // TODO: type error
@@ -1134,14 +1138,14 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         final var operatorCount = ctx.INTERSECT().size();
         for (int i = 1; i <= operatorCount; i++) {
             final var visitedExpression = ctx.orExpr(i).accept(this);
-            value = value.intersect(valueFactory, visitedExpression);
+            value = value.intersect(typeFactory, visitedExpression);
             i++;
         }
         return value;
     }
 
 
-    private XQueryValue handleSequenceSubtractionExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
+    private Boolean handleSequenceSubtractionExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
         var value = ctx.orExpr(0).accept(this);
         if (!value.isSequence()) {
             // TODO: type error
@@ -1150,49 +1154,49 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         final var operatorCount = ctx.EXCEPT().size();
         for (int i = 1; i <= operatorCount; i++) {
             final var visitedExpression = ctx.orExpr(i).accept(this);
-            value = value.except(valueFactory, visitedExpression);
+            value = value.except(typeFactory, visitedExpression);
             i++;
         }
         return value;
     }
 
 
-    private XQueryValue handleUnaryArithmeticExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
+    private Boolean handleUnaryArithmeticExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
         final var value = ctx.orExpr(0).accept(this);
         if (!value.isNumericValue()) {
             // TODO: type error
         }
-        return value.multiply(valueFactory, valueFactory.number(new BigDecimal(-1)));
+        return value.multiply(typeFactory, typeFactory.number(new BigDecimal(-1)));
     }
 
     @Override
-    public XQueryValue visitSwitchExpr(SwitchExprContext ctx) {
-        Map<XQueryValue, ParseTree> valueToExpression = ctx.switchCaseClause().stream()
+    public Boolean visitSwitchExpr(SwitchExprContext ctx) {
+        Map<Boolean, ParseTree> valueToExpression = ctx.switchCaseClause().stream()
                 .flatMap(clause -> clause.switchCaseOperand()
                                             .stream().map(operand -> Map.entry(operand.accept(this), clause.exprSingle())))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        XQueryValue switchedValue = ctx.switchedExpr.accept(this);
+        Boolean switchedValue = ctx.switchedExpr.accept(this);
         ParseTree toBeExecuted = valueToExpression.getOrDefault(switchedValue, ctx.defaultExpr);
         return toBeExecuted.accept(this);
     }
 
 
     @Override
-    public XQueryValue visitArgument(final ArgumentContext ctx) {
+    public Boolean visitArgument(final ArgumentContext ctx) {
         final var value =  super.visitArgument(ctx);
         visitedArgumentList.add(value);
         return value;
     }
 
-    private List<XQueryValue> saveVisitedArguments() {
+    private List<Boolean> saveVisitedArguments() {
         final var saved = visitedArgumentList;
         visitedArgumentList = new ArrayList<>();
         return saved;
     }
 
-    private XQueryValue saveMatchedModes() {
-        final XQueryValue saved = matchedNodes;
-        matchedNodes = valueFactory.sequence(List.of());
+    private Boolean saveMatchedModes() {
+        final Boolean saved = matchedNodes;
+        matchedNodes = typeFactory.sequence(List.of());
         return saved;
     }
 
@@ -1221,9 +1225,9 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     private Comparator<List<TupleElement>> ascendingEmptyGreatest(ParseTree expr) {
         return (tuple1, tuple2) -> {
             provideVariables(tuple1);
-            XQueryValue value1 = expr.accept(this);
+            Boolean value1 = expr.accept(this);
             provideVariables(tuple2);
-            XQueryValue value2 = expr.accept(this);
+            Boolean value2 = expr.accept(this);
             boolean value1IsEmptySequence = value1.isSequence() && value1.sequence().isEmpty();
             boolean value2IsEmptySequence = value2.isSequence() && value2.sequence().isEmpty();
             if (value1IsEmptySequence && !value2IsEmptySequence) {
@@ -1237,9 +1241,9 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     private Comparator<List<TupleElement>> ascendingEmptyLeast(ParseTree expr) {
         return (tuple1, tuple2) -> {
             provideVariables(tuple1);
-            XQueryValue value1 = expr.accept(this);
+            Boolean value1 = expr.accept(this);
             provideVariables(tuple2);
-            XQueryValue value2 = expr.accept(this);
+            Boolean value2 = expr.accept(this);
             boolean value1IsEmptySequence = value1.isSequence() && value1.sequence().isEmpty();
             boolean value2IsEmptySequence = value2.isSequence() && value2.sequence().isEmpty();
             if (value1IsEmptySequence && !value2IsEmptySequence) {
@@ -1253,9 +1257,9 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     private Comparator<List<TupleElement>> descendingEmptyGreatest(ParseTree expr) {
         return (tuple1, tuple2) -> {
             provideVariables(tuple1);
-            XQueryValue value1 = expr.accept(this);
+            Boolean value1 = expr.accept(this);
             provideVariables(tuple2);
-            XQueryValue value2 = expr.accept(this);
+            Boolean value2 = expr.accept(this);
             boolean value1IsEmptySequence = value1.isSequence() && value1.sequence().isEmpty();
             boolean value2IsEmptySequence = value2.isSequence() && value2.sequence().isEmpty();
             if (value1IsEmptySequence && !value2IsEmptySequence) {
@@ -1269,9 +1273,9 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     private Comparator<List<TupleElement>> descendingEmptyLeast(ParseTree expr) {
         return (tuple1, tuple2) -> {
             provideVariables(tuple1);
-            XQueryValue value1 = expr.accept(this);
+            Boolean value1 = expr.accept(this);
             provideVariables(tuple2);
-            XQueryValue value2 = expr.accept(this);
+            Boolean value2 = expr.accept(this);
             boolean value1IsEmptySequence = value1.isSequence() && value1.sequence().isEmpty();
             boolean value2IsEmptySequence = value2.isSequence() && value2.sequence().isEmpty();
             if (value1IsEmptySequence && !value2IsEmptySequence) {
@@ -1301,7 +1305,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
     @Override
-    public XQueryValue visitIfExpr(IfExprContext ctx) {
+    public Boolean visitIfExpr(IfExprContext ctx) {
         var visitedExpression = ctx.condition.accept(this);
         if (visitedExpression.effectiveBooleanValue())
             return ctx.ifValue.accept(this);
@@ -1310,7 +1314,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
     @Override
-    public XQueryValue visitOrderByClause(OrderByClauseContext ctx) {
+    public Boolean visitOrderByClause(OrderByClauseContext ctx) {
         final int sortingExprCount = ctx.orderSpecList().orderSpec().size();
         final var orderSpecs = ctx.orderSpecList().orderSpec();
         final int[] modifierMaskArray = orderSpecs.stream()
@@ -1336,11 +1340,11 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         return null;
     }
 
-    private int compareValues(XQueryValue value1, XQueryValue value2) {
-        if (value1.valueEqual(valueFactory, value2).booleanValue()) {
+    private int compareValues(Boolean value1, Boolean value2) {
+        if (value1.valueEqual(typeFactory, value2).booleanValue()) {
             return 0;
         } else {
-            if (value1.valueLessThan(valueFactory, value2).booleanValue()) {
+            if (value1.valueLessThan(typeFactory, value2).booleanValue()) {
                 return -1;
             }
             ;
@@ -1355,4 +1359,6 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                 contextManager.provideVariable(e.positionalName, e.index);
         }
     }
+
+
 }

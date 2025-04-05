@@ -59,6 +59,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.VarRefContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.WhereClauseContext;
 import com.github.akruk.antlrxquery.contextmanagement.XQueryContextManager;
 import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.baseimplementation.XQueryBaseDynamicContextManager;
+import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.XQuerySemanticContextManager;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
 import com.github.akruk.antlrxquery.evaluator.functioncaller.XQueryFunctionCaller;
@@ -70,11 +71,10 @@ import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.values.factories.defaults.XQueryBaseValueFactory;
 
 public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryType>  {
-    XQueryContextManager contextManager;
+    XQuerySemanticContextManager contextManager;
 
     Parser parser;
     List<XQueryType> visitedArgumentTypesList;
-    // XQueryAxis currentAxis;
     XQueryVisitingSemanticContext context;
     XQueryTypeFactory typeFactory;
     XQueryValueFactory valueFactory;
@@ -83,35 +83,11 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     List<String> errors;
 
 
-    // private XQueryType saveVisitedType() {
-    //     var saved = visitedType;
-    //     visitedType = null;
-    //     return saved;
-    // }
-
-    private record TupleElement(String name, XQueryType value, String positionalName, XQueryType index){};
-
-    // private enum XQueryAxis {
-    //     CHILD,
-    //     DESCENDANT,
-    //     SELF,
-    //     DESCENDANT_OR_SELF,
-    //     FOLLOWING_SIBLING,
-    //     FOLLOWING,
-    //     PARENT,
-    //     ANCESTOR,
-    //     PRECEDING_SIBLING,
-    //     PRECEDING,
-    //     ANCESTOR_OR_SELF,
-    // }
-
-    // public XQuerySemanticAnalyzer(final ParseTree tree, final Parser parser) {
-    //     this(tree, parser, new XQueryBaseContextManager(), new XQueryBaseValueFactory(), new BaseFunctionCaller());
-    // }
+    private record TupleElement(String name, XQueryType type, String positionalName){};
 
     public XQuerySemanticAnalyzer(
             final Parser parser,
-            final XQueryContextManager contextManager,
+            final XQuerySemanticContextManager contextManager,
             final XQueryTypeFactory typeFactory,
             final XQueryValueFactory valueFactory,
             final XQueryFunctionCaller functionCaller) {
@@ -210,7 +186,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
             var newTuple = new ArrayList<TupleElement>(tuple.size() + 1);
             newTuple.addAll(tuple);
             var element = new TupleElement(countVariableName, typeFactory.number(index.i++), null, null);
-            contextManager.entypeVariable(element.name, element.value);
+            contextManager.entypeVariable(element.name, element.type);
             newTuple.add(element);
             return newTuple;
         });
@@ -740,220 +716,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         return nodeSequence(matchedTreeNodes);
     }
 
-    private List<ParseTree> getAllFollowing(List<ParseTree> nodes) {
-        var result = new ArrayList<ParseTree>();
-        for (var node : nodes) {
-            var followingSiblings = getFollowing(node);
-            result.addAll(followingSiblings);
-        }
-        return result;
-    }
-
-    private List<ParseTree> getFollowing(ParseTree node) {
-        List<ParseTree> ancestors = getAncestors(node);
-        List<ParseTree> ancestorFollowingSiblings = getAllFollowingSiblings(ancestors);
-        List<ParseTree> followingSiblingDescendants =  getAllDescendants(ancestorFollowingSiblings);
-        List<ParseTree> thisNodeDescendants = getDescendants(node);
-        List<ParseTree> thisNodefollowingSiblings = getFollowingSiblings(node);
-        List<ParseTree> thisNodeFollowingSiblingDescendants = getAllDescendantsOrSelf(thisNodefollowingSiblings);
-        List<ParseTree> following = new ArrayList<>(ancestorFollowingSiblings.size()
-                                                    + followingSiblingDescendants.size()
-                                                    + followingSiblingDescendants.size()
-                                                    + thisNodeDescendants.size()
-                                                    + thisNodeFollowingSiblingDescendants.size());
-        following.addAll(ancestorFollowingSiblings);
-        following.addAll(followingSiblingDescendants);
-        following.addAll(thisNodeDescendants);
-        following.addAll(thisNodeFollowingSiblingDescendants);
-        return following;
-    }
-
-
-    private List<ParseTree> getAllPreceding(List<ParseTree> nodes) {
-        var result = new ArrayList<ParseTree>();
-        for (var node : nodes) {
-            var precedingSiblings = getPreceding(node);
-            result.addAll(precedingSiblings);
-        }
-        return result;
-    }
-
-
-    private List<ParseTree> getPreceding(ParseTree node) {
-        List<ParseTree> ancestors = getAncestors(node);
-        List<ParseTree> ancestorPrecedingSiblings = getAllPrecedingSiblings(ancestors);
-        List<ParseTree> precedingSiblingDescendants =  getAllDescendantsOrSelf(ancestorPrecedingSiblings);
-        List<ParseTree> thisNodePrecedingSiblings = getPrecedingSiblings(node);
-        List<ParseTree> thisNodePrecedingSiblingDescendants = getAllDescendantsOrSelf(thisNodePrecedingSiblings);
-        List<ParseTree> following = new ArrayList<>(ancestors.size()
-                                                    + precedingSiblingDescendants.size()
-                                                    + thisNodePrecedingSiblingDescendants.size());
-        following.addAll(ancestors);
-        following.addAll(precedingSiblingDescendants);
-        following.addAll(thisNodePrecedingSiblingDescendants);
-        return following;
-    }
-
-    private List<ParseTree> getAllFollowingSiblings(List<ParseTree> nodes) {
-        var result = new ArrayList<ParseTree>();
-        for (var node : nodes) {
-            var followingSiblings = getFollowingSiblings(node);
-            result.addAll(followingSiblings);
-        }
-        return result;
-    }
-
-    private List<ParseTree> getFollowingSiblings(ParseTree node) {
-        var parent = node.getParent();
-        if (parent == null)
-            return List.of();
-        var parentsChildren = getChildren(parent);
-        var nodeIndex = parentsChildren.indexOf(node);
-        var followingSibling = parentsChildren.subList(nodeIndex+1, parentsChildren.size());
-        return followingSibling;
-    }
-
-
-
-    private List<ParseTree> getAllPrecedingSiblings(List<ParseTree> nodes) {
-        var result = new ArrayList<ParseTree>();
-        for (var node : nodes) {
-            var precedingSiblings = getPrecedingSiblings(node);
-            result.addAll(precedingSiblings);
-        }
-        return result;
-    }
-
-
-    private List<ParseTree> getPrecedingSiblings(ParseTree node) {
-        var parent = node.getParent();
-        if (parent == null)
-            return List.of();
-        var parentsChildren = getChildren(parent);
-        var nodeIndex = parentsChildren.indexOf(node);
-        var precedingSibling = parentsChildren.subList(0, nodeIndex);
-        return precedingSibling;
-    }
-
-
-    private List<ParseTree> getAllDescendantsOrSelf(List<ParseTree> nodes) {
-        var newMatched = new ArrayList<ParseTree>();
-        for (var node :nodes) {
-            var descendants = getDescendantsOrSelf(node);
-            newMatched.addAll(descendants);
-        }
-        return newMatched;
-    }
-
-
-    private List<ParseTree> getDescendantsOrSelf(ParseTree node) {
-        var newMatched = new ArrayList<ParseTree>();
-        var descendants = getDescendants(node);
-        newMatched.add(node);
-        newMatched.addAll(descendants);
-
-        return newMatched;
-    }
-
-    private List<ParseTree> getAllDescendants(List<ParseTree> nodes) {
-        var allDescendants = new ArrayList<ParseTree>();
-        for (var node : nodes) {
-            var descendants = getDescendants(node);
-            allDescendants.addAll(descendants);
-        }
-        return allDescendants;
-    }
-
-
-    private List<ParseTree> getDescendants(ParseTree treenode) {
-        List<ParseTree> allDescendants = new ArrayList<>();
-        List<ParseTree> children = getChildren(treenode);
-        while (children.size() != 0) {
-            var child = children.removeFirst();
-            allDescendants.add(child);
-            var descendants = getChildren(child);
-            for (ParseTree descendantTree : descendants.reversed()) {
-                children.addFirst(descendantTree);
-            }
-        }
-        return allDescendants;
-    }
-
-
-    private List<ParseTree> getChildren(ParseTree treenode) {
-        List<ParseTree> children = IntStream.range(0, treenode.getChildCount())
-            .mapToObj(i->treenode.getChild(i))
-            .collect(Collectors.toList());
-        return children;
-    }
-
-
-    private List<ParseTree> getAllChildren(List<ParseTree> nodes) {
-        var newMatched = new ArrayList<ParseTree>();
-        for (var node : nodes) {
-            var children = getChildren(node);
-            newMatched.addAll(children);
-        }
-        return newMatched;
-    }
-
-
-    private List<ParseTree> getAllAncestors(List<ParseTree> nodes) {
-        var newMatched = new ArrayList<ParseTree>();
-        for (var valueNode : nodes) {
-            var ancestors = getAncestors(valueNode);
-            newMatched.addAll(ancestors);
-        }
-        return newMatched.reversed();
-    }
-
-    private List<ParseTree> getAncestors(ParseTree node) {
-        List<ParseTree> newMatched = new ArrayList<ParseTree>();
-        ParseTree parent = node.getParent();
-        while (parent != null) {
-            newMatched.add(parent);
-            parent = parent.getParent();
-        }
-        return newMatched.reversed();
-    }
-
-    private List<ParseTree> getAllParents(List<ParseTree> nodes) {
-        List<ParseTree> newMatched = nodes.stream()
-            .map(ParseTree::getParent)
-            .toList();
-        return newMatched;
-    }
-
-    private List<ParseTree> getAllAncestorsOrSelf(List<ParseTree> nodes) {
-        // TODO: Correct sequence
-        var newMatched = new ArrayList<ParseTree>();
-        var ancestorPart = getAllAncestors(nodes);
-        newMatched.addAll(ancestorPart);
-        newMatched.addAll(nodes);
-        return newMatched;
-    }
-
-    @Override
-    public XQueryType visitForwardAxis(ForwardAxisContext ctx) {
-        if (ctx.CHILD() != null) currentAxis = XQueryAxis.CHILD;
-        if (ctx.DESCENDANT() != null) currentAxis = XQueryAxis.DESCENDANT;
-        if (ctx.SELF() != null) currentAxis = XQueryAxis.SELF;
-        if (ctx.DESCENDANT_OR_SELF() != null) currentAxis = XQueryAxis.DESCENDANT_OR_SELF;
-        if (ctx.FOLLOWING_SIBLING() != null) currentAxis = XQueryAxis.FOLLOWING_SIBLING;
-        if (ctx.FOLLOWING() != null) currentAxis = XQueryAxis.FOLLOWING;
-        return null;
-    }
-
-    @Override
-    public XQueryType visitReverseAxis(ReverseAxisContext ctx) {
-        if (ctx.PARENT() != null) currentAxis = XQueryAxis.PARENT;
-        if (ctx.ANCESTOR() != null) currentAxis = XQueryAxis.ANCESTOR;
-        if (ctx.PRECEDING_SIBLING() != null) currentAxis = XQueryAxis.PRECEDING_SIBLING;
-        if (ctx.PRECEDING() != null) currentAxis = XQueryAxis.PRECEDING;
-        if (ctx.ANCESTOR_OR_SELF() != null) currentAxis = XQueryAxis.ANCESTOR_OR_SELF;
-        return null;
-    }
-
     private XQueryType handleConcatenation(final OrExprContext ctx) throws XQueryUnsupportedOperation {
         var value = ctx.orExpr(0).accept(this);
         if (!value.isStringValue()) {
@@ -1356,11 +1118,11 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         }
     }
 
-    private void provideVariables(List<TupleElement> tuple) {
+    private void entypeVariables(List<TupleElement> tuple) {
         for (var e : tuple) {
-            contextManager.entypeVariable(e.name, e.value);
+            contextManager.entypeVariable(e.name, e.type);
             if (e.positionalName != null)
-                contextManager.entypeVariable(e.positionalName, e.index);
+                contextManager.entypeVariable(e.positionalName, typeFactory.number());
         }
     }
 

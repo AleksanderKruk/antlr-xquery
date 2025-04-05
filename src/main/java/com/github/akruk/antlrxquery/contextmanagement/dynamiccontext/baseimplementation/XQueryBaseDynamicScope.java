@@ -1,9 +1,10 @@
-package com.github.akruk.antlrxquery.contextmanagement.dynamiccontext;
+package com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.baseimplementation;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import com.github.akruk.antlrxquery.contextmanagement.XQueryScope;
+import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.XQueryDynamicScope;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 
 public class XQueryBaseDynamicScope implements XQueryDynamicScope {

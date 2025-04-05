@@ -58,7 +58,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarRefContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.WhereClauseContext;
 import com.github.akruk.antlrxquery.contextmanagement.XQueryContextManager;
-import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.XQueryBaseDynamicContextManager;
+import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.baseimplementation.XQueryBaseDynamicContextManager;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
 import com.github.akruk.antlrxquery.evaluator.functioncaller.XQueryFunctionCaller;
@@ -66,7 +66,6 @@ import com.github.akruk.antlrxquery.evaluator.functioncaller.defaults.BaseFuncti
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 import com.github.akruk.antlrxquery.typesystem.XQueryType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
-import com.github.akruk.antlrxquery.values.XQueryXQueryType;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.values.factories.defaults.XQueryBaseValueFactory;
 
@@ -111,7 +110,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     // }
 
     public XQuerySemanticAnalyzer(
-            final ParseTree tree,
             final Parser parser,
             final XQueryContextManager contextManager,
             final XQueryTypeFactory typeFactory,
@@ -155,7 +153,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
                 XQueryType assignedValue = streamVariable.exprSingle().accept(this);
                 var element = new TupleElement(variableName, assignedValue, null, null);
                 newTuple.add(element);
-                contextManager.provideVariable(variableName, assignedValue);
+                contextManager.entypeVariable(variableName, assignedValue);
             }
             return newTuple;
         });
@@ -212,7 +210,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
             var newTuple = new ArrayList<TupleElement>(tuple.size() + 1);
             newTuple.addAll(tuple);
             var element = new TupleElement(countVariableName, typeFactory.number(index.i++), null, null);
-            contextManager.provideVariable(element.name, element.value);
+            contextManager.entypeVariable(element.name, element.value);
             newTuple.add(element);
             return newTuple;
         });
@@ -271,7 +269,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     public XQueryType visitParenthesizedExpr(final ParenthesizedExprContext ctx) {
         // Empty parentheses mean an empty sequence '()'
         if (ctx.expr() == null) {
-            return typeFactory.sequence(List.of());
+            valueFactory.sequence(List.of());
+            return typeFactory.emptySequence();
         }
         return ctx.expr().accept(this);
     }
@@ -353,7 +352,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         if (ctx.EVERY() != null) {
             boolean every = cartesianProduct(sequences).allMatch(variableProduct -> {
                 for (int i = 0; i < variableNames.size(); i++) {
-                    contextManager.provideVariable(variableNames.get(i), variableProduct.get(i));
+                    contextManager.entypeVariable(variableNames.get(i), variableProduct.get(i));
                 }
                 return criterionNode.accept(this).booleanValue();
             });
@@ -362,7 +361,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         if (ctx.SOME() != null) {
             boolean some = cartesianProduct(sequences).anyMatch(variableProduct -> {
                 for (int i = 0; i < variableNames.size(); i++) {
-                    contextManager.provideVariable(variableNames.get(i), variableProduct.get(i));
+                    contextManager.entypeVariable(variableNames.get(i), variableProduct.get(i));
                 }
                 return criterionNode.accept(this).booleanValue();
             });
@@ -1359,9 +1358,9 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
 
     private void provideVariables(List<TupleElement> tuple) {
         for (var e : tuple) {
-            contextManager.provideVariable(e.name, e.value);
+            contextManager.entypeVariable(e.name, e.value);
             if (e.positionalName != null)
-                contextManager.provideVariable(e.positionalName, e.index);
+                contextManager.entypeVariable(e.positionalName, e.index);
         }
     }
 

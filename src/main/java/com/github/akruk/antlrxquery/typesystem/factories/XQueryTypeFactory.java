@@ -13,4 +13,5 @@ public interface XQueryTypeFactory {
     public XQueryType anyItem();
     public XQueryType boolean_();
     public XQueryType emptySequence();
+    public XQueryType any();
 }

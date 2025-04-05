@@ -330,4 +330,9 @@ public class XQueryEnumBasedType implements XQueryType {
                 && !this.isArray();
     }
 
+    @Override
+    public boolean isAnyType() {
+        return type == XQueryTypes.ANY;
+    }
+
 }

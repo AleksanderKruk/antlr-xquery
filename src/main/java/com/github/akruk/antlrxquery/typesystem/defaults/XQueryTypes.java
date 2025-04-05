@@ -1,6 +1,7 @@
 package com.github.akruk.antlrxquery.typesystem.defaults;
 
 public enum XQueryTypes {
+    ANY,
     ERROR,
 
     ANY_ITEM,

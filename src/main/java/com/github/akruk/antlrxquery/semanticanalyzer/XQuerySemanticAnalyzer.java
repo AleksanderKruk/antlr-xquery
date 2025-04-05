@@ -5,7 +5,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -13,6 +15,7 @@ import java.util.stream.Stream;
 
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -1053,7 +1056,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     };
 
 
-    private Comparator<List<TupleElement>> comparatorFromNthOrderSpec(List<OrderSpecContext> orderSpecs, int[] modifierMaskArray, int i) {
+    private Comparator<List<TupleElement>> comparatorFromNthOrderSpec(List<OrderSpecContext> orderSpecs,
+            int[] modifierMaskArray, int i) {
         final OrderSpecContext orderSpec = orderSpecs.get(0);
         final ExprSingleContext expr = orderSpec.exprSingle();
         int modifierMask = modifierMaskArray[i];
@@ -1070,13 +1074,42 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         };
     }
 
+
+    boolean hasEffectiveBooleanValue(XQueryType type) {
+        return !type.isFunction()
+                && !type.isMap()
+                && !type.isArray();
+    }
+
+    void addError(ParserRuleContext where, String message) {
+        errors.add(String.format("[line:%i, column:%i] %s", where.getStart().getLine(),
+                where.getStart().getCharPositionInLine(), message));
+    }
+
+    void addError(ParserRuleContext where, Function<ParserRuleContext, String> message) {
+        errors.add(String.format("[line:%i, column:%i] %s", where.getStart().getLine(),
+                where.getStart().getCharPositionInLine(), message.apply(where)));
+    }
+
     @Override
     public XQueryType visitIfExpr(IfExprContext ctx) {
-        var visitedExpression = ctx.condition.accept(this);
-        if (visitedExpression.effectiveXQueryTypeValue())
-            return ctx.ifValue.accept(this);
-        else
-            return ctx.elseValue.accept(this);
+        var visitedType = ctx.condition.accept(this);
+        if (!hasEffectiveBooleanValue(visitedType)) {
+            var msg = String.format(
+                    "If condition must have an effective boolean value and the type %s doesn't have one",
+                    visitedType.toString());
+            addError(ctx, msg);
+        }
+        var trueType = ctx.ifValue.accept(this);
+        var falseType =  ctx.elseValue.accept(this);
+        if (trueType.equals(falseType))
+            return trueType;
+        if (trueType.isSubtypeOf(falseType))
+            return falseType;
+        if (falseType.isSubtypeOf(trueType))
+            return trueType;
+        // Add union types
+        return typeFactory.any();
     }
 
     @Override
@@ -1104,18 +1137,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
             return tuple;
         });
         return null;
-    }
-
-    private int compareValues(XQueryType value1, XQueryType value2) {
-        if (value1.valueEqual(typeFactory, value2).booleanValue()) {
-            return 0;
-        } else {
-            if (value1.valueLessThan(typeFactory, value2).booleanValue()) {
-                return -1;
-            }
-            ;
-            return 1;
-        }
     }
 
     private void entypeVariables(List<TupleElement> tuple) {

@@ -41,7 +41,7 @@ public class XQueryBaseSemanticContext implements XQuerySemanticContext {
         return currentScope().getVariable(variableName);
     }
     @Override
-    public boolean entypeVariable(String variableName, XQueryType assignedValue) {
-        return currentScope().entypeVariable(variableName, assignedValue);
+    public boolean entypeVariable(String variableName, XQueryType assignedType) {
+        return currentScope().entypeVariable(variableName, assignedType);
     }
 }

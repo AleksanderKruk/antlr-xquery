@@ -5,6 +5,6 @@ import com.github.akruk.antlrxquery.typesystem.XQueryType;
 
 public interface XQuerySemanticContext extends XQueryContext {
   XQuerySemanticScope currentScope();
-  boolean entypeVariable(String variableName, XQueryType assignedValue);
+  boolean entypeVariable(String variableName, XQueryType assignedType);
   XQueryType getVariable(String variableName);
 }

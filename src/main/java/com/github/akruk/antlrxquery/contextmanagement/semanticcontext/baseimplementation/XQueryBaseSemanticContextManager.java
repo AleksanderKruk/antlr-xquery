@@ -54,8 +54,8 @@ public class XQueryBaseSemanticContextManager implements XQuerySemanticContextMa
     }
 
     @Override
-    public boolean entypeVariable(String variableName, XQueryType assignedValue) {
-        return currentContext().entypeVariable(variableName, assignedValue);
+    public boolean entypeVariable(String variableName, XQueryType assignedType) {
+        return currentContext().entypeVariable(variableName, assignedType);
     }
 
     @Override

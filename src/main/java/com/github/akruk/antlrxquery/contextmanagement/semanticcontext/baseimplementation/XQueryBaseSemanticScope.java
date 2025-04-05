@@ -10,9 +10,9 @@ public class XQueryBaseSemanticScope implements XQuerySemanticScope {
     Map<String, XQueryType> variables = new HashMap<>();
 
     @Override
-    public boolean entypeVariable(String variableName, XQueryType assignedValue) {
+    public boolean entypeVariable(String variableName, XQueryType assignedType) {
         boolean addedVariable = variables.containsKey(variableName);
-        variables.put(variableName, assignedValue);
+        variables.put(variableName, assignedType);
         return addedVariable;
     }
 

@@ -16,7 +16,7 @@ import com.github.akruk.antlrxquery.values.XQueryNumber;
 import com.github.akruk.antlrxquery.values.XQueryString;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
-import com.github.akruk.antlrxquery.values.factories.defaults.XQueryBaseValueFactory;
+import com.github.akruk.antlrxquery.values.factories.defaults.XQueryMemoizedValueFactory;
 
 import static org.junit.Assert.assertEquals;
 
@@ -26,7 +26,7 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class XQueryTest {
-    XQueryValueFactory baseFactory = new XQueryBaseValueFactory();
+    XQueryValueFactory baseFactory = new XQueryMemoizedValueFactory();
     public void assertResult(String xquery, String result) {
         var value = XQuery.evaluate(null, xquery, null);
         assertNotNull(value);

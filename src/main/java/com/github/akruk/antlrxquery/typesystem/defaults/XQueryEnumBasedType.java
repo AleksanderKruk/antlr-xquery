@@ -323,4 +323,11 @@ public class XQueryEnumBasedType implements XQueryType {
         return isArray[type.ordinal()];
     }
 
+    @Override
+    public boolean hasEffectiveBooleanValue() {
+        return !this.isFunction()
+                && !this.isMap()
+                && !this.isArray();
+    }
+
 }

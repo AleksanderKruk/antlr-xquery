@@ -17,4 +17,5 @@ public interface XQueryType {
     boolean isFunction(String otherName, XQueryType returnedType, List<XQueryType> argumentTypes);
     boolean isMap();
     boolean isArray();
+    boolean hasEffectiveBooleanValue();
 }

@@ -41,7 +41,6 @@ public class XQueryEnumBasedType implements XQueryType {
         return sequence(number, XQueryOccurence.ONE);
     }
 
-
     public static final XQueryEnumBasedType anynode = new XQueryEnumBasedType(XQueryTypes.ANY_NODE, null, null, null, null, null);
     public static XQueryEnumBasedType anyNode() {
         return sequence(anynode, XQueryOccurence.ONE);
@@ -324,6 +323,31 @@ public class XQueryEnumBasedType implements XQueryType {
         return !this.isFunction()
                 && !this.isMap()
                 && !this.isArray();
+    }
+
+    @Override
+    public boolean isOne() {
+        return occurence == XQueryOccurence.ONE;
+    }
+
+    @Override
+    public boolean isOneOrMore() {
+        return occurence == XQueryOccurence.ONE_OR_MORE;
+    }
+
+    @Override
+    public boolean isZeroOrMore() {
+        return occurence == XQueryOccurence.ZERO_OR_MORE;
+    }
+
+    @Override
+    public boolean isZeroOrOne() {
+        return occurence == XQueryOccurence.ZERO_OR_ONE;
+    }
+
+    @Override
+    public boolean isZero() {
+        return occurence == XQueryOccurence.ZERO;
     }
 
 }

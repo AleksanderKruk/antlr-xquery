@@ -2,6 +2,8 @@ package com.github.akruk.antlrxquery.typesystem;
 
 import java.util.List;
 
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryOccurence;
+
 public interface XQueryType {
     @Override
     boolean equals(Object obj);
@@ -18,4 +20,9 @@ public interface XQueryType {
     boolean isMap();
     boolean isArray();
     boolean hasEffectiveBooleanValue();
+    boolean isOne();
+    boolean isOneOrMore();
+    boolean isZeroOrMore();
+    boolean isZeroOrOne();
+    boolean isZero();
 }

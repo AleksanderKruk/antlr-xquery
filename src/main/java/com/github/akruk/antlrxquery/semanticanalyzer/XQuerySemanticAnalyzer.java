@@ -721,18 +721,16 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
     private XQueryType handleConcatenation(final OrExprContext ctx) throws XQueryUnsupportedOperation {
-        var value = ctx.orExpr(0).accept(this);
-        if (!value.isStringValue()) {
-            // TODO: type error
-        }
+        final XQueryType string = typeFactory.string();
         final var operationCount = ctx.CONCATENATION().size();
-        for (int i = 1; i <= operationCount; i++) {
-            final var visitedExpression = ctx.orExpr(i).accept(this);
-            value = value.concatenate(typeFactory, visitedExpression);
+        for (int i = 0; i <= operationCount; i++) {
+            final var visitedType = ctx.orExpr(i).accept(this);
+            if (!visitedType.isSubtypeOf(string)) {
+                addError(ctx.orExpr(i), "Operands of 'or expression' need to be string");
+            }
             i++;
         }
-
-        return value;
+        return string;
     }
 
 
@@ -769,120 +767,91 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
 
 
     private XQueryType handleOrExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
-        var value = ctx.orExpr(0).accept(this);
-        if (!value.isXQueryTypeValue()) {
-            // TODO: type error
-        }
-        // Short circuit
-        if (value.booleanValue()) {
-            return XQueryXQueryType.TRUE;
-        }
+        final XQueryType boolean_ = typeFactory.boolean_();
         final var orCount = ctx.OR().size();
-        for (int i = 1; i <= orCount; i++) {
-            final var visitedExpression = ctx.orExpr(i).accept(this);
-            value = value.or(typeFactory, visitedExpression);
-            // Short circuit
-            if (value.booleanValue()) {
-                return XQueryXQueryType.TRUE;
+        for (int i = 0; i <= orCount; i++) {
+            final var visitedType = ctx.orExpr(i).accept(this);
+            if (!visitedType.isSubtypeOf(boolean_)) {
+                addError(ctx.orExpr(i), "Operands of 'or expression' need to be boolean");
             }
             i++;
         }
-
-        return value;
+        return boolean_;
     }
 
 
     private XQueryType handleAndExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
-        var value = ctx.orExpr(0).accept(this);
-        if (!value.isXQueryTypeValue()) {
-            // TODO: type error
-        }
-        // Short circuit
-        if (!value.booleanValue()) {
-            return XQueryXQueryType.FALSE;
-        }
+        final XQueryType boolean_ = typeFactory.boolean_();
         final var orCount = ctx.AND().size();
-        for (int i = 1; i <= orCount; i++) {
-            final var visitedExpression = ctx.orExpr(i).accept(this);
-            value = value.and(typeFactory, visitedExpression);
-            // Short circuit
-            if (!value.booleanValue()) {
-                return XQueryXQueryType.FALSE;
+        for (int i = 0; i <= orCount; i++) {
+            final var visitedType = ctx.orExpr(i).accept(this);
+            if (!visitedType.isSubtypeOf(boolean_)) {
+                addError(ctx.orExpr(i), "Operands of 'or expression' need to be boolean");
             }
             i++;
         }
-
-        return value;
+        return boolean_;
     }
 
 
     private XQueryType handleAdditiveExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
-        var value = ctx.orExpr(0).accept(this);
-        if (!value.isNumericValue()) {
-            // TODO: type error
-        }
+        final XQueryType number = typeFactory.number();
         final var orCount = ctx.additiveOperator().size();
-        for (int i = 1; i <= orCount; i++) {
-            final var visitedExpression = ctx.orExpr(i).accept(this);
-            value = switch (ctx.additiveOperator(i-1).getText()) {
-                case "+" -> value.add(typeFactory, visitedExpression);
-                case "-" -> value.subtract(typeFactory, visitedExpression);
-                default -> null;
-            };
+        for (int i = 0; i <= orCount; i++) {
+            final OrExprContext operandExpr = ctx.orExpr(i);
+            final var operand = operandExpr.accept(this);
+            if (!operand.isSubtypeOf(number)) {
+                addError(operandExpr, "Operands in additive expression must be numeric");
+            }
             i++;
         }
-        return value;
+        return typeFactory.number();
     }
 
 
 
     private XQueryType handleGeneralComparison(final OrExprContext ctx) throws XQueryUnsupportedOperation {
-        final var value = ctx.orExpr(0).accept(this);
-        final var visitedExpression = ctx.orExpr(1).accept(this);
-        return switch(ctx.generalComp().getText()) {
-            case "=" -> value.generalEqual(typeFactory, visitedExpression);
-            case "!=" -> value.generalUnequal(typeFactory, visitedExpression);
-            case ">" -> value.generalGreaterThan(typeFactory, visitedExpression);
-            case "<" -> value.generalLessThan(typeFactory, visitedExpression);
-            case "<=" -> value.generalLessEqual(typeFactory, visitedExpression);
-            case ">=" -> value.generalGreaterEqual(typeFactory, visitedExpression);
-            default -> null;
-        };
+        final var leftHandSide = ctx.orExpr(0).accept(this);
+        final var rightHandSide = ctx.orExpr(1).accept(this);
+        if (!leftHandSide.isSubtypeOf(rightHandSide)) {
+            String msg = String.format("The types: %s and %s in general comparison are not comparable",
+                    leftHandSide.toString(), rightHandSide.toString());
+            addError(ctx, msg);
+        }
+        return typeFactory.boolean_();
     }
 
     private XQueryType handleValueComparison(final OrExprContext ctx) throws XQueryUnsupportedOperation {
-        final var value = ctx.orExpr(0).accept(this);
-        final var visitedExpression = ctx.orExpr(1).accept(this);
-        return switch(ctx.valueComp().getText()) {
-            case "eq" -> value.valueEqual(typeFactory, visitedExpression);
-            case "ne" -> value.valueUnequal(typeFactory, visitedExpression);
-            case "lt" -> value.valueLessThan(typeFactory, visitedExpression);
-            case "gt" -> value.valueGreaterThan(typeFactory, visitedExpression);
-            case "le" -> value.valueLessEqual(typeFactory, visitedExpression);
-            case "ge" -> value.valueGreaterEqual(typeFactory, visitedExpression);
-            default -> null;
-        };
+        final var leftHandSide = ctx.orExpr(0).accept(this);
+        final var rightHandSide = ctx.orExpr(1).accept(this);
+        if (!leftHandSide.isOne()) {
+            addError(ctx.orExpr(0), "Left hand side of 'or expression' must be a one-length sequence");
+        }
+        if (!rightHandSide.isOne()) {
+            addError(ctx.orExpr(1), "Right hand side of 'or expression' must be a one-length sequence");
+        }
+        if (!leftHandSide.isSubtypeOf(rightHandSide)) {
+            String msg = String.format("The types: %s and %s in value comparison are not comparable", leftHandSide.toString(), rightHandSide.toString());
+            addError(ctx, msg);
+        }
+        return typeFactory.boolean_();
     }
 
-
     private XQueryType handleMultiplicativeExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
-        var value = ctx.orExpr(0).accept(this);
-        if (!value.isNumericValue()) {
-            // TODO: type error
+        final XQueryType number = typeFactory.number();
+        var type = ctx.orExpr(0).accept(this);
+        if (!type.isSubtypeOf(number)) {
+            addError(ctx, "Multiplicative expression requires a number as its first operand");
         }
         final var orCount = ctx.multiplicativeOperator().size();
         for (int i = 1; i <= orCount; i++) {
-            final var visitedExpression = ctx.orExpr(i).accept(this);
-            value = switch (ctx.multiplicativeOperator(i-1).getText()) {
-                case "*" -> value.multiply(typeFactory, visitedExpression);
-                case "div" -> value.divide(typeFactory, visitedExpression);
-                case "idiv" -> value.integerDivide(typeFactory, visitedExpression);
-                case "mod" -> value.modulus(typeFactory, visitedExpression);
-                default -> null;
-            };
+            final var visitedType = ctx.orExpr(i).accept(this);
+            if (!visitedType.isSubtypeOf(number)) {
+                addError(ctx, "Multiplicative expression requires a number as its first operand");
+            }
             i++;
         }
-        return value;
+        return number;
     }
 
     private XQueryType handleUnionExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
@@ -931,10 +900,10 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
 
-    private final XQueryType number = typeFactory.number();
     private XQueryType handleUnaryArithmeticExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
         final var type = ctx.orExpr(0).accept(this);
-        if (!type.equals(number)) {
+        final XQueryType number = typeFactory.number();
+        if (!type.isSubtypeOf(typeFactory.number())) {
             addError(ctx, "Arithmetic unary expression requires a number");
         }
         return number;

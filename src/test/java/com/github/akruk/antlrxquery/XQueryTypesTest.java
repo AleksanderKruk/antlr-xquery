@@ -8,8 +8,6 @@ import com.github.akruk.antlrxquery.typesystem.defaults.XQueryOccurence;
 
 import static org.junit.Assert.assertEquals;
 
-import javax.print.DocFlavor.STRING;
-
 import static org.junit.Assert.*;
 
 public class XQueryTypesTest {

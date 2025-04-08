@@ -202,9 +202,12 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     @Override
     public XQueryType visitWhereClause(WhereClauseContext ctx) {
         final var filteringExpression = ctx.exprSingle();
-        visitedTupleStream = visitedTupleStream.filter(tuple -> {
+        visitedTupleStream = visitedTupleStream.map(tuple -> {
             XQueryType filter = filteringExpression.accept(this);
-            return filter.effectiveXQueryTypeValue();
+            if (!hasEffectiveBooleanValue(filter)) {
+                addError(filteringExpression, "Where clause expression needs to have effective boolean value");
+            }
+            return tuple;
         });
         return null;
     }
@@ -266,16 +269,14 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         }
         // More than one expression
         // are turned into a flattened list
-        final List<XQueryType> result = new ArrayList<>();
         for (final var exprSingle : ctx.exprSingle()) {
-            final var expressionValue = exprSingle.accept(this);
-            if (expressionValue.isAtomic()) {
-                result.add(expressionValue);
+            final var expressionType = exprSingle.accept(this);
+            if (expressionType.isAtomic()) {
                 continue;
             }
             // If the result is not atomic we atomize it
             // and extend the result list
-            final var atomizedValues = expressionValue.atomize();
+            final var atomizedValues = expressionType.atomize();
             result.addAll(atomizedValues);
         }
         return typeFactory.sequence(result);
@@ -338,7 +339,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
                 }
                 return criterionNode.accept(this).booleanValue();
             });
-            return XQueryXQueryType.of(every);
+            return XQueryType.of(every);
         }
         if (ctx.SOME() != null) {
             boolean some = cartesianProduct(sequences).anyMatch(variableProduct -> {
@@ -347,7 +348,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
                 }
                 return criterionNode.accept(this).booleanValue();
             });
-            return XQueryXQueryType.of(some);
+            return XQueryType.of(some);
         }
         return null;
     }
@@ -401,26 +402,15 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     private XQueryType handleNodeComp(OrExprContext ctx) {
         final var anyElement = XQueryEnumBasedType.anyElement();
         final var visitedLeft = ctx.orExpr(0).accept(this);
-        if (visitedLeft.isSubtypeOf(anyElement)) {
+        if (!visitedLeft.isSubtypeOf(anyElement)) {
             addError(ctx.orExpr(0), "Operands of node comparison must be a one-item sequence of type 'element'");
         }
         final var visitedRight = ctx.orExpr(1).accept(this);
-        if (visitedRight.isSubtypeOf(anyElement)) {
+        if (!visitedRight.isSubtypeOf(anyElement)) {
             addError(ctx.orExpr(1), "Operands of node comparison must be a one-item sequence of type 'element'");
         }
         return typeFactory.boolean_();
 
-    }
-
-    private ParseTree getSingleNode(final XQueryType visitedLeft) {
-        ParseTree nodeLeft;
-        if (visitedLeft.isAtomic()) {
-            nodeLeft = visitedLeft.node();
-        } else {
-            List<XQueryType> sequenceLeft = visitedLeft.exactlyOne(typeFactory).sequence();
-            nodeLeft = sequenceLeft.get(0).node();
-        }
-        return nodeLeft;
     }
 
 
@@ -444,20 +434,14 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
             final var savedNodes = saveMatchedModes();
             final var savedAxis = saveAxis();
             // TODO: Context nodes
-            currentAxis = XQueryAxis.CHILD;
             var resultingNodeSequence = ctx.relativePathExpr().accept(this);
-            matchedNodes = savedNodes;
-            currentAxis = savedAxis;
             return resultingNodeSequence;
         }
         boolean useDescendantOrSelfAxis = ctx.SLASHES() != null;
         if (useDescendantOrSelfAxis) {
             final var savedNodes = saveMatchedModes();
             final var savedAxis = saveAxis();
-            currentAxis = XQueryAxis.DESCENDANT_OR_SELF;
             var resultingNodeSequence = ctx.relativePathExpr().accept(this);
-            matchedNodes = savedNodes;
-            currentAxis = savedAxis;
             return resultingNodeSequence;
         }
         return ctx.relativePathExpr().accept(this);
@@ -483,10 +467,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
             i++;
         }
         return matchedNodes;
-    }
-
-    private List<ParseTree> matchedTreeNodes() {
-        return matchedNodes.sequence().stream().map(XQueryType::node).toList();
     }
 
     @Override
@@ -795,8 +775,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         return typeFactory.number();
     }
 
-
-
     private XQueryType handleGeneralComparison(final OrExprContext ctx) {
         final var leftHandSide = ctx.orExpr(0).accept(this);
         final var rightHandSide = ctx.orExpr(1).accept(this);
@@ -812,10 +790,10 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         final var leftHandSide = ctx.orExpr(0).accept(this);
         final var rightHandSide = ctx.orExpr(1).accept(this);
         if (!leftHandSide.isOne()) {
-            addError(ctx.orExpr(0), "Left hand side of 'or expression' must be a one-length sequence");
+            addError(ctx.orExpr(0), "Left hand side of 'or expression' must be a one-item sequence");
         }
         if (!rightHandSide.isOne()) {
-            addError(ctx.orExpr(1), "Right hand side of 'or expression' must be a one-length sequence");
+            addError(ctx.orExpr(1), "Right hand side of 'or expression' must be a one-item sequence");
         }
         if (!leftHandSide.isSubtypeOf(rightHandSide)) {
             String msg = String.format("The types: %s and %s in value comparison are not comparable", leftHandSide.toString(), rightHandSide.toString());

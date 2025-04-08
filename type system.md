@@ -36,12 +36,12 @@ Type designation | Interpretation
 `element(test)?`| sequence consisting of zero or one parse tree nodes named `test`
 
 ### Primary types
-Primary types are the most basic of types. These are `string` for representing text
-and `number` for representing numbers.
+Primary types are the most basic of types. These are `string` for representing text, `number` for representing numbers and `boolean` for boolean values.
 Type designation | Interpretation
 --- | ---
 `string` | one-element-sequence of type `string`
 `number` | one-element-sequence of type `number`
+`boolean` | one-element-sequence of type `boolean`
 
 ###
 

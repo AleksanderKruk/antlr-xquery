@@ -69,6 +69,9 @@ import com.github.akruk.antlrxquery.evaluator.functioncaller.XQueryFunctionCalle
 import com.github.akruk.antlrxquery.evaluator.functioncaller.defaults.BaseFunctionCaller;
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 import com.github.akruk.antlrxquery.typesystem.XQueryType;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumBasedType;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryOccurence;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.values.factories.defaults.XQueryBaseValueFactory;
@@ -396,25 +399,20 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
 
 
     private XQueryType handleNodeComp(OrExprContext ctx) {
-        try {
-            final var visitedLeft = ctx.orExpr(0).accept(this);
-            ParseTree nodeLeft = getSingleNode(visitedLeft);
-            final var visitedRight = ctx.orExpr(1).accept(this);
-            ParseTree nodeRight = getSingleNode(visitedRight);
-            boolean result = switch (ctx.nodeComp().getText()) {
-                case "is" -> nodeLeft == nodeRight;
-                case "<<" -> getFollowing(nodeLeft).contains(nodeRight);
-                case ">>" -> getPreceding(nodeLeft).contains(nodeRight);
-                default -> false;
-            };
-            return typeFactory.bool(result);
-        } catch (XQueryUnsupportedOperation e) {
-            return null;
+        final var anyElement = XQueryEnumBasedType.anyElement();
+        final var visitedLeft = ctx.orExpr(0).accept(this);
+        if (visitedLeft.isSubtypeOf(anyElement)) {
+            addError(ctx.orExpr(0), "Operands of node comparison must be a one-item sequence of type 'element'");
         }
+        final var visitedRight = ctx.orExpr(1).accept(this);
+        if (visitedRight.isSubtypeOf(anyElement)) {
+            addError(ctx.orExpr(1), "Operands of node comparison must be a one-item sequence of type 'element'");
+        }
+        return typeFactory.boolean_();
 
     }
 
-    private ParseTree getSingleNode(final XQueryType visitedLeft) throws XQueryUnsupportedOperation {
+    private ParseTree getSingleNode(final XQueryType visitedLeft) {
         ParseTree nodeLeft;
         if (visitedLeft.isAtomic()) {
             nodeLeft = visitedLeft.node();
@@ -446,7 +444,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
             final var savedNodes = saveMatchedModes();
             final var savedAxis = saveAxis();
             // TODO: Context nodes
-            matchedNodes = nodeSequence(List.of(root.node()));
             currentAxis = XQueryAxis.CHILD;
             var resultingNodeSequence = ctx.relativePathExpr().accept(this);
             matchedNodes = savedNodes;
@@ -457,7 +454,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         if (useDescendantOrSelfAxis) {
             final var savedNodes = saveMatchedModes();
             final var savedAxis = saveAxis();
-            matchedNodes = nodeSequence(List.of(root.node()));
             currentAxis = XQueryAxis.DESCENDANT_OR_SELF;
             var resultingNodeSequence = ctx.relativePathExpr().accept(this);
             matchedNodes = savedNodes;
@@ -479,7 +475,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
             matchedNodes = switch (ctx.pathOperator(i-1).getText()) {
                 case "//" -> {
                     List<ParseTree> descendantsOrSelf = getAllDescendantsOrSelf(matchedTreeNodes());
-                    matchedNodes = nodeSequence(descendantsOrSelf);
                     yield ctx.stepExpr(i).accept(this);
                 }
                 case "/" -> ctx.stepExpr(i).accept(this);
@@ -488,13 +483,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
             i++;
         }
         return matchedNodes;
-    }
-
-    private XQueryType nodeSequence(List<ParseTree> treenodes) {
-        List<XQueryType> nodeSequence = treenodes.stream()
-            .map(typeFactory::node)
-            .collect(Collectors.toList());
-        return typeFactory.sequence(nodeSequence);
     }
 
     private List<ParseTree> matchedTreeNodes() {
@@ -720,7 +708,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         return nodeSequence(matchedTreeNodes);
     }
 
-    private XQueryType handleConcatenation(final OrExprContext ctx) throws XQueryUnsupportedOperation {
+    private XQueryType handleConcatenation(final OrExprContext ctx) {
         final XQueryType string = typeFactory.string();
         final var operationCount = ctx.CONCATENATION().size();
         for (int i = 0; i <= operationCount; i++) {
@@ -734,8 +722,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
 
-    private XQueryType handleArrowExpr(final OrExprContext ctx)
-            throws XQueryUnsupportedOperation {
+    private XQueryType handleArrowExpr(final OrExprContext ctx) {
         final var savedArgs = saveVisitedArguments();
         var contextArgument = ctx.orExpr(0).accept(this);
         visitedArgumentTypesList.add(contextArgument);
@@ -766,7 +753,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
 
 
 
-    private XQueryType handleOrExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
+    private XQueryType handleOrExpr(final OrExprContext ctx) {
         final XQueryType boolean_ = typeFactory.boolean_();
         final var orCount = ctx.OR().size();
         for (int i = 0; i <= orCount; i++) {
@@ -780,7 +767,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
 
-    private XQueryType handleAndExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
+    private XQueryType handleAndExpr(final OrExprContext ctx) {
         final XQueryType boolean_ = typeFactory.boolean_();
         final var orCount = ctx.AND().size();
         for (int i = 0; i <= orCount; i++) {
@@ -794,7 +781,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
 
-    private XQueryType handleAdditiveExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
+    private XQueryType handleAdditiveExpr(final OrExprContext ctx) {
         final XQueryType number = typeFactory.number();
         final var orCount = ctx.additiveOperator().size();
         for (int i = 0; i <= orCount; i++) {
@@ -810,7 +797,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
 
 
 
-    private XQueryType handleGeneralComparison(final OrExprContext ctx) throws XQueryUnsupportedOperation {
+    private XQueryType handleGeneralComparison(final OrExprContext ctx) {
         final var leftHandSide = ctx.orExpr(0).accept(this);
         final var rightHandSide = ctx.orExpr(1).accept(this);
         if (!leftHandSide.isSubtypeOf(rightHandSide)) {
@@ -821,7 +808,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         return typeFactory.boolean_();
     }
 
-    private XQueryType handleValueComparison(final OrExprContext ctx) throws XQueryUnsupportedOperation {
+    private XQueryType handleValueComparison(final OrExprContext ctx) {
         final var leftHandSide = ctx.orExpr(0).accept(this);
         final var rightHandSide = ctx.orExpr(1).accept(this);
         if (!leftHandSide.isOne()) {
@@ -837,7 +824,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         return typeFactory.boolean_();
     }
 
-    private XQueryType handleMultiplicativeExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
+    private XQueryType handleMultiplicativeExpr(final OrExprContext ctx) {
         final XQueryType number = typeFactory.number();
         var type = ctx.orExpr(0).accept(this);
         if (!type.isSubtypeOf(number)) {
@@ -854,7 +841,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         return number;
     }
 
-    private XQueryType handleUnionExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
+    private XQueryType handleUnionExpr(final OrExprContext ctx) {
         var value = ctx.orExpr(0).accept(this);
         if (!value.isSequence()) {
             // TODO: type error
@@ -868,7 +855,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         return value;
     }
 
-    private XQueryType handleIntersectionExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
+    private XQueryType handleIntersectionExpr(final OrExprContext ctx) {
         var value = ctx.orExpr(0).accept(this);
         if (!value.isSequence()) {
             // TODO: type error
@@ -884,7 +871,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
 
-    private XQueryType handleSequenceSubtractionExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
+    private XQueryType handleSequenceSubtractionExpr(final OrExprContext ctx) {
         var value = ctx.orExpr(0).accept(this);
         if (!value.isSequence()) {
             // TODO: type error
@@ -900,7 +887,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
 
-    private XQueryType handleUnaryArithmeticExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
+    private XQueryType handleUnaryArithmeticExpr(final OrExprContext ctx) {
         final var type = ctx.orExpr(0).accept(this);
         final XQueryType number = typeFactory.number();
         if (!type.isSubtypeOf(typeFactory.number())) {

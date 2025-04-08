@@ -18,5 +18,4 @@ public interface XQueryType {
     boolean isMap();
     boolean isArray();
     boolean hasEffectiveBooleanValue();
-    boolean isAnyType();
 }

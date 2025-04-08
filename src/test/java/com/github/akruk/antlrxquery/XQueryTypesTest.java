@@ -15,7 +15,6 @@ import static org.junit.Assert.*;
 public class XQueryTypesTest {
 
     final XQueryEnumBasedType string = XQueryEnumBasedType.string();
-    final XQueryEnumBasedType integer = XQueryEnumBasedType.integer();
     final XQueryEnumBasedType number = XQueryEnumBasedType.number();
     final XQueryEnumBasedType anyNode = XQueryEnumBasedType.anyNode();
     final XQueryEnumBasedType emptySequence = XQueryEnumBasedType.emptySequence();
@@ -26,7 +25,6 @@ public class XQueryTypesTest {
     @Test
     public void stringDirectEquality() throws XQueryUnsupportedOperation {
         assertEquals(string, XQueryEnumBasedType.string());
-        assertNotEquals(string, integer);
         assertNotEquals(string, number);
         assertNotEquals(string, emptySequence);
         assertNotEquals(string, stringSequenceOneOrMore);

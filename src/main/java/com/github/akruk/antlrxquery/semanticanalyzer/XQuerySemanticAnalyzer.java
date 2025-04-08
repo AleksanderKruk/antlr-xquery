@@ -657,6 +657,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
     private Predicate<String> canBeTokenName = Pattern.compile("^[\\p{IsUppercase}].*").asPredicate();
+
     @Override
     public XQueryType visitNameTest(NameTestContext ctx) {
         var matchedTreeNodes = matchedTreeNodes();
@@ -930,12 +931,13 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
 
+    private final XQueryType number = typeFactory.number();
     private XQueryType handleUnaryArithmeticExpr(final OrExprContext ctx) throws XQueryUnsupportedOperation {
-        final var value = ctx.orExpr(0).accept(this);
-        if (!value.isNumericValue()) {
-            // TODO: type error
+        final var type = ctx.orExpr(0).accept(this);
+        if (!type.equals(number)) {
+            addError(ctx, "Arithmetic unary expression requires a number");
         }
-        return value.multiply(typeFactory, typeFactory.number(new BigDecimal(-1)));
+        return number;
     }
 
     @Override

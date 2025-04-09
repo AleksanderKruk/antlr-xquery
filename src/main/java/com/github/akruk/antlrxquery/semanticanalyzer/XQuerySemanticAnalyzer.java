@@ -30,6 +30,7 @@ import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
 import com.github.akruk.antlrxquery.evaluator.functioncaller.XQueryFunctionCaller;
 import com.github.akruk.antlrxquery.evaluator.functioncaller.defaults.BaseFunctionCaller;
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionCaller;
 import com.github.akruk.antlrxquery.typesystem.XQueryType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumBasedType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryOccurence;
@@ -46,7 +47,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     XQueryVisitingSemanticContext context;
     XQueryTypeFactory typeFactory;
     XQueryValueFactory valueFactory;
-    XQueryFunctionCaller functionCaller;
+    XQuerySemanticFunctionCaller functionCaller;
     Stream<List<TupleElement>> visitedTupleStream;
     List<String> errors;
 
@@ -58,7 +59,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
             final XQuerySemanticContextManager contextManager,
             final XQueryTypeFactory typeFactory,
             final XQueryValueFactory valueFactory,
-            final XQueryFunctionCaller functionCaller) {
+            final XQuerySemanticFunctionCaller functionCaller) {
         this.context = new XQueryVisitingSemanticContext();
         this.parser = parser;
         this.typeFactory = typeFactory;
@@ -270,9 +271,9 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         // TODO: error handling missing function
         final var savedArgs = saveVisitedArguments();
         ctx.argumentList().accept(this);
-        final var value = functionCaller.call(functionName, typeFactory, context, visitedArgumentTypesList);
+        final var type = functionCaller.call(functionName, typeFactory, context, visitedArgumentTypesList);
         visitedArgumentTypesList = savedArgs;
-        return value;
+        return type;
     }
 
 

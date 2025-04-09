@@ -9,6 +9,7 @@ public interface XQueryTypeFactory {
     public XQueryType anyArray();
     public XQueryType anyMap();
     public XQueryType anyElement();
+    public XQueryType element(String elementName);
     public XQueryType anyFunction();
     public XQueryType anyItem();
     public XQueryType boolean_();
@@ -17,5 +18,4 @@ public interface XQueryTypeFactory {
     public XQueryType zeroOrOne(XQueryType itemType);
     public XQueryType zeroOrMore(XQueryType itemType);
     public XQueryType oneOrMore(XQueryType itemType);
-    public XQueryType any();
 }

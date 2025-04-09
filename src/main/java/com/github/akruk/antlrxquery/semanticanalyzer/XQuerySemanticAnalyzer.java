@@ -552,7 +552,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
 
     @Override
     public XQueryType visitContextItemExpr(ContextItemExprContext ctx) {
-        return context.getItem();
+        return context.getItemType();
     }
 
     @Override

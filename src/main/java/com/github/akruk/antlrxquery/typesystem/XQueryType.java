@@ -25,4 +25,9 @@ public interface XQueryType {
     boolean isZeroOrMore();
     boolean isZeroOrOne();
     boolean isZero();
+    // XQueryType asOne();
+    // XQueryType asOneOrMore();
+    // XQueryType asZeroOrMore();
+    // XQueryType asZeroOrOne();
+    // XQueryType asZero();
 }

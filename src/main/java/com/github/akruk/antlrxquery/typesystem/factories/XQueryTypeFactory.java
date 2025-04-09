@@ -13,5 +13,9 @@ public interface XQueryTypeFactory {
     public XQueryType anyItem();
     public XQueryType boolean_();
     public XQueryType emptySequence();
+    public XQueryType one(XQueryType itemType);
+    public XQueryType zeroOrOne(XQueryType itemType);
+    public XQueryType zeroOrMore(XQueryType itemType);
+    public XQueryType oneOrMore(XQueryType itemType);
     public XQueryType any();
 }

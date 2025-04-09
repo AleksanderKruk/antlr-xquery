@@ -176,14 +176,14 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
 
     @Override
     public XQueryType visitVarRef(VarRefContext ctx) {
-        String variableName = ctx.varName().getText();
-        XQueryType variableValue = contextManager.getVariable(variableName);
+        final String variableName = ctx.varName().getText();
+        final XQueryType variableValue = contextManager.getVariable(variableName);
         return variableValue;
     }
 
     @Override
     public XQueryType visitReturnClause(ReturnClauseContext ctx) {
-        List<XQueryType> results = visitedTupleStream.map((tuple) -> {
+        final List<XQueryType> results = visitedTupleStream.map((tuple) -> {
             XQueryType value = ctx.exprSingle().accept(this);
             return value;
         }).toList();
@@ -231,17 +231,30 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         }
         // More than one expression
         // are turned into a flattened list
-        for (final var exprSingle : ctx.exprSingle()) {
-            final var expressionType = exprSingle.accept(this);
-            if (expressionType.isAtomic()) {
-                continue;
+        final boolean allOccurencesAreZero = ctx.exprSingle().stream()
+            .map(e->e.accept(this))
+            .allMatch(XQueryType::isZero);
+        if (allOccurencesAreZero)
+            return typeFactory.emptySequence();
+        final boolean allCanBeZero = ctx.exprSingle().stream()
+            .map(e->e.accept(this))
+            .allMatch(type->type.isZeroOrMore() || type.isZeroOrOne());
+
+        final var firstExpr = ctx.exprSingle(0);
+        final var firstExprType = firstExpr.accept(this);
+        final int size = ctx.exprSingle().size();
+        for (int i = 1; i < size; i++) {
+            final var exprSingle = ctx.exprSingle(i);
+            final XQueryType expressionType = exprSingle.accept(this);
+            final boolean mustBeAnyItem = !expressionType.isSubtypeItemtypeOf(firstExprType);
+            if (mustBeAnyItem && allCanBeZero) {
+                return typeFactory.zeroOrMore(typeFactory.anyItem());
+            } else if (mustBeAnyItem) {
+                return typeFactory.oneOrMore(typeFactory.anyItem());
             }
-            // If the result is not atomic we atomize it
-            // and extend the result list
-            final var atomizedValues = expressionType.atomize();
-            result.addAll(atomizedValues);
         }
-        return typeFactory.sequence(result);
+        return allCanBeZero? typeFactory.zeroOrMore(firstExprType)
+                           : typeFactory.oneOrMore(firstExprType);
     }
 
 

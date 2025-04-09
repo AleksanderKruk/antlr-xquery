@@ -311,15 +311,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         }
 
         final var criterionNode = ctx.exprSingle().getLast();
-        if (ctx.EVERY() != null) {
-            boolean every = cartesianProduct(sequences).allMatch(variableProduct -> {
-                for (int i = 0; i < variableNames.size(); i++) {
-                    contextManager.entypeVariable(variableNames.get(i), variableProduct.get(i));
-                }
-                return criterionNode.accept(this).booleanValue();
-            });
-            return XQueryType.of(every);
-        }
         for (int i = 0; i < variableNames.size(); i++) {
             contextManager.entypeVariable(variableNames.get(i), variableProduct.get(i));
         }
@@ -392,16 +383,15 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
 
 
     private XQueryType handleRangeExpr(OrExprContext ctx) {
-        var fromValue = ctx.orExpr(0).accept(this);
-        var toValue = ctx.orExpr(1).accept(this);
-        int fromInt = fromValue.numericValue().intValue();
-        int toInt = toValue.numericValue().intValue();
-        if (fromInt > toInt)
-            return typeFactory.emptySequence();
-        List<XQueryType> values = IntStream.rangeClosed(fromInt, toInt)
-            .mapToObj(i->typeFactory.number(i))
-            .collect(Collectors.toList());
-        return typeFactory.sequence(values);
+        final var fromValue = ctx.orExpr(0).accept(this);
+        final var toValue = ctx.orExpr(1).accept(this);
+        final var number = typeFactory.number();
+        if (!fromValue.isSubtypeOf(number)) {
+            addError(ctx.orExpr(0), "Wrong type in 'from' operand of 'range expression': '<number> to <number>'");
+        }
+        if (!toValue.isSubtypeOf(number)) {
+            addError(ctx.orExpr(1), "Wrong type in 'to' operand of range expression: '<number> to <number>'");
+        }
     }
 
     @Override

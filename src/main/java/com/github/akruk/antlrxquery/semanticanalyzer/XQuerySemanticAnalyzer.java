@@ -272,12 +272,15 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         final var savedArgs = saveVisitedArguments();
         ctx.argumentList().accept(this);
         final var type = functionCaller.call(functionName, typeFactory, context, visitedArgumentTypesList);
+        if (type == null) {
+            addError(ctx.functionName(), String.format("%s is unknown function name", functionName));
+        }
         visitedArgumentTypesList = savedArgs;
         return type;
     }
 
 
-    public static <T> Stream<List<T>> cartesianProduct(List<List<T>> lists) {
+    private static <T> Stream<List<T>> cartesianProduct(List<List<T>> lists) {
         if (lists.isEmpty()) {
             return Stream.of(List.of());
         }
@@ -317,16 +320,14 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
             });
             return XQueryType.of(every);
         }
-        if (ctx.SOME() != null) {
-            boolean some = cartesianProduct(sequences).anyMatch(variableProduct -> {
-                for (int i = 0; i < variableNames.size(); i++) {
-                    contextManager.entypeVariable(variableNames.get(i), variableProduct.get(i));
-                }
-                return criterionNode.accept(this).booleanValue();
-            });
-            return XQueryType.of(some);
+        for (int i = 0; i < variableNames.size(); i++) {
+            contextManager.entypeVariable(variableNames.get(i), variableProduct.get(i));
         }
-        return null;
+        var queriedType = criterionNode.accept(this);
+        if (!queriedType.hasEffectiveBooleanValue()) {
+            addError(criterionNode, "Criterion value needs to have effective boolean value");
+        }
+        return typeFactory.boolean_();
     }
 
 

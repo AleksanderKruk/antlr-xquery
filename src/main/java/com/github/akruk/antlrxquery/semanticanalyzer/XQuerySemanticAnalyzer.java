@@ -20,48 +20,10 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import com.github.akruk.antlrxquery.AntlrXqueryParser.AbbrevReverseStepContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ArgumentContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ArrowFunctionSpecifierContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.AxisStepContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ContextItemExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.CountClauseContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ExprSingleContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.FLWORExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ForBindingContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ForClauseContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ForwardAxisContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ForwardStepContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionCallContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.IfExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.LetBindingContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.LetClauseContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.LiteralContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.NameTestContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.NodeTestContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.OrExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.OrderByClauseContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.OrderSpecContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.PathExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.PositionalVarContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.PostfixContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.PostfixExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.PredicateContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.QnameContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.QuantifiedExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.RelativePathExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ReturnClauseContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseAxisContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseStepContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.StepExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.SwitchExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.VarRefContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.WhereClauseContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.*;
 import com.github.akruk.antlrxquery.contextmanagement.XQueryContextManager;
 import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.baseimplementation.XQueryBaseDynamicContextManager;
+import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.XQuerySemanticContext;
 import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.XQuerySemanticContextManager;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
@@ -899,12 +861,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         return saved;
     }
 
-    private XQueryType saveMatchedModes() {
-        final XQueryType saved = matchedNodes;
-        matchedNodes = typeFactory.sequence(List.of());
-        return saved;
-    }
-
     private Stream<List<TupleElement>> saveVisitedTupleStream() {
         final Stream<List<TupleElement>> saved = visitedTupleStream;
         visitedTupleStream = Stream.of(List.of());
@@ -912,26 +868,19 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
 
-    private XQueryVisitingContext saveContext() {
-        final XQueryVisitingContext saved = context;
-        context = new XQueryVisitingContext();
-        return saved;
-    }
-
-    private XQueryAxis saveAxis() {
-        final var saved = currentAxis;
-        currentAxis = null;
-        return saved;
-    }
-
+    // private XQuerySemanticContext saveContext() {
+    //     final XQuerySemanticContext saved = semani;
+    //     context = new XQueryVisitingContext();
+    //     return saved;
+    // }
 
 
 
     private Comparator<List<TupleElement>> ascendingEmptyGreatest(ParseTree expr) {
         return (tuple1, tuple2) -> {
-            provideVariables(tuple1);
+            entypeVariables(tuple1);
             XQueryType value1 = expr.accept(this);
-            provideVariables(tuple2);
+            entypeVariables(tuple2);
             XQueryType value2 = expr.accept(this);
             boolean value1IsEmptySequence = value1.isSequence() && value1.sequence().isEmpty();
             boolean value2IsEmptySequence = value2.isSequence() && value2.sequence().isEmpty();
@@ -945,9 +894,9 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
 
     private Comparator<List<TupleElement>> ascendingEmptyLeast(ParseTree expr) {
         return (tuple1, tuple2) -> {
-            provideVariables(tuple1);
+            entypeVariables(tuple1);
             XQueryType value1 = expr.accept(this);
-            provideVariables(tuple2);
+            entypeVariables(tuple2);
             XQueryType value2 = expr.accept(this);
             boolean value1IsEmptySequence = value1.isSequence() && value1.sequence().isEmpty();
             boolean value2IsEmptySequence = value2.isSequence() && value2.sequence().isEmpty();
@@ -961,9 +910,9 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
 
     private Comparator<List<TupleElement>> descendingEmptyGreatest(ParseTree expr) {
         return (tuple1, tuple2) -> {
-            provideVariables(tuple1);
+            entypeVariables(tuple1);
             XQueryType value1 = expr.accept(this);
-            provideVariables(tuple2);
+            entypeVariables(tuple2);
             XQueryType value2 = expr.accept(this);
             boolean value1IsEmptySequence = value1.isSequence() && value1.sequence().isEmpty();
             boolean value2IsEmptySequence = value2.isSequence() && value2.sequence().isEmpty();
@@ -977,9 +926,9 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
 
     private Comparator<List<TupleElement>> descendingEmptyLeast(ParseTree expr) {
         return (tuple1, tuple2) -> {
-            provideVariables(tuple1);
+            entypeVariables(tuple1);
             XQueryType value1 = expr.accept(this);
-            provideVariables(tuple2);
+            entypeVariables(tuple2);
             XQueryType value2 = expr.accept(this);
             boolean value1IsEmptySequence = value1.isSequence() && value1.sequence().isEmpty();
             boolean value2IsEmptySequence = value2.isSequence() && value2.sequence().isEmpty();

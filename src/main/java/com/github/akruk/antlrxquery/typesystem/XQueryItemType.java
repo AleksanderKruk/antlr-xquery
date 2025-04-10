@@ -12,4 +12,6 @@ public interface XQueryItemType {
     boolean isMap();
     boolean isArray();
     boolean hasEffectiveBooleanValue();
+    // subtype-itemtype(A, B) judgement
+    boolean itemtypeIsSubtypeOf(XQueryItemType obj);
 }

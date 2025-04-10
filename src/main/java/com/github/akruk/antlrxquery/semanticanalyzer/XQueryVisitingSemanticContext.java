@@ -1,28 +1,28 @@
 package com.github.akruk.antlrxquery.semanticanalyzer;
 
-import com.github.akruk.antlrxquery.typesystem.XQueryType;
+import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 
 public class XQueryVisitingSemanticContext {
-    private XQueryType itemType;
-    private XQueryType positionType;
+    private XQuerySequenceType itemType;
+    private XQuerySequenceType positionType;
 
-    public XQueryType getItemType() {
+    public XQuerySequenceType getItemType() {
         return itemType;
     }
 
-    public void setItemType(XQueryType item) {
+    public void setItemType(XQuerySequenceType item) {
         this.itemType = item;
     }
 
-    public XQueryType getPositionType() {
+    public XQuerySequenceType getPositionType() {
         return positionType;
     }
 
-    public XQueryType  getSizeType() {
+    public XQuerySequenceType  getSizeType() {
         return positionType;
     }
 
-    public void setPositionType(XQueryType positionType) {
+    public void setPositionType(XQuerySequenceType positionType) {
         this.positionType = positionType;
     }
 }

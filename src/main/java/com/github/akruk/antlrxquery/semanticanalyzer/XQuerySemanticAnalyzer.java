@@ -31,19 +31,18 @@ import com.github.akruk.antlrxquery.evaluator.functioncaller.XQueryFunctionCalle
 import com.github.akruk.antlrxquery.evaluator.functioncaller.defaults.BaseFunctionCaller;
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionCaller;
-import com.github.akruk.antlrxquery.typesystem.XQueryType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumBasedType;
+import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumSequenceType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryOccurence;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.values.factories.defaults.XQueryBaseValueFactory;
 
-public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryType>  {
+public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQuerySequenceType>  {
     XQuerySemanticContextManager contextManager;
 
     Parser parser;
-    List<XQueryType> visitedArgumentTypesList;
+    List<XQuerySequenceType> visitedArgumentTypesList;
     XQueryVisitingSemanticContext context;
     XQueryTypeFactory typeFactory;
     XQueryValueFactory valueFactory;
@@ -52,7 +51,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     List<String> errors;
 
 
-    private record TupleElement(String name, XQueryType type, String positionalName){};
+    private record TupleElement(String name, XQuerySequenceType type, String positionalName){};
 
     public XQuerySemanticAnalyzer(
             final Parser parser,
@@ -72,7 +71,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
     @Override
-    public XQueryType visitFLWORExpr(FLWORExprContext ctx) {
+    public XQuerySequenceType visitFLWORExpr(FLWORExprContext ctx) {
         final var savedTupleStream = saveVisitedTupleStream();
         contextManager.enterScope();
         // visitedTupleStream will be manipulated to prepare result stream
@@ -88,14 +87,14 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
     @Override
-    public XQueryType visitLetClause(LetClauseContext ctx) {
+    public XQuerySequenceType visitLetClause(LetClauseContext ctx) {
         final int newVariableCount = ctx.letBinding().size();
         visitedTupleStream = visitedTupleStream.map(tuple -> {
             var newTuple = new ArrayList<TupleElement>(tuple.size() + newVariableCount);
             newTuple.addAll(tuple);
             for (LetBindingContext streamVariable : ctx.letBinding()) {
                 String variableName = streamVariable.varName().getText();
-                XQueryType assignedValue = streamVariable.exprSingle().accept(this);
+                XQuerySequenceType assignedValue = streamVariable.exprSingle().accept(this);
                 var element = new TupleElement(variableName, assignedValue, null, null);
                 newTuple.add(element);
                 contextManager.entypeVariable(variableName, assignedValue);
@@ -108,13 +107,13 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
 
 
     @Override
-    public XQueryType visitForClause(ForClauseContext ctx) {
+    public XQuerySequenceType visitForClause(ForClauseContext ctx) {
         final int numberOfVariables = (int) ctx.forBinding().size();
         visitedTupleStream = visitedTupleStream.flatMap(tuple -> {
             List<List<TupleElement>> newTupleLike = tuple.stream().map(e -> List.of(e)).collect(Collectors.toList());
             for (ForBindingContext streamVariable : ctx.forBinding()) {
                 String variableName = streamVariable.varName().getText();
-                List<XQueryType> sequence = streamVariable.exprSingle().accept(this).sequence();
+                List<XQuerySequenceType> sequence = streamVariable.exprSingle().accept(this).sequence();
                 PositionalVarContext positional = streamVariable.positionalVar();
                 int sequenceSize = sequence.size();
                 if (positional != null) {
@@ -147,7 +146,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         public int i = 0;
     }
     @Override
-    public XQueryType visitCountClause(CountClauseContext ctx) {
+    public XQuerySequenceType visitCountClause(CountClauseContext ctx) {
         final String countVariableName = ctx.varName().getText();
         final MutableInt index = new MutableInt();
         index.i = 1;
@@ -163,10 +162,10 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
     @Override
-    public XQueryType visitWhereClause(WhereClauseContext ctx) {
+    public XQuerySequenceType visitWhereClause(WhereClauseContext ctx) {
         final var filteringExpression = ctx.exprSingle();
         visitedTupleStream = visitedTupleStream.map(tuple -> {
-            XQueryType filter = filteringExpression.accept(this);
+            XQuerySequenceType filter = filteringExpression.accept(this);
             if (!hasEffectiveBooleanValue(filter)) {
                 addError(filteringExpression, "Where clause expression needs to have effective boolean value");
             }
@@ -176,16 +175,16 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
     @Override
-    public XQueryType visitVarRef(VarRefContext ctx) {
+    public XQuerySequenceType visitVarRef(VarRefContext ctx) {
         final String variableName = ctx.varName().getText();
-        final XQueryType variableValue = contextManager.getVariable(variableName);
+        final XQuerySequenceType variableValue = contextManager.getVariable(variableName);
         return variableValue;
     }
 
     @Override
-    public XQueryType visitReturnClause(ReturnClauseContext ctx) {
-        final List<XQueryType> results = visitedTupleStream.map((tuple) -> {
-            XQueryType value = ctx.exprSingle().accept(this);
+    public XQuerySequenceType visitReturnClause(ReturnClauseContext ctx) {
+        final List<XQuerySequenceType> results = visitedTupleStream.map((tuple) -> {
+            XQuerySequenceType value = ctx.exprSingle().accept(this);
             return value;
         }).toList();
         if (results.size() == 1) {
@@ -196,7 +195,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
     @Override
-    public XQueryType visitLiteral(final LiteralContext ctx) {
+    public XQuerySequenceType visitLiteral(final LiteralContext ctx) {
         if (ctx.STRING() != null) {
             final String text = ctx.getText();
             final String removepars = ctx.getText().substring(1, text.length() - 1);
@@ -214,7 +213,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
     @Override
-    public XQueryType visitParenthesizedExpr(final ParenthesizedExprContext ctx) {
+    public XQuerySequenceType visitParenthesizedExpr(final ParenthesizedExprContext ctx) {
         // Empty parentheses mean an empty sequence '()'
         if (ctx.expr() == null) {
             valueFactory.sequence(List.of());
@@ -224,7 +223,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
     @Override
-    public XQueryType visitExpr(final ExprContext ctx) {
+    public XQuerySequenceType visitExpr(final ExprContext ctx) {
         // Only one expression
         // e.g. 13
         if (ctx.exprSingle().size() == 1) {
@@ -234,7 +233,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         // are turned into a flattened list
         final boolean allOccurencesAreZero = ctx.exprSingle().stream()
             .map(e->e.accept(this))
-            .allMatch(XQueryType::isZero);
+            .allMatch(XQuerySequenceType::isZero);
         if (allOccurencesAreZero)
             return typeFactory.emptySequence();
         final boolean allCanBeZero = ctx.exprSingle().stream()
@@ -246,7 +245,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         final int size = ctx.exprSingle().size();
         for (int i = 1; i < size; i++) {
             final var exprSingle = ctx.exprSingle(i);
-            final XQueryType expressionType = exprSingle.accept(this);
+            final XQuerySequenceType expressionType = exprSingle.accept(this);
             final boolean mustBeAnyItem = !expressionType.isSubtypeItemtypeOf(firstExprType);
             if (mustBeAnyItem && allCanBeZero) {
                 return typeFactory.zeroOrMore(typeFactory.anyItem());
@@ -266,7 +265,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
     @Override
-    public XQueryType visitFunctionCall(final FunctionCallContext ctx) {
+    public XQuerySequenceType visitFunctionCall(final FunctionCallContext ctx) {
         final var functionName = ctx.functionName().getText();
         // TODO: error handling missing function
         final var savedArgs = saveVisitedArguments();
@@ -298,13 +297,13 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
 
 
     @Override
-    public XQueryType visitQuantifiedExpr(QuantifiedExprContext ctx) {
+    public XQuerySequenceType visitQuantifiedExpr(QuantifiedExprContext ctx) {
         List<String> variableNames = ctx.varName().stream()
             .map(VarNameContext::qname)
             .map(QnameContext::getText)
             .toList();
         int variableExpressionCount = ctx.exprSingle().size()-1;
-        List<List<XQueryType>> sequences = new ArrayList<>(variableExpressionCount);
+        List<List<XQuerySequenceType>> sequences = new ArrayList<>(variableExpressionCount);
         for (var expr : ctx.exprSingle().subList(0, variableExpressionCount)) {
             var sequenceValue = expr.accept(this);
             sequences.add(sequenceValue.sequence());
@@ -323,9 +322,9 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
 
 
     @Override
-    public XQueryType visitOrExpr(final OrExprContext ctx) {
+    public XQuerySequenceType visitOrExpr(final OrExprContext ctx) {
         try {
-            XQueryType value = null;
+            XQuerySequenceType value = null;
             if (ctx.orExpr().size() == 0) {
                 value = ctx.pathExpr(0).accept(this);
             }
@@ -367,8 +366,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
 
 
 
-    private XQueryType handleNodeComp(OrExprContext ctx) {
-        final var anyElement = XQueryEnumBasedType.anyElement();
+    private XQuerySequenceType handleNodeComp(OrExprContext ctx) {
+        final var anyElement = XQueryEnumSequenceType.anyElement();
         final var visitedLeft = ctx.orExpr(0).accept(this);
         if (!visitedLeft.isSubtypeOf(anyElement)) {
             addError(ctx.orExpr(0), "Operands of node comparison must be a one-item sequence of type 'element'");
@@ -382,7 +381,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
 
-    private XQueryType handleRangeExpr(OrExprContext ctx) {
+    private XQuerySequenceType handleRangeExpr(OrExprContext ctx) {
         final var fromValue = ctx.orExpr(0).accept(this);
         final var toValue = ctx.orExpr(1).accept(this);
         final var number = typeFactory.number();
@@ -395,7 +394,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
     @Override
-    public XQueryType visitPathExpr(PathExprContext ctx) {
+    public XQuerySequenceType visitPathExpr(PathExprContext ctx) {
         boolean pathExpressionFromRoot = ctx.SLASH() != null;
         if (pathExpressionFromRoot) {
             final var savedNodes = saveMatchedModes();
@@ -415,11 +414,11 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
     @Override
-    public XQueryType visitRelativePathExpr(RelativePathExprContext ctx) {
+    public XQuerySequenceType visitRelativePathExpr(RelativePathExprContext ctx) {
         if (ctx.pathOperator().isEmpty()) {
             return ctx.stepExpr(0).accept(this);
         }
-        XQueryType visitedNodeSequence = ctx.stepExpr(0).accept(this);
+        XQuerySequenceType visitedNodeSequence = ctx.stepExpr(0).accept(this);
         matchedNodes = visitedNodeSequence;
         var operationCount = ctx.pathOperator().size();
         for (int i = 1; i <= operationCount; i++) {
@@ -437,7 +436,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
     @Override
-    public XQueryType visitStepExpr(StepExprContext ctx) {
+    public XQuerySequenceType visitStepExpr(StepExprContext ctx) {
         if (ctx.postfixExpr() != null)
             return ctx.postfixExpr().accept(this);
         return ctx.axisStep().accept(this);
@@ -445,8 +444,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
 
 
     @Override
-    public XQueryType visitAxisStep(AxisStepContext ctx) {
-        XQueryType stepResult = null;
+    public XQuerySequenceType visitAxisStep(AxisStepContext ctx) {
+        XQuerySequenceType stepResult = null;
         if (ctx.reverseStep() != null)
             stepResult = ctx.reverseStep().accept(this);
         else if (ctx.forwardStep() != null)
@@ -470,7 +469,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
     // @Override
-    // public XQueryType visitPredicateList(PredicateListContext ctx) {
+    // public XQuerySequenceType visitPredicateList(PredicateListContext ctx) {
     //     var result = match;
     //     for (var predicate : ctx.predicate()) {
     //         predicate.accept(this);
@@ -479,7 +478,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     // }
 
     @Override
-    public XQueryType visitPostfixExpr(PostfixExprContext ctx) {
+    public XQuerySequenceType visitPostfixExpr(PostfixExprContext ctx) {
         if (ctx.postfix().isEmpty()) {
             return ctx.primaryExpr().accept(this);
         }
@@ -501,7 +500,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
     @Override
-    public XQueryType visitPostfix(PostfixContext ctx) {
+    public XQuerySequenceType visitPostfix(PostfixContext ctx) {
         if (ctx.predicate() != null) {
             return ctx.predicate().accept(this);
         }
@@ -516,14 +515,14 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
     @Override
-    public XQueryType visitPredicate(PredicateContext ctx) {
+    public XQuerySequenceType visitPredicate(PredicateContext ctx) {
         final var contextValue = context.getItem();
         if (contextValue.isAtomic()) {
             // TODO: error
             return null;
         }
         final var sequence = contextValue.sequence();
-        final var filteredValues = new ArrayList<XQueryType>(sequence.size());
+        final var filteredValues = new ArrayList<XQuerySequenceType>(sequence.size());
         final var savedContext = saveContext();
         int index = 1;
         context.setSize(sequence.size());
@@ -539,7 +538,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
                 }
                 return sequence.get(i);
             }
-            if (visitedExpression.effectiveXQueryTypeValue()) {
+            if (visitedExpression.effectiveXQuerySequenceTypeValue()) {
                 filteredValues.add(contextItem);
             }
             index++;
@@ -551,12 +550,12 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
 
 
     @Override
-    public XQueryType visitContextItemExpr(ContextItemExprContext ctx) {
+    public XQuerySequenceType visitContextItemExpr(ContextItemExprContext ctx) {
         return context.getItemType();
     }
 
     @Override
-    public XQueryType visitForwardStep(ForwardStepContext ctx) {
+    public XQuerySequenceType visitForwardStep(ForwardStepContext ctx) {
         if (ctx.forwardAxis() != null) {
             ctx.forwardAxis().accept(this);
         }
@@ -572,7 +571,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
     @Override
-    public XQueryType visitReverseStep(ReverseStepContext ctx) {
+    public XQuerySequenceType visitReverseStep(ReverseStepContext ctx) {
         if (ctx.abbrevReverseStep() != null) {
             return ctx.abbrevReverseStep().accept(this);
         }
@@ -581,20 +580,20 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
     @Override
-    public XQueryType visitAbbrevReverseStep(AbbrevReverseStepContext ctx) {
+    public XQuerySequenceType visitAbbrevReverseStep(AbbrevReverseStepContext ctx) {
         var matchedParents = getAllParents(matchedTreeNodes());
         return nodeSequence(matchedParents);
     }
 
     @Override
-    public XQueryType visitNodeTest(NodeTestContext ctx) {
+    public XQuerySequenceType visitNodeTest(NodeTestContext ctx) {
         return ctx.nameTest().accept(this);
     }
 
     private Predicate<String> canBeTokenName = Pattern.compile("^[\\p{IsUppercase}].*").asPredicate();
 
     @Override
-    public XQueryType visitNameTest(NameTestContext ctx) {
+    public XQuerySequenceType visitNameTest(NameTestContext ctx) {
         var matchedTreeNodes = matchedTreeNodes();
         List<ParseTree> stepNodes = switch (currentAxis) {
             case ANCESTOR -> getAllAncestors(matchedTreeNodes);
@@ -655,8 +654,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         return nodeSequence(matchedTreeNodes);
     }
 
-    private XQueryType handleConcatenation(final OrExprContext ctx) {
-        final XQueryType string = typeFactory.string();
+    private XQuerySequenceType handleConcatenation(final OrExprContext ctx) {
+        final XQuerySequenceType string = typeFactory.string();
         final var operationCount = ctx.CONCATENATION().size();
         for (int i = 0; i <= operationCount; i++) {
             final var visitedType = ctx.orExpr(i).accept(this);
@@ -669,7 +668,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
 
-    private XQueryType handleArrowExpr(final OrExprContext ctx) {
+    private XQuerySequenceType handleArrowExpr(final OrExprContext ctx) {
         final var savedArgs = saveVisitedArguments();
         var contextArgument = ctx.orExpr(0).accept(this);
         visitedArgumentTypesList.add(contextArgument);
@@ -689,7 +688,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
     @Override
-    public XQueryType visitArrowFunctionSpecifier(ArrowFunctionSpecifierContext ctx) {
+    public XQuerySequenceType visitArrowFunctionSpecifier(ArrowFunctionSpecifierContext ctx) {
         if (ctx.ID() != null)
             return functionCaller.getFunctionReference(ctx.ID().getText(), typeFactory);
         if (ctx.varRef() != null)
@@ -700,8 +699,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
 
 
 
-    private XQueryType handleOrExpr(final OrExprContext ctx) {
-        final XQueryType boolean_ = typeFactory.boolean_();
+    private XQuerySequenceType handleOrExpr(final OrExprContext ctx) {
+        final XQuerySequenceType boolean_ = typeFactory.boolean_();
         final var orCount = ctx.OR().size();
         for (int i = 0; i <= orCount; i++) {
             final var visitedType = ctx.orExpr(i).accept(this);
@@ -714,8 +713,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
 
-    private XQueryType handleAndExpr(final OrExprContext ctx) {
-        final XQueryType boolean_ = typeFactory.boolean_();
+    private XQuerySequenceType handleAndExpr(final OrExprContext ctx) {
+        final XQuerySequenceType boolean_ = typeFactory.boolean_();
         final var orCount = ctx.AND().size();
         for (int i = 0; i <= orCount; i++) {
             final var visitedType = ctx.orExpr(i).accept(this);
@@ -728,8 +727,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
 
-    private XQueryType handleAdditiveExpr(final OrExprContext ctx) {
-        final XQueryType number = typeFactory.number();
+    private XQuerySequenceType handleAdditiveExpr(final OrExprContext ctx) {
+        final XQuerySequenceType number = typeFactory.number();
         final var orCount = ctx.additiveOperator().size();
         for (int i = 0; i <= orCount; i++) {
             final OrExprContext operandExpr = ctx.orExpr(i);
@@ -742,7 +741,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         return typeFactory.number();
     }
 
-    private XQueryType handleGeneralComparison(final OrExprContext ctx) {
+    private XQuerySequenceType handleGeneralComparison(final OrExprContext ctx) {
         final var leftHandSide = ctx.orExpr(0).accept(this);
         final var rightHandSide = ctx.orExpr(1).accept(this);
         if (!leftHandSide.isSubtypeOf(rightHandSide)) {
@@ -753,7 +752,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         return typeFactory.boolean_();
     }
 
-    private XQueryType handleValueComparison(final OrExprContext ctx) {
+    private XQuerySequenceType handleValueComparison(final OrExprContext ctx) {
         final var leftHandSide = ctx.orExpr(0).accept(this);
         final var rightHandSide = ctx.orExpr(1).accept(this);
         if (!leftHandSide.isOne()) {
@@ -769,8 +768,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         return typeFactory.boolean_();
     }
 
-    private XQueryType handleMultiplicativeExpr(final OrExprContext ctx) {
-        final XQueryType number = typeFactory.number();
+    private XQuerySequenceType handleMultiplicativeExpr(final OrExprContext ctx) {
+        final XQuerySequenceType number = typeFactory.number();
         var type = ctx.orExpr(0).accept(this);
         if (!type.isSubtypeOf(number)) {
             addError(ctx, "Multiplicative expression requires a number as its first operand");
@@ -786,7 +785,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         return number;
     }
 
-    private XQueryType handleUnionExpr(final OrExprContext ctx) {
+    private XQuerySequenceType handleUnionExpr(final OrExprContext ctx) {
         var value = ctx.orExpr(0).accept(this);
         if (!value.isSequence()) {
             // TODO: type error
@@ -800,7 +799,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         return value;
     }
 
-    private XQueryType handleIntersectionExpr(final OrExprContext ctx) {
+    private XQuerySequenceType handleIntersectionExpr(final OrExprContext ctx) {
         var value = ctx.orExpr(0).accept(this);
         if (!value.isSequence()) {
             // TODO: type error
@@ -816,7 +815,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
 
-    private XQueryType handleSequenceSubtractionExpr(final OrExprContext ctx) {
+    private XQuerySequenceType handleSequenceSubtractionExpr(final OrExprContext ctx) {
         var value = ctx.orExpr(0).accept(this);
         if (!value.isSequence()) {
             // TODO: type error
@@ -832,9 +831,9 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
 
-    private XQueryType handleUnaryArithmeticExpr(final OrExprContext ctx) {
+    private XQuerySequenceType handleUnaryArithmeticExpr(final OrExprContext ctx) {
         final var type = ctx.orExpr(0).accept(this);
-        final XQueryType number = typeFactory.number();
+        final XQuerySequenceType number = typeFactory.number();
         if (!type.isSubtypeOf(typeFactory.number())) {
             addError(ctx, "Arithmetic unary expression requires a number");
         }
@@ -842,25 +841,25 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
     @Override
-    public XQueryType visitSwitchExpr(SwitchExprContext ctx) {
-        Map<XQueryType, ParseTree> valueToExpression = ctx.switchCaseClause().stream()
+    public XQuerySequenceType visitSwitchExpr(SwitchExprContext ctx) {
+        Map<XQuerySequenceType, ParseTree> valueToExpression = ctx.switchCaseClause().stream()
                 .flatMap(clause -> clause.switchCaseOperand()
                                             .stream().map(operand -> Map.entry(operand.accept(this), clause.exprSingle())))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        XQueryType switchedValue = ctx.switchedExpr.accept(this);
+        XQuerySequenceType switchedValue = ctx.switchedExpr.accept(this);
         ParseTree toBeExecuted = valueToExpression.getOrDefault(switchedValue, ctx.defaultExpr);
         return toBeExecuted.accept(this);
     }
 
 
     @Override
-    public XQueryType visitArgument(final ArgumentContext ctx) {
+    public XQuerySequenceType visitArgument(final ArgumentContext ctx) {
         final var value =  super.visitArgument(ctx);
         visitedArgumentTypesList.add(value);
         return value;
     }
 
-    private List<XQueryType> saveVisitedArguments() {
+    private List<XQuerySequenceType> saveVisitedArguments() {
         final var saved = visitedArgumentTypesList;
         visitedArgumentTypesList = new ArrayList<>();
         return saved;
@@ -884,9 +883,9 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     private Comparator<List<TupleElement>> ascendingEmptyGreatest(ParseTree expr) {
         return (tuple1, tuple2) -> {
             entypeVariables(tuple1);
-            XQueryType value1 = expr.accept(this);
+            XQuerySequenceType value1 = expr.accept(this);
             entypeVariables(tuple2);
-            XQueryType value2 = expr.accept(this);
+            XQuerySequenceType value2 = expr.accept(this);
             boolean value1IsEmptySequence = value1.isSequence() && value1.sequence().isEmpty();
             boolean value2IsEmptySequence = value2.isSequence() && value2.sequence().isEmpty();
             if (value1IsEmptySequence && !value2IsEmptySequence) {
@@ -900,9 +899,9 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     private Comparator<List<TupleElement>> ascendingEmptyLeast(ParseTree expr) {
         return (tuple1, tuple2) -> {
             entypeVariables(tuple1);
-            XQueryType value1 = expr.accept(this);
+            XQuerySequenceType value1 = expr.accept(this);
             entypeVariables(tuple2);
-            XQueryType value2 = expr.accept(this);
+            XQuerySequenceType value2 = expr.accept(this);
             boolean value1IsEmptySequence = value1.isSequence() && value1.sequence().isEmpty();
             boolean value2IsEmptySequence = value2.isSequence() && value2.sequence().isEmpty();
             if (value1IsEmptySequence && !value2IsEmptySequence) {
@@ -916,9 +915,9 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     private Comparator<List<TupleElement>> descendingEmptyGreatest(ParseTree expr) {
         return (tuple1, tuple2) -> {
             entypeVariables(tuple1);
-            XQueryType value1 = expr.accept(this);
+            XQuerySequenceType value1 = expr.accept(this);
             entypeVariables(tuple2);
-            XQueryType value2 = expr.accept(this);
+            XQuerySequenceType value2 = expr.accept(this);
             boolean value1IsEmptySequence = value1.isSequence() && value1.sequence().isEmpty();
             boolean value2IsEmptySequence = value2.isSequence() && value2.sequence().isEmpty();
             if (value1IsEmptySequence && !value2IsEmptySequence) {
@@ -932,9 +931,9 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     private Comparator<List<TupleElement>> descendingEmptyLeast(ParseTree expr) {
         return (tuple1, tuple2) -> {
             entypeVariables(tuple1);
-            XQueryType value1 = expr.accept(this);
+            XQuerySequenceType value1 = expr.accept(this);
             entypeVariables(tuple2);
-            XQueryType value2 = expr.accept(this);
+            XQuerySequenceType value2 = expr.accept(this);
             boolean value1IsEmptySequence = value1.isSequence() && value1.sequence().isEmpty();
             boolean value2IsEmptySequence = value2.isSequence() && value2.sequence().isEmpty();
             if (value1IsEmptySequence && !value2IsEmptySequence) {
@@ -965,7 +964,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
 
-    boolean hasEffectiveBooleanValue(XQueryType type) {
+    boolean hasEffectiveBooleanValue(XQuerySequenceType type) {
         return !type.isFunction()
                 && !type.isMap()
                 && !type.isArray();
@@ -982,7 +981,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
     @Override
-    public XQueryType visitIfExpr(IfExprContext ctx) {
+    public XQuerySequenceType visitIfExpr(IfExprContext ctx) {
         var visitedType = ctx.condition.accept(this);
         if (!hasEffectiveBooleanValue(visitedType)) {
             var msg = String.format(
@@ -1003,7 +1002,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
     @Override
-    public XQueryType visitOrderByClause(OrderByClauseContext ctx) {
+    public XQuerySequenceType visitOrderByClause(OrderByClauseContext ctx) {
         final int sortingExprCount = ctx.orderSpecList().orderSpec().size();
         final var orderSpecs = ctx.orderSpecList().orderSpec();
         final int[] modifierMaskArray = orderSpecs.stream()

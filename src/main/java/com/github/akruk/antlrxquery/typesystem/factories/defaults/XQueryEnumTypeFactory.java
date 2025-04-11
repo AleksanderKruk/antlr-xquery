@@ -50,9 +50,10 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
     }
 
 
+    Map<String, XQueryEnumItemType> elementTypes = new HashMap<>();
     @Override
     public XQueryItemType itemElement(String elementName) {
-        return new XQueryEnumItemTypeElement(elementName);
+        return elementTypes.computeIfAbsent(elementName, k -> new XQueryEnumItemTypeElement(k));
     }
 
     private static final XQueryEnumItemTypeAnyFunction ANY_FUNCTION = new XQueryEnumItemTypeAnyFunction();
@@ -109,10 +110,9 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
         return ANY_ELEMENT_TYPE;
     }
 
-    Map<String, XQueryEnumItemType> elementTypes = new HashMap<>();
     @Override
     public XQuerySequenceType element(String elementName) {
-        return (XQuerySequenceType) elementTypes.computeIfAbsent(elementName, k -> new XQueryEnumItemTypeElement(k));
+        return one(itemElement(elementName));
     }
 
 

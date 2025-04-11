@@ -29,10 +29,6 @@ public class XQueryEnumItemType implements XQueryItemType {
         this.argumentTypes = argumentTypes;
         this.returnedType = returnedType;
         this.name = name;
-            // // case MAP -> this.isMap();
-            // // case ARRAY -> this.isArray();
-            // default -> false;
-
     }
 
     public String getName() {
@@ -76,15 +72,15 @@ public class XQueryEnumItemType implements XQueryItemType {
         return isNullableEquals(this.returnedType, otherReturnedType);
     }
 
-    private static final int occurenceCount = XQueryOccurence.values().length;
+    private static final int typesCount = XQueryTypes.values().length;
     private static final BiPredicate<XQueryEnumItemType, XQueryEnumItemType> alwaysTrue = (t1, t2) -> true;
     private static final BiPredicate<XQueryEnumItemType, XQueryEnumItemType> alwaysFalse = (t1, t2) -> false;
 
     @SuppressWarnings("rawtypes")
     private static final BiPredicate[] itemtypeIsSubtypeOf;
     static {
-        itemtypeIsSubtypeOf = new BiPredicate[occurenceCount];
-        for (int i = 0; i < occurenceCount; i++) {
+        itemtypeIsSubtypeOf = new BiPredicate[typesCount];
+        for (int i = 0; i < typesCount; i++) {
             itemtypeIsSubtypeOf[i] = alwaysFalse;
         }
         itemtypeIsSubtypeOf[XQueryTypes.ERROR.ordinal()] = (x, y) -> ((XQueryEnumItemType) x).isAtomic();
@@ -100,6 +96,10 @@ public class XQueryEnumItemType implements XQueryItemType {
         };
         itemtypeIsSubtypeOf[XQueryTypes.ANY_MAP.ordinal()] = (x, y) -> ((XQueryEnumItemType) x).isMap();
         itemtypeIsSubtypeOf[XQueryTypes.ANY_ARRAY.ordinal()] = (x, y) -> ((XQueryEnumItemType) x).isArray();
+            // // case MAP -> this.isMap();
+            // // case ARRAY -> this.isArray();
+            // default -> false;
+
 
 
     }

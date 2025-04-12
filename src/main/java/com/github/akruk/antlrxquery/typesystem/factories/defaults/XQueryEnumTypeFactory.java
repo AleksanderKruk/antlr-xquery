@@ -1,13 +1,15 @@
 package com.github.akruk.antlrxquery.typesystem.factories.defaults;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.defaults.*;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
-import com.github.akruk.antlrxquery.values.XQueryString;
 
 public class XQueryEnumTypeFactory implements XQueryTypeFactory {
 
@@ -115,6 +117,44 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
         return one(itemElement(elementName));
     }
 
+    @Override
+    public XQueryItemType itemArray(XQuerySequenceType itemType) {
+        return new XQueryEnumItemTypeArray((XQueryEnumSequenceType) itemType);
+    }
+
+    @Override
+    public XQueryItemType itemFunction(XQuerySequenceType returnType, List<XQuerySequenceType> argumentTypes) {
+        List<XQueryEnumSequenceType> argumentTypesEnum = argumentTypes.stream()
+                .map(t -> (XQueryEnumSequenceType) t)
+                .collect(Collectors.toList());
+        return new XQueryEnumItemTypeFunction((XQueryEnumSequenceType) returnType, argumentTypesEnum);
+    }
+
+    @Override
+    public XQueryItemType itemMap(XQueryItemType keyType, XQuerySequenceType valueType) {
+        return new XQueryEnumItemTypeMap((XQueryEnumItemType) keyType, (XQueryEnumSequenceType) valueType);
+    }
+
+    private final Map<XQuerySequenceType, XQuerySequenceType> arrays = new HashMap<>();
+    @Override
+    public XQuerySequenceType array(XQuerySequenceType containedItemType) {
+        return arrays.computeIfAbsent(containedItemType, it -> one(itemArray(containedItemType)));
+    }
+
+    private final Map<XQueryItemType, Map<XQuerySequenceType, XQuerySequenceType>> maps = new HashMap<>();
+    @Override
+    public XQuerySequenceType map(XQueryItemType mapKeyType, XQuerySequenceType mapValueType) {
+        var keyMap = maps.computeIfAbsent(mapKeyType, k-> new HashMap<>());
+        return keyMap.computeIfAbsent(mapValueType, k -> one(itemMap(mapKeyType, mapValueType)));
+    }
+
+    private final Map<XQuerySequenceType, XQuerySequenceType> functions = new HashMap<>();
+    @Override
+    public XQuerySequenceType function(XQuerySequenceType returnType, List<XQuerySequenceType> argumentTypes) {
+        return functions.computeIfAbsent(returnType, it -> {
+            return one(itemFunction(returnType, argumentTypes));
+        });
+    }
 
     private final XQuerySequenceType ANY_FUNCTION_TYPE = one(ANY_FUNCTION);
     @Override

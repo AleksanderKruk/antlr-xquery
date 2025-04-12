@@ -3,6 +3,7 @@ package com.github.akruk.antlrxquery.typesystem.defaults;
 import java.util.List;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 
@@ -11,24 +12,43 @@ import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 
 public class XQueryEnumItemType implements XQueryItemType {
     private final XQueryTypes type;
-    private final List<XQuerySequenceType> argumentTypes;
+    public XQueryEnumItemType(XQueryTypes type, List<XQueryEnumSequenceType> argumentTypes,
+            XQuerySequenceType returnedType, XQuerySequenceType arrayType, XQueryEnumItemType key,
+            XQuerySequenceType mapValueType, String name) {
+        this.type = type;
+        this.argumentTypes = argumentTypes;
+        this.returnedType = returnedType;
+        this.arrayType = arrayType;
+        this.mapKeyType = key;
+        this.mapValueType = mapValueType;
+        this.name = name;
+    }
+
+    private final List<XQueryEnumSequenceType> argumentTypes;
     private final XQuerySequenceType returnedType;
+    private final XQuerySequenceType arrayType;
+    public XQuerySequenceType getArrayType() {
+        return arrayType;
+    }
+
+    private final XQueryItemType mapKeyType;
+
+    private final XQuerySequenceType mapValueType;
+
     private final String name;
 
-    public List<XQuerySequenceType> getArgumentTypes() {
+    public XQueryItemType getMapKeyType() {
+        return mapKeyType;
+    }
+    public XQuerySequenceType getMapValueType() {
+        return mapValueType;
+    }
+    public List<XQueryEnumSequenceType> getArgumentTypes() {
         return argumentTypes;
     }
 
     public XQuerySequenceType getReturnedType() {
         return returnedType;
-    }
-
-    public XQueryEnumItemType(XQueryTypes type, List<XQuerySequenceType> argumentTypes,
-            XQueryEnumSequenceType returnedType, String name) {
-        this.type = type;
-        this.argumentTypes = argumentTypes;
-        this.returnedType = returnedType;
-        this.name = name;
     }
 
     public String getName() {
@@ -56,7 +76,7 @@ public class XQueryEnumItemType implements XQueryItemType {
         XQueryEnumItemType other = (XQueryEnumItemType) obj;
         if (type != other.getType())
             return false;
-        List<XQuerySequenceType> otherArgumentTypes = other.getArgumentTypes();
+        final var otherArgumentTypes = other.getArgumentTypes();
         if (this.argumentTypes == null && otherArgumentTypes != null)
             return false;
         if (this.argumentTypes != null && otherArgumentTypes == null)
@@ -92,7 +112,8 @@ public class XQueryEnumItemType implements XQueryItemType {
         itemtypeIsSubtypeOf[XQueryTypes.FUNCTION.ordinal()] = (x, y) -> {
             XQueryEnumItemType i1 = (XQueryEnumItemType) x;
             XQueryEnumItemType i2 = (XQueryEnumItemType) y;
-            return i1.isFunction(i2.getName(), i2.getReturnedType(), i2.getArgumentTypes());
+            List<XQuerySequenceType> i2ArgumentTypes = i2.getArgumentTypes().stream().collect(Collectors.toList());
+            return i1.isFunction(i2.getName(), (XQuerySequenceType) i2.getReturnedType(), i2ArgumentTypes);
         };
         itemtypeIsSubtypeOf[XQueryTypes.ANY_MAP.ordinal()] = (x, y) -> ((XQueryEnumItemType) x).isMap();
         itemtypeIsSubtypeOf[XQueryTypes.ANY_ARRAY.ordinal()] = (x, y) -> ((XQueryEnumItemType) x).isArray();

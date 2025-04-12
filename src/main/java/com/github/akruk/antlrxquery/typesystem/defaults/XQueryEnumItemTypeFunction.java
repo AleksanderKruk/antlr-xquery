@@ -1,0 +1,11 @@
+package com.github.akruk.antlrxquery.typesystem.defaults;
+
+import java.util.List;
+
+public class XQueryEnumItemTypeFunction extends XQueryEnumItemType {
+
+  public XQueryEnumItemTypeFunction(XQueryEnumSequenceType returnedType, List<XQueryEnumSequenceType> argumentType) {
+    super(XQueryTypes.FUNCTION, argumentType, returnedType, null, null, null, null);
+  }
+
+}

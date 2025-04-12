@@ -1,14 +1,6 @@
 package com.github.akruk.antlrxquery.typesystem.defaults;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.function.BiPredicate;
-import java.util.function.Predicate;
-import java.util.stream.IntStream;
-
-import javax.print.DocFlavor.STRING;
-
-import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 
 public class XQueryEnumSequenceType implements XQuerySequenceType {
@@ -19,8 +11,8 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         return itemType;
     }
 
-    public XQueryEnumSequenceType(XQueryEnumItemType containedType, XQueryOccurence occurence) {
-        this.itemType = containedType;
+    public XQueryEnumSequenceType(XQueryEnumItemType itemType, XQueryOccurence occurence) {
+        this.itemType = itemType;
         this.occurence = occurence;
     }
 

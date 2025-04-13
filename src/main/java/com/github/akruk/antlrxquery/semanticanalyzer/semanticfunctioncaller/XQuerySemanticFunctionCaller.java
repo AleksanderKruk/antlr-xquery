@@ -5,7 +5,6 @@ import java.util.List;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQueryVisitingSemanticContext;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 public interface XQuerySemanticFunctionCaller {
     public XQuerySequenceType call(String functionName, XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, List<XQuerySequenceType> args);

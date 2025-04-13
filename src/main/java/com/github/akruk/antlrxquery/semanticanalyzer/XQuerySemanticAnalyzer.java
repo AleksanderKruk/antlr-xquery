@@ -246,11 +246,11 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         for (int i = 1; i < size; i++) {
             final var exprSingle = ctx.exprSingle(i);
             final XQuerySequenceType expressionType = exprSingle.accept(this);
-            final boolean mustBeAnyItem = !expressionType.isSubtypeItemtypeOf(firstExprType);
+            final boolean mustBeAnyItem = !expressionType.itemtypeIsSubtypeOf(firstExprType);
             if (mustBeAnyItem && allCanBeZero) {
-                return typeFactory.zeroOrMore(typeFactory.anyItem());
+                return typeFactory.zeroOrMore(typeFactory.itemAnyItem());
             } else if (mustBeAnyItem) {
-                return typeFactory.oneOrMore(typeFactory.anyItem());
+                return typeFactory.oneOrMore(typeFactory.itemAnyItem());
             }
         }
         return allCanBeZero? typeFactory.zeroOrMore(firstExprType)
@@ -367,7 +367,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
 
     private XQuerySequenceType handleNodeComp(OrExprContext ctx) {
-        final var anyElement = XQueryEnumSequenceType.anyElement();
+        final var anyElement = typeFactory.anyElement()
         final var visitedLeft = ctx.orExpr(0).accept(this);
         if (!visitedLeft.isSubtypeOf(anyElement)) {
             addError(ctx.orExpr(0), "Operands of node comparison must be a one-item sequence of type 'element'");
@@ -560,12 +560,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             ctx.forwardAxis().accept(this);
         }
         else {
-            // the first slash will work
-            // because of the fake root
-            // '/*' will return the real root
-            if (currentAxis == null) {
-                currentAxis = XQueryAxis.CHILD;
-            }
         }
         return ctx.nodeTest().accept(this);
     }

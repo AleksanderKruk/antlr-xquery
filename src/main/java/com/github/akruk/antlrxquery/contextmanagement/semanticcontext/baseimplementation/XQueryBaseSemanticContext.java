@@ -6,7 +6,7 @@ import java.util.function.Supplier;
 
 import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.XQuerySemanticContext;
 import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.XQuerySemanticScope;
-import com.github.akruk.antlrxquery.typesystem.XQueryType;
+import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 
 public class XQueryBaseSemanticContext implements XQuerySemanticContext {
     final List<XQuerySemanticScope> scopes;
@@ -37,11 +37,11 @@ public class XQueryBaseSemanticContext implements XQuerySemanticContext {
     }
 
     @Override
-    public XQueryType getVariable(String variableName) {
+    public XQuerySequenceType getVariable(String variableName) {
         return currentScope().getVariable(variableName);
     }
     @Override
-    public boolean entypeVariable(String variableName, XQueryType assignedType) {
+    public boolean entypeVariable(String variableName, XQuerySequenceType assignedType) {
         return currentScope().entypeVariable(variableName, assignedType);
     }
 }

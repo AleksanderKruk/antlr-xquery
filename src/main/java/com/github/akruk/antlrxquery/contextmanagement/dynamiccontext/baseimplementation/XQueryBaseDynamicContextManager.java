@@ -4,9 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-import com.github.akruk.antlrxquery.contextmanagement.XQueryContext;
-import com.github.akruk.antlrxquery.contextmanagement.XQueryContextManager;
-import com.github.akruk.antlrxquery.contextmanagement.XQueryScope;
 import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.XQueryDynamicContext;
 import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.XQueryDynamicContextManager;
 import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.XQueryDynamicScope;

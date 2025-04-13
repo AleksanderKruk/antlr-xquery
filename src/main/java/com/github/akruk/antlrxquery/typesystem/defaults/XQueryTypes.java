@@ -18,9 +18,6 @@ public enum XQueryTypes {
     ANY_FUNCTION,
     FUNCTION,
 
-    EMPTY_SEQUENCE,
-    SEQUENCE,
-
     BOOLEAN,
     NODE,
     STRING,

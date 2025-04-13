@@ -1,21 +1,41 @@
 package com.github.akruk.antlrxquery.typesystem.factories;
 
-import com.github.akruk.antlrxquery.typesystem.XQueryType;
+import java.util.List;
+
+import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
+import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 
 public interface XQueryTypeFactory {
-    public XQueryType string();
-    public XQueryType number();
-    public XQueryType anyNode();
-    public XQueryType anyArray();
-    public XQueryType anyMap();
-    public XQueryType anyElement();
-    public XQueryType element(String elementName);
-    public XQueryType anyFunction();
-    public XQueryType anyItem();
-    public XQueryType boolean_();
-    public XQueryType emptySequence();
-    public XQueryType one(XQueryType itemType);
-    public XQueryType zeroOrOne(XQueryType itemType);
-    public XQueryType zeroOrMore(XQueryType itemType);
-    public XQueryType oneOrMore(XQueryType itemType);
+    public XQueryItemType itemString();
+    public XQueryItemType itemNumber();
+    public XQueryItemType itemAnyNode();
+    public XQueryItemType itemAnyArray();
+    public XQueryItemType itemAnyMap();
+    public XQueryItemType itemAnyElement();
+    public XQueryItemType itemElement(String elementName);
+    public XQueryItemType itemAnyFunction();
+    public XQueryItemType itemAnyItem();
+    public XQueryItemType itemBoolean();
+    public XQueryItemType itemMap(XQueryItemType keyType, XQuerySequenceType valueType);
+    public XQueryItemType itemArray(XQuerySequenceType itemType);
+    public XQueryItemType itemFunction(XQuerySequenceType returnType, List<XQuerySequenceType> argumentTypes);
+
+    public XQuerySequenceType string();
+    public XQuerySequenceType number();
+    public XQuerySequenceType anyNode();
+    public XQuerySequenceType anyArray();
+    public XQuerySequenceType array(XQuerySequenceType itemType);
+    public XQuerySequenceType anyMap();
+    public XQuerySequenceType map(XQueryItemType mapKeyType, XQuerySequenceType mapValueType);
+    public XQuerySequenceType anyElement();
+    public XQuerySequenceType element(String elementName);
+    public XQuerySequenceType anyFunction();
+    public XQuerySequenceType function(XQuerySequenceType returnType, List<XQuerySequenceType> argumentTypes);
+    public XQuerySequenceType anyItem();
+    public XQuerySequenceType boolean_();
+    public XQuerySequenceType emptySequence();
+    public XQuerySequenceType one(XQueryItemType itemType);
+    public XQuerySequenceType zeroOrOne(XQueryItemType itemType);
+    public XQuerySequenceType zeroOrMore(XQueryItemType itemType);
+    public XQuerySequenceType oneOrMore(XQueryItemType itemType);
 }

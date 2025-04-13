@@ -4,13 +4,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.XQuerySemanticScope;
-import com.github.akruk.antlrxquery.typesystem.XQueryType;
+import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 
 public class XQueryBaseSemanticScope implements XQuerySemanticScope {
-    Map<String, XQueryType> variables = new HashMap<>();
+    Map<String, XQuerySequenceType> variables = new HashMap<>();
 
     @Override
-    public boolean entypeVariable(String variableName, XQueryType assignedType) {
+    public boolean entypeVariable(String variableName, XQuerySequenceType assignedType) {
         boolean addedVariable = variables.containsKey(variableName);
         variables.put(variableName, assignedType);
         return addedVariable;
@@ -18,7 +18,7 @@ public class XQueryBaseSemanticScope implements XQuerySemanticScope {
 
 
     @Override
-    public XQueryType getVariable(String variableName) {
+    public XQuerySequenceType getVariable(String variableName) {
         return variables.getOrDefault(variableName, null);
     }
 

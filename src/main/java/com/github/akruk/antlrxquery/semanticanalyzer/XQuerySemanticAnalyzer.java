@@ -560,14 +560,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         if (ctx.forwardAxis() != null) {
             ctx.forwardAxis().accept(this);
         }
-        else {
-            // the first slash will work
-            // because of the fake root
-            // '/*' will return the real root
-            if (currentAxis == null) {
-                currentAxis = XQueryAxis.CHILD;
-            }
-        }
         return ctx.nodeTest().accept(this);
     }
 
@@ -595,47 +587,21 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
 
     @Override
     public XQueryType visitNameTest(NameTestContext ctx) {
-        var matchedTreeNodes = matchedTreeNodes();
-        List<ParseTree> stepNodes = switch (currentAxis) {
-            case ANCESTOR -> getAllAncestors(matchedTreeNodes);
-            case ANCESTOR_OR_SELF -> getAllAncestorsOrSelf(matchedTreeNodes);
-            case CHILD -> getAllChildren(matchedTreeNodes);
-            case DESCENDANT -> getAllDescendants(matchedTreeNodes);
-            case DESCENDANT_OR_SELF -> getAllDescendantsOrSelf(matchedTreeNodes);
-            case FOLLOWING -> getAllFollowing(matchedTreeNodes);
-            case FOLLOWING_SIBLING -> getAllFollowingSiblings(matchedTreeNodes);
-            case PARENT -> getAllParents(matchedTreeNodes);
-            case PRECEDING -> getAllPreceding(matchedTreeNodes);
-            case PRECEDING_SIBLING -> getAllPrecedingSiblings(matchedTreeNodes);
-            case SELF -> matchedTreeNodes;
-            default -> matchedTreeNodes;
-        };
         if (ctx.wildcard() != null) {
             return switch(ctx.wildcard().getText()) {
-                case "*" -> nodeSequence(stepNodes);
+                case "*" -> typeFactory.zeroOrMore(typeFactory.anyElement());
                 // case "*:" -> ;
                 // case ":*" -> ;
-                default -> throw new AssertionError("Invalid wildcard");
+                default -> throw new AssertionError("Not implemented wildcard");
             };
         }
-        matchedTreeNodes = new ArrayList<>(stepNodes.size());
-        String name = ctx.ID().toString();
+        final String name = ctx.ID().toString();
         if (canBeTokenName.test(name)) {
             // test for token type
             int tokenType = parser.getTokenType(name);
-            // TODO: error values
-            if (tokenType == Token.INVALID_TYPE)
-                return null;
-            for (ParseTree node : stepNodes) {
-                // We skip nodes that are not terminal
-                // i.e. are not tokens
-                if (!(node instanceof TerminalNode))
-                    continue;
-                TerminalNode tokenNode = (TerminalNode) node;
-                Token token = tokenNode.getSymbol();
-                if (token.getType() == tokenType) {
-                    matchedTreeNodes.add(tokenNode);
-                }
+            if (tokenType == Token.INVALID_TYPE) {
+                String msg = String.format("Token name: %s is not recognized by parser %s", name, parser.toString());
+                addError(ctx.ID(), msg);
             }
         }
         else { // test for rule
@@ -648,11 +614,10 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
                     continue;
                 ParserRuleContext testedRule = (ParserRuleContext) node;
                 if (testedRule.getRuleIndex() == ruleIndex) {
-                    matchedTreeNodes.add(testedRule);
                 }
             }
         }
-        return nodeSequence(matchedTreeNodes);
+        return typeFactory.zeroOrMore(typeFactory.element(name))
     }
 
     private XQueryType handleConcatenation(final OrExprContext ctx) {
@@ -678,6 +643,10 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
         final var arrowCount = ctx.ARROW().size();
         for (int i = 0; i < arrowCount; i++) {
             final var visitedFunction = ctx.arrowFunctionSpecifier(i).accept(this);
+            if (visitedFunction == null) {
+                final TerminalNode functionName = ctx.arrowFunctionSpecifier(i).ID();
+                addError(functionName, String.format("%s is unknown function name", functionName.getText()));
+            }
             ctx.argumentList(i).accept(this); // visitedArgumentList is set to function's args
             contextArgument = visitedFunction.functionValue().call(typeFactory, context, visitedArgumentTypesList);
             visitedArgumentTypesList = new ArrayList<>();
@@ -690,8 +659,9 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
 
     @Override
     public XQueryType visitArrowFunctionSpecifier(ArrowFunctionSpecifierContext ctx) {
-        if (ctx.ID() != null)
+        if (ctx.ID() != null) {
             return functionCaller.getFunctionReference(ctx.ID().getText(), typeFactory);
+        }
         if (ctx.varRef() != null)
             return ctx.varRef().accept(this);
         return ctx.parenthesizedExpr().accept(this);
@@ -763,7 +733,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
             addError(ctx.orExpr(1), "Right hand side of 'or expression' must be a one-item sequence");
         }
         if (!leftHandSide.isSubtypeOf(rightHandSide)) {
-            String msg = String.format("The types: %s and %s in value comparison are not comparable", leftHandSide.toString(), rightHandSide.toString());
+            String msg = String.format("The types: %s and %s in value comparison are not comparable",
+                                        leftHandSide.toString(), rightHandSide.toString());
             addError(ctx, msg);
         }
         return typeFactory.boolean_();
@@ -788,7 +759,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
 
     private XQueryType handleUnionExpr(final OrExprContext ctx) {
         var value = ctx.orExpr(0).accept(this);
-        if (!value.isSequence()) {
+        if (value.isSeq) {
             // TODO: type error
         }
         final var unionCount = ctx.unionOperator().size();
@@ -972,13 +943,26 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryT
     }
 
     void addError(ParserRuleContext where, String message) {
-        errors.add(String.format("[line:%i, column:%i] %s", where.getStart().getLine(),
-                where.getStart().getCharPositionInLine(), message));
+        Token start = where.getStart();
+        Token stop = where.getStop();
+        errors.add(String.format("[line:%i, column:%i] %s [/line:%i, column:%i]",
+                    start.getLine(), start.getCharPositionInLine(),
+                    message,
+                    stop.getLine(), stop.getCharPositionInLine()));
+    }
+
+    private void addError(TerminalNode id, String message) {
+        var start = id.getSymbol();
+        errors.add(String.format("[line:%i, column:%i] %s", start.getLine(), start.getCharPositionInLine(), message));
     }
 
     void addError(ParserRuleContext where, Function<ParserRuleContext, String> message) {
-        errors.add(String.format("[line:%i, column:%i] %s", where.getStart().getLine(),
-                where.getStart().getCharPositionInLine(), message.apply(where)));
+        Token start = where.getStart();
+        Token stop = where.getStop();
+        errors.add(String.format("[line:%i, column:%i] %s [/line:%i, column:%i]",
+                    start.getLine(), start.getCharPositionInLine(),
+                    message,
+                    stop.getLine(), stop.getCharPositionInLine()));
     }
 
     @Override

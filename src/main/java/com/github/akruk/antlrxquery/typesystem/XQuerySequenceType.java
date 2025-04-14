@@ -1,10 +1,11 @@
 package com.github.akruk.antlrxquery.typesystem;
 
-import java.util.List;
-
 public interface XQuerySequenceType {
     // subtype(A, B) judgement
+    XQueryItemType getItemType();
+    XQuerySequenceType sequenceMerge(XQuerySequenceType other);
     boolean isSubtypeOf(XQuerySequenceType obj);
+    boolean itemtypeIsSubtypeOf(XQuerySequenceType obj);
     boolean isOne();
     boolean isOneOrMore();
     boolean isZeroOrMore();

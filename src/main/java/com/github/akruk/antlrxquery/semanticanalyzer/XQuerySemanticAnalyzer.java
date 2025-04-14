@@ -40,7 +40,6 @@ import com.github.akruk.antlrxquery.values.factories.defaults.XQueryBaseValueFac
 
 public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQuerySequenceType>  {
     XQuerySemanticContextManager contextManager;
-
     Parser parser;
     List<XQuerySequenceType> visitedArgumentTypesList;
     XQueryVisitingSemanticContext context;
@@ -240,21 +239,15 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             .map(e->e.accept(this))
             .allMatch(type->type.isZeroOrMore() || type.isZeroOrOne());
 
-        final var firstExpr = ctx.exprSingle(0);
-        final var firstExprType = firstExpr.accept(this);
+        var previousExpr = ctx.exprSingle(0);
+        var previousExprType = previousExpr.accept(this);
         final int size = ctx.exprSingle().size();
         for (int i = 1; i < size; i++) {
             final var exprSingle = ctx.exprSingle(i);
             final XQuerySequenceType expressionType = exprSingle.accept(this);
-            final boolean mustBeAnyItem = !expressionType.itemtypeIsSubtypeOf(firstExprType);
-            if (mustBeAnyItem && allCanBeZero) {
-                return typeFactory.zeroOrMore(typeFactory.itemAnyItem());
-            } else if (mustBeAnyItem) {
-                return typeFactory.oneOrMore(typeFactory.itemAnyItem());
-            }
+            previousExprType = previousExprType.sequenceMerge(expressionType);
         }
-        return allCanBeZero? typeFactory.zeroOrMore(firstExprType)
-                           : typeFactory.oneOrMore(firstExprType);
+        return previousExprType;
     }
 
 
@@ -303,17 +296,17 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             .map(QnameContext::getText)
             .toList();
         int variableExpressionCount = ctx.exprSingle().size()-1;
-        List<List<XQuerySequenceType>> sequences = new ArrayList<>(variableExpressionCount);
+        List<XQuerySequenceType> variableTypes = new ArrayList<>(variableExpressionCount);
         for (var expr : ctx.exprSingle().subList(0, variableExpressionCount)) {
-            var sequenceValue = expr.accept(this);
-            sequences.add(sequenceValue.sequence());
+            var sequenceType = expr.accept(this);
+            variableTypes.add(sequenceType);
         }
 
         final var criterionNode = ctx.exprSingle().getLast();
         for (int i = 0; i < variableNames.size(); i++) {
-            contextManager.entypeVariable(variableNames.get(i), variableProduct.get(i));
+            contextManager.entypeVariable(variableNames.get(i), variableTypes.get(i));
         }
-        var queriedType = criterionNode.accept(this);
+        XQuerySequenceType queriedType = criterionNode.accept(this);
         if (!queriedType.hasEffectiveBooleanValue()) {
             addError(criterionNode, "Criterion value needs to have effective boolean value");
         }

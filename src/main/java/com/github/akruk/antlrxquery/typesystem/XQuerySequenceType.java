@@ -11,4 +11,5 @@ public interface XQuerySequenceType {
     boolean isZeroOrMore();
     boolean isZeroOrOne();
     boolean isZero();
+    boolean hasEffectiveBooleanValue();
 }

@@ -174,7 +174,7 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
         return BOOLEAN_TYPE;
     }
 
-    private final XQuerySequenceType EMPTY_SEQUENCE = new XQueryEnumEmptySequenceType();
+    private final XQuerySequenceType EMPTY_SEQUENCE = new XQueryEnumEmptySequenceType(this);
     @Override
     public XQuerySequenceType emptySequence() {
         return EMPTY_SEQUENCE;
@@ -182,22 +182,22 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
 
     @Override
     public XQuerySequenceType one(XQueryItemType itemType) {
-        return new XQueryEnumSequenceType((XQueryEnumItemType) itemType, XQueryOccurence.ONE);
+        return new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ONE);
     }
 
     @Override
     public XQuerySequenceType zeroOrOne(XQueryItemType itemType) {
-        return new XQueryEnumSequenceType((XQueryEnumItemType) itemType, XQueryOccurence.ZERO_OR_ONE);
+        return new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ZERO_OR_ONE);
     }
 
     @Override
     public XQuerySequenceType zeroOrMore(XQueryItemType itemType) {
-        return new XQueryEnumSequenceType((XQueryEnumItemType) itemType, XQueryOccurence.ZERO_OR_MORE);
+        return new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ZERO_OR_MORE);
     }
 
     @Override
     public XQuerySequenceType oneOrMore(XQueryItemType itemType) {
-        return new XQueryEnumSequenceType((XQueryEnumItemType) itemType, XQueryOccurence.ONE_OR_MORE);
+        return new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ONE_OR_MORE);
     }
 
 }

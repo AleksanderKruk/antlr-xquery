@@ -46,11 +46,11 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     XQueryTypeFactory typeFactory;
     XQueryValueFactory valueFactory;
     XQuerySemanticFunctionCaller functionCaller;
-    Stream<List<TupleElement>> visitedTupleStream;
+    List<TupleElementType> visitedTupleStreamType;
     List<String> errors;
 
 
-    private record TupleElement(String name, XQuerySequenceType type, String positionalName){};
+    private record TupleElementType(String name, XQuerySequenceType type, String positionalName){};
 
     public XQuerySemanticAnalyzer(
             final Parser parser,
@@ -88,7 +88,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     @Override
     public XQuerySequenceType visitLetClause(LetClauseContext ctx) {
         final int newVariableCount = ctx.letBinding().size();
-        visitedTupleStream = visitedTupleStream.map(tuple -> {
+        visitedTupleStreamType = visitedTupleStreamType.map(tuple -> {
             var newTuple = new ArrayList<TupleElement>(tuple.size() + newVariableCount);
             newTuple.addAll(tuple);
             for (LetBindingContext streamVariable : ctx.letBinding()) {
@@ -108,7 +108,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     @Override
     public XQuerySequenceType visitForClause(ForClauseContext ctx) {
         final int numberOfVariables = (int) ctx.forBinding().size();
-        visitedTupleStream = visitedTupleStream.flatMap(tuple -> {
+        visitedTupleStreamType = visitedTupleStreamType.flatMap(tuple -> {
             List<List<TupleElement>> newTupleLike = tuple.stream().map(e -> List.of(e)).collect(Collectors.toList());
             for (ForBindingContext streamVariable : ctx.forBinding()) {
                 String variableName = streamVariable.varName().getText();
@@ -746,54 +746,55 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             if (!visitedType.isSubtypeOf(number)) {
                 addError(ctx, "Multiplicative expression requires a number as its first operand");
             }
-            i++;
         }
         return number;
     }
 
     private XQuerySequenceType handleUnionExpr(final OrExprContext ctx) {
-        var value = ctx.orExpr(0).accept(this);
-        if (value.isS) {
-            // TODO: type error
-        }
+        var expressionNode = ctx.orExpr(0);
+        var expressionType = expressionNode.accept(this);
+        // TODO: Whether or not it should be any element item
+        // final var anyItemSequence = typeFactory.zeroOrMore(typeFactory.itemAnyElement());
+        // if (!expressionType.isSubtypeOf(anyItemSequence)) {
+        //     addError(expressionNode, "Operand of union expression must be a sequence of items");
+        // }
         final var unionCount = ctx.unionOperator().size();
         for (int i = 1; i <= unionCount; i++) {
-            final var visitedExpression = ctx.orExpr(i).accept(this);
-            value = value.union(typeFactory, visitedExpression);
-            i++;
+            final var visitedType = ctx.orExpr(i).accept(this);
+            expressionType = expressionType.sequenceMerge(visitedType);
         }
-        return value;
+        return expressionType;
     }
 
     private XQuerySequenceType handleIntersectionExpr(final OrExprContext ctx) {
-        var value = ctx.orExpr(0).accept(this);
-        if (!value.isSequence()) {
-            // TODO: type error
-            return null;
-        }
+        var expressionType = ctx.orExpr(0).accept(this);
+        // TODO: Whether or not it should be any element item
+        // final var anyItemSequence = typeFactory.zeroOrMore(typeFactory.itemAnyElement());
+        // if (!expressionType.isSubtypeOf(anyItemSequence)) {
+        //     addError(expressionNode, "Operand of union expression must be a sequence of items");
+        // }
         final var operatorCount = ctx.INTERSECT().size();
         for (int i = 1; i <= operatorCount; i++) {
-            final var visitedExpression = ctx.orExpr(i).accept(this);
-            value = value.intersect(typeFactory, visitedExpression);
-            i++;
+            final var visitedType = ctx.orExpr(i).accept(this);
+            expressionType = expressionType.sequenceMerge(visitedType);
         }
-        return value;
+        return expressionType;
     }
 
 
     private XQuerySequenceType handleSequenceSubtractionExpr(final OrExprContext ctx) {
-        var value = ctx.orExpr(0).accept(this);
-        if (!value.isSequence()) {
-            // TODO: type error
-            return null;
-        }
+        var expressionType = ctx.orExpr(0).accept(this);
+        // TODO: Whether or not it should be any element item
+        // final var anyItemSequence = typeFactory.zeroOrMore(typeFactory.itemAnyElement());
+        // if (!expressionType.isSubtypeOf(anyItemSequence)) {
+        //     addError(expressionNode, "Operand of union expression must be a sequence of items");
+        // }
         final var operatorCount = ctx.EXCEPT().size();
         for (int i = 1; i <= operatorCount; i++) {
-            final var visitedExpression = ctx.orExpr(i).accept(this);
-            value = value.except(typeFactory, visitedExpression);
-            i++;
+            final var visitedType = ctx.orExpr(i).accept(this);
+            expressionType = expressionType.sequenceMerge(visitedType);
         }
-        return value;
+        return expressionType;
     }
 
 
@@ -831,10 +832,10 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         return saved;
     }
 
-    private Stream<List<TupleElement>> saveVisitedTupleStream() {
-        final Stream<List<TupleElement>> saved = visitedTupleStream;
-        visitedTupleStream = Stream.of(List.of());
-        return  saved;
+    private List<TupleElementType> saveVisitedTupleStream() {
+        final List<TupleElementType> saved = visitedTupleStreamType;
+        visitedTupleStreamType = List.of();
+        return saved;
     }
 
 

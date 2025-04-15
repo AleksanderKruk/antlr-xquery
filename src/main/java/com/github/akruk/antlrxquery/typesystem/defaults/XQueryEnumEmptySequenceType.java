@@ -1,11 +1,10 @@
 package com.github.akruk.antlrxquery.typesystem.defaults;
 
-import java.util.function.BiPredicate;
-import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 public class XQueryEnumEmptySequenceType extends XQueryEnumSequenceType {
-    public XQueryEnumEmptySequenceType() {
-        super(null, XQueryOccurence.ZERO);
+    public XQueryEnumEmptySequenceType(XQueryTypeFactory typeFactory) {
+        super(typeFactory, null, XQueryOccurence.ZERO);
     }
 
 }

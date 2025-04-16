@@ -43,6 +43,75 @@ Type designation | Interpretation
 `number` | one-element-sequence of type `number`
 `boolean` | one-element-sequence of type `boolean`
 
-###
+## Operation type semantics
+
+### Sequence constructor operator
+As *sequence constructor operator* we understand `(v1, v2, v3, ...)` expression. The deduced type resulting from this expression is
+achieved by 'merging' types of values `v1` and `v2` and `v3` and ... using the following rules:
+1. If values have the same item type the resulting item type is this item type. Otherwise the deduced item type is `any()`
+2. Occurence is deduced using the following table
+
+(v1, v2)  | 0 | 1 | ? | \* | \+
+---    |---|---|---|--- |---
+**0**  | 0 | 1 | ? | *  | +
+**1**  | 1 | + | + | +  | +
+**?**  | ? | + | * | *  | +
+**\*** | * | + | * | *  | +
+**\+** | + | + | + | +  | +
+
+
+### Union operator
+
+### Intersect operator
+The deduced type resulting from `intersect` operator is
+achieved by 'merging' types of values `v1` and `v2` and `v3` and ... using the following rules:
+1. Item type is that of left hand side expression
+2. Occurence is deduced using the following table
+
+v1 intersect v2  | 0 | 1 | ? | \* | \+
+---              |---|---|---|--- |---
+**0**            | 0 | 0 | 0 | 0  | 0
+**1**            | 0 | ? | ? | ?  | ?
+**?**            | 0 | ? | ? | ?  | ?
+**\***           | 0 | ? | ? | *  | *
+**\+**           | 0 | ? | ? | *  | *
+
+### Except operator
+The deduced type resulting from `except` operator is
+achieved by 'merging' types of values `v1` and `v2` and `v3` and ... using the following rules:
+1. Item type is that of left hand side expression
+2. Occurence is deduced using the following table
+
+v1 except v2  | 0 | 1 | ? | \* | \+
+---           |---|---|---|--- |---
+**0**         | 0 | 0 | 0 | 0  | 0
+**1**         | 1 | ? | ? | ?  | ?
+**?**         | ? | ? | ? | ?  | ?
+**\***        | * | * | * | *  | *
+**\+**        | + | * | * | *  | *
+
+### Arithmetic operators
+Arithmetic operators take `number`s as arguments and return
+`number` as the resulting type.
+
+
+### Boolean operators
+Boolean operators take values that have effective boolean value as arguments and return `boolean` as the resulting type.
+
+#### Effective boolean value
+Type     |Has effective boolean value?
+---      |---
+`any()`    | no
+`any()?`   | yes, whether or not item is present
+`any()*`   | yes, whether or not sequence has items
+`any()+`   | yes, always true because non empty sequence
+`boolean()`| yes
+`number()` | yes, whether or not number equals zero
+`string()` | yes, whether or not string is not empty
+`node()`  | no
+
+
+
+### Functions
 
 

@@ -61,6 +61,21 @@ achieved by 'merging' types of values `v1` and `v2` and `v3` and ... using the f
 
 
 ### Union operator
+Union operators have the same semantics as sequence constructor operator.
+```
+v1 union v2 -> merged
+```
+
+
+**Merging occurence semantics:**
+(v1, v2)  | 0 | 1 | ? | \* | \+
+---    |---|---|---|--- |---
+**0**  | 0 | 1 | ? | *  | +
+**1**  | 1 | + | + | +  | +
+**?**  | ? | + | * | *  | +
+**\*** | * | + | * | *  | +
+**\+** | + | + | + | +  | +
+
 
 ### Intersect operator
 The deduced type resulting from `intersect` operator is
@@ -101,8 +116,12 @@ Arithmetic operators take item types that can be converted to string as argument
 
 
 
-### Boolean operators
-Boolean operators take values that have effective boolean value as arguments and return `boolean` as the resulting type.
+### Logical expressions
+Logical expressions take values that have effective boolean value as arguments and return `boolean` as the resulting type.
+```
+Effective Boolean Value Type or Effective Boolean Value Type
+Effective Boolean Value Type and Effective Boolean Value Type
+```
 
 #### Effective boolean value
 Type     |Has effective boolean value?

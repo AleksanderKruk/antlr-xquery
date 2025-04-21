@@ -94,6 +94,12 @@ v1 except v2  | 0 | 1 | ? | \* | \+
 Arithmetic operators take `number`s as arguments and return
 `number` as the resulting type.
 
+### String concatenation
+Arithmetic operators take item types that can be converted to string as arguments and return `string` as the resulting type.
+
+
+###
+
 
 ### Boolean operators
 Boolean operators take values that have effective boolean value as arguments and return `boolean` as the resulting type.

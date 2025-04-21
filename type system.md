@@ -180,6 +180,15 @@ Arrow expressions semantics are equivalent to embedded function calls with the p
 Arg1Type => function(Arg1Type , *) as ReturnedType -> ReturnedType
 ```
 
+### Simple map expression
+Simple map expressions are interpreted as a sequence type with the item type of the mapped expression, and the occurence same as that of the mapped type.
+```xquery
+MappedType() ! ExpressionType -> ExpressionType
+MappedType()? ! ExpressionType -> ExpressionType?
+MappedType()* ! ExpressionType -> ExpressionType*
+MappedType()+ ! ExpressionType -> ExpressionType+
+```
+
 
 
 ### Let clause

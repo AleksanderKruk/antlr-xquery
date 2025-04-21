@@ -188,8 +188,9 @@ MappedType()? ! ExpressionType -> ExpressionType?
 MappedType()* ! ExpressionType -> ExpressionType*
 MappedType()+ ! ExpressionType -> ExpressionType+
 ```
+If the expression type is a sequence type then sequence construction operator semantics are applied before interpreting simple map expression type.
 
-
+###
 
 ### Let clause
 ```xquery

@@ -43,9 +43,15 @@ Type designation | Interpretation
 `number` | one-element-sequence of type `number`
 `boolean` | one-element-sequence of type `boolean`
 
-## Operation type semantics
+## Expression semantics
 
-### Sequence constructor operator
+### Sequence range expression
+Sequence range expression has the following semantics:
+```
+number() to number() -> number()*
+```
+
+### Sequence constructor expression
 As *sequence constructor operator* we understand `(v1, v2, v3, ...)` expression. The deduced type resulting from this expression is
 achieved by 'merging' types of values `v1` and `v2` and `v3` and ... using the following rules:
 1. If values have the same item type the resulting item type is this item type. Otherwise the deduced item type is `any()`

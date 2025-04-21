@@ -190,7 +190,42 @@ MappedType()+ ! ExpressionType -> ExpressionType+
 ```
 If the expression type is a sequence type then sequence construction operator semantics are applied before interpreting simple map expression type.
 
-###
+### Instance of expression
+```xquery
+TestedType instance of ExpectedType -> boolean
+```
+### Typeswitch expression
+```
+typeswitch(TestedType)
+   case $a as TypeVariantA return ExprAType
+   case $b as TypeVariantB return ExprBType
+   case $c as TypeVariantC return ExprCType
+   default return DefaultExprType
+```
+If `ExprAType` and `ExprBType` and `ExprCType` and `DefaultExprType` are all the same item type then the interpreted item type is the same as these item types. Otherwise the interpreted item type is `item()`.
+
+Occurence is interpreted using the following merging table:
+v1 \| v2 | 0 | 1 | ? | \* | \+
+---      |---|---|---|--- |---
+**0**    | 0 | ? | ? | *  | *
+**1**    | ? | 1 | ? | *  | +
+**?**    | ? | ? | ? | *  | *
+**\***   | * | * | * | *  | *
+**\+**   | * | + | * | *  | +
+
+
+
+### Cast expression
+```xquery
+InputType cast as TargetType -> TargetType
+InputType cast as TargetType? -> TargetType?
+```
+`InputType` must have occurence `1`. If `TargetType?` is specified then occurence of `InputType` can be `?`
+
+### Castable expression
+
+
+### Treat expression
 
 ### Let clause
 ```xquery

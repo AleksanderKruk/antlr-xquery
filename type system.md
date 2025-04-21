@@ -117,6 +117,7 @@ Type     |Has effective boolean value?
 `node()`  | no
 
 ### Value comparisons
+Value comparisons are used to compare directly item types.
 ```
 T eq T -> boolean
 T ne T -> boolean
@@ -127,6 +128,28 @@ T ge T -> boolean
 ```
 T needs to be a single item type, same for both operands.
 
+
+### General comparisons
+General comparisons are expanded value comparisons. They work both for single item values as well as multi item values.
+```
+T* =  T* -> boolean
+T* != T* -> boolean
+T* >  T* -> boolean
+T* <  T* -> boolean
+T* >= T* -> boolean
+T* <= T* -> boolean
+```
+T can be any sequence type, as long as the item type can be compared by value.
+
+### Node comparisons
+Node comparisons take one item sequences of `node()` and return `boolean`.
+```
+node() is node() -> boolean
+node() << node() -> boolean
+node() >> node() -> boolean
+```
+
+###
 
 
 

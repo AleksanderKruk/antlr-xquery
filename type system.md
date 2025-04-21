@@ -47,7 +47,7 @@ Type designation | Interpretation
 
 ### Sequence range expression
 Sequence range expression has the following semantics:
-```
+```xquery
 number() to number() -> number()*
 ```
 
@@ -68,7 +68,7 @@ achieved by 'merging' types of values `v1` and `v2` and `v3` and ... using the f
 
 ### Union operator
 Union operators have the same semantics as sequence constructor operator.
-```
+```xquery
 v1 union v2 -> merged
 ```
 
@@ -124,7 +124,7 @@ Arithmetic operators take item types that can be converted to string as argument
 
 ### Logical expressions
 Logical expressions take values that have effective boolean value as arguments and return `boolean` as the resulting type.
-```
+```xquery
 Effective Boolean Value Type or Effective Boolean Value Type
 Effective Boolean Value Type and Effective Boolean Value Type
 ```
@@ -143,7 +143,7 @@ Type     |Has effective boolean value?
 
 ### Value comparisons
 Value comparisons are used to compare directly item types.
-```
+```xquery
 T eq T -> boolean
 T ne T -> boolean
 T lt T -> boolean
@@ -156,7 +156,7 @@ T needs to be a single item type, same for both operands.
 
 ### General comparisons
 General comparisons are expanded value comparisons. They work both for single item values as well as multi item values.
-```
+```xquery
 T* =  T* -> boolean
 T* != T* -> boolean
 T* >  T* -> boolean
@@ -168,16 +168,24 @@ T can be any sequence type, as long as the item type can be compared by value.
 
 ### Node comparisons
 Node comparisons take one item sequences of `node()` and return `boolean`.
-```
+```xquery
 node() is node() -> boolean
 node() << node() -> boolean
 node() >> node() -> boolean
 ```
 
-###
+### Arrow expression
+Arrow expressions semantics are equivalent to embedded function calls with the previous expression type having to match the first argument for the following function.
+```xquery
+Arg1Type => function(Arg1Type , *) as ReturnedType -> ReturnedType
+```
 
 
 
-### Functions
+### Let clause
+```xquery
+let $x := AssignedExpressionType -> AssignedExpressionType
+let $x as DeclaredType := AssignedExpressionType ->
+```
 
 

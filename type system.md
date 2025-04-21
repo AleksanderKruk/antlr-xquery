@@ -98,7 +98,7 @@ Arithmetic operators take `number`s as arguments and return
 Arithmetic operators take item types that can be converted to string as arguments and return `string` as the resulting type.
 
 
-###
+
 
 
 ### Boolean operators
@@ -115,6 +115,18 @@ Type     |Has effective boolean value?
 `number()` | yes, whether or not number equals zero
 `string()` | yes, whether or not string is not empty
 `node()`  | no
+
+### Value comparisons
+```
+T eq T -> boolean
+T ne T -> boolean
+T lt T -> boolean
+T gt T -> boolean
+T le T -> boolean
+T ge T -> boolean
+```
+T needs to be a single item type, same for both operands.
+
 
 
 

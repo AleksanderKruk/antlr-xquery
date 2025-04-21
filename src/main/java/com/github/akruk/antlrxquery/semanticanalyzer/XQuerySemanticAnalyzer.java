@@ -931,12 +931,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     }
 
 
-    boolean hasEffectiveBooleanValue(XQuerySequenceType type) {
-        return !type.isFunction()
-                && !type.isMap()
-                && !type.isArray();
-    }
-
     void addError(ParserRuleContext where, String message) {
         Token start = where.getStart();
         Token stop = where.getStop();
@@ -963,7 +957,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     @Override
     public XQuerySequenceType visitIfExpr(IfExprContext ctx) {
         var visitedType = ctx.condition.accept(this);
-        if (!hasEffectiveBooleanValue(visitedType)) {
+        if (!visitedType.hasEffectiveBooleanValue()) {
             var msg = String.format(
                     "If condition must have an effective boolean value and the type %s doesn't have one",
                     visitedType.toString());

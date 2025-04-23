@@ -223,9 +223,27 @@ InputType cast as TargetType? -> TargetType?
 `InputType` must have occurence `1`. If `TargetType?` is specified then occurence of `InputType` can be `?`
 
 ### Castable expression
+```xquery
+InputExpressionType castable as SequenceType -> boolean
+```
+Always interpreted as `boolean`.
 
 
 ### Treat expression
+```xquery
+InputExpressionType treat as SequenceType -> SequenceType
+```
+
+### Path expression
+```xquery
+   node()* / node()* -> node()*
+	node()* / other sequence -> other sequence
+   /name -> element(name)*
+	/* -> node()*
+   <any-axis> -> node()*
+
+```
+
 
 ### Let clause
 ```xquery

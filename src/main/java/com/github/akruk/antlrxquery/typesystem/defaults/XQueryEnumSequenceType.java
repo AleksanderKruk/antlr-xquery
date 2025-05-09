@@ -56,32 +56,28 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
                 isSubtypeOf[i][j] = alwaysFalse;
             }
         }
-        isSubtypeOf[XQueryOccurence.ZERO.ordinal()][XQueryOccurence.ZERO.ordinal()] = alwaysTrue;
-        isSubtypeOf[XQueryOccurence.ZERO.ordinal()][XQueryOccurence.ZERO_OR_ONE.ordinal()] = alwaysTrue;
-        isSubtypeOf[XQueryOccurence.ZERO.ordinal()][XQueryOccurence.ZERO_OR_MORE.ordinal()] = alwaysTrue;
+        final int zero = XQueryOccurence.ZERO.ordinal();
+        final int one = XQueryOccurence.ONE.ordinal();
+        final int zeroOrOne = XQueryOccurence.ZERO_OR_ONE.ordinal();
+        final int zeroOrMore = XQueryOccurence.ZERO_OR_MORE.ordinal();
+        final int oneOrMore = XQueryOccurence.ONE_OR_MORE.ordinal();
+        isSubtypeOf[zero][zero] = alwaysTrue;
+        isSubtypeOf[zero][zeroOrOne] = alwaysTrue;
+        isSubtypeOf[zero][zeroOrMore] = alwaysTrue;
 
-        isSubtypeOf[XQueryOccurence.ZERO_OR_ONE.ordinal()][XQueryOccurence.ZERO_OR_ONE
-                .ordinal()] = XQueryEnumSequenceType::isSubtypeItemtype;
-        isSubtypeOf[XQueryOccurence.ZERO_OR_ONE.ordinal()][XQueryOccurence.ZERO_OR_MORE
-                .ordinal()] = XQueryEnumSequenceType::isSubtypeItemtype;
+        isSubtypeOf[zeroOrOne][zeroOrOne] = XQueryEnumSequenceType::isSubtypeItemtype;
+        isSubtypeOf[zeroOrOne][zeroOrMore] = XQueryEnumSequenceType::isSubtypeItemtype;
         ;
 
-        isSubtypeOf[XQueryOccurence.ZERO_OR_MORE.ordinal()][XQueryOccurence.ZERO_OR_MORE
-                .ordinal()] = XQueryEnumSequenceType::isSubtypeItemtype;
+        isSubtypeOf[zeroOrMore][zeroOrMore] = XQueryEnumSequenceType::isSubtypeItemtype;
 
-        isSubtypeOf[XQueryOccurence.ONE.ordinal()][XQueryOccurence.ONE
-                .ordinal()] = XQueryEnumSequenceType::isSubtypeItemtype;
-        isSubtypeOf[XQueryOccurence.ONE.ordinal()][XQueryOccurence.ONE_OR_MORE
-                .ordinal()] = XQueryEnumSequenceType::isSubtypeItemtype;
-        isSubtypeOf[XQueryOccurence.ONE.ordinal()][XQueryOccurence.ZERO_OR_MORE
-                .ordinal()] = XQueryEnumSequenceType::isSubtypeItemtype;
-        isSubtypeOf[XQueryOccurence.ONE.ordinal()][XQueryOccurence.ZERO_OR_ONE
-                .ordinal()] = XQueryEnumSequenceType::isSubtypeItemtype;
+        isSubtypeOf[one][one] = XQueryEnumSequenceType::isSubtypeItemtype;
+        isSubtypeOf[one][oneOrMore] = XQueryEnumSequenceType::isSubtypeItemtype;
+        isSubtypeOf[one][zeroOrMore] = XQueryEnumSequenceType::isSubtypeItemtype;
+        isSubtypeOf[one][zeroOrOne] = XQueryEnumSequenceType::isSubtypeItemtype;
 
-        isSubtypeOf[XQueryOccurence.ONE_OR_MORE.ordinal()][XQueryOccurence.ZERO_OR_MORE
-                .ordinal()] = XQueryEnumSequenceType::isSubtypeItemtype;
-        isSubtypeOf[XQueryOccurence.ONE_OR_MORE.ordinal()][XQueryOccurence.ONE_OR_MORE
-                .ordinal()] = XQueryEnumSequenceType::isSubtypeItemtype;
+        isSubtypeOf[oneOrMore][zeroOrMore] = XQueryEnumSequenceType::isSubtypeItemtype;
+        isSubtypeOf[oneOrMore][oneOrMore] = XQueryEnumSequenceType::isSubtypeItemtype;
     }
 
     private static boolean isSubtypeItemtype(Object x, Object y) {

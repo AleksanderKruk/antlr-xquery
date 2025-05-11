@@ -218,4 +218,22 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         return true;
     }
 
+    @Override
+    public XQuerySequenceType unionMerge(XQuerySequenceType other) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'unionMerge'");
+    }
+
+    @Override
+    public XQuerySequenceType intersectionMerge(XQuerySequenceType other) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'intersectionMerge'");
+    }
+
+    @Override
+    public XQuerySequenceType exceptionMerge(XQuerySequenceType other) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'exceptionMerge'");
+    }
+
 }

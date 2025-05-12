@@ -159,7 +159,7 @@ public class XQueryEnumItemType implements XQueryItemType {
         return isNode[type.ordinal()];
     }
 
-    private static final boolean[] isElement = booleanEnumArray(XQueryTypes.ANY_ELEMENT, XQueryTypes.ELEMENT);
+    private static final boolean[] isElement = isNode;
 
     @Override
     public boolean isElement() {
@@ -168,7 +168,7 @@ public class XQueryEnumItemType implements XQueryItemType {
 
     @Override
     public boolean isElement(String otherName) {
-        return isElement() && name.equals(otherName);
+        return isElement() && name != null && name.equals(otherName);
     }
 
     private static final boolean[] isFunction = booleanEnumArray(XQueryTypes.ANY_FUNCTION, XQueryTypes.FUNCTION);

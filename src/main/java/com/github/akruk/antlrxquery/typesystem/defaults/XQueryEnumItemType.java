@@ -6,7 +6,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 
@@ -95,13 +94,14 @@ public class XQueryEnumItemType implements XQueryItemType {
     private static final int typesCount = XQueryTypes.values().length;
     private static final BiPredicate<XQueryEnumItemType, XQueryEnumItemType> alwaysTrue = (t1, t2) -> true;
     private static final BiPredicate<XQueryEnumItemType, XQueryEnumItemType> alwaysFalse = (t1, t2) -> false;
+    private static final BiPredicate<XQueryEnumItemType, XQueryEnumItemType> equalType = (t1, t2) -> t1.type == t2.type;
 
     @SuppressWarnings("rawtypes")
     private static final BiPredicate[] itemtypeIsSubtypeOf;
     static {
         itemtypeIsSubtypeOf = new BiPredicate[typesCount];
         for (int i = 0; i < typesCount; i++) {
-            itemtypeIsSubtypeOf[i] = alwaysFalse;
+            itemtypeIsSubtypeOf[i] = equalType;
         }
         itemtypeIsSubtypeOf[XQueryTypes.ERROR.ordinal()] = (x, y) -> ((XQueryEnumItemType) x).isAtomic();
         itemtypeIsSubtypeOf[XQueryTypes.ANY_ITEM.ordinal()] = alwaysTrue;
@@ -130,7 +130,8 @@ public class XQueryEnumItemType implements XQueryItemType {
     public boolean itemtypeIsSubtypeOf(XQueryItemType obj) {
         if (!(obj instanceof XQueryEnumItemType))
             return false;
-        return itemtypeIsSubtypeOf[type.ordinal()].test(this, obj);
+        var typed = (XQueryEnumItemType) obj;
+        return itemtypeIsSubtypeOf[typed.getType().ordinal()].test(this, obj);
     }
 
 
@@ -151,7 +152,7 @@ public class XQueryEnumItemType implements XQueryItemType {
         return array;
     }
 
-    private static final boolean[] isNode = booleanEnumArray(XQueryTypes.ANY_NODE, XQueryTypes.NODE);
+    private static final boolean[] isNode = booleanEnumArray(XQueryTypes.ANY_NODE, XQueryTypes.ANY_ELEMENT, XQueryTypes.ELEMENT, XQueryTypes.NODE);
 
     @Override
     public boolean isNode() {

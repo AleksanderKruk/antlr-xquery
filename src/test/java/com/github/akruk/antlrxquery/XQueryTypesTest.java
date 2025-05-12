@@ -15,6 +15,7 @@ import static org.junit.Assert.*;
 public class XQueryTypesTest {
 
     XQueryTypeFactory typeFactory = new XQueryEnumTypeFactory();
+    final XQuerySequenceType boolean_ = typeFactory.boolean_();
     final XQuerySequenceType string = typeFactory.string();
     final XQuerySequenceType number = typeFactory.number();
     final XQuerySequenceType anyNode = typeFactory.anyNode();
@@ -193,67 +194,67 @@ public class XQueryTypesTest {
 
     @Test
     public void booleanSubtyping() {
-        assertFalse(boolean.isSubtypeOf(typeFactory.emptySequence()));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.emptySequence()));
 
-        assertTrue(boolean.isSubtypeOf(typeFactory.anyItem()));
-        assertTrue(boolean.isSubtypeOf(typeFactory.zeroOrOne(itemAnyItem)));
-        assertTrue(boolean.isSubtypeOf(typeFactory.zeroOrMore(itemAnyItem)));
-        assertTrue(boolean.isSubtypeOf(typeFactory.oneOrMore(itemAnyItem)));
+        assertTrue(boolean_.isSubtypeOf(typeFactory.anyItem()));
+        assertTrue(boolean_.isSubtypeOf(typeFactory.zeroOrOne(itemAnyItem)));
+        assertTrue(boolean_.isSubtypeOf(typeFactory.zeroOrMore(itemAnyItem)));
+        assertTrue(boolean_.isSubtypeOf(typeFactory.oneOrMore(itemAnyItem)));
 
-        assertFalse(boolean.isSubtypeOf(typeFactory.string()));
-        assertFalse(boolean.isSubtypeOf(typeFactory.zeroOrOne(itemString)));
-        assertFalse(boolean.isSubtypeOf(typeFactory.zeroOrMore(itemString)));
-        assertFalse(boolean.isSubtypeOf(typeFactory.oneOrMore(itemString)));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.string()));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.zeroOrOne(itemString)));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.zeroOrMore(itemString)));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.oneOrMore(itemString)));
 
-        assertTrue(boolean.isSubtypeOf(typeFactory.boolean()));
-        assertTrue(boolean.isSubtypeOf(typeFactory.zeroOrOne(itemboolean)));
-        assertTrue(boolean.isSubtypeOf(typeFactory.zeroOrMore(itemboolean)));
-        assertTrue(boolean.isSubtypeOf(typeFactory.oneOrMore(itemboolean)));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.number()));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.zeroOrOne(itemNumber)));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.zeroOrMore(itemNumber)));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.oneOrMore(itemNumber)));
 
-        assertFalse(boolean.isSubtypeOf(typeFactory.boolean_()));
-        assertFalse(boolean.isSubtypeOf(typeFactory.zeroOrOne(itemBoolean)));
-        assertFalse(boolean.isSubtypeOf(typeFactory.zeroOrMore(itemBoolean)));
-        assertFalse(boolean.isSubtypeOf(typeFactory.oneOrMore(itemBoolean)));
+        assertTrue(boolean_.isSubtypeOf(typeFactory.boolean_()));
+        assertTrue(boolean_.isSubtypeOf(typeFactory.zeroOrOne(itemBoolean)));
+        assertTrue(boolean_.isSubtypeOf(typeFactory.zeroOrMore(itemBoolean)));
+        assertTrue(boolean_.isSubtypeOf(typeFactory.oneOrMore(itemBoolean)));
 
-        assertFalse(boolean.isSubtypeOf(typeFactory.anyNode()));
-        assertFalse(boolean.isSubtypeOf(typeFactory.zeroOrOne(itemAnyNode)));
-        assertFalse(boolean.isSubtypeOf(typeFactory.zeroOrMore(itemAnyNode)));
-        assertFalse(boolean.isSubtypeOf(typeFactory.oneOrMore(itemAnyNode)));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.anyNode()));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.zeroOrOne(itemAnyNode)));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.zeroOrMore(itemAnyNode)));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.oneOrMore(itemAnyNode)));
 
-        assertFalse(boolean.isSubtypeOf(typeFactory.anyElement()));
-        assertFalse(boolean.isSubtypeOf(typeFactory.zeroOrOne(itemAnyElement)));
-        assertFalse(boolean.isSubtypeOf(typeFactory.zeroOrMore(itemAnyElement)));
-        assertFalse(boolean.isSubtypeOf(typeFactory.oneOrMore(itemAnyElement)));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.anyElement()));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.zeroOrOne(itemAnyElement)));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.zeroOrMore(itemAnyElement)));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.oneOrMore(itemAnyElement)));
 
-        assertFalse(boolean.isSubtypeOf(fooElement));
-        assertFalse(boolean.isSubtypeOf(typeFactory.zeroOrOne(fooElementItem)));
-        assertFalse(boolean.isSubtypeOf(typeFactory.zeroOrMore(fooElementItem)));
-        assertFalse(boolean.isSubtypeOf(typeFactory.oneOrMore(fooElementItem)));
+        assertFalse(boolean_.isSubtypeOf(fooElement));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.zeroOrOne(fooElementItem)));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.zeroOrMore(fooElementItem)));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.oneOrMore(fooElementItem)));
 
-        assertFalse(boolean.isSubtypeOf(typeFactory.anyMap()));
-        assertFalse(boolean.isSubtypeOf(typeFactory.zeroOrOne(itemAnyMap)));
-        assertFalse(boolean.isSubtypeOf(typeFactory.zeroOrMore(itemAnyMap)));
-        assertFalse(boolean.isSubtypeOf(typeFactory.oneOrMore(itemAnyMap)));
-
-
-        assertFalse(boolean.isSubtypeOf(typeFactory.map(itemString, typeFactory.anyItem())));
-        assertFalse(boolean.isSubtypeOf(typeFactory.map(itemboolean, typeFactory.anyItem())));
-        assertFalse(boolean.isSubtypeOf(typeFactory.map(itemBoolean, typeFactory.anyItem())));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.anyMap()));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.zeroOrOne(itemAnyMap)));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.zeroOrMore(itemAnyMap)));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.oneOrMore(itemAnyMap)));
 
 
-        assertFalse(boolean.isSubtypeOf(typeFactory.anyArray()));
-        assertFalse(boolean.isSubtypeOf(typeFactory.zeroOrOne(itemAnyArray)));
-        assertFalse(boolean.isSubtypeOf(typeFactory.zeroOrMore(itemAnyArray)));
-        assertFalse(boolean.isSubtypeOf(typeFactory.oneOrMore(itemAnyArray)));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.map(itemString, typeFactory.anyItem())));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.map(itemBoolean, typeFactory.anyItem())));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.map(itemBoolean, typeFactory.anyItem())));
 
-        assertFalse(boolean.isSubtypeOf(typeFactory.anyFunction()));
-        assertFalse(boolean.isSubtypeOf(typeFactory.zeroOrOne(itemAnyFunction)));
-        assertFalse(boolean.isSubtypeOf(typeFactory.zeroOrMore(itemAnyFunction)));
-        assertFalse(boolean.isSubtypeOf(typeFactory.oneOrMore(itemAnyFunction)));
-        // assertTrue(boolean.isSubtypeOf(typeFactory.function(typeFactory.boolean_(), List.of())))
-        // assertTrue(boolean.isSubtypeOf(typeFactory.function(typeFactory.boolean_(), List.of())))
-        // assertTrue(boolean.isSubtypeOf(function(T) as R))
-        // assertTrue(boolean.isSubtypeOf(function(T1, T2) as R))
+
+        assertFalse(boolean_.isSubtypeOf(typeFactory.anyArray()));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.zeroOrOne(itemAnyArray)));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.zeroOrMore(itemAnyArray)));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.oneOrMore(itemAnyArray)));
+
+        assertFalse(boolean_.isSubtypeOf(typeFactory.anyFunction()));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.zeroOrOne(itemAnyFunction)));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.zeroOrMore(itemAnyFunction)));
+        assertFalse(boolean_.isSubtypeOf(typeFactory.oneOrMore(itemAnyFunction)));
+        // assertTrue(boolean_.isSubtypeOf(typeFactory.function(typeFactory.boolean_(), List.of())))
+        // assertTrue(boolean_.isSubtypeOf(typeFactory.function(typeFactory.boolean_(), List.of())))
+        // assertTrue(boolean_.isSubtypeOf(function(T) as R))
+        // assertTrue(boolean_.isSubtypeOf(function(T1, T2) as R))
 
     }
 

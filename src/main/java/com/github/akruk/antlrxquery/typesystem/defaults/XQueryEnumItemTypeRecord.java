@@ -1,14 +1,19 @@
 package com.github.akruk.antlrxquery.typesystem.defaults;
 
-import java.util.List;
+import java.util.Map;
+
+import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 
 public class XQueryEnumItemTypeRecord extends XQueryEnumItemType {
-  record KeyValuePair(XQueryEnumItemType key, XQueryEnumSequenceType value) {}
+  final Map<String, XQuerySequenceType> recordFields;
 
-  List<KeyValuePair> keyValuePairs;
-  public XQueryEnumItemTypeRecord (List<KeyValuePair> keyValuePairs) {
+  public Map<String, XQuerySequenceType> getRecordFields() {
+    return recordFields;
+  }
+
+  public XQueryEnumItemTypeRecord(Map<String, XQuerySequenceType> keyValuePairs) {
     super(XQueryTypes.RECORD, null, null, null, null, null, null);
-    this.keyValuePairs = keyValuePairs;
+    this.recordFields = keyValuePairs;
   }
 
 }

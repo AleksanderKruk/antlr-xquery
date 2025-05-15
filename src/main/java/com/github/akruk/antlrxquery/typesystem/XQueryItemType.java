@@ -8,7 +8,7 @@ public interface XQueryItemType {
     boolean isElement();
     boolean isElement(String otherName);
     boolean isFunction();
-    boolean isFunction(String otherName, XQuerySequenceType returnedType, List<XQuerySequenceType> argumentTypes);
+    boolean isFunction(XQuerySequenceType returnedType, List<XQuerySequenceType> argumentTypes);
     boolean isMap();
     boolean isArray();
     boolean hasEffectiveBooleanValue();

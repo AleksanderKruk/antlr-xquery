@@ -165,8 +165,7 @@ public class XQueryEnumItemType implements XQueryItemType {
                 return false;
             var onlyArg =  (XQueryEnumSequenceType) x_.getArgumentTypes().get(0);
             var onlyArgItem =  (XQueryEnumItemType) onlyArg.getItemType();
-            // this one argument must be either
-            // number or number+
+            // this one argument must be either number or number+
             boolean correctOccurence = onlyArg.isOne() || onlyArg.isOneOrMore();
             return correctOccurence
                     && onlyArgItem.getType() == XQueryTypes.NUMBER;

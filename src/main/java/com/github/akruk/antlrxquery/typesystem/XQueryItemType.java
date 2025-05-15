@@ -6,7 +6,6 @@ public interface XQueryItemType {
     boolean isAtomic();
     boolean isNode();
     boolean isElement();
-    boolean isElement(String otherName);
     boolean isFunction();
     boolean isFunction(XQuerySequenceType returnedType, List<XQuerySequenceType> argumentTypes);
     boolean isMap();

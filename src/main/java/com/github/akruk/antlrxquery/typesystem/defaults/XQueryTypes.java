@@ -6,7 +6,6 @@ public enum XQueryTypes {
     ANY_ITEM,
     ANY_NODE,
 
-    ANY_ELEMENT,
     ELEMENT,
 
     ANY_MAP,
@@ -18,8 +17,11 @@ public enum XQueryTypes {
     ANY_FUNCTION,
     FUNCTION,
 
+    ENUM,
+    RECORD,
+
+
     BOOLEAN,
-    NODE,
     STRING,
     NUMBER,
     ;

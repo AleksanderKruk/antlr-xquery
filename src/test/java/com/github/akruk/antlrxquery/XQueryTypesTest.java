@@ -11,6 +11,8 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryEnumTypeFactory;
 import static org.junit.Assert.assertEquals;
 
+import java.util.List;
+
 import static org.junit.Assert.*;
 
 public class XQueryTypesTest {
@@ -398,9 +400,76 @@ public class XQueryTypesTest {
         // assertTrue(tested.isSubtypeOf(typeFactory.function(typeFactory.tested(), List.of())))
         // assertTrue(tested.isSubtypeOf(function(T) as R))
         // assertTrue(tested.isSubtypeOf(function(T1, T2) as R))
-
     }
 
+    @Test
+    public void anyArraySubtyping() {
+        final var tested = typeFactory.anyArray();
+        assertFalse(tested.isSubtypeOf(typeFactory.emptySequence()));
+
+        assertTrue(tested.isSubtypeOf(typeFactory.anyItem()));
+        assertTrue(tested.isSubtypeOf(typeFactory.zeroOrOne(itemAnyItem)));
+        assertTrue(tested.isSubtypeOf(typeFactory.zeroOrMore(itemAnyItem)));
+        assertTrue(tested.isSubtypeOf(typeFactory.oneOrMore(itemAnyItem)));
+
+        assertFalse(tested.isSubtypeOf(typeFactory.string()));
+        assertFalse(tested.isSubtypeOf(typeFactory.zeroOrOne(itemString)));
+        assertFalse(tested.isSubtypeOf(typeFactory.zeroOrMore(itemString)));
+        assertFalse(tested.isSubtypeOf(typeFactory.oneOrMore(itemString)));
+
+        assertFalse(tested.isSubtypeOf(typeFactory.number()));
+        assertFalse(tested.isSubtypeOf(typeFactory.zeroOrOne(itemNumber)));
+        assertFalse(tested.isSubtypeOf(typeFactory.zeroOrMore(itemNumber)));
+        assertFalse(tested.isSubtypeOf(typeFactory.oneOrMore(itemNumber)));
+
+        assertFalse(tested.isSubtypeOf(typeFactory.boolean_()));
+        assertFalse(tested.isSubtypeOf(typeFactory.zeroOrOne(itemBoolean)));
+        assertFalse(tested.isSubtypeOf(typeFactory.zeroOrMore(itemBoolean)));
+        assertFalse(tested.isSubtypeOf(typeFactory.oneOrMore(itemBoolean)));
+
+        assertFalse(tested.isSubtypeOf(typeFactory.anyNode()));
+        assertFalse(tested.isSubtypeOf(typeFactory.zeroOrOne(itemAnyNode)));
+        assertFalse(tested.isSubtypeOf(typeFactory.zeroOrMore(itemAnyNode)));
+        assertFalse(tested.isSubtypeOf(typeFactory.oneOrMore(itemAnyNode)));
+
+        assertFalse(tested.isSubtypeOf(typeFactory.anyElement()));
+        assertFalse(tested.isSubtypeOf(typeFactory.zeroOrOne(itemAnyElement)));
+        assertFalse(tested.isSubtypeOf(typeFactory.zeroOrMore(itemAnyElement)));
+        assertFalse(tested.isSubtypeOf(typeFactory.oneOrMore(itemAnyElement)));
+
+        assertFalse(tested.isSubtypeOf(fooElement));
+        assertFalse(tested.isSubtypeOf(typeFactory.zeroOrOne(fooElementItem)));
+        assertFalse(tested.isSubtypeOf(typeFactory.zeroOrMore(fooElementItem)));
+        assertFalse(tested.isSubtypeOf(typeFactory.oneOrMore(fooElementItem)));
+
+        assertFalse(tested.isSubtypeOf(typeFactory.anyMap()));
+        assertFalse(tested.isSubtypeOf(typeFactory.zeroOrOne(itemAnyMap)));
+        assertFalse(tested.isSubtypeOf(typeFactory.zeroOrMore(itemAnyMap)));
+        assertFalse(tested.isSubtypeOf(typeFactory.oneOrMore(itemAnyMap)));
+
+        assertFalse(tested.isSubtypeOf(typeFactory.map(itemString, typeFactory.anyItem())));
+        assertFalse(tested.isSubtypeOf(typeFactory.map(itemNumber, typeFactory.anyItem())));
+        assertFalse(tested.isSubtypeOf(typeFactory.map(itemBoolean, typeFactory.anyItem())));
+
+        assertTrue(tested.isSubtypeOf(typeFactory.anyArray()));
+        assertTrue(tested.isSubtypeOf(typeFactory.zeroOrOne(itemAnyArray)));
+        assertTrue(tested.isSubtypeOf(typeFactory.zeroOrMore(itemAnyArray)));
+        assertTrue(tested.isSubtypeOf(typeFactory.oneOrMore(itemAnyArray)));
+
+        final XQuerySequenceType stringArray = typeFactory.array(typeFactory.string());
+        assertFalse(tested.isSubtypeOf(stringArray));
+
+        assertTrue(tested.isSubtypeOf(typeFactory.anyFunction()));
+        assertTrue(tested.isSubtypeOf(typeFactory.function(typeFactory.anyItem(), List.of(typeFactory.number()))));
+        assertTrue(tested.isSubtypeOf(typeFactory.function(typeFactory.zeroOrOne(typeFactory.itemAnyItem()), List.of(typeFactory.number()))));
+        assertTrue(tested.isSubtypeOf(typeFactory.function(typeFactory.zeroOrMore(typeFactory.itemAnyItem()), List.of(typeFactory.number()))));
+        assertTrue(tested.isSubtypeOf(typeFactory.function(typeFactory.oneOrMore(typeFactory.itemAnyItem()), List.of(typeFactory.number()))));
+
+        // assertTrue(tested.isSubtypeOf(typeFactory.function(typeFactory.tested(), List.of())))
+        // assertTrue(tested.isSubtypeOf(typeFactory.function(typeFactory.tested(), List.of())))
+        // assertTrue(tested.isSubtypeOf(function(T) as R))
+        // assertTrue(tested.isSubtypeOf(function(T1, T2) as R))
+    }
 
 
 }

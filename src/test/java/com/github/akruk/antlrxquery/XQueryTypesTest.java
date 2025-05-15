@@ -12,6 +12,7 @@ import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryEnumType
 import static org.junit.Assert.assertEquals;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.Assert.*;
 
@@ -35,11 +36,10 @@ public class XQueryTypesTest {
     final XQueryItemType itemNumber = typeFactory.itemNumber();
     final XQueryItemType itemBoolean = typeFactory.itemBoolean();
     final XQueryItemType itemAnyNode = typeFactory.itemAnyNode();
-    final XQueryItemType itemAnyElement = typeFactory.itemAnyElement();
     final XQueryItemType itemAnyMap = typeFactory.itemAnyMap();
     final XQueryItemType itemAnyArray = typeFactory.itemAnyArray();
-    final XQueryItemType fooElementItem = typeFactory.itemElement("foo");
-    final XQuerySequenceType fooElement = typeFactory.element("foo");
+    final XQueryItemType fooElementItem = typeFactory.itemElement(Set.of("foo"));
+    final XQuerySequenceType fooElement = typeFactory.element(Set.of("foo"));
 
 
 
@@ -92,11 +92,6 @@ public class XQueryTypesTest {
         assertTrue(emptySequence.isSubtypeOf(typeFactory.zeroOrOne(itemAnyNode)));
         assertTrue(emptySequence.isSubtypeOf(typeFactory.zeroOrMore(itemAnyNode)));
         assertFalse(emptySequence.isSubtypeOf(typeFactory.oneOrMore(itemAnyNode)));
-
-        assertFalse(emptySequence.isSubtypeOf(typeFactory.anyElement()));
-        assertTrue(emptySequence.isSubtypeOf(typeFactory.zeroOrOne(itemAnyElement)));
-        assertTrue(emptySequence.isSubtypeOf(typeFactory.zeroOrMore(itemAnyElement)));
-        assertFalse(emptySequence.isSubtypeOf(typeFactory.oneOrMore(itemAnyElement)));
 
         assertFalse(emptySequence.isSubtypeOf(fooElement));
         assertTrue(emptySequence.isSubtypeOf(typeFactory.zeroOrOne(fooElementItem)));
@@ -158,11 +153,6 @@ public class XQueryTypesTest {
         assertFalse(number.isSubtypeOf(typeFactory.zeroOrMore(itemAnyNode)));
         assertFalse(number.isSubtypeOf(typeFactory.oneOrMore(itemAnyNode)));
 
-        assertFalse(number.isSubtypeOf(typeFactory.anyElement()));
-        assertFalse(number.isSubtypeOf(typeFactory.zeroOrOne(itemAnyElement)));
-        assertFalse(number.isSubtypeOf(typeFactory.zeroOrMore(itemAnyElement)));
-        assertFalse(number.isSubtypeOf(typeFactory.oneOrMore(itemAnyElement)));
-
         assertFalse(number.isSubtypeOf(fooElement));
         assertFalse(number.isSubtypeOf(typeFactory.zeroOrOne(fooElementItem)));
         assertFalse(number.isSubtypeOf(typeFactory.zeroOrMore(fooElementItem)));
@@ -223,11 +213,6 @@ public class XQueryTypesTest {
         assertFalse(boolean_.isSubtypeOf(typeFactory.zeroOrOne(itemAnyNode)));
         assertFalse(boolean_.isSubtypeOf(typeFactory.zeroOrMore(itemAnyNode)));
         assertFalse(boolean_.isSubtypeOf(typeFactory.oneOrMore(itemAnyNode)));
-
-        assertFalse(boolean_.isSubtypeOf(typeFactory.anyElement()));
-        assertFalse(boolean_.isSubtypeOf(typeFactory.zeroOrOne(itemAnyElement)));
-        assertFalse(boolean_.isSubtypeOf(typeFactory.zeroOrMore(itemAnyElement)));
-        assertFalse(boolean_.isSubtypeOf(typeFactory.oneOrMore(itemAnyElement)));
 
         assertFalse(boolean_.isSubtypeOf(fooElement));
         assertFalse(boolean_.isSubtypeOf(typeFactory.zeroOrOne(fooElementItem)));
@@ -292,18 +277,13 @@ public class XQueryTypesTest {
         assertTrue(tested.isSubtypeOf(typeFactory.zeroOrMore(itemAnyNode)));
         assertTrue(tested.isSubtypeOf(typeFactory.oneOrMore(itemAnyNode)));
 
-        assertTrue(tested.isSubtypeOf(typeFactory.anyElement()));
-        assertTrue(tested.isSubtypeOf(typeFactory.zeroOrOne(itemAnyElement)));
-        assertTrue(tested.isSubtypeOf(typeFactory.zeroOrMore(itemAnyElement)));
-        assertTrue(tested.isSubtypeOf(typeFactory.oneOrMore(itemAnyElement)));
-
         assertTrue(tested.isSubtypeOf(fooElement));
         assertTrue(tested.isSubtypeOf(typeFactory.zeroOrOne(fooElementItem)));
         assertTrue(tested.isSubtypeOf(typeFactory.zeroOrMore(fooElementItem)));
         assertTrue(tested.isSubtypeOf(typeFactory.oneOrMore(fooElementItem)));
 
-        final XQueryItemType barElementItem = typeFactory.itemElement("bar");
-        final XQuerySequenceType barElementType = typeFactory.element("bar");
+        final XQueryItemType barElementItem = typeFactory.itemElement(Set.of("bar"));
+        final XQuerySequenceType barElementType = typeFactory.element(Set.of("bar"));
         assertFalse(tested.isSubtypeOf(barElementType));
         assertFalse(tested.isSubtypeOf(typeFactory.zeroOrOne(barElementItem)));
         assertFalse(tested.isSubtypeOf(typeFactory.zeroOrMore(barElementItem)));
@@ -366,11 +346,6 @@ public class XQueryTypesTest {
         assertTrue(tested.isSubtypeOf(typeFactory.zeroOrMore(itemAnyNode)));
         assertTrue(tested.isSubtypeOf(typeFactory.oneOrMore(itemAnyNode)));
 
-        assertTrue(tested.isSubtypeOf(typeFactory.anyElement()));
-        assertTrue(tested.isSubtypeOf(typeFactory.zeroOrOne(itemAnyElement)));
-        assertTrue(tested.isSubtypeOf(typeFactory.zeroOrMore(itemAnyElement)));
-        assertTrue(tested.isSubtypeOf(typeFactory.oneOrMore(itemAnyElement)));
-
         assertFalse(tested.isSubtypeOf(fooElement));
         assertFalse(tested.isSubtypeOf(typeFactory.zeroOrOne(fooElementItem)));
         assertFalse(tested.isSubtypeOf(typeFactory.zeroOrMore(fooElementItem)));
@@ -431,11 +406,6 @@ public class XQueryTypesTest {
         assertFalse(tested.isSubtypeOf(typeFactory.zeroOrOne(itemAnyNode)));
         assertFalse(tested.isSubtypeOf(typeFactory.zeroOrMore(itemAnyNode)));
         assertFalse(tested.isSubtypeOf(typeFactory.oneOrMore(itemAnyNode)));
-
-        assertFalse(tested.isSubtypeOf(typeFactory.anyElement()));
-        assertFalse(tested.isSubtypeOf(typeFactory.zeroOrOne(itemAnyElement)));
-        assertFalse(tested.isSubtypeOf(typeFactory.zeroOrMore(itemAnyElement)));
-        assertFalse(tested.isSubtypeOf(typeFactory.oneOrMore(itemAnyElement)));
 
         assertFalse(tested.isSubtypeOf(fooElement));
         assertFalse(tested.isSubtypeOf(typeFactory.zeroOrOne(fooElementItem)));

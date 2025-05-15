@@ -3,6 +3,7 @@ package com.github.akruk.antlrxquery.typesystem.factories.defaults;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
@@ -44,16 +45,10 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
         return ANY_MAP;
     }
 
-    private static final XQueryEnumItemTypeAnyElement ANY_ELEMENT = new XQueryEnumItemTypeAnyElement();
-    @Override
-    public XQueryItemType itemAnyElement() {
-        return ANY_ELEMENT;
-    }
 
-
-    Map<String, XQueryEnumItemType> elementTypes = new HashMap<>();
+    Map<Set<String>, XQueryEnumItemType> elementTypes = new HashMap<>();
     @Override
-    public XQueryItemType itemElement(String elementName) {
+    public XQueryItemType itemElement(Set<String> elementName) {
         return elementTypes.computeIfAbsent(elementName, k -> new XQueryEnumItemTypeElement(k));
     }
 
@@ -105,14 +100,8 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
         return ANY_MAP_TYPE;
     }
 
-    private final XQuerySequenceType ANY_ELEMENT_TYPE = one(ANY_ELEMENT);
     @Override
-    public XQuerySequenceType anyElement() {
-        return ANY_ELEMENT_TYPE;
-    }
-
-    @Override
-    public XQuerySequenceType element(String elementName) {
+    public XQuerySequenceType element(Set<String> elementName) {
         return one(itemElement(elementName));
     }
 
@@ -123,10 +112,10 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
 
     @Override
     public XQueryItemType itemFunction(XQuerySequenceType returnType, List<XQuerySequenceType> argumentTypes) {
-        List<XQueryEnumSequenceType> argumentTypesEnum = argumentTypes.stream()
+        List<XQuerySequenceType> argumentTypesEnum = argumentTypes.stream()
                 .map(t -> (XQueryEnumSequenceType) t)
                 .collect(Collectors.toList());
-        return new XQueryEnumItemTypeFunction((XQueryEnumSequenceType) returnType, argumentTypesEnum);
+        return new XQueryEnumItemTypeFunction(returnType, argumentTypesEnum);
     }
 
     @Override

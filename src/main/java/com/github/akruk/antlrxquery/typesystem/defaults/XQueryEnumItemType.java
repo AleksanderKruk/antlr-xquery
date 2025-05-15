@@ -1,6 +1,5 @@
 package com.github.akruk.antlrxquery.typesystem.defaults;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiPredicate;
@@ -22,6 +21,7 @@ public class XQueryEnumItemType implements XQueryItemType {
                                 Set<String> elementNames)
     {
         this.type = type;
+        this.typeOrdinal = type.ordinal();
         this.argumentTypes = argumentTypes;
         this.returnedType = returnedType;
         this.arrayType = arrayType;
@@ -102,7 +102,6 @@ public class XQueryEnumItemType implements XQueryItemType {
     private static final int typesCount = XQueryTypes.values().length;
     private static final BiPredicate<XQueryEnumItemType, XQueryEnumItemType> alwaysTrue = (t1, t2) -> true;
     private static final BiPredicate<XQueryEnumItemType, XQueryEnumItemType> alwaysFalse = (t1, t2) -> false;
-    private static final BiPredicate<XQueryEnumItemType, XQueryEnumItemType> equalType = (t1, t2) -> t1.type == t2.type;
 
     private static final BiPredicate[][] itemtypeIsSubtypeOf;
     static {
@@ -126,6 +125,8 @@ public class XQueryEnumItemType implements XQueryItemType {
         final int record = XQueryTypes.RECORD.ordinal();
         final int anyMap = XQueryTypes.ANY_MAP.ordinal();
         final int anyArray = XQueryTypes.ANY_ARRAY.ordinal();
+        final int enum_ = XQueryTypes.ENUM.ordinal();
+        final int string = XQueryTypes.STRING.ordinal();
 
 
         itemtypeIsSubtypeOf[element][anyNode] = alwaysTrue;
@@ -159,7 +160,6 @@ public class XQueryEnumItemType implements XQueryItemType {
         itemtypeIsSubtypeOf[array][anyArray] = alwaysTrue;
         itemtypeIsSubtypeOf[function][anyArray] = (x, y) -> {
             XQueryEnumItemType x_ = (XQueryEnumItemType) x;
-            XQueryEnumItemType y_ = (XQueryEnumItemType) y;
             // function must have one argument
             if (x_.getArgumentTypes().size() != 1)
                 return false;
@@ -173,14 +173,13 @@ public class XQueryEnumItemType implements XQueryItemType {
 
         itemtypeIsSubtypeOf[map][anyArray] = (x, y) -> {
             XQueryEnumItemType x_ = (XQueryEnumItemType) x;
-            XQueryEnumItemType y_ = (XQueryEnumItemType) y;
             // map must have a key that is a number
             var key = (XQueryEnumItemType) x_.getMapKeyType();
             return key.getType() == XQueryTypes.NUMBER;
         };
-        // itemtypeIsSubtypeOf[record][anyArray]
 
-        itemtypeIsSubtypeOf[array][anyArray] = (x, y) -> {
+
+        itemtypeIsSubtypeOf[array][array] = (x, y) -> {
             XQueryEnumItemType x_ = (XQueryEnumItemType) x;
             XQueryEnumItemType y_ = (XQueryEnumItemType) y;
             boolean isSubtypeOfAnyArray = itemtypeIsSubtypeOf[array][anyArray].test(x, y);
@@ -189,15 +188,70 @@ public class XQueryEnumItemType implements XQueryItemType {
             XQuerySequenceType xArrayItemType = x_.getArrayType();
             XQuerySequenceType yArrayItemType = y_.getArrayType();
             return xArrayItemType.isSubtypeOf(yArrayItemType);
-
-            x_.getArrayType().isSubtypeOf(y_.getArrayType());
         };
-        // // case MAP -> this.isMap();
-        // default -> false;
+
+
+        itemtypeIsSubtypeOf[enum_][string] = alwaysTrue;
+        itemtypeIsSubtypeOf[enum_][enum_] = (x, y) -> {
+            var x_ = (XQueryEnumItemTypeEnum) x;
+            var y_ = (XQueryEnumItemTypeEnum) y;
+            return y_.getEnumMembers().containsAll(x_.getEnumMembers());
+        };
+
+        itemtypeIsSubtypeOf[record][anyMap] = alwaysTrue;
+        itemtypeIsSubtypeOf[record][anyArray] = alwaysFalse;
+        itemtypeIsSubtypeOf[record][anyFunction] = alwaysTrue;
+        itemtypeIsSubtypeOf[record][record] = (x, y) -> {
+            var x_ = (XQueryEnumItemTypeRecord) x;
+            var y_ = (XQueryEnumItemTypeRecord) y;
+            boolean allFieldsPresent = y_.getRecordFields().keySet().containsAll(x_.getRecordFields().keySet());
+            if (!allFieldsPresent)
+                return false;
+            for (var key : x_.getRecordFields().keySet()) {
+                var xFieldType = x_.getRecordFields().get(key);
+                var yFieldType = y_.getRecordFields().get(key);
+                if (!xFieldType.isSubtypeOf(yFieldType))
+                    return false;
+            }
+            return true;
+        };
+
+        itemtypeIsSubtypeOf[record][map] = (x, y) -> {
+            var x_ = (XQueryEnumItemTypeRecord) x;
+            var y_ = (XQueryEnumItemTypeMap) y;
+            var keyItemType = (XQueryEnumItemType) y_.getMapKeyType();
+            if (keyItemType.getType() != XQueryTypes.STRING)
+                return false;
+            var yFieldType = y_.getMapValueType();
+            for (var key : x_.getRecordFields().keySet()) {
+                var xFieldType = x_.getRecordFields().get(key);
+                if (!xFieldType.isSubtypeOf(yFieldType))
+                    return false;
+            }
+            return true;
+        };
+
+        itemtypeIsSubtypeOf[record][function] = (x, y) -> {
+            var x_ = (XQueryEnumItemTypeRecord) x;
+            var y_ = (XQueryEnumItemTypeFunction) y;
+            var yArgumentTypes = y_.getArgumentTypes();
+            if (yArgumentTypes.size() != 1)
+                return false;
+            var yFieldType = (XQueryEnumItemType) yArgumentTypes.get(0);
+            if (yFieldType.getType() != XQueryTypes.STRING)
+                return false;
+            var yReturnedType = y_.getReturnedType();
+            for (var key : x_.getRecordFields().keySet()) {
+                var xFieldType = x_.getRecordFields().get(key);
+                if (!xFieldType.isSubtypeOf(yReturnedType))
+                    return false;
+            }
+            return true;
+        };
 
     }
 
-    public final int typeOrdinal = type.ordinal();
+    public final int typeOrdinal;
     @SuppressWarnings("unchecked")
     @Override
     public boolean itemtypeIsSubtypeOf(XQueryItemType obj) {
@@ -225,7 +279,7 @@ public class XQueryEnumItemType implements XQueryItemType {
         return array;
     }
 
-    private static final boolean[] isNode = booleanEnumArray(XQueryTypes.ANY_NODE, XQueryTypes.ANY_ELEMENT, XQueryTypes.ELEMENT, XQueryTypes.NODE);
+    private static final boolean[] isNode = booleanEnumArray(XQueryTypes.ANY_NODE, XQueryTypes.ELEMENT);
 
     @Override
     public boolean isNode() {
@@ -237,11 +291,6 @@ public class XQueryEnumItemType implements XQueryItemType {
     @Override
     public boolean isElement() {
         return isElement[type.ordinal()];
-    }
-
-    @Override
-    public boolean isElement(String otherName) {
-        return isElement() && elementNames != null && elementNames.equals(otherName);
     }
 
     private static final boolean[] isFunction = booleanEnumArray(XQueryTypes.ANY_FUNCTION, XQueryTypes.FUNCTION);
@@ -281,8 +330,8 @@ public class XQueryEnumItemType implements XQueryItemType {
                 && !this.isArray();
     }
 
-    private static final boolean[] isAtomic = booleanEnumArray(t -> t != XQueryTypes.NODE && t != XQueryTypes.ELEMENT
-            && t != XQueryTypes.FUNCTION);
+    private static final boolean[] isAtomic = booleanEnumArray(t -> t != XQueryTypes.ELEMENT
+                                                                    && t != XQueryTypes.FUNCTION);
     @Override
     public boolean isAtomic() {
         return isAtomic[type.ordinal()];

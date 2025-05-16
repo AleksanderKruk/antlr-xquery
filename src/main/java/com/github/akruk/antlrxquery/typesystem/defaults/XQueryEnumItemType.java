@@ -250,9 +250,21 @@ public class XQueryEnumItemType implements XQueryItemType {
             return xArrayItemType.isSubtypeOf(yArrayItemType);
         };
 
-        itemtypeIsSubtypeOf[map][anyFunction] = alwaysTrue;
         itemtypeIsSubtypeOf[record][anyFunction] = alwaysTrue;
         itemtypeIsSubtypeOf[anyMap][anyFunction] = alwaysTrue;
+
+        itemtypeIsSubtypeOf[map][anyFunction] = alwaysTrue;
+        itemtypeIsSubtypeOf[map][function] = (x, y) -> {
+            XQueryEnumItemType x_ = (XQueryEnumItemType) x;
+            XQueryEnumItemType y_ = (XQueryEnumItemType) y;
+            if (y_.getArgumentTypes().size() != 1)
+                return false;
+            var onlyArg =  (XQueryEnumSequenceType) y_.getArgumentTypes().get(0);
+            var onlyArgItem =  (XQueryEnumItemType) onlyArg.getItemType();
+            boolean correctOccurence = onlyArg.isOne();
+            return correctOccurence
+                    && x_.getMapKeyType().itemtypeIsSubtypeOf(onlyArgItem);
+        };
 
         itemtypeIsSubtypeOf[map][anyMap] = alwaysTrue;
         itemtypeIsSubtypeOf[map][map] = (x, y) -> {

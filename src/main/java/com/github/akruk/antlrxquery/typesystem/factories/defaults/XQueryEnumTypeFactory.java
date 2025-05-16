@@ -13,7 +13,11 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 public class XQueryEnumTypeFactory implements XQueryTypeFactory {
 
-
+    private static final XQueryEnumItemTypeError ERROR_ITEM_TYPE = new XQueryEnumItemTypeError();
+    @Override
+    public XQueryItemType itemError() {
+        return ERROR_ITEM_TYPE;
+    }
 
     private static final XQueryEnumItemTypeString STRING_ITEM_TYPE = new XQueryEnumItemTypeString();
     @Override
@@ -70,10 +74,27 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
         return BOOLEAN_ITEM_TYPE;
     }
 
+    private final XQuerySequenceType ERROR_ITEM = one(ERROR_ITEM_TYPE);
+    @Override
+    public XQuerySequenceType error() {
+        return ERROR_ITEM;
+    }
+
     private final XQuerySequenceType STRING_TYPE = one(STRING_ITEM_TYPE);
     @Override
     public XQuerySequenceType string() {
         return STRING_TYPE;
+    }
+
+    private final Map<Set<String>, XQueryItemType> enums = new HashMap<>();
+    @Override
+    public XQueryItemType itemEnum(Set<String> memberNames) {
+        return enums.computeIfAbsent(memberNames, k -> new XQueryEnumItemTypeEnum(k));
+    }
+
+    @Override
+    public XQuerySequenceType enum_(Set<String> memberNames) {
+        return one(itemEnum(memberNames));
     }
 
     private final XQuerySequenceType NUMBER_TYPE = one(NUMBER_ITEM_TYPE);
@@ -168,24 +189,32 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
         return EMPTY_SEQUENCE;
     }
 
+    private final Map<XQueryItemType, XQuerySequenceType> oneTypes = new HashMap<>();
     @Override
     public XQuerySequenceType one(XQueryItemType itemType) {
-        return new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ONE);
+        return oneTypes.computeIfAbsent(itemType,
+                it -> new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ONE));
     }
 
+    private final Map<XQueryItemType, XQuerySequenceType> zeroOrOneTypes = new HashMap<>();
     @Override
     public XQuerySequenceType zeroOrOne(XQueryItemType itemType) {
-        return new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ZERO_OR_ONE);
+        return zeroOrOneTypes.computeIfAbsent(itemType,
+                it -> new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ZERO_OR_ONE));
     }
 
+    private final Map<XQueryItemType, XQuerySequenceType> zeroOrMoreTypes = new HashMap<>();
     @Override
     public XQuerySequenceType zeroOrMore(XQueryItemType itemType) {
-        return new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ZERO_OR_MORE);
+        return zeroOrMoreTypes.computeIfAbsent(itemType,
+                it -> new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ZERO_OR_MORE));
     }
 
+    private final Map<XQueryItemType, XQuerySequenceType> oneOrMoreTypes = new HashMap<>();
     @Override
     public XQuerySequenceType oneOrMore(XQueryItemType itemType) {
-        return new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ONE_OR_MORE);
+        return oneOrMoreTypes.computeIfAbsent(itemType,
+                it -> new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ONE_OR_MORE));
     }
 
 }

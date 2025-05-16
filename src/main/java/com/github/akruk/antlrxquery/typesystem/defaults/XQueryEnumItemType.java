@@ -21,7 +21,6 @@ public class XQueryEnumItemType implements XQueryItemType {
                                 Set<String> elementNames)
     {
         this.type = type;
-        this.typeOrdinal = type.ordinal();
         this.argumentTypes = argumentTypes;
         this.returnedType = returnedType;
         this.arrayType = arrayType;
@@ -304,14 +303,13 @@ public class XQueryEnumItemType implements XQueryItemType {
 
     }
 
-    public final int typeOrdinal;
     @SuppressWarnings("unchecked")
     @Override
     public boolean itemtypeIsSubtypeOf(XQueryItemType obj) {
         if (!(obj instanceof XQueryEnumItemType))
             return false;
         var typed = (XQueryEnumItemType) obj;
-        return itemtypeIsSubtypeOf[typeOrdinal][typed.typeOrdinal].test(this, obj);
+        return itemtypeIsSubtypeOf[type.ordinal()][typed.getType().ordinal()].test(this, obj);
     }
 
 

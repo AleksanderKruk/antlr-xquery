@@ -4,14 +4,9 @@ skinparam wrapWidth 150
 |Detekcja czerwonego okręgu|
 start
 
-:Pobierz momenty wzorcowego okręgu;
-:Pobierz momenty wzorcowej cyfry 3;
-:Pobierz momenty wzorcowej cyfry 0;
-
-:Rozciągnij histogram obrazu;
+' :Rozciągnij histogram obrazu;
 :Proguj czerwony kolor;
-:Erozja sprogowanego obrazu;
-while (nie przetworzono wszystkich kształtów?)
+while (Czy przetworzono wszystkie kształty?) is (nie)
 :Znajdź kształt;
 note
 Kształt np. jako jednolity obszar sprogowanych pikseli
@@ -34,22 +29,23 @@ end note
         while (Nie przetworzono wszystkich kształtów?) is (tak)
             :Znajdź kształt;
             :Wyznacz momenty kształtu;
-            if (Momenty podobne do cyfry 3 w marginesie błędu?) then (znaleziono cyfrę 3)
+            if (Momenty podobne do cyfry 3 w marginesie błędu?) then (tak)
                 :Zapisz obszar cyfry 3;
-            elseif (Momenty podobne do cyfry 0 w marginesie błędu?) then (znaleziono cyfrę 0)
+            elseif (Momenty podobne do cyfry 0 w marginesie błędu?) then (tak)
                 :Zapisz obszar cyfry 0;
-            else (następny kształtt)
+            else (następny kształt)
             :;
             note
-                Możnaby szukać inne cyfry
-                by wykluczyć obecność innych cyfr
+                Możnaby szukać inne cyfry by wykluczyć obecność innych cyfr
             end note
             endif
             if (Czy wykryto 3 i 0?) then (tak)
                 if (Cyfra 3 po lewo od cyfry 0?) then (tak)
                 :Zaznacz pudełko ograniczające czerwonego okręgu;
+                else (nie)
                 endif
-        endif
+                else (nie)
+            endif
         endwhile
 
     else (nie)

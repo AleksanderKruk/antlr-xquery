@@ -1,0 +1,80 @@
+import cv2
+import numpy as np
+
+# Wczytaj obraz
+image = cv2.imread(r"C:\Users\aleks\Desktop\30znak.png")
+padding = 100
+
+# Dodaj ramkę (padding)
+image = cv2.copyMakeBorder( image, padding, padding, padding, padding,
+    borderType=cv2.BORDER_CONSTANT,
+    value=[255, 255, 255]
+)
+
+clone = image.copy()
+
+# Lista punktów klikniętych
+points = []
+
+# Callback do zbierania punktów
+def click_event(event, x, y, flags, param):
+    global points, image
+
+    if event == cv2.EVENT_LBUTTONDOWN:
+        points.append((x, y))
+        cv2.circle(image, (x, y), 5, (0, 0, 255), -1)
+        cv2.imshow("Kliknij 4 punkty", image)
+
+        if len(points) == 4:
+            transform_and_show()
+            points.clear()
+
+def transform_and_show():
+    global points, clone
+
+    pts_src = np.array(points, dtype="float32")
+    pts_src = order_points(pts_src)
+
+    # Oblicz wymiary docelowe (np. na podstawie odległości między punktami)
+    width = int(max(
+        np.linalg.norm(pts_src[0] - pts_src[1]),
+        np.linalg.norm(pts_src[2] - pts_src[3])
+    ))
+    height = int(max(
+        np.linalg.norm(pts_src[0] - pts_src[3]),
+        np.linalg.norm(pts_src[1] - pts_src[2])
+    ))
+
+    # Docelowe punkty
+    pts_dst = np.array([
+        [0, 0],
+        [width - 1, 0],
+        [width - 1, height - 1],
+        [0, height - 1]
+    ], dtype="float32")
+
+    # Transformacja perspektywiczna
+    M = cv2.getPerspectiveTransform(pts_src, pts_dst)
+    warped = cv2.warpPerspective(clone, M, (width, height))
+
+    # Pokaż wynik
+    cv2.imshow("Wyprostowany obraz", warped)
+    cv2.imwrite("wyprostowany.jpg", warped)
+
+def order_points(pts):
+    rect = np.zeros((4, 2), dtype="float32")
+    s = pts.sum(axis=1)
+    diff = np.diff(pts, axis=1)
+
+    rect[0] = pts[np.argmin(s)]       # Top-left
+    rect[2] = pts[np.argmax(s)]       # Bottom-right
+    rect[1] = pts[np.argmin(diff)]    # Top-right
+    rect[3] = pts[np.argmax(diff)]    # Bottom-left
+
+    return rect
+
+# Uruchom
+cv2.imshow("Kliknij 4 punkty", image)
+cv2.setMouseCallback("Kliknij 4 punkty", click_event)
+cv2.waitKey(0)
+cv2.destroyAllWindows()

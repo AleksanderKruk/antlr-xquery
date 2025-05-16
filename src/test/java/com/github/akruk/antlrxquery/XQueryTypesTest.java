@@ -41,6 +41,7 @@ public class XQueryTypesTest {
     final XQueryItemType itemAnyArray = typeFactory.itemAnyArray();
     final XQueryItemType fooElementItem = typeFactory.itemElement(Set.of("foo"));
     final XQueryItemType barElementItem = typeFactory.itemElement(Set.of("bar"));
+    final XQueryItemType itemABenum = typeFactory.itemEnum(Set.of("A", "B"));
     final XQueryItemType itemABCenum = typeFactory.itemEnum(Set.of("A", "B", "C"));
     final XQueryItemType itemABCDenum = typeFactory.itemEnum(Set.of("A", "B", "C", "D"));
 
@@ -276,11 +277,16 @@ public class XQueryTypesTest {
 
         assertFalse(tested.itemtypeIsSubtypeOf(itemError));
         assertTrue(tested.itemtypeIsSubtypeOf(itemAnyItem));
-        assertFalse(tested.itemtypeIsSubtypeOf(itemString));
+        assertTrue(tested.itemtypeIsSubtypeOf(itemString));
+
+        assertTrue(tested.itemtypeIsSubtypeOf(itemABCenum));
+        assertTrue(tested.itemtypeIsSubtypeOf(itemABCDenum));
+        assertFalse(itemABCDenum.itemtypeIsSubtypeOf(itemABCenum));
+
         assertFalse(tested.itemtypeIsSubtypeOf(itemNumber));
         assertFalse(tested.itemtypeIsSubtypeOf(itemBoolean));
-        assertTrue(tested.itemtypeIsSubtypeOf(itemAnyNode));
-        assertTrue(tested.itemtypeIsSubtypeOf(fooElementItem));
+        assertFalse(tested.itemtypeIsSubtypeOf(itemAnyNode));
+        assertFalse(tested.itemtypeIsSubtypeOf(fooElementItem));
         assertFalse(tested.itemtypeIsSubtypeOf(barElementItem));
         assertFalse(tested.itemtypeIsSubtypeOf(itemAnyMap));
         assertFalse(tested.itemtypeIsSubtypeOf(typeFactory.itemMap(itemString, typeFactory.anyItem())));

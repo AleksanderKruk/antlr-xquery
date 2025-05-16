@@ -77,7 +77,7 @@ import com.github.akruk.antlrxquery.evaluator.functioncaller.defaults.BaseFuncti
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
-import com.github.akruk.antlrxquery.values.factories.defaults.XQueryBaseValueFactory;
+import com.github.akruk.antlrxquery.values.factories.defaults.XQueryMemoizedValueFactory;
 import com.github.akruk.antlrxquery.values.XQueryBoolean;
 
 class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
@@ -111,7 +111,9 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
 
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser) {
-        this(tree, parser, new XQueryBaseDynamicContextManager(), new XQueryBaseValueFactory(), new BaseFunctionCaller());
+        this(tree, parser, new XQueryBaseDynamicContextManager(),
+                            new XQueryMemoizedValueFactory(),
+                            new BaseFunctionCaller());
     }
 
     public XQueryEvaluatorVisitor(
@@ -119,7 +121,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             final Parser parser,
             final XQueryDynamicContextManager contextManager,
             final XQueryValueFactory valueFactory,
-            final XQueryFunctionCaller functionCaller) {
+            final XQueryFunctionCaller functionCaller)
+    {
         this.root = valueFactory.node(tree);
         this.context = new XQueryVisitingContext();
         this.context.setItem(root);

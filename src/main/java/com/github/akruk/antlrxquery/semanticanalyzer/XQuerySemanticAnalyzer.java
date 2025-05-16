@@ -26,16 +26,20 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
 public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQuerySequenceType>  {
-    XQuerySemanticContextManager contextManager;
-    Parser parser;
+    final XQuerySemanticContextManager contextManager;
+    final Parser parser;
+    final List<String> errors;
+    final XQueryTypeFactory typeFactory;
+    final XQueryValueFactory valueFactory;
+    final XQuerySemanticFunctionCaller functionCaller;
+    final XQueryVisitingSemanticContext context;
     List<XQuerySequenceType> visitedArgumentTypesList;
-    XQueryVisitingSemanticContext context;
-    XQueryTypeFactory typeFactory;
-    XQueryValueFactory valueFactory;
-    XQuerySemanticFunctionCaller functionCaller;
     List<TupleElementType> visitedTupleStreamType;
-    List<String> errors;
 
+
+    public List<String> getErrors() {
+        return errors;
+    }
 
     private record TupleElementType(String name, XQuerySequenceType type, String positionalName){};
 
@@ -44,16 +48,18 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             final XQuerySemanticContextManager contextManager,
             final XQueryTypeFactory typeFactory,
             final XQueryValueFactory valueFactory,
-            final XQuerySemanticFunctionCaller functionCaller) {
+            final XQuerySemanticFunctionCaller functionCaller)
+    {
         this.context = new XQueryVisitingSemanticContext();
         this.parser = parser;
         this.typeFactory = typeFactory;
         this.valueFactory = valueFactory;
         this.functionCaller = functionCaller;
         this.contextManager = contextManager;
-        contextManager.enterContext();
+        this.contextManager.enterContext();
         this.context.setItemType(typeFactory.anyNode());
         this.context.setPositionType(typeFactory.number());
+        this.errors = new ArrayList<>();
     }
 
     @Override
@@ -303,69 +309,70 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
     @Override
     public XQuerySequenceType visitOrExpr(final OrExprContext ctx) {
-            XQuerySequenceType value = null;
-            if (ctx.orExpr().size() == 0) {
-                value = ctx.pathExpr(0).accept(this);
-            }
-            if (!ctx.OR().isEmpty())
-                return handleOrExpr(ctx);
-            if (!ctx.AND().isEmpty())
-                return handleAndExpr(ctx);
-            if (ctx.TO() != null)
-                return handleRangeExpr(ctx);
-            if (!ctx.additiveOperator().isEmpty())
-                return handleAdditiveExpr(ctx);
-            if (!ctx.multiplicativeOperator().isEmpty())
-                return handleMultiplicativeExpr(ctx);
-            if (!ctx.unionOperator().isEmpty())
-                return handleUnionExpr(ctx);
-            if (!ctx.INTERSECT().isEmpty())
-                return handleIntersectionExpr(ctx);
-            if (!ctx.EXCEPT().isEmpty())
-                return handleSequenceSubtractionExpr(ctx);
-            if (ctx.MINUS() != null)
-                return handleUnaryArithmeticExpr(ctx);
-            if (ctx.generalComp() != null)
-                return handleGeneralComparison(ctx);
-            if (ctx.valueComp() != null)
-                return handleValueComparison(ctx);
-            if (!ctx.CONCATENATION().isEmpty())
-                return handleConcatenation(ctx);
-            if (!ctx.ARROW().isEmpty())
-                return handleArrowExpr(ctx);
-            if (ctx.nodeComp() != null)
-                return handleNodeComp(ctx);
-            return value;
+            // XQuerySequenceType value = null;
+            // if (ctx.orExpr().size() == 0) {
+            //     value = ctx.pathExpr(0).accept(this);
+            // }
+            // if (!ctx.OR().isEmpty())
+            //     return handleOrExpr(ctx);
+            // if (!ctx.AND().isEmpty())
+            //     return handleAndExpr(ctx);
+            // if (ctx.TO() != null)
+            //     return handleRangeExpr(ctx);
+            // if (!ctx.additiveOperator().isEmpty())
+            //     return handleAdditiveExpr(ctx);
+            // if (!ctx.multiplicativeOperator().isEmpty())
+            //     return handleMultiplicativeExpr(ctx);
+            // if (!ctx.unionOperator().isEmpty())
+            //     return handleUnionExpr(ctx);
+            // if (!ctx.INTERSECT().isEmpty())
+            //     return handleIntersectionExpr(ctx);
+            // if (!ctx.EXCEPT().isEmpty())
+            //     return handleSequenceSubtractionExpr(ctx);
+            // if (ctx.MINUS() != null)
+            //     return handleUnaryArithmeticExpr(ctx);
+            // if (ctx.generalComp() != null)
+            //     return handleGeneralComparison(ctx);
+            // if (ctx.valueComp() != null)
+            //     return handleValueComparison(ctx);
+            // if (!ctx.CONCATENATION().isEmpty())
+            //     return handleConcatenation(ctx);
+            // if (!ctx.ARROW().isEmpty())
+            //     return handleArrowExpr(ctx);
+            // if (ctx.nodeComp() != null)
+            //     return handleNodeComp(ctx);
+            // return value;
+            return null;
     }
 
 
 
 
     private XQuerySequenceType handleNodeComp(OrExprContext ctx) {
-        final var anyNode = typeFactory.anyNode();
-        final var visitedLeft = ctx.orExpr(0).accept(this);
-        if (!visitedLeft.isSubtypeOf(anyNode)) {
-            addError(ctx.orExpr(0), "Operands of node comparison must be a one-item sequence of type 'element'");
-        }
-        final var visitedRight = ctx.orExpr(1).accept(this);
-        if (!visitedRight.isSubtypeOf(anyNode)) {
-            addError(ctx.orExpr(1), "Operands of node comparison must be a one-item sequence of type 'element'");
-        }
+        // final var anyNode = typeFactory.anyNode();
+        // final var visitedLeft = ctx.orExpr(0).accept(this);
+        // if (!visitedLeft.isSubtypeOf(anyNode)) {
+        //     addError(ctx.orExpr(0), "Operands of node comparison must be a one-item sequence of type 'element'");
+        // }
+        // final var visitedRight = ctx.orExpr(1).accept(this);
+        // if (!visitedRight.isSubtypeOf(anyNode)) {
+        //     addError(ctx.orExpr(1), "Operands of node comparison must be a one-item sequence of type 'element'");
+        // }
         return typeFactory.boolean_();
 
     }
 
 
     private XQuerySequenceType handleRangeExpr(OrExprContext ctx) {
-        final var fromValue = ctx.orExpr(0).accept(this);
-        final var toValue = ctx.orExpr(1).accept(this);
-        final var number = typeFactory.number();
-        if (!fromValue.isSubtypeOf(number)) {
-            addError(ctx.orExpr(0), "Wrong type in 'from' operand of 'range expression': '<number> to <number>'");
-        }
-        if (!toValue.isSubtypeOf(number)) {
-            addError(ctx.orExpr(1), "Wrong type in 'to' operand of range expression: '<number> to <number>'");
-        }
+        // final var fromValue = ctx.orExpr(0).accept(this);
+        // final var toValue = ctx.orExpr(1).accept(this);
+        // final var number = typeFactory.number();
+        // if (!fromValue.isSubtypeOf(number)) {
+        //     addError(ctx.orExpr(0), "Wrong type in 'from' operand of 'range expression': '<number> to <number>'");
+        // }
+        // if (!toValue.isSubtypeOf(number)) {
+        //     addError(ctx.orExpr(1), "Wrong type in 'to' operand of range expression: '<number> to <number>'");
+        // }
         return typeFactory.zeroOrMore(typeFactory.itemNumber());
     }
 
@@ -576,39 +583,40 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
     private XQuerySequenceType handleConcatenation(final OrExprContext ctx) {
         final XQuerySequenceType string = typeFactory.string();
-        final var operationCount = ctx.CONCATENATION().size();
-        for (int i = 0; i <= operationCount; i++) {
-            final var visitedType = ctx.orExpr(i).accept(this);
-            if (!visitedType.isSubtypeOf(string)) {
-                addError(ctx.orExpr(i), "Operands of 'or expression' need to be string");
-            }
-            i++;
-        }
+        // final var operationCount = ctx.CONCATENATION().size();
+        // for (int i = 0; i <= operationCount; i++) {
+        //     final var visitedType = ctx.orExpr(i).accept(this);
+        //     if (!visitedType.isSubtypeOf(string)) {
+        //         addError(ctx.orExpr(i), "Operands of 'or expression' need to be string");
+        //     }
+        //     i++;
+        // }
         return string;
     }
 
 
     private XQuerySequenceType handleArrowExpr(final OrExprContext ctx) {
-        final var savedArgs = saveVisitedArguments();
-        var contextArgument = ctx.orExpr(0).accept(this);
-        visitedArgumentTypesList.add(contextArgument);
-        // var isString = !value.isStringValue();
-        // var isFunction = !func
-        final var arrowCount = ctx.ARROW().size();
-        for (int i = 0; i < arrowCount; i++) {
-            final var visitedFunction = ctx.arrowFunctionSpecifier(i).accept(this);
-            if (visitedFunction == null) {
-                final TerminalNode functionName = ctx.arrowFunctionSpecifier(i).ID();
-                addError(functionName, String.format("%s is unknown function name", functionName.getText()));
-            }
-            ctx.argumentList(i).accept(this); // visitedArgumentList is set to function's args
-            // contextArgument = visitedFunction.functionValue().call(typeFactory, context, visitedArgumentTypesList);
-            visitedArgumentTypesList = new ArrayList<>();
-            visitedArgumentTypesList.add(contextArgument);
-            i++;
-        }
-        visitedArgumentTypesList = savedArgs;
-        return contextArgument;
+        // final var savedArgs = saveVisitedArguments();
+        // var contextArgument = ctx.orExpr(0).accept(this);
+        // visitedArgumentTypesList.add(contextArgument);
+        // // var isString = !value.isStringValue();
+        // // var isFunction = !func
+        // final var arrowCount = ctx.ARROW().size();
+        // for (int i = 0; i < arrowCount; i++) {
+        //     final var visitedFunction = ctx.arrowFunctionSpecifier(i).accept(this);
+        //     if (visitedFunction == null) {
+        //         final TerminalNode functionName = ctx.arrowFunctionSpecifier(i).ID();
+        //         addError(functionName, String.format("%s is unknown function name", functionName.getText()));
+        //     }
+        //     ctx.argumentList(i).accept(this); // visitedArgumentList is set to function's args
+        //     // contextArgument = visitedFunction.functionValue().call(typeFactory, context, visitedArgumentTypesList);
+        //     visitedArgumentTypesList = new ArrayList<>();
+        //     visitedArgumentTypesList.add(contextArgument);
+        //     i++;
+        // }
+        // visitedArgumentTypesList = savedArgs;
+        // return contextArgument;
+        return null;
     }
 
     @Override
@@ -624,146 +632,152 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
 
     private XQuerySequenceType handleOrExpr(final OrExprContext ctx) {
-        final XQuerySequenceType boolean_ = typeFactory.boolean_();
-        final var orCount = ctx.OR().size();
-        for (int i = 0; i <= orCount; i++) {
-            final var visitedType = ctx.orExpr(i).accept(this);
-            if (!visitedType.isSubtypeOf(boolean_)) {
-                addError(ctx.orExpr(i), "Operands of 'or expression' need to be boolean");
-            }
-            i++;
-        }
-        return boolean_;
+        // final XQuerySequenceType boolean_ = typeFactory.boolean_();
+        // final var orCount = ctx.OR().size();
+        // for (int i = 0; i <= orCount; i++) {
+        //     final var visitedType = ctx.orExpr(i).accept(this);
+        //     if (!visitedType.isSubtypeOf(boolean_)) {
+        //         addError(ctx.orExpr(i), "Operands of 'or expression' need to be boolean");
+        //     }
+        //     i++;
+        // }
+        // return boolean_;
+        return null;
     }
 
 
     private XQuerySequenceType handleAndExpr(final OrExprContext ctx) {
-        final XQuerySequenceType boolean_ = typeFactory.boolean_();
-        final var orCount = ctx.AND().size();
-        for (int i = 0; i <= orCount; i++) {
-            final var visitedType = ctx.orExpr(i).accept(this);
-            if (!visitedType.isSubtypeOf(boolean_)) {
-                addError(ctx.orExpr(i), "Operands of 'or expression' need to be boolean");
-            }
-            i++;
-        }
-        return boolean_;
+        // final XQuerySequenceType boolean_ = typeFactory.boolean_();
+        // final var orCount = ctx.AND().size();
+        // for (int i = 0; i <= orCount; i++) {
+        //     final var visitedType = ctx.orExpr(i).accept(this);
+        //     if (!visitedType.isSubtypeOf(boolean_)) {
+        //         addError(ctx.orExpr(i), "Operands of 'or expression' need to be boolean");
+        //     }
+        //     i++;
+        // }
+        // return boolean_;
+        return null;
     }
 
 
     private XQuerySequenceType handleAdditiveExpr(final OrExprContext ctx) {
-        final XQuerySequenceType number = typeFactory.number();
-        final var orCount = ctx.additiveOperator().size();
-        for (int i = 0; i <= orCount; i++) {
-            final OrExprContext operandExpr = ctx.orExpr(i);
-            final var operand = operandExpr.accept(this);
-            if (!operand.isSubtypeOf(number)) {
-                addError(operandExpr, "Operands in additive expression must be numeric");
-            }
-            i++;
-        }
+        // final XQuerySequenceType number = typeFactory.number();
+        // final var orCount = ctx.additiveOperator().size();
+        // for (int i = 0; i <= orCount; i++) {
+        //     final OrExprContext operandExpr = ctx.orExpr(i);
+        //     final var operand = operandExpr.accept(this);
+        //     if (!operand.isSubtypeOf(number)) {
+        //         addError(operandExpr, "Operands in additive expression must be numeric");
+        //     }
+        //     i++;
+        // }
         return typeFactory.number();
     }
 
     private XQuerySequenceType handleGeneralComparison(final OrExprContext ctx) {
-        final var leftHandSide = ctx.orExpr(0).accept(this);
-        final var rightHandSide = ctx.orExpr(1).accept(this);
-        if (!leftHandSide.isSubtypeOf(rightHandSide)) {
-            String msg = String.format("The types: %s and %s in general comparison are not comparable",
-                    leftHandSide.toString(), rightHandSide.toString());
-            addError(ctx, msg);
-        }
+        // final var leftHandSide = ctx.orExpr(0).accept(this);
+        // final var rightHandSide = ctx.orExpr(1).accept(this);
+        // if (!leftHandSide.isSubtypeOf(rightHandSide)) {
+        //     String msg = String.format("The types: %s and %s in general comparison are not comparable",
+        //             leftHandSide.toString(), rightHandSide.toString());
+        //     addError(ctx, msg);
+        // }
         return typeFactory.boolean_();
     }
 
     private XQuerySequenceType handleValueComparison(final OrExprContext ctx) {
-        final var leftHandSide = ctx.orExpr(0).accept(this);
-        final var rightHandSide = ctx.orExpr(1).accept(this);
-        if (!leftHandSide.isOne()) {
-            addError(ctx.orExpr(0), "Left hand side of 'or expression' must be a one-item sequence");
-        }
-        if (!rightHandSide.isOne()) {
-            addError(ctx.orExpr(1), "Right hand side of 'or expression' must be a one-item sequence");
-        }
-        if (!leftHandSide.isSubtypeOf(rightHandSide)) {
-            String msg = String.format("The types: %s and %s in value comparison are not comparable",
-                                        leftHandSide.toString(), rightHandSide.toString());
-            addError(ctx, msg);
-        }
+        // final var leftHandSide = ctx.orExpr(0).accept(this);
+        // final var rightHandSide = ctx.orExpr(1).accept(this);
+        // if (!leftHandSide.isOne()) {
+        //     addError(ctx.orExpr(0), "Left hand side of 'or expression' must be a one-item sequence");
+        // }
+        // if (!rightHandSide.isOne()) {
+        //     addError(ctx.orExpr(1), "Right hand side of 'or expression' must be a one-item sequence");
+        // }
+        // if (!leftHandSide.isSubtypeOf(rightHandSide)) {
+        //     String msg = String.format("The types: %s and %s in value comparison are not comparable",
+        //                                 leftHandSide.toString(), rightHandSide.toString());
+        //     addError(ctx, msg);
+        // }
         return typeFactory.boolean_();
     }
 
+
     private XQuerySequenceType handleMultiplicativeExpr(final OrExprContext ctx) {
-        final XQuerySequenceType number = typeFactory.number();
-        var type = ctx.orExpr(0).accept(this);
-        if (!type.isSubtypeOf(number)) {
-            addError(ctx, "Multiplicative expression requires a number as its first operand");
-        }
-        final var orCount = ctx.multiplicativeOperator().size();
-        for (int i = 1; i <= orCount; i++) {
-            final var visitedType = ctx.orExpr(i).accept(this);
-            if (!visitedType.isSubtypeOf(number)) {
-                addError(ctx, "Multiplicative expression requires a number as its first operand");
-            }
-        }
-        return number;
+        // final XQuerySequenceType number = typeFactory.number();
+        // var type = ctx.orExpr(0).accept(this);
+        // if (!type.isSubtypeOf(number)) {
+        //     addError(ctx, "Multiplicative expression requires a number as its first operand");
+        // }
+        // final var orCount = ctx.multiplicativeOperator().size();
+        // for (int i = 1; i <= orCount; i++) {
+        //     final var visitedType = ctx.orExpr(i).accept(this);
+        //     if (!visitedType.isSubtypeOf(number)) {
+        //         addError(ctx, "Multiplicative expression requires a number as its first operand");
+        //     }
+        // }
+        return typeFactory.number();
     }
 
     private XQuerySequenceType handleUnionExpr(final OrExprContext ctx) {
-        var expressionNode = ctx.orExpr(0);
-        var expressionType = expressionNode.accept(this);
-        // TODO: Whether or not it should be any element item
-        // final var anyItemSequence = typeFactory.zeroOrMore(typeFactory.itemAnyElement());
-        // if (!expressionType.isSubtypeOf(anyItemSequence)) {
-        //     addError(expressionNode, "Operand of union expression must be a sequence of items");
+        // var expressionNode = ctx.orExpr(0);
+        // var expressionType = expressionNode.accept(this);
+        // // TODO: Whether or not it should be any element item
+        // // final var anyItemSequence = typeFactory.zeroOrMore(typeFactory.itemAnyElement());
+        // // if (!expressionType.isSubtypeOf(anyItemSequence)) {
+        // //     addError(expressionNode, "Operand of union expression must be a sequence of items");
+        // // }
+        // final var unionCount = ctx.unionOperator().size();
+        // for (int i = 1; i <= unionCount; i++) {
+        //     final var visitedType = ctx.orExpr(i).accept(this);
+        //     expressionType = expressionType.sequenceMerge(visitedType);
         // }
-        final var unionCount = ctx.unionOperator().size();
-        for (int i = 1; i <= unionCount; i++) {
-            final var visitedType = ctx.orExpr(i).accept(this);
-            expressionType = expressionType.sequenceMerge(visitedType);
-        }
-        return expressionType;
+        // return expressionType;
+        return null;
     }
 
     private XQuerySequenceType handleIntersectionExpr(final OrExprContext ctx) {
-        var expressionType = ctx.orExpr(0).accept(this);
+        // var expressionType = ctx.orExpr(0).accept(this);
         // TODO: Whether or not it should be any element item
         // final var anyItemSequence = typeFactory.zeroOrMore(typeFactory.itemAnyElement());
         // if (!expressionType.isSubtypeOf(anyItemSequence)) {
         //     addError(expressionNode, "Operand of union expression must be a sequence of items");
         // }
-        final var operatorCount = ctx.INTERSECT().size();
-        for (int i = 1; i <= operatorCount; i++) {
-            final var visitedType = ctx.orExpr(i).accept(this);
-            expressionType = expressionType.sequenceMerge(visitedType);
-        }
-        return expressionType;
+        // final var operatorCount = ctx.INTERSECT().size();
+        // for (int i = 1; i <= operatorCount; i++) {
+        //     final var visitedType = ctx.orExpr(i).accept(this);
+        //     expressionType = expressionType.sequenceMerge(visitedType);
+        // }
+        // return expressionType;
+        return null;
     }
 
 
     private XQuerySequenceType handleSequenceSubtractionExpr(final OrExprContext ctx) {
-        var expressionType = ctx.orExpr(0).accept(this);
+        // var expressionType = ctx.orExpr(0).accept(this);
         // TODO: Whether or not it should be any element item
         // final var anyItemSequence = typeFactory.zeroOrMore(typeFactory.itemAnyElement());
         // if (!expressionType.isSubtypeOf(anyItemSequence)) {
         //     addError(expressionNode, "Operand of union expression must be a sequence of items");
         // }
-        final var operatorCount = ctx.EXCEPT().size();
-        for (int i = 1; i <= operatorCount; i++) {
-            final var visitedType = ctx.orExpr(i).accept(this);
-            expressionType = expressionType.sequenceMerge(visitedType);
-        }
-        return expressionType;
+        // final var operatorCount = ctx.EXCEPT().size();
+        // for (int i = 1; i <= operatorCount; i++) {
+        //     final var visitedType = ctx.orExpr(i).accept(this);
+        //     expressionType = expressionType.sequenceMerge(visitedType);
+        // }
+        // return expressionType;
+        return null;
     }
 
 
     private XQuerySequenceType handleUnaryArithmeticExpr(final OrExprContext ctx) {
-        final var type = ctx.orExpr(0).accept(this);
-        final XQuerySequenceType number = typeFactory.number();
-        if (!type.isSubtypeOf(typeFactory.number())) {
-            addError(ctx, "Arithmetic unary expression requires a number");
-        }
-        return number;
+        // final var type = ctx.orExpr(0).accept(this);
+        // final XQuerySequenceType number = typeFactory.number();
+        // if (!type.isSubtypeOf(typeFactory.number())) {
+        //     addError(ctx, "Arithmetic unary expression requires a number");
+        // }
+        return typeFactory.number();
     }
 
     @Override

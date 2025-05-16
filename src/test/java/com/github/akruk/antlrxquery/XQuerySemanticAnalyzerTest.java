@@ -1,5 +1,17 @@
 package com.github.akruk.antlrxquery;
 
+import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
+
+import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.baseimplementation.XQueryBaseSemanticContextManager;
+import com.github.akruk.antlrxquery.evaluator.functioncaller.XQueryFunctionCaller;
+import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionCaller;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQueryBaseSemanticFunctionCaller;
+import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryEnumTypeFactory;
+import com.github.akruk.antlrxquery.values.factories.defaults.XQueryMemoizedValueFactory;
+
 public class XQuerySemanticAnalyzerTest {
     // final XQueryEnumBasedType string = XQueryEnumBasedType.string();
     // final XQueryEnumBasedType integer = XQueryEnumBasedType.integer();
@@ -12,14 +24,21 @@ public class XQuerySemanticAnalyzerTest {
     //         XQueryOccurence.ZERO_OR_ONE);
 
 
-    // void analyze(String text) {
-    //     CharStream characters = CharStreams.fromString(xquery);
-    //     var xqueryLexer = new AntlrXqueryLexer(characters);
-    //     var xqueryTokens = new CommonTokenStream(xqueryLexer);
-    //     var xqueryParser = new AntlrXqueryParser(xqueryTokens);
-    //     var xqueryTree = xqueryParser.xquery();
-    //     XQuerySemanticAnalyzer visitor = new XQuerySemanticAnalyzer(null, );
-    // }
+    void analyze(String text) {
+        CharStream characters = CharStreams.fromString(text);
+        Lexer xqueryLexer = new AntlrXqueryLexer(characters);
+        CommonTokenStream xqueryTokens = new CommonTokenStream(xqueryLexer);
+        AntlrXqueryParser xqueryParser = new AntlrXqueryParser(xqueryTokens);
+        ParseTree xqueryTree = xqueryParser.xquery();
+        XQuerySemanticFunctionCaller caller = new XQueryBaseSemanticFunctionCaller();
+        XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
+            xqueryParser,
+            new XQueryBaseSemanticContextManager(),
+            new XQueryEnumTypeFactory(),
+            new XQueryMemoizedValueFactory(),
+            caller);
+        analyzer.visit(xqueryTree);
+    }
 
     // @Test
     // void emptySequence() {

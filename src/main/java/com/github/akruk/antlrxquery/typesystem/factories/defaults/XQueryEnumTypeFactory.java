@@ -43,6 +43,10 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
     private final XQuerySequenceType BOOLEAN_TYPE = one(BOOLEAN_ITEM_TYPE);
     private final XQuerySequenceType EMPTY_SEQUENCE = new XQueryEnumEmptySequenceType(this);
 
+    @Override
+    public XQueryItemType itemRecord(Map<String, XQuerySequenceType> fields) {
+        return new XQueryEnumItemTypeRecord(fields);
+    }
 
     @Override
     public XQueryItemType itemError() {
@@ -156,6 +160,11 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
     @Override
     public XQueryItemType itemMap(XQueryItemType keyType, XQuerySequenceType valueType) {
         return new XQueryEnumItemTypeMap((XQueryEnumItemType) keyType, (XQueryEnumSequenceType) valueType);
+    }
+
+    @Override
+    public XQuerySequenceType record(Map<String, XQuerySequenceType> fields) {
+        return one(itemRecord(fields));
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.github.akruk.antlrxquery.typesystem.factories;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
@@ -21,6 +22,7 @@ public interface XQueryTypeFactory {
     public XQueryItemType itemMap(XQueryItemType keyType, XQuerySequenceType valueType);
     public XQueryItemType itemArray(XQuerySequenceType itemType);
     public XQueryItemType itemFunction(XQuerySequenceType returnType, List<XQuerySequenceType> argumentTypes);
+    public XQueryItemType itemRecord(Map<String, XQuerySequenceType> fields);
 
     public XQuerySequenceType error();
     public XQuerySequenceType string();
@@ -31,6 +33,7 @@ public interface XQueryTypeFactory {
     public XQuerySequenceType array(XQuerySequenceType itemType);
     public XQuerySequenceType anyMap();
     public XQuerySequenceType map(XQueryItemType mapKeyType, XQuerySequenceType mapValueType);
+    public XQuerySequenceType record(Map<String, XQuerySequenceType> fields);
     public XQuerySequenceType element(Set<String> elementName);
     public XQuerySequenceType anyFunction();
     public XQuerySequenceType function(XQuerySequenceType returnType, List<XQuerySequenceType> argumentTypes);

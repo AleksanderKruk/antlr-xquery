@@ -7,7 +7,9 @@ import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 
 public interface XQueryTypeFactory {
+    public XQueryItemType itemError();
     public XQueryItemType itemString();
+    public XQueryItemType itemEnum(Set<String> memberNames);
     public XQueryItemType itemNumber();
     public XQueryItemType itemAnyNode();
     public XQueryItemType itemAnyArray();
@@ -20,7 +22,9 @@ public interface XQueryTypeFactory {
     public XQueryItemType itemArray(XQuerySequenceType itemType);
     public XQueryItemType itemFunction(XQuerySequenceType returnType, List<XQuerySequenceType> argumentTypes);
 
+    public XQuerySequenceType error();
     public XQuerySequenceType string();
+    public XQuerySequenceType enum_(Set<String> memberNames);
     public XQuerySequenceType number();
     public XQuerySequenceType anyNode();
     public XQuerySequenceType anyArray();

@@ -309,6 +309,9 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
     @Override
     public XQuerySequenceType visitOrExpr(final OrExprContext ctx) {
+        if (ctx.OR().isEmpty()) {
+            return ctx.andExpr(0).accept(this);
+        }
         final XQuerySequenceType boolean_ = typeFactory.boolean_();
         final var orCount = ctx.OR().size();
         for (int i = 0; i <= orCount; i++) {

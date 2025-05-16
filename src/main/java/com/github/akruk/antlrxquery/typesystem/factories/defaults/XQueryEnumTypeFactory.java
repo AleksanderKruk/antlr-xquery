@@ -12,81 +12,99 @@ import com.github.akruk.antlrxquery.typesystem.defaults.*;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 public class XQueryEnumTypeFactory implements XQueryTypeFactory {
-
     private static final XQueryEnumItemTypeError ERROR_ITEM_TYPE = new XQueryEnumItemTypeError();
+    private static final XQueryEnumItemTypeString STRING_ITEM_TYPE = new XQueryEnumItemTypeString();
+    private static final XQueryEnumItemTypeNumber NUMBER_ITEM_TYPE = new XQueryEnumItemTypeNumber();
+    private static final XQueryEnumItemTypeAnyNode ANY_NODE_TYPE = new XQueryEnumItemTypeAnyNode();
+    private static final XQueryEnumItemTypeAnyArray ANY_ARRAY = new XQueryEnumItemTypeAnyArray();
+    private static final XQueryEnumItemTypeBoolean BOOLEAN_ITEM_TYPE = new XQueryEnumItemTypeBoolean();
+    private static final XQueryEnumItemTypeAnyItem ANY_ITEM_TYPE = new XQueryEnumItemTypeAnyItem();
+    private static final XQueryEnumItemTypeAnyFunction ANY_FUNCTION = new XQueryEnumItemTypeAnyFunction();
+    private static final XQueryEnumItemTypeAnyMap ANY_MAP = new XQueryEnumItemTypeAnyMap();
+
+    private final Map<XQuerySequenceType, XQuerySequenceType> arrays = new HashMap<>();
+    private final Map<XQueryItemType, Map<XQuerySequenceType, XQuerySequenceType>> maps=new HashMap<>();
+    private final Map<XQuerySequenceType, XQuerySequenceType> functions = new HashMap<>();
+    private final Map<Set<String>, XQueryItemType> enums = new HashMap<>();
+    private final Map<Set<String>, XQueryEnumItemType> elementTypes = new HashMap<>();
+    private final Map<XQueryItemType, XQuerySequenceType> oneTypes = new HashMap<>();
+    private final Map<XQueryItemType, XQuerySequenceType> zeroOrOneTypes = new HashMap<>();
+    private final Map<XQueryItemType, XQuerySequenceType> zeroOrMoreTypes = new HashMap<>();
+    private final Map<XQueryItemType, XQuerySequenceType> oneOrMoreTypes = new HashMap<>();
+
+    private final XQuerySequenceType STRING_TYPE = one(STRING_ITEM_TYPE);
+    private final XQuerySequenceType NUMBER_TYPE = one(NUMBER_ITEM_TYPE);
+    private final XQuerySequenceType ANY_NODE = one(ANY_NODE_TYPE);
+    private final XQuerySequenceType ANY_ARRAY_TYPE = one(ANY_ARRAY);
+    private final XQuerySequenceType ANY_MAP_TYPE = one(ANY_MAP);
+    private final XQuerySequenceType ERROR_ITEM = one(ERROR_ITEM_TYPE);
+    private final XQuerySequenceType ANY_FUNCTION_TYPE = one(ANY_FUNCTION);
+    private final XQuerySequenceType ANY_ITEM = one(ANY_ITEM_TYPE);
+    private final XQuerySequenceType BOOLEAN_TYPE = one(BOOLEAN_ITEM_TYPE);
+    private final XQuerySequenceType EMPTY_SEQUENCE = new XQueryEnumEmptySequenceType(this);
+
+
     @Override
     public XQueryItemType itemError() {
         return ERROR_ITEM_TYPE;
     }
 
-    private static final XQueryEnumItemTypeString STRING_ITEM_TYPE = new XQueryEnumItemTypeString();
     @Override
     public XQueryItemType itemString() {
         return STRING_ITEM_TYPE;
     }
 
-    private static final XQueryEnumItemTypeNumber NUMBER_ITEM_TYPE = new XQueryEnumItemTypeNumber();
     @Override
     public XQueryItemType itemNumber() {
         return NUMBER_ITEM_TYPE;
     }
 
-    private static final XQueryEnumItemTypeAnyNode ANY_NODE_TYPE = new XQueryEnumItemTypeAnyNode();
     @Override
     public XQueryItemType itemAnyNode() {
         return ANY_NODE_TYPE;
     }
 
-    private static final XQueryEnumItemTypeAnyArray ANY_ARRAY = new XQueryEnumItemTypeAnyArray();
     @Override
     public XQueryItemType itemAnyArray() {
         return ANY_ARRAY;
     }
 
-    private static final XQueryEnumItemTypeAnyMap ANY_MAP = new XQueryEnumItemTypeAnyMap();
     @Override
     public XQueryItemType itemAnyMap() {
         return ANY_MAP;
     }
 
 
-    Map<Set<String>, XQueryEnumItemType> elementTypes = new HashMap<>();
     @Override
     public XQueryItemType itemElement(Set<String> elementName) {
         return elementTypes.computeIfAbsent(elementName, k -> new XQueryEnumItemTypeElement(k));
     }
 
-    private static final XQueryEnumItemTypeAnyFunction ANY_FUNCTION = new XQueryEnumItemTypeAnyFunction();
     @Override
     public XQueryItemType itemAnyFunction() {
         return ANY_FUNCTION;
     }
 
-    private static final XQueryEnumItemTypeAnyItem ANY_ITEM_TYPE = new XQueryEnumItemTypeAnyItem();
     @Override
     public XQueryItemType itemAnyItem() {
         return ANY_ITEM_TYPE;
     }
 
-    private static final XQueryEnumItemTypeBoolean BOOLEAN_ITEM_TYPE = new XQueryEnumItemTypeBoolean();
     @Override
     public XQueryItemType itemBoolean() {
         return BOOLEAN_ITEM_TYPE;
     }
 
-    private final XQuerySequenceType ERROR_ITEM = one(ERROR_ITEM_TYPE);
     @Override
     public XQuerySequenceType error() {
         return ERROR_ITEM;
     }
 
-    private final XQuerySequenceType STRING_TYPE = one(STRING_ITEM_TYPE);
     @Override
     public XQuerySequenceType string() {
         return STRING_TYPE;
     }
 
-    private final Map<Set<String>, XQueryItemType> enums = new HashMap<>();
     @Override
     public XQueryItemType itemEnum(Set<String> memberNames) {
         return enums.computeIfAbsent(memberNames, k -> new XQueryEnumItemTypeEnum(k));
@@ -97,25 +115,21 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
         return one(itemEnum(memberNames));
     }
 
-    private final XQuerySequenceType NUMBER_TYPE = one(NUMBER_ITEM_TYPE);
     @Override
     public XQuerySequenceType number() {
         return NUMBER_TYPE;
     }
 
-    private final XQuerySequenceType ANY_NODE = one(ANY_NODE_TYPE);
     @Override
     public XQuerySequenceType anyNode() {
         return ANY_NODE;
     }
 
-    private final XQuerySequenceType ANY_ARRAY_TYPE = one(ANY_ARRAY);
     @Override
     public XQuerySequenceType anyArray() {
         return ANY_ARRAY_TYPE;
     }
 
-    private final XQuerySequenceType ANY_MAP_TYPE = one(ANY_MAP);
     @Override
     public XQuerySequenceType anyMap() {
         return ANY_MAP_TYPE;
@@ -144,20 +158,17 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
         return new XQueryEnumItemTypeMap((XQueryEnumItemType) keyType, (XQueryEnumSequenceType) valueType);
     }
 
-    private final Map<XQuerySequenceType, XQuerySequenceType> arrays = new HashMap<>();
     @Override
     public XQuerySequenceType array(XQuerySequenceType containedItemType) {
         return arrays.computeIfAbsent(containedItemType, it -> one(itemArray(containedItemType)));
     }
 
-    private final Map<XQueryItemType, Map<XQuerySequenceType, XQuerySequenceType>> maps = new HashMap<>();
     @Override
     public XQuerySequenceType map(XQueryItemType mapKeyType, XQuerySequenceType mapValueType) {
         var keyMap = maps.computeIfAbsent(mapKeyType, k-> new HashMap<>());
         return keyMap.computeIfAbsent(mapValueType, k -> one(itemMap(mapKeyType, mapValueType)));
     }
 
-    private final Map<XQuerySequenceType, XQuerySequenceType> functions = new HashMap<>();
     @Override
     public XQuerySequenceType function(XQuerySequenceType returnType, List<XQuerySequenceType> argumentTypes) {
         return functions.computeIfAbsent(returnType, it -> {
@@ -165,52 +176,44 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
         });
     }
 
-    private final XQuerySequenceType ANY_FUNCTION_TYPE = one(ANY_FUNCTION);
     @Override
     public XQuerySequenceType anyFunction() {
         return ANY_FUNCTION_TYPE;
     }
 
-    private final XQuerySequenceType ANY_ITEM = one(ANY_ITEM_TYPE);
     @Override
     public XQuerySequenceType anyItem() {
         return ANY_ITEM;
     }
 
-    private final XQuerySequenceType BOOLEAN_TYPE = one(BOOLEAN_ITEM_TYPE);
     @Override
     public XQuerySequenceType boolean_() {
         return BOOLEAN_TYPE;
     }
 
-    private final XQuerySequenceType EMPTY_SEQUENCE = new XQueryEnumEmptySequenceType(this);
     @Override
     public XQuerySequenceType emptySequence() {
         return EMPTY_SEQUENCE;
     }
 
-    private final Map<XQueryItemType, XQuerySequenceType> oneTypes = new HashMap<>();
     @Override
     public XQuerySequenceType one(XQueryItemType itemType) {
         return oneTypes.computeIfAbsent(itemType,
                 it -> new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ONE));
     }
 
-    private final Map<XQueryItemType, XQuerySequenceType> zeroOrOneTypes = new HashMap<>();
     @Override
     public XQuerySequenceType zeroOrOne(XQueryItemType itemType) {
         return zeroOrOneTypes.computeIfAbsent(itemType,
                 it -> new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ZERO_OR_ONE));
     }
 
-    private final Map<XQueryItemType, XQuerySequenceType> zeroOrMoreTypes = new HashMap<>();
     @Override
     public XQuerySequenceType zeroOrMore(XQueryItemType itemType) {
         return zeroOrMoreTypes.computeIfAbsent(itemType,
                 it -> new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ZERO_OR_MORE));
     }
 
-    private final Map<XQueryItemType, XQuerySequenceType> oneOrMoreTypes = new HashMap<>();
     @Override
     public XQuerySequenceType oneOrMore(XQueryItemType itemType) {
         return oneOrMoreTypes.computeIfAbsent(itemType,

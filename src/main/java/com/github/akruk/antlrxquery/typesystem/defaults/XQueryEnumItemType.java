@@ -127,6 +127,35 @@ public class XQueryEnumItemType implements XQueryItemType {
         final int enum_ = XQueryTypes.ENUM.ordinal();
         final int string = XQueryTypes.STRING.ordinal();
 
+        itemtypeIsSubtypeOf[anyArray][anyMap] = alwaysTrue;
+        itemtypeIsSubtypeOf[anyArray][map] = (x, y) -> {
+            XQueryEnumItemTypeMap y_ = (XQueryEnumItemTypeMap) y;
+            var mapKeyType = (XQueryEnumItemType) y_.getMapKeyType();
+            boolean isNumber = mapKeyType.getType() == XQueryTypes.NUMBER;
+            return isNumber;
+        };
+
+        itemtypeIsSubtypeOf[anyArray][anyFunction] = alwaysTrue;
+        itemtypeIsSubtypeOf[anyArray][function] = (x, y) -> {
+            XQueryEnumItemTypeFunction y_ = (XQueryEnumItemTypeFunction) y;
+            var argumentTypes = y_.getArgumentTypes();
+            if (argumentTypes.size() != 1)
+                return false;
+            var onlyArg =  (XQueryEnumSequenceType) argumentTypes.get(0);
+            var onlyArgItem =  (XQueryEnumItemType) onlyArg.getItemType();
+            boolean correctOccurence = onlyArg.isOne() || onlyArg.isOneOrMore();
+            return correctOccurence
+                    && onlyArgItem.getType() == XQueryTypes.NUMBER;
+        };
+
+        itemtypeIsSubtypeOf[array][anyMap] = alwaysTrue;
+        itemtypeIsSubtypeOf[array][map] = (x, y) -> {
+            XQueryEnumItemType x_ = (XQueryEnumItemType) x;
+            XQueryEnumItemType y_ = (XQueryEnumItemType) y;
+            if (!itemtypeIsSubtypeOf[anyArray][map].test(x, y))
+                return false;
+            return x_.getArrayType().isSubtypeOf(y_.getMapValueType());
+        };
 
         itemtypeIsSubtypeOf[element][anyNode] = alwaysTrue;
         itemtypeIsSubtypeOf[element][element] = (x, y) -> {
@@ -223,7 +252,6 @@ public class XQueryEnumItemType implements XQueryItemType {
 
         itemtypeIsSubtypeOf[map][anyFunction] = alwaysTrue;
         itemtypeIsSubtypeOf[record][anyFunction] = alwaysTrue;
-        itemtypeIsSubtypeOf[anyArray][anyFunction] = alwaysTrue;
         itemtypeIsSubtypeOf[anyMap][anyFunction] = alwaysTrue;
 
         itemtypeIsSubtypeOf[map][anyMap] = alwaysTrue;

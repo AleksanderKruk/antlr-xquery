@@ -1,23 +1,23 @@
-package com.github.akruk.antlrxquery.evaluator.contextmanagement.baseimplementations;
+package com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.baseimplementation;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-import com.github.akruk.antlrxquery.evaluator.contextmanagement.XQueryContext;
-import com.github.akruk.antlrxquery.evaluator.contextmanagement.XQueryContextManager;
-import com.github.akruk.antlrxquery.evaluator.contextmanagement.XQueryScope;
+import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.XQueryDynamicContext;
+import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.XQueryDynamicContextManager;
+import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.XQueryDynamicScope;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 
-public class XQueryBaseContextManager implements XQueryContextManager {
-    final List<XQueryContext> contexts;
-    final Supplier<XQueryContext> contextFactory;
+public class XQueryBaseDynamicContextManager implements XQueryDynamicContextManager {
+    final List<XQueryDynamicContext> contexts;
+    final Supplier<XQueryDynamicContext> contextFactory;
 
-    public XQueryBaseContextManager() {
-        this(XQueryBaseContext::new);
+    public XQueryBaseDynamicContextManager() {
+        this(XQueryBaseDynamicContext::new);
     }
 
-    public XQueryBaseContextManager(Supplier<XQueryContext> contextFactory) {
+    public XQueryBaseDynamicContextManager(Supplier<XQueryDynamicContext> contextFactory) {
         this.contexts = new ArrayList<>();
         this.contextFactory = contextFactory;
     }
@@ -44,12 +44,12 @@ public class XQueryBaseContextManager implements XQueryContextManager {
     }
 
     @Override
-    public XQueryContext currentContext() {
+    public XQueryDynamicContext currentContext() {
         return contexts.getLast();
     }
 
     @Override
-    public XQueryScope currentScope() {
+    public XQueryDynamicScope currentScope() {
         return currentContext().currentScope();
     }
 

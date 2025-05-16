@@ -1,0 +1,1484 @@
+isSubtype(empty-sequence(), item()) ->
+isSubtype(empty-sequence(), item()?) ->
+isSubtype(empty-sequence(), item()*) ->
+isSubtype(empty-sequence(), item()+) ->
+isSubtype(empty-sequence(), xs:string()) ->
+isSubtype(empty-sequence(), xs:string()?) ->
+isSubtype(empty-sequence(), xs:string()*) ->
+isSubtype(empty-sequence(), xs:string()+) ->
+isSubtype(empty-sequence(), xs:numeric()) ->
+isSubtype(empty-sequence(), xs:numeric()?) ->
+isSubtype(empty-sequence(), xs:numeric()*) ->
+isSubtype(empty-sequence(), xs:numeric()+) ->
+isSubtype(empty-sequence(), xs:boolean()) ->
+isSubtype(empty-sequence(), xs:boolean()?) ->
+isSubtype(empty-sequence(), xs:boolean()*) ->
+isSubtype(empty-sequence(), xs:boolean()+) ->
+isSubtype(empty-sequence(), node()) ->
+isSubtype(empty-sequence(), node()?) ->
+isSubtype(empty-sequence(), node()*) ->
+isSubtype(empty-sequence(), node()+) ->
+isSubtype(empty-sequence(), element()) ->
+isSubtype(empty-sequence(), element()?) ->
+isSubtype(empty-sequence(), element()*) ->
+isSubtype(empty-sequence(), element()+) ->
+isSubtype(empty-sequence(), element(name)) ->
+isSubtype(empty-sequence(), element(name)?) ->
+isSubtype(empty-sequence(), element(name)*) ->
+isSubtype(empty-sequence(), element(name)+) ->
+isSubtype(empty-sequence(), map(*)) ->
+isSubtype(empty-sequence(), map(xs:string, item())) ->
+isSubtype(empty-sequence(), map(xs:numeric, item())) ->
+isSubtype(empty-sequence(), map(xs:boolean, item())) ->
+isSubtype(empty-sequence(), array(*)) ->
+isSubtype(empty-sequence(), array(item())) ->
+isSubtype(empty-sequence(), function(*)) ->
+isSubtype(empty-sequence(), function() as integer) ->
+isSubtype(empty-sequence(), function(T) as R) ->
+isSubtype(empty-sequence(), function(T1, T2) as R) ->
+isSubtype(item(), item()?) ->
+isSubtype(item(), item()*) ->
+isSubtype(item(), item()+) ->
+isSubtype(item(), xs:string()) ->
+isSubtype(item(), xs:string()?) ->
+isSubtype(item(), xs:string()*) ->
+isSubtype(item(), xs:string()+) ->
+isSubtype(item(), xs:numeric()) ->
+isSubtype(item(), xs:numeric()?) ->
+isSubtype(item(), xs:numeric()*) ->
+isSubtype(item(), xs:numeric()+) ->
+isSubtype(item(), xs:boolean()) ->
+isSubtype(item(), xs:boolean()?) ->
+isSubtype(item(), xs:boolean()*) ->
+isSubtype(item(), xs:boolean()+) ->
+isSubtype(item(), node()) ->
+isSubtype(item(), node()?) ->
+isSubtype(item(), node()*) ->
+isSubtype(item(), node()+) ->
+isSubtype(item(), element()) ->
+isSubtype(item(), element()?) ->
+isSubtype(item(), element()*) ->
+isSubtype(item(), element()+) ->
+isSubtype(item(), element(name)) ->
+isSubtype(item(), element(name)?) ->
+isSubtype(item(), element(name)*) ->
+isSubtype(item(), element(name)+) ->
+isSubtype(item(), map(*)) ->
+isSubtype(item(), map(xs:string, item())) ->
+isSubtype(item(), map(xs:numeric, item())) ->
+isSubtype(item(), map(xs:boolean, item())) ->
+isSubtype(item(), array(*)) ->
+isSubtype(item(), array(item())) ->
+isSubtype(item(), function(*)) ->
+isSubtype(item(), function() as integer) ->
+isSubtype(item(), function(T) as R) ->
+isSubtype(item(), function(T1, T2) as R) ->
+isSubtype(item()?, item()*) ->
+isSubtype(item()?, item()+) ->
+isSubtype(item()?, xs:string()) ->
+isSubtype(item()?, xs:string()?) ->
+isSubtype(item()?, xs:string()*) ->
+isSubtype(item()?, xs:string()+) ->
+isSubtype(item()?, xs:numeric()) ->
+isSubtype(item()?, xs:numeric()?) ->
+isSubtype(item()?, xs:numeric()*) ->
+isSubtype(item()?, xs:numeric()+) ->
+isSubtype(item()?, xs:boolean()) ->
+isSubtype(item()?, xs:boolean()?) ->
+isSubtype(item()?, xs:boolean()*) ->
+isSubtype(item()?, xs:boolean()+) ->
+isSubtype(item()?, node()) ->
+isSubtype(item()?, node()?) ->
+isSubtype(item()?, node()*) ->
+isSubtype(item()?, node()+) ->
+isSubtype(item()?, element()) ->
+isSubtype(item()?, element()?) ->
+isSubtype(item()?, element()*) ->
+isSubtype(item()?, element()+) ->
+isSubtype(item()?, element(name)) ->
+isSubtype(item()?, element(name)?) ->
+isSubtype(item()?, element(name)*) ->
+isSubtype(item()?, element(name)+) ->
+isSubtype(item()?, map(*)) ->
+isSubtype(item()?, map(xs:string, item())) ->
+isSubtype(item()?, map(xs:numeric, item())) ->
+isSubtype(item()?, map(xs:boolean, item())) ->
+isSubtype(item()?, array(*)) ->
+isSubtype(item()?, array(item())) ->
+isSubtype(item()?, function(*)) ->
+isSubtype(item()?, function() as integer) ->
+isSubtype(item()?, function(T) as R) ->
+isSubtype(item()?, function(T1, T2) as R) ->
+isSubtype(item()*, item()+) ->
+isSubtype(item()*, xs:string()) ->
+isSubtype(item()*, xs:string()?) ->
+isSubtype(item()*, xs:string()*) ->
+isSubtype(item()*, xs:string()+) ->
+isSubtype(item()*, xs:numeric()) ->
+isSubtype(item()*, xs:numeric()?) ->
+isSubtype(item()*, xs:numeric()*) ->
+isSubtype(item()*, xs:numeric()+) ->
+isSubtype(item()*, xs:boolean()) ->
+isSubtype(item()*, xs:boolean()?) ->
+isSubtype(item()*, xs:boolean()*) ->
+isSubtype(item()*, xs:boolean()+) ->
+isSubtype(item()*, node()) ->
+isSubtype(item()*, node()?) ->
+isSubtype(item()*, node()*) ->
+isSubtype(item()*, node()+) ->
+isSubtype(item()*, element()) ->
+isSubtype(item()*, element()?) ->
+isSubtype(item()*, element()*) ->
+isSubtype(item()*, element()+) ->
+isSubtype(item()*, element(name)) ->
+isSubtype(item()*, element(name)?) ->
+isSubtype(item()*, element(name)*) ->
+isSubtype(item()*, element(name)+) ->
+isSubtype(item()*, map(*)) ->
+isSubtype(item()*, map(xs:string, item())) ->
+isSubtype(item()*, map(xs:numeric, item())) ->
+isSubtype(item()*, map(xs:boolean, item())) ->
+isSubtype(item()*, array(*)) ->
+isSubtype(item()*, array(item())) ->
+isSubtype(item()*, function(*)) ->
+isSubtype(item()*, function() as integer) ->
+isSubtype(item()*, function(T) as R) ->
+isSubtype(item()*, function(T1, T2) as R) ->
+isSubtype(item()+, xs:string()) ->
+isSubtype(item()+, xs:string()?) ->
+isSubtype(item()+, xs:string()*) ->
+isSubtype(item()+, xs:string()+) ->
+isSubtype(item()+, xs:numeric()) ->
+isSubtype(item()+, xs:numeric()?) ->
+isSubtype(item()+, xs:numeric()*) ->
+isSubtype(item()+, xs:numeric()+) ->
+isSubtype(item()+, xs:boolean()) ->
+isSubtype(item()+, xs:boolean()?) ->
+isSubtype(item()+, xs:boolean()*) ->
+isSubtype(item()+, xs:boolean()+) ->
+isSubtype(item()+, node()) ->
+isSubtype(item()+, node()?) ->
+isSubtype(item()+, node()*) ->
+isSubtype(item()+, node()+) ->
+isSubtype(item()+, element()) ->
+isSubtype(item()+, element()?) ->
+isSubtype(item()+, element()*) ->
+isSubtype(item()+, element()+) ->
+isSubtype(item()+, element(name)) ->
+isSubtype(item()+, element(name)?) ->
+isSubtype(item()+, element(name)*) ->
+isSubtype(item()+, element(name)+) ->
+isSubtype(item()+, map(*)) ->
+isSubtype(item()+, map(xs:string, item())) ->
+isSubtype(item()+, map(xs:numeric, item())) ->
+isSubtype(item()+, map(xs:boolean, item())) ->
+isSubtype(item()+, array(*)) ->
+isSubtype(item()+, array(item())) ->
+isSubtype(item()+, function(*)) ->
+isSubtype(item()+, function() as integer) ->
+isSubtype(item()+, function(T) as R) ->
+isSubtype(item()+, function(T1, T2) as R) ->
+isSubtype(xs:string(), xs:string()?) ->
+isSubtype(xs:string(), xs:string()*) ->
+isSubtype(xs:string(), xs:string()+) ->
+isSubtype(xs:string(), xs:numeric()) ->
+isSubtype(xs:string(), xs:numeric()?) ->
+isSubtype(xs:string(), xs:numeric()*) ->
+isSubtype(xs:string(), xs:numeric()+) ->
+isSubtype(xs:string(), xs:boolean()) ->
+isSubtype(xs:string(), xs:boolean()?) ->
+isSubtype(xs:string(), xs:boolean()*) ->
+isSubtype(xs:string(), xs:boolean()+) ->
+isSubtype(xs:string(), node()) ->
+isSubtype(xs:string(), node()?) ->
+isSubtype(xs:string(), node()*) ->
+isSubtype(xs:string(), node()+) ->
+isSubtype(xs:string(), element()) ->
+isSubtype(xs:string(), element()?) ->
+isSubtype(xs:string(), element()*) ->
+isSubtype(xs:string(), element()+) ->
+isSubtype(xs:string(), element(name)) ->
+isSubtype(xs:string(), element(name)?) ->
+isSubtype(xs:string(), element(name)*) ->
+isSubtype(xs:string(), element(name)+) ->
+isSubtype(xs:string(), map(*)) ->
+isSubtype(xs:string(), map(xs:string, item())) ->
+isSubtype(xs:string(), map(xs:numeric, item())) ->
+isSubtype(xs:string(), map(xs:boolean, item())) ->
+isSubtype(xs:string(), array(*)) ->
+isSubtype(xs:string(), array(item())) ->
+isSubtype(xs:string(), function(*)) ->
+isSubtype(xs:string(), function() as integer) ->
+isSubtype(xs:string(), function(T) as R) ->
+isSubtype(xs:string(), function(T1, T2) as R) ->
+isSubtype(xs:string()?, xs:string()*) ->
+isSubtype(xs:string()?, xs:string()+) ->
+isSubtype(xs:string()?, xs:numeric()) ->
+isSubtype(xs:string()?, xs:numeric()?) ->
+isSubtype(xs:string()?, xs:numeric()*) ->
+isSubtype(xs:string()?, xs:numeric()+) ->
+isSubtype(xs:string()?, xs:boolean()) ->
+isSubtype(xs:string()?, xs:boolean()?) ->
+isSubtype(xs:string()?, xs:boolean()*) ->
+isSubtype(xs:string()?, xs:boolean()+) ->
+isSubtype(xs:string()?, node()) ->
+isSubtype(xs:string()?, node()?) ->
+isSubtype(xs:string()?, node()*) ->
+isSubtype(xs:string()?, node()+) ->
+isSubtype(xs:string()?, element()) ->
+isSubtype(xs:string()?, element()?) ->
+isSubtype(xs:string()?, element()*) ->
+isSubtype(xs:string()?, element()+) ->
+isSubtype(xs:string()?, element(name)) ->
+isSubtype(xs:string()?, element(name)?) ->
+isSubtype(xs:string()?, element(name)*) ->
+isSubtype(xs:string()?, element(name)+) ->
+isSubtype(xs:string()?, map(*)) ->
+isSubtype(xs:string()?, map(xs:string, item())) ->
+isSubtype(xs:string()?, map(xs:numeric, item())) ->
+isSubtype(xs:string()?, map(xs:boolean, item())) ->
+isSubtype(xs:string()?, array(*)) ->
+isSubtype(xs:string()?, array(item())) ->
+isSubtype(xs:string()?, function(*)) ->
+isSubtype(xs:string()?, function() as integer) ->
+isSubtype(xs:string()?, function(T) as R) ->
+isSubtype(xs:string()?, function(T1, T2) as R) ->
+isSubtype(xs:string()*, xs:string()+) ->
+isSubtype(xs:string()*, xs:numeric()) ->
+isSubtype(xs:string()*, xs:numeric()?) ->
+isSubtype(xs:string()*, xs:numeric()*) ->
+isSubtype(xs:string()*, xs:numeric()+) ->
+isSubtype(xs:string()*, xs:boolean()) ->
+isSubtype(xs:string()*, xs:boolean()?) ->
+isSubtype(xs:string()*, xs:boolean()*) ->
+isSubtype(xs:string()*, xs:boolean()+) ->
+isSubtype(xs:string()*, node()) ->
+isSubtype(xs:string()*, node()?) ->
+isSubtype(xs:string()*, node()*) ->
+isSubtype(xs:string()*, node()+) ->
+isSubtype(xs:string()*, element()) ->
+isSubtype(xs:string()*, element()?) ->
+isSubtype(xs:string()*, element()*) ->
+isSubtype(xs:string()*, element()+) ->
+isSubtype(xs:string()*, element(name)) ->
+isSubtype(xs:string()*, element(name)?) ->
+isSubtype(xs:string()*, element(name)*) ->
+isSubtype(xs:string()*, element(name)+) ->
+isSubtype(xs:string()*, map(*)) ->
+isSubtype(xs:string()*, map(xs:string, item())) ->
+isSubtype(xs:string()*, map(xs:numeric, item())) ->
+isSubtype(xs:string()*, map(xs:boolean, item())) ->
+isSubtype(xs:string()*, array(*)) ->
+isSubtype(xs:string()*, array(item())) ->
+isSubtype(xs:string()*, function(*)) ->
+isSubtype(xs:string()*, function() as integer) ->
+isSubtype(xs:string()*, function(T) as R) ->
+isSubtype(xs:string()*, function(T1, T2) as R) ->
+isSubtype(xs:string()+, xs:numeric()) ->
+isSubtype(xs:string()+, xs:numeric()?) ->
+isSubtype(xs:string()+, xs:numeric()*) ->
+isSubtype(xs:string()+, xs:numeric()+) ->
+isSubtype(xs:string()+, xs:boolean()) ->
+isSubtype(xs:string()+, xs:boolean()?) ->
+isSubtype(xs:string()+, xs:boolean()*) ->
+isSubtype(xs:string()+, xs:boolean()+) ->
+isSubtype(xs:string()+, node()) ->
+isSubtype(xs:string()+, node()?) ->
+isSubtype(xs:string()+, node()*) ->
+isSubtype(xs:string()+, node()+) ->
+isSubtype(xs:string()+, element()) ->
+isSubtype(xs:string()+, element()?) ->
+isSubtype(xs:string()+, element()*) ->
+isSubtype(xs:string()+, element()+) ->
+isSubtype(xs:string()+, element(name)) ->
+isSubtype(xs:string()+, element(name)?) ->
+isSubtype(xs:string()+, element(name)*) ->
+isSubtype(xs:string()+, element(name)+) ->
+isSubtype(xs:string()+, map(*)) ->
+isSubtype(xs:string()+, map(xs:string, item())) ->
+isSubtype(xs:string()+, map(xs:numeric, item())) ->
+isSubtype(xs:string()+, map(xs:boolean, item())) ->
+isSubtype(xs:string()+, array(*)) ->
+isSubtype(xs:string()+, array(item())) ->
+isSubtype(xs:string()+, function(*)) ->
+isSubtype(xs:string()+, function() as integer) ->
+isSubtype(xs:string()+, function(T) as R) ->
+isSubtype(xs:string()+, function(T1, T2) as R) ->
+isSubtype(xs:numeric(), xs:numeric()?) ->
+isSubtype(xs:numeric(), xs:numeric()*) ->
+isSubtype(xs:numeric(), xs:numeric()+) ->
+isSubtype(xs:numeric(), xs:boolean()) ->
+isSubtype(xs:numeric(), xs:boolean()?) ->
+isSubtype(xs:numeric(), xs:boolean()*) ->
+isSubtype(xs:numeric(), xs:boolean()+) ->
+isSubtype(xs:numeric(), node()) ->
+isSubtype(xs:numeric(), node()?) ->
+isSubtype(xs:numeric(), node()*) ->
+isSubtype(xs:numeric(), node()+) ->
+isSubtype(xs:numeric(), element()) ->
+isSubtype(xs:numeric(), element()?) ->
+isSubtype(xs:numeric(), element()*) ->
+isSubtype(xs:numeric(), element()+) ->
+isSubtype(xs:numeric(), element(name)) ->
+isSubtype(xs:numeric(), element(name)?) ->
+isSubtype(xs:numeric(), element(name)*) ->
+isSubtype(xs:numeric(), element(name)+) ->
+isSubtype(xs:numeric(), map(*)) ->
+isSubtype(xs:numeric(), map(xs:string, item())) ->
+isSubtype(xs:numeric(), map(xs:numeric, item())) ->
+isSubtype(xs:numeric(), map(xs:boolean, item())) ->
+isSubtype(xs:numeric(), array(*)) ->
+isSubtype(xs:numeric(), array(item())) ->
+isSubtype(xs:numeric(), function(*)) ->
+isSubtype(xs:numeric(), function() as integer) ->
+isSubtype(xs:numeric(), function(T) as R) ->
+isSubtype(xs:numeric(), function(T1, T2) as R) ->
+isSubtype(xs:numeric()?, xs:numeric()*) ->
+isSubtype(xs:numeric()?, xs:numeric()+) ->
+isSubtype(xs:numeric()?, xs:boolean()) ->
+isSubtype(xs:numeric()?, xs:boolean()?) ->
+isSubtype(xs:numeric()?, xs:boolean()*) ->
+isSubtype(xs:numeric()?, xs:boolean()+) ->
+isSubtype(xs:numeric()?, node()) ->
+isSubtype(xs:numeric()?, node()?) ->
+isSubtype(xs:numeric()?, node()*) ->
+isSubtype(xs:numeric()?, node()+) ->
+isSubtype(xs:numeric()?, element()) ->
+isSubtype(xs:numeric()?, element()?) ->
+isSubtype(xs:numeric()?, element()*) ->
+isSubtype(xs:numeric()?, element()+) ->
+isSubtype(xs:numeric()?, element(name)) ->
+isSubtype(xs:numeric()?, element(name)?) ->
+isSubtype(xs:numeric()?, element(name)*) ->
+isSubtype(xs:numeric()?, element(name)+) ->
+isSubtype(xs:numeric()?, map(*)) ->
+isSubtype(xs:numeric()?, map(xs:string, item())) ->
+isSubtype(xs:numeric()?, map(xs:numeric, item())) ->
+isSubtype(xs:numeric()?, map(xs:boolean, item())) ->
+isSubtype(xs:numeric()?, array(*)) ->
+isSubtype(xs:numeric()?, array(item())) ->
+isSubtype(xs:numeric()?, function(*)) ->
+isSubtype(xs:numeric()?, function() as integer) ->
+isSubtype(xs:numeric()?, function(T) as R) ->
+isSubtype(xs:numeric()?, function(T1, T2) as R) ->
+isSubtype(xs:numeric()*, xs:numeric()+) ->
+isSubtype(xs:numeric()*, xs:boolean()) ->
+isSubtype(xs:numeric()*, xs:boolean()?) ->
+isSubtype(xs:numeric()*, xs:boolean()*) ->
+isSubtype(xs:numeric()*, xs:boolean()+) ->
+isSubtype(xs:numeric()*, node()) ->
+isSubtype(xs:numeric()*, node()?) ->
+isSubtype(xs:numeric()*, node()*) ->
+isSubtype(xs:numeric()*, node()+) ->
+isSubtype(xs:numeric()*, element()) ->
+isSubtype(xs:numeric()*, element()?) ->
+isSubtype(xs:numeric()*, element()*) ->
+isSubtype(xs:numeric()*, element()+) ->
+isSubtype(xs:numeric()*, element(name)) ->
+isSubtype(xs:numeric()*, element(name)?) ->
+isSubtype(xs:numeric()*, element(name)*) ->
+isSubtype(xs:numeric()*, element(name)+) ->
+isSubtype(xs:numeric()*, map(*)) ->
+isSubtype(xs:numeric()*, map(xs:string, item())) ->
+isSubtype(xs:numeric()*, map(xs:numeric, item())) ->
+isSubtype(xs:numeric()*, map(xs:boolean, item())) ->
+isSubtype(xs:numeric()*, array(*)) ->
+isSubtype(xs:numeric()*, array(item())) ->
+isSubtype(xs:numeric()*, function(*)) ->
+isSubtype(xs:numeric()*, function() as integer) ->
+isSubtype(xs:numeric()*, function(T) as R) ->
+isSubtype(xs:numeric()*, function(T1, T2) as R) ->
+isSubtype(xs:numeric()+, xs:boolean()) ->
+isSubtype(xs:numeric()+, xs:boolean()?) ->
+isSubtype(xs:numeric()+, xs:boolean()*) ->
+isSubtype(xs:numeric()+, xs:boolean()+) ->
+isSubtype(xs:numeric()+, node()) ->
+isSubtype(xs:numeric()+, node()?) ->
+isSubtype(xs:numeric()+, node()*) ->
+isSubtype(xs:numeric()+, node()+) ->
+isSubtype(xs:numeric()+, element()) ->
+isSubtype(xs:numeric()+, element()?) ->
+isSubtype(xs:numeric()+, element()*) ->
+isSubtype(xs:numeric()+, element()+) ->
+isSubtype(xs:numeric()+, element(name)) ->
+isSubtype(xs:numeric()+, element(name)?) ->
+isSubtype(xs:numeric()+, element(name)*) ->
+isSubtype(xs:numeric()+, element(name)+) ->
+isSubtype(xs:numeric()+, map(*)) ->
+isSubtype(xs:numeric()+, map(xs:string, item())) ->
+isSubtype(xs:numeric()+, map(xs:numeric, item())) ->
+isSubtype(xs:numeric()+, map(xs:boolean, item())) ->
+isSubtype(xs:numeric()+, array(*)) ->
+isSubtype(xs:numeric()+, array(item())) ->
+isSubtype(xs:numeric()+, function(*)) ->
+isSubtype(xs:numeric()+, function() as integer) ->
+isSubtype(xs:numeric()+, function(T) as R) ->
+isSubtype(xs:numeric()+, function(T1, T2) as R) ->
+isSubtype(xs:boolean(), xs:boolean()?) ->
+isSubtype(xs:boolean(), xs:boolean()*) ->
+isSubtype(xs:boolean(), xs:boolean()+) ->
+isSubtype(xs:boolean(), node()) ->
+isSubtype(xs:boolean(), node()?) ->
+isSubtype(xs:boolean(), node()*) ->
+isSubtype(xs:boolean(), node()+) ->
+isSubtype(xs:boolean(), element()) ->
+isSubtype(xs:boolean(), element()?) ->
+isSubtype(xs:boolean(), element()*) ->
+isSubtype(xs:boolean(), element()+) ->
+isSubtype(xs:boolean(), element(name)) ->
+isSubtype(xs:boolean(), element(name)?) ->
+isSubtype(xs:boolean(), element(name)*) ->
+isSubtype(xs:boolean(), element(name)+) ->
+isSubtype(xs:boolean(), map(*)) ->
+isSubtype(xs:boolean(), map(xs:string, item())) ->
+isSubtype(xs:boolean(), map(xs:numeric, item())) ->
+isSubtype(xs:boolean(), map(xs:boolean, item())) ->
+isSubtype(xs:boolean(), array(*)) ->
+isSubtype(xs:boolean(), array(item())) ->
+isSubtype(xs:boolean(), function(*)) ->
+isSubtype(xs:boolean(), function() as integer) ->
+isSubtype(xs:boolean(), function(T) as R) ->
+isSubtype(xs:boolean(), function(T1, T2) as R) ->
+isSubtype(xs:boolean()?, xs:boolean()*) ->
+isSubtype(xs:boolean()?, xs:boolean()+) ->
+isSubtype(xs:boolean()?, node()) ->
+isSubtype(xs:boolean()?, node()?) ->
+isSubtype(xs:boolean()?, node()*) ->
+isSubtype(xs:boolean()?, node()+) ->
+isSubtype(xs:boolean()?, element()) ->
+isSubtype(xs:boolean()?, element()?) ->
+isSubtype(xs:boolean()?, element()*) ->
+isSubtype(xs:boolean()?, element()+) ->
+isSubtype(xs:boolean()?, element(name)) ->
+isSubtype(xs:boolean()?, element(name)?) ->
+isSubtype(xs:boolean()?, element(name)*) ->
+isSubtype(xs:boolean()?, element(name)+) ->
+isSubtype(xs:boolean()?, map(*)) ->
+isSubtype(xs:boolean()?, map(xs:string, item())) ->
+isSubtype(xs:boolean()?, map(xs:numeric, item())) ->
+isSubtype(xs:boolean()?, map(xs:boolean, item())) ->
+isSubtype(xs:boolean()?, array(*)) ->
+isSubtype(xs:boolean()?, array(item())) ->
+isSubtype(xs:boolean()?, function(*)) ->
+isSubtype(xs:boolean()?, function() as integer) ->
+isSubtype(xs:boolean()?, function(T) as R) ->
+isSubtype(xs:boolean()?, function(T1, T2) as R) ->
+isSubtype(xs:boolean()*, xs:boolean()+) ->
+isSubtype(xs:boolean()*, node()) ->
+isSubtype(xs:boolean()*, node()?) ->
+isSubtype(xs:boolean()*, node()*) ->
+isSubtype(xs:boolean()*, node()+) ->
+isSubtype(xs:boolean()*, element()) ->
+isSubtype(xs:boolean()*, element()?) ->
+isSubtype(xs:boolean()*, element()*) ->
+isSubtype(xs:boolean()*, element()+) ->
+isSubtype(xs:boolean()*, element(name)) ->
+isSubtype(xs:boolean()*, element(name)?) ->
+isSubtype(xs:boolean()*, element(name)*) ->
+isSubtype(xs:boolean()*, element(name)+) ->
+isSubtype(xs:boolean()*, map(*)) ->
+isSubtype(xs:boolean()*, map(xs:string, item())) ->
+isSubtype(xs:boolean()*, map(xs:numeric, item())) ->
+isSubtype(xs:boolean()*, map(xs:boolean, item())) ->
+isSubtype(xs:boolean()*, array(*)) ->
+isSubtype(xs:boolean()*, array(item())) ->
+isSubtype(xs:boolean()*, function(*)) ->
+isSubtype(xs:boolean()*, function() as integer) ->
+isSubtype(xs:boolean()*, function(T) as R) ->
+isSubtype(xs:boolean()*, function(T1, T2) as R) ->
+isSubtype(xs:boolean()+, node()) ->
+isSubtype(xs:boolean()+, node()?) ->
+isSubtype(xs:boolean()+, node()*) ->
+isSubtype(xs:boolean()+, node()+) ->
+isSubtype(xs:boolean()+, element()) ->
+isSubtype(xs:boolean()+, element()?) ->
+isSubtype(xs:boolean()+, element()*) ->
+isSubtype(xs:boolean()+, element()+) ->
+isSubtype(xs:boolean()+, element(name)) ->
+isSubtype(xs:boolean()+, element(name)?) ->
+isSubtype(xs:boolean()+, element(name)*) ->
+isSubtype(xs:boolean()+, element(name)+) ->
+isSubtype(xs:boolean()+, map(*)) ->
+isSubtype(xs:boolean()+, map(xs:string, item())) ->
+isSubtype(xs:boolean()+, map(xs:numeric, item())) ->
+isSubtype(xs:boolean()+, map(xs:boolean, item())) ->
+isSubtype(xs:boolean()+, array(*)) ->
+isSubtype(xs:boolean()+, array(item())) ->
+isSubtype(xs:boolean()+, function(*)) ->
+isSubtype(xs:boolean()+, function() as integer) ->
+isSubtype(xs:boolean()+, function(T) as R) ->
+isSubtype(xs:boolean()+, function(T1, T2) as R) ->
+isSubtype(node(), node()?) ->
+isSubtype(node(), node()*) ->
+isSubtype(node(), node()+) ->
+isSubtype(node(), element()) ->
+isSubtype(node(), element()?) ->
+isSubtype(node(), element()*) ->
+isSubtype(node(), element()+) ->
+isSubtype(node(), element(name)) ->
+isSubtype(node(), element(name)?) ->
+isSubtype(node(), element(name)*) ->
+isSubtype(node(), element(name)+) ->
+isSubtype(node(), map(*)) ->
+isSubtype(node(), map(xs:string, item())) ->
+isSubtype(node(), map(xs:numeric, item())) ->
+isSubtype(node(), map(xs:boolean, item())) ->
+isSubtype(node(), array(*)) ->
+isSubtype(node(), array(item())) ->
+isSubtype(node(), function(*)) ->
+isSubtype(node(), function() as integer) ->
+isSubtype(node(), function(T) as R) ->
+isSubtype(node(), function(T1, T2) as R) ->
+isSubtype(node()?, node()*) ->
+isSubtype(node()?, node()+) ->
+isSubtype(node()?, element()) ->
+isSubtype(node()?, element()?) ->
+isSubtype(node()?, element()*) ->
+isSubtype(node()?, element()+) ->
+isSubtype(node()?, element(name)) ->
+isSubtype(node()?, element(name)?) ->
+isSubtype(node()?, element(name)*) ->
+isSubtype(node()?, element(name)+) ->
+isSubtype(node()?, map(*)) ->
+isSubtype(node()?, map(xs:string, item())) ->
+isSubtype(node()?, map(xs:numeric, item())) ->
+isSubtype(node()?, map(xs:boolean, item())) ->
+isSubtype(node()?, array(*)) ->
+isSubtype(node()?, array(item())) ->
+isSubtype(node()?, function(*)) ->
+isSubtype(node()?, function() as integer) ->
+isSubtype(node()?, function(T) as R) ->
+isSubtype(node()?, function(T1, T2) as R) ->
+isSubtype(node()*, node()+) ->
+isSubtype(node()*, element()) ->
+isSubtype(node()*, element()?) ->
+isSubtype(node()*, element()*) ->
+isSubtype(node()*, element()+) ->
+isSubtype(node()*, element(name)) ->
+isSubtype(node()*, element(name)?) ->
+isSubtype(node()*, element(name)*) ->
+isSubtype(node()*, element(name)+) ->
+isSubtype(node()*, map(*)) ->
+isSubtype(node()*, map(xs:string, item())) ->
+isSubtype(node()*, map(xs:numeric, item())) ->
+isSubtype(node()*, map(xs:boolean, item())) ->
+isSubtype(node()*, array(*)) ->
+isSubtype(node()*, array(item())) ->
+isSubtype(node()*, function(*)) ->
+isSubtype(node()*, function() as integer) ->
+isSubtype(node()*, function(T) as R) ->
+isSubtype(node()*, function(T1, T2) as R) ->
+isSubtype(node()+, element()) ->
+isSubtype(node()+, element()?) ->
+isSubtype(node()+, element()*) ->
+isSubtype(node()+, element()+) ->
+isSubtype(node()+, element(name)) ->
+isSubtype(node()+, element(name)?) ->
+isSubtype(node()+, element(name)*) ->
+isSubtype(node()+, element(name)+) ->
+isSubtype(node()+, map(*)) ->
+isSubtype(node()+, map(xs:string, item())) ->
+isSubtype(node()+, map(xs:numeric, item())) ->
+isSubtype(node()+, map(xs:boolean, item())) ->
+isSubtype(node()+, array(*)) ->
+isSubtype(node()+, array(item())) ->
+isSubtype(node()+, function(*)) ->
+isSubtype(node()+, function() as integer) ->
+isSubtype(node()+, function(T) as R) ->
+isSubtype(node()+, function(T1, T2) as R) ->
+isSubtype(element(), element()?) ->
+isSubtype(element(), element()*) ->
+isSubtype(element(), element()+) ->
+isSubtype(element(), element(name)) ->
+isSubtype(element(), element(name)?) ->
+isSubtype(element(), element(name)*) ->
+isSubtype(element(), element(name)+) ->
+isSubtype(element(), map(*)) ->
+isSubtype(element(), map(xs:string, item())) ->
+isSubtype(element(), map(xs:numeric, item())) ->
+isSubtype(element(), map(xs:boolean, item())) ->
+isSubtype(element(), array(*)) ->
+isSubtype(element(), array(item())) ->
+isSubtype(element(), function(*)) ->
+isSubtype(element(), function() as integer) ->
+isSubtype(element(), function(T) as R) ->
+isSubtype(element(), function(T1, T2) as R) ->
+isSubtype(element()?, element()*) ->
+isSubtype(element()?, element()+) ->
+isSubtype(element()?, element(name)) ->
+isSubtype(element()?, element(name)?) ->
+isSubtype(element()?, element(name)*) ->
+isSubtype(element()?, element(name)+) ->
+isSubtype(element()?, map(*)) ->
+isSubtype(element()?, map(xs:string, item())) ->
+isSubtype(element()?, map(xs:numeric, item())) ->
+isSubtype(element()?, map(xs:boolean, item())) ->
+isSubtype(element()?, array(*)) ->
+isSubtype(element()?, array(item())) ->
+isSubtype(element()?, function(*)) ->
+isSubtype(element()?, function() as integer) ->
+isSubtype(element()?, function(T) as R) ->
+isSubtype(element()?, function(T1, T2) as R) ->
+isSubtype(element()*, element()+) ->
+isSubtype(element()*, element(name)) ->
+isSubtype(element()*, element(name)?) ->
+isSubtype(element()*, element(name)*) ->
+isSubtype(element()*, element(name)+) ->
+isSubtype(element()*, map(*)) ->
+isSubtype(element()*, map(xs:string, item())) ->
+isSubtype(element()*, map(xs:numeric, item())) ->
+isSubtype(element()*, map(xs:boolean, item())) ->
+isSubtype(element()*, array(*)) ->
+isSubtype(element()*, array(item())) ->
+isSubtype(element()*, function(*)) ->
+isSubtype(element()*, function() as integer) ->
+isSubtype(element()*, function(T) as R) ->
+isSubtype(element()*, function(T1, T2) as R) ->
+isSubtype(element()+, element(name)) ->
+isSubtype(element()+, element(name)?) ->
+isSubtype(element()+, element(name)*) ->
+isSubtype(element()+, element(name)+) ->
+isSubtype(element()+, map(*)) ->
+isSubtype(element()+, map(xs:string, item())) ->
+isSubtype(element()+, map(xs:numeric, item())) ->
+isSubtype(element()+, map(xs:boolean, item())) ->
+isSubtype(element()+, array(*)) ->
+isSubtype(element()+, array(item())) ->
+isSubtype(element()+, function(*)) ->
+isSubtype(element()+, function() as integer) ->
+isSubtype(element()+, function(T) as R) ->
+isSubtype(element()+, function(T1, T2) as R) ->
+isSubtype(element(name), element(name)?) ->
+isSubtype(element(name), element(name)*) ->
+isSubtype(element(name), element(name)+) ->
+isSubtype(element(name), map(*)) ->
+isSubtype(element(name), map(xs:string, item())) ->
+isSubtype(element(name), map(xs:numeric, item())) ->
+isSubtype(element(name), map(xs:boolean, item())) ->
+isSubtype(element(name), array(*)) ->
+isSubtype(element(name), array(item())) ->
+isSubtype(element(name), function(*)) ->
+isSubtype(element(name), function() as integer) ->
+isSubtype(element(name), function(T) as R) ->
+isSubtype(element(name), function(T1, T2) as R) ->
+isSubtype(element(name)?, element(name)*) ->
+isSubtype(element(name)?, element(name)+) ->
+isSubtype(element(name)?, map(*)) ->
+isSubtype(element(name)?, map(xs:string, item())) ->
+isSubtype(element(name)?, map(xs:numeric, item())) ->
+isSubtype(element(name)?, map(xs:boolean, item())) ->
+isSubtype(element(name)?, array(*)) ->
+isSubtype(element(name)?, array(item())) ->
+isSubtype(element(name)?, function(*)) ->
+isSubtype(element(name)?, function() as integer) ->
+isSubtype(element(name)?, function(T) as R) ->
+isSubtype(element(name)?, function(T1, T2) as R) ->
+isSubtype(element(name)*, element(name)+) ->
+isSubtype(element(name)*, map(*)) ->
+isSubtype(element(name)*, map(xs:string, item())) ->
+isSubtype(element(name)*, map(xs:numeric, item())) ->
+isSubtype(element(name)*, map(xs:boolean, item())) ->
+isSubtype(element(name)*, array(*)) ->
+isSubtype(element(name)*, array(item())) ->
+isSubtype(element(name)*, function(*)) ->
+isSubtype(element(name)*, function() as integer) ->
+isSubtype(element(name)*, function(T) as R) ->
+isSubtype(element(name)*, function(T1, T2) as R) ->
+isSubtype(element(name)+, map(*)) ->
+isSubtype(element(name)+, map(xs:string, item())) ->
+isSubtype(element(name)+, map(xs:numeric, item())) ->
+isSubtype(element(name)+, map(xs:boolean, item())) ->
+isSubtype(element(name)+, array(*)) ->
+isSubtype(element(name)+, array(item())) ->
+isSubtype(element(name)+, function(*)) ->
+isSubtype(element(name)+, function() as integer) ->
+isSubtype(element(name)+, function(T) as R) ->
+isSubtype(element(name)+, function(T1, T2) as R) ->
+isSubtype(map(*), map(xs:string, item())) ->
+isSubtype(map(*), map(xs:numeric, item())) ->
+isSubtype(map(*), map(xs:boolean, item())) ->
+isSubtype(map(*), array(*)) ->
+isSubtype(map(*), array(item())) ->
+isSubtype(map(*), function(*)) ->
+isSubtype(map(*), function() as integer) ->
+isSubtype(map(*), function(T) as R) ->
+isSubtype(map(*), function(T1, T2) as R) ->
+isSubtype(map(xs:string, item()), map(xs:numeric, item())) ->
+isSubtype(map(xs:string, item()), map(xs:boolean, item())) ->
+isSubtype(map(xs:string, item()), array(*)) ->
+isSubtype(map(xs:string, item()), array(item())) ->
+isSubtype(map(xs:string, item()), function(*)) ->
+isSubtype(map(xs:string, item()), function() as integer) ->
+isSubtype(map(xs:string, item()), function(T) as R) ->
+isSubtype(map(xs:string, item()), function(T1, T2) as R) ->
+isSubtype(map(xs:numeric, item()), map(xs:boolean, item())) ->
+isSubtype(map(xs:numeric, item()), array(*)) ->
+isSubtype(map(xs:numeric, item()), array(item())) ->
+isSubtype(map(xs:numeric, item()), function(*)) ->
+isSubtype(map(xs:numeric, item()), function() as integer) ->
+isSubtype(map(xs:numeric, item()), function(T) as R) ->
+isSubtype(map(xs:numeric, item()), function(T1, T2) as R) ->
+isSubtype(map(xs:boolean, item()), array(*)) ->
+isSubtype(map(xs:boolean, item()), array(item())) ->
+isSubtype(map(xs:boolean, item()), function(*)) ->
+isSubtype(map(xs:boolean, item()), function() as integer) ->
+isSubtype(map(xs:boolean, item()), function(T) as R) ->
+isSubtype(map(xs:boolean, item()), function(T1, T2) as R) ->
+isSubtype(array(*), array(item())) ->
+isSubtype(array(*), function(*)) ->
+isSubtype(array(*), function() as integer) ->
+isSubtype(array(*), function(T) as R) ->
+isSubtype(array(*), function(T1, T2) as R) ->
+isSubtype(array(item()), function(*)) ->
+isSubtype(array(item()), function() as integer) ->
+isSubtype(array(item()), function(T) as R) ->
+isSubtype(array(item()), function(T1, T2) as R) ->
+isSubtype(function(*), function() as integer) ->
+isSubtype(function(*), function(T) as R) ->
+isSubtype(function(*), function(T1, T2) as R) ->
+isSubtype(function() as integer, function(T) as R) ->
+isSubtype(function() as integer, function(T1, T2) as R) ->
+isSubtype(function(T) as R, function(T1, T2) as R) ->
+
+
+() instance of item(),
+() instance of item()?,
+() instance of item()*,
+() instance of item()+,
+() instance of xs:string(),
+() instance of xs:string()?,
+() instance of xs:string()*,
+() instance of xs:string()+,
+() instance of xs:numeric(),
+() instance of xs:numeric()?,
+() instance of xs:numeric()*,
+() instance of xs:numeric()+,
+() instance of xs:boolean(),
+() instance of xs:boolean()?,
+() instance of xs:boolean()*,
+() instance of xs:boolean()+,
+() instance of node(),
+() instance of node()?,
+() instance of node()*,
+() instance of node()+,
+() instance of element(),
+() instance of element()?,
+() instance of element()*,
+() instance of element()+,
+() instance of element(name),
+() instance of element(name)?,
+() instance of element(name)*,
+() instance of element(name)+,
+() instance of map(*),
+() instance of map(xs:string, item()),
+() instance of map(xs:numeric, item()),
+() instance of map(xs:boolean, item()),
+() instance of array(*),
+() instance of array(item()),
+() instance of function(*),
+() instance of function() as integer,
+() instance of function(T) as R,
+() instance of function(T1, T2) as R,
+item() instance of item()?,
+item() instance of item()*,
+item() instance of item()+,
+item() instance of xs:string(),
+item() instance of xs:string()?,
+item() instance of xs:string()*,
+item() instance of xs:string()+,
+item() instance of xs:numeric(),
+item() instance of xs:numeric()?,
+item() instance of xs:numeric()*,
+item() instance of xs:numeric()+,
+item() instance of xs:boolean(),
+item() instance of xs:boolean()?,
+item() instance of xs:boolean()*,
+item() instance of xs:boolean()+,
+item() instance of node(),
+item() instance of node()?,
+item() instance of node()*,
+item() instance of node()+,
+item() instance of element(),
+item() instance of element()?,
+item() instance of element()*,
+item() instance of element()+,
+item() instance of element(name),
+item() instance of element(name)?,
+item() instance of element(name)*,
+item() instance of element(name)+,
+item() instance of map(*),
+item() instance of map(xs:string, item()),
+item() instance of map(xs:numeric, item()),
+item() instance of map(xs:boolean, item()),
+item() instance of array(*),
+item() instance of array(item()),
+item() instance of function(*),
+item() instance of function() as integer,
+item() instance of function(T) as R,
+item() instance of function(T1, T2) as R,
+item()? instance of item()*,
+item()? instance of item()+,
+item()? instance of xs:string(),
+item()? instance of xs:string()?,
+item()? instance of xs:string()*,
+item()? instance of xs:string()+,
+item()? instance of xs:numeric(),
+item()? instance of xs:numeric()?,
+item()? instance of xs:numeric()*,
+item()? instance of xs:numeric()+,
+item()? instance of xs:boolean(),
+item()? instance of xs:boolean()?,
+item()? instance of xs:boolean()*,
+item()? instance of xs:boolean()+,
+item()? instance of node(),
+item()? instance of node()?,
+item()? instance of node()*,
+item()? instance of node()+,
+item()? instance of element(),
+item()? instance of element()?,
+item()? instance of element()*,
+item()? instance of element()+,
+item()? instance of element(name),
+item()? instance of element(name)?,
+item()? instance of element(name)*,
+item()? instance of element(name)+,
+item()? instance of map(*),
+item()? instance of map(xs:string, item()),
+item()? instance of map(xs:numeric, item()),
+item()? instance of map(xs:boolean, item()),
+item()? instance of array(*),
+item()? instance of array(item()),
+item()? instance of function(*),
+item()? instance of function() as integer,
+item()? instance of function(T) as R,
+item()? instance of function(T1, T2) as R,
+item()* instance of item()+,
+item()* instance of xs:string(),
+item()* instance of xs:string()?,
+item()* instance of xs:string()*,
+item()* instance of xs:string()+,
+item()* instance of xs:numeric(),
+item()* instance of xs:numeric()?,
+item()* instance of xs:numeric()*,
+item()* instance of xs:numeric()+,
+item()* instance of xs:boolean(),
+item()* instance of xs:boolean()?,
+item()* instance of xs:boolean()*,
+item()* instance of xs:boolean()+,
+item()* instance of node(),
+item()* instance of node()?,
+item()* instance of node()*,
+item()* instance of node()+,
+item()* instance of element(),
+item()* instance of element()?,
+item()* instance of element()*,
+item()* instance of element()+,
+item()* instance of element(name),
+item()* instance of element(name)?,
+item()* instance of element(name)*,
+item()* instance of element(name)+,
+item()* instance of map(*),
+item()* instance of map(xs:string, item()),
+item()* instance of map(xs:numeric, item()),
+item()* instance of map(xs:boolean, item()),
+item()* instance of array(*),
+item()* instance of array(item()),
+item()* instance of function(*),
+item()* instance of function() as integer,
+item()* instance of function(T) as R,
+item()* instance of function(T1, T2) as R,
+item()+ instance of xs:string(),
+item()+ instance of xs:string()?,
+item()+ instance of xs:string()*,
+item()+ instance of xs:string()+,
+item()+ instance of xs:numeric(),
+item()+ instance of xs:numeric()?,
+item()+ instance of xs:numeric()*,
+item()+ instance of xs:numeric()+,
+item()+ instance of xs:boolean(),
+item()+ instance of xs:boolean()?,
+item()+ instance of xs:boolean()*,
+item()+ instance of xs:boolean()+,
+item()+ instance of node(),
+item()+ instance of node()?,
+item()+ instance of node()*,
+item()+ instance of node()+,
+item()+ instance of element(),
+item()+ instance of element()?,
+item()+ instance of element()*,
+item()+ instance of element()+,
+item()+ instance of element(name),
+item()+ instance of element(name)?,
+item()+ instance of element(name)*,
+item()+ instance of element(name)+,
+item()+ instance of map(*),
+item()+ instance of map(xs:string, item()),
+item()+ instance of map(xs:numeric, item()),
+item()+ instance of map(xs:boolean, item()),
+item()+ instance of array(*),
+item()+ instance of array(item()),
+item()+ instance of function(*),
+item()+ instance of function() as integer,
+item()+ instance of function(T) as R,
+item()+ instance of function(T1, T2) as R,
+xs:string() instance of xs:string()?,
+xs:string() instance of xs:string()*,
+xs:string() instance of xs:string()+,
+xs:string() instance of xs:numeric(),
+xs:string() instance of xs:numeric()?,
+xs:string() instance of xs:numeric()*,
+xs:string() instance of xs:numeric()+,
+xs:string() instance of xs:boolean(),
+xs:string() instance of xs:boolean()?,
+xs:string() instance of xs:boolean()*,
+xs:string() instance of xs:boolean()+,
+xs:string() instance of node(),
+xs:string() instance of node()?,
+xs:string() instance of node()*,
+xs:string() instance of node()+,
+xs:string() instance of element(),
+xs:string() instance of element()?,
+xs:string() instance of element()*,
+xs:string() instance of element()+,
+xs:string() instance of element(name),
+xs:string() instance of element(name)?,
+xs:string() instance of element(name)*,
+xs:string() instance of element(name)+,
+xs:string() instance of map(*),
+xs:string() instance of map(xs:string, item()),
+xs:string() instance of map(xs:numeric, item()),
+xs:string() instance of map(xs:boolean, item()),
+xs:string() instance of array(*),
+xs:string() instance of array(item()),
+xs:string() instance of function(*),
+xs:string() instance of function() as integer,
+xs:string() instance of function(T) as R,
+xs:string() instance of function(T1, T2) as R,
+xs:string()? instance of xs:string()*,
+xs:string()? instance of xs:string()+,
+xs:string()? instance of xs:numeric(),
+xs:string()? instance of xs:numeric()?,
+xs:string()? instance of xs:numeric()*,
+xs:string()? instance of xs:numeric()+,
+xs:string()? instance of xs:boolean(),
+xs:string()? instance of xs:boolean()?,
+xs:string()? instance of xs:boolean()*,
+xs:string()? instance of xs:boolean()+,
+xs:string()? instance of node(),
+xs:string()? instance of node()?,
+xs:string()? instance of node()*,
+xs:string()? instance of node()+,
+xs:string()? instance of element(),
+xs:string()? instance of element()?,
+xs:string()? instance of element()*,
+xs:string()? instance of element()+,
+xs:string()? instance of element(name),
+xs:string()? instance of element(name)?,
+xs:string()? instance of element(name)*,
+xs:string()? instance of element(name)+,
+xs:string()? instance of map(*),
+xs:string()? instance of map(xs:string, item()),
+xs:string()? instance of map(xs:numeric, item()),
+xs:string()? instance of map(xs:boolean, item()),
+xs:string()? instance of array(*),
+xs:string()? instance of array(item()),
+xs:string()? instance of function(*),
+xs:string()? instance of function() as integer,
+xs:string()? instance of function(T) as R,
+xs:string()? instance of function(T1, T2) as R,
+xs:string()* instance of xs:string()+,
+xs:string()* instance of xs:numeric(),
+xs:string()* instance of xs:numeric()?,
+xs:string()* instance of xs:numeric()*,
+xs:string()* instance of xs:numeric()+,
+xs:string()* instance of xs:boolean(),
+xs:string()* instance of xs:boolean()?,
+xs:string()* instance of xs:boolean()*,
+xs:string()* instance of xs:boolean()+,
+xs:string()* instance of node(),
+xs:string()* instance of node()?,
+xs:string()* instance of node()*,
+xs:string()* instance of node()+,
+xs:string()* instance of element(),
+xs:string()* instance of element()?,
+xs:string()* instance of element()*,
+xs:string()* instance of element()+,
+xs:string()* instance of element(name),
+xs:string()* instance of element(name)?,
+xs:string()* instance of element(name)*,
+xs:string()* instance of element(name)+,
+xs:string()* instance of map(*),
+xs:string()* instance of map(xs:string, item()),
+xs:string()* instance of map(xs:numeric, item()),
+xs:string()* instance of map(xs:boolean, item()),
+xs:string()* instance of array(*),
+xs:string()* instance of array(item()),
+xs:string()* instance of function(*),
+xs:string()* instance of function() as integer,
+xs:string()* instance of function(T) as R,
+xs:string()* instance of function(T1, T2) as R,
+xs:string()+ instance of xs:numeric(),
+xs:string()+ instance of xs:numeric()?,
+xs:string()+ instance of xs:numeric()*,
+xs:string()+ instance of xs:numeric()+,
+xs:string()+ instance of xs:boolean(),
+xs:string()+ instance of xs:boolean()?,
+xs:string()+ instance of xs:boolean()*,
+xs:string()+ instance of xs:boolean()+,
+xs:string()+ instance of node(),
+xs:string()+ instance of node()?,
+xs:string()+ instance of node()*,
+xs:string()+ instance of node()+,
+xs:string()+ instance of element(),
+xs:string()+ instance of element()?,
+xs:string()+ instance of element()*,
+xs:string()+ instance of element()+,
+xs:string()+ instance of element(name),
+xs:string()+ instance of element(name)?,
+xs:string()+ instance of element(name)*,
+xs:string()+ instance of element(name)+,
+xs:string()+ instance of map(*),
+xs:string()+ instance of map(xs:string, item()),
+xs:string()+ instance of map(xs:numeric, item()),
+xs:string()+ instance of map(xs:boolean, item()),
+xs:string()+ instance of array(*),
+xs:string()+ instance of array(item()),
+xs:string()+ instance of function(*),
+xs:string()+ instance of function() as integer,
+xs:string()+ instance of function(T) as R,
+xs:string()+ instance of function(T1, T2) as R,
+xs:numeric() instance of xs:numeric()?,
+xs:numeric() instance of xs:numeric()*,
+xs:numeric() instance of xs:numeric()+,
+xs:numeric() instance of xs:boolean(),
+xs:numeric() instance of xs:boolean()?,
+xs:numeric() instance of xs:boolean()*,
+xs:numeric() instance of xs:boolean()+,
+xs:numeric() instance of node(),
+xs:numeric() instance of node()?,
+xs:numeric() instance of node()*,
+xs:numeric() instance of node()+,
+xs:numeric() instance of element(),
+xs:numeric() instance of element()?,
+xs:numeric() instance of element()*,
+xs:numeric() instance of element()+,
+xs:numeric() instance of element(name),
+xs:numeric() instance of element(name)?,
+xs:numeric() instance of element(name)*,
+xs:numeric() instance of element(name)+,
+xs:numeric() instance of map(*),
+xs:numeric() instance of map(xs:string, item()),
+xs:numeric() instance of map(xs:numeric, item()),
+xs:numeric() instance of map(xs:boolean, item()),
+xs:numeric() instance of array(*),
+xs:numeric() instance of array(item()),
+xs:numeric() instance of function(*),
+xs:numeric() instance of function() as integer,
+xs:numeric() instance of function(T) as R,
+xs:numeric() instance of function(T1, T2) as R,
+xs:numeric()? instance of xs:numeric()*,
+xs:numeric()? instance of xs:numeric()+,
+xs:numeric()? instance of xs:boolean(),
+xs:numeric()? instance of xs:boolean()?,
+xs:numeric()? instance of xs:boolean()*,
+xs:numeric()? instance of xs:boolean()+,
+xs:numeric()? instance of node(),
+xs:numeric()? instance of node()?,
+xs:numeric()? instance of node()*,
+xs:numeric()? instance of node()+,
+xs:numeric()? instance of element(),
+xs:numeric()? instance of element()?,
+xs:numeric()? instance of element()*,
+xs:numeric()? instance of element()+,
+xs:numeric()? instance of element(name),
+xs:numeric()? instance of element(name)?,
+xs:numeric()? instance of element(name)*,
+xs:numeric()? instance of element(name)+,
+xs:numeric()? instance of map(*),
+xs:numeric()? instance of map(xs:string, item()),
+xs:numeric()? instance of map(xs:numeric, item()),
+xs:numeric()? instance of map(xs:boolean, item()),
+xs:numeric()? instance of array(*),
+xs:numeric()? instance of array(item()),
+xs:numeric()? instance of function(*),
+xs:numeric()? instance of function() as integer,
+xs:numeric()? instance of function(T) as R,
+xs:numeric()? instance of function(T1, T2) as R,
+xs:numeric()* instance of xs:numeric()+,
+xs:numeric()* instance of xs:boolean(),
+xs:numeric()* instance of xs:boolean()?,
+xs:numeric()* instance of xs:boolean()*,
+xs:numeric()* instance of xs:boolean()+,
+xs:numeric()* instance of node(),
+xs:numeric()* instance of node()?,
+xs:numeric()* instance of node()*,
+xs:numeric()* instance of node()+,
+xs:numeric()* instance of element(),
+xs:numeric()* instance of element()?,
+xs:numeric()* instance of element()*,
+xs:numeric()* instance of element()+,
+xs:numeric()* instance of element(name),
+xs:numeric()* instance of element(name)?,
+xs:numeric()* instance of element(name)*,
+xs:numeric()* instance of element(name)+,
+xs:numeric()* instance of map(*),
+xs:numeric()* instance of map(xs:string, item()),
+xs:numeric()* instance of map(xs:numeric, item()),
+xs:numeric()* instance of map(xs:boolean, item()),
+xs:numeric()* instance of array(*),
+xs:numeric()* instance of array(item()),
+xs:numeric()* instance of function(*),
+xs:numeric()* instance of function() as integer,
+xs:numeric()* instance of function(T) as R,
+xs:numeric()* instance of function(T1, T2) as R,
+xs:numeric()+ instance of xs:boolean(),
+xs:numeric()+ instance of xs:boolean()?,
+xs:numeric()+ instance of xs:boolean()*,
+xs:numeric()+ instance of xs:boolean()+,
+xs:numeric()+ instance of node(),
+xs:numeric()+ instance of node()?,
+xs:numeric()+ instance of node()*,
+xs:numeric()+ instance of node()+,
+xs:numeric()+ instance of element(),
+xs:numeric()+ instance of element()?,
+xs:numeric()+ instance of element()*,
+xs:numeric()+ instance of element()+,
+xs:numeric()+ instance of element(name),
+xs:numeric()+ instance of element(name)?,
+xs:numeric()+ instance of element(name)*,
+xs:numeric()+ instance of element(name)+,
+xs:numeric()+ instance of map(*),
+xs:numeric()+ instance of map(xs:string, item()),
+xs:numeric()+ instance of map(xs:numeric, item()),
+xs:numeric()+ instance of map(xs:boolean, item()),
+xs:numeric()+ instance of array(*),
+xs:numeric()+ instance of array(item()),
+xs:numeric()+ instance of function(*),
+xs:numeric()+ instance of function() as integer,
+xs:numeric()+ instance of function(T) as R,
+xs:numeric()+ instance of function(T1, T2) as R,
+xs:boolean() instance of xs:boolean()?,
+xs:boolean() instance of xs:boolean()*,
+xs:boolean() instance of xs:boolean()+,
+xs:boolean() instance of node(),
+xs:boolean() instance of node()?,
+xs:boolean() instance of node()*,
+xs:boolean() instance of node()+,
+xs:boolean() instance of element(),
+xs:boolean() instance of element()?,
+xs:boolean() instance of element()*,
+xs:boolean() instance of element()+,
+xs:boolean() instance of element(name),
+xs:boolean() instance of element(name)?,
+xs:boolean() instance of element(name)*,
+xs:boolean() instance of element(name)+,
+xs:boolean() instance of map(*),
+xs:boolean() instance of map(xs:string, item()),
+xs:boolean() instance of map(xs:numeric, item()),
+xs:boolean() instance of map(xs:boolean, item()),
+xs:boolean() instance of array(*),
+xs:boolean() instance of array(item()),
+xs:boolean() instance of function(*),
+xs:boolean() instance of function() as integer,
+xs:boolean() instance of function(T) as R,
+xs:boolean() instance of function(T1, T2) as R,
+xs:boolean()? instance of xs:boolean()*,
+xs:boolean()? instance of xs:boolean()+,
+xs:boolean()? instance of node(),
+xs:boolean()? instance of node()?,
+xs:boolean()? instance of node()*,
+xs:boolean()? instance of node()+,
+xs:boolean()? instance of element(),
+xs:boolean()? instance of element()?,
+xs:boolean()? instance of element()*,
+xs:boolean()? instance of element()+,
+xs:boolean()? instance of element(name),
+xs:boolean()? instance of element(name)?,
+xs:boolean()? instance of element(name)*,
+xs:boolean()? instance of element(name)+,
+xs:boolean()? instance of map(*),
+xs:boolean()? instance of map(xs:string, item()),
+xs:boolean()? instance of map(xs:numeric, item()),
+xs:boolean()? instance of map(xs:boolean, item()),
+xs:boolean()? instance of array(*),
+xs:boolean()? instance of array(item()),
+xs:boolean()? instance of function(*),
+xs:boolean()? instance of function() as integer,
+xs:boolean()? instance of function(T) as R,
+xs:boolean()? instance of function(T1, T2) as R,
+xs:boolean()* instance of xs:boolean()+,
+xs:boolean()* instance of node(),
+xs:boolean()* instance of node()?,
+xs:boolean()* instance of node()*,
+xs:boolean()* instance of node()+,
+xs:boolean()* instance of element(),
+xs:boolean()* instance of element()?,
+xs:boolean()* instance of element()*,
+xs:boolean()* instance of element()+,
+xs:boolean()* instance of element(name),
+xs:boolean()* instance of element(name)?,
+xs:boolean()* instance of element(name)*,
+xs:boolean()* instance of element(name)+,
+xs:boolean()* instance of map(*),
+xs:boolean()* instance of map(xs:string, item()),
+xs:boolean()* instance of map(xs:numeric, item()),
+xs:boolean()* instance of map(xs:boolean, item()),
+xs:boolean()* instance of array(*),
+xs:boolean()* instance of array(item()),
+xs:boolean()* instance of function(*),
+xs:boolean()* instance of function() as integer,
+xs:boolean()* instance of function(T) as R,
+xs:boolean()* instance of function(T1, T2) as R,
+xs:boolean()+ instance of node(),
+xs:boolean()+ instance of node()?,
+xs:boolean()+ instance of node()*,
+xs:boolean()+ instance of node()+,
+xs:boolean()+ instance of element(),
+xs:boolean()+ instance of element()?,
+xs:boolean()+ instance of element()*,
+xs:boolean()+ instance of element()+,
+xs:boolean()+ instance of element(name),
+xs:boolean()+ instance of element(name)?,
+xs:boolean()+ instance of element(name)*,
+xs:boolean()+ instance of element(name)+,
+xs:boolean()+ instance of map(*),
+xs:boolean()+ instance of map(xs:string, item()),
+xs:boolean()+ instance of map(xs:numeric, item()),
+xs:boolean()+ instance of map(xs:boolean, item()),
+xs:boolean()+ instance of array(*),
+xs:boolean()+ instance of array(item()),
+xs:boolean()+ instance of function(*),
+xs:boolean()+ instance of function() as integer,
+xs:boolean()+ instance of function(T) as R,
+xs:boolean()+ instance of function(T1, T2) as R,
+node() instance of node()?,
+node() instance of node()*,
+node() instance of node()+,
+node() instance of element(),
+node() instance of element()?,
+node() instance of element()*,
+node() instance of element()+,
+node() instance of element(name),
+node() instance of element(name)?,
+node() instance of element(name)*,
+node() instance of element(name)+,
+node() instance of map(*),
+node() instance of map(xs:string, item()),
+node() instance of map(xs:numeric, item()),
+node() instance of map(xs:boolean, item()),
+node() instance of array(*),
+node() instance of array(item()),
+node() instance of function(*),
+node() instance of function() as integer,
+node() instance of function(T) as R,
+node() instance of function(T1, T2) as R,
+node()? instance of node()*,
+node()? instance of node()+,
+node()? instance of element(),
+node()? instance of element()?,
+node()? instance of element()*,
+node()? instance of element()+,
+node()? instance of element(name),
+node()? instance of element(name)?,
+node()? instance of element(name)*,
+node()? instance of element(name)+,
+node()? instance of map(*),
+node()? instance of map(xs:string, item()),
+node()? instance of map(xs:numeric, item()),
+node()? instance of map(xs:boolean, item()),
+node()? instance of array(*),
+node()? instance of array(item()),
+node()? instance of function(*),
+node()? instance of function() as integer,
+node()? instance of function(T) as R,
+node()? instance of function(T1, T2) as R,
+node()* instance of node()+,
+node()* instance of element(),
+node()* instance of element()?,
+node()* instance of element()*,
+node()* instance of element()+,
+node()* instance of element(name),
+node()* instance of element(name)?,
+node()* instance of element(name)*,
+node()* instance of element(name)+,
+node()* instance of map(*),
+node()* instance of map(xs:string, item()),
+node()* instance of map(xs:numeric, item()),
+node()* instance of map(xs:boolean, item()),
+node()* instance of array(*),
+node()* instance of array(item()),
+node()* instance of function(*),
+node()* instance of function() as integer,
+node()* instance of function(T) as R,
+node()* instance of function(T1, T2) as R,
+node()+ instance of element(),
+node()+ instance of element()?,
+node()+ instance of element()*,
+node()+ instance of element()+,
+node()+ instance of element(name),
+node()+ instance of element(name)?,
+node()+ instance of element(name)*,
+node()+ instance of element(name)+,
+node()+ instance of map(*),
+node()+ instance of map(xs:string, item()),
+node()+ instance of map(xs:numeric, item()),
+node()+ instance of map(xs:boolean, item()),
+node()+ instance of array(*),
+node()+ instance of array(item()),
+node()+ instance of function(*),
+node()+ instance of function() as integer,
+node()+ instance of function(T) as R,
+node()+ instance of function(T1, T2) as R,
+element() instance of element()?,
+element() instance of element()*,
+element() instance of element()+,
+element() instance of element(name),
+element() instance of element(name)?,
+element() instance of element(name)*,
+element() instance of element(name)+,
+element() instance of map(*),
+element() instance of map(xs:string, item()),
+element() instance of map(xs:numeric, item()),
+element() instance of map(xs:boolean, item()),
+element() instance of array(*),
+element() instance of array(item()),
+element() instance of function(*),
+element() instance of function() as integer,
+element() instance of function(T) as R,
+element() instance of function(T1, T2) as R,
+element()? instance of element()*,
+element()? instance of element()+,
+element()? instance of element(name),
+element()? instance of element(name)?,
+element()? instance of element(name)*,
+element()? instance of element(name)+,
+element()? instance of map(*),
+element()? instance of map(xs:string, item()),
+element()? instance of map(xs:numeric, item()),
+element()? instance of map(xs:boolean, item()),
+element()? instance of array(*),
+element()? instance of array(item()),
+element()? instance of function(*),
+element()? instance of function() as integer,
+element()? instance of function(T) as R,
+element()? instance of function(T1, T2) as R,
+element()* instance of element()+,
+element()* instance of element(name),
+element()* instance of element(name)?,
+element()* instance of element(name)*,
+element()* instance of element(name)+,
+element()* instance of map(*),
+element()* instance of map(xs:string, item()),
+element()* instance of map(xs:numeric, item()),
+element()* instance of map(xs:boolean, item()),
+element()* instance of array(*),
+element()* instance of array(item()),
+element()* instance of function(*),
+element()* instance of function() as integer,
+element()* instance of function(T) as R,
+element()* instance of function(T1, T2) as R,
+element()+ instance of element(name),
+element()+ instance of element(name)?,
+element()+ instance of element(name)*,
+element()+ instance of element(name)+,
+element()+ instance of map(*),
+element()+ instance of map(xs:string, item()),
+element()+ instance of map(xs:numeric, item()),
+element()+ instance of map(xs:boolean, item()),
+element()+ instance of array(*),
+element()+ instance of array(item()),
+element()+ instance of function(*),
+element()+ instance of function() as integer,
+element()+ instance of function(T) as R,
+element()+ instance of function(T1, T2) as R,
+element(name) instance of element(name)?,
+element(name) instance of element(name)*,
+element(name) instance of element(name)+,
+element(name) instance of map(*),
+element(name) instance of map(xs:string, item()),
+element(name) instance of map(xs:numeric, item()),
+element(name) instance of map(xs:boolean, item()),
+element(name) instance of array(*),
+element(name) instance of array(item()),
+element(name) instance of function(*),
+element(name) instance of function() as integer,
+element(name) instance of function(T) as R,
+element(name) instance of function(T1, T2) as R,
+element(name)? instance of element(name)*,
+element(name)? instance of element(name)+,
+element(name)? instance of map(*),
+element(name)? instance of map(xs:string, item()),
+element(name)? instance of map(xs:numeric, item()),
+element(name)? instance of map(xs:boolean, item()),
+element(name)? instance of array(*),
+element(name)? instance of array(item()),
+element(name)? instance of function(*),
+element(name)? instance of function() as integer,
+element(name)? instance of function(T) as R,
+element(name)? instance of function(T1, T2) as R,
+element(name)* instance of element(name)+,
+element(name)* instance of map(*),
+element(name)* instance of map(xs:string, item()),
+element(name)* instance of map(xs:numeric, item()),
+element(name)* instance of map(xs:boolean, item()),
+element(name)* instance of array(*),
+element(name)* instance of array(item()),
+element(name)* instance of function(*),
+element(name)* instance of function() as integer,
+element(name)* instance of function(T) as R,
+element(name)* instance of function(T1, T2) as R,
+element(name)+ instance of map(*),
+element(name)+ instance of map(xs:string, item()),
+element(name)+ instance of map(xs:numeric, item()),
+element(name)+ instance of map(xs:boolean, item()),
+element(name)+ instance of array(*),
+element(name)+ instance of array(item()),
+element(name)+ instance of function(*),
+element(name)+ instance of function() as integer,
+element(name)+ instance of function(T) as R,
+element(name)+ instance of function(T1, T2) as R,
+map(*) instance of map(xs:string, item()),
+map(*) instance of map(xs:numeric, item()),
+map(*) instance of map(xs:boolean, item()),
+map(*) instance of array(*),
+map(*) instance of array(item()),
+map(*) instance of function(*),
+map(*) instance of function() as integer,
+map(*) instance of function(T) as R,
+map(*) instance of function(T1, T2) as R,
+map(xs:string, item()) instance of map(xs:numeric, item()),
+map(xs:string, item()) instance of map(xs:boolean, item()),
+map(xs:string, item()) instance of array(*),
+map(xs:string, item()) instance of array(item()),
+map(xs:string, item()) instance of function(*),
+map(xs:string, item()) instance of function() as integer,
+map(xs:string, item()) instance of function(T) as R,
+map(xs:string, item()) instance of function(T1, T2) as R,
+map(xs:numeric, item()) instance of map(xs:boolean, item()),
+map(xs:numeric, item()) instance of array(*),
+map(xs:numeric, item()) instance of array(item()),
+map(xs:numeric, item()) instance of function(*),
+map(xs:numeric, item()) instance of function() as integer,
+map(xs:numeric, item()) instance of function(T) as R,
+map(xs:numeric, item()) instance of function(T1, T2) as R,
+map(xs:boolean, item()) instance of array(*),
+map(xs:boolean, item()) instance of array(item()),
+map(xs:boolean, item()) instance of function(*),
+map(xs:boolean, item()) instance of function() as integer,
+map(xs:boolean, item()) instance of function(T) as R,
+map(xs:boolean, item()) instance of function(T1, T2) as R,
+array(*) instance of array(item()),
+array(*) instance of function(*),
+array(*) instance of function() as integer,
+array(*) instance of function(T) as R,
+array(*) instance of function(T1, T2) as R,
+array(item()) instance of function(*),
+array(item()) instance of function() as integer,
+array(item()) instance of function(T) as R,
+array(item()) instance of function(T1, T2) as R,
+function(*) instance of function() as integer,
+function(*) instance of function(T) as R,
+function(*) instance of function(T1, T2) as R,
+function() as integer instance of function(T) as R,
+function() as integer instance of function(T1, T2) as R,
+function(T) as R instance of function(T1, T2) as R,

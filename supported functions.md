@@ -81,6 +81,7 @@ Function                                              | Is implemented | Comment
 `fn:idref`                                            |                |
 `antlr:start`                                         |                | non-standard, equivalent to $start in grammar
 `antlr:stop`                                          |                | non-standard, equivalent to $stop in grammar
+`antlr:line`                                           |                | non-standard, equivalent to $ctx in grammar
 `antlr:ctx`                                           |                | non-standard, equivalent to $ctx in grammar
 
 ## Sequence functions

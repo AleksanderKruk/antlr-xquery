@@ -1,0 +1,65 @@
+@startuml Pobr proces przetwarzania
+skinparam wrapWidth 150
+
+|Detekcja czerwonego okręgu|
+start
+
+' :Rozciągnij histogram obrazu;
+:Proguj czerwony kolor;
+while (Czy przetworzono wszystkie kształty?) is (nie)
+:Znajdź kształt;
+note
+Kształt np. jako jednolity obszar sprogowanych pikseli
+end note
+:Wyznacz momenty kształtu;
+if (momenty kształu podobne w marginesie błędu do momentów okręgu?) then (znaleziono czerwony okrąg)
+:Zapisz obszar czerwonego okręgu;
+note
+    Obszar czerwonego okręgu posłuży nam jednocześnie za obszar wykrytego znaku
+end note
+
+    |Detekcja białego koła|
+
+    :Sproguj biały kolor wewnątrz obszaru czerwonego okręgu;
+    :Policz procent białych pikseli;
+
+    if (Procent białych pikseli przekracza próg akceptacji) then (tak)
+        |Detekcja liczby 30|
+        :Sproguj czarny kolor wewnątrz obszaru czerwonego okręgu;
+        while (Nie przetworzono wszystkich kształtów?) is (tak)
+            :Znajdź kształt;
+            :Wyznacz momenty kształtu;
+            if (Momenty podobne do cyfry 3 w marginesie błędu?) then (tak)
+                :Zapisz obszar cyfry 3;
+            elseif (Momenty podobne do cyfry 0 w marginesie błędu?) then (tak)
+                :Zapisz obszar cyfry 0;
+            else (następny kształt)
+            :;
+            note
+                Możnaby szukać inne cyfry by wykluczyć obecność innych cyfr
+            end note
+            endif
+            if (Czy wykryto 3 i 0?) then (tak)
+                if (Cyfra 3 po lewo od cyfry 0?) then (tak)
+                :Zaznacz pudełko ograniczające czerwonego okręgu;
+                else (nie)
+                endif
+                else (nie)
+            endif
+        endwhile
+
+    else (nie)
+
+    endif
+
+
+
+else (następny kształt)
+
+endif
+
+endwhile
+|Detekcja czerwonego okręgu|
+stop
+
+@enduml

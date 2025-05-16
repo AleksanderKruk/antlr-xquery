@@ -70,8 +70,8 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.UnionExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarRefContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.WhereClauseContext;
-import com.github.akruk.antlrxquery.evaluator.contextmanagement.XQueryContextManager;
-import com.github.akruk.antlrxquery.evaluator.contextmanagement.baseimplementations.XQueryBaseContextManager;
+import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.XQueryDynamicContextManager;
+import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.baseimplementation.XQueryBaseDynamicContextManager;
 import com.github.akruk.antlrxquery.evaluator.functioncaller.XQueryFunctionCaller;
 import com.github.akruk.antlrxquery.evaluator.functioncaller.defaults.BaseFunctionCaller;
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
@@ -87,7 +87,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     XQueryValue matchedNodes;
     XQueryAxis currentAxis;
     XQueryVisitingContext context;
-    XQueryContextManager contextManager;
+    XQueryDynamicContextManager contextManager;
     XQueryValueFactory valueFactory;
     XQueryFunctionCaller functionCaller;
     Stream<List<TupleElement>> visitedTupleStream;
@@ -111,13 +111,13 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
 
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser) {
-        this(tree, parser, new XQueryBaseContextManager(), new XQueryBaseValueFactory(), new BaseFunctionCaller());
+        this(tree, parser, new XQueryBaseDynamicContextManager(), new XQueryBaseValueFactory(), new BaseFunctionCaller());
     }
 
     public XQueryEvaluatorVisitor(
             final ParseTree tree,
             final Parser parser,
-            final XQueryContextManager contextManager,
+            final XQueryDynamicContextManager contextManager,
             final XQueryValueFactory valueFactory,
             final XQueryFunctionCaller functionCaller) {
         this.root = valueFactory.node(tree);

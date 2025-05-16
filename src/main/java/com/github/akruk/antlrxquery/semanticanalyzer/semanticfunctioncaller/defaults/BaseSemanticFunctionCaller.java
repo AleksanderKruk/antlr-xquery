@@ -1,4 +1,4 @@
-package com.github.akruk.antlrxquery.evaluator.functioncaller.defaults;
+package com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -18,10 +18,10 @@ import com.github.akruk.antlrxquery.values.XQueryFunction;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
-public class BaseFunctionCaller implements XQueryFunctionCaller {
+public class BaseSemanticFunctionCaller implements XQueryFunctionCaller {
 
     private final Map<String, XQueryFunction> functions;
-    public BaseFunctionCaller() {
+    public BaseSemanticFunctionCaller() {
         functions = new HashMap<>(200);
         functions.put("true", this::true_);
         functions.put("false", this::false_);

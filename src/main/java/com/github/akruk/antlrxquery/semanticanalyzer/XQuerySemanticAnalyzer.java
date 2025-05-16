@@ -222,16 +222,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             return ctx.exprSingle(0).accept(this);
         }
         // More than one expression
-        // are turned into a flattened list
-        final boolean allOccurencesAreZero = ctx.exprSingle().stream()
-            .map(e->e.accept(this))
-            .allMatch(XQuerySequenceType::isZero);
-        if (allOccurencesAreZero)
-            return typeFactory.emptySequence();
-        final boolean allCanBeZero = ctx.exprSingle().stream()
-            .map(e->e.accept(this))
-            .allMatch(type->type.isZeroOrMore() || type.isZeroOrOne());
-
         var previousExpr = ctx.exprSingle(0);
         var previousExprType = previousExpr.accept(this);
         final int size = ctx.exprSingle().size();

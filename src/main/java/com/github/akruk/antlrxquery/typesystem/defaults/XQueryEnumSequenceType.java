@@ -140,69 +140,69 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         = typeFactory -> (item) -> typeFactory.oneOrMore(item);
 
     static {
-        mergedOccurences[XQueryOccurence.ZERO.ordinal()][XQueryOccurence.ZERO.ordinal()] = zero;
-        mergedOccurences[XQueryOccurence.ZERO.ordinal()][XQueryOccurence.ONE.ordinal()] = one;
-        mergedOccurences[XQueryOccurence.ZERO.ordinal()][XQueryOccurence.ZERO_OR_ONE
-                .ordinal()] = zeroOrOne;
-        mergedOccurences[XQueryOccurence.ZERO.ordinal()][XQueryOccurence.ZERO_OR_MORE
-                .ordinal()] = zeroOrMore;
-        mergedOccurences[XQueryOccurence.ZERO.ordinal()][XQueryOccurence.ONE_OR_MORE
-                .ordinal()] = oneOrMore;
+        final int zeroOrdinal = XQueryOccurence.ZERO.ordinal();
+        final int oneOrdinal = XQueryOccurence.ONE.ordinal();
+        final int zeroOrOneOrdinal = XQueryOccurence.ZERO_OR_ONE.ordinal();
+        final int zeroOrMoreOrdinal = XQueryOccurence.ZERO_OR_MORE.ordinal();
+        final int oneOrMoreOrdinal = XQueryOccurence.ONE_OR_MORE.ordinal();
+        mergedOccurences[zeroOrdinal][zeroOrdinal] = zero;
+        mergedOccurences[zeroOrdinal][oneOrdinal] = one;
+        mergedOccurences[zeroOrdinal][zeroOrOneOrdinal] = zeroOrOne;
+        mergedOccurences[zeroOrdinal][zeroOrMoreOrdinal] = zeroOrMore;
+        mergedOccurences[zeroOrdinal][oneOrMoreOrdinal] = oneOrMore;
 
-        mergedOccurences[XQueryOccurence.ONE.ordinal()][XQueryOccurence.ZERO.ordinal()] = one;
-        mergedOccurences[XQueryOccurence.ONE.ordinal()][XQueryOccurence.ONE.ordinal()] = oneOrMore;
-        mergedOccurences[XQueryOccurence.ONE.ordinal()][XQueryOccurence.ZERO_OR_ONE
-                .ordinal()] = oneOrMore;
-        mergedOccurences[XQueryOccurence.ONE.ordinal()][XQueryOccurence.ZERO_OR_MORE
-                .ordinal()] = oneOrMore;
-        mergedOccurences[XQueryOccurence.ONE.ordinal()][XQueryOccurence.ONE_OR_MORE
-                .ordinal()] = oneOrMore;
+        mergedOccurences[oneOrdinal][zeroOrdinal] = one;
+        mergedOccurences[oneOrdinal][oneOrdinal] = oneOrMore;
+        mergedOccurences[oneOrdinal][zeroOrOneOrdinal] = oneOrMore;
+        mergedOccurences[oneOrdinal][zeroOrMoreOrdinal] = oneOrMore;
+        mergedOccurences[oneOrdinal][oneOrMoreOrdinal] = oneOrMore;
 
-        mergedOccurences[XQueryOccurence.ZERO_OR_ONE.ordinal()][XQueryOccurence.ZERO
-                .ordinal()] = zeroOrOne;
-        mergedOccurences[XQueryOccurence.ZERO_OR_ONE.ordinal()][XQueryOccurence.ONE
-                .ordinal()] = oneOrMore;
-        mergedOccurences[XQueryOccurence.ZERO_OR_ONE.ordinal()][XQueryOccurence.ZERO_OR_ONE
-                .ordinal()] = zeroOrMore;
-        mergedOccurences[XQueryOccurence.ZERO_OR_ONE.ordinal()][XQueryOccurence.ZERO_OR_MORE
-                .ordinal()] = zeroOrMore;
-        mergedOccurences[XQueryOccurence.ZERO_OR_ONE.ordinal()][XQueryOccurence.ONE_OR_MORE
-                .ordinal()] = oneOrMore;
+        mergedOccurences[zeroOrOneOrdinal][zeroOrdinal] = zeroOrOne;
+        mergedOccurences[zeroOrOneOrdinal][oneOrdinal] = oneOrMore;
+        mergedOccurences[zeroOrOneOrdinal][zeroOrOneOrdinal] = zeroOrMore;
+        mergedOccurences[zeroOrOneOrdinal][zeroOrMoreOrdinal] = zeroOrMore;
+        mergedOccurences[zeroOrOneOrdinal][oneOrMoreOrdinal] = oneOrMore;
 
-        mergedOccurences[XQueryOccurence.ZERO_OR_MORE.ordinal()][XQueryOccurence.ZERO
-                .ordinal()] = zeroOrMore;
-        mergedOccurences[XQueryOccurence.ZERO_OR_MORE.ordinal()][XQueryOccurence.ONE
-                .ordinal()] = oneOrMore;
-        mergedOccurences[XQueryOccurence.ZERO_OR_MORE.ordinal()][XQueryOccurence.ZERO_OR_ONE
-                .ordinal()] = zeroOrMore;
-        mergedOccurences[XQueryOccurence.ZERO_OR_MORE.ordinal()][XQueryOccurence.ZERO_OR_MORE
-                .ordinal()] = zeroOrMore;
-        mergedOccurences[XQueryOccurence.ZERO_OR_MORE.ordinal()][XQueryOccurence.ONE_OR_MORE
-                .ordinal()] = oneOrMore;
+        mergedOccurences[zeroOrMoreOrdinal][zeroOrdinal] = zeroOrMore;
+        mergedOccurences[zeroOrMoreOrdinal][oneOrdinal] = oneOrMore;
+        mergedOccurences[zeroOrMoreOrdinal][zeroOrOneOrdinal] = zeroOrMore;
+        mergedOccurences[zeroOrMoreOrdinal][zeroOrMoreOrdinal] = zeroOrMore;
+        mergedOccurences[zeroOrMoreOrdinal][oneOrMoreOrdinal] = oneOrMore;
 
-        mergedOccurences[XQueryOccurence.ONE_OR_MORE.ordinal()][XQueryOccurence.ZERO
-                .ordinal()] = oneOrMore;
-        mergedOccurences[XQueryOccurence.ONE_OR_MORE.ordinal()][XQueryOccurence.ONE
-                .ordinal()] = oneOrMore;
-        mergedOccurences[XQueryOccurence.ONE_OR_MORE.ordinal()][XQueryOccurence.ZERO_OR_ONE
-                .ordinal()] = oneOrMore;
-        mergedOccurences[XQueryOccurence.ONE_OR_MORE.ordinal()][XQueryOccurence.ZERO_OR_MORE
-                .ordinal()] = oneOrMore;
-        mergedOccurences[XQueryOccurence.ONE_OR_MORE.ordinal()][XQueryOccurence.ONE_OR_MORE
-                .ordinal()] = oneOrMore;
+        mergedOccurences[oneOrMoreOrdinal][zeroOrdinal] = oneOrMore;
+        mergedOccurences[oneOrMoreOrdinal][oneOrdinal] = oneOrMore;
+        mergedOccurences[oneOrMoreOrdinal][zeroOrOneOrdinal] = oneOrMore;
+        mergedOccurences[oneOrMoreOrdinal][zeroOrMoreOrdinal] = oneOrMore;
+        mergedOccurences[oneOrMoreOrdinal][oneOrMoreOrdinal] = oneOrMore;
     }
 
 
     @Override
     public XQuerySequenceType sequenceMerge(XQuerySequenceType other) {
-        var enumType1 = this;
-        var enumType2 = (XQueryEnumSequenceType) other;
-        var enumItemType1 = this.getItemType();
-        var enumItemType2 = other.getItemType();
-        var sequenceGetterWithoutFactory = mergedOccurences[enumType1.getOccurence().ordinal()][enumType2.getOccurence().ordinal()];
+        final var enumType1 = this;
+        final var enumType2 = (XQueryEnumSequenceType) other;
+        final var enumItemType1 = this.getItemType();
+        final var enumItemType2 = other.getItemType();
+        final var sequenceGetterWithoutFactory = mergedOccurences[enumType1.getOccurence().ordinal()][enumType2.getOccurence().ordinal()];
         Function<XQueryItemType, XQuerySequenceType> sequenceGetter = (Function) sequenceGetterWithoutFactory.apply(typeFactory);
-        boolean equalItemTypes = enumItemType1.equals(enumItemType2);
-        return sequenceGetter.apply(equalItemTypes ? enumItemType1 : enumItemType2);
+        if (enumItemType1 == null && enumItemType2 == null) {
+            return sequenceGetter.apply(typeFactory.itemAnyItem());
+        }
+        if (enumItemType1 == null) {
+            return sequenceGetter.apply(enumItemType2);
+        }
+        if (enumItemType2 == null) {
+            return sequenceGetter.apply(enumItemType1);
+        }
+        boolean itemType1MoreGeneral = enumItemType2.itemtypeIsSubtypeOf(enumItemType1);
+        if (itemType1MoreGeneral) {
+            return sequenceGetter.apply(enumItemType1);
+        }
+        boolean itemType2MoreGeneral = enumItemType1.itemtypeIsSubtypeOf(enumItemType2);
+        if (itemType2MoreGeneral) {
+            return sequenceGetter.apply(enumItemType2);
+        }
+        return sequenceGetter.apply(typeFactory.itemAnyItem());
 
     }
 

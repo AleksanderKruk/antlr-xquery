@@ -1,7 +1,6 @@
 package com.github.akruk.antlrxquery.typesystem.typeoperations.defaults;
 
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;

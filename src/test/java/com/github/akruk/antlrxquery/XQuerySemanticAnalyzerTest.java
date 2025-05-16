@@ -71,6 +71,9 @@ public class XQuerySemanticAnalyzerTest {
         assertType("()", typeFactory.emptySequence());
         assertType("(1)", typeFactory.number());
         assertType("(1, 'a')", typeFactory.oneOrMore(typeFactory.itemAnyItem()));
+        assertType("(1, 2, 3)", typeFactory.oneOrMore(typeFactory.itemNumber()));
+        assertType("((), (), (1))", typeFactory.number());
+        assertType("((), (1), (1))", typeFactory.oneOrMore(typeFactory.itemNumber()));
     }
 
     // @Test

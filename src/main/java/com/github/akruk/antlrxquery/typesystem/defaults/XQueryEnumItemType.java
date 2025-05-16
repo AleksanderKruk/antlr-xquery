@@ -309,7 +309,8 @@ public class XQueryEnumItemType implements XQueryItemType {
             var x_ = (XQueryEnumItemTypeRecord) x;
             var y_ = (XQueryEnumItemTypeMap) y;
             var keyItemType = (XQueryEnumItemType) y_.getMapKeyType();
-            if (keyItemType.getType() != XQueryTypes.STRING)
+            if (keyItemType.getType() != XQueryTypes.STRING
+                && keyItemType.getType() != XQueryTypes.ANY_ITEM)
                 return false;
             var yFieldType = y_.getMapValueType();
             for (var key : x_.getRecordFields().keySet()) {
@@ -327,8 +328,10 @@ public class XQueryEnumItemType implements XQueryItemType {
             var yArgumentTypes = y_.getArgumentTypes();
             if (yArgumentTypes.size() != 1)
                 return false;
-            var yFieldType = (XQueryEnumItemType) yArgumentTypes.get(0);
-            if (yFieldType.getType() != XQueryTypes.STRING)
+            var yFieldType = (XQueryEnumSequenceType) yArgumentTypes.get(0);
+            var yFieldItemType = (XQueryEnumItemType) yFieldType.getItemType();
+            if (yFieldItemType.getType() != XQueryTypes.STRING
+                && yFieldItemType.getType() != XQueryTypes.ANY_ITEM)
                 return false;
             var yReturnedType = y_.getReturnedType();
             for (var key : x_.getRecordFields().keySet()) {

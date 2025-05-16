@@ -137,29 +137,42 @@ public class XQueryEnumItemType implements XQueryItemType {
         };
 
         itemtypeIsSubtypeOf[function][anyFunction] = alwaysTrue;
-        itemtypeIsSubtypeOf[array][anyFunction] = alwaysTrue;
-        itemtypeIsSubtypeOf[map][anyFunction] = alwaysTrue;
-        itemtypeIsSubtypeOf[record][anyFunction] = alwaysTrue;
-        itemtypeIsSubtypeOf[anyArray][anyFunction] = alwaysTrue;
-        itemtypeIsSubtypeOf[anyMap][anyFunction] = alwaysTrue;
-
         itemtypeIsSubtypeOf[function][function] = (x, y) -> {
             XQueryEnumItemType i1 = (XQueryEnumItemType) x;
             XQueryEnumItemType i2 = (XQueryEnumItemType) y;
             return i1.isFunction(i2.getReturnedType(), i2.getArgumentTypes());
         };
 
-        itemtypeIsSubtypeOf[map][anyMap] = alwaysTrue;
-        itemtypeIsSubtypeOf[map][map] = (x, y) -> {
-            XQueryEnumItemType x_ = (XQueryEnumItemType) x;
-            XQueryEnumItemType y_ = (XQueryEnumItemType) y;
-            return x_.getMapKeyType().itemtypeIsSubtypeOf(y_.getMapKeyType())
-                    && x_.getMapValueType().isSubtypeOf(y_.getMapValueType());
+        final var canBeKey = booleanEnumArray(XQueryTypes.NUMBER, XQueryTypes.BOOLEAN, XQueryTypes.STRING, XQueryTypes.ENUM);
+        itemtypeIsSubtypeOf[function][anyMap] = (x, y) -> {
+            XQueryEnumItemTypeFunction x_ = (XQueryEnumItemTypeFunction) x;
+            // function must have one argument
+            if (x_.getArgumentTypes().size() != 1)
+                return false;
+            var onlyArg =  (XQueryEnumSequenceType) x_.getArgumentTypes().get(0);
+            var onlyArgItem =  (XQueryEnumItemType) onlyArg.getItemType();
+            boolean correctOccurence = onlyArg.isOne();
+            return correctOccurence
+                    && canBeKey[onlyArgItem.getType().ordinal()];
         };
 
-        itemtypeIsSubtypeOf[array][anyArray] = alwaysTrue;
+        itemtypeIsSubtypeOf[function][map] = (x, y) -> {
+            if (!itemtypeIsSubtypeOf[function][anyMap].test(x, y))
+                return false;
+            XQueryEnumItemTypeFunction x_ = (XQueryEnumItemTypeFunction) x;
+            XQueryEnumItemTypeMap y_ = (XQueryEnumItemTypeMap) y;
+            var onlyArg =  (XQueryEnumSequenceType) x_.getArgumentTypes().get(0);
+            var onlyArgItem =  (XQueryEnumItemType) onlyArg.getItemType();
+            boolean argCanBeKey = onlyArgItem.itemtypeIsSubtypeOf(y_.getMapKeyType());
+            boolean returnedCanBeValue = x_.getReturnedType().isSubtypeOf(y_.getMapValueType());
+            boolean correctOccurence = onlyArg.isOne();
+            return correctOccurence
+                    && argCanBeKey
+                    && returnedCanBeValue;
+        };
+
         itemtypeIsSubtypeOf[function][anyArray] = (x, y) -> {
-            XQueryEnumItemType x_ = (XQueryEnumItemType) x;
+            XQueryEnumItemTypeFunction x_ = (XQueryEnumItemTypeFunction) x;
             // function must have one argument
             if (x_.getArgumentTypes().size() != 1)
                 return false;
@@ -171,14 +184,33 @@ public class XQueryEnumItemType implements XQueryItemType {
                     && onlyArgItem.getType() == XQueryTypes.NUMBER;
         };
 
-        itemtypeIsSubtypeOf[map][anyArray] = (x, y) -> {
-            XQueryEnumItemType x_ = (XQueryEnumItemType) x;
-            // map must have a key that is a number
-            var key = (XQueryEnumItemType) x_.getMapKeyType();
-            return key.getType() == XQueryTypes.NUMBER;
+        itemtypeIsSubtypeOf[function][array] = (x, y) -> {
+            if (!itemtypeIsSubtypeOf[function][anyArray].test(x, y))
+                return false;
+            XQueryEnumItemTypeFunction x_ = (XQueryEnumItemTypeFunction) x;
+            XQueryEnumItemTypeArray y_ = (XQueryEnumItemTypeArray) y;
+            var returnedType = x_.getReturnedType();
+
+            return returnedType.isSubtypeOf(y_.getArrayType());
         };
 
 
+        itemtypeIsSubtypeOf[array][anyFunction] = alwaysTrue;
+        itemtypeIsSubtypeOf[array][function] = (x, y) -> {
+            XQueryEnumItemType x_ = (XQueryEnumItemType) x;
+            XQueryEnumItemType y_ = (XQueryEnumItemType) y;
+            if (y_.getArgumentTypes().size() != 1)
+                return false;
+            var onlyArg =  (XQueryEnumSequenceType) y_.getArgumentTypes().get(0);
+            var onlyArgItem = (XQueryEnumItemType) onlyArg.getItemType();
+            if (onlyArgItem.getType() == XQueryTypes.NUMBER) {
+
+            }
+
+            return x_.getArrayType().isSubtypeOf(y_.getReturnedType());
+        };
+
+        itemtypeIsSubtypeOf[array][anyArray] = alwaysTrue;
         itemtypeIsSubtypeOf[array][array] = (x, y) -> {
             XQueryEnumItemType x_ = (XQueryEnumItemType) x;
             XQueryEnumItemType y_ = (XQueryEnumItemType) y;
@@ -190,6 +222,27 @@ public class XQueryEnumItemType implements XQueryItemType {
             return xArrayItemType.isSubtypeOf(yArrayItemType);
         };
 
+        itemtypeIsSubtypeOf[map][anyFunction] = alwaysTrue;
+        itemtypeIsSubtypeOf[record][anyFunction] = alwaysTrue;
+        itemtypeIsSubtypeOf[anyArray][anyFunction] = alwaysTrue;
+        itemtypeIsSubtypeOf[anyMap][anyFunction] = alwaysTrue;
+
+        itemtypeIsSubtypeOf[map][anyMap] = alwaysTrue;
+        itemtypeIsSubtypeOf[map][map] = (x, y) -> {
+            XQueryEnumItemType x_ = (XQueryEnumItemType) x;
+            XQueryEnumItemType y_ = (XQueryEnumItemType) y;
+            return x_.getMapKeyType().itemtypeIsSubtypeOf(y_.getMapKeyType())
+                    && x_.getMapValueType().isSubtypeOf(y_.getMapValueType());
+        };
+
+
+        itemtypeIsSubtypeOf[map][anyArray] = (x, y) -> {
+            XQueryEnumItemType x_ = (XQueryEnumItemType) x;
+            // map must have a key that is a number
+            var key = (XQueryEnumItemType) x_.getMapKeyType();
+            return key.getType() == XQueryTypes.NUMBER;
+        };
+
 
         itemtypeIsSubtypeOf[enum_][string] = alwaysTrue;
         itemtypeIsSubtypeOf[enum_][enum_] = (x, y) -> {
@@ -199,23 +252,6 @@ public class XQueryEnumItemType implements XQueryItemType {
         };
 
         itemtypeIsSubtypeOf[record][anyMap] = alwaysTrue;
-        itemtypeIsSubtypeOf[record][anyArray] = alwaysFalse;
-        itemtypeIsSubtypeOf[record][anyFunction] = alwaysTrue;
-        itemtypeIsSubtypeOf[record][record] = (x, y) -> {
-            var x_ = (XQueryEnumItemTypeRecord) x;
-            var y_ = (XQueryEnumItemTypeRecord) y;
-            boolean allFieldsPresent = y_.getRecordFields().keySet().containsAll(x_.getRecordFields().keySet());
-            if (!allFieldsPresent)
-                return false;
-            for (var key : x_.getRecordFields().keySet()) {
-                var xFieldType = x_.getRecordFields().get(key);
-                var yFieldType = y_.getRecordFields().get(key);
-                if (!xFieldType.isSubtypeOf(yFieldType))
-                    return false;
-            }
-            return true;
-        };
-
         itemtypeIsSubtypeOf[record][map] = (x, y) -> {
             var x_ = (XQueryEnumItemTypeRecord) x;
             var y_ = (XQueryEnumItemTypeMap) y;
@@ -231,6 +267,7 @@ public class XQueryEnumItemType implements XQueryItemType {
             return true;
         };
 
+        itemtypeIsSubtypeOf[record][anyFunction] = alwaysTrue;
         itemtypeIsSubtypeOf[record][function] = (x, y) -> {
             var x_ = (XQueryEnumItemTypeRecord) x;
             var y_ = (XQueryEnumItemTypeFunction) y;
@@ -248,6 +285,22 @@ public class XQueryEnumItemType implements XQueryItemType {
             }
             return true;
         };
+
+        itemtypeIsSubtypeOf[record][record] = (x, y) -> {
+            var x_ = (XQueryEnumItemTypeRecord) x;
+            var y_ = (XQueryEnumItemTypeRecord) y;
+            boolean allFieldsPresent = y_.getRecordFields().keySet().containsAll(x_.getRecordFields().keySet());
+            if (!allFieldsPresent)
+                return false;
+            for (var key : x_.getRecordFields().keySet()) {
+                var xFieldType = x_.getRecordFields().get(key);
+                var yFieldType = y_.getRecordFields().get(key);
+                if (!xFieldType.isSubtypeOf(yFieldType))
+                    return false;
+            }
+            return true;
+        };
+
 
     }
 

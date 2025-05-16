@@ -99,7 +99,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
     @Override
     public XQuerySequenceType visitForClause(ForClauseContext ctx) {
-        final int numberOfVariables = (int) ctx.forBinding().size();
+        final int numberOfVariables = ctx.forBinding().size();
         // visitedTupleStreamType = visitedTupleStreamType.flatMap(tuple -> {
         //     List<List<TupleElement>> newTupleLike = tuple.stream().map(e -> List.of(e)).collect(Collectors.toList());
         //     for (ForBindingContext streamVariable : ctx.forBinding()) {
@@ -309,40 +309,16 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
     @Override
     public XQuerySequenceType visitOrExpr(final OrExprContext ctx) {
-            // XQuerySequenceType value = null;
-            // if (ctx.orExpr().size() == 0) {
-            //     value = ctx.pathExpr(0).accept(this);
-            // }
-            // if (!ctx.OR().isEmpty())
-            //     return handleOrExpr(ctx);
-            // if (!ctx.AND().isEmpty())
-            //     return handleAndExpr(ctx);
-            // if (ctx.TO() != null)
-            //     return handleRangeExpr(ctx);
-            // if (!ctx.additiveOperator().isEmpty())
-            //     return handleAdditiveExpr(ctx);
-            // if (!ctx.multiplicativeOperator().isEmpty())
-            //     return handleMultiplicativeExpr(ctx);
-            // if (!ctx.unionOperator().isEmpty())
-            //     return handleUnionExpr(ctx);
-            // if (!ctx.INTERSECT().isEmpty())
-            //     return handleIntersectionExpr(ctx);
-            // if (!ctx.EXCEPT().isEmpty())
-            //     return handleSequenceSubtractionExpr(ctx);
-            // if (ctx.MINUS() != null)
-            //     return handleUnaryArithmeticExpr(ctx);
-            // if (ctx.generalComp() != null)
-            //     return handleGeneralComparison(ctx);
-            // if (ctx.valueComp() != null)
-            //     return handleValueComparison(ctx);
-            // if (!ctx.CONCATENATION().isEmpty())
-            //     return handleConcatenation(ctx);
-            // if (!ctx.ARROW().isEmpty())
-            //     return handleArrowExpr(ctx);
-            // if (ctx.nodeComp() != null)
-            //     return handleNodeComp(ctx);
-            // return value;
-            return null;
+        final XQuerySequenceType boolean_ = typeFactory.boolean_();
+        final var orCount = ctx.OR().size();
+        for (int i = 0; i <= orCount; i++) {
+            final var visitedType = ctx.andExpr(i).accept(this);
+            if (!visitedType.isSubtypeOf(boolean_)) {
+                addError(ctx.andExpr(i), "Operands of 'or expression' need to be boolean");
+            }
+            i++;
+        }
+        return boolean_;
     }
 
 
@@ -630,23 +606,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     }
 
 
-
-    private XQuerySequenceType handleOrExpr(final OrExprContext ctx) {
-        // final XQuerySequenceType boolean_ = typeFactory.boolean_();
-        // final var orCount = ctx.OR().size();
-        // for (int i = 0; i <= orCount; i++) {
-        //     final var visitedType = ctx.orExpr(i).accept(this);
-        //     if (!visitedType.isSubtypeOf(boolean_)) {
-        //         addError(ctx.orExpr(i), "Operands of 'or expression' need to be boolean");
-        //     }
-        //     i++;
-        // }
-        // return boolean_;
-        return null;
-    }
-
-
-    private XQuerySequenceType handleAndExpr(final OrExprContext ctx) {
+    private XQuerySequenceType visitAndExpr(final OrExprContext ctx) {
         // final XQuerySequenceType boolean_ = typeFactory.boolean_();
         // final var orCount = ctx.AND().size();
         // for (int i = 0; i <= orCount; i++) {

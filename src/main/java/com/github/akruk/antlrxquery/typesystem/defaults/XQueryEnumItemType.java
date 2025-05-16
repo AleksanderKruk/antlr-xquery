@@ -222,6 +222,20 @@ public class XQueryEnumItemType implements XQueryItemType {
             return returnedType.isSubtypeOf(y_.getArrayType());
         };
 
+        itemtypeIsSubtypeOf[function][function] = (x, y) -> {
+            XQueryEnumItemTypeFunction x_ = (XQueryEnumItemTypeFunction) x;
+            XQueryEnumItemTypeFunction y_ = (XQueryEnumItemTypeFunction) y;
+            if (x_.getArgumentTypes().size() != y_.getArgumentTypes().size())
+                return false;
+            for (int i = 0; i < x_.getArgumentTypes().size(); i++) {
+                var xArgType = x_.getArgumentTypes().get(i);
+                var yArgType = y_.getArgumentTypes().get(i);
+                if (!xArgType.isSubtypeOf(yArgType))
+                    return false;
+            }
+            return x_.getReturnedType().isSubtypeOf(y_.getReturnedType());
+        };
+
 
         itemtypeIsSubtypeOf[array][anyFunction] = alwaysTrue;
         itemtypeIsSubtypeOf[array][function] = (x, y) -> {

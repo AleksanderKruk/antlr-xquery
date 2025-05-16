@@ -231,31 +231,6 @@ public class XQueryTypesTest {
         assertFalse(tested.itemtypeIsSubtypeOf(itemABCenum));
     }
 
-
-    // @Test
-    // public void mapItemSubtyping() {
-    //     final var tested = typeFactory.itemMap(itemString, typeFactory.anyItem());
-
-    //     assertFalse(tested.itemtypeIsSubtypeOf(itemError));
-    //     assertTrue(tested.itemtypeIsSubtypeOf(itemAnyItem));
-    //     assertFalse(tested.itemtypeIsSubtypeOf(itemAnyNode));
-    //     assertFalse(tested.itemtypeIsSubtypeOf(fooElementItem));
-    //     assertFalse(tested.itemtypeIsSubtypeOf(fooElementItem));
-    //     assertTrue(tested.itemtypeIsSubtypeOf(itemAnyMap));
-    //     assertFalse(tested.itemtypeIsSubtypeOf(typeFactory.itemMap(itemString, typeFactory.anyItem())));
-    //     assertFalse(tested.itemtypeIsSubtypeOf(itemAnyArray));
-    //     assertFalse(tested.itemtypeIsSubtypeOf(typeFactory.itemArray(typeFactory.number())));
-    //     assertTrue(tested.itemtypeIsSubtypeOf(itemAnyFunction));
-    //     assertFalse(tested.itemtypeIsSubtypeOf(typeFactory.itemFunction(typeFactory.anyItem(), List.of())));
-
-    //     assertFalse(tested.itemtypeIsSubtypeOf(itemBoolean));
-    //     assertFalse(tested.itemtypeIsSubtypeOf(itemNumber));
-    //     assertFalse(tested.itemtypeIsSubtypeOf(itemString));
-
-    //     assertFalse(tested.itemtypeIsSubtypeOf(itemABCenum));
-    // }
-
-
     @Test
     public void anyMapItemSubtyping() {
         final var tested = itemAnyMap;
@@ -498,6 +473,58 @@ public class XQueryTypesTest {
         assertFalse(tested.itemtypeIsSubtypeOf(itemAnyArray));
         assertTrue(itemMapNumberToString.itemtypeIsSubtypeOf(itemAnyArray));
         assertFalse(tested.itemtypeIsSubtypeOf(typeFactory.itemArray(typeFactory.string())));
+        assertFalse(tested.itemtypeIsSubtypeOf(typeFactory.itemArray(typeFactory.number())));
+
+        assertTrue(tested.itemtypeIsSubtypeOf(itemAnyFunction));
+        assertFalse(tested.itemtypeIsSubtypeOf(typeFactory.itemFunction(typeFactory.anyItem(), List.of())));
+        assertTrue(tested.itemtypeIsSubtypeOf(typeFactory.itemFunction(typeFactory.anyItem(), List.of(typeFactory.anyItem()))));
+        assertTrue(tested.itemtypeIsSubtypeOf(typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.string()))));
+        assertFalse(tested.itemtypeIsSubtypeOf(typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.number()))));
+        assertTrue(tested.itemtypeIsSubtypeOf(typeFactory.itemFunction(typeFactory.oneOrMore(itemString), List.of(typeFactory.string()))));
+        assertFalse(tested.itemtypeIsSubtypeOf(typeFactory.itemFunction(typeFactory.number(), List.of(typeFactory.number()))));
+        assertFalse(tested.itemtypeIsSubtypeOf(typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.string(), typeFactory.string()))));
+
+        assertFalse(tested.itemtypeIsSubtypeOf(itemRecordAny));
+        assertFalse(tested.itemtypeIsSubtypeOf(itemRecordString));
+
+        assertFalse(tested.itemtypeIsSubtypeOf(itemBoolean));
+        assertFalse(tested.itemtypeIsSubtypeOf(itemNumber));
+        assertFalse(tested.itemtypeIsSubtypeOf(itemString));
+
+        assertFalse(tested.itemtypeIsSubtypeOf(itemABCenum));
+        assertFalse(tested.itemtypeIsSubtypeOf(itemABCDenum));
+    }
+
+
+    @Test
+    public void typedFunctionSubtyping() {
+        final var tested = typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.string()));
+        final var noargFunction = typeFactory.itemFunction(typeFactory.string(), List.of());
+        final var $2argfunction = typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.string(), typeFactory.string()));
+        final var numberToItem = typeFactory.itemFunction(typeFactory.anyItem(), List.of(typeFactory.number()));
+        final var numberToString = typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.number()));
+
+        assertFalse(tested.itemtypeIsSubtypeOf(itemError));
+        assertTrue(tested.itemtypeIsSubtypeOf(itemAnyItem));
+        assertFalse(tested.itemtypeIsSubtypeOf(itemAnyNode));
+        assertFalse(tested.itemtypeIsSubtypeOf(itemElementFoo));
+
+        assertTrue(tested.itemtypeIsSubtypeOf(itemAnyMap));
+        assertFalse(noargFunction.itemtypeIsSubtypeOf(itemAnyMap));
+        assertFalse($2argfunction.itemtypeIsSubtypeOf(itemAnyMap));
+
+        assertTrue(tested.itemtypeIsSubtypeOf(typeFactory.itemMap(itemAnyItem, typeFactory.anyItem())));
+        assertTrue(tested.itemtypeIsSubtypeOf(typeFactory.itemMap(itemString, typeFactory.anyItem())));
+        assertTrue(tested.itemtypeIsSubtypeOf(typeFactory.itemMap(itemString, typeFactory.string())));
+        assertFalse(tested.itemtypeIsSubtypeOf(typeFactory.itemMap(itemNumber, typeFactory.anyItem())));
+        assertFalse(tested.itemtypeIsSubtypeOf(typeFactory.itemMap(itemAnyItem, typeFactory.number())));
+        assertFalse(tested.itemtypeIsSubtypeOf(typeFactory.itemMap(itemNumber, typeFactory.number())));
+
+
+        assertFalse(tested.itemtypeIsSubtypeOf(itemAnyArray));
+        assertTrue(numberToItem.itemtypeIsSubtypeOf(itemAnyArray));
+        assertFalse(tested.itemtypeIsSubtypeOf(typeFactory.itemArray(typeFactory.string())));
+        assertTrue(numberToString.itemtypeIsSubtypeOf(typeFactory.itemArray(typeFactory.string())));
         assertFalse(tested.itemtypeIsSubtypeOf(typeFactory.itemArray(typeFactory.number())));
 
         assertTrue(tested.itemtypeIsSubtypeOf(itemAnyFunction));

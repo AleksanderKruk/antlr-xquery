@@ -15,16 +15,18 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 public class XQueryBaseSemanticFunctionCaller implements XQuerySemanticFunctionCaller {
 
-
     public interface XQuerySemanticFunction {
         public CallAnalysisResult call(final XQueryTypeFactory typeFactory,
                                         final XQueryVisitingSemanticContext context,
                                         final List<XQuerySequenceType> types);
     }
 
-    private final Map<String, XQuerySemanticFunction> functions;
+    private final Map<String, Map<String, XQuerySemanticFunction>> namespaces;
     public XQueryBaseSemanticFunctionCaller() {
-        functions = new HashMap<>(300);
+        namespaces = new HashMap<>(10);
+        final Map<String, XQuerySemanticFunction> functions = new HashMap<>(300);
+
+        namespaces.put("fn", functions);
         functions.put("true", this::true_);
         functions.put("false", this::false_);
         functions.put("not", this::not);
@@ -61,88 +63,37 @@ public class XQueryBaseSemanticFunctionCaller implements XQuerySemanticFunctionC
         functions.put("replace", this::replace);
         functions.put("position", this::position);
         functions.put("last", this::last);
-        functions.put("fn:true", this::true_);
-        functions.put("fn:false", this::false_);
-        functions.put("fn:not", this::not);
-        functions.put("fn:abs", this::abs);
-        functions.put("fn:ceiling", this::ceiling);
-        functions.put("fn:floor", this::floor);
-        functions.put("fn:round", this::round);
-        functions.put("fn:empty", this::empty);
-        functions.put("fn:exists", this::exists);
-        functions.put("fn:head", this::head);
-        functions.put("fn:tail", this::tail);
-        functions.put("fn:insert-before", this::insertBefore);
-        functions.put("fn:remove", this::remove);
-        functions.put("fn:reverse", this::reverse);
-        functions.put("fn:subsequence", this::subsequence);
-        functions.put("fn:substring", this::substring);
-        functions.put("fn:distinct-values", this::distinctValues);
-        functions.put("fn:zero-or-one", this::zeroOrOne);
-        functions.put("fn:one-or-more", this::oneOrMore);
-        functions.put("fn:exactly-one", this::exactlyOne);
-        functions.put("fn:data", this::data);
-        functions.put("fn:contains", this::contains);
-        functions.put("fn:starts-with", this::startsWith);
-        functions.put("fn:ends-with", this::endsWith);
-        functions.put("fn:substring-after", this::substringAfter);
-        functions.put("fn:substring-before", this::substringBefore);
-        functions.put("fn:upper-case", this::uppercase);
-        functions.put("fn:lower-case", this::lowercase);
-        functions.put("fn:string", this::string);
-        functions.put("fn:concat", this::concat);
-        functions.put("fn:string-join", this::stringJoin);
-        functions.put("fn:string-length", this::stringLength);
-        functions.put("fn:normalize-space", this::normalizeSpace);
-        functions.put("fn:replace", this::replace);
-        functions.put("fn:position", this::position);
-        functions.put("fn:last", this::last);
 
-        functions.put("pi", this::pi);
-        functions.put("math:pi", this::pi);
-        // functions.put("exp", this::exp);
-        // functions.put("math:exp", this::exp);
-        // functions.put("exp10", this::exp10);
-        // functions.put("math:exp10", this::exp10);
-        // functions.put("log", this::log);
-        // functions.put("math:log", this::log);
-        // functions.put("log10", this::log10);
-        // functions.put("math:log10", this::log10);
-        // functions.put("pow", this::pow);
-        // functions.put("math:pow", this::pow);
-        // functions.put("sqrt", this::sqrt);
-        // functions.put("math:sqrt", this::sqrt);
-        // functions.put("sin", this::sin);
-        // functions.put("math:sin", this::sin);
-        // functions.put("cos", this::cos);
-        // functions.put("math:cos", this::cos);
-        // functions.put("tan", this::tan);
-        // functions.put("math:tan", this::tan);
-        // functions.put("asin", this::asin);
-        // functions.put("math:asin", this::asin);
-        // functions.put("acos", this::acos);
-        // functions.put("math:acos", this::acos);
-        // functions.put("atan", this::atan);
-        // functions.put("math:atan", this::atan);
-        // functions.put("atan2", this::atan2);
-        // functions.put("math:atan2", this::atan2);
+        final Map<String, XQuerySemanticFunction>
+            mathfunctions = new HashMap<>(300);
+        namespaces.put("math", mathfunctions);
+        mathfunctions.put("pi", this::pi);
+        // mathfunctions.put("exp", this::exp);
+        // mathfunctions.put("exp10", this::exp10);
+        // mathfunctions.put("log", this::log);
+        // mathfunctions.put("log10", this::log10);
+        // mathfunctions.put("pow", this::pow);
+        // mathfunctions.put("sqrt", this::sqrt);
+        // mathfunctions.put("sin", this::sin);
+        // mathfunctions.put("cos", this::cos);
+        // mathfunctions.put("tan", this::tan);
+        // mathfunctions.put("asin", this::asin);
+        // mathfunctions.put("acos", this::acos);
+        // mathfunctions.put("atan", this::atan);
+        // mathfunctions.put("atan2", this::atan2);
 
-        functions.put("numeric-add", this::numericAdd);
-        functions.put("numeric-subtract", this::numericSubtract);
-        functions.put("numeric-multiply", this::numericMultiply);
-        functions.put("numeric-divide", this::numericDivide);
-        functions.put("numeric-integer-divide", this::numericIntegerDivide);
-        functions.put("numeric-mod", this::numericMod);
-        functions.put("numeric-unary-plus", this::numericUnaryPlus);
-        functions.put("numeric-unary-minus", this::numericUnaryMinus);
-        functions.put("op:numeric-add", this::numericAdd);
-        functions.put("op:numeric-subtract", this::numericSubtract);
-        functions.put("op:numeric-multiply", this::numericMultiply);
-        functions.put("op:numeric-divide", this::numericDivide);
-        functions.put("op:numeric-integer-divide", this::numericIntegerDivide);
-        functions.put("op:numeric-mod", this::numericMod);
-        functions.put("op:numeric-unary-plus", this::numericUnaryPlus);
-        functions.put("op:numeric-unary-minus", this::numericUnaryMinus);
+        final Map<String, XQuerySemanticFunction>
+            operatorfunctions = new HashMap<>(300);
+        namespaces.put("op", mathfunctions);
+
+        operatorfunctions.put("numeric-add", this::numericAdd);
+        operatorfunctions.put("numeric-subtract", this::numericSubtract);
+        operatorfunctions.put("numeric-multiply", this::numericMultiply);
+        operatorfunctions.put("numeric-divide", this::numericDivide);
+        operatorfunctions.put("numeric-integer-divide", this::numericIntegerDivide);
+        operatorfunctions.put("numeric-mod", this::numericMod);
+        operatorfunctions.put("numeric-unary-plus", this::numericUnaryPlus);
+        operatorfunctions.put("numeric-unary-minus", this::numericUnaryMinus);
 
     }
 
@@ -761,14 +712,24 @@ public class XQueryBaseSemanticFunctionCaller implements XQuerySemanticFunctionC
 
     @Override
     public CallAnalysisResult call(
+        final String functionNamespace,
         final String functionName,
         final XQueryTypeFactory typeFactory,
         final XQueryVisitingSemanticContext context,
         final List<XQuerySequenceType> args)
     {
-
-        // return null;
-        return functions.get(functionName).call(typeFactory, context, args);
+        if (!namespaces.containsKey(functionNamespace)) {
+            var anyItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
+            List<String> errors = List.of("Unknown function namespace: " + functionNamespace);
+            return new CallAnalysisResult(anyItems, errors);
+        }
+        final var namespace = namespaces.get(functionNamespace);
+        if (!namespace.containsKey(functionName)) {
+            var anyItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
+            List<String> errors = List.of("Unknown function: " + functionNamespace + ":" + functionName);
+            return new CallAnalysisResult(anyItems, errors);
+        }
+        return namespace.get(functionName).call(typeFactory, context, args);
     }
 
     @Override

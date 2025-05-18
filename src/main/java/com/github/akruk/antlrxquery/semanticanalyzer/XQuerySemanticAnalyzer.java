@@ -243,16 +243,20 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
     @Override
     public XQuerySequenceType visitFunctionCall(final FunctionCallContext ctx) {
-        final var functionName = ctx.functionName().getText();
-        // TODO: error handling missing function
-        final var savedArgs = saveVisitedArguments();
-        ctx.argumentList().accept(this);
-        final var callAnalysisResult = functionCaller.call(functionName, typeFactory, context, visitedArgumentTypesList);
+        final String fullName = ctx.functionName().getText();
+        final String namespaces[] = fullName.split(":", 2);
+        final boolean hasNamespace = namespaces.length == 2;
+        final String namespace = (hasNamespace)? namespaces[0] : defaultNamespace;
+        final String functionName = (hasNamespace)? namespaces[1] : namespaces[0];
 
-        if (callAnalysisResult == null) {
-            addError(ctx.functionName(), String.format("%s is unknown function name", functionName));
-        }
+        final var savedArgs = saveVisitedArguments();
+
+        ctx.argumentList().accept(this);
+        final var callAnalysisResult = functionCaller.call(namespace, functionName,
+                                                            typeFactory, context,
+                                                            visitedArgumentTypesList);
         errors.addAll(callAnalysisResult.errors());
+
         visitedArgumentTypesList = savedArgs;
         return callAnalysisResult.result();
     }
@@ -502,7 +506,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         return ctx.nameTest().accept(this);
     }
 
-    private Predicate<String> canBeTokenName = Pattern.compile("^[\\p{IsUppercase}].*").asPredicate();
+    private final Predicate<String> canBeTokenName = Pattern.compile("^[\\p{IsUppercase}].*").asPredicate();
+    private final String defaultNamespace = "fn";
 
     @Override
     public XQuerySequenceType visitNameTest(NameTestContext ctx) {

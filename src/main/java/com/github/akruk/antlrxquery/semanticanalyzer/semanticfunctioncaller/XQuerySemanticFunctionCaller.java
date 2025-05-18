@@ -8,18 +8,39 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 public interface XQuerySemanticFunctionCaller {
     public static record CallAnalysisResult(XQuerySequenceType result, List<String> errors) {}
-    public CallAnalysisResult call(String functionName, XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, List<XQuerySequenceType> args);
-    public CallAnalysisResult getFunctionReference(String functionName, XQueryTypeFactory valueFactory);
-    public CallAnalysisResult not(final XQueryTypeFactory valueFactory, final XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args);
+    public CallAnalysisResult call(String namespace,
+                                   String functionName,
+                                   XQueryTypeFactory valueFactory,
+                                   XQueryVisitingSemanticContext context,
+                                   List<XQuerySequenceType> args);
+    public CallAnalysisResult getFunctionReference(String functionName,
+                                                    XQueryTypeFactory valueFactory);
+    public CallAnalysisResult not(final XQueryTypeFactory valueFactory,
+                                    final XQueryVisitingSemanticContext context,
+                                    final List<XQuerySequenceType> args);
     // fn:abs($arg as xs:numeric?) as xs:numeric?
-    public CallAnalysisResult abs(final XQueryTypeFactory valueFactory, final XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args);
-    public CallAnalysisResult ceiling(final XQueryTypeFactory valueFactory, final XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args);
-    public CallAnalysisResult floor(final XQueryTypeFactory valueFactory, final XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args);
-    public CallAnalysisResult round(final XQueryTypeFactory valueFactory, final XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args);
+    public CallAnalysisResult abs(final XQueryTypeFactory valueFactory,
+                                    final XQueryVisitingSemanticContext context,
+                                    final List<XQuerySequenceType> args);
+    public CallAnalysisResult ceiling(final XQueryTypeFactory valueFactory,
+                                        final XQueryVisitingSemanticContext context,
+                                        final List<XQuerySequenceType> args);
+    public CallAnalysisResult floor(final XQueryTypeFactory valueFactory,
+                                    final XQueryVisitingSemanticContext context,
+                                    final List<XQuerySequenceType> args);
+    public CallAnalysisResult round(final XQueryTypeFactory valueFactory,
+                                    final XQueryVisitingSemanticContext context,
+                                    final List<XQuerySequenceType> args);
     // public CallAnalysisResult roundHaftToEven(final List<XQuerySequenceType> args);
-    public CallAnalysisResult numericAdd(final XQueryTypeFactory valueFactory, final XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args);
-    public CallAnalysisResult numericSubtract(final XQueryTypeFactory valueFactory, final XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args);
-    public CallAnalysisResult numericMultiply(final XQueryTypeFactory valueFactory, final XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args);
+    public CallAnalysisResult numericAdd(final XQueryTypeFactory valueFactory,
+                                            final XQueryVisitingSemanticContext context,
+                                            final List<XQuerySequenceType> args);
+    public CallAnalysisResult numericSubtract(final XQueryTypeFactory valueFactory,
+                                                final XQueryVisitingSemanticContext context,
+                                                final List<XQuerySequenceType> args);
+    public CallAnalysisResult numericMultiply(final XQueryTypeFactory valueFactory,
+                                                final XQueryVisitingSemanticContext context,
+                                                final List<XQuerySequenceType> args);
     public CallAnalysisResult numericDivide(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args);
     public CallAnalysisResult numericIntegerDivide(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args);
     public CallAnalysisResult numericMod(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args);

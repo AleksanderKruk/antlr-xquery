@@ -236,4 +236,15 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         throw new UnsupportedOperationException("Unimplemented method 'exceptionMerge'");
     }
 
+    @Override
+    public boolean castableAs(XQuerySequenceType other) {
+        if (!(other instanceof XQueryEnumSequenceType))
+            return false;
+        XQueryEnumSequenceType otherEnum = (XQueryEnumSequenceType) other;
+        if (!this.isOne() || !other.isOne()) {
+            return false;
+        }
+        return this.getItemType().castableAs(otherEnum.getItemType());
+    }
+
 }

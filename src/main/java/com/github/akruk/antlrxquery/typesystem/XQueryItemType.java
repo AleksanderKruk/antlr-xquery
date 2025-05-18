@@ -13,4 +13,5 @@ public interface XQueryItemType {
     boolean hasEffectiveBooleanValue();
     // subtype-itemtype(A, B) judgement
     boolean itemtypeIsSubtypeOf(XQueryItemType obj);
+    boolean castableAs(XQueryItemType other);
 }

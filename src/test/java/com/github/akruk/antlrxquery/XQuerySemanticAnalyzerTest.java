@@ -98,13 +98,20 @@ public class XQuerySemanticAnalyzerTest {
     }
 
     @Test
-    public void notExpressionc() {
+    public void notExpression() {
         assertType("not(true())", typeFactory.boolean_());
         assertType("not(4)", typeFactory.boolean_());
         assertType("fn:not(true())", typeFactory.boolean_());
         assertType("fn:not(4)", typeFactory.boolean_());
         assertThereAreErrors("fn:not()");
         assertThereAreErrors("fn:not(1, 2)");
+    }
+
+    @Test
+    public void concatenation() {
+        assertType("'a'|| 'b'", typeFactory.string());
+        assertType("'a' || ()", typeFactory.string());
+        assertType(" () || ()", typeFactory.string());
     }
 
 

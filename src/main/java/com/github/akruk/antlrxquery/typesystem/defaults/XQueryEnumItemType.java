@@ -444,4 +444,30 @@ public class XQueryEnumItemType implements XQueryItemType {
     public boolean isAtomic() {
         return isAtomic[type.ordinal()];
     }
+
+
+    private static final boolean[][] castableAs;
+    static {
+        castableAs = new boolean[typesCount][typesCount];
+        for (int i = 0; i < typesCount; i++) {
+            for (int j = 0; j < typesCount; j++) {
+                castableAs[i][j] = i == j;
+            }
+        }
+        final int number = XQueryTypes.NUMBER.ordinal();
+        final int string = XQueryTypes.STRING.ordinal();
+        final int anyItem = XQueryTypes.ANY_ITEM.ordinal();
+        for (int i = 0; i < typesCount; i++) {
+            castableAs[i][anyItem] = true;
+            castableAs[i][string] = true;
+        }
+    }
+
+    @Override
+    public boolean castableAs(XQueryItemType itemType) {
+        if (!(itemType instanceof XQueryEnumItemType))
+            return false;
+        var typed = (XQueryEnumItemType) itemType;
+        return castableAs[type.ordinal()][typed.getType().ordinal()];
+    }
 }

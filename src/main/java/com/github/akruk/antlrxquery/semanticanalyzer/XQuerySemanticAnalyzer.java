@@ -539,19 +539,23 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         return typeFactory.zeroOrMore(typeFactory.itemElement(Set.of(name)));
     }
 
-    private XQuerySequenceType handleConcatenation(final OrExprContext ctx) {
+
+    @Override
+    public XQuerySequenceType visitStringConcatExpr(StringConcatExprContext ctx) {
+        if (ctx.CONCATENATION().isEmpty()) {
+            return ctx.rangeExpr(0).accept(this);
+        }
         final XQuerySequenceType string = typeFactory.string();
+        return string;
         // final var operationCount = ctx.CONCATENATION().size();
         // for (int i = 0; i <= operationCount; i++) {
-        //     final var visitedType = ctx.orExpr(i).accept(this);
-        //     if (!visitedType.isSubtypeOf(string)) {
-        //         addError(ctx.orExpr(i), "Operands of 'or expression' need to be string");
-        //     }
+        //     final var visitedType = ctx.rangeExpr(i).accept(this);
+        //     // if (!visitedType.castableAs(string)) {
+        //     //     addError(ctx.rangeExpr(i), "Operands of 'or expression' need to be castable to string");
+        //     // }
         //     i++;
         // }
-        return string;
     }
-
 
     private XQuerySequenceType handleArrowExpr(final OrExprContext ctx) {
         // final var savedArgs = saveVisitedArguments();

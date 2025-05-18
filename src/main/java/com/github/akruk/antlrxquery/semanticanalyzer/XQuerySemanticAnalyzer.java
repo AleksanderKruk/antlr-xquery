@@ -309,8 +309,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         final var orCount = ctx.OR().size();
         for (int i = 0; i <= orCount; i++) {
             final var visitedType = ctx.andExpr(i).accept(this);
-            if (!visitedType.isSubtypeOf(boolean_)) {
-                addError(ctx.andExpr(i), "Operands of 'or expression' need to be boolean");
+            if (!visitedType.hasEffectiveBooleanValue()) {
+                addError(ctx.andExpr(i), "Operands of 'or expression' need to have effective boolean value");
             }
             i++;
         }
@@ -600,8 +600,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         final var operatorCount = ctx.AND().size();
         for (int i = 0; i <= operatorCount; i++) {
             final var visitedType = ctx.comparisonExpr(i).accept(this);
-            if (!visitedType.isSubtypeOf(boolean_)) {
-                addError(ctx.comparisonExpr(i), "Operands of 'or expression' need to be boolean");
+            if (!visitedType.hasEffectiveBooleanValue()) {
+                addError(ctx.comparisonExpr(i), "Operands of 'or expression' need to have effective boolean value");
             }
             i++;
         }

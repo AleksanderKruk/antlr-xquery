@@ -150,16 +150,13 @@ public class XQueryBaseSemanticFunctionCaller implements XQuerySemanticFunctionC
         return "Wrong number of arguments for function" + functionName + " : expected " + expected + ", got " + actual;
     }
 
+
     public CallAnalysisResult not(final XQueryTypeFactory typeFactory, final XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
-        return null;
-        // assert args.size() == 1;
-        // try {
-        //     return args.get(0).not(typeFactory);
-        // } catch (final XQueryUnsupportedOperation e) {
-        //     // TODO Auto-generated catch block
-        //     e.printStackTrace();
-        //     return null;
-        // }
+        if (args.size() != 1) {
+            String message = wrongNumberOfArguments("fn:not()", 1, args.size());
+            return new CallAnalysisResult(typeFactory.boolean_(), List.of(message));
+        }
+        return new CallAnalysisResult(typeFactory.boolean_(), List.of());
     }
 
     // fn:abs($arg as xs:numeric?) as xs:numeric?
@@ -764,14 +761,14 @@ public class XQueryBaseSemanticFunctionCaller implements XQuerySemanticFunctionC
 
     @Override
     public CallAnalysisResult call(
-        String functionName,
-        XQueryTypeFactory typeFactory,
-        XQueryVisitingSemanticContext context,
-        List<XQuerySequenceType> args)
+        final String functionName,
+        final XQueryTypeFactory typeFactory,
+        final XQueryVisitingSemanticContext context,
+        final List<XQuerySequenceType> args)
     {
 
-        return null;
-        // return functions.get(functionName).call(typeFactory, context, args);
+        // return null;
+        return functions.get(functionName).call(typeFactory, context, args);
     }
 
     @Override

@@ -53,6 +53,15 @@ public class XQuerySemanticAnalyzerTest {
         assertTrue(analyzer.analyzer.getErrors().size() == 0);
     }
 
+    void assertThereAreErrors(String xquery) {
+        var analysisResult = analyze(xquery);
+        assertThereAreErrors(analysisResult);
+    }
+
+    void assertThereAreErrors(AnalysisResult analyzer) {
+        assertTrue(analyzer.analyzer.getErrors().size() != 0);
+    }
+
     void assertType(AnalysisResult result, XQuerySequenceType expectedType) {
         assertNoErrors(result);
         assertTrue(result.expressionType.isSubtypeOf(expectedType));
@@ -79,6 +88,23 @@ public class XQuerySemanticAnalyzerTest {
     @Test
     public void orExpressions() {
         assertType("true() or false() or true()", typeFactory.boolean_());
+        assertType("1 or false() or true()", typeFactory.boolean_());
+    }
+
+    @Test
+    public void andExpressions() {
+        assertType("true() and false() and true()", typeFactory.boolean_());
+        assertType("1 and false() and true()", typeFactory.boolean_());
+    }
+
+    @Test
+    public void notExpressionc() {
+        assertType("not(true())", typeFactory.boolean_());
+        assertType("not(4)", typeFactory.boolean_());
+        assertType("fn:not(true())", typeFactory.boolean_());
+        assertType("fn:not(4)", typeFactory.boolean_());
+        assertThereAreErrors("fn:not()");
+        assertThereAreErrors("fn:not(1, 2)");
     }
 
 

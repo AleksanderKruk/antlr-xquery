@@ -76,12 +76,10 @@ public class XQuerySemanticAnalyzerTest {
         assertType("((), (1), (1))", typeFactory.oneOrMore(typeFactory.itemNumber()));
     }
 
-    // @Test
-    // public void parenthesizedExpression() {
-    //     assertType("()", typeFactory.emptySequence());
-    //     assertType("(1)", typeFactory.number());
-    //     assertType("(1, 'a')", typeFactory.oneOrMore(typeFactory.itemAnyItem()));
-    // }
+    @Test
+    public void orExpressions() {
+        assertType("true() or false() or true()", typeFactory.boolean_());
+    }
 
 
 

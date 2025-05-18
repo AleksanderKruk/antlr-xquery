@@ -15,10 +15,11 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 public class XQueryBaseSemanticFunctionCaller implements XQuerySemanticFunctionCaller {
 
+
     public interface XQuerySemanticFunction {
-        public XQuerySequenceType call(final XQueryTypeFactory typeFactory,
-                                final XQueryVisitingSemanticContext context,
-                                final List<XQuerySequenceType> types);
+        public CallAnalysisResult call(final XQueryTypeFactory typeFactory,
+                                        final XQueryVisitingSemanticContext context,
+                                        final List<XQuerySequenceType> types);
     }
 
     private final Map<String, XQuerySemanticFunction> functions;
@@ -145,11 +146,15 @@ public class XQueryBaseSemanticFunctionCaller implements XQuerySemanticFunctionC
 
     }
 
-    public XQuerySequenceType not(final XQueryTypeFactory valueFactory, final XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    private String wrongNumberOfArguments(String functionName, int expected, int actual) {
+        return "Wrong number of arguments for function" + functionName + " : expected " + expected + ", got " + actual;
+    }
+
+    public CallAnalysisResult not(final XQueryTypeFactory typeFactory, final XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 1;
         // try {
-        //     return args.get(0).not(valueFactory);
+        //     return args.get(0).not(typeFactory);
         // } catch (final XQueryUnsupportedOperation e) {
         //     // TODO Auto-generated catch block
         //     e.printStackTrace();
@@ -158,37 +163,37 @@ public class XQueryBaseSemanticFunctionCaller implements XQuerySemanticFunctionC
     }
 
     // fn:abs($arg as xs:numeric?) as xs:numeric?
-    public XQuerySequenceType abs(final XQueryTypeFactory valueFactory, final XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult abs(final XQueryTypeFactory typeFactory, final XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 1;
         // final var arg = args.get(0);
         // // TODO: Add type check failure
         // if (!arg.isNumericValue())
         //     return null;
-        // return valueFactory.number(arg.numericValue().abs());
+        // return typeFactory.number(arg.numericValue().abs());
     }
 
-    public XQuerySequenceType ceiling(final XQueryTypeFactory valueFactory, final XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult ceiling(final XQueryTypeFactory typeFactory, final XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 1;
         // final var arg = args.get(0);
         // // TODO: Add type check failure
         // if (!arg.isNumericValue())
         //     return null;
-        // return valueFactory.number(arg.numericValue().setScale(0, RoundingMode.CEILING));
+        // return typeFactory.number(arg.numericValue().setScale(0, RoundingMode.CEILING));
     }
 
-    public XQuerySequenceType floor(final XQueryTypeFactory valueFactory, final XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult floor(final XQueryTypeFactory typeFactory, final XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 1;
         // final var arg = args.get(0);
         // // TODO: Add type check failure
         // if (!arg.isNumericValue())
         //     return null;
-        // return valueFactory.number(arg.numericValue().setScale(0, RoundingMode.FLOOR));
+        // return typeFactory.number(arg.numericValue().setScale(0, RoundingMode.FLOOR));
     }
 
-    public XQuerySequenceType round(final XQueryTypeFactory valueFactory, final XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult round(final XQueryTypeFactory typeFactory, final XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 1 || args.size() == 2;
         // final var arg1 = args.get(0);
@@ -196,26 +201,26 @@ public class XQueryBaseSemanticFunctionCaller implements XQuerySemanticFunctionC
         // final var negativeNumber = number1.compareTo(BigDecimal.ZERO) == -1;
         // final var oneArg = args.size() == 1;
         // if (oneArg && negativeNumber) {
-        //     return valueFactory.number(number1.setScale(0, RoundingMode.HALF_DOWN));
+        //     return typeFactory.number(number1.setScale(0, RoundingMode.HALF_DOWN));
         // }
         // if (oneArg) {
-        //     return valueFactory.number(number1.setScale(0, RoundingMode.HALF_UP));
+        //     return typeFactory.number(number1.setScale(0, RoundingMode.HALF_UP));
         // }
         // final var number2 = args.get(1).numericValue();
         // final int scale = number2.intValue();
         // if (negativeNumber) {
-        //     return valueFactory.number(arg1.numericValue().setScale(scale, RoundingMode.HALF_DOWN));
+        //     return typeFactory.number(arg1.numericValue().setScale(scale, RoundingMode.HALF_DOWN));
         // }
         // if (scale > 0) {
         //     final var roundedNumberNormalNotation = number1.setScale(scale, RoundingMode.HALF_UP);
-        //     return valueFactory.number(roundedNumberNormalNotation);
+        //     return typeFactory.number(roundedNumberNormalNotation);
         // }
         // final var roundedNumber = number1.setScale(scale, RoundingMode.HALF_UP);
         // final var roundedNumberNormalNotation = roundedNumber.setScale(0, RoundingMode.HALF_UP);
-        // return valueFactory.number(roundedNumberNormalNotation);
+        // return typeFactory.number(roundedNumberNormalNotation);
     }
 
-    public XQuerySequenceType numericAdd(final XQueryTypeFactory valueFactory, final XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult numericAdd(final XQueryTypeFactory typeFactory, final XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 2;
         // final var val1 = args.get(0);
@@ -224,13 +229,13 @@ public class XQueryBaseSemanticFunctionCaller implements XQuerySemanticFunctionC
         // if (!val1.isNumericValue() || !val2.isNumericValue())
         //     return null;
         // try {
-        //     return val1.add(valueFactory, val2);
+        //     return val1.add(typeFactory, val2);
         // } catch (final XQueryUnsupportedOperation e) {
         //     return null;
         // }
     }
 
-    public XQuerySequenceType numericSubtract(final XQueryTypeFactory valueFactory, final XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult numericSubtract(final XQueryTypeFactory typeFactory, final XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 2;
         // final var val1 = args.get(0);
@@ -239,13 +244,13 @@ public class XQueryBaseSemanticFunctionCaller implements XQuerySemanticFunctionC
         // if (!val1.isNumericValue() || !val2.isNumericValue())
         //     return null;
         // try {
-        //     return val1.subtract(valueFactory, val2);
+        //     return val1.subtract(typeFactory, val2);
         // } catch (final XQueryUnsupportedOperation e) {
         //     return null;
         // }
     }
 
-    public XQuerySequenceType numericMultiply(final XQueryTypeFactory valueFactory, final XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult numericMultiply(final XQueryTypeFactory typeFactory, final XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 2;
         // final var val1 = args.get(0);
@@ -254,14 +259,14 @@ public class XQueryBaseSemanticFunctionCaller implements XQuerySemanticFunctionC
         // if (!val1.isNumericValue() || !val2.isNumericValue())
         //     return null;
         // try {
-        //     return val1.multiply(valueFactory, val2);
+        //     return val1.multiply(typeFactory, val2);
         // } catch (final XQueryUnsupportedOperation e) {
         //     return null;
         // }
     }
 
 
-    public XQuerySequenceType numericDivide(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult numericDivide(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 2;
         // final var val1 = args.get(0);
@@ -270,13 +275,13 @@ public class XQueryBaseSemanticFunctionCaller implements XQuerySemanticFunctionC
         // if (!val1.isNumericValue() || !val2.isNumericValue())
         //     return null;
         // try {
-        //     return val1.divide(valueFactory, val2);
+        //     return val1.divide(typeFactory, val2);
         // } catch (final XQueryUnsupportedOperation e) {
         //     return null;
         // }
     }
 
-    public XQuerySequenceType numericIntegerDivide(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult numericIntegerDivide(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 2;
         // final var val1 = args.get(0);
@@ -285,14 +290,14 @@ public class XQueryBaseSemanticFunctionCaller implements XQuerySemanticFunctionC
         // if (!val1.isNumericValue() || !val2.isNumericValue())
         //     return null;
         // try {
-        //     return val1.integerDivide(valueFactory, val2);
+        //     return val1.integerDivide(typeFactory, val2);
         // } catch (final XQueryUnsupportedOperation e) {
         //     return null;
         // }
     }
 
 
-    public XQuerySequenceType numericMod(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult numericMod(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 2;
         // final var val1 = args.get(0);
@@ -301,13 +306,13 @@ public class XQueryBaseSemanticFunctionCaller implements XQuerySemanticFunctionC
         // if (!val1.isNumericValue() || !val2.isNumericValue())
         //     return null;
         // try {
-        //     return val1.modulus(valueFactory, val2);
+        //     return val1.modulus(typeFactory, val2);
         // } catch (final XQueryUnsupportedOperation e) {
         //     return null;
         // }
     }
 
-    public XQuerySequenceType numericUnaryPlus(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult numericUnaryPlus(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 1;
         // final var val1 = args.get(0);
@@ -317,117 +322,121 @@ public class XQueryBaseSemanticFunctionCaller implements XQuerySemanticFunctionC
         // return val1;
     }
 
-    public XQuerySequenceType numericUnaryMinus(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult numericUnaryMinus(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 1;
         // final var val1 = args.get(0);
         // // TODO: Add type check failure
         // if (!val1.isNumericValue())
         //     return null;
-        // return valueFactory.number(val1.numericValue().negate());
+        // return typeFactory.number(val1.numericValue().negate());
     }
 
-    public XQuerySequenceType true_(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult true_(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+        if (args.size() != 0) {
+            String message = wrongNumberOfArguments("fn:true()", 0, args.size());
+            return new CallAnalysisResult(typeFactory.boolean_(), List.of(message));
+        }
+        return new CallAnalysisResult(typeFactory.boolean_(), List.of());
+    }
+
+    public CallAnalysisResult false_(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+        if (args.size() != 0) {
+            String message = wrongNumberOfArguments("fn:false()", 0, args.size());
+            return new CallAnalysisResult(typeFactory.boolean_(), List.of(message));
+        }
+        return new CallAnalysisResult(typeFactory.boolean_(), List.of());
+    }
+
+    public CallAnalysisResult pi(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 0;
-        // return XQueryBoolean.TRUE;
+        // return typeFactory.number(new BigDecimal(Math.PI));
     }
 
-    public XQuerySequenceType false_(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
-        return null;
-        // assert args.size() == 0;
-        // return XQueryBoolean.FALSE;
-    }
-
-    public XQuerySequenceType pi(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
-        return null;
-        // assert args.size() == 0;
-        // return valueFactory.number(new BigDecimal(Math.PI));
-    }
-
-    public XQuerySequenceType empty(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult empty(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 1;
         // var arg = args.get(0);
         // try {
-        //     return arg.empty(valueFactory);
+        //     return arg.empty(typeFactory);
         // } catch (XQueryUnsupportedOperation e) {
         //     return null;
         // }
     }
 
-    public XQuerySequenceType exists(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult exists(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 1;
         // try {
-        //     return empty(valueFactory, context, args).not(valueFactory);
+        //     return empty(typeFactory, context, args).not(typeFactory);
         // } catch (XQueryUnsupportedOperation e) {
         //     return null;
         // }
     }
 
-    public XQuerySequenceType head(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult head(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 1;
         // try {
-        //     return args.get(0).head(valueFactory);
+        //     return args.get(0).head(typeFactory);
         // } catch (XQueryUnsupportedOperation e) {
         //     return null;
         // }
     }
 
-    public XQuerySequenceType tail(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult tail(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 1;
         // try {
-        //     return args.get(0).tail(valueFactory);
+        //     return args.get(0).tail(typeFactory);
         // } catch (XQueryUnsupportedOperation e) {
         //     return null;
         // }
     }
 
 
-    public XQuerySequenceType insertBefore(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult insertBefore(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 3;
         // try {
         //     var target = args.get(0);
         //     var position = args.get(1);
         //     var inserts = args.get(2);
-        //     return target.insertBefore(valueFactory, position, inserts);
+        //     return target.insertBefore(typeFactory, position, inserts);
         // } catch (XQueryUnsupportedOperation e) {
         //     return null;
         // }
     }
 
-    public XQuerySequenceType remove(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult remove(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 2;
         // try {
         //     var target = args.get(0);
         //     var position = args.get(1);
-        //     return target.remove(valueFactory, position);
+        //     return target.remove(typeFactory, position);
         // } catch (XQueryUnsupportedOperation e) {
         //     return null;
         // }
     }
 
-    public XQuerySequenceType reverse(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult reverse(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 1;
         // try {
         //     var target = args.get(0);
         //     if (target.isAtomic()) {
-        //         return valueFactory.sequence(List.of(target));
+        //         return typeFactory.sequence(List.of(target));
         //     }
-        //     return target.reverse(valueFactory);
+        //     return target.reverse(typeFactory);
         // } catch (XQueryUnsupportedOperation e) {
         //     return null;
         // }
     }
 
 
-    public XQuerySequenceType subsequence(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult subsequence(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // try {
         //     return switch (args.size()) {
@@ -435,12 +444,12 @@ public class XQueryBaseSemanticFunctionCaller implements XQuerySemanticFunctionC
         //             var target = args.get(0);
         //             var position = args.get(1).numericValue().intValue();
         //             var length = args.get(2).numericValue().intValue();
-        //             yield target.subsequence(valueFactory, position, length);
+        //             yield target.subsequence(typeFactory, position, length);
         //         }
         //         case 2 -> {
         //             var target = args.get(0);
         //             var position = args.get(1).numericValue().intValue();
-        //             yield target.subsequence(valueFactory, position);
+        //             yield target.subsequence(typeFactory, position);
         //         }
         //         default -> null;
         //     };
@@ -449,7 +458,7 @@ public class XQueryBaseSemanticFunctionCaller implements XQuerySemanticFunctionC
         // }
     }
 
-    public XQuerySequenceType substring(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult substring(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // try {
         //     return switch (args.size()) {
@@ -457,12 +466,12 @@ public class XQueryBaseSemanticFunctionCaller implements XQuerySemanticFunctionC
         //             var target = args.get(0);
         //             var position = args.get(1).numericValue().intValue();
         //             var length = args.get(2).numericValue().intValue();
-        //             yield target.substring(valueFactory, position, length);
+        //             yield target.substring(typeFactory, position, length);
         //         }
         //         case 2 -> {
         //             var target = args.get(0);
         //             var position = args.get(1).numericValue().intValue();
-        //             yield target.substring(valueFactory, position);
+        //             yield target.substring(typeFactory, position);
         //         }
         //         default -> null;
         //     };
@@ -471,204 +480,204 @@ public class XQueryBaseSemanticFunctionCaller implements XQuerySemanticFunctionC
         // }
     }
 
-    public XQuerySequenceType distinctValues(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult distinctValues(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 1;
         // try {
         //     var target = args.get(0);
-        //     return target.distinctValues(valueFactory);
+        //     return target.distinctValues(typeFactory);
         // } catch (XQueryUnsupportedOperation e) {
         //     return null;
         // }
     }
 
-    public XQuerySequenceType zeroOrOne(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult zeroOrOne(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 1;
         // try {
         //     var target = args.get(0);
-        //     return target.zeroOrOne(valueFactory);
+        //     return target.zeroOrOne(typeFactory);
         // } catch (XQueryUnsupportedOperation e) {
         //     return null;
         // }
     }
 
-    public XQuerySequenceType oneOrMore(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult oneOrMore(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 1;
         // try {
         //     var target = args.get(0);
-        //     return target.oneOrMore(valueFactory);
+        //     return target.oneOrMore(typeFactory);
         // } catch (XQueryUnsupportedOperation e) {
         //     return null;
         // }
     }
 
-    public XQuerySequenceType exactlyOne(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult exactlyOne(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 1;
         // try {
         //     var target = args.get(0);
-        //     return target.exactlyOne(valueFactory);
+        //     return target.exactlyOne(typeFactory);
         // } catch (XQueryUnsupportedOperation e) {
         //     return null;
         // }
     }
 
-    public XQuerySequenceType data(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult data(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 1;
         // try {
         //     var target = args.get(0);
-        //     return target.data(valueFactory);
+        //     return target.data(typeFactory);
         // } catch (XQueryUnsupportedOperation e) {
         //     return null;
         // }
     }
 
-    public XQuerySequenceType contains(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult contains(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 2;
         // try {
         //     var target = args.get(0);
         //     var what = args.get(1);
-        //     return target.contains(valueFactory, what);
+        //     return target.contains(typeFactory, what);
         // } catch (XQueryUnsupportedOperation e) {
         //     return null;
         // }
     }
 
-    public XQuerySequenceType startsWith(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult startsWith(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 2;
         // try {
         //     var target = args.get(0);
         //     var what = args.get(1);
-        //     return target.startsWith(valueFactory, what);
+        //     return target.startsWith(typeFactory, what);
         // } catch (XQueryUnsupportedOperation e) {
         //     return null;
         // }
     }
 
-    public XQuerySequenceType endsWith(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult endsWith(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 2;
         // try {
         //     var target = args.get(0);
         //     var what = args.get(1);
-        //     return target.endsWith(valueFactory, what);
+        //     return target.endsWith(typeFactory, what);
         // } catch (XQueryUnsupportedOperation e) {
         //     return null;
         // }
     }
 
 
-    public XQuerySequenceType substringAfter(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult substringAfter(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 2;
         // try {
         //     var target = args.get(0);
         //     var what = args.get(1);
-        //     return target.substringAfter(valueFactory, what);
+        //     return target.substringAfter(typeFactory, what);
         // } catch (XQueryUnsupportedOperation e) {
         //     return null;
         // }
     }
 
 
-    public XQuerySequenceType substringBefore(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult substringBefore(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 2;
         // try {
         //     var target = args.get(0);
         //     var what = args.get(1);
-        //     return target.substringBefore(valueFactory, what);
+        //     return target.substringBefore(typeFactory, what);
         // } catch (XQueryUnsupportedOperation e) {
         //     return null;
         // }
     }
 
 
-    public XQuerySequenceType uppercase(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult uppercase(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 1;
         // try {
         //     var target = args.get(0);
-        //     return target.uppercase(valueFactory);
+        //     return target.uppercase(typeFactory);
         // } catch (XQueryUnsupportedOperation e) {
         //     return null;
         // }
     }
 
 
-    public XQuerySequenceType lowercase(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult lowercase(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 1;
         // try {
         //     var target = args.get(0);
-        //     return target.lowercase(valueFactory);
+        //     return target.lowercase(typeFactory);
         // } catch (XQueryUnsupportedOperation e) {
         //     return null;
         // }
     }
 
-    public XQuerySequenceType string(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult string(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // var target = switch (args.size()) {
         //     case 0 -> context.getItem();
         //     case 1 -> args.get(0);
         //     default -> null;
         // };
-        // return valueFactory.string(target.stringValue());
+        // return typeFactory.string(target.stringValue());
     }
 
-    public XQuerySequenceType concat(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult concat(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() >= 2;
         // String joined = args.stream().map(XQuerySequenceType::stringValue).collect(Collectors.joining());
-        // return valueFactory.string(joined);
+        // return typeFactory.string(joined);
     }
 
-    public XQuerySequenceType stringJoin(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult stringJoin(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // return switch (args.size()) {
         //     case 1 -> {
         //         var sequence = args.get(0).sequence();
         //         String joined = sequence.stream().map(XQuerySequenceType::stringValue).collect(Collectors.joining());
-        //         yield valueFactory.string(joined);
+        //         yield typeFactory.string(joined);
         //     }
         //     case 2 -> {
         //         var sequence = args.get(0).sequence();
         //         var delimiter = args.get(1).stringValue();
         //         String joined = sequence.stream().map(XQuerySequenceType::stringValue).collect(Collectors.joining(delimiter));
-        //         yield valueFactory.string(joined);
+        //         yield typeFactory.string(joined);
         //     }
         //     default -> null;
         // };
     }
 
-    public XQuerySequenceType position(final XQueryTypeFactory valueFactory, final XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult position(final XQueryTypeFactory typeFactory, final XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 0;
-        // return valueFactory.number(context.getPosition());
+        // return typeFactory.number(context.getPosition());
     }
 
-    public XQuerySequenceType last(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult last(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // assert args.size() == 0;
-        // return valueFactory.number(context.getSize());
+        // return typeFactory.number(context.getSize());
     }
 
-    public XQuerySequenceType stringLength(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult stringLength(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // return switch (args.size()) {
         //     case 0 -> {
         //         var string = context.getItem().stringValue();
-        //         yield valueFactory.number(string.length());
+        //         yield typeFactory.number(string.length());
         //     }
         //     case 1 -> {
         //         var string = args.get(0).stringValue();
-        //         yield valueFactory.number(string.length());
+        //         yield typeFactory.number(string.length());
         //     }
         //     default -> null;
         // };
@@ -679,18 +688,18 @@ public class XQueryBaseSemanticFunctionCaller implements XQuerySemanticFunctionC
         var trimmed = s.trim();
         return whitespace.matcher(trimmed).replaceAll(" ");
     };
-    public XQuerySequenceType normalizeSpace(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult normalizeSpace(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // return switch (args.size()) {
         //     case 0 -> {
         //         String string = context.getItem().stringValue();
         //         String normalized = normalize.apply(string);
-        //         yield valueFactory.string(normalized);
+        //         yield typeFactory.string(normalized);
         //     }
         //     case 1 -> {
         //         String string = args.get(0).stringValue();
         //         String normalized = normalize.apply(string);
-        //         yield valueFactory.string(normalized);
+        //         yield typeFactory.string(normalized);
         //     }
         //     default -> null;
         // };
@@ -729,7 +738,7 @@ public class XQueryBaseSemanticFunctionCaller implements XQuerySemanticFunctionC
         return new ParseFlagsResult(flagBitMap, pattern, replacement);
     }
 
-    public XQuerySequenceType replace(final XQueryTypeFactory valueFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
+    public CallAnalysisResult replace(final XQueryTypeFactory typeFactory, XQueryVisitingSemanticContext context, final List<XQuerySequenceType> args) {
         return null;
         // return switch (args.size()) {
         //     case 3 -> {
@@ -737,7 +746,7 @@ public class XQueryBaseSemanticFunctionCaller implements XQuerySemanticFunctionC
         //         String pattern = args.get(1).stringValue();
         //         String replacement = args.get(2).stringValue();
         //         String result = input.replaceAll(pattern, replacement);
-        //         yield valueFactory.string(result);
+        //         yield typeFactory.string(result);
         //     }
         //     case 4 -> {
         //         String input = args.get(0).stringValue();
@@ -747,28 +756,28 @@ public class XQueryBaseSemanticFunctionCaller implements XQuerySemanticFunctionC
         //         ParseFlagsResult parsedFlags = parseFlags(flags, pattern, replacement);
         //         var matcher = Pattern.compile(parsedFlags.newPattern(), parsedFlags.flags()).matcher(input);
         //         String result = matcher.replaceAll(parsedFlags.newReplacement());
-        //         yield valueFactory.string(result);
+        //         yield typeFactory.string(result);
         //     }
         //     default -> null;
         // };
     }
 
     @Override
-    public XQuerySequenceType call(
+    public CallAnalysisResult call(
         String functionName,
-        XQueryTypeFactory valueFactory,
+        XQueryTypeFactory typeFactory,
         XQueryVisitingSemanticContext context,
         List<XQuerySequenceType> args)
     {
 
         return null;
-        // return functions.get(functionName).call(valueFactory, context, args);
+        // return functions.get(functionName).call(typeFactory, context, args);
     }
 
     @Override
-    public XQuerySequenceType getFunctionReference(String functionName, XQueryTypeFactory valueFactory) {
+    public CallAnalysisResult getFunctionReference(String functionName, XQueryTypeFactory typeFactory) {
         return null;
-        // return valueFactory.functionReference(functions.get(functionName));
+        // return typeFactory.functionReference(functions.get(functionName));
     }
 
 }

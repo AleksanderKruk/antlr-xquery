@@ -261,24 +261,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         return callAnalysisResult.result();
     }
 
-
-    private static <T> Stream<List<T>> cartesianProduct(List<List<T>> lists) {
-        if (lists.isEmpty()) {
-            return Stream.of(List.of());
-        }
-
-        final int size = lists.size();
-        return lists.get(0).stream()
-                .flatMap(firstElement -> cartesianProduct(lists.subList(1, size))
-                        .map(rest -> {
-                            List<T> combination = new ArrayList<>(size);
-                            combination.add(firstElement);
-                            combination.addAll(rest);
-                            return combination;
-                        }));
-    }
-
-
     @Override
     public XQuerySequenceType visitQuantifiedExpr(QuantifiedExprContext ctx) {
         List<String> variableNames = ctx.varName().stream()

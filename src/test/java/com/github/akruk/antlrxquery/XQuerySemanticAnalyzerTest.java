@@ -8,7 +8,6 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.Test;
 
 import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.baseimplementation.XQueryBaseSemanticContextManager;
-import com.github.akruk.antlrxquery.evaluator.functioncaller.XQueryFunctionCaller;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionCaller;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQueryBaseSemanticFunctionCaller;

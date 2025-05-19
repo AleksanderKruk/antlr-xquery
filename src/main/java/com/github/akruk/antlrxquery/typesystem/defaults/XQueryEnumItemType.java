@@ -9,6 +9,7 @@ import java.util.stream.IntStream;
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 
+@SuppressWarnings("unchecked")
 public class XQueryEnumItemType implements XQueryItemType {
     private final XQueryTypes type;
 
@@ -102,6 +103,7 @@ public class XQueryEnumItemType implements XQueryItemType {
     private static final BiPredicate<XQueryEnumItemType, XQueryEnumItemType> alwaysTrue = (t1, t2) -> true;
     private static final BiPredicate<XQueryEnumItemType, XQueryEnumItemType> alwaysFalse = (t1, t2) -> false;
 
+    @SuppressWarnings("rawtypes")
     private static final BiPredicate[][] itemtypeIsSubtypeOf;
     static {
         itemtypeIsSubtypeOf = new BiPredicate[typesCount][typesCount];

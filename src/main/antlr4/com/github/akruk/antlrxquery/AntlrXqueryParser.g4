@@ -128,9 +128,10 @@ itemType: anyItemTest
 kindTest:	elementTest
         | anyKindTest;
 
-elementTest	:	ELEMENT LPAREN (nameTestUnion (COMMA typeName QUESTION_MARK?)?)? RPAREN;
-nameTestUnion	:	(nameTest ('|' nameTest)*);
+elementTest	:	ELEMENT LPAREN nameTestUnion? RPAREN;
+nameTestUnion	:	nameTest ('|' nameTest)*;
 nameTest	:	qname | wildcard;
+
 functionType:	annotation* (anyFunctionType | typedFunctionType);
 annotation	:	PERCENTAGE qname (LPAREN annotationValue (',' annotationValue)* RPAREN)?;
 annotationValue:	STRING | ('-'? (INTEGER | DECIMAL)) | (qname LPAREN RPAREN);

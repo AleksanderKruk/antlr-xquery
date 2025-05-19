@@ -156,15 +156,48 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     }
 
     @Override
+    public XQuerySequenceType visitAnyItemTest(AnyItemTestContext ctx) {
+        return typeFactory.anyItem();
+    }
+
+    @Override
     public XQuerySequenceType visitTypeName(TypeNameContext ctx) {
         // TODO: Add proper type resolution
         return switch(ctx.getText()) {
             case "number" -> typeFactory.number();
             case "string" -> typeFactory.string();
             case "boolean" -> typeFactory.boolean_();
-            default -> null;
+            default -> {
+                String msg = String.format("Type %s is not recognized", ctx.getText());
+                addError(ctx, msg);
+                yield typeFactory.anyItem();
+            };
         };
     }
+
+    @Override
+    public XQuerySequenceType visitAnyKindTest(AnyKindTestContext ctx) {
+        return typeFactory.anyNode();
+    }
+
+    @Override
+    public XQuerySequenceType visitElementTest(ElementTestContext ctx) {
+        Set<String> elementNames = ctx.nameTestUnion().nameTest().stream().map(e->e.toString()).collect(Collectors.toSet());
+        return typeFactory.element(elementNames);
+    }
+
+    @Override
+    public XQuerySequenceType visitFunctionType(FunctionTypeContext ctx) {
+        if (ctx.anyFunctionType() != null) {
+            return typeFactory.anyFunction();
+        }
+        final var func = ctx.typedFunctionType();
+        List<XQuerySequenceType> parameterTypes = func.typedFunctionParam().stream()
+                .map(p-> p.sequenceType().accept(this))
+                .collect(Collectors.toList());
+        return typeFactory.function(func.sequenceType().accept(this), parameterTypes);
+    }
+
 
     private class MutableInt {
         public int i = 0;

@@ -611,19 +611,16 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
                 String msg = String.format("Token name: %s is not recognized by parser %s", name, parser.toString());
                 addError(ctx.qname(), msg);
             }
+            return typeFactory.zeroOrMore(typeFactory.itemElement(Set.of(name)));
         } else { // test for rule
             int ruleIndex = parser.getRuleIndex(name);
             if (ruleIndex == -1) {
                 String msg = String.format("Rule name: %s is not recognized by parser %s", name, parser.toString());
                 addError(ctx.qname(), msg);
             }
+            return typeFactory.zeroOrMore(typeFactory.itemElement(Set.of(name)));
         }
-        return typeFactory.zeroOrMore(typeFactory.itemElement(Set.of(name)));
     }
-
-
-
-
 
     @Override
     public XQuerySequenceType visitStringConcatExpr(StringConcatExprContext ctx) {

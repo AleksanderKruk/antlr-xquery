@@ -22,6 +22,7 @@ import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQue
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionCaller.CallAnalysisResult;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.values.XQuerySequence;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
 public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQuerySequenceType>  {
@@ -79,6 +80,14 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     @Override
     public XQuerySequenceType visitLetClause(LetClauseContext ctx) {
         final int newVariableCount = ctx.letBinding().size();
+
+        for (var letBinding : ctx.letBinding()) {
+            String variableName = letBinding.varName().getText();
+            XQuerySequenceType assignedValue = letBinding.exprSingle().accept(this);
+            XQuerySequenceType type = letBinding.typeDeclaration().accept(this);
+            var element = new TupleElementType(variableName, assignedValue, null);
+            contextManager.entypeVariable(variableName, assignedValue);
+        }
         // visitedTupleStreamType = visitedTupleStreamType.map(tuple -> {
         //     var newTuple = new ArrayList<TupleElement>(tuple.size() + newVariableCount);
         //     newTuple.addAll(tuple);
@@ -131,6 +140,27 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         // });
         return null;
     }
+
+    @Override
+    public XQuerySequenceType visitSequenceType(SequenceTypeContext ctx) {
+        if (ctx.EMPTY_SEQUENCE() != null) {
+            return typeFactory.emptySequence();
+        }
+        final var itemType = ctx.itemType().accept(this).getItemType();
+        return switch(ctx.occurrenceIndicator().getText()) {
+            case "?" -> typeFactory.zeroOrOne(itemType);
+            case "*" -> typeFactory.zeroOrMore(itemType);
+            case "+" -> typeFactory.oneOrMore(itemType);
+            default -> typeFactory.one(itemType);
+        };
+    }
+
+    @Override
+    public XQuerySequenceType visitItemType(ItemTypeContext ctx) {
+        // TODO Auto-generated method stub
+        return super.visitItemType(ctx);
+    }
+
 
     private class MutableInt {
         public int i = 0;

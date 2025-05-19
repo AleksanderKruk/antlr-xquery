@@ -113,6 +113,13 @@ public class XQuerySemanticAnalyzerTest {
         assertType(" () || ()", typeFactory.string());
     }
 
+    @Test
+    public void variableBinding() {
+        assertType("let $x := 1 return $x", typeFactory.number());
+        assertType("let $x as item() := 1 return $x", typeFactory.anyItem());
+        assertType("let $x as boolean := 1 return $x", typeFactory.boolean_());
+    }
+
 
 
 }

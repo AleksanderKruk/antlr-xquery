@@ -698,7 +698,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             };
         }
         matchedTreeNodes = new ArrayList<>(stepNodes.size());
-        String name = ctx.ID().toString();
+        String name = ctx.qname().toString();
         if (canBeTokenName.test(name)) {
             // test for token type
             int tokenType = parser.getTokenType(name);

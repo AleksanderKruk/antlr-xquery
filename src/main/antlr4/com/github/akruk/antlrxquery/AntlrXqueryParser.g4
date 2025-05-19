@@ -85,7 +85,6 @@ reverseAxis: PARENT COLONS
         | ANCESTOR_OR_SELF COLONS;
 abbrevReverseStep: DOTS;
 nodeTest: nameTest;
-nameTest: ID | wildcard;
 wildcard: STAR
         | (ID COLONSTAR)
         | (STARCOLON ID);
@@ -109,10 +108,61 @@ functionCall: functionName argumentList;
 argument: exprSingle | argumentPlaceholder;
 argumentPlaceholder: QUESTION_MARK;
 typeDeclaration: AS sequenceType;
-sequenceType: (ID occurrenceIndicator?);
+// sequenceType: qname occurrenceIndicator?;
 occurrenceIndicator: QUESTION_MARK | STAR | PLUS;
-functionName: qname;
+sequenceTypeUnion: sequenceType ('|' sequenceType)*;
 
+sequenceType	:	EMPTY_SEQUENCE LPAREN RPAREN
+              | itemType occurrenceIndicator?;
+
+itemType: anyItemTest
+        | typeName
+        | kindTest
+        | functionType
+        | mapType
+        | arrayType
+        | recordType
+        | enumerationType
+        | choiceItemType;
+kindTest:	elementTest
+        | anyKindTest;
+
+elementTest	:	ELEMENT LPAREN (nameTestUnion (COMMA typeName QUESTION_MARK?)?)? RPAREN;
+nameTestUnion	:	(nameTest ('|' nameTest)*);
+nameTest	:	qname | wildcard;
+functionType:	annotation* (anyFunctionType | typedFunctionType);
+annotation	:	PERCENTAGE qname (LPAREN annotationValue (',' annotationValue)* RPAREN)?;
+annotationValue:	STRING | ('-'? (INTEGER | DECIMAL)) | (qname LPAREN RPAREN);
+anyFunctionType	:	FUNCTION LPAREN '*' RPAREN;
+typedFunctionType	:	FUNCTION LPAREN (typedFunctionParam (',' typedFunctionParam)*)? RPAREN 'as' sequenceType;
+typedFunctionParam	:	('$' qname 'as')? sequenceType;
+
+mapType	:	anyMapType | typedMapType;
+anyMapType	:	MAP LPAREN '*' RPAREN;
+typedMapType	:	MAP LPAREN itemType ',' sequenceType RPAREN;
+
+
+recordType:	anyRecordType | typedRecordType;
+anyRecordType: RECORD LPAREN '*' RPAREN;
+typedRecordType: RECORD LPAREN (fieldDeclaration (',' fieldDeclaration)*)? extensibleFlag? RPAREN;
+extensibleFlag:	',' '*';
+fieldDeclaration	:	fieldName '?'? ('as' sequenceType)?;
+fieldName	:	ID;
+
+
+arrayType	:	anyArrayType | typedArrayType;
+anyArrayType	:	ARRAY LPAREN '*' RPAREN;
+typedArrayType	:	ARRAY LPAREN sequenceType RPAREN;
+
+enumerationType	:	ENUM LPAREN STRING (',' STRING)* RPAREN;
+
+choiceItemType	:	LPAREN itemType ('|' itemType)* RPAREN;
+
+anyItemTest	:	ITEM LPAREN RPAREN;
+anyKindTest	:	NODE LPAREN RPAREN;
+
+functionName: qname;
+typeName: qname;
 
 qname: (namespace COLON)* anyName;
 namespace: anyName;

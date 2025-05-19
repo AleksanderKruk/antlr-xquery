@@ -60,6 +60,15 @@ MOD: 'mod';
 UNION: 'union';
 INTERSECT: 'intersect';
 EXCEPT: 'except';
+ELEMENT: 'element';
+MAP: 'map';
+RECORD: 'record';
+ARRAY: 'array';
+ENUM: 'enum';
+NODE: 'node';
+ITEM: 'item';
+FUNCTION: 'function';
+EMPTY_SEQUENCE: 'empty-sequence';
 AS: 'as';
 EQ: 'eq';
 NE: 'ne';
@@ -97,6 +106,7 @@ INSTANCE: 'instance';
 OF: 'of';
 TREAT: 'treat';
 CAST: 'cast';
+PERCENTAGE: '%';
 
 
 ID: NAME_START (DASH NAME_MIDDLE)*

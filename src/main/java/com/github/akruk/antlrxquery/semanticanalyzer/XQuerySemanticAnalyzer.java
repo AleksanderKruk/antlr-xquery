@@ -20,6 +20,7 @@ import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.XQuerySema
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionCaller;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionCaller.CallAnalysisResult;
+import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.values.XQuerySequence;
@@ -196,6 +197,17 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
                 .map(p-> p.sequenceType().accept(this))
                 .collect(Collectors.toList());
         return typeFactory.function(func.sequenceType().accept(this), parameterTypes);
+    }
+
+    @Override
+    public XQuerySequenceType visitMapType(MapTypeContext ctx) {
+        if (ctx.anyMapType() != null) {
+            return typeFactory.anyMap();
+        }
+        final var map = ctx.typedMapType();
+        XQueryItemType keyType = map.itemType().accept(this).getItemType();
+        XQuerySequenceType valueType = map.sequenceType().accept(this);
+        return typeFactory.map(keyType, valueType);
     }
 
 

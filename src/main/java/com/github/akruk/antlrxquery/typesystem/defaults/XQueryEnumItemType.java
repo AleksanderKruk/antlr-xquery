@@ -362,7 +362,6 @@ public class XQueryEnumItemType implements XQueryItemType {
 
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public boolean itemtypeIsSubtypeOf(XQueryItemType obj) {
         if (!(obj instanceof XQueryEnumItemType))

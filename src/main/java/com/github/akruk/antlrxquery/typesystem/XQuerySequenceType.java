@@ -1,7 +1,5 @@
 package com.github.akruk.antlrxquery.typesystem;
 
-import com.github.akruk.antlrxquery.evaluator.XQuery;
-
 public interface XQuerySequenceType {
     XQueryItemType getItemType();
     XQuerySequenceType sequenceMerge(XQuerySequenceType other);

@@ -2,6 +2,7 @@ package com.github.akruk.antlrxquery.semanticanalyzer;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -23,7 +24,6 @@ import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQue
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
-import com.github.akruk.antlrxquery.values.XQuerySequence;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
 public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQuerySequenceType>  {
@@ -65,9 +65,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
     @Override
     public XQuerySequenceType visitFLWORExpr(FLWORExprContext ctx) {
-        final var savedTupleStream = saveVisitedTupleStream();
+        // final var savedTupleStream = saveVisitedTupleStream();
         contextManager.enterScope();
-        // visitedTupleStream will be manipulated to prepare result stream
         ctx.initialClause().accept(this);
         for (final var clause : ctx.intermediateClause()) {
             clause.accept(this);
@@ -80,27 +79,20 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
     @Override
     public XQuerySequenceType visitLetClause(LetClauseContext ctx) {
-        final int newVariableCount = ctx.letBinding().size();
-
         for (var letBinding : ctx.letBinding()) {
             String variableName = letBinding.varName().getText();
             XQuerySequenceType assignedValue = letBinding.exprSingle().accept(this);
+            if (letBinding.typeDeclaration() == null) {
+                contextManager.entypeVariable(variableName, assignedValue);
+                continue;
+            }
             XQuerySequenceType type = letBinding.typeDeclaration().accept(this);
-            var element = new TupleElementType(variableName, assignedValue, null);
-            contextManager.entypeVariable(variableName, assignedValue);
+            if (!assignedValue.isSubtypeOf(type)) {
+                String msg = String.format("Type of variable %s is not compatible with the assigned value", variableName);
+                addError(letBinding, msg);
+            }
+            contextManager.entypeVariable(variableName, type);
         }
-        // visitedTupleStreamType = visitedTupleStreamType.map(tuple -> {
-        //     var newTuple = new ArrayList<TupleElement>(tuple.size() + newVariableCount);
-        //     newTuple.addAll(tuple);
-        //     for (LetBindingContext streamVariable : ctx.letBinding()) {
-        //         String variableName = streamVariable.varName().getText();
-        //         XQuerySequenceType assignedValue = streamVariable.exprSingle().accept(this);
-        //         var element = new TupleElement(variableName, assignedValue, null, null);
-        //         newTuple.add(element);
-        //         contextManager.entypeVariable(variableName, assignedValue);
-        //     }
-        //     return newTuple;
-        // });
         return null;
     }
 
@@ -148,16 +140,25 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             return typeFactory.emptySequence();
         }
         final var itemType = ctx.itemType().accept(this).getItemType();
+        if (ctx.occurrenceIndicator() == null) {
+            return typeFactory.one(itemType);
+        }
         return switch(ctx.occurrenceIndicator().getText()) {
             case "?" -> typeFactory.zeroOrOne(itemType);
             case "*" -> typeFactory.zeroOrMore(itemType);
             case "+" -> typeFactory.oneOrMore(itemType);
-            default -> typeFactory.one(itemType);
+            default -> null;
         };
     }
 
     @Override
     public XQuerySequenceType visitAnyItemTest(AnyItemTestContext ctx) {
+        return typeFactory.anyItem();
+    }
+
+    @Override
+    public XQuerySequenceType visitChoiceItemType(ChoiceItemTypeContext ctx) {
+        // TODO: Implement choice item type
         return typeFactory.anyItem();
     }
 
@@ -172,7 +173,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
                 String msg = String.format("Type %s is not recognized", ctx.getText());
                 addError(ctx, msg);
                 yield typeFactory.anyItem();
-            };
+            }
         };
     }
 
@@ -210,6 +211,39 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         return typeFactory.map(keyType, valueType);
     }
 
+    @Override
+    public XQuerySequenceType visitArrayType(ArrayTypeContext ctx) {
+        if (ctx.anyArrayType() != null) {
+            return typeFactory.anyArray();
+        }
+        final var array = ctx.typedArrayType();
+        XQuerySequenceType sequenceType = array.sequenceType().accept(this);
+        return typeFactory.array(sequenceType);
+    }
+
+    @Override
+    public XQuerySequenceType visitRecordType(RecordTypeContext ctx) {
+        if (ctx.anyRecordType() != null) {
+            return typeFactory.anyMap();
+        }
+        final var record = ctx.typedRecordType();
+        final Map<String, XQuerySequenceType> fields = new HashMap<>();
+        // TODO: extensible flag
+        for (var field : record.fieldDeclaration()) {
+            final String fieldName = field.fieldName().getText();
+            final XQuerySequenceType fieldType = field.sequenceType().accept(this);
+            fields.put(fieldName, fieldType);
+        }
+        return typeFactory.record(fields);
+    }
+
+    @Override
+    public XQuerySequenceType visitEnumerationType(EnumerationTypeContext ctx) {
+        final Set<String> enumMembers = ctx.STRING().stream()
+                .map(TerminalNode::getText)
+                .collect(Collectors.toSet());
+        return typeFactory.enum_(enumMembers);
+    }
 
     private class MutableInt {
         public int i = 0;
@@ -252,16 +286,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
     @Override
     public XQuerySequenceType visitReturnClause(ReturnClauseContext ctx) {
-        // final List<XQuerySequenceType> results = visitedTupleStream.map((tuple) -> {
-        //     XQuerySequenceType value = ctx.exprSingle().accept(this);
-        //     return value;
-        // }).toList();
-        // if (results.size() == 1) {
-        //     var value = results.get(0);
-        //     return value;
-        // }
-        // return typeFactory.sequence(results);
-        return null;
+        return ctx.exprSingle().accept(this);
     }
 
     @Override
@@ -578,13 +603,13 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
                 default -> throw new AssertionError("Not implemented wildcard");
             };
         }
-        final String name = ctx.ID().toString();
+        final String name = ctx.qname().toString();
         if (canBeTokenName.test(name)) {
             // test for token type
             int tokenType = parser.getTokenType(name);
             if (tokenType == Token.INVALID_TYPE) {
                 String msg = String.format("Token name: %s is not recognized by parser %s", name, parser.toString());
-                addError(ctx.ID(), msg);
+                addError(ctx.qname(), msg);
             }
         }
         else { // test for rule

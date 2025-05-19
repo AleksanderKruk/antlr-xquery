@@ -124,6 +124,7 @@ itemType: anyItemTest
         | recordType
         | enumerationType
         | choiceItemType;
+
 kindTest:	elementTest
         | anyKindTest;
 

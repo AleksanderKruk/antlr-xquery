@@ -156,11 +156,15 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     }
 
     @Override
-    public XQuerySequenceType visitItemType(ItemTypeContext ctx) {
-        // TODO Auto-generated method stub
-        return super.visitItemType(ctx);
+    public XQuerySequenceType visitTypeName(TypeNameContext ctx) {
+        // TODO: Add proper type resolution
+        return switch(ctx.getText()) {
+            case "number" -> typeFactory.number();
+            case "string" -> typeFactory.string();
+            case "boolean" -> typeFactory.boolean_();
+            default -> null;
+        };
     }
-
 
     private class MutableInt {
         public int i = 0;

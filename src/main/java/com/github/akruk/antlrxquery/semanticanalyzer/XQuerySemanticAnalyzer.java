@@ -596,7 +596,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     @Override
     public XQuerySequenceType visitNameTest(NameTestContext ctx) {
         if (ctx.wildcard() != null) {
-            return switch(ctx.wildcard().getText()) {
+            return switch (ctx.wildcard().getText()) {
                 case "*" -> typeFactory.zeroOrMore(typeFactory.itemAnyNode());
                 // case "*:" -> ;
                 // case ":*" -> ;
@@ -611,22 +611,18 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
                 String msg = String.format("Token name: %s is not recognized by parser %s", name, parser.toString());
                 addError(ctx.qname(), msg);
             }
-        }
-        else { // test for rule
+        } else { // test for rule
             int ruleIndex = parser.getRuleIndex(name);
-            // TODO: error values
-            if (ruleIndex == -1) return null;
-            // for (ParseTree node : stepNodes) {
-            //     // Token nodes are being skipped
-            //     if (!(node instanceof ParserRuleContext))
-            //         continue;
-            //     ParserRuleContext testedRule = (ParserRuleContext) node;
-            //     if (testedRule.getRuleIndex() == ruleIndex) {
-            //     }
-            // }
+            if (ruleIndex == -1) {
+                String msg = String.format("Rule name: %s is not recognized by parser %s", name, parser.toString());
+                addError(ctx.qname(), msg);
+            }
         }
         return typeFactory.zeroOrMore(typeFactory.itemElement(Set.of(name)));
     }
+
+
+
 
 
     @Override
@@ -923,7 +919,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             addError(ctx, msg);
         }
         var trueType = ctx.ifValue.accept(this);
-        var falseType =  ctx.elseValue.accept(this);
+        var falseType = ctx.elseValue.accept(this);
         if (trueType.equals(falseType))
             return trueType;
         if (trueType.isSubtypeOf(falseType))
@@ -932,11 +928,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             return trueType;
         // Add union types
         // return typeFactory.any();
-        return null;
-    }
-
-    @Override
-    public XQuerySequenceType visitOrderByClause(OrderByClauseContext ctx) {
         return null;
     }
 

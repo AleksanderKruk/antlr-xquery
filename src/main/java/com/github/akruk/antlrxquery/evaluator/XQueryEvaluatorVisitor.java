@@ -107,7 +107,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         PRECEDING_SIBLING,
         PRECEDING,
         ANCESTOR_OR_SELF,
-        FOLLOWING_OR_SELF, FOLLOWING_SIBLING_OR_SELF,
+        FOLLOWING_OR_SELF, FOLLOWING_SIBLING_OR_SELF, PRECEDING_SIBLING_OR_SELF, PRECEDING_OR_SELF,
     }
 
 
@@ -690,6 +690,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             case PRECEDING_SIBLING -> getAllPrecedingSiblings(matchedTreeNodes);
             case FOLLOWING_OR_SELF -> getAllFollowingOrSelf(matchedTreeNodes);
             case FOLLOWING_SIBLING_OR_SELF -> getAllFollowingSiblingsOrSelf(matchedTreeNodes);
+            case PRECEDING_OR_SELF -> getAllPrecedingOrSelf(matchedTreeNodes);
+            case PRECEDING_SIBLING_OR_SELF -> getAllPrecedingSiblingsOrSelf(matchedTreeNodes);
             case SELF -> matchedTreeNodes;
             default -> matchedTreeNodes;
         };
@@ -739,11 +741,29 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
 
-    // private List<ParseTree> getFollowingOrSelf()
 
-    private List<ParseTree> getFollowingSiblingOrSelf(ParseTree node) {
+    private List<ParseTree> getPrecedingSiblingsOrSelf(ParseTree node) {
         final var newMatched = new ArrayList<ParseTree>();
-        final var following = getFollowingSibling(node);
+        final var preceding = getPrecedingSiblings(node);
+        newMatched.add(node);
+        newMatched.addAll(preceding);
+        return newMatched;
+    }
+
+
+    private List<ParseTree> getAllPrecedingSiblingsOrSelf(List<ParseTree> matchedTreeNodes) {
+        var result = new ArrayList<ParseTree>();
+        for (var node : matchedTreeNodes) {
+            var followingSiblings = getPrecedingSiblingsOrSelf(node);
+            result.addAll(followingSiblings);
+        }
+        return result;
+    }
+
+
+    private List<ParseTree> getFollowingSiblingsOrSelf(ParseTree node) {
+        final var newMatched = new ArrayList<ParseTree>();
+        final var following = getFollowingSiblings(node);
         newMatched.add(node);
         newMatched.addAll(following);
         return newMatched;
@@ -753,7 +773,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     private List<ParseTree> getAllFollowingSiblingsOrSelf(List<ParseTree> matchedTreeNodes) {
         var result = new ArrayList<ParseTree>();
         for (var node : matchedTreeNodes) {
-            var followingSiblings = getFollowingSiblingOrSelf(node);
+            var followingSiblings = getFollowingSiblingsOrSelf(node);
             result.addAll(followingSiblings);
         }
         return result;
@@ -792,7 +812,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         List<ParseTree> ancestorFollowingSiblings = getAllFollowingSiblings(ancestors);
         List<ParseTree> followingSiblingDescendants =  getAllDescendants(ancestorFollowingSiblings);
         List<ParseTree> thisNodeDescendants = getDescendants(node);
-        List<ParseTree> thisNodefollowingSiblings = getFollowingSibling(node);
+        List<ParseTree> thisNodefollowingSiblings = getFollowingSiblings(node);
         List<ParseTree> thisNodeFollowingSiblingDescendants = getAllDescendantsOrSelf(thisNodefollowingSiblings);
         List<ParseTree> following = new ArrayList<>(ancestorFollowingSiblings.size()
                                                     + followingSiblingDescendants.size()
@@ -835,13 +855,13 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     private List<ParseTree> getAllFollowingSiblings(List<ParseTree> nodes) {
         var result = new ArrayList<ParseTree>();
         for (var node : nodes) {
-            var followingSiblings = getFollowingSibling(node);
+            var followingSiblings = getFollowingSiblings(node);
             result.addAll(followingSiblings);
         }
         return result;
     }
 
-    private List<ParseTree> getFollowingSibling(ParseTree node) {
+    private List<ParseTree> getFollowingSiblings(ParseTree node) {
         var parent = node.getParent();
         if (parent == null)
             return List.of();

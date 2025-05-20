@@ -107,6 +107,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         PRECEDING_SIBLING,
         PRECEDING,
         ANCESTOR_OR_SELF,
+        FOLLOWING_OR_SELF,
     }
 
 
@@ -687,6 +688,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             case PARENT -> getAllParents(matchedTreeNodes);
             case PRECEDING -> getAllPreceding(matchedTreeNodes);
             case PRECEDING_SIBLING -> getAllPrecedingSiblings(matchedTreeNodes);
+            case FOLLOWING_OR_SELF -> getAllFollowingOrSelf(matchedTreeNodes);
             case SELF -> matchedTreeNodes;
             default -> matchedTreeNodes;
         };
@@ -733,6 +735,28 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             }
         }
         return nodeSequence(matchedTreeNodes);
+    }
+
+
+    // private List<ParseTree> getFollowingOrSelf()
+
+
+    private List<ParseTree> getFollowingOrSelf(ParseTree node) {
+        final var newMatched = new ArrayList<ParseTree>();
+        final var following = getFollowing(node);
+        newMatched.add(node);
+        newMatched.addAll(following);
+        return newMatched;
+    }
+
+
+    private List<ParseTree> getAllFollowingOrSelf(List<ParseTree> matchedTreeNodes) {
+        var result = new ArrayList<ParseTree>();
+        for (var node : matchedTreeNodes) {
+            var followingSiblings = getFollowingOrSelf(node);
+            result.addAll(followingSiblings);
+        }
+        return result;
     }
 
     private List<ParseTree> getAllFollowing(List<ParseTree> nodes) {

@@ -21,6 +21,7 @@ SELF: 'self';
 DESCENDANT_OR_SELF: 'descendant-or-self';
 ANCESTOR_OR_SELF: 'ancestor-or-self';
 FOLLOWING_OR_SELF: 'following-or-self';
+FOLLOWING_SIBLING: 'following-sibling';
 FOLLOWING_SIBLING_OR_SELF: 'following-sibling-or-self';
 PRECEDING_OR_SELF: 'preceding-or-self';
 PRECEDING_SIBLING_OR_SELF: 'preceding-sibling-or-self';

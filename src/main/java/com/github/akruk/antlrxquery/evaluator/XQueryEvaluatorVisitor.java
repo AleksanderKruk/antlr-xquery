@@ -779,6 +779,24 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         return result;
     }
 
+    private List<ParseTree> getPrecedingOrSelf(ParseTree node) {
+        final var newMatched = new ArrayList<ParseTree>();
+        final var following = getPreceding(node);
+        newMatched.add(node);
+        newMatched.addAll(following);
+        return newMatched;
+    }
+
+
+    private List<ParseTree> getAllPrecedingOrSelf(List<ParseTree> matchedTreeNodes) {
+        var result = new ArrayList<ParseTree>();
+        for (var node : matchedTreeNodes) {
+            var followingSiblings = getPrecedingOrSelf(node);
+            result.addAll(followingSiblings);
+        }
+        return result;
+    }
+
 
     private List<ParseTree> getFollowingOrSelf(ParseTree node) {
         final var newMatched = new ArrayList<ParseTree>();
@@ -999,6 +1017,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         if (ctx.DESCENDANT_OR_SELF() != null) currentAxis = XQueryAxis.DESCENDANT_OR_SELF;
         if (ctx.FOLLOWING_SIBLING() != null) currentAxis = XQueryAxis.FOLLOWING_SIBLING;
         if (ctx.FOLLOWING() != null) currentAxis = XQueryAxis.FOLLOWING;
+        if (ctx.FOLLOWING_SIBLING_OR_SELF() != null) currentAxis = XQueryAxis.FOLLOWING_SIBLING;
+        if (ctx.FOLLOWING_OR_SELF() != null) currentAxis = XQueryAxis.FOLLOWING;
         return null;
     }
 

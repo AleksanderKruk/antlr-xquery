@@ -81,16 +81,17 @@ import com.github.akruk.antlrxquery.values.factories.defaults.XQueryMemoizedValu
 import com.github.akruk.antlrxquery.values.XQueryBoolean;
 
 class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
-    XQueryValue root;
-    Parser parser;
-    List<XQueryValue> visitedArgumentList;
+    final XQueryValue root;
+    final Parser parser;
+    final XQueryDynamicContextManager contextManager;
+    final XQueryValueFactory valueFactory;
+    final XQueryFunctionCaller functionCaller;
+
     XQueryValue matchedNodes;
-    XQueryAxis currentAxis;
-    XQueryVisitingContext context;
-    XQueryDynamicContextManager contextManager;
-    XQueryValueFactory valueFactory;
-    XQueryFunctionCaller functionCaller;
     Stream<List<TupleElement>> visitedTupleStream;
+    XQueryAxis currentAxis;
+    List<XQueryValue> visitedArgumentList;
+    XQueryVisitingContext context;
 
     private record TupleElement(String name, XQueryValue value, String positionalName, XQueryValue index){};
 
@@ -1105,22 +1106,20 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             var value = ctx.unionExpr(0).accept(this);
             if (ctx.multiplicativeOperator().isEmpty())
                 return value;
-            if (!value.isNumericValue()) {
-                // TODO: type error
-            }
             final var orCount = ctx.multiplicativeOperator().size();
             for (int i = 1; i <= orCount; i++) {
                 final var visitedExpression = ctx.unionExpr(i).accept(this);
                 value = switch (ctx.multiplicativeOperator(i-1).getText()) {
                     case "*" -> value.multiply(valueFactory, visitedExpression);
+                    case "x" -> value.multiply(valueFactory, visitedExpression);
                     case "div" -> value.divide(valueFactory, visitedExpression);
+                    case "÷" -> value.divide(valueFactory, visitedExpression);
                     case "idiv" -> value.integerDivide(valueFactory, visitedExpression);
                     case "mod" -> value.modulus(valueFactory, visitedExpression);
                     default -> null;
                 };
             }
             return value;
-
         } catch (XQueryUnsupportedOperation e) {
             // TODO: handle exception
             return null;

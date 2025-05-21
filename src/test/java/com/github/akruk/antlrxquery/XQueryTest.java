@@ -108,11 +108,9 @@ public class XQueryTest {
 
     @Test
     public void sequenceLiteral() {
-        String xquery = """
-                    (1, 2, 3)
-                """;
+        String xquery = "(1, 2, 3)";
         var value = XQuery.evaluate(null, xquery, null);
-        List<XQueryValue> expected = List.of(
+        final List<XQueryValue> expected = List.of(
                 baseFactory.number(1),
                 baseFactory.number(2),
                 baseFactory.number(3));
@@ -123,14 +121,11 @@ public class XQueryTest {
         assertTrue(expected.get(0).numericValue().equals(sequence.get(0).numericValue()));
         assertTrue(expected.get(0).numericValue().equals(sequence.get(0).numericValue()));
         assertTrue(expected.get(0).numericValue().equals(sequence.get(0).numericValue()));
-
     }
 
     @Test
     public void atomization() {
-        String xquery = """
-                    (1, (2,3,4), ((5, 6), 7))
-                """;
+        String xquery = "(1, (2,3,4), ((5, 6), 7))";
         var value = XQuery.evaluate(null, xquery, null);
         List<XQueryValue> expected = List.of(
                 baseFactory.number(1),

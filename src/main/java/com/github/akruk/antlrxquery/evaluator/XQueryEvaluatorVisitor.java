@@ -308,7 +308,58 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
 
+    private static final int[] hexToDecimal = new int['f' - '0'];
+    {
+        final int offset = '0';
+        hexToDecimal['0' - offset] = 0;
+        hexToDecimal['1' - offset] = 1;
+        hexToDecimal['2' - offset] = 2;
+        hexToDecimal['3' - offset] = 3;
+        hexToDecimal['4' - offset] = 4;
+        hexToDecimal['5' - offset] = 5;
+        hexToDecimal['6' - offset] = 6;
+        hexToDecimal['7' - offset] = 7;
+        hexToDecimal['8' - offset] = 8;
+        hexToDecimal['9' - offset] = 9;
+        hexToDecimal['a' - offset] = 10;
+        hexToDecimal['b' - offset] = 11;
+        hexToDecimal['c' - offset] = 12;
+        hexToDecimal['d' - offset] = 13;
+        hexToDecimal['e' - offset] = 14;
+        hexToDecimal['f' - offset] = 15;
+        hexToDecimal['A' - offset] = 10;
+        hexToDecimal['B' - offset] = 11;
+        hexToDecimal['C' - offset] = 12;
+        hexToDecimal['D' - offset] = 13;
+        hexToDecimal['E' - offset] = 14;
+        hexToDecimal['F' - offset] = 15;
+    }
+
     private String unescapeString(final String str) {
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            if (c == '&') {
+                final int start = i;
+                while (i < str.length() && str.charAt(i) != ';') {
+                    i++;
+                }
+                final int end = i;
+                final boolean isCharRef = str.charAt(start + 1) == '#';
+                final boolean isHexCharRef = isCharRef && str.charAt(start + 2) == 'x';
+                if (isHexCharRef) {
+                    char createdChar = 0;
+                    final int digitStart = start+3;
+                    final int digitCount = digitStart - end;
+                    for (int j = digitStart; j < end; j++) {
+                        int number = hexToDecimal[str.charAt(j) - '0'];
+                    }
+                }
+
+
+
+            }
+        }
+        str.split("&#");
         return str.replace("\"\"", "\"")
                   .replace("''", "'")
                   .replace("&lt;", "<")

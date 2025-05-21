@@ -92,6 +92,15 @@ public class XQueryTest {
     }
 
     @Test
+    public void stringLiteralsEscapeCharRefs() {
+        assertResult("'a&#5;b'", "a\u0005b");
+        assertResult("'a&#x10;b'", "a\u0010b");
+        assertResult("\"a&#5;b\"", "a\u0005b");
+        assertResult("\"a&#x10;b\"", "a\u0010b");
+    }
+
+
+    @Test
     public void stringLiteralsEscapeCharsSingle() {
         assertResult("'a''b'", "a'b");
     }

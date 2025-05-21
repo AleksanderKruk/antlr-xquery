@@ -67,6 +67,12 @@ public class XQueryTest {
 
 
     @Test
+    public void comments() {
+        assertResult("(:comment:) 1", BigDecimal.ONE);
+    }
+
+
+    @Test
     public void stringLiteralsDoubleQuote() {
         assertResult("\"string\"", "string");
     }

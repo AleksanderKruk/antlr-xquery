@@ -119,8 +119,8 @@ public class XQueryTest {
         var sequence = value.sequence();
         assertEquals(expected.size(), sequence.size());
         assertTrue(expected.get(0).numericValue().equals(sequence.get(0).numericValue()));
-        assertTrue(expected.get(0).numericValue().equals(sequence.get(0).numericValue()));
-        assertTrue(expected.get(0).numericValue().equals(sequence.get(0).numericValue()));
+        assertTrue(expected.get(1).numericValue().equals(sequence.get(1).numericValue()));
+        assertTrue(expected.get(2).numericValue().equals(sequence.get(2).numericValue()));
     }
 
     @Test

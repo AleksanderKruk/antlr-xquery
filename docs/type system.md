@@ -65,6 +65,12 @@ achieved by 'merging' types of values `v1` and `v2` and `v3` and ... using the f
 **\*** | * | + | * | *  | +
 **\+** | + | + | + | +  | +
 
+```
+()            -> empty-sequence()
+(T)           -> T
+(T, T, T)     -> T | T | T -> T+
+(T1, T2, T3)  -> T1 | T2 | T3
+```
 
 ### Union operator
 Union operators have the same semantics as sequence constructor operator.

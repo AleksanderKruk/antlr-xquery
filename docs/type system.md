@@ -43,6 +43,21 @@ Type designation | Interpretation
 `number` | one-element-sequence of type `number`
 `boolean` | one-element-sequence of type `boolean`
 
+### Compound item types
+Compound item types consist of other item types.
+There are arrays, maps, records and enums.
+
+Type designation | Interpretation
+--- | ---
+`array(T)`                             | array of sequence type T
+`array(*)`                             | array of any item type, equivalent to `array(item())`
+`map(KeyType, ValueType)`              | map of primary type to any sequenceType
+`map(*)`                               | map of item() to item() (`map(item(), item())`)
+`record(x as number, y as string+)`    | map containing exactly 2 string keys "x" and "y" that map to `number` and `string+` respectively
+`record(x as number, y as string+, *)` | map containing at least 2 string keys "x" and "y" that map to `number` and `string+` respectively
+`record(*)`                            | same as `map(*)`
+`enum("true", "false")`                | item can contain string "true" or string "false"
+
 ## Expression semantics
 
 ### Sequence range expression
@@ -58,12 +73,12 @@ achieved by 'merging' types of values `v1` and `v2` and `v3` and ... using the f
 2. Occurence is deduced using the following table
 
 (v1, v2)  | 0 | 1 | ? | \* | \+
----    |---|---|---|--- |---
-**0**  | 0 | 1 | ? | *  | +
-**1**  | 1 | + | + | +  | +
-**?**  | ? | + | * | *  | +
-**\*** | * | + | * | *  | +
-**\+** | + | + | + | +  | +
+---       |---|---|---|--- |---
+**0**     | 0 | 1 | ? | *  | +
+**1**     | 1 | + | + | +  | +
+**?**     | ? | + | * | *  | +
+**\***    | * | + | * | *  | +
+**\+**    | + | + | + | +  | +
 
 ```
 ()            -> empty-sequence()
@@ -120,9 +135,26 @@ v1 except v2  | 0 | 1 | ? | \* | \+
 ### Arithmetic operators
 Arithmetic operators take `number`s as arguments and return
 `number` as the resulting type.
+```xquery
+# addition
+<number> + <number> -> number
+# subtraction
+<number> - <number> -> number
+# multiplication
+<number> * <number> -> number
+<number> x <number> -> number
+# division
+<number> ÷ <number> -> number
+<number> div <number> -> number
+# modulus
+<number> mod <number> -> number
+```
 
 ### String concatenation
-Arithmetic operators take item types that can be converted to string as arguments and return `string` as the resulting type.
+Concatenation operator takes as argument either an `empty-sequence` or `string` and returns string
+```
+<string?> || <string?> -> string
+```
 
 
 

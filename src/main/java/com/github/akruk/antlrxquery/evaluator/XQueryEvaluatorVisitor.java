@@ -308,10 +308,14 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
 
-    // TODO: ESCAPE characters
-    // &lt ...
     private String unescapeString(final String str) {
-        return str.replace("\"\"", "\"").replace("''", "'");
+        return str.replace("\"\"", "\"")
+                  .replace("''", "'")
+                  .replace("&lt;", "<")
+                  .replace("&gt;", ">")
+                  .replace("&amp;", "&")
+                  .replace("&apos;", "'")
+                  .replace("&quot;", "\"");
     }
 
     @Override

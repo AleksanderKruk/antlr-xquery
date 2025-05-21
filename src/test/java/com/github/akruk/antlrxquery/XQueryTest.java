@@ -77,6 +77,21 @@ public class XQueryTest {
     }
 
     @Test
+    public void stringLiteralsEscapePredefinedChars() {
+        assertResult("'a&apos;b'", "a'b");
+        assertResult("'a&lt;b'", "a<b");
+        assertResult("'a&gt;b'", "a>b");
+        assertResult("'a&amp;b'", "a&b");
+        assertResult("'a&quot;b'", "a\"b");
+
+        assertResult("\"a&apos;b\"", "a'b");
+        assertResult("\"a&lt;b\"", "a<b");
+        assertResult("\"a&gt;b\"", "a>b");
+        assertResult("\"a&amp;b\"", "a&b");
+        assertResult("\"a&quot;b\"", "a\"b");
+    }
+
+    @Test
     public void stringLiteralsEscapeCharsSingle() {
         assertResult("'a''b'", "a'b");
     }

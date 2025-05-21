@@ -3,8 +3,18 @@ INTEGER: Digits;
 DECIMAL: (DOT Digits) | (Digits DOT Digits?);
 fragment Digits: [0-9]+;
 
-STRING: ('"' ('""' | ~["&])* '"')
-    | ('\'' ('\'\'' | ~['&])* '\'');
+STRING: ('"' ('""' | CHARREF | PREDEFINED_ENTITY_REF | ~["&])* '"')
+    | ('\'' ('\'\'' | CHARREF | PREDEFINED_ENTITY_REF | ~['&])* '\'');
+fragment CHARREF: '&#' [0-9]+ ';'
+                | '&#x' [0-9a-fA-F]+ ';';
+fragment PREDEFINED_ENTITY_REF:
+    '&lt;'
+  | '&gt;'
+  | '&amp;'
+  | '&apos;'
+  | '&quot;';
+
+
 
 COMMENT: '(:' .*? ':)';
 WS: [\p{White_Space}]+ -> channel(HIDDEN);

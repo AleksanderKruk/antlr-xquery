@@ -121,6 +121,25 @@ public class XQuerySemanticAnalyzerTest {
         // assertType("let $x as boolean := 1 return $x", typeFactory.boolean_());
     }
 
+    @Test
+    public void forClauseBinding() {
+        assertType("for $x in (1, 2, 3) return $x", typeFactory.oneOrMore(typeFactory.itemNumber()));
+    }
+
+    @Test
+    public void indexVariableBinding() {
+        assertType("for $x at $i in (1, 2, 3) return $i", typeFactory.oneOrMore(typeFactory.itemNumber()));
+    }
+
+
+    @Test
+    public void countVariableClause() {
+        assertType("""
+            for $x at $i in (1, 2, 3)
+            count $count
+            return $count
+        """, typeFactory.oneOrMore(typeFactory.itemNumber()));
+    }
 
 
 }

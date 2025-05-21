@@ -90,25 +90,24 @@ achieved by 'merging' types of values `v1` and `v2` and `v3` and ... using the f
 ### Union operator
 Union operators have the same semantics as sequence constructor operator.
 ```xquery
-v1 union v2 -> merged
+<node():o1> union <node():o2> -> node():o2
 ```
-
-
 **Merging occurence semantics:**
-(v1, v2)  | 0 | 1 | ? | \* | \+
----    |---|---|---|--- |---
-**0**  | 0 | 1 | ? | *  | +
-**1**  | 1 | + | + | +  | +
-**?**  | ? | + | * | *  | +
-**\*** | * | + | * | *  | +
-**\+** | + | + | + | +  | +
+(o1, o2)  | 0 | 1 | ? | \* | \+
+---       |---|---|---|--- |---
+**0**     | 0 | 1 | ? | *  | +
+**1**     | 1 | + | + | +  | +
+**?**     | ? | + | * | *  | +
+**\***    | * | + | * | *  | +
+**\+**    | + | + | + | +  | +
 
 
 ### Intersect operator
 The deduced type resulting from `intersect` operator is
-achieved by 'merging' types of values `v1` and `v2` and `v3` and ... using the following rules:
-1. Item type is that of left hand side expression
-2. Occurence is deduced using the following table
+achieved by 'merging' node sequences of occurences `o1` and `o2` and ... using the following rules:
+```xquery
+<node():o1> intersect <node():o2> -> node():o2
+```
 
 v1 intersect v2  | 0 | 1 | ? | \* | \+
 ---              |---|---|---|--- |---
@@ -120,11 +119,8 @@ v1 intersect v2  | 0 | 1 | ? | \* | \+
 
 ### Except operator
 The deduced type resulting from `except` operator is
-achieved by 'merging' types of values `v1` and `v2` and `v3` and ... using the following rules:
-1. Item type is that of left hand side expression
-2. Occurence is deduced using the following table
-
-v1 except v2  | 0 | 1 | ? | \* | \+
+achieved by 'merging' node sequences of occurences `o1` and `o2` and ... using the following rules:
+o1 except o2  | 0 | 1 | ? | \* | \+
 ---           |---|---|---|--- |---
 **0**         | 0 | 0 | 0 | 0  | 0
 **1**         | 1 | ? | ? | ?  | ?
@@ -156,20 +152,16 @@ Concatenation operator takes as argument either an `empty-sequence` or `string` 
 <string?> || <string?> -> string
 ```
 
-
-
-
-
 ### Logical expressions
 Logical expressions take values that have effective boolean value as arguments and return `boolean` as the resulting type.
 ```xquery
-Effective Boolean Value Type or Effective Boolean Value Type
-Effective Boolean Value Type and Effective Boolean Value Type
+<Effective Boolean Value Type> or  <Effective Boolean Value Type> -> boolean
+<Effective Boolean Value Type> and <Effective Boolean Value Type> -> boolean
 ```
 
 #### Effective boolean value
-Type     |Has effective boolean value?
----      |---
+Type       | Has effective boolean value?
+---        | ---
 `any()`    | no
 `any()?`   | yes, whether or not item is present
 `any()*`   | yes, whether or not sequence has items
@@ -177,17 +169,17 @@ Type     |Has effective boolean value?
 `boolean()`| yes
 `number()` | yes, whether or not number equals zero
 `string()` | yes, whether or not string is not empty
-`node()`  | no
+`node()`   | no
 
 ### Value comparisons
 Value comparisons are used to compare directly item types.
 ```xquery
-T eq T -> boolean
-T ne T -> boolean
-T lt T -> boolean
-T gt T -> boolean
-T le T -> boolean
-T ge T -> boolean
+<T?> eq <T?> -> boolean
+<T?> ne <T?> -> boolean
+<T?> lt <T?> -> boolean
+<T?> gt <T?> -> boolean
+<T?> le <T?> -> boolean
+<T?> ge <T?> -> boolean
 ```
 T needs to be a single item type, same for both operands.
 
@@ -195,21 +187,21 @@ T needs to be a single item type, same for both operands.
 ### General comparisons
 General comparisons are expanded value comparisons. They work both for single item values as well as multi item values.
 ```xquery
-T* =  T* -> boolean
-T* != T* -> boolean
-T* >  T* -> boolean
-T* <  T* -> boolean
-T* >= T* -> boolean
-T* <= T* -> boolean
+<T*> =  <T*> -> boolean
+<T*> != <T*> -> boolean
+<T*> >  <T*> -> boolean
+<T*> <  <T*> -> boolean
+<T*> >= <T*> -> boolean
+<T*> <= <T*> -> boolean
 ```
 T can be any sequence type, as long as the item type can be compared by value.
 
 ### Node comparisons
 Node comparisons take one item sequences of `node()` and return `boolean`.
 ```xquery
-node() is node() -> boolean
-node() << node() -> boolean
-node() >> node() -> boolean
+<node()> is <node()> -> boolean
+<node()> << <node()> -> boolean
+<node()> >> <node()> -> boolean
 ```
 
 ### Arrow expression
@@ -221,7 +213,7 @@ Arg1Type => function(Arg1Type , *) as ReturnedType -> ReturnedType
 ### Simple map expression
 Simple map expressions are interpreted as a sequence type with the item type of the mapped expression, and the occurence same as that of the mapped type.
 ```xquery
-MappedType() ! ExpressionType -> ExpressionType
+MappedType()  ! ExpressionType -> ExpressionType
 MappedType()? ! ExpressionType -> ExpressionType?
 MappedType()* ! ExpressionType -> ExpressionType*
 MappedType()+ ! ExpressionType -> ExpressionType+

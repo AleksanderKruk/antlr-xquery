@@ -697,16 +697,14 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         if (ctx.CONCATENATION().isEmpty()) {
             return ctx.rangeExpr(0).accept(this);
         }
-        final XQuerySequenceType string = typeFactory.string();
-        return string;
-        // final var operationCount = ctx.CONCATENATION().size();
-        // for (int i = 0; i <= operationCount; i++) {
-        //     final var visitedType = ctx.rangeExpr(i).accept(this);
-        //     // if (!visitedType.castableAs(string)) {
-        //     //     addError(ctx.rangeExpr(i), "Operands of 'or expression' need to be castable to string");
-        //     // }
-        //     i++;
-        // }
+        final XQuerySequenceType anyItemOptional = typeFactory.zeroOrOne(typeFactory.itemAnyItem());
+        for (int i = 0; i < ctx.rangeExpr().size(); i++) {
+            final var visitedType = ctx.rangeExpr(i).accept(this);
+            if (!visitedType.isSubtypeOf(anyItemOptional)) {
+                addError(ctx.rangeExpr(i), "Operands of 'or expression' need to be subtype of item()?");
+            }
+        }
+        return typeFactory.string();
     }
 
     private XQuerySequenceType handleArrowExpr(final OrExprContext ctx) {
@@ -971,23 +969,59 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         final Token start = where.getStart();
         final Token stop = where.getStop();
         errors.add(String.format("[line:%s, column:%s] %s [/line:%s, column:%s]",
-                    start.getLine(), start.getCharPositionInLine(),
-                    message,
-                    stop.getLine(), stop.getCharPositionInLine()));
+                start.getLine(), start.getCharPositionInLine(),
+                message,
+                stop.getLine(), stop.getCharPositionInLine()));
     }
 
-    private void addError(final TerminalNode id, final String message) {
-        final var start = id.getSymbol();
-        errors.add(String.format("[line:%s, column:%s] %s", start.getLine(), start.getCharPositionInLine(), message));
+
+    record LineEndCharPosEnd(int lineEnd, int charPosEnd) {
     }
 
-    void addError(final ParserRuleContext where, final Function<ParserRuleContext, String> message) {
+    LineEndCharPosEnd getLineEndCharPosEnd(Token end) {
+        final var string = end.getText();
+        final int length = string.length();
+
+        int newlineCount = 0;
+        int lastNewlineIndex = 0;
+        for (int i = 0; i < length; i++) {
+            if (string.codePointAt(i) == '\n') {
+                newlineCount++;
+                lastNewlineIndex = i;
+            }
+        }
+
+        final int lineEnd = end.getLine() + newlineCount;
+        final int charPositionInLineEnd = newlineCount == 0 ?
+                end.getCharPositionInLine() + length : length - lastNewlineIndex;
+        return new LineEndCharPosEnd(lineEnd, charPositionInLineEnd);
+    }
+
+    private void addError(TerminalNode id, String message) {
+        final Token start = id.getSymbol();
+        final int line = start.getLine();
+        final int charPositionInLine = start.getCharPositionInLine();
+        final LineEndCharPosEnd lineEndCharPosEnd = getLineEndCharPosEnd(start);
+        final int lineEnd = lineEndCharPosEnd.lineEnd();
+        final int charPositionInLineEnd = lineEndCharPosEnd.charPosEnd();
+        String msg = String.format(
+            "[line:%s, column:%s] %s [/line:%s, column:%s]",
+                line, charPositionInLine, message, lineEnd, charPositionInLineEnd);
+        errors.add(msg);
+    }
+
+    void addError(ParserRuleContext where, Function<ParserRuleContext, String> message) {
         final Token start = where.getStart();
         final Token stop = where.getStop();
+        final int line = start.getLine();
+        final int charPositionInLine = start.getCharPositionInLine();
+        final LineEndCharPosEnd lineEndCharPosEnd = getLineEndCharPosEnd(stop);
+        final int lineEnd = lineEndCharPosEnd.lineEnd();
+        final int charPositionInLineEnd = lineEndCharPosEnd.charPosEnd();
         errors.add(String.format("[line:%s, column:%s] %s [/line:%s, column:%s]",
-                    start.getLine(), start.getCharPositionInLine(),
+                    line, charPositionInLine,
                     message,
-                    stop.getLine(), stop.getCharPositionInLine()));
+                    lineEnd, charPositionInLineEnd));
     }
 
     @Override

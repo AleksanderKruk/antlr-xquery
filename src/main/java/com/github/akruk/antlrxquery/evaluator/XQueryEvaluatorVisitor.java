@@ -1208,7 +1208,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             var expr = ctx.stringConcatExpr(i);
             XQueryValue exprValue = expr.accept(this);
             if (exprValue.isSequence() && exprValue.sequence().isEmpty())
-                return exprValue;
+                continue;
+            return exprValue;
         }
         return ctx.stringConcatExpr(length-1).accept(this);
     }

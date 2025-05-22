@@ -1080,6 +1080,26 @@ public class XQueryEvaluatorTest {
         """, baseFactory.number(-10));
     }
 
+    @Test
+    public void otherwiseExpression() throws XQueryUnsupportedOperation {
+        final List<XQueryValue> $123 = List.of(new XQueryNumber(1), new XQueryNumber(2), new XQueryNumber(3));
+        assertResult("""
+            () otherwise 1
+        """, new XQueryNumber(1));
+        assertResult("""
+            1 otherwise 2
+        """, new XQueryNumber(1));
+        assertResult("""
+            "napis" otherwise 2
+        """, new XQueryString("napis"));
+        assertResult("""
+            () otherwise () otherwise (1, 2, 3)
+        """, $123);
+        assertResult("""
+            (1, 2, 3) otherwise (4, 5, 6) otherwise (7, 8, 9)
+        """, $123);
+    }
+
     // Wildcards
     // All effective boolean values
 

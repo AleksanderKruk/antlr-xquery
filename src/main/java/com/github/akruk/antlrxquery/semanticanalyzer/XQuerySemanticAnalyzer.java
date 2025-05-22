@@ -406,7 +406,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     // TODO: ESCAPE characters
     // &lt ...
     private String unescapeString(final String str) {
-        return str.replace("\"\"", "\"").replace("''", "'");
+        return str.replace("\"\"", "\"")
+                  .replace("''", "'");
     }
 
     @Override

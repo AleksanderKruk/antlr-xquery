@@ -6,6 +6,8 @@ public interface XQuerySequenceType {
     XQuerySequenceType unionMerge(XQuerySequenceType other);
     XQuerySequenceType intersectionMerge(XQuerySequenceType other);
     XQuerySequenceType exceptionMerge(XQuerySequenceType other);
+    XQuerySequenceType typeAlternative(XQuerySequenceType other);
+    XQuerySequenceType addOptionality();
     // subtype(A, B) judgement
     boolean isSubtypeOf(XQuerySequenceType obj);
     boolean itemtypeIsSubtypeOf(XQuerySequenceType obj);

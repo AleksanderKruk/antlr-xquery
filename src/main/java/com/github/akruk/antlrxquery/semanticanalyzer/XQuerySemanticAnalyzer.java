@@ -791,12 +791,12 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         if (ctx.nodeComp() != null) {
             return handleNodeComp(ctx);
         }
-        return ctx.stringConcatExpr(0).accept(this);
+        return ctx.otherwiseExpr(0).accept(this);
     }
 
     private XQuerySequenceType handleGeneralComparison(final ComparisonExprContext ctx) {
-        final var leftHandSide = ctx.stringConcatExpr(0).accept(this);
-        final var rightHandSide = ctx.stringConcatExpr(1).accept(this);
+        final var leftHandSide = ctx.otherwiseExpr(0).accept(this);
+        final var rightHandSide = ctx.otherwiseExpr(1).accept(this);
         if (!leftHandSide.isSubtypeOf(rightHandSide)) {
             final String msg = String.format("The types: %s and %s in general comparison are not comparable",
                     leftHandSide.toString(), rightHandSide.toString());
@@ -808,13 +808,13 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
 
     private XQuerySequenceType handleValueComparison(final ComparisonExprContext ctx) {
-        final var leftHandSide = ctx.stringConcatExpr(0).accept(this);
-        final var rightHandSide = ctx.stringConcatExpr(1).accept(this);
+        final var leftHandSide = ctx.otherwiseExpr(0).accept(this);
+        final var rightHandSide = ctx.otherwiseExpr(1).accept(this);
         if (!leftHandSide.isOne()) {
-            addError(ctx.stringConcatExpr(0), "Left hand side of 'or expression' must be a one-item sequence");
+            addError(ctx.otherwiseExpr(0), "Left hand side of 'or expression' must be a one-item sequence");
         }
         if (!rightHandSide.isOne()) {
-            addError(ctx.stringConcatExpr(1), "Right hand side of 'or expression' must be a one-item sequence");
+            addError(ctx.otherwiseExpr(1), "Right hand side of 'or expression' must be a one-item sequence");
         }
         if (!leftHandSide.isSubtypeOf(rightHandSide)) {
             final String msg = String.format("The types: %s and %s in value comparison are not comparable",
@@ -826,13 +826,13 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
     private XQuerySequenceType handleNodeComp(final ComparisonExprContext ctx) {
         final var anyNode = typeFactory.anyNode();
-        final var visitedLeft = ctx.stringConcatExpr(0).accept(this);
+        final var visitedLeft = ctx.otherwiseExpr(0).accept(this);
         if (!visitedLeft.isSubtypeOf(anyNode)) {
-            addError(ctx.stringConcatExpr(0), "Operands of node comparison must be a one-item sequence of type 'element'");
+            addError(ctx.otherwiseExpr(0), "Operands of node comparison must be a one-item sequence of type 'element'");
         }
-        final var visitedRight = ctx.stringConcatExpr(1).accept(this);
+        final var visitedRight = ctx.otherwiseExpr(1).accept(this);
         if (!visitedRight.isSubtypeOf(anyNode)) {
-            addError(ctx.stringConcatExpr(1), "Operands of node comparison must be a one-item sequence of type 'element'");
+            addError(ctx.otherwiseExpr(1), "Operands of node comparison must be a one-item sequence of type 'element'");
         }
         return typeFactory.boolean_();
 
@@ -856,6 +856,20 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             }
         }
         return typeFactory.number();
+    }
+
+    @Override
+    public XQuerySequenceType visitOtherwiseExpr(OtherwiseExprContext ctx) {
+        if (ctx.OTHERWISE().isEmpty())
+            return ctx.stringConcatExpr(0).accept(this);
+        final int length = ctx.stringConcatExpr().size();
+        XQuerySequenceType merged = ctx.stringConcatExpr(0).accept(this);
+        for (int i = 1; i < length; i++) {
+            var expr = ctx.stringConcatExpr(i);
+            XQuerySequenceType exprType = expr.accept(this);
+            merged = exprType.typeAlternative(merged);
+        }
+        return merged;
     }
 
     @Override
@@ -993,14 +1007,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             trueType = ctx.unbracedActions().exprSingle(0).accept(this);
             falseType = ctx.unbracedActions().exprSingle(1).accept(this);
         }
-        if (trueType.equals(falseType))
-            return trueType;
-        if (trueType.isSubtypeOf(falseType))
-            return falseType;
-        if (falseType.isSubtypeOf(trueType))
-            return trueType;
         // TODO: Add union types
-        return typeFactory.oneOrMore(typeFactory.itemAnyItem());
+        return trueType.typeAlternative(falseType);
     }
 
 }

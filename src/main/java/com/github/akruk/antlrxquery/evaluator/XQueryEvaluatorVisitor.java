@@ -49,6 +49,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.NodeTestContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.OrExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.OrderByClauseContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.OrderSpecContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.OtherwiseExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PathExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PositionalVarContext;
@@ -310,6 +311,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
 
+
+
     // TODO: ESCAPE characters
     // &lt ...
     private String unescapeString(final String str) {
@@ -415,9 +418,9 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     private XQueryValue handleNodeComp(final ComparisonExprContext ctx) {
         try {
-            final var visitedLeft = ctx.stringConcatExpr(0).accept(this);
+            final var visitedLeft = ctx.otherwiseExpr(0).accept(this);
             final ParseTree nodeLeft = getSingleNode(visitedLeft);
-            final var visitedRight = ctx.stringConcatExpr(1).accept(this);
+            final var visitedRight = ctx.otherwiseExpr(1).accept(this);
             final ParseTree nodeRight = getSingleNode(visitedRight);
             final boolean result = switch (ctx.nodeComp().getText()) {
                 case "is" -> nodeLeft == nodeRight;
@@ -1160,7 +1163,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
                 return handleValueComparison(ctx);
             if (ctx.nodeComp() != null)
                 return handleNodeComp(ctx);
-            return ctx.stringConcatExpr(0).accept(this);
+            return ctx.otherwiseExpr(0).accept(this);
         } catch (final XQueryUnsupportedOperation e) {
             //TODO: add proper error support
             return null;
@@ -1168,8 +1171,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
     private XQueryValue handleGeneralComparison(final ComparisonExprContext ctx) throws XQueryUnsupportedOperation {
-        final var value = ctx.stringConcatExpr(0).accept(this);
-        final var visitedExpression = ctx.stringConcatExpr(1).accept(this);
+        final var value = ctx.otherwiseExpr(0).accept(this);
+        final var visitedExpression = ctx.otherwiseExpr(1).accept(this);
         return switch(ctx.generalComp().getText()) {
             case "=" -> value.generalEqual(valueFactory, visitedExpression);
             case "!=" -> value.generalUnequal(valueFactory, visitedExpression);
@@ -1182,8 +1185,8 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     }
 
     private XQueryValue handleValueComparison(final ComparisonExprContext ctx) throws XQueryUnsupportedOperation {
-        final var value = ctx.stringConcatExpr(0).accept(this);
-        final var visitedExpression = ctx.stringConcatExpr(1).accept(this);
+        final var value = ctx.otherwiseExpr(0).accept(this);
+        final var visitedExpression = ctx.otherwiseExpr(1).accept(this);
         return switch(ctx.valueComp().getText()) {
             case "eq" -> value.valueEqual(valueFactory, visitedExpression);
             case "ne" -> value.valueUnequal(valueFactory, visitedExpression);
@@ -1193,6 +1196,21 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             case "ge" -> value.valueGreaterEqual(valueFactory, visitedExpression);
             default -> null;
         };
+    }
+
+
+    @Override
+    public XQueryValue visitOtherwiseExpr(OtherwiseExprContext ctx) {
+        if (ctx.OTHERWISE().isEmpty())
+            return ctx.stringConcatExpr(0).accept(this);
+        final int length = ctx.stringConcatExpr().size();
+        for (int i = 0; i < length-1; i++) {
+            var expr = ctx.stringConcatExpr(i);
+            XQueryValue exprValue = expr.accept(this);
+            if (exprValue.isSequence() && exprValue.sequence().isEmpty())
+                return exprValue;
+        }
+        return ctx.stringConcatExpr(length-1).accept(this);
     }
 
 

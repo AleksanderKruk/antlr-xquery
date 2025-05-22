@@ -14,6 +14,7 @@ initialClause: forClause
             | letClause;
 intermediateClause: initialClause
                 | whereClause
+                | whileClause
                 | orderByClause
                 | countClause;
 forClause: FOR forBinding (COMMA forBinding)*;
@@ -24,6 +25,7 @@ letClause: LET letBinding (COMMA letBinding)*;
 letBinding: DOLLAR varName typeDeclaration? ASSIGNMENT_OP exprSingle;
 countClause: COUNT DOLLAR varName;
 whereClause: WHERE exprSingle;
+whileClause: WHILE exprSingle;
 orderByClause: ((ORDER BY) | (STABLE ORDER BY)) orderSpecList;
 orderSpecList: orderSpec (COMMA orderSpec)*;
 orderSpec: exprSingle orderModifier;

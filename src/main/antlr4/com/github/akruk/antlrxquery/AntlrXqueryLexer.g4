@@ -14,6 +14,7 @@ AT: 'at';
 LET: 'let';
 COUNT: 'count';
 WHERE: 'where';
+WHILE: 'while';
 DOLLAR: '$';
 CHILD: 'child';
 DESCENDANT: 'descendant';

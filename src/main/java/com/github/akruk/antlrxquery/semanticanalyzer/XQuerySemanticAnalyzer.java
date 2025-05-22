@@ -472,20 +472,23 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
 
 
-
-
-    private XQuerySequenceType handleRangeExpr(final OrExprContext ctx) {
-        // final var fromValue = ctx.orExpr(0).accept(this);
-        // final var toValue = ctx.orExpr(1).accept(this);
-        // final var number = typeFactory.number();
-        // if (!fromValue.isSubtypeOf(number)) {
-        //     addError(ctx.orExpr(0), "Wrong type in 'from' operand of 'range expression': '<number> to <number>'");
-        // }
-        // if (!toValue.isSubtypeOf(number)) {
-        //     addError(ctx.orExpr(1), "Wrong type in 'to' operand of range expression: '<number> to <number>'");
-        // }
+    @Override
+    public XQuerySequenceType visitRangeExpr(RangeExprContext ctx) {
+        if (ctx.TO() == null) {
+            return ctx.additiveExpr(0).accept(this);
+        }
+        final var fromValue = ctx.additiveExpr(0).accept(this);
+        final var toValue = ctx.additiveExpr(1).accept(this);
+        final var optionalNumber = typeFactory.zeroOrOne(typeFactory.itemNumber());
+        if (!fromValue.isSubtypeOf(optionalNumber)) {
+            addError(ctx.additiveExpr(0), "Wrong type in 'from' operand of 'range expression': '<number?> to <number?>'");
+        }
+        if (!toValue.isSubtypeOf(optionalNumber)) {
+            addError(ctx.additiveExpr(1), "Wrong type in 'to' operand of range expression: '<number?> to <number?>'");
+        }
         return typeFactory.zeroOrMore(typeFactory.itemNumber());
     }
+
 
     @Override
     public XQuerySequenceType visitPathExpr(final PathExprContext ctx) {

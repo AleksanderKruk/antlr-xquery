@@ -25,7 +25,7 @@ import java.math.MathContext;
 import java.util.List;
 import static org.junit.Assert.*;
 
-public class XQueryTest {
+public class XQueryEvaluatorTest {
     XQueryValueFactory baseFactory = new XQueryMemoizedValueFactory();
     public void assertResult(String xquery, String result) {
         var value = XQuery.evaluate(null, xquery, null);
@@ -67,6 +67,12 @@ public class XQueryTest {
 
 
     @Test
+    public void comments() {
+        assertResult("(:comment:) 1", BigDecimal.ONE);
+    }
+
+
+    @Test
     public void stringLiteralsDoubleQuote() {
         assertResult("\"string\"", "string");
     }
@@ -102,11 +108,9 @@ public class XQueryTest {
 
     @Test
     public void sequenceLiteral() {
-        String xquery = """
-                    (1, 2, 3)
-                """;
+        String xquery = "(1, 2, 3)";
         var value = XQuery.evaluate(null, xquery, null);
-        List<XQueryValue> expected = List.of(
+        final List<XQueryValue> expected = List.of(
                 baseFactory.number(1),
                 baseFactory.number(2),
                 baseFactory.number(3));
@@ -115,16 +119,13 @@ public class XQueryTest {
         var sequence = value.sequence();
         assertEquals(expected.size(), sequence.size());
         assertTrue(expected.get(0).numericValue().equals(sequence.get(0).numericValue()));
-        assertTrue(expected.get(0).numericValue().equals(sequence.get(0).numericValue()));
-        assertTrue(expected.get(0).numericValue().equals(sequence.get(0).numericValue()));
-
+        assertTrue(expected.get(1).numericValue().equals(sequence.get(1).numericValue()));
+        assertTrue(expected.get(2).numericValue().equals(sequence.get(2).numericValue()));
     }
 
     @Test
     public void atomization() {
-        String xquery = """
-                    (1, (2,3,4), ((5, 6), 7))
-                """;
+        String xquery = "(1, (2,3,4), ((5, 6), 7))";
         var value = XQuery.evaluate(null, xquery, null);
         List<XQueryValue> expected = List.of(
                 baseFactory.number(1),
@@ -830,6 +831,7 @@ public class XQueryTest {
         assertResult("substring-after('abcde', 'f')", new XQueryString(""));
     }
 
+    @Test
     public void rangeExpression() throws XQueryUnsupportedOperation {
         var i1 = baseFactory.number(1);
         var i2 = baseFactory.number(2);
@@ -839,6 +841,10 @@ public class XQueryTest {
         assertResult("1 to 5", List.of(i1, i2, i3, i4, i5));
         assertResult("4 to 3", List.of());
         assertResult("3 to 3", List.of(i3));
+        assertResult("4 to 3", List.of());
+        assertResult("() to ()", List.of());
+        assertResult("1 to ()", List.of());
+        assertResult("() to 3", List.of());
     }
 
 
@@ -979,6 +985,14 @@ public class XQueryTest {
                         baseFactory.number(4)));
     }
 
+    @Test
+    public void whileClause() throws XQueryUnsupportedOperation {
+        assertResult("for $x in (1 to 5) while $x < 4 return $x",
+                List.of(baseFactory.number(1),
+                        baseFactory.number(2),
+                        baseFactory.number(3)));
+    }
+
 
     @Test
     public void orderByAscending() throws XQueryUnsupportedOperation {
@@ -1008,6 +1022,12 @@ public class XQueryTest {
     public void ifExpression() throws XQueryUnsupportedOperation {
         assertResult("if ('non-empty-string') then 1 else 2", baseFactory.number(1));
         assertResult("if ('') then 1 else 2", baseFactory.number(2));
+    }
+
+    @Test
+    public void shortIfExpression() throws XQueryUnsupportedOperation {
+        assertResult("if ('non-empty-string') { 1 }", baseFactory.number(1));
+        assertResult("if ('') { 1 }", List.of());
     }
 
 

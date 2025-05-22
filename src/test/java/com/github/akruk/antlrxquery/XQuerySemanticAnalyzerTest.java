@@ -121,6 +121,93 @@ public class XQuerySemanticAnalyzerTest {
         // assertType("let $x as boolean := 1 return $x", typeFactory.boolean_());
     }
 
+    @Test
+    public void forClauseBinding() {
+        assertType("for $x in (1, 2, 3) return $x", typeFactory.oneOrMore(typeFactory.itemNumber()));
+    }
+
+    @Test
+    public void indexVariableBinding() {
+        assertType("for $x at $i in (1, 2, 3) return $i", typeFactory.oneOrMore(typeFactory.itemNumber()));
+    }
+
+
+    @Test
+    public void countVariableClause() {
+        assertType("""
+            for $x at $i in (1, 2, 3)
+            count $count
+            return $count
+        """, typeFactory.oneOrMore(typeFactory.itemNumber()));
+    }
+
+
+    @Test
+    public void whereClause() {
+        assertType("""
+            for $x at $i in (1, 2, 3)
+            where $x > 3
+            return $x
+        """, typeFactory.zeroOrMore(typeFactory.itemNumber()));
+    }
+
+    @Test
+    public void whileClause() {
+        assertType("""
+            for $x at $i in (1, 2, 3)
+            while $x > 3
+            return $x
+        """, typeFactory.zeroOrMore(typeFactory.itemNumber()));
+    }
+
+    @Test
+    public void rangeExpression() {
+        var numbers = typeFactory.zeroOrMore(typeFactory.itemNumber());
+        assertType("""
+            1 to 5
+        """, numbers);
+        assertType("""
+            let $x as number? := 5
+            return $x to 5
+        """, numbers);
+        assertType("""
+            let $x as number? := 5
+            return 5 to $x
+        """, numbers);
+        assertType("""
+            let $x as number? := 5,
+                $y as number? := 6
+            return $x to $y
+        """, numbers);
+        assertThereAreErrors("""
+            let $x as string? := "a",
+                $y as number? := 6
+            return $x to $y
+        """);
+        assertThereAreErrors("""
+            let $x as number? := 4,
+                $y as string? := "a"
+            return $x to $y
+        """);
+        assertThereAreErrors("""
+            let $x := (1, 2, 3, 4),
+                $y := (4, 5, 6, 7)
+            return $x to $y
+        """);
+        assertThereAreErrors("""
+            let $x as number+ := (1, 2, 3, 4),
+                $y as number+ := (4, 5, 6, 7)
+            return $x to $y
+        """);
+        assertThereAreErrors("""
+            let $x as item()+ := (1, 2, 3, 4),
+                $y as item()+ := (4, 5, 6, 7)
+            return $x to $y
+        """);
+    }
 
 
 }
+
+
+

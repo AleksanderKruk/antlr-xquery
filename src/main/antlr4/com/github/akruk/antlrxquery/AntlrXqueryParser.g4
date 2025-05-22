@@ -14,6 +14,7 @@ initialClause: forClause
             | letClause;
 intermediateClause: initialClause
                 | whereClause
+                | whileClause
                 | orderByClause
                 | countClause;
 forClause: FOR forBinding (COMMA forBinding)*;
@@ -24,13 +25,17 @@ letClause: LET letBinding (COMMA letBinding)*;
 letBinding: DOLLAR varName typeDeclaration? ASSIGNMENT_OP exprSingle;
 countClause: COUNT DOLLAR varName;
 whereClause: WHERE exprSingle;
+whileClause: WHILE exprSingle;
 orderByClause: ((ORDER BY) | (STABLE ORDER BY)) orderSpecList;
 orderSpecList: orderSpec (COMMA orderSpec)*;
 orderSpec: exprSingle orderModifier;
 orderModifier: (ASCENDING | DESCENDING)? (EMPTY (GREATEST | LEAST))?;
 returnClause: RETURN exprSingle;
 quantifiedExpr: (SOME | EVERY) DOLLAR varName typeDeclaration? IN exprSingle (COMMA DOLLAR varName typeDeclaration? IN exprSingle)* SATISFIES exprSingle;
-ifExpr: IF LPAREN condition=expr RPAREN THEN ifValue=exprSingle ELSE elseValue=exprSingle;
+ifExpr	:	IF LPAREN expr RPAREN (unbracedActions | bracedAction);
+unbracedActions	:	THEN exprSingle ELSE exprSingle;
+bracedAction	:	enclosedExpr;
+enclosedExpr	:	LCURLY expr? RCURLY;
 
 switchExpr: SWITCH  LPAREN switchedExpr=expr RPAREN switchCaseClause+ DEFAULT RETURN defaultExpr=exprSingle;
 switchCaseClause: (CASE switchCaseOperand)+ RETURN exprSingle;

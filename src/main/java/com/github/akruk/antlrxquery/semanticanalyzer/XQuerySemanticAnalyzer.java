@@ -322,6 +322,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     public XQuerySequenceType visitReturnClause(final ReturnClauseContext ctx) {
         final var type = ctx.exprSingle().accept(this);
         final var itemType = type.getItemType();
+        returnedOccurence = mergeFLWOROccurence(type);
         return switch (returnedOccurence) {
             case 0 -> typeFactory.emptySequence();
             case 1 -> typeFactory.one(itemType);

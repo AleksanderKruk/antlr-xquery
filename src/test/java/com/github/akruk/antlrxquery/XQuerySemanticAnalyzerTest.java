@@ -53,13 +53,13 @@ public class XQuerySemanticAnalyzerTest {
 
     void assertType(AnalysisResult result, XQuerySequenceType expectedType) {
         assertNoErrors(result);
-        assertTrue(result.expressionType.isSubtypeOf(expectedType));
+        assertTrue(result.expressionType.equals(expectedType));
     }
 
     void assertType(String xquery, XQuerySequenceType expectedType) {
         var analysisResult = analyze(xquery);
         assertNoErrors(analysisResult);
-        assertTrue(analysisResult.expressionType.isSubtypeOf(expectedType));
+        assertTrue(analysisResult.expressionType.equals(expectedType));
     }
 
 
@@ -152,47 +152,49 @@ public class XQuerySemanticAnalyzerTest {
 
     @Test
     public void rangeExpression() {
-        var numbers = typeFactory.zeroOrMore(typeFactory.itemNumber());
+        // final var number$one = typeFactory.one(typeFactory.itemNumber());
+        // final var number$zeroOrOne = typeFactory.zeroOrOne(typeFactory.itemNumber());
+        final var numbers = typeFactory.zeroOrMore(typeFactory.itemNumber());
         assertType("""
             1 to 5
         """, numbers);
         assertType("""
             let $x as number? := 5
-            return $x to 5
+            return ($x to 5)
         """, numbers);
         assertType("""
             let $x as number? := 5
-            return 5 to $x
+            return (5 to $x)
         """, numbers);
         assertType("""
             let $x as number? := 5,
                 $y as number? := 6
-            return $x to $y
+            return ($x to $y)
         """, numbers);
         assertThereAreErrors("""
             let $x as string? := "a",
                 $y as number? := 6
-            return $x to $y
+            return ($x to $y)
         """);
         assertThereAreErrors("""
             let $x as number? := 4,
                 $y as string? := "a"
-            return $x to $y
+            return ($x to $y)
         """);
         assertThereAreErrors("""
             let $x := (1, 2, 3, 4),
                 $y := (4, 5, 6, 7)
-            return $x to $y
+            return ($x to $y)
         """);
         assertThereAreErrors("""
             let $x as number+ := (1, 2, 3, 4),
                 $y as number+ := (4, 5, 6, 7)
-            return $x to $y
+            return ($x to $y)
         """);
         assertThereAreErrors("""
             let $x as item()+ := (1, 2, 3, 4),
                 $y as item()+ := (4, 5, 6, 7)
-            return $x to $y
+            return ($x to $y)
         """);
     }
 

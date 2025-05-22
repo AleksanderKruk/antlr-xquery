@@ -903,6 +903,14 @@ public class XQueryEvaluatorTest {
     }
 
     @Test
+    public void itemGetterIndices() throws XQueryUnsupportedOperation {
+        assertResult("(1, 2, 3, 4, 5, 6)[()]", List.of());
+        assertResult("(1, 2, 3, 4, 5, 6)[3 to 5]", List.of( new XQueryNumber(3),
+                                                                   new XQueryNumber(4),
+                                                                   new XQueryNumber(5)));
+    }
+
+    @Test
     public void positionFunction() throws XQueryUnsupportedOperation {
         assertResult("(1, 2, 3)[position() eq 2][1]", new XQueryNumber(2));
         assertResult("(1, 2, 3)[position() eq 2]", List.of(new XQueryNumber(2)));

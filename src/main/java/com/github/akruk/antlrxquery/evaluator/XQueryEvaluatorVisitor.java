@@ -616,6 +616,37 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         return value;
     }
 
+    XQueryValue handleAsItemGetter(final List<XQueryValue> sequence,
+                                    final XQueryValue visitedExpression)
+    {
+        if (visitedExpression.isNumericValue()) {
+            final int i = visitedExpression.numericValue().intValue() - 1;
+            if (i >= sequence.size() || i < 0) {
+                return valueFactory.emptySequence();
+            }
+            return sequence.get(i);
+        }
+        if (visitedExpression.isSequence()) {
+            if (visitedExpression.sequence().isEmpty())
+                return valueFactory.emptySequence();
+            final boolean allNumericValues = visitedExpression.sequence()
+                                                                .stream()
+                                                                .allMatch(XQueryValue::isNumericValue);
+            if (allNumericValues) {
+                List<XQueryValue> items = new ArrayList<>();
+                for (final var sequenceIndex : visitedExpression.sequence()) {
+                    final int i = sequenceIndex.numericValue().intValue() - 1;
+                    if (i >= sequence.size() || i < 0) {
+                        continue;
+                    }
+                    items.add(sequence.get(i));
+                }
+                return valueFactory.sequence(items);
+            }
+        }
+        return null;
+    }
+
     @Override
     public XQueryValue visitPredicate(final PredicateContext ctx) {
         final var contextValue = context.getItem();
@@ -631,15 +662,13 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         for (final var contextItem : sequence) {
             context.setItem(contextItem);
             context.setPosition(index);
-            final var visitedExpression = ctx.expr().accept(this);
-            if (visitedExpression.isNumericValue()) {
+            final XQueryValue visitedExpression = ctx.expr().accept(this);
+            final XQueryValue items = handleAsItemGetter(sequence, visitedExpression);
+            if (items != null) {
                 context = savedContext;
-                final int i = visitedExpression.numericValue().intValue() - 1;
-                if (i >= sequence.size() || i < 0) {
-                    return valueFactory.emptySequence();
-                }
-                return sequence.get(i);
+                return items;
             }
+
             if (visitedExpression.effectiveBooleanValue()) {
                 filteredValues.add(contextItem);
             }

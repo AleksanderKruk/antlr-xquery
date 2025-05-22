@@ -28,6 +28,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.CastableExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ComparisonExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ContextItemExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.CountClauseContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.EnclosedExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ExprSingleContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FLWORExprContext;
@@ -440,6 +441,16 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             nodeLeft = sequenceLeft.get(0).node();
         }
         return nodeLeft;
+    }
+
+
+
+
+    @Override
+    public XQueryValue visitEnclosedExpr(EnclosedExprContext ctx) {
+        if (ctx.expr() == null)
+            return valueFactory.emptySequence();
+        return ctx.expr().accept(this);
     }
 
     @Override
@@ -1445,11 +1456,22 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     @Override
     public XQueryValue visitIfExpr(final IfExprContext ctx) {
-        final var visitedExpression = ctx.condition.accept(this);
-        if (visitedExpression.effectiveBooleanValue())
-            return ctx.ifValue.accept(this);
-        else
-            return ctx.elseValue.accept(this);
+        final var condition = ctx.expr().accept(this);
+        final var effectiveBooleanValue = condition.effectiveBooleanValue();
+        final var isBraced = ctx.bracedAction() != null;
+        if (isBraced) {
+            if (effectiveBooleanValue) {
+                return ctx.bracedAction().enclosedExpr().accept(this);
+            } else {
+                return valueFactory.emptySequence();
+            }
+        } else {
+            if (effectiveBooleanValue)
+                return ctx.unbracedActions().exprSingle(0).accept(this);
+            else
+                return ctx.unbracedActions().exprSingle(1).accept(this);
+        }
+
     }
 
     @Override

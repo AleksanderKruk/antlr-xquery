@@ -976,33 +976,31 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
     @Override
     public XQuerySequenceType visitIfExpr(final IfExprContext ctx) {
-        final var visitedType = ctx.condition.accept(this);
-        if (!visitedType.hasEffectiveBooleanValue()) {
+        final var conditionType = ctx.expr().accept(this);
+        if (!conditionType.hasEffectiveBooleanValue()) {
             final var msg = String.format(
                     "If condition must have an effective boolean value and the type %s doesn't have one",
-                    visitedType.toString());
+                    conditionType.toString());
             addError(ctx, msg);
         }
-        final var trueType = ctx.ifValue.accept(this);
-        final var falseType = ctx.elseValue.accept(this);
+        XQuerySequenceType trueType = null;
+        XQuerySequenceType falseType = null;
+        if (ctx.bracedAction() != null) {
+            trueType = ctx.bracedAction().enclosedExpr().accept(this);
+            falseType = typeFactory.emptySequence();
+        }
+        else {
+            trueType = ctx.unbracedActions().exprSingle(0).accept(this);
+            falseType = ctx.unbracedActions().exprSingle(1).accept(this);
+        }
         if (trueType.equals(falseType))
             return trueType;
         if (trueType.isSubtypeOf(falseType))
             return falseType;
         if (falseType.isSubtypeOf(trueType))
             return trueType;
-        // Add union types
-        // return typeFactory.any();
-        return null;
+        // TODO: Add union types
+        return typeFactory.oneOrMore(typeFactory.itemAnyItem());
     }
-
-    private void entypeVariables(final List<TupleElementType> tuple) {
-        for (final var e : tuple) {
-            contextManager.entypeVariable(e.name, e.type);
-            if (e.positionalName != null)
-                contextManager.entypeVariable(e.positionalName, typeFactory.number());
-        }
-    }
-
 
 }

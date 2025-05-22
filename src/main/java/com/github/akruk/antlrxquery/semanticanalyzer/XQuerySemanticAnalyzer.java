@@ -269,12 +269,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         if (!filteringExpressionType.hasEffectiveBooleanValue()) {
             addError(filteringExpression, "Filtering expression must have effective boolean value");
         }
-        returnedOccurence = switch(returnedOccurence){
-            case 0 -> 0;
-            case 1 -> 2;
-            case 2 -> 2;
-            default -> 3;
-        };
+        returnedOccurence = addOptionality(returnedOccurence);
         return null;
     }
 
@@ -333,6 +328,29 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             case 2 -> typeFactory.zeroOrOne(itemType);
             case 3 -> typeFactory.zeroOrMore(itemType);
             default -> typeFactory.oneOrMore(itemType);
+        };
+    }
+
+    @Override
+    public XQuerySequenceType visitWhileClause(WhileClauseContext ctx) {
+        final var filteringExpression = ctx.exprSingle();
+        final var filteringExpressionType = filteringExpression.accept(this);
+        if (!filteringExpressionType.hasEffectiveBooleanValue()) {
+            addError(filteringExpression, "Filtering expression must have effective boolean value");
+        }
+        returnedOccurence = addOptionality(returnedOccurence);
+        return null;
+
+    }
+
+
+
+    private int addOptionality(int occurence) {
+        return switch(returnedOccurence){
+            case 0 -> 0;
+            case 1 -> 2;
+            case 2 -> 2;
+            default -> 3;
         };
     }
 

@@ -70,6 +70,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.UnionExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarRefContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.WhereClauseContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.WhileClauseContext;
 import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.XQueryDynamicContextManager;
 import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.baseimplementation.XQueryBaseDynamicContextManager;
 import com.github.akruk.antlrxquery.evaluator.functioncaller.XQueryFunctionCaller;
@@ -1431,6 +1432,17 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
             default -> null;
         };
     }
+
+    @Override
+    public XQueryValue visitWhileClause(WhileClauseContext ctx) {
+        final var filteringExpression = ctx.exprSingle();
+        visitedTupleStream = visitedTupleStream.takeWhile(tuple -> {
+            XQueryValue filter = filteringExpression.accept(this);
+            return filter.effectiveBooleanValue();
+        });
+        return null;
+    }
+
 
     @Override
     public XQueryValue visitIfExpr(IfExprContext ctx) {

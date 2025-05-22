@@ -151,4 +151,16 @@ public class XQuerySemanticAnalyzerTest {
         """, typeFactory.zeroOrMore(typeFactory.itemNumber()));
     }
 
+    @Test
+    public void whileClause() {
+        assertType("""
+            for $x at $i in (1, 2, 3)
+            while $x > 3
+            return $x
+        """, typeFactory.zeroOrMore(typeFactory.itemNumber()));
+    }
+
+
+
+
 }

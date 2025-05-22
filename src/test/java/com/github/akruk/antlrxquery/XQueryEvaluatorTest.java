@@ -25,7 +25,7 @@ import java.math.MathContext;
 import java.util.List;
 import static org.junit.Assert.*;
 
-public class XQueryTest {
+public class XQueryEvaluatorTest {
     XQueryValueFactory baseFactory = new XQueryMemoizedValueFactory();
     public void assertResult(String xquery, String result) {
         var value = XQuery.evaluate(null, xquery, null);
@@ -978,6 +978,14 @@ public class XQueryTest {
         assertResult("for $x in (1 to 5) where ($x mod 2) eq 0 return $x",
                 List.of(baseFactory.number(2),
                         baseFactory.number(4)));
+    }
+
+    @Test
+    public void whileClause() throws XQueryUnsupportedOperation {
+        assertResult("for $x in (1 to 5) while $x < 4 return $x",
+                List.of(baseFactory.number(1),
+                        baseFactory.number(2),
+                        baseFactory.number(3)));
     }
 
 

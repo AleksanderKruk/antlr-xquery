@@ -709,9 +709,6 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         if (canBeTokenName.test(name)) {
             // test for token type
             int tokenType = parser.getTokenType(name);
-            // TODO: error values
-            if (tokenType == Token.INVALID_TYPE)
-                return null;
             for (ParseTree node : stepNodes) {
                 // We skip nodes that are not terminal
                 // i.e. are not tokens
@@ -726,8 +723,6 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
         }
         else { // test for rule
             int ruleIndex = parser.getRuleIndex(name);
-            // TODO: error values
-            if (ruleIndex == -1) return null;
             for (ParseTree node : stepNodes) {
                 // Token nodes are being skipped
                 if (!(node instanceof ParserRuleContext))

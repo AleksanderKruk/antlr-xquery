@@ -21,7 +21,7 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         this.itemType = itemType;
         this.occurence = occurence;
         this.factoryByOccurence = new Function[XQueryOccurence.values().length];
-        this.factoryByOccurence[XQueryOccurence.ZERO.ordinal()] = i -> typeFactory.emptySequence();
+        this.factoryByOccurence[XQueryOccurence.ZERO.ordinal()] = _ -> typeFactory.emptySequence();
         this.factoryByOccurence[XQueryOccurence.ONE.ordinal()] = i -> typeFactory.one((XQueryItemType)i);
         this.factoryByOccurence[XQueryOccurence.ZERO_OR_ONE.ordinal()] = i -> typeFactory.zeroOrOne((XQueryItemType)i);
         this.factoryByOccurence[XQueryOccurence.ZERO_OR_MORE.ordinal()] = i -> typeFactory.zeroOrMore((XQueryItemType)i);
@@ -50,8 +50,8 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         return true;
     }
 
-    private static final BiPredicate<XQueryEnumSequenceType, XQueryEnumSequenceType> alwaysTrue = (t1, t2) -> true;
-    private static final BiPredicate<XQueryEnumSequenceType, XQueryEnumSequenceType> alwaysFalse = (t1, t2) -> false;
+    private static final BiPredicate<XQueryEnumSequenceType, XQueryEnumSequenceType> alwaysTrue = (_, _) -> true;
+    private static final BiPredicate<XQueryEnumSequenceType, XQueryEnumSequenceType> alwaysFalse = (_, _) -> false;
     private static final int occurenceCount = XQueryOccurence.values().length;
     @SuppressWarnings("rawtypes")
 	private static final BiPredicate[][] isSubtypeOf;
@@ -136,7 +136,7 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
     @SuppressWarnings("rawtypes")
 	private static final Function[][] mergedOccurences = new Function[XQueryOccurence.values().length][XQueryOccurence.values().length];
     private static final Function<XQueryTypeFactory, Function<XQueryItemType, XQuerySequenceType>> zero =
-        typeFactory -> (item) -> typeFactory.emptySequence();
+        typeFactory -> (_) -> typeFactory.emptySequence();
     private static final Function<XQueryTypeFactory, Function<XQueryItemType, XQuerySequenceType>> one =
         typeFactory -> (item) -> typeFactory.one(item);
     private static final Function<XQueryTypeFactory, Function<XQueryItemType, XQuerySequenceType>> zeroOrOne
@@ -191,7 +191,7 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         final var enumItemType1 = this.getItemType();
         final var enumItemType2 = other.getItemType();
         final var sequenceGetterWithoutFactory = mergedOccurences[enumType1.getOccurence().ordinal()][enumType2.getOccurence().ordinal()];
-        @SuppressWarnings("rawtypes")
+        @SuppressWarnings({ "rawtypes", "unchecked" })
 		Function<XQueryItemType, XQuerySequenceType> sequenceGetter = (Function) sequenceGetterWithoutFactory.apply(typeFactory);
         if (enumItemType1 == null && enumItemType2 == null) {
             return sequenceGetter.apply(typeFactory.itemAnyItem());
@@ -285,6 +285,7 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
 
     @SuppressWarnings("rawtypes")
 	final Function[] factoryByOccurence;
+    @SuppressWarnings("unchecked")
     @Override
     public XQuerySequenceType typeAlternative(XQuerySequenceType other) {
         final var other_ = (XQueryEnumSequenceType) other;

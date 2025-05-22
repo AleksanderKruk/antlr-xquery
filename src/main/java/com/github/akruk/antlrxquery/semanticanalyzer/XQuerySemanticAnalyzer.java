@@ -20,7 +20,6 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.*;
 import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.XQuerySemanticContextManager;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionCaller;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionCaller.CallAnalysisResult;
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
@@ -513,7 +512,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         if (ctx.pathOperator().isEmpty()) {
             return ctx.stepExpr(0).accept(this);
         }
-        final XQuerySequenceType visitedNodeSequence = ctx.stepExpr(0).accept(this);
+        // final XQuerySequenceType visitedNodeSequence = ctx.stepExpr(0).accept(this);
         final var operationCount = ctx.pathOperator().size();
         for (int i = 1; i <= operationCount; i++) {
             // matchedNodes = switch (ctx.pathOperator(i-1).getText()) {
@@ -572,11 +571,9 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
         final var savedArgs = saveVisitedArguments();
         var value = ctx.primaryExpr().accept(this);
-        int index = 1;
         for (final var postfix : ctx.postfix()) {
             context.setType(value);
             value = postfix.accept(this);
-            index++;
         }
         visitedArgumentTypesList = savedArgs;
         return value;
@@ -621,11 +618,11 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         return contextType.addOptionality();
     }
 
-    private XQueryVisitingSemanticContext saveContext() {
-        var saved = context;
-        context = new XQueryVisitingSemanticContext();
-        return saved;
-    }
+    // private XQueryVisitingSemanticContext saveContext() {
+    //     var saved = context;
+    //     context = new XQueryVisitingSemanticContext();
+    //     return saved;
+    // }
 
 
 
@@ -732,7 +729,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     @Override
     public XQuerySequenceType visitArrowFunctionSpecifier(final ArrowFunctionSpecifierContext ctx) {
         if (ctx.ID() != null) {
-            final CallAnalysisResult call = functionCaller.getFunctionReference(ctx.ID().getText(), typeFactory);
+            // final CallAnalysisResult call = functionCaller.getFunctionReference(ctx.ID().getText(), typeFactory);
         }
 
 

@@ -42,6 +42,8 @@ LBRACKET: '[';
 RBRACKET: ']';
 LPAREN: '(';
 RPAREN: ')';
+LCURLY: '{';
+RCURLY: '}';
 COLONSTAR: ':*';
 STARCOLON: '*:';
 ALLOWING: 'allowing';

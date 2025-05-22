@@ -142,4 +142,13 @@ public class XQuerySemanticAnalyzerTest {
     }
 
 
+    @Test
+    public void whereClause() {
+        assertType("""
+            for $x at $i in (1, 2, 3)
+            where $x > 3
+            return $x
+        """, typeFactory.zeroOrMore(typeFactory.itemNumber()));
+    }
+
 }

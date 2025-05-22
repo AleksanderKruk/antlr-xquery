@@ -264,12 +264,17 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
     @Override
     public XQuerySequenceType visitWhereClause(final WhereClauseContext ctx) {
-        // final var filteringExpression = ctx.exprSingle();
-        // final var filteringExpressionType = filteringExpression.accept(this);
-        // if (!filteringExpressionType.hasEffectiveBooleanValue()) {
-        //     addError(filteringExpression, "Filtering expression must have effective boolean value");
-        // }
-        // return filteringExpressionType;
+        final var filteringExpression = ctx.exprSingle();
+        final var filteringExpressionType = filteringExpression.accept(this);
+        if (!filteringExpressionType.hasEffectiveBooleanValue()) {
+            addError(filteringExpression, "Filtering expression must have effective boolean value");
+        }
+        returnedOccurence = switch(returnedOccurence){
+            case 0 -> 0;
+            case 1 -> 2;
+            case 2 -> 2;
+            default -> 3;
+        };
         return null;
     }
 

@@ -831,6 +831,7 @@ public class XQueryEvaluatorTest {
         assertResult("substring-after('abcde', 'f')", new XQueryString(""));
     }
 
+    @Test
     public void rangeExpression() throws XQueryUnsupportedOperation {
         var i1 = baseFactory.number(1);
         var i2 = baseFactory.number(2);
@@ -840,6 +841,10 @@ public class XQueryEvaluatorTest {
         assertResult("1 to 5", List.of(i1, i2, i3, i4, i5));
         assertResult("4 to 3", List.of());
         assertResult("3 to 3", List.of(i3));
+        assertResult("4 to 3", List.of());
+        assertResult("() to ()", List.of());
+        assertResult("1 to ()", List.of());
+        assertResult("() to 3", List.of());
     }
 
 

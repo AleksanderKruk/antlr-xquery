@@ -19,6 +19,7 @@ DOLLAR: '$';
 CHILD: 'child';
 DESCENDANT: 'descendant';
 SELF: 'self';
+OTHERWISE: 'otherwise';
 DESCENDANT_OR_SELF: 'descendant-or-self';
 ANCESTOR_OR_SELF: 'ancestor-or-self';
 FOLLOWING_OR_SELF: 'following-or-self';

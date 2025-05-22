@@ -33,6 +33,7 @@ orderModifier: (ASCENDING | DESCENDING)? (EMPTY (GREATEST | LEAST))?;
 returnClause: RETURN exprSingle;
 quantifiedExpr: (SOME | EVERY) DOLLAR varName typeDeclaration? IN exprSingle (COMMA DOLLAR varName typeDeclaration? IN exprSingle)* SATISFIES exprSingle;
 ifExpr	:	IF LPAREN expr RPAREN (unbracedActions | bracedAction);
+otherwiseExpr	:	stringConcatExpr (OTHERWISE stringConcatExpr)*;
 unbracedActions	:	THEN exprSingle ELSE exprSingle;
 bracedAction	:	enclosedExpr;
 enclosedExpr	:	LCURLY expr? RCURLY;
@@ -43,7 +44,7 @@ switchCaseOperand: exprSingle;
 
 orExpr: andExpr ( OR andExpr)*;
 andExpr: comparisonExpr ( AND comparisonExpr )*;
-comparisonExpr: stringConcatExpr  ((valueComp | generalComp | nodeComp) stringConcatExpr)?;
+comparisonExpr: otherwiseExpr ((valueComp | generalComp | nodeComp) otherwiseExpr)?;
 stringConcatExpr: rangeExpr ( CONCATENATION rangeExpr )*;
 rangeExpr: additiveExpr (TO additiveExpr)?;
 additiveExpr: multiplicativeExpr (additiveOperator multiplicativeExpr)*;

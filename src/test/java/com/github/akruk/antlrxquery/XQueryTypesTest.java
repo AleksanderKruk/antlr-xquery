@@ -553,8 +553,10 @@ public class XQueryTypesTest {
         final var tested = itemRecordAny;
         final var numberToItem = typeFactory.itemFunction(typeFactory.anyItem(), List.of(typeFactory.number()));
         final var numberToString = typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.number()));
-        final var itemFooBarHoo = typeFactory.itemRecord(Map.of("foo", typeFactory.string(), "bar", typeFactory.string(), "hoo", typeFactory.string()));
-        final var itemFooBarNum = typeFactory.itemRecord(Map.of("foo", typeFactory.number(), "bar", typeFactory.string()));
+        final var itemFooBarHoo = typeFactory.itemRecord(
+                Map.of("foo", typeFactory.string(), "bar", typeFactory.string(), "hoo", typeFactory.string()));
+        final var itemFooBarNum = typeFactory
+                .itemRecord(Map.of("foo", typeFactory.number(), "bar", typeFactory.string()));
 
         assertFalse(tested.itemtypeIsSubtypeOf(itemError));
         assertTrue(tested.itemtypeIsSubtypeOf(itemAnyItem));
@@ -570,7 +572,6 @@ public class XQueryTypesTest {
         assertFalse(tested.itemtypeIsSubtypeOf(typeFactory.itemMap(itemAnyItem, typeFactory.number())));
         assertFalse(tested.itemtypeIsSubtypeOf(typeFactory.itemMap(itemNumber, typeFactory.number())));
 
-
         assertFalse(tested.itemtypeIsSubtypeOf(itemAnyArray));
         assertTrue(numberToItem.itemtypeIsSubtypeOf(itemAnyArray));
         assertFalse(tested.itemtypeIsSubtypeOf(typeFactory.itemArray(typeFactory.string())));
@@ -579,14 +580,22 @@ public class XQueryTypesTest {
 
         assertTrue(tested.itemtypeIsSubtypeOf(itemAnyFunction));
         assertFalse(tested.itemtypeIsSubtypeOf(typeFactory.itemFunction(typeFactory.anyItem(), List.of())));
-        assertTrue(tested.itemtypeIsSubtypeOf(typeFactory.itemFunction(typeFactory.anyItem(), List.of(typeFactory.anyItem()))));
-        assertTrue(tested.itemtypeIsSubtypeOf(typeFactory.itemFunction(typeFactory.anyItem(), List.of(typeFactory.string()))));
-        assertFalse(tested.itemtypeIsSubtypeOf(typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.string()))));
-        assertTrue(itemRecordString.itemtypeIsSubtypeOf(typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.string()))));
-        assertFalse(tested.itemtypeIsSubtypeOf(typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.number()))));
-        assertTrue(itemRecordString.itemtypeIsSubtypeOf(typeFactory.itemFunction(typeFactory.oneOrMore(itemString), List.of(typeFactory.string()))));
-        assertFalse(tested.itemtypeIsSubtypeOf(typeFactory.itemFunction(typeFactory.number(), List.of(typeFactory.number()))));
-        assertFalse(tested.itemtypeIsSubtypeOf(typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.string(), typeFactory.string()))));
+        assertTrue(tested
+                .itemtypeIsSubtypeOf(typeFactory.itemFunction(typeFactory.anyItem(), List.of(typeFactory.anyItem()))));
+        assertTrue(tested
+                .itemtypeIsSubtypeOf(typeFactory.itemFunction(typeFactory.anyItem(), List.of(typeFactory.string()))));
+        assertFalse(tested
+                .itemtypeIsSubtypeOf(typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.string()))));
+        assertTrue(itemRecordString
+                .itemtypeIsSubtypeOf(typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.string()))));
+        assertFalse(tested
+                .itemtypeIsSubtypeOf(typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.number()))));
+        assertTrue(itemRecordString.itemtypeIsSubtypeOf(
+                typeFactory.itemFunction(typeFactory.oneOrMore(itemString), List.of(typeFactory.string()))));
+        assertFalse(tested
+                .itemtypeIsSubtypeOf(typeFactory.itemFunction(typeFactory.number(), List.of(typeFactory.number()))));
+        assertFalse(tested.itemtypeIsSubtypeOf(
+                typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.string(), typeFactory.string()))));
 
         assertTrue(tested.itemtypeIsSubtypeOf(itemRecordAny));
         assertTrue(itemRecordString.itemtypeIsSubtypeOf(itemRecordAny));
@@ -604,6 +613,73 @@ public class XQueryTypesTest {
         assertFalse(tested.itemtypeIsSubtypeOf(itemABCenum));
         assertFalse(tested.itemtypeIsSubtypeOf(itemABCDenum));
     }
+
+    @Test
+    public void typeAlternatives() {
+        final var empty = typeFactory.emptySequence();
+        final var numberZeroOrOne = typeFactory.zeroOrOne(typeFactory.itemNumber());
+        final var numberZeroOrMore = typeFactory.zeroOrMore(typeFactory.itemNumber());
+        final var numberOneOrMore = typeFactory.oneOrMore(typeFactory.itemNumber());
+        final var $00 = empty.typeAlternative(empty);
+        final var $01 = empty.typeAlternative(number);
+        final var $0_zeroOrOne = empty.typeAlternative(numberZeroOrOne);
+        final var $0_zeroOrMore = empty.typeAlternative(numberZeroOrMore);
+        final var $0_oneOrMore = empty.typeAlternative(numberOneOrMore);
+        assertEquals($00, empty);
+        assertEquals($01, numberZeroOrOne);
+        assertEquals($0_zeroOrOne, numberZeroOrOne);
+        assertEquals($0_zeroOrMore, numberZeroOrMore);
+        assertEquals($0_oneOrMore, numberZeroOrMore);
+
+        final var $10 = number.typeAlternative(empty);
+        final var $11 = number.typeAlternative(number);
+        final var $1_zeroOrOne = number.typeAlternative(numberZeroOrOne);
+        final var $1_zeroOrMore = number.typeAlternative(numberZeroOrMore);
+        final var $1_oneOrMore = number.typeAlternative(numberOneOrMore);
+
+        assertEquals($10, numberZeroOrOne);
+        assertEquals($11, number);
+        assertEquals($1_zeroOrOne, numberZeroOrOne);
+        assertEquals($1_zeroOrMore, numberZeroOrMore);
+        assertEquals($1_oneOrMore, numberOneOrMore);
+
+        final var $zeroOrOne_0 = numberZeroOrOne.typeAlternative(empty);
+        final var $zeroOrOne_1 = numberZeroOrOne.typeAlternative(number);
+        final var $zeroOrOne_zeroOrOne = numberZeroOrOne.typeAlternative(numberZeroOrOne);
+        final var $zeroOrOne_zeroOrMore = numberZeroOrOne.typeAlternative(numberZeroOrMore);
+        final var $zeroOrOne_oneOrMore = numberZeroOrOne.typeAlternative(numberOneOrMore);
+
+        assertEquals($zeroOrOne_0, numberZeroOrOne);
+        assertEquals($zeroOrOne_1, numberZeroOrOne);
+        assertEquals($zeroOrOne_zeroOrOne, numberZeroOrOne);
+        assertEquals($zeroOrOne_zeroOrMore, numberZeroOrMore);
+        assertEquals($zeroOrOne_oneOrMore, numberZeroOrMore);
+
+        final var $zeroOrMore_0 = numberZeroOrMore.typeAlternative(empty);
+        final var $zeroOrMore_1 = numberZeroOrMore.typeAlternative(number);
+        final var $zeroOrMore_zeroOrOne = numberZeroOrMore.typeAlternative(numberZeroOrOne);
+        final var $zeroOrMore_zeroOrMore = numberZeroOrMore.typeAlternative(numberZeroOrMore);
+        final var $zeroOrMore_oneOrMore = numberZeroOrMore.typeAlternative(numberOneOrMore);
+
+        assertEquals($zeroOrMore_0, numberZeroOrMore);
+        assertEquals($zeroOrMore_1, numberZeroOrMore);
+        assertEquals($zeroOrMore_zeroOrOne, numberZeroOrMore);
+        assertEquals($zeroOrMore_zeroOrMore, numberZeroOrMore);
+        assertEquals($zeroOrMore_oneOrMore, numberZeroOrMore);
+
+        final var $oneOrMore_0 = numberOneOrMore.typeAlternative(empty);
+        final var $oneOrMore_1 = numberOneOrMore.typeAlternative(number);
+        final var $oneOrMore_zeroOrOne = numberOneOrMore.typeAlternative(numberZeroOrOne);
+        final var $oneOrMore_zeroOrMore = numberOneOrMore.typeAlternative(numberZeroOrMore);
+        final var $oneOrMore_oneOrMore = numberOneOrMore.typeAlternative(numberOneOrMore);
+
+        assertEquals($oneOrMore_0, numberZeroOrMore);
+        assertEquals($oneOrMore_1, numberOneOrMore);
+        assertEquals($oneOrMore_zeroOrOne, numberZeroOrMore);
+        assertEquals($oneOrMore_zeroOrMore, numberZeroOrMore);
+        assertEquals($oneOrMore_oneOrMore, numberOneOrMore);
+    }
+
 
 
 }

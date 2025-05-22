@@ -266,7 +266,7 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
 
         typeAlternativeOccurence[zeroOrOneOrdinal][zeroOrdinal] = XQueryOccurence.ZERO_OR_ONE;
         typeAlternativeOccurence[zeroOrOneOrdinal][oneOrdinal] = XQueryOccurence.ZERO_OR_ONE;
-        typeAlternativeOccurence[zeroOrOneOrdinal][zeroOrOneOrdinal] = XQueryOccurence.ZERO_OR_MORE;
+        typeAlternativeOccurence[zeroOrOneOrdinal][zeroOrOneOrdinal] = XQueryOccurence.ZERO_OR_ONE;
         typeAlternativeOccurence[zeroOrOneOrdinal][zeroOrMoreOrdinal] = XQueryOccurence.ZERO_OR_MORE;
         typeAlternativeOccurence[zeroOrOneOrdinal][oneOrMoreOrdinal] = XQueryOccurence.ZERO_OR_MORE;
 
@@ -287,15 +287,24 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
 	final Function[] factoryByOccurence;
     @Override
     public XQuerySequenceType typeAlternative(XQuerySequenceType other) {
-        if (isSubtypeOf(other))
-            return this;
-        if (other.isSubtypeOf(this))
-            return other;
-        var other_ = (XQueryEnumSequenceType) other;
-        var occurence_ = typeAlternativeOccurence[occurence.ordinal()][other_.getOccurence().ordinal()];
+        final var other_ = (XQueryEnumSequenceType) other;
+        final var occurence_ = typeAlternativeOccurence[occurence.ordinal()][other_.getOccurence().ordinal()];
         @SuppressWarnings("rawtypes")
-		Function sequenceTypeFactory = factoryByOccurence[occurence.ordinal()];
-        return (XQuerySequenceType)sequenceTypeFactory.apply(typeFactory.itemAnyItem());
+		final Function sequenceTypeFactory = factoryByOccurence[occurence_.ordinal()];
+        if (this.itemType == null)
+            if (other.getItemType() == null)
+                return (XQuerySequenceType)sequenceTypeFactory.apply(typeFactory.itemAnyItem());
+            else
+                return (XQuerySequenceType)sequenceTypeFactory.apply(other.getItemType());
+        else
+            if (other.getItemType() == null)
+                return (XQuerySequenceType)sequenceTypeFactory.apply(this.itemType);
+            else
+                if (this.itemType.equals(other.getItemType()))
+                    return (XQuerySequenceType)sequenceTypeFactory.apply(this.itemType);
+                else
+                    return (XQuerySequenceType)sequenceTypeFactory.apply(typeFactory.itemAnyItem());
+
     }
 
     @Override

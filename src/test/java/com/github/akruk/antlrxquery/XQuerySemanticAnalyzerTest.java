@@ -18,16 +18,6 @@ import com.github.akruk.antlrxquery.values.factories.defaults.XQueryMemoizedValu
 
 public class XQuerySemanticAnalyzerTest {
     XQueryTypeFactory typeFactory = new XQueryEnumTypeFactory();
-    // final XQueryEnumBasedType string = XQueryEnumBasedType.string();
-    // final XQueryEnumBasedType integer = XQueryEnumBasedType.integer();
-    // final XQueryEnumBasedType number = XQueryEnumBasedType.number();
-    // final XQueryEnumBasedType anyNode = XQueryEnumBasedType.anyNode();
-    // final XQueryEnumBasedType emptySequence = XQueryEnumBasedType.emptySequence();
-    // final XQueryEnumBasedType stringSequenceOneOrMore = XQueryEnumBasedType.sequence(XQueryEnumBasedType.string, XQueryOccurence.ONE_OR_MORE);
-    // final XQueryEnumBasedType stringSequenceZeroOrMore = XQueryEnumBasedType.sequence(XQueryEnumBasedType.string, XQueryOccurence.ZERO_OR_MORE);
-    // final XQueryEnumBasedType stringSequenceZeroOrOne = XQueryEnumBasedType.sequence(XQueryEnumBasedType.string,
-    //         XQueryOccurence.ZERO_OR_ONE);
-
 
     record AnalysisResult(XQuerySemanticAnalyzer analyzer, XQuerySequenceType expressionType) {};
 

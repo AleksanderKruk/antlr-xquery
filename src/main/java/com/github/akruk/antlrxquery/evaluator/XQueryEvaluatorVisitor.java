@@ -650,11 +650,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     @Override
     public XQueryValue visitPredicate(final PredicateContext ctx) {
         final var contextValue = context.getItem();
-        if (contextValue.isAtomic()) {
-            // TODO: error
-            return null;
-        }
-        final var sequence = contextValue.sequence();
+        final var sequence = contextValue.atomize();
         final var filteredValues = new ArrayList<XQueryValue>(sequence.size());
         final var savedContext = saveContext();
         int index = 1;

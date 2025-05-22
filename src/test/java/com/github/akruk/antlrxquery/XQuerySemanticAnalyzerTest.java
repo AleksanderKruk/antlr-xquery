@@ -217,6 +217,33 @@ public class XQuerySemanticAnalyzerTest {
         """, typeFactory.oneOrMore(typeFactory.itemNumber()));
     }
 
+    @Test
+    public void itemGetting() {
+        final var optionalString = typeFactory.zeroOrOne(typeFactory.itemString());
+        final var zeroOrMoreString = typeFactory.zeroOrMore(typeFactory.itemString());
+        assertType("""
+            ("a", "b", "c")[()]
+        """, typeFactory.emptySequence());
+        assertType("""
+            ("a", "b", "c")[1]
+        """, optionalString);
+        assertType("""
+            ("a", "b", "c")[1, 2]
+        """, zeroOrMoreString);
+        assertType("""
+            let $x as number? := 1
+            return ("a", "b", "c")[$x]
+        """, optionalString);
+        assertType("""
+            let $x as number* := (1, 2)
+            return ("a", "b", "c")[$x]
+        """, zeroOrMoreString);
+        assertType("""
+            let $x as number+ := (1, 2)
+            return ("a", "b", "c")[$x]
+        """, zeroOrMoreString);
+    }
+
 
 
 

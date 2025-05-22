@@ -33,7 +33,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     final XQueryTypeFactory typeFactory;
     final XQueryValueFactory valueFactory;
     final XQuerySemanticFunctionCaller functionCaller;
-    final XQueryVisitingSemanticContext context;
+    XQueryVisitingSemanticContext context;
     List<XQuerySequenceType> visitedArgumentTypesList;
     List<TupleElementType> visitedTupleStreamType;
 
@@ -58,7 +58,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         this.functionCaller = functionCaller;
         this.contextManager = contextManager;
         this.contextManager.enterContext();
-        this.context.setItemType(typeFactory.anyNode());
+        this.context.setType(typeFactory.anyNode());
         this.context.setPositionType(typeFactory.number());
         this.errors = new ArrayList<>();
     }
@@ -574,7 +574,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         var value = ctx.primaryExpr().accept(this);
         int index = 1;
         for (final var postfix : ctx.postfix()) {
-            context.setItemType(value);
+            context.setType(value);
             value = postfix.accept(this);
             index++;
         }
@@ -599,41 +599,39 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
     @Override
     public XQuerySequenceType visitPredicate(final PredicateContext ctx) {
-        // final var contextValue = context.getItem();
-        // if (contextValue.isAtomic()) {
-        //     // TODO: error
-        //     return null;
-        // }
-        // final var sequence = contextValue.sequence();
-        // final var filteredValues = new ArrayList<XQuerySequenceType>(sequence.size());
-        // final var savedContext = saveContext();
-        // int index = 1;
-        // context.setSize(sequence.size());
-        // for (final var contextItem : sequence) {
-        //     context.setItem(contextItem);
-        //     context.setPosition(index);
-        //     final var visitedExpression = ctx.expr().accept(this);
-        //     if (visitedExpression.isNumericValue()) {
-        //         int i = visitedExpression.numericValue().intValue() - 1;
-        //         if (i >= sequence.size() || i < 0) {
-        //             return typeFactory.emptySequence();
-        //         }
-        //         return sequence.get(i);
-        //     }
-        //     // if (visitedExpression.effectiveXQuerySequenceTypeValue()) {
-        //         // filteredValues.add(contextItem);
-        //     // }
-        //     index++;
-        // }
-        // return typeFactory.sequence(filteredValues);
-        return null;
+        final var contextType = context.getType();
+        final var predicateExpression = ctx.expr().accept(this);
+        if (predicateExpression.isSubtypeOf(typeFactory.emptySequence()))
+            return typeFactory.emptySequence();
+        if (predicateExpression.isSubtypeOf(typeFactory.zeroOrOne(typeFactory.itemNumber()))) {
+            final var item = contextType.getItemType();
+            final var decucedType =  typeFactory.zeroOrOne(item);
+            return decucedType;
+        }
+        if (predicateExpression.isSubtypeOf(typeFactory.zeroOrMore(typeFactory.itemNumber()))) {
+            final var item = contextType.getItemType();
+            final var decucedType =  typeFactory.zeroOrMore(item);
+            context.setType(decucedType);
+            return decucedType;
+        }
+        if (!predicateExpression.hasEffectiveBooleanValue()) {
+            var msg = String.format("Predicate requires either number* type (for item by index aquisition) or a value that has effective boolean value, provided type: %s", predicateExpression);
+            addError(ctx.expr(), msg);
+        }
+        return contextType.addOptionality();
+    }
+
+    private XQueryVisitingSemanticContext saveContext() {
+        var saved = context;
+        context = new XQueryVisitingSemanticContext();
+        return saved;
     }
 
 
 
     @Override
     public XQuerySequenceType visitContextItemExpr(final ContextItemExprContext ctx) {
-        return context.getItemType();
+        return context.getType();
     }
 
     @Override

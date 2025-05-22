@@ -13,11 +13,11 @@ public final class XQueryRunner {
     }
 
     public static void main(String[] args) {
-        CharStream characters = CharStreams.fromString(args[0]);
-        var lexer = new AntlrXqueryLexer(characters);
-        var tokens = new CommonTokenStream(lexer);
-        var parser = new AntlrXqueryParser(tokens);
-        var evaluator = new AntlrXqueryParserBaseVisitor<XQueryValue>();
+        final CharStream characters = CharStreams.fromString(args[0]);
+        final var lexer = new AntlrXqueryLexer(characters);
+        final var tokens = new CommonTokenStream(lexer);
+        final var parser = new AntlrXqueryParser(tokens);
+        final var evaluator = new AntlrXqueryParserBaseVisitor<XQueryValue>();
         evaluator.visit(null);
     }
 }

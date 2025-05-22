@@ -34,30 +34,30 @@ public class XQueryMemoizedValueFactory implements XQueryValueFactory{
 
     @Override
     public XQueryValue node(ParseTree v) {
-        XQueryValue returnedNode = createdNodes.computeIfAbsent(v, t -> new XQueryTreeNode(v));
+        XQueryValue returnedNode = createdNodes.computeIfAbsent(v, _ -> new XQueryTreeNode(v));
         return returnedNode;
     }
 
     @Override
     public XQueryValue number(BigDecimal d) {
-        XQueryValue returnedNumber = createdNumbers.computeIfAbsent(d, t -> new XQueryNumber(d));
+        XQueryValue returnedNumber = createdNumbers.computeIfAbsent(d, _ -> new XQueryNumber(d));
         return returnedNumber;
     }
     @Override
     public XQueryValue number(int integer) {
-        XQueryValue returnedNumber = createdIntegers.computeIfAbsent(integer, t -> new XQueryNumber(integer));
+        XQueryValue returnedNumber = createdIntegers.computeIfAbsent(integer, _ -> new XQueryNumber(integer));
         return returnedNumber;
     }
 
     @Override
     public XQueryValue sequence(List<XQueryValue> v) {
-        XQueryValue returnedSequence = createdSequences.computeIfAbsent(v, t -> new XQuerySequence(v));
+        XQueryValue returnedSequence = createdSequences.computeIfAbsent(v, _ -> new XQuerySequence(v));
         return returnedSequence;
     }
 
     @Override
     public XQueryValue string(String s) {
-        XQueryValue returnedString = createdStrings.computeIfAbsent(s, t -> new XQueryString(s));
+        XQueryValue returnedString = createdStrings.computeIfAbsent(s, _ -> new XQueryString(s));
         return returnedString;
     }
 

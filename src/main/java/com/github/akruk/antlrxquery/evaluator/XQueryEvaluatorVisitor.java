@@ -83,7 +83,7 @@ import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.values.factories.defaults.XQueryMemoizedValueFactory;
 import com.github.akruk.antlrxquery.values.XQueryBoolean;
 
-class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
+public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     final XQueryValue root;
     final Parser parser;
     final XQueryDynamicContextManager contextManager;
@@ -234,7 +234,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     @Override
     public XQueryValue visitWhereClause(final WhereClauseContext ctx) {
         final var filteringExpression = ctx.exprSingle();
-        visitedTupleStream = visitedTupleStream.filter(tuple -> {
+        visitedTupleStream = visitedTupleStream.filter(_ -> {
             final XQueryValue filter = filteringExpression.accept(this);
             return filter.effectiveBooleanValue();
         });
@@ -250,7 +250,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
 
     @Override
     public XQueryValue visitReturnClause(final ReturnClauseContext ctx) {
-        final List<XQueryValue> results = visitedTupleStream.map((tuple) -> {
+        final List<XQueryValue> results = visitedTupleStream.map((_) -> {
             final XQueryValue value = ctx.exprSingle().accept(this);
             return value;
         }).toList();
@@ -1490,7 +1490,7 @@ class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     @Override
     public XQueryValue visitWhileClause(final WhileClauseContext ctx) {
         final var filteringExpression = ctx.exprSingle();
-        visitedTupleStream = visitedTupleStream.takeWhile(tuple -> {
+        visitedTupleStream = visitedTupleStream.takeWhile(_ -> {
             final XQueryValue filter = filteringExpression.accept(this);
             return filter.effectiveBooleanValue();
         });

@@ -16,9 +16,10 @@ public class EnumTypeSequenceMerger implements TypeSequenceMerger {
         this.typeFactory = typeFactory;
     }
 
+    @SuppressWarnings("rawtypes")
     private static final Function[][] mergedOccurences = new Function[XQueryOccurence.values().length][XQueryOccurence.values().length];
     private static final Function<XQueryTypeFactory, Function<XQueryItemType, XQuerySequenceType>> zero =
-        typeFactory -> (item) -> typeFactory.emptySequence();
+        typeFactory -> (_) -> typeFactory.emptySequence();
     private static final Function<XQueryTypeFactory, Function<XQueryItemType, XQuerySequenceType>> one =
         typeFactory -> (item) -> typeFactory.one(item);
     private static final Function<XQueryTypeFactory, Function<XQueryItemType, XQuerySequenceType>> zeroOrOne
@@ -83,6 +84,7 @@ public class EnumTypeSequenceMerger implements TypeSequenceMerger {
 
 
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     public XQuerySequenceType merge(XQuerySequenceType type1, XQuerySequenceType type2) {
         var enumType1 = (XQueryEnumSequenceType) type1;
@@ -90,7 +92,7 @@ public class EnumTypeSequenceMerger implements TypeSequenceMerger {
         var enumItemType1 = type1.getItemType();
         var enumItemType2 = type2.getItemType();
         var sequenceGetterWithoutFactory = mergedOccurences[enumType1.getOccurence().ordinal()][enumType2.getOccurence().ordinal()];
-        Function<XQueryItemType, XQuerySequenceType> sequenceGetter = (Function) sequenceGetterWithoutFactory.apply(typeFactory);
+        final Function<XQueryItemType, XQuerySequenceType> sequenceGetter = (Function) sequenceGetterWithoutFactory.apply(typeFactory);
         boolean equalItemTypes = enumItemType1.equals(enumItemType2);
         return sequenceGetter.apply(equalItemTypes ? enumItemType1 : enumItemType2);
     }

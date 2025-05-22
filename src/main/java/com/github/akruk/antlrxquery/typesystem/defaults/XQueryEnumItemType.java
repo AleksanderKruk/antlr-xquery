@@ -100,8 +100,8 @@ public class XQueryEnumItemType implements XQueryItemType {
     }
 
     private static final int typesCount = XQueryTypes.values().length;
-    private static final BiPredicate<XQueryEnumItemType, XQueryEnumItemType> alwaysTrue = (t1, t2) -> true;
-    private static final BiPredicate<XQueryEnumItemType, XQueryEnumItemType> alwaysFalse = (t1, t2) -> false;
+    private static final BiPredicate<XQueryEnumItemType, XQueryEnumItemType> alwaysTrue = (_, _) -> true;
+    private static final BiPredicate<XQueryEnumItemType, XQueryEnumItemType> alwaysFalse = (_, _) -> false;
 
     @SuppressWarnings("rawtypes")
     private static final BiPredicate[][] itemtypeIsSubtypeOf;
@@ -130,7 +130,7 @@ public class XQueryEnumItemType implements XQueryItemType {
         final int string = XQueryTypes.STRING.ordinal();
 
         itemtypeIsSubtypeOf[anyArray][anyMap] = alwaysTrue;
-        itemtypeIsSubtypeOf[anyArray][map] = (x, y) -> {
+        itemtypeIsSubtypeOf[anyArray][map] = (_, y) -> {
             XQueryEnumItemTypeMap y_ = (XQueryEnumItemTypeMap) y;
             var mapKeyType = (XQueryEnumItemType) y_.getMapKeyType();
             boolean isNumber = mapKeyType.getType() == XQueryTypes.NUMBER;
@@ -138,7 +138,7 @@ public class XQueryEnumItemType implements XQueryItemType {
         };
 
         itemtypeIsSubtypeOf[anyArray][anyFunction] = alwaysTrue;
-        itemtypeIsSubtypeOf[anyArray][function] = (x, y) -> {
+        itemtypeIsSubtypeOf[anyArray][function] = (_, y) -> {
             XQueryEnumItemTypeFunction y_ = (XQueryEnumItemTypeFunction) y;
             var argumentTypes = y_.getArgumentTypes();
             if (argumentTypes.size() != 1)
@@ -174,7 +174,7 @@ public class XQueryEnumItemType implements XQueryItemType {
         };
 
         final var canBeKey = booleanEnumArray(XQueryTypes.NUMBER, XQueryTypes.BOOLEAN, XQueryTypes.STRING, XQueryTypes.ENUM);
-        itemtypeIsSubtypeOf[function][anyMap] = (x, y) -> {
+        itemtypeIsSubtypeOf[function][anyMap] = (x, _) -> {
             XQueryEnumItemTypeFunction x_ = (XQueryEnumItemTypeFunction) x;
             // function must have one argument
             if (x_.getArgumentTypes().size() != 1)
@@ -201,7 +201,7 @@ public class XQueryEnumItemType implements XQueryItemType {
                     && returnedCanBeValue;
         };
 
-        itemtypeIsSubtypeOf[function][anyArray] = (x, y) -> {
+        itemtypeIsSubtypeOf[function][anyArray] = (x, _) -> {
             XQueryEnumItemTypeFunction x_ = (XQueryEnumItemTypeFunction) x;
             // function must have one argument
             if (x_.getArgumentTypes().size() != 1)
@@ -291,7 +291,7 @@ public class XQueryEnumItemType implements XQueryItemType {
         };
 
 
-        itemtypeIsSubtypeOf[map][anyArray] = (x, y) -> {
+        itemtypeIsSubtypeOf[map][anyArray] = (x, _) -> {
             XQueryEnumItemType x_ = (XQueryEnumItemType) x;
             // map must have a key that is a number
             var key = (XQueryEnumItemType) x_.getMapKeyType();
@@ -455,7 +455,7 @@ public class XQueryEnumItemType implements XQueryItemType {
                 castableAs[i][j] = i == j;
             }
         }
-        final int number = XQueryTypes.NUMBER.ordinal();
+        // final int number = XQueryTypes.NUMBER.ordinal();
         final int string = XQueryTypes.STRING.ordinal();
         final int anyItem = XQueryTypes.ANY_ITEM.ordinal();
         for (int i = 0; i < typesCount; i++) {

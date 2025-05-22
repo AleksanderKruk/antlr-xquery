@@ -169,18 +169,18 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
 
     @Override
     public XQuerySequenceType array(XQuerySequenceType containedItemType) {
-        return arrays.computeIfAbsent(containedItemType, it -> one(itemArray(containedItemType)));
+        return arrays.computeIfAbsent(containedItemType, _ -> one(itemArray(containedItemType)));
     }
 
     @Override
     public XQuerySequenceType map(XQueryItemType mapKeyType, XQuerySequenceType mapValueType) {
-        var keyMap = maps.computeIfAbsent(mapKeyType, k-> new HashMap<>());
-        return keyMap.computeIfAbsent(mapValueType, k -> one(itemMap(mapKeyType, mapValueType)));
+        var keyMap = maps.computeIfAbsent(mapKeyType, _-> new HashMap<>());
+        return keyMap.computeIfAbsent(mapValueType, _ -> one(itemMap(mapKeyType, mapValueType)));
     }
 
     @Override
     public XQuerySequenceType function(XQuerySequenceType returnType, List<XQuerySequenceType> argumentTypes) {
-        return functions.computeIfAbsent(returnType, it -> {
+        return functions.computeIfAbsent(returnType, _ -> {
             return one(itemFunction(returnType, argumentTypes));
         });
     }
@@ -208,25 +208,25 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
     @Override
     public XQuerySequenceType one(XQueryItemType itemType) {
         return oneTypes.computeIfAbsent(itemType,
-                it -> new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ONE));
+                _ -> new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ONE));
     }
 
     @Override
     public XQuerySequenceType zeroOrOne(XQueryItemType itemType) {
         return zeroOrOneTypes.computeIfAbsent(itemType,
-                it -> new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ZERO_OR_ONE));
+                _ -> new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ZERO_OR_ONE));
     }
 
     @Override
     public XQuerySequenceType zeroOrMore(XQueryItemType itemType) {
         return zeroOrMoreTypes.computeIfAbsent(itemType,
-                it -> new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ZERO_OR_MORE));
+                _ -> new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ZERO_OR_MORE));
     }
 
     @Override
     public XQuerySequenceType oneOrMore(XQueryItemType itemType) {
         return oneOrMoreTypes.computeIfAbsent(itemType,
-                it -> new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ONE_OR_MORE));
+                _ -> new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ONE_OR_MORE));
     }
 
 }

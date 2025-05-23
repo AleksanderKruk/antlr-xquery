@@ -53,7 +53,7 @@ public class InputGrammarAnalyzer {
         // "following-or-self"
         // "following-sibling"
         // "following-sibling-or-self"
-        // "self"
+        // + "self"
         // + "ancestor"
         // + "ancestor-or-self"
         // + "parent"
@@ -134,6 +134,29 @@ public class InputGrammarAnalyzer {
                 nodesToProcess.remove(processedNode);
             }
             ancestorMapping.put(node, ancestors);
+        }
+        return ancestorMapping;
+    }
+
+
+    private Map<String, Set<String>> getDescendantMapping(final Map<String, Set<String>> childrenMapping)
+    {
+        final var allNodes = childrenMapping.keySet();
+        final  Map<String, Set<String>> ancestorMapping = new HashMap<>(childrenMapping.size(), 1);
+        for (final var node: allNodes) {
+            final Set<String> children = childrenMapping.get(node);
+
+            final Set<String> descendants = new HashSet<>(childrenMapping.size());
+            descendants.addAll(children);
+            final Set<String> nodesToProcess = new HashSet<>(children);
+            while (!nodesToProcess.isEmpty()) {
+                final String processedNode = nodesToProcess.stream().findFirst().get();
+                final var processedParents = new HashSet<>(childrenMapping.get(processedNode));
+                processedParents.removeAll(descendants);
+                nodesToProcess.addAll(processedParents);
+                nodesToProcess.remove(processedNode);
+            }
+            ancestorMapping.put(node, descendants);
         }
         return ancestorMapping;
     }

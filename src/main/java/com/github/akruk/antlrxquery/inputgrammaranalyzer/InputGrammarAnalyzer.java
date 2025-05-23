@@ -39,7 +39,7 @@ public class InputGrammarAnalyzer {
                     Set<String> precedingSiblingOrSelf) {}
     record GrammarAnalysisResult(Map<String, NodeData> nodeInfo) {}
 
-    Set<String> toSet(Collection<ParseTree> els) {
+    Set<String> toSet(final Collection<ParseTree> els) {
         return els.stream()
             .map(e->e.getText())
             .collect(Collectors.toSet());
@@ -55,6 +55,7 @@ public class InputGrammarAnalyzer {
 
         final var childrenMapping = getChildrenMapping(antlrParser, tree, definedNodes, allNodeNames);
         final var parentMapping = getParentMapping(antlrParser, childrenMapping, tree);
+        final var ancestorMapping = getAncestorMapping(parentMapping);
 
         // final var parentMapping = getChildrenMapping(antlrParser, tree, definedNodes, allNodeNames);
         // final var precedingSiblingMapping = getPrecedingSiblingMapping(antlrParser, tree, definedNodes, allNodeNames);
@@ -75,16 +76,39 @@ public class InputGrammarAnalyzer {
             parentMapping.put(node, new HashSet<>());
         }
         final var ruleSpecs = XPath.findAll(tree, "//parserRuleSpec", antlrParser);
-        for (ParseTree spec :ruleSpecs) {
+        for (final ParseTree spec :ruleSpecs) {
             final ParserRuleSpecContext spec_ = (ParserRuleSpecContext) spec;
             final String ruleRef = spec_.RULE_REF().getText();
             final Set<String> children = childrenMapping.get(ruleRef);
-            for (var child : children) {
+            for (final var child : children) {
                 parentMapping.get(child).add(ruleRef);
             }
         }
         return parentMapping;
     }
+
+    private Map<String, Set<String>> getAncestorMapping(final Map<String, Set<String>> parentMapping)
+    {
+        final var allNodes = parentMapping.keySet();
+        final  Map<String, Set<String>> ancestorMapping = new HashMap<>(allNodes.size(), 1);
+        for (final var node: allNodes) {
+            final Set<String> parents = parentMapping.get(node);
+
+            final Set<String> ancestors = new HashSet<>(parentMapping.size());
+            ancestors.addAll(parents);
+            final Set<String> nodesToProcess = new HashSet<>(parents);
+            while (!nodesToProcess.isEmpty()) {
+                final String processedNode = nodesToProcess.stream().findFirst().get();
+                final var processedParents = new HashSet<>(parentMapping.get(processedNode));
+                processedParents.removeAll(ancestors);
+                nodesToProcess.addAll(processedParents);
+                nodesToProcess.remove(processedNode);
+            }
+            ancestorMapping.put(node, ancestors);
+        }
+        return ancestorMapping;
+    }
+
 
     // private Map<String, Set<String>> getPrecedingSiblingMapping(final ANTLRv4Parser antlrParser,
     //                                                             final GrammarSpecContext tree,
@@ -118,7 +142,7 @@ public class InputGrammarAnalyzer {
         final  Map<String, Set<String>> childrenMapping = new HashMap<>(definedNodes.size()*2);
 
         final var ruleSpecs = XPath.findAll(tree, "//parserRuleSpec", antlrParser);
-        for (ParseTree spec :ruleSpecs) {
+        for (final ParseTree spec :ruleSpecs) {
             final ParserRuleSpecContext spec_ = (ParserRuleSpecContext) spec;
             final String ruleRef = spec_.RULE_REF().getText();
 

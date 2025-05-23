@@ -46,6 +46,23 @@ public class InputGrammarAnalyzer {
     }
 
     public GrammarAnalysisResult analyze(final CharStream characterStream) {
+        // + "child"
+        // "descendant"
+        // "descendant-or-self"
+        // "following"
+        // "following-or-self"
+        // "following-sibling"
+        // "following-sibling-or-self"
+        // "self"
+        // + "ancestor"
+        // + "ancestor-or-self"
+        // + "parent"
+        // "preceding"
+        // "preceding-or-self"
+        // "preceding-sibling"
+        // "preceding-sibling-or-self"
+
+
         final Lexer xqueryLexer = new ANTLRv4Lexer(characterStream);
         final CommonTokenStream xqueryTokens = new CommonTokenStream(xqueryLexer);
         final ANTLRv4Parser antlrParser = new ANTLRv4Parser(xqueryTokens);
@@ -56,6 +73,8 @@ public class InputGrammarAnalyzer {
         final var childrenMapping = getChildrenMapping(antlrParser, tree, definedNodes, allNodeNames);
         final var parentMapping = getParentMapping(antlrParser, childrenMapping, tree);
         final var ancestorMapping = getAncestorMapping(parentMapping);
+        final var ancestorOrSelfMapping = addSelf(ancestorMapping);
+
 
         // final var parentMapping = getChildrenMapping(antlrParser, tree, definedNodes, allNodeNames);
         // final var precedingSiblingMapping = getPrecedingSiblingMapping(antlrParser, tree, definedNodes, allNodeNames);
@@ -64,6 +83,16 @@ public class InputGrammarAnalyzer {
             // childrenMapping.put(ruleRef, gatheredData);
 
         return null;
+    }
+
+
+
+    private Map<String, Set<String>> addSelf(Map<String, Set<String>> mapping) {
+        Map<String, Set<String>> selfMapping = new HashMap<>(mapping);
+        for (var node : mapping.keySet()) {
+            selfMapping.get(node).add(node);
+        }
+        return selfMapping;
     }
 
     private Map<String, Set<String>> getParentMapping(final ANTLRv4Parser antlrParser,

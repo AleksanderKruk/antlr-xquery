@@ -47,7 +47,7 @@ public class InputGrammarAnalyzer {
 
     public GrammarAnalysisResult analyze(final CharStream characterStream) {
         // + "child"
-        // "descendant"
+        // + "descendant"
         // "descendant-or-self"
         // "following"
         // "following-or-self"
@@ -74,6 +74,8 @@ public class InputGrammarAnalyzer {
         final var parentMapping = getParentMapping(antlrParser, childrenMapping, tree);
         final var ancestorMapping = getAncestorMapping(parentMapping);
         final var ancestorOrSelfMapping = addSelf(ancestorMapping);
+        final var descendantMapping = getDescendantMapping(childrenMapping);
+        final var descendantOrSelfMapping = addSelf(descendantMapping);
 
 
         // final var parentMapping = getChildrenMapping(antlrParser, tree, definedNodes, allNodeNames);

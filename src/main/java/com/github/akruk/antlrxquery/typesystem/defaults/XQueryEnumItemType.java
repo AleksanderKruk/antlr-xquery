@@ -1,17 +1,22 @@
 package com.github.akruk.antlrxquery.typesystem.defaults;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiPredicate;
+import java.util.function.BinaryOperator;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 @SuppressWarnings("unchecked")
 public class XQueryEnumItemType implements XQueryItemType {
     private final XQueryTypes type;
+    private final BinaryOperator[][] unionItemMerger;
+    private final XQueryTypeFactory typeFactory;
 
     public XQueryEnumItemType(XQueryTypes type,
                                 List<XQuerySequenceType> argumentTypes,
@@ -19,7 +24,8 @@ public class XQueryEnumItemType implements XQueryItemType {
                                 XQuerySequenceType arrayType,
                                 XQueryEnumItemType key,
                                 XQuerySequenceType mapValueType,
-                                Set<String> elementNames)
+                                Set<String> elementNames,
+                                XQueryTypeFactory factory)
     {
         this.type = type;
         this.argumentTypes = argumentTypes;
@@ -28,6 +34,28 @@ public class XQueryEnumItemType implements XQueryItemType {
         this.mapKeyType = key;
         this.mapValueType = mapValueType;
         this.elementNames = elementNames;
+        this.typeFactory = factory;
+
+        // Union merging preparation
+        final int element = XQueryTypes.ELEMENT.ordinal();
+        final int anyNode = XQueryTypes.ANY_NODE.ordinal();
+        unionItemMerger = new BinaryOperator[typesCount][typesCount];
+        unionItemMerger[element][element] = (i1, i2) -> {
+            final var i1_ = (XQueryEnumItemType) i1;
+            final var i2_ = (XQueryEnumItemType) i2;
+            final var i1Elements = i1_.getElementNames();
+            final var i2ELements = i2_.getElementNames();
+            final Set<String> mergedElements = new HashSet<>(i1Elements.size() + i2ELements.size());
+            mergedElements.addAll(i1Elements);
+            mergedElements.addAll(i2ELements);
+            return typeFactory.itemElement(mergedElements);
+        };
+        final BinaryOperator<XQueryItemType> anyItemReturn = (_, _) -> {
+            return typeFactory.itemAnyNode();
+        };
+        unionItemMerger[element][anyNode] = anyItemReturn;
+        unionItemMerger[anyNode][element] = anyItemReturn;
+        unionItemMerger[anyNode][anyNode] = anyItemReturn;
     }
 
     private final List<XQuerySequenceType> argumentTypes;
@@ -470,5 +498,12 @@ public class XQueryEnumItemType implements XQueryItemType {
             return false;
         var typed = (XQueryEnumItemType) itemType;
         return castableAs[type.ordinal()][typed.getType().ordinal()];
+    }
+
+
+    @Override
+    public XQueryItemType unionMerge(XQueryItemType other) {
+        var other_ = (XQueryEnumItemType) other;
+        return (XQueryItemType)unionItemMerger[type.ordinal()][other_.getType().ordinal()].apply(this, other);
     }
 }

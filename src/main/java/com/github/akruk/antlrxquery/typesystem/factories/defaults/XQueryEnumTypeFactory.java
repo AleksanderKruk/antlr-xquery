@@ -12,15 +12,15 @@ import com.github.akruk.antlrxquery.typesystem.defaults.*;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 public class XQueryEnumTypeFactory implements XQueryTypeFactory {
-    private static final XQueryEnumItemTypeError ERROR_ITEM_TYPE = new XQueryEnumItemTypeError();
-    private static final XQueryEnumItemTypeString STRING_ITEM_TYPE = new XQueryEnumItemTypeString();
-    private static final XQueryEnumItemTypeNumber NUMBER_ITEM_TYPE = new XQueryEnumItemTypeNumber();
-    private static final XQueryEnumItemTypeAnyNode ANY_NODE_TYPE = new XQueryEnumItemTypeAnyNode();
-    private static final XQueryEnumItemTypeAnyArray ANY_ARRAY = new XQueryEnumItemTypeAnyArray();
-    private static final XQueryEnumItemTypeBoolean BOOLEAN_ITEM_TYPE = new XQueryEnumItemTypeBoolean();
-    private static final XQueryEnumItemTypeAnyItem ANY_ITEM_TYPE = new XQueryEnumItemTypeAnyItem();
-    private static final XQueryEnumItemTypeAnyFunction ANY_FUNCTION = new XQueryEnumItemTypeAnyFunction();
-    private static final XQueryEnumItemTypeAnyMap ANY_MAP = new XQueryEnumItemTypeAnyMap();
+    private final XQueryEnumItemTypeError ERROR_ITEM_TYPE = new XQueryEnumItemTypeError(this);
+    private final XQueryEnumItemTypeString STRING_ITEM_TYPE = new XQueryEnumItemTypeString(this);
+    private final XQueryEnumItemTypeNumber NUMBER_ITEM_TYPE = new XQueryEnumItemTypeNumber(this);
+    private final XQueryEnumItemTypeAnyNode ANY_NODE_TYPE = new XQueryEnumItemTypeAnyNode(this);
+    private final XQueryEnumItemTypeAnyArray ANY_ARRAY = new XQueryEnumItemTypeAnyArray(this);
+    private final XQueryEnumItemTypeBoolean BOOLEAN_ITEM_TYPE = new XQueryEnumItemTypeBoolean(this);
+    private final XQueryEnumItemTypeAnyItem ANY_ITEM_TYPE = new XQueryEnumItemTypeAnyItem(this);
+    private final XQueryEnumItemTypeAnyFunction ANY_FUNCTION = new XQueryEnumItemTypeAnyFunction(this);
+    private final XQueryEnumItemTypeAnyMap ANY_MAP = new XQueryEnumItemTypeAnyMap(this);
 
     private final Map<XQuerySequenceType, XQuerySequenceType> arrays = new HashMap<>();
     private final Map<XQueryItemType, Map<XQuerySequenceType, XQuerySequenceType>> maps=new HashMap<>();
@@ -45,7 +45,7 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
 
     @Override
     public XQueryItemType itemRecord(Map<String, XQuerySequenceType> fields) {
-        return new XQueryEnumItemTypeRecord(fields);
+        return new XQueryEnumItemTypeRecord(fields, this);
     }
 
     @Override
@@ -81,7 +81,7 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
 
     @Override
     public XQueryItemType itemElement(Set<String> elementName) {
-        return elementTypes.computeIfAbsent(elementName, k -> new XQueryEnumItemTypeElement(k));
+        return elementTypes.computeIfAbsent(elementName, k -> new XQueryEnumItemTypeElement(k, this));
     }
 
     @Override
@@ -111,7 +111,7 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
 
     @Override
     public XQueryItemType itemEnum(Set<String> memberNames) {
-        return enums.computeIfAbsent(memberNames, k -> new XQueryEnumItemTypeEnum(k));
+        return enums.computeIfAbsent(memberNames, k -> new XQueryEnumItemTypeEnum(k, this));
     }
 
     @Override
@@ -146,7 +146,7 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
 
     @Override
     public XQueryItemType itemArray(XQuerySequenceType itemType) {
-        return new XQueryEnumItemTypeArray((XQueryEnumSequenceType) itemType);
+        return new XQueryEnumItemTypeArray((XQueryEnumSequenceType) itemType, this);
     }
 
     @Override
@@ -154,12 +154,12 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
         List<XQuerySequenceType> argumentTypesEnum = argumentTypes.stream()
                 .map(t -> (XQueryEnumSequenceType) t)
                 .collect(Collectors.toList());
-        return new XQueryEnumItemTypeFunction(returnType, argumentTypesEnum);
+        return new XQueryEnumItemTypeFunction(returnType, argumentTypesEnum, this);
     }
 
     @Override
     public XQueryItemType itemMap(XQueryItemType keyType, XQuerySequenceType valueType) {
-        return new XQueryEnumItemTypeMap((XQueryEnumItemType) keyType, (XQueryEnumSequenceType) valueType);
+        return new XQueryEnumItemTypeMap((XQueryEnumItemType) keyType, (XQueryEnumSequenceType) valueType, this);
     }
 
     @Override

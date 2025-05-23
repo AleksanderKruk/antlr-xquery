@@ -681,5 +681,85 @@ public class XQueryTypesTest {
     }
 
 
+    @Test
+    public void unionNodeMerging() {
+        final var empty = typeFactory.emptySequence();
+        final var node = typeFactory.anyNode();
+        final var nodeZeroOrOne = typeFactory.zeroOrOne(typeFactory.itemAnyNode());
+        final var nodeZeroOrMore = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
+        final var nodeOneOrMore = typeFactory.oneOrMore(typeFactory.itemAnyNode());
+
+        final var $00 = empty.unionMerge(empty);
+        final var $01 = empty.unionMerge(node);
+        final var $0_zeroOrOne = empty.unionMerge(nodeZeroOrOne);
+        final var $0_zeroOrMore = empty.unionMerge(nodeZeroOrMore);
+        final var $0_oneOrMore = empty.unionMerge(nodeOneOrMore);
+        assertEquals($00, empty);
+        assertEquals($01, node);
+        assertEquals($0_zeroOrOne, nodeZeroOrOne);
+        assertEquals($0_zeroOrMore, nodeZeroOrMore);
+        assertEquals($0_oneOrMore, nodeOneOrMore);
+
+        final var $10 = node.unionMerge(empty);
+        final var $11 = node.unionMerge(node);
+        final var $1_zeroOrOne = node.unionMerge(nodeZeroOrOne);
+        final var $1_zeroOrMore = node.unionMerge(nodeZeroOrMore);
+        final var $1_oneOrMore = node.unionMerge(nodeOneOrMore);
+
+        assertEquals($10, node);
+        assertEquals($11, nodeOneOrMore);
+        assertEquals($1_zeroOrOne, nodeOneOrMore);
+        assertEquals($1_zeroOrMore, nodeOneOrMore);
+        assertEquals($1_oneOrMore, nodeOneOrMore);
+
+        final var $zeroOrOne_0 = nodeZeroOrOne.unionMerge(empty);
+        final var $zeroOrOne_1 = nodeZeroOrOne.unionMerge(node);
+        final var $zeroOrOne_zeroOrOne = nodeZeroOrOne.unionMerge(nodeZeroOrOne);
+        final var $zeroOrOne_zeroOrMore = nodeZeroOrOne.unionMerge(nodeZeroOrMore);
+        final var $zeroOrOne_oneOrMore = nodeZeroOrOne.unionMerge(nodeOneOrMore);
+
+        assertEquals($zeroOrOne_0, nodeZeroOrOne);
+        assertEquals($zeroOrOne_1, nodeOneOrMore);
+        assertEquals($zeroOrOne_zeroOrOne, nodeZeroOrMore);
+        assertEquals($zeroOrOne_zeroOrMore, nodeZeroOrMore);
+        assertEquals($zeroOrOne_oneOrMore, nodeOneOrMore);
+
+        final var $zeroOrMore_0 = nodeZeroOrMore.unionMerge(empty);
+        final var $zeroOrMore_1 = nodeZeroOrMore.unionMerge(node);
+        final var $zeroOrMore_zeroOrOne = nodeZeroOrMore.unionMerge(nodeZeroOrOne);
+        final var $zeroOrMore_zeroOrMore = nodeZeroOrMore.unionMerge(nodeZeroOrMore);
+        final var $zeroOrMore_oneOrMore = nodeZeroOrMore.unionMerge(nodeOneOrMore);
+
+        assertEquals($zeroOrMore_0, nodeZeroOrMore);
+        assertEquals($zeroOrMore_1, nodeOneOrMore);
+        assertEquals($zeroOrMore_zeroOrOne, nodeZeroOrMore);
+        assertEquals($zeroOrMore_zeroOrMore, nodeZeroOrMore);
+        assertEquals($zeroOrMore_oneOrMore, nodeOneOrMore);
+
+        final var $oneOrMore_0 = nodeOneOrMore.unionMerge(empty);
+        final var $oneOrMore_1 = nodeOneOrMore.unionMerge(node);
+        final var $oneOrMore_zeroOrOne = nodeOneOrMore.unionMerge(nodeZeroOrOne);
+        final var $oneOrMore_zeroOrMore = nodeOneOrMore.unionMerge(nodeZeroOrMore);
+        final var $oneOrMore_oneOrMore = nodeOneOrMore.unionMerge(nodeOneOrMore);
+
+        assertEquals($oneOrMore_0, nodeOneOrMore);
+        assertEquals($oneOrMore_1, nodeOneOrMore);
+        assertEquals($oneOrMore_zeroOrOne, nodeOneOrMore);
+        assertEquals($oneOrMore_zeroOrMore, nodeOneOrMore);
+        assertEquals($oneOrMore_oneOrMore, nodeOneOrMore);
+
+
+        final var elementFoo = typeFactory.element(Set.of("foo"));
+        final var elementBar = typeFactory.element(Set.of("bar"));
+        final var merged$elements = elementFoo.unionMerge(elementBar);
+        assertEquals(merged$elements, typeFactory.oneOrMore(typeFactory.itemElement(Set.of("foo", "bar"))));
+
+        final var merged$any = elementFoo.unionMerge(anyNode);
+        assertEquals(merged$any, nodeOneOrMore);
+
+        final var merged$any2 = anyNode.unionMerge(elementFoo);
+        assertEquals(merged$any2, nodeOneOrMore);
+    }
+
 
 }

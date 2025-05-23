@@ -54,6 +54,8 @@ public class InputGrammarAnalyzer {
         final Set<String> allNodeNames = toSet(definedNodes);
 
         final var childrenMapping = getChildrenMapping(antlrParser, tree, definedNodes, allNodeNames);
+        final var parentMapping = getParentMapping(antlrParser, childrenMapping, tree);
+
         // final var parentMapping = getChildrenMapping(antlrParser, tree, definedNodes, allNodeNames);
         // final var precedingSiblingMapping = getPrecedingSiblingMapping(antlrParser, tree, definedNodes, allNodeNames);
 
@@ -63,29 +65,50 @@ public class InputGrammarAnalyzer {
         return null;
     }
 
-    private Map<String, Set<String>> getPrecedingSiblingMapping(final ANTLRv4Parser antlrParser,
-                                                                final GrammarSpecContext tree,
-                                                                final Collection<ParseTree> definedNodes)
+    private Map<String, Set<String>> getParentMapping(final ANTLRv4Parser antlrParser,
+                                                        final Map<String, Set<String>> childrenMapping,
+                                                        final GrammarSpecContext tree)
     {
-        final  Map<String, Set<String>> childrenMapping = new HashMap<>(definedNodes.size()*2);
-
+        final var allNodes = childrenMapping.keySet();
+        final  Map<String, Set<String>> parentMapping = new HashMap<>(allNodes.size());
+        for (final var node: allNodes) {
+            parentMapping.put(node, new HashSet<>());
+        }
         final var ruleSpecs = XPath.findAll(tree, "//parserRuleSpec", antlrParser);
         for (ParseTree spec :ruleSpecs) {
             final ParserRuleSpecContext spec_ = (ParserRuleSpecContext) spec;
             final String ruleRef = spec_.RULE_REF().getText();
-
-            final Set<String> children = new HashSet<>();
-            final var rulerefs = XPath.findAll(spec, "//ruleref", antlrParser);
-            final var terminalTokens = XPath.findAll(spec, "//TOKEN_REF", antlrParser);
-            final var terminalTokenLiterals = XPath.findAll(spec, "//STRING_LITERAL", antlrParser);
-
-            children.addAll(toSet(rulerefs));
-            children.addAll(toSet(terminalTokens));
-            children.addAll(toSet(terminalTokenLiterals));
-            childrenMapping.put(ruleRef, children);
+            final Set<String> children = childrenMapping.get(ruleRef);
+            for (var child : children) {
+                parentMapping.get(child).add(ruleRef);
+            }
         }
-        return childrenMapping;
+        return parentMapping;
     }
+
+    // private Map<String, Set<String>> getPrecedingSiblingMapping(final ANTLRv4Parser antlrParser,
+    //                                                             final GrammarSpecContext tree,
+    //                                                             final Collection<ParseTree> definedNodes)
+    // {
+    //     final  Map<String, Set<String>> childrenMapping = new HashMap<>(definedNodes.size()*2);
+
+    //     final var ruleSpecs = XPath.findAll(tree, "//parserRuleSpec", antlrParser);
+    //     for (ParseTree spec :ruleSpecs) {
+    //         final ParserRuleSpecContext spec_ = (ParserRuleSpecContext) spec;
+    //         final String ruleRef = spec_.RULE_REF().getText();
+
+    //         final Set<String> children = new HashSet<>();
+    //         final var rulerefs = XPath.findAll(spec, "//ruleref", antlrParser);
+    //         final var terminalTokens = XPath.findAll(spec, "//TOKEN_REF", antlrParser);
+    //         final var terminalTokenLiterals = XPath.findAll(spec, "//STRING_LITERAL", antlrParser);
+
+    //         children.addAll(toSet(rulerefs));
+    //         children.addAll(toSet(terminalTokens));
+    //         children.addAll(toSet(terminalTokenLiterals));
+    //         childrenMapping.put(ruleRef, children);
+    //     }
+    //     return childrenMapping;
+    // }
 
     private Map<String, Set<String>> getChildrenMapping(final ANTLRv4Parser antlrParser,
                                                         final GrammarSpecContext tree,

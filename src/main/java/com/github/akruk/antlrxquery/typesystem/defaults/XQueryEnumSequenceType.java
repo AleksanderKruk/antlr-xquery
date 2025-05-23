@@ -289,10 +289,10 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         intersectionOccurences = new XQueryOccurence[occurenceCount][occurenceCount];
 
         final XQueryOccurence zero = XQueryOccurence.ZERO;
-        final XQueryOccurence one = XQueryOccurence.ONE;
+        // final XQueryOccurence one = XQueryOccurence.ONE;
         final XQueryOccurence zeroOrOne = XQueryOccurence.ZERO_OR_ONE;
         final XQueryOccurence zeroOrMore = XQueryOccurence.ZERO_OR_MORE;
-        final XQueryOccurence oneOrMore = XQueryOccurence.ONE_OR_MORE;
+        // final XQueryOccurence oneOrMore = XQueryOccurence.ONE_OR_MORE;
 
         final int zero_ = XQueryOccurence.ZERO.ordinal();
         final int one_ = XQueryOccurence.ONE.ordinal();
@@ -335,14 +335,64 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
     @Override
     public XQuerySequenceType intersectionMerge(XQuerySequenceType other) {
         final var other_ = (XQueryEnumSequenceType) other;
-        final XQueryOccurence mergedOccurence = unionOccurences[this.occurence.ordinal()][other_.getOccurence().ordinal()];
+        final XQueryOccurence mergedOccurence = intersectionOccurences[this.occurence.ordinal()][other_.getOccurence().ordinal()];
         return (XQuerySequenceType) factoryByOccurence[mergedOccurence.ordinal()].apply(itemType);
+    }
+
+
+    private static final XQueryOccurence[][] exceptOccurences;
+    static {
+        final int occurenceCount = XQueryOccurence.values().length;
+        exceptOccurences = new XQueryOccurence[occurenceCount][occurenceCount];
+
+        final XQueryOccurence zero = XQueryOccurence.ZERO;
+        final XQueryOccurence one = XQueryOccurence.ONE;
+        final XQueryOccurence zeroOrOne = XQueryOccurence.ZERO_OR_ONE;
+        final XQueryOccurence zeroOrMore = XQueryOccurence.ZERO_OR_MORE;
+        final XQueryOccurence oneOrMore = XQueryOccurence.ONE_OR_MORE;
+
+        final int zero_ = XQueryOccurence.ZERO.ordinal();
+        final int one_ = XQueryOccurence.ONE.ordinal();
+        final int zeroOrOne_ = XQueryOccurence.ZERO_OR_ONE.ordinal();
+        final int zeroOrMore_ = XQueryOccurence.ZERO_OR_MORE.ordinal();
+        final int oneOrMore_ = XQueryOccurence.ONE_OR_MORE.ordinal();
+
+        exceptOccurences[zero_][zero_] = zero;
+        exceptOccurences[zero_][one_] = zero;
+        exceptOccurences[zero_][zeroOrOne_] = zero;
+        exceptOccurences[zero_][zeroOrMore_] = zero;
+        exceptOccurences[zero_][oneOrMore_] = zero;
+
+        exceptOccurences[one_][zero_] = one;
+        exceptOccurences[one_][one_] = zeroOrOne;
+        exceptOccurences[one_][zeroOrOne_] = zeroOrOne;
+        exceptOccurences[one_][zeroOrMore_] = zeroOrOne;
+        exceptOccurences[one_][oneOrMore_] = zeroOrOne;
+
+        exceptOccurences[zeroOrOne_][zero_] = zeroOrOne;
+        exceptOccurences[zeroOrOne_][one_] = zeroOrOne;
+        exceptOccurences[zeroOrOne_][zeroOrOne_] = zeroOrOne;
+        exceptOccurences[zeroOrOne_][zeroOrMore_] = zeroOrOne;
+        exceptOccurences[zeroOrOne_][oneOrMore_] = zeroOrOne;
+
+        exceptOccurences[zeroOrMore_][zero_] = zeroOrMore;
+        exceptOccurences[zeroOrMore_][one_] = zeroOrMore;
+        exceptOccurences[zeroOrMore_][zeroOrOne_] = zeroOrMore;
+        exceptOccurences[zeroOrMore_][zeroOrMore_] = zeroOrMore;
+        exceptOccurences[zeroOrMore_][oneOrMore_] = zeroOrMore;
+
+        exceptOccurences[oneOrMore_][zero_] = oneOrMore;
+        exceptOccurences[oneOrMore_][one_] = zeroOrMore;
+        exceptOccurences[oneOrMore_][zeroOrOne_] = zeroOrMore;
+        exceptOccurences[oneOrMore_][zeroOrMore_] = zeroOrMore;
+        exceptOccurences[oneOrMore_][oneOrMore_] = zeroOrMore;
     }
 
     @Override
     public XQuerySequenceType exceptionMerge(XQuerySequenceType other) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'exceptionMerge'");
+        final var other_ = (XQueryEnumSequenceType) other;
+        final XQueryOccurence mergedOccurence = exceptOccurences[this.occurence.ordinal()][other_.getOccurence().ordinal()];
+        return (XQuerySequenceType) factoryByOccurence[mergedOccurence.ordinal()].apply(itemType);
     }
 
 

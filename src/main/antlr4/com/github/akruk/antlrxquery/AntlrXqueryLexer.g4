@@ -6,7 +6,7 @@ fragment Digits: [0-9]+;
 STRING: ('"' ('""' | ~["&])* '"')
     | ('\'' ('\'\'' | ~['&])* '\'');
 
-COMMENT: '(:' .*? ':)';
+COMMENT: '(:' .*? ':)'-> channel(HIDDEN);
 WS: [\p{White_Space}]+ -> channel(HIDDEN);
 FOR: 'for';
 COMMA: ',';

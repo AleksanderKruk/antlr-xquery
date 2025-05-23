@@ -154,7 +154,6 @@ public class XQueryEnumItemType implements XQueryItemType {
     private static final BiPredicate<XQueryEnumItemType, XQueryEnumItemType> alwaysTrue = (_, _) -> true;
     private static final BiPredicate<XQueryEnumItemType, XQueryEnumItemType> alwaysFalse = (_, _) -> false;
 
-    @SuppressWarnings("rawtypes")
     private static final BiPredicate[][] itemtypeIsSubtypeOf;
     static {
         itemtypeIsSubtypeOf = new BiPredicate[typesCount][typesCount];

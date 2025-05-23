@@ -7,6 +7,7 @@ import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
+@SuppressWarnings({ "unchecked", "rawtypes" })
 public class XQueryEnumSequenceType implements XQuerySequenceType {
     private final XQueryEnumItemType itemType;
     private final XQueryOccurence occurence;
@@ -53,7 +54,6 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
     private static final BiPredicate<XQueryEnumSequenceType, XQueryEnumSequenceType> alwaysTrue = (_, _) -> true;
     private static final BiPredicate<XQueryEnumSequenceType, XQueryEnumSequenceType> alwaysFalse = (_, _) -> false;
     private static final int occurenceCount = XQueryOccurence.values().length;
-    @SuppressWarnings("rawtypes")
 	private static final BiPredicate[][] isSubtypeOf;
     static {
         isSubtypeOf = new BiPredicate[occurenceCount][occurenceCount];
@@ -92,7 +92,6 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         return this_.getItemType().itemtypeIsSubtypeOf(other.getItemType());
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public boolean isSubtypeOf(XQuerySequenceType obj) {
         if (!(obj instanceof XQueryEnumSequenceType))
@@ -133,7 +132,6 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
     }
 
 
-    @SuppressWarnings("rawtypes")
 	private static final Function[][] mergedOccurences = new Function[XQueryOccurence.values().length][XQueryOccurence.values().length];
     private static final Function<XQueryTypeFactory, Function<XQueryItemType, XQuerySequenceType>> zero =
         typeFactory -> (_) -> typeFactory.emptySequence();
@@ -275,7 +273,6 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
     }
 
 
-    @SuppressWarnings("unchecked")
     @Override
     public XQuerySequenceType unionMerge(XQuerySequenceType other) {
         final var other_ = (XQueryEnumSequenceType) other;
@@ -410,7 +407,9 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
     public XQuerySequenceType exceptionMerge(XQuerySequenceType other) {
         final var other_ = (XQueryEnumSequenceType) other;
         final XQueryOccurence mergedOccurence = exceptOccurences[this.occurence.ordinal()][other_.getOccurence().ordinal()];
-        return (XQuerySequenceType) factoryByOccurence[mergedOccurence.ordinal()].apply(itemType);
+        final Function typeFactoryMethod = factoryByOccurence[mergedOccurence.ordinal()];
+        final var usedItemType = occurence == XQueryOccurence.ZERO? typeFactory.itemAnyNode(): itemType;
+        return (XQuerySequenceType) typeFactoryMethod.apply(usedItemType);
     }
 
 
@@ -452,14 +451,12 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         typeAlternativeOccurence[oneOrMoreOrdinal][oneOrMoreOrdinal] = XQueryOccurence.ONE_OR_MORE;
     }
 
-    @SuppressWarnings("rawtypes")
 	final Function[] factoryByOccurence;
-    @SuppressWarnings("unchecked")
+
     @Override
     public XQuerySequenceType typeAlternative(XQuerySequenceType other) {
         final var other_ = (XQueryEnumSequenceType) other;
         final var occurence_ = typeAlternativeOccurence[occurence.ordinal()][other_.getOccurence().ordinal()];
-        @SuppressWarnings("rawtypes")
 		final Function sequenceTypeFactory = factoryByOccurence[occurence_.ordinal()];
         if (this.itemType == null)
             if (other.getItemType() == null)

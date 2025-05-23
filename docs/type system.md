@@ -277,10 +277,10 @@ InputExpressionType treat as SequenceType -> SequenceType
 ### Filter expression
 ```xquery
 	empty-list() -> empty-list()
-	T1[EffectiveBooleanType] -> T1?
-	T1?[EffectiveBooleanType] -> T1?
-	T1*[EffectiveBooleanType] -> T1*
-	T1+[EffectiveBooleanType] -> T1*
+	T [<EffectiveBooleanType>] -> T?
+	T?[<EffectiveBooleanType>] -> T?
+	T*[<EffectiveBooleanType>] -> T*
+	T+[<EffectiveBooleanType>] -> T*
 ```
 
 

@@ -841,15 +841,84 @@ public class XQueryTypesTest {
         final var merged$any2 = anyNode.intersectionMerge(elementFoo);
         assertEquals(merged$any2, typeFactory.zeroOrOne(typeFactory.itemElement(Set.of("foo", "x"))));
     }
-        // final var elementFoo = typeFactory.element(Set.of("foo"));
-        // final var elementBar = typeFactory.element(Set.of("bar"));
-        // final var merged$elements = elementFoo.intersectionMerge(elementBar);
-        // assertEquals(merged$elements, typeFactory.zeroOrOne(typeFactory.itemElement(Set.of("foo"))));
 
-        // final var merged$any = elementFoo.intersectionMerge(anyNode);
-        // assertEquals(merged$any, typeFactory.zeroOrOne(typeFactory.itemElement(Set.of("foo"))));
+    @Test
+    public void exceptNodeMerging() {
+        final var empty = typeFactory.emptySequence();
+        final var node = typeFactory.anyNode();
+        final var nodeZeroOrOne = typeFactory.zeroOrOne(typeFactory.itemAnyNode());
+        final var nodeZeroOrMore = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
+        final var nodeOneOrMore = typeFactory.oneOrMore(typeFactory.itemAnyNode());
 
-        // final var merged$any2 = anyNode.intersectionMerge(elementFoo);
-        // assertEquals(merged$any2, typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
+        final var $00 = empty.exceptionMerge(empty);
+        final var $01 = empty.exceptionMerge(node);
+        final var $0_zeroOrOne = empty.exceptionMerge(nodeZeroOrOne);
+        final var $0_zeroOrMore = empty.exceptionMerge(nodeZeroOrMore);
+        final var $0_oneOrMore = empty.exceptionMerge(nodeOneOrMore);
+        assertEquals($00, empty);
+        assertEquals($01, empty);
+        assertEquals($0_zeroOrOne, empty);
+        assertEquals($0_zeroOrMore, empty);
+        assertEquals($0_oneOrMore, empty);
+
+        final var $10 = node.exceptionMerge(empty);
+        final var $11 = node.exceptionMerge(node);
+        final var $1_zeroOrOne = node.exceptionMerge(nodeZeroOrOne);
+        final var $1_zeroOrMore = node.exceptionMerge(nodeZeroOrMore);
+        final var $1_oneOrMore = node.exceptionMerge(nodeOneOrMore);
+
+        assertEquals($10, node);
+        assertEquals($11, nodeZeroOrOne);
+        assertEquals($1_zeroOrOne, nodeZeroOrOne);
+        assertEquals($1_zeroOrMore, nodeZeroOrOne);
+        assertEquals($1_oneOrMore, nodeZeroOrOne);
+
+        final var $zeroOrOne_0 = nodeZeroOrOne.exceptionMerge(empty);
+        final var $zeroOrOne_1 = nodeZeroOrOne.exceptionMerge(node);
+        final var $zeroOrOne_zeroOrOne = nodeZeroOrOne.exceptionMerge(nodeZeroOrOne);
+        final var $zeroOrOne_zeroOrMore = nodeZeroOrOne.exceptionMerge(nodeZeroOrMore);
+        final var $zeroOrOne_oneOrMore = nodeZeroOrOne.exceptionMerge(nodeOneOrMore);
+
+        assertEquals($zeroOrOne_0, nodeZeroOrOne);
+        assertEquals($zeroOrOne_1, nodeZeroOrOne);
+        assertEquals($zeroOrOne_zeroOrOne, nodeZeroOrOne);
+        assertEquals($zeroOrOne_zeroOrMore, nodeZeroOrOne);
+        assertEquals($zeroOrOne_oneOrMore, nodeZeroOrOne);
+
+        final var $zeroOrMore_0 = nodeZeroOrMore.exceptionMerge(empty);
+        final var $zeroOrMore_1 = nodeZeroOrMore.exceptionMerge(node);
+        final var $zeroOrMore_zeroOrOne = nodeZeroOrMore.exceptionMerge(nodeZeroOrOne);
+        final var $zeroOrMore_zeroOrMore = nodeZeroOrMore.exceptionMerge(nodeZeroOrMore);
+        final var $zeroOrMore_oneOrMore = nodeZeroOrMore.exceptionMerge(nodeOneOrMore);
+
+        assertEquals($zeroOrMore_0, nodeZeroOrMore);
+        assertEquals($zeroOrMore_1, nodeZeroOrMore);
+        assertEquals($zeroOrMore_zeroOrOne, nodeZeroOrMore);
+        assertEquals($zeroOrMore_zeroOrMore, nodeZeroOrMore);
+        assertEquals($zeroOrMore_oneOrMore, nodeZeroOrMore);
+
+        final var $oneOrMore_0 = nodeOneOrMore.exceptionMerge(empty);
+        final var $oneOrMore_1 = nodeOneOrMore.exceptionMerge(node);
+        final var $oneOrMore_zeroOrOne = nodeOneOrMore.exceptionMerge(nodeZeroOrOne);
+        final var $oneOrMore_zeroOrMore = nodeOneOrMore.exceptionMerge(nodeZeroOrMore);
+        final var $oneOrMore_oneOrMore = nodeOneOrMore.exceptionMerge(nodeOneOrMore);
+
+        assertEquals($oneOrMore_0, nodeOneOrMore);
+        assertEquals($oneOrMore_1, nodeZeroOrMore);
+        assertEquals($oneOrMore_zeroOrOne, nodeZeroOrMore);
+        assertEquals($oneOrMore_zeroOrMore, nodeZeroOrMore);
+        assertEquals($oneOrMore_oneOrMore, nodeZeroOrMore);
+
+        final var elementFoo = typeFactory.element(Set.of("foo"));
+        final var elementBar = typeFactory.element(Set.of("bar"));
+        final var merged$elements = elementFoo.exceptionMerge(elementBar);
+        assertEquals(merged$elements, typeFactory.zeroOrOne(typeFactory.itemElement(Set.of("foo"))));
+
+        final var merged$any = elementFoo.exceptionMerge(anyNode);
+        assertEquals(merged$any, typeFactory.zeroOrOne(typeFactory.itemElement(Set.of("foo"))));
+
+        final var merged$any2 = anyNode.exceptionMerge(elementFoo);
+        assertEquals(merged$any2, typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
+    }
 
 }

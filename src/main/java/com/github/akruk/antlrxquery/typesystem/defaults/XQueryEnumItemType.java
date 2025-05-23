@@ -12,10 +12,9 @@ import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "rawtypes" })
 public class XQueryEnumItemType implements XQueryItemType {
     private final XQueryTypes type;
-    @SuppressWarnings("rawtypes")
     private final BinaryOperator[][] unionItemMerger;
     private final BinaryOperator[][] intersectionItemMerger;
     private final XQueryTypeFactory typeFactory;
@@ -524,17 +523,20 @@ public class XQueryEnumItemType implements XQueryItemType {
         return castableAs[type.ordinal()][typed.getType().ordinal()];
     }
 
-
     @Override
     public XQueryItemType unionMerge(XQueryItemType other) {
         var other_ = (XQueryEnumItemType) other;
         return (XQueryItemType)unionItemMerger[type.ordinal()][other_.getType().ordinal()].apply(this, other);
     }
 
-
     @Override
     public XQueryItemType intersectionMerge(XQueryItemType other) {
         var other_ = (XQueryEnumItemType) other;
         return (XQueryItemType)intersectionItemMerger[type.ordinal()][other_.getType().ordinal()].apply(this, other);
+    }
+
+    @Override
+    public XQueryItemType exceptionMerge(XQueryItemType other) {
+        return this;
     }
 }

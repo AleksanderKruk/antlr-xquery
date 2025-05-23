@@ -16,4 +16,5 @@ public interface XQueryItemType {
     boolean castableAs(XQueryItemType other);
     XQueryItemType unionMerge(XQueryItemType other);
     XQueryItemType intersectionMerge(XQueryItemType other);
+    XQueryItemType exceptionMerge(XQueryItemType other);
 }

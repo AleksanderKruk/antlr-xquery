@@ -237,6 +237,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         final var record = ctx.typedRecordType();
         final Map<String, XQuerySequenceType> fields = new HashMap<>();
         // TODO: extensible flag
+        // TODO: optional fields
         for (final var field : record.fieldDeclaration()) {
             final String fieldName = field.fieldName().getText();
             final XQuerySequenceType fieldType = field.sequenceType().accept(this);

@@ -15,6 +15,7 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 @SuppressWarnings("unchecked")
 public class XQueryEnumItemType implements XQueryItemType {
     private final XQueryTypes type;
+    @SuppressWarnings("rawtypes")
     private final BinaryOperator[][] unionItemMerger;
     private final XQueryTypeFactory typeFactory;
 

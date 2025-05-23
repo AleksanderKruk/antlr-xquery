@@ -17,6 +17,7 @@ public class XQueryEnumItemType implements XQueryItemType {
     private final XQueryTypes type;
     @SuppressWarnings("rawtypes")
     private final BinaryOperator[][] unionItemMerger;
+    private final BinaryOperator[][] intersectionItemMerger;
     private final XQueryTypeFactory typeFactory;
 
     public XQueryEnumItemType(XQueryTypes type,
@@ -40,6 +41,7 @@ public class XQueryEnumItemType implements XQueryItemType {
         // Union merging preparation
         final int element = XQueryTypes.ELEMENT.ordinal();
         final int anyNode = XQueryTypes.ANY_NODE.ordinal();
+
         unionItemMerger = new BinaryOperator[typesCount][typesCount];
         unionItemMerger[element][element] = (i1, i2) -> {
             final var i1_ = (XQueryEnumItemType) i1;
@@ -51,12 +53,33 @@ public class XQueryEnumItemType implements XQueryItemType {
             mergedElements.addAll(i2ELements);
             return typeFactory.itemElement(mergedElements);
         };
-        final BinaryOperator<XQueryItemType> anyItemReturn = (_, _) -> {
+        final BinaryOperator<XQueryItemType> anyNodeReturn = (_, _) -> {
             return typeFactory.itemAnyNode();
         };
-        unionItemMerger[element][anyNode] = anyItemReturn;
-        unionItemMerger[anyNode][element] = anyItemReturn;
-        unionItemMerger[anyNode][anyNode] = anyItemReturn;
+        unionItemMerger[element][anyNode] = anyNodeReturn;
+        unionItemMerger[anyNode][element] = anyNodeReturn;
+        unionItemMerger[anyNode][anyNode] = anyNodeReturn;
+
+
+
+        intersectionItemMerger = new BinaryOperator[typesCount][typesCount];
+        intersectionItemMerger[element][element] = (i1, i2) -> {
+            final var i1_ = (XQueryEnumItemType) i1;
+            final var i2_ = (XQueryEnumItemType) i2;
+            final var i1Elements = i1_.getElementNames();
+            final var i2ELements = i2_.getElementNames();
+            final Set<String> mergedElements = new HashSet<>(i1Elements.size());
+            mergedElements.addAll(i1Elements);
+            mergedElements.retainAll(i2ELements);
+            return typeFactory.itemElement(mergedElements);
+        };
+        intersectionItemMerger[element][anyNode] = (i1, _) -> {
+            return i1;
+        };
+        intersectionItemMerger[anyNode][element] = (_, i2) -> {
+            return i2;
+        };
+        intersectionItemMerger[anyNode][anyNode] = anyNodeReturn;
     }
 
     private final List<XQuerySequenceType> argumentTypes;
@@ -506,5 +529,12 @@ public class XQueryEnumItemType implements XQueryItemType {
     public XQueryItemType unionMerge(XQueryItemType other) {
         var other_ = (XQueryEnumItemType) other;
         return (XQueryItemType)unionItemMerger[type.ordinal()][other_.getType().ordinal()].apply(this, other);
+    }
+
+
+    @Override
+    public XQueryItemType intersectionMerge(XQueryItemType other) {
+        var other_ = (XQueryEnumItemType) other;
+        return (XQueryItemType)intersectionItemMerger[type.ordinal()][other_.getType().ordinal()].apply(this, other);
     }
 }

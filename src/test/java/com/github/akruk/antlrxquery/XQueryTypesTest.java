@@ -762,4 +762,94 @@ public class XQueryTypesTest {
     }
 
 
+    @Test
+    public void intersectNodeMerging() {
+        final var empty = typeFactory.emptySequence();
+        final var node = typeFactory.anyNode();
+        final var nodeZeroOrOne = typeFactory.zeroOrOne(typeFactory.itemAnyNode());
+        final var nodeZeroOrMore = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
+        final var nodeOneOrMore = typeFactory.oneOrMore(typeFactory.itemAnyNode());
+
+        final var $00 = empty.intersectionMerge(empty);
+        final var $01 = empty.intersectionMerge(node);
+        final var $0_zeroOrOne = empty.intersectionMerge(nodeZeroOrOne);
+        final var $0_zeroOrMore = empty.intersectionMerge(nodeZeroOrMore);
+        final var $0_oneOrMore = empty.intersectionMerge(nodeOneOrMore);
+        assertEquals($00, empty);
+        assertEquals($01, empty);
+        assertEquals($0_zeroOrOne, empty);
+        assertEquals($0_zeroOrMore, empty);
+        assertEquals($0_oneOrMore, empty);
+
+        final var $10 = node.intersectionMerge(empty);
+        final var $11 = node.intersectionMerge(node);
+        final var $1_zeroOrOne = node.intersectionMerge(nodeZeroOrOne);
+        final var $1_zeroOrMore = node.intersectionMerge(nodeZeroOrMore);
+        final var $1_oneOrMore = node.intersectionMerge(nodeOneOrMore);
+
+        assertEquals($10, empty);
+        assertEquals($11, nodeZeroOrOne);
+        assertEquals($1_zeroOrOne, nodeZeroOrOne);
+        assertEquals($1_zeroOrMore, nodeZeroOrOne);
+        assertEquals($1_oneOrMore, nodeZeroOrOne);
+
+        final var $zeroOrOne_0 = nodeZeroOrOne.intersectionMerge(empty);
+        final var $zeroOrOne_1 = nodeZeroOrOne.intersectionMerge(node);
+        final var $zeroOrOne_zeroOrOne = nodeZeroOrOne.intersectionMerge(nodeZeroOrOne);
+        final var $zeroOrOne_zeroOrMore = nodeZeroOrOne.intersectionMerge(nodeZeroOrMore);
+        final var $zeroOrOne_oneOrMore = nodeZeroOrOne.intersectionMerge(nodeOneOrMore);
+
+        assertEquals($zeroOrOne_0, empty);
+        assertEquals($zeroOrOne_1, nodeZeroOrOne);
+        assertEquals($zeroOrOne_zeroOrOne, nodeZeroOrOne);
+        assertEquals($zeroOrOne_zeroOrMore, nodeZeroOrOne);
+        assertEquals($zeroOrOne_oneOrMore, nodeZeroOrOne);
+
+        final var $zeroOrMore_0 = nodeZeroOrMore.intersectionMerge(empty);
+        final var $zeroOrMore_1 = nodeZeroOrMore.intersectionMerge(node);
+        final var $zeroOrMore_zeroOrOne = nodeZeroOrMore.intersectionMerge(nodeZeroOrOne);
+        final var $zeroOrMore_zeroOrMore = nodeZeroOrMore.intersectionMerge(nodeZeroOrMore);
+        final var $zeroOrMore_oneOrMore = nodeZeroOrMore.intersectionMerge(nodeOneOrMore);
+
+        assertEquals($zeroOrMore_0, empty);
+        assertEquals($zeroOrMore_1, nodeZeroOrOne);
+        assertEquals($zeroOrMore_zeroOrOne, nodeZeroOrOne);
+        assertEquals($zeroOrMore_zeroOrMore, nodeZeroOrMore);
+        assertEquals($zeroOrMore_oneOrMore, nodeZeroOrMore);
+
+        final var $oneOrMore_0 = nodeOneOrMore.intersectionMerge(empty);
+        final var $oneOrMore_1 = nodeOneOrMore.intersectionMerge(node);
+        final var $oneOrMore_zeroOrOne = nodeOneOrMore.intersectionMerge(nodeZeroOrOne);
+        final var $oneOrMore_zeroOrMore = nodeOneOrMore.intersectionMerge(nodeZeroOrMore);
+        final var $oneOrMore_oneOrMore = nodeOneOrMore.intersectionMerge(nodeOneOrMore);
+
+        assertEquals($oneOrMore_0, empty);
+        assertEquals($oneOrMore_1, nodeZeroOrOne);
+        assertEquals($oneOrMore_zeroOrOne, nodeZeroOrOne);
+        assertEquals($oneOrMore_zeroOrMore, nodeZeroOrMore);
+        assertEquals($oneOrMore_oneOrMore, nodeZeroOrMore);
+
+
+        final var elementFoo = typeFactory.element(Set.of("foo", "x"));
+        final var elementBar = typeFactory.element(Set.of("bar", "x"));
+        final var merged$elements = elementFoo.intersectionMerge(elementBar);
+        assertEquals(merged$elements, typeFactory.zeroOrOne(typeFactory.itemElement(Set.of("x"))));
+
+        final var merged$any = elementFoo.intersectionMerge(anyNode);
+        assertEquals(merged$any, typeFactory.zeroOrOne(typeFactory.itemElement(Set.of("foo", "x"))));
+
+        final var merged$any2 = anyNode.intersectionMerge(elementFoo);
+        assertEquals(merged$any2, typeFactory.zeroOrOne(typeFactory.itemElement(Set.of("foo", "x"))));
+    }
+        // final var elementFoo = typeFactory.element(Set.of("foo"));
+        // final var elementBar = typeFactory.element(Set.of("bar"));
+        // final var merged$elements = elementFoo.intersectionMerge(elementBar);
+        // assertEquals(merged$elements, typeFactory.zeroOrOne(typeFactory.itemElement(Set.of("foo"))));
+
+        // final var merged$any = elementFoo.intersectionMerge(anyNode);
+        // assertEquals(merged$any, typeFactory.zeroOrOne(typeFactory.itemElement(Set.of("foo"))));
+
+        // final var merged$any2 = anyNode.intersectionMerge(elementFoo);
+        // assertEquals(merged$any2, typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
+
 }

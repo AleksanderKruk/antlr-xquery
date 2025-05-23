@@ -344,8 +344,17 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
     @Override
     public XQuerySequenceType intersectionMerge(XQuerySequenceType other) {
         final var other_ = (XQueryEnumSequenceType) other;
+        final XQueryEnumItemType otherItemType = other_.getItemType();
         final XQueryOccurence mergedOccurence = intersectionOccurences[this.occurence.ordinal()][other_.getOccurence().ordinal()];
-        return (XQuerySequenceType) factoryByOccurence[mergedOccurence.ordinal()].apply(itemType);
+        final int occurence_ = mergedOccurence.ordinal();
+        if (itemType == null) {
+            return (XQuerySequenceType) factoryByOccurence[occurence_].apply(otherItemType);
+        }
+        if (otherItemType == null) {
+            return (XQuerySequenceType) factoryByOccurence[occurence_].apply(itemType);
+        }
+        final var mergedType = itemType.intersectionMerge(otherItemType);
+        return (XQuerySequenceType) factoryByOccurence[occurence_].apply(mergedType);
     }
 
 

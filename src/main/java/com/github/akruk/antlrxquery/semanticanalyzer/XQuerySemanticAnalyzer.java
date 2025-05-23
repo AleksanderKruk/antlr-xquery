@@ -872,16 +872,19 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         if (ctx.unionOperator().isEmpty()) {
             return ctx.intersectExpr(0).accept(this);
         }
-        final var expressionNode = ctx.intersectExpr(0);
+        final var zeroOrMoreNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
+        var expressionNode = ctx.intersectExpr(0);
         var expressionType = expressionNode.accept(this);
-        // TODO: Whether or not it should be any element item
-        // final var anyItemSequence = typeFactory.zeroOrMore(typeFactory.itemAnyElement());
-        // if (!expressionType.isSubtypeOf(anyItemSequence)) {
-        //     addError(expressionNode, "Operand of union expression must be a sequence of items");
-        // }
+        if (!expressionType.isSubtypeOf(zeroOrMoreNodes)) {
+            addError(expressionNode, "Expression of union operator node()* | node()* does match the type 'node()', received type: " + expressionType.toString());
+        }
         final var unionCount = ctx.unionOperator().size();
         for (int i = 1; i <= unionCount; i++) {
-            final var visitedType = ctx.intersectExpr(i).accept(this);
+            expressionNode = ctx.intersectExpr(i);
+            final var visitedType = expressionNode.accept(this);
+            if (!expressionType.isSubtypeOf(zeroOrMoreNodes)) {
+                addError(expressionNode, "Expression of union operator node()* | node()* does match the type 'node()', received type: " + expressionType.toString());
+            }
             expressionType = expressionType.unionMerge(visitedType);
         }
         return expressionType;
@@ -893,23 +896,23 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             return ctx.instanceofExpr(0).accept(this);
         }
         var expressionType = ctx.instanceofExpr(0).accept(this);
-        // TODO: Whether or not it should be any element item
-        final var anyItemSequence = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
-        if (!expressionType.isSubtypeOf(anyItemSequence)) {
-            addError(ctx, "Operand of union expression must be a sequence of items");
+        final var zeroOrMoreNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
+        if (!expressionType.isSubtypeOf(zeroOrMoreNodes)) {
+            addError(ctx.instanceofExpr(0),
+                    "Expression of operator node()* except/intersect node()* does match the type 'node()', received type: " + expressionType.toString());
         }
         final var operatorCount = ctx.exceptOrIntersect().size();
         for (int i = 1; i <= operatorCount; i++) {
             final var instanceofExpr = ctx.instanceofExpr(i);
             final var visitedType = instanceofExpr.accept(this);
-            if (!expressionType.isSubtypeOf(anyItemSequence)) {
-                addError(instanceofExpr, "Operand of union expression must be a sequence of items");
+            if (!visitedType.isSubtypeOf(zeroOrMoreNodes)) {
+                addError(ctx.instanceofExpr(i),
+                        "Expression of operator node()* except/intersect node()* does match the type 'node()', received type: " + expressionType.toString());
             }
-            if (ctx.exceptOrIntersect(i).EXCEPT() != null) {
+            if (ctx.exceptOrIntersect(i).EXCEPT() != null)
                 expressionType = expressionType.exceptionMerge(visitedType);
-                continue;
-            }
-            expressionType = expressionType.intersectionMerge(visitedType);
+            else
+                expressionType = expressionType.intersectionMerge(visitedType);
         }
         return expressionType;
     }

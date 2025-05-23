@@ -226,10 +226,109 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         return true;
     }
 
+    private static final XQueryOccurence[][] unionOccurences;
+    static {
+        final int occurenceCount = XQueryOccurence.values().length;
+        unionOccurences = new XQueryOccurence[occurenceCount][occurenceCount];
+
+        final XQueryOccurence zero = XQueryOccurence.ZERO;
+        final XQueryOccurence one = XQueryOccurence.ONE;
+        final XQueryOccurence zeroOrOne = XQueryOccurence.ZERO_OR_ONE;
+        final XQueryOccurence zeroOrMore = XQueryOccurence.ZERO_OR_MORE;
+        final XQueryOccurence oneOrMore = XQueryOccurence.ONE_OR_MORE;
+
+        final int zero_ = XQueryOccurence.ZERO.ordinal();
+        final int one_ = XQueryOccurence.ONE.ordinal();
+        final int zeroOrOne_ = XQueryOccurence.ZERO_OR_ONE.ordinal();
+        final int zeroOrMore_ = XQueryOccurence.ZERO_OR_MORE.ordinal();
+        final int oneOrMore_ = XQueryOccurence.ONE_OR_MORE.ordinal();
+
+        unionOccurences[zero_][zero_] = zero;
+        unionOccurences[zero_][one_] = one;
+        unionOccurences[zero_][zeroOrOne_] = zeroOrOne;
+        unionOccurences[zero_][zeroOrMore_] = zeroOrMore;
+        unionOccurences[zero_][oneOrMore_] = oneOrMore;
+
+        unionOccurences[one_][zero_] = one;
+        unionOccurences[one_][one_] = oneOrMore;
+        unionOccurences[one_][zeroOrOne_] = oneOrMore;
+        unionOccurences[one_][zeroOrMore_] = oneOrMore;
+        unionOccurences[one_][oneOrMore_] = oneOrMore;
+
+        unionOccurences[zeroOrOne_][zero_] = zeroOrOne;
+        unionOccurences[zeroOrOne_][one_] = oneOrMore;
+        unionOccurences[zeroOrOne_][zeroOrOne_] = zeroOrMore;
+        unionOccurences[zeroOrOne_][zeroOrMore_] = zeroOrMore;
+        unionOccurences[zeroOrOne_][oneOrMore_] = oneOrMore;
+
+        unionOccurences[zeroOrMore_][zero_] = zeroOrMore;
+        unionOccurences[zeroOrMore_][one_] = oneOrMore;
+        unionOccurences[zeroOrMore_][zeroOrOne_] = zeroOrMore;
+        unionOccurences[zeroOrMore_][zeroOrMore_] = zeroOrMore;
+        unionOccurences[zeroOrMore_][oneOrMore_] = oneOrMore;
+
+        unionOccurences[oneOrMore_][zero_] = oneOrMore;
+        unionOccurences[oneOrMore_][one_] = oneOrMore;
+        unionOccurences[oneOrMore_][zeroOrOne_] = oneOrMore;
+        unionOccurences[oneOrMore_][zeroOrMore_] = oneOrMore;
+        unionOccurences[oneOrMore_][oneOrMore_] = oneOrMore;
+    }
+
+
+    @SuppressWarnings("unchecked")
     @Override
     public XQuerySequenceType unionMerge(XQuerySequenceType other) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'unionMerge'");
+        final var other_ = (XQueryEnumSequenceType) other;
+        final XQueryOccurence mergedOccurence = unionOccurences[this.occurence.ordinal()][other_.getOccurence().ordinal()];
+        return (XQuerySequenceType) factoryByOccurence[mergedOccurence.ordinal()].apply(itemType);
+    }
+
+    private static final XQueryOccurence[][] intersectionOccurences;
+    static {
+        final int occurenceCount = XQueryOccurence.values().length;
+        intersectionOccurences = new XQueryOccurence[occurenceCount][occurenceCount];
+
+        final XQueryOccurence zero = XQueryOccurence.ZERO;
+        final XQueryOccurence one = XQueryOccurence.ONE;
+        final XQueryOccurence zeroOrOne = XQueryOccurence.ZERO_OR_ONE;
+        final XQueryOccurence zeroOrMore = XQueryOccurence.ZERO_OR_MORE;
+        final XQueryOccurence oneOrMore = XQueryOccurence.ONE_OR_MORE;
+
+        final int zero_ = XQueryOccurence.ZERO.ordinal();
+        final int one_ = XQueryOccurence.ONE.ordinal();
+        final int zeroOrOne_ = XQueryOccurence.ZERO_OR_ONE.ordinal();
+        final int zeroOrMore_ = XQueryOccurence.ZERO_OR_MORE.ordinal();
+        final int oneOrMore_ = XQueryOccurence.ONE_OR_MORE.ordinal();
+
+        intersectionOccurences[zero_][zero_] = zero;
+        intersectionOccurences[zero_][one_] = one;
+        intersectionOccurences[zero_][zeroOrOne_] = zeroOrOne;
+        intersectionOccurences[zero_][zeroOrMore_] = zeroOrMore;
+        intersectionOccurences[zero_][oneOrMore_] = oneOrMore;
+
+        intersectionOccurences[one_][zero_] = one;
+        intersectionOccurences[one_][one_] = oneOrMore;
+        intersectionOccurences[one_][zeroOrOne_] = oneOrMore;
+        intersectionOccurences[one_][zeroOrMore_] = oneOrMore;
+        intersectionOccurences[one_][oneOrMore_] = oneOrMore;
+
+        intersectionOccurences[zeroOrOne_][zero_] = zeroOrOne;
+        intersectionOccurences[zeroOrOne_][one_] = oneOrMore;
+        intersectionOccurences[zeroOrOne_][zeroOrOne_] = zeroOrMore;
+        intersectionOccurences[zeroOrOne_][zeroOrMore_] = zeroOrMore;
+        intersectionOccurences[zeroOrOne_][oneOrMore_] = oneOrMore;
+
+        intersectionOccurences[zeroOrMore_][zero_] = zeroOrMore;
+        intersectionOccurences[zeroOrMore_][one_] = oneOrMore;
+        intersectionOccurences[zeroOrMore_][zeroOrOne_] = zeroOrMore;
+        intersectionOccurences[zeroOrMore_][zeroOrMore_] = zeroOrMore;
+        intersectionOccurences[zeroOrMore_][oneOrMore_] = oneOrMore;
+
+        intersectionOccurences[oneOrMore_][zero_] = oneOrMore;
+        intersectionOccurences[oneOrMore_][one_] = oneOrMore;
+        intersectionOccurences[oneOrMore_][zeroOrOne_] = oneOrMore;
+        intersectionOccurences[oneOrMore_][zeroOrMore_] = oneOrMore;
+        intersectionOccurences[oneOrMore_][oneOrMore_] = oneOrMore;
     }
 
     @Override

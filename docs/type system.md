@@ -92,7 +92,7 @@ Union operators have the same semantics as sequence constructor operator.
 ```xquery
 <node():o1> union <node():o2> -> node():o2
 ```
-**Merging occurence semantics:**
+**Union occurence merging semantics:**
 (o1, o2)  | 0 | 1 | ? | \* | \+
 ---       |---|---|---|--- |---
 **0**     | 0 | 1 | ? | *  | +

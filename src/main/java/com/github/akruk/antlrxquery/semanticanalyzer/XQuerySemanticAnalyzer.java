@@ -904,6 +904,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         if (!expressionType.isSubtypeOf(zeroOrMoreNodes)) {
             addError(ctx.instanceofExpr(0),
                     "Expression of operator node()* except/intersect node()* does match the type 'node()', received type: " + expressionType.toString());
+            expressionType = zeroOrMoreNodes;
         }
         final var operatorCount = ctx.exceptOrIntersect().size();
         for (int i = 1; i <= operatorCount; i++) {
@@ -912,11 +913,13 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             if (!visitedType.isSubtypeOf(zeroOrMoreNodes)) {
                 addError(ctx.instanceofExpr(i),
                         "Expression of operator node()* except/intersect node()* does match the type 'node()', received type: " + expressionType.toString());
+                expressionType = zeroOrMoreNodes;
+            } else {
+                if (ctx.exceptOrIntersect(i).EXCEPT() != null)
+                    expressionType = expressionType.exceptionMerge(visitedType);
+                else
+                    expressionType = expressionType.intersectionMerge(visitedType);
             }
-            if (ctx.exceptOrIntersect(i).EXCEPT() != null)
-                expressionType = expressionType.exceptionMerge(visitedType);
-            else
-                expressionType = expressionType.intersectionMerge(visitedType);
         }
         return expressionType;
     }

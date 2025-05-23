@@ -878,15 +878,18 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         var expressionType = expressionNode.accept(this);
         if (!expressionType.isSubtypeOf(zeroOrMoreNodes)) {
             addError(expressionNode, "Expression of union operator node()* | node()* does match the type 'node()', received type: " + expressionType.toString());
+            expressionType = zeroOrMoreNodes;
         }
         final var unionCount = ctx.unionOperator().size();
         for (int i = 1; i <= unionCount; i++) {
             expressionNode = ctx.intersectExpr(i);
             final var visitedType = expressionNode.accept(this);
-            if (!expressionType.isSubtypeOf(zeroOrMoreNodes)) {
+            if (!visitedType.isSubtypeOf(zeroOrMoreNodes)) {
                 addError(expressionNode, "Expression of union operator node()* | node()* does match the type 'node()', received type: " + expressionType.toString());
+                expressionType = zeroOrMoreNodes;
+            } else {
+                expressionType = expressionType.unionMerge(visitedType);
             }
-            expressionType = expressionType.unionMerge(visitedType);
         }
         return expressionType;
     }

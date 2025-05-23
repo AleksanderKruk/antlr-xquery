@@ -1108,6 +1108,7 @@ public class XQueryEvaluatorTest {
         """, $123);
     }
 
+
     // Wildcards
     // All effective boolean values
 

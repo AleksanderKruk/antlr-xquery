@@ -2,6 +2,8 @@ package com.github.akruk.antlrxquery;
 
 import static org.junit.Assert.assertTrue;
 
+import java.util.Set;
+
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -244,6 +246,30 @@ public class XQuerySemanticAnalyzerTest {
         """, zeroOrMoreString);
     }
 
+
+    @Test
+    public void unionExpression() {
+        assertType("""
+            let $x as node()* := (),
+                $y as node()* := (),
+                $z as node()* := ()
+            return $x | $y | $z
+        """, typeFactory.zeroOrMore(typeFactory.itemAnyNode()));
+
+        assertType("""
+            let $x as element(a)* := (),
+                $y as element(b)* := (),
+                $z as element(c)* := ()
+            return $x | $y | $z
+        """, typeFactory.zeroOrMore(typeFactory.itemElement(Set.of("a", "b", "c"))));
+
+        assertThereAreErrors("""
+            let $x as number+ := (1, 2, 3)
+            return $x | $x
+        """);
+
+
+    }
 
 
 

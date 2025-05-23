@@ -301,40 +301,42 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         final int oneOrMore_ = XQueryOccurence.ONE_OR_MORE.ordinal();
 
         intersectionOccurences[zero_][zero_] = zero;
-        intersectionOccurences[zero_][one_] = one;
-        intersectionOccurences[zero_][zeroOrOne_] = zeroOrOne;
-        intersectionOccurences[zero_][zeroOrMore_] = zeroOrMore;
-        intersectionOccurences[zero_][oneOrMore_] = oneOrMore;
+        intersectionOccurences[zero_][one_] = zero;
+        intersectionOccurences[zero_][zeroOrOne_] = zero;
+        intersectionOccurences[zero_][zeroOrMore_] = zero;
+        intersectionOccurences[zero_][oneOrMore_] = zero;
 
-        intersectionOccurences[one_][zero_] = one;
-        intersectionOccurences[one_][one_] = oneOrMore;
-        intersectionOccurences[one_][zeroOrOne_] = oneOrMore;
-        intersectionOccurences[one_][zeroOrMore_] = oneOrMore;
-        intersectionOccurences[one_][oneOrMore_] = oneOrMore;
+        intersectionOccurences[one_][zero_] = zero;
+        intersectionOccurences[one_][one_] = zeroOrOne;
+        intersectionOccurences[one_][zeroOrOne_] = zeroOrOne;
+        intersectionOccurences[one_][zeroOrMore_] = zeroOrOne;
+        intersectionOccurences[one_][oneOrMore_] = zeroOrOne;
 
-        intersectionOccurences[zeroOrOne_][zero_] = zeroOrOne;
-        intersectionOccurences[zeroOrOne_][one_] = oneOrMore;
-        intersectionOccurences[zeroOrOne_][zeroOrOne_] = zeroOrMore;
-        intersectionOccurences[zeroOrOne_][zeroOrMore_] = zeroOrMore;
-        intersectionOccurences[zeroOrOne_][oneOrMore_] = oneOrMore;
+        intersectionOccurences[zeroOrOne_][zero_] = zero;
+        intersectionOccurences[zeroOrOne_][one_] = zeroOrOne;
+        intersectionOccurences[zeroOrOne_][zeroOrOne_] = zeroOrOne;
+        intersectionOccurences[zeroOrOne_][zeroOrMore_] = zeroOrOne;
+        intersectionOccurences[zeroOrOne_][oneOrMore_] = zeroOrOne;
 
-        intersectionOccurences[zeroOrMore_][zero_] = zeroOrMore;
-        intersectionOccurences[zeroOrMore_][one_] = oneOrMore;
-        intersectionOccurences[zeroOrMore_][zeroOrOne_] = zeroOrMore;
+        intersectionOccurences[zeroOrMore_][zero_] = zero;
+        intersectionOccurences[zeroOrMore_][one_] = zeroOrOne;
+        intersectionOccurences[zeroOrMore_][zeroOrOne_] = zeroOrOne;
         intersectionOccurences[zeroOrMore_][zeroOrMore_] = zeroOrMore;
-        intersectionOccurences[zeroOrMore_][oneOrMore_] = oneOrMore;
+        intersectionOccurences[zeroOrMore_][oneOrMore_] = zeroOrMore;
 
-        intersectionOccurences[oneOrMore_][zero_] = oneOrMore;
-        intersectionOccurences[oneOrMore_][one_] = oneOrMore;
-        intersectionOccurences[oneOrMore_][zeroOrOne_] = oneOrMore;
-        intersectionOccurences[oneOrMore_][zeroOrMore_] = oneOrMore;
-        intersectionOccurences[oneOrMore_][oneOrMore_] = oneOrMore;
+        intersectionOccurences[oneOrMore_][zero_] = zero;
+        intersectionOccurences[oneOrMore_][one_] = zeroOrOne;
+        intersectionOccurences[oneOrMore_][zeroOrOne_] = zeroOrOne;
+        intersectionOccurences[oneOrMore_][zeroOrMore_] = zeroOrMore;
+        intersectionOccurences[oneOrMore_][oneOrMore_] = zeroOrMore;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public XQuerySequenceType intersectionMerge(XQuerySequenceType other) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'intersectionMerge'");
+        final var other_ = (XQueryEnumSequenceType) other;
+        final XQueryOccurence mergedOccurence = unionOccurences[this.occurence.ordinal()][other_.getOccurence().ordinal()];
+        return (XQuerySequenceType) factoryByOccurence[mergedOccurence.ordinal()].apply(itemType);
     }
 
     @Override

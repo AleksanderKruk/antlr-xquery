@@ -44,18 +44,17 @@ public class InputGrammarAnalyzer {
         // + "descendant"
         // + "descendant-or-self"
         // + "following"
-        // "following-or-self"
+        // + "following-or-self"
         // + "following-sibling"
-        // "following-sibling-or-self"
+        // + "following-sibling-or-self"
         // + "self"
         // + "ancestor"
         // + "ancestor-or-self"
         // + "parent"
         // + "preceding"
-        // "preceding-or-self"
+        // + "preceding-or-self"
         // + "preceding-sibling"
-        // "preceding-sibling-or-self"
-
+        // + "preceding-sibling-or-self"
 
         final Lexer xqueryLexer = new ANTLRv4Lexer(characterStream);
         final CommonTokenStream xqueryTokens = new CommonTokenStream(xqueryLexer);
@@ -99,7 +98,6 @@ public class InputGrammarAnalyzer {
                                                     precedingOrSelfMapping,
                                                     precedingSiblingMapping,
                                                     precedingSiblingOrSelfMapping);
-
         return gatheredData;
     }
 

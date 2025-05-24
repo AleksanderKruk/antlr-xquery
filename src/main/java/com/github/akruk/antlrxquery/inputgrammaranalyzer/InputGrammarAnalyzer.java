@@ -12,6 +12,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.xpath.XPath;
+import org.stringtemplate.v4.compiler.STParser.element_return;
 
 import com.github.akruk.antlrgrammar.ANTLRv4Lexer;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser;
@@ -48,17 +49,17 @@ public class InputGrammarAnalyzer {
         // + "child"
         // + "descendant"
         // + "descendant-or-self"
-        // "following"
+        // + "following"
         // "following-or-self"
-        // "following-sibling"
+        // + "following-sibling"
         // "following-sibling-or-self"
         // + "self"
         // + "ancestor"
         // + "ancestor-or-self"
         // + "parent"
-        // "preceding"
+        // + "preceding"
         // "preceding-or-self"
-        // "preceding-sibling"
+        // + "preceding-sibling"
         // "preceding-sibling-or-self"
 
 
@@ -75,6 +76,24 @@ public class InputGrammarAnalyzer {
         final var ancestorOrSelfMapping = addSelf(ancestorMapping);
         final var descendantMapping = getDescendantMapping(childrenMapping);
         final var descendantOrSelfMapping = addSelf(descendantMapping);
+        final ElementSequenceAnalyzer analyzer = new ElementSequenceAnalyzer();
+        tree.accept(analyzer);
+
+        final var followingSiblingMapping = analyzer.getFollowingSiblingMapping();
+        final var followingSiblingOrSelfMapping = addSelf(followingSiblingMapping);
+        final var precedingSiblingMapping = analyzer.getPrecedingSiblingMapping();
+        final var precedingSiblingOrSelfMapping = addSelf(precedingSiblingMapping);
+        final var followingMapping = getFollowing(ancestorMapping,
+                                                  followingSiblingMapping,
+                                                  descendantOrSelfMapping);
+        final var followingOrSelfMapping = addSelf(followingMapping);
+        final var precedingMapping = getPreceding(ancestorMapping,
+                                                    precedingSiblingMapping,
+                                                    descendantOrSelfMapping);
+        final var precedingOrSelfMapping = addSelf(precedingMapping);
+
+
+
 
 
 
@@ -192,43 +211,47 @@ public class InputGrammarAnalyzer {
     }
 
 
-    private Map<String, Set<String>> getFollowingSibling(final ANTLRv4Parser antlrParser,
-                                                        final GrammarSpecContext tree,
-                                                        final Set<String> allNodeNames)
+    private Map<String, Set<String>> getFollowing(final Map<String, Set<String>> ancestorMapping,
+                                                    final Map<String, Set<String>> followingSiblingMapping,
+                                                    final Map<String, Set<String>> descendantsOrSelfMapping)
     {
-        final  Map<String, Set<String>> childrenMapping = new HashMap<>(allNodeNames.size());
-        for (var node : childrenMapping.keySet()) {
-            childrenMapping.put(node, new HashSet<>());
+        final  Map<String, Set<String>> followingMapping = new HashMap<>(ancestorMapping.size());
+        for (var node : followingMapping.keySet()) {
+            followingMapping.put(node, new HashSet<>());
         }
-
-        final var ruleSpecs = XPath.findAll(tree, "//parserRuleSpec", antlrParser);
-        for (final ParseTree spec :ruleSpecs) {
-            final ParserRuleSpecContext spec_ = (ParserRuleSpecContext) spec;
-            final String ruleRef = spec_.RULE_REF().getText();
-            // TODO: take labeled alts into account
-            final var alternatives = XPath.findAll(spec_, "//alternative", antlrParser);
-            for (var alternative_ : alternatives) {
-                var alternative = (AlternativeContext) alternative_;
-                for (var element: alternative.element()) {
-                    for (var child: element.children) {
-                        if (child instanceof EbnfContext) { }
-                        if (child instanceof EbnfSuffixContext) { }
-                        if (child instanceof EbnfSuffixContext) { }
-
-                    }
-
-
+        for (var node  : followingMapping.keySet()) {
+            var result = followingMapping.get(node);
+            var ancestors = ancestorMapping.get(node);
+            for (var ancestor: ancestors) {
+                var followingSibling = followingSiblingMapping.get(ancestor);
+                for (var fs: followingSibling) {
+                    var descendantOrSelfs = descendantsOrSelfMapping.get(fs);
+                    result.addAll(descendantOrSelfs);
                 }
-
             }
-
-            // final Set<String> children = new HashSet<>();
-            final var rulerefs = XPath.findAll(spec, "//ruleref", antlrParser);
-            final var terminalTokens = XPath.findAll(spec, "//TOKEN_REF", antlrParser);
-            final var terminalTokenLiterals = XPath.findAll(spec, "//STRING_LITERAL", antlrParser);
-
         }
-        return childrenMapping;
+        return followingMapping;
     }
 
+    private Map<String, Set<String>> getPreceding(final Map<String, Set<String>> ancestorMapping,
+                                                    final Map<String, Set<String>> precedingSiblingMapping,
+                                                    final Map<String, Set<String>> descendantsOrSelfMapping)
+    {
+        final  Map<String, Set<String>> precedingMapping = new HashMap<>(ancestorMapping.size());
+        for (var node : precedingMapping.keySet()) {
+            precedingMapping.put(node, new HashSet<>());
+        }
+        for (var node  : precedingMapping.keySet()) {
+            var result = precedingMapping.get(node);
+            var ancestors = ancestorMapping.get(node);
+            for (var ancestor: ancestors) {
+                var precedingSibling = precedingSiblingMapping.get(ancestor);
+                for (var ps: precedingSibling) {
+                    var descendantOrSelfs = descendantsOrSelfMapping.get(ps);
+                    result.addAll(descendantOrSelfs);
+                }
+            }
+        }
+        return precedingMapping;
+    }
 }

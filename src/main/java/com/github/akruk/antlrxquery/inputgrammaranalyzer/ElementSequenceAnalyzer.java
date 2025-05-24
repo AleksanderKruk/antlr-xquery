@@ -18,8 +18,17 @@ public class ElementSequenceAnalyzer extends ANTLRv4ParserBaseVisitor<Boolean> {
     final Map<String, Set<String>> followingSiblingMapping = new HashMap<>();
     final Map<String, Set<String>> precedingSiblingMapping = new HashMap<>();
 
-    ElementSequenceAnalyzer()
-    { }
+    public Map<String, Set<String>> getFollowingSiblingMapping() {
+        return followingSiblingMapping;
+    }
+
+
+
+    public Map<String, Set<String>> getPrecedingSiblingMapping() {
+        return precedingSiblingMapping;
+    }
+
+    ElementSequenceAnalyzer() { }
 
 
     String currentRule;

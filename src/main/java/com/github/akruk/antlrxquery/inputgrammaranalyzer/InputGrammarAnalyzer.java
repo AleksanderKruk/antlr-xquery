@@ -3,14 +3,11 @@ package com.github.akruk.antlrxquery.inputgrammaranalyzer;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -18,9 +15,11 @@ import org.antlr.v4.runtime.tree.xpath.XPath;
 
 import com.github.akruk.antlrgrammar.ANTLRv4Lexer;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser;
+import com.github.akruk.antlrgrammar.ANTLRv4Parser.AlternativeContext;
+import com.github.akruk.antlrgrammar.ANTLRv4Parser.EbnfContext;
+import com.github.akruk.antlrgrammar.ANTLRv4Parser.EbnfSuffixContext;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.GrammarSpecContext;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.ParserRuleSpecContext;
-import com.github.akruk.antlrgrammar.ANTLRv4Parser.RuleBlockContext;
 
 public class InputGrammarAnalyzer {
     record NodeData(Set<String> children,
@@ -48,7 +47,7 @@ public class InputGrammarAnalyzer {
     public GrammarAnalysisResult analyze(final CharStream characterStream) {
         // + "child"
         // + "descendant"
-        // "descendant-or-self"
+        // + "descendant-or-self"
         // "following"
         // "following-or-self"
         // "following-sibling"
@@ -76,6 +75,8 @@ public class InputGrammarAnalyzer {
         final var ancestorOrSelfMapping = addSelf(ancestorMapping);
         final var descendantMapping = getDescendantMapping(childrenMapping);
         final var descendantOrSelfMapping = addSelf(descendantMapping);
+
+
 
 
         // final var parentMapping = getChildrenMapping(antlrParser, tree, definedNodes, allNodeNames);
@@ -164,30 +165,6 @@ public class InputGrammarAnalyzer {
     }
 
 
-    // private Map<String, Set<String>> getPrecedingSiblingMapping(final ANTLRv4Parser antlrParser,
-    //                                                             final GrammarSpecContext tree,
-    //                                                             final Collection<ParseTree> definedNodes)
-    // {
-    //     final  Map<String, Set<String>> childrenMapping = new HashMap<>(definedNodes.size()*2);
-
-    //     final var ruleSpecs = XPath.findAll(tree, "//parserRuleSpec", antlrParser);
-    //     for (ParseTree spec :ruleSpecs) {
-    //         final ParserRuleSpecContext spec_ = (ParserRuleSpecContext) spec;
-    //         final String ruleRef = spec_.RULE_REF().getText();
-
-    //         final Set<String> children = new HashSet<>();
-    //         final var rulerefs = XPath.findAll(spec, "//ruleref", antlrParser);
-    //         final var terminalTokens = XPath.findAll(spec, "//TOKEN_REF", antlrParser);
-    //         final var terminalTokenLiterals = XPath.findAll(spec, "//STRING_LITERAL", antlrParser);
-
-    //         children.addAll(toSet(rulerefs));
-    //         children.addAll(toSet(terminalTokens));
-    //         children.addAll(toSet(terminalTokenLiterals));
-    //         childrenMapping.put(ruleRef, children);
-    //     }
-    //     return childrenMapping;
-    // }
-
     private Map<String, Set<String>> getChildrenMapping(final ANTLRv4Parser antlrParser,
                                                         final GrammarSpecContext tree,
                                                         final Collection<ParseTree> definedNodes,
@@ -214,5 +191,44 @@ public class InputGrammarAnalyzer {
         return childrenMapping;
     }
 
+
+    private Map<String, Set<String>> getFollowingSibling(final ANTLRv4Parser antlrParser,
+                                                        final GrammarSpecContext tree,
+                                                        final Set<String> allNodeNames)
+    {
+        final  Map<String, Set<String>> childrenMapping = new HashMap<>(allNodeNames.size());
+        for (var node : childrenMapping.keySet()) {
+            childrenMapping.put(node, new HashSet<>());
+        }
+
+        final var ruleSpecs = XPath.findAll(tree, "//parserRuleSpec", antlrParser);
+        for (final ParseTree spec :ruleSpecs) {
+            final ParserRuleSpecContext spec_ = (ParserRuleSpecContext) spec;
+            final String ruleRef = spec_.RULE_REF().getText();
+            // TODO: take labeled alts into account
+            final var alternatives = XPath.findAll(spec_, "//alternative", antlrParser);
+            for (var alternative_ : alternatives) {
+                var alternative = (AlternativeContext) alternative_;
+                for (var element: alternative.element()) {
+                    for (var child: element.children) {
+                        if (child instanceof EbnfContext) { }
+                        if (child instanceof EbnfSuffixContext) { }
+                        if (child instanceof EbnfSuffixContext) { }
+
+                    }
+
+
+                }
+
+            }
+
+            // final Set<String> children = new HashSet<>();
+            final var rulerefs = XPath.findAll(spec, "//ruleref", antlrParser);
+            final var terminalTokens = XPath.findAll(spec, "//TOKEN_REF", antlrParser);
+            final var terminalTokenLiterals = XPath.findAll(spec, "//STRING_LITERAL", antlrParser);
+
+        }
+        return childrenMapping;
+    }
 
 }

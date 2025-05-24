@@ -12,13 +12,8 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.xpath.XPath;
-import org.stringtemplate.v4.compiler.STParser.element_return;
-
 import com.github.akruk.antlrgrammar.ANTLRv4Lexer;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser;
-import com.github.akruk.antlrgrammar.ANTLRv4Parser.AlternativeContext;
-import com.github.akruk.antlrgrammar.ANTLRv4Parser.EbnfContext;
-import com.github.akruk.antlrgrammar.ANTLRv4Parser.EbnfSuffixContext;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.GrammarSpecContext;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.ParserRuleSpecContext;
 

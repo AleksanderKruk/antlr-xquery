@@ -23,21 +23,20 @@ import com.github.akruk.antlrgrammar.ANTLRv4Parser.GrammarSpecContext;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.ParserRuleSpecContext;
 
 public class InputGrammarAnalyzer {
-    record NodeData(Set<String> children,
-                    Set<String> descendants,
-                    Set<String> descendantsOrSelf,
-                    Set<String> following,
-                    Set<String> followingOrSelf,
-                    Set<String> followingSibling,
-                    Set<String> followingSiblingOrSelf,
-                    Set<String> ancestors,
-                    Set<String> ancestorsOrSelf,
-                    Set<String> parent,
-                    Set<String> preceding,
-                    Set<String> precedingOrSelf,
-                    Set<String> precedingSibling,
-                    Set<String> precedingSiblingOrSelf) {}
-    record GrammarAnalysisResult(Map<String, NodeData> nodeInfo) {}
+    record GrammarAnalysisResult(Map<String, Set<String>> children,
+                                 Map<String, Set<String>> descendants,
+                                 Map<String, Set<String>> descendantsOrSelf,
+                                 Map<String, Set<String>> following,
+                                 Map<String, Set<String>> followingOrSelf,
+                                 Map<String, Set<String>> followingSibling,
+                                 Map<String, Set<String>> followingSiblingOrSelf,
+                                 Map<String, Set<String>> ancestors,
+                                 Map<String, Set<String>> ancestorsOrSelf,
+                                 Map<String, Set<String>> parent,
+                                 Map<String, Set<String>> preceding,
+                                 Map<String, Set<String>> precedingOrSelf,
+                                 Map<String, Set<String>> precedingSibling,
+                                 Map<String, Set<String>> precedingSiblingOrSelf) {}
 
     Set<String> toSet(final Collection<ParseTree> els) {
         return els.stream()
@@ -91,20 +90,22 @@ public class InputGrammarAnalyzer {
                                                     precedingSiblingMapping,
                                                     descendantOrSelfMapping);
         final var precedingOrSelfMapping = addSelf(precedingMapping);
+        final var gatheredData = new GrammarAnalysisResult(childrenMapping,
+                                                    descendantMapping,
+                                                    descendantOrSelfMapping,
+                                                    followingMapping,
+                                                    followingOrSelfMapping,
+                                                    followingSiblingMapping,
+                                                    followingSiblingOrSelfMapping,
+                                                    ancestorMapping,
+                                                    ancestorOrSelfMapping,
+                                                    parentMapping,
+                                                    precedingMapping,
+                                                    precedingOrSelfMapping,
+                                                    precedingSiblingMapping,
+                                                    precedingSiblingOrSelfMapping);
 
-
-
-
-
-
-
-        // final var parentMapping = getChildrenMapping(antlrParser, tree, definedNodes, allNodeNames);
-        // final var precedingSiblingMapping = getPrecedingSiblingMapping(antlrParser, tree, definedNodes, allNodeNames);
-
-            // final NodeData gatheredData = new NodeData(children, null, null, null, null, null, null, null, null, null,)
-            // childrenMapping.put(ruleRef, gatheredData);
-
-        return null;
+        return gatheredData;
     }
 
 

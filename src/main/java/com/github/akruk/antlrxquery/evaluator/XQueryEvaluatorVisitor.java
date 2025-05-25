@@ -419,8 +419,12 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     private XQueryValue handleNodeComp(final ComparisonExprContext ctx) {
         try {
             final var visitedLeft = ctx.otherwiseExpr(0).accept(this);
+            if (visitedLeft.isSequence() && visitedLeft.empty(valueFactory).booleanValue())
+                return valueFactory.emptySequence();
             final ParseTree nodeLeft = getSingleNode(visitedLeft);
             final var visitedRight = ctx.otherwiseExpr(1).accept(this);
+            if (visitedRight.isSequence() && visitedRight.empty(valueFactory).booleanValue())
+                return valueFactory.emptySequence();
             final ParseTree nodeRight = getSingleNode(visitedRight);
             final boolean result = switch (ctx.nodeComp().getText()) {
                 case "is" -> nodeLeft == nodeRight;

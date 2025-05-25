@@ -18,4 +18,5 @@ public interface XQuerySequenceType {
     boolean isZero();
     boolean hasEffectiveBooleanValue();
     boolean castableAs(XQuerySequenceType other);
+    boolean isValueComparableWith(XQuerySequenceType other);
 }

@@ -798,23 +798,30 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         return typeFactory.boolean_();
     }
 
-
-
     private XQuerySequenceType handleValueComparison(final ComparisonExprContext ctx) {
         final var leftHandSide = ctx.otherwiseExpr(0).accept(this);
         final var rightHandSide = ctx.otherwiseExpr(1).accept(this);
-        if (!leftHandSide.isOne()) {
-            addError(ctx.otherwiseExpr(0), "Left hand side of 'or expression' must be a one-item sequence");
+        final var optionalItem = typeFactory.zeroOrOne(typeFactory.itemAnyItem());
+        final var optionalBoolean = typeFactory.zeroOrOne(typeFactory.itemBoolean());
+        if (!leftHandSide.isSubtypeOf(optionalItem)) {
+            addError(ctx.otherwiseExpr(0),
+                    "Left hand side of 'or expression' must be of type 'item()?', received: " + leftHandSide.toString());
         }
-        if (!rightHandSide.isOne()) {
-            addError(ctx.otherwiseExpr(1), "Right hand side of 'or expression' must be a one-item sequence");
+        if (!rightHandSide.isSubtypeOf(optionalItem)) {
+            addError(ctx.otherwiseExpr(1),
+                    "Right hand side of 'or expression' must be of type 'item()?', received: "  + leftHandSide.toString());
         }
-        if (!leftHandSide.isSubtypeOf(rightHandSide)) {
+        if (!leftHandSide.isValueComparableWith(rightHandSide)) {
             final String msg = String.format("The types: %s and %s in value comparison are not comparable",
                                         leftHandSide.toString(), rightHandSide.toString());
             addError(ctx, msg);
         }
-        return typeFactory.boolean_();
+        if (leftHandSide.isSubtypeOf(typeFactory.anyItem())
+                && rightHandSide.isSubtypeOf(typeFactory.anyItem()))
+        {
+            return typeFactory.boolean_();
+        }
+        return optionalBoolean;
     }
 
     private XQuerySequenceType handleNodeComp(final ComparisonExprContext ctx) {

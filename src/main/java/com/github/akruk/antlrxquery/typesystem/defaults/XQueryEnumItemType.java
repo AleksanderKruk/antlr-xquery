@@ -538,4 +538,25 @@ public class XQueryEnumItemType implements XQueryItemType {
     public XQueryItemType exceptionMerge(XQueryItemType other) {
         return this;
     }
+
+    private static final boolean[][] isValueComparableWith;
+    static {
+        final int number = XQueryTypes.NUMBER.ordinal();
+        final int boolean_ = XQueryTypes.BOOLEAN.ordinal();
+        final int enum_ = XQueryTypes.ENUM.ordinal();
+        final int string = XQueryTypes.STRING.ordinal();
+        isValueComparableWith = new boolean[typesCount][typesCount];
+        isValueComparableWith[string][string] = true;
+        isValueComparableWith[number][number] = true;
+        isValueComparableWith[boolean_][boolean_] = true;
+        isValueComparableWith[enum_][string] = true;
+        isValueComparableWith[string][enum_] = true;
+    }
+
+
+    @Override
+    public boolean isValueComparableWith(XQueryItemType other) {
+        var other_ = (XQueryEnumItemType) other;
+        return isValueComparableWith[type.ordinal()][other_.getType().ordinal()];
+    }
 }

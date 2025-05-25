@@ -1,5 +1,6 @@
 package com.github.akruk.antlrxquery.typesystem.defaults;
 
+import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 
@@ -486,8 +487,41 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
     }
 
 	@Override
-	public XQuerySequenceType addOptionality() {
+    public XQuerySequenceType addOptionality() {
         return typeAlternative(typeFactory.emptySequence());
-	}
+    }
+
+
+    private static final boolean[][] isValueComparableWith;
+    static {
+        final int zero_ = XQueryOccurence.ZERO.ordinal();
+        final int one_ = XQueryOccurence.ONE.ordinal();
+        final int zeroOrOne_ = XQueryOccurence.ZERO_OR_ONE.ordinal();
+        isValueComparableWith = new boolean[occurenceCount][occurenceCount];
+        for (int i = 0; i < isValueComparableWith.length; i++) {
+            for (int j = 0; j < isValueComparableWith.length; j++) {
+                isValueComparableWith[i][j] = false;
+            }
+        }
+        isValueComparableWith[zero_][zero_] = true;
+        isValueComparableWith[zero_][one_] = true;
+        isValueComparableWith[zero_][zeroOrOne_] = true;
+
+        isValueComparableWith[one_][zero_] = true;
+        isValueComparableWith[one_][one_] = true;
+        isValueComparableWith[one_][zeroOrOne_] = true;
+
+        isValueComparableWith[zeroOrOne_][one_] = true;
+        isValueComparableWith[zeroOrOne_][zero_] = true;
+        isValueComparableWith[zeroOrOne_][zeroOrOne_] = true;
+    }
+
+    @Override
+    public boolean isValueComparableWith(XQuerySequenceType other) {
+        var cast = (XQueryEnumSequenceType) other;
+        if (isZero() || other.isZero())
+            return true;
+        return isValueComparableWith[occurence.ordinal()][cast.getOccurence().ordinal()] && itemType.isValueComparableWith(other.getItemType());
+    }
 
 }

@@ -304,6 +304,61 @@ public class XQuerySemanticAnalyzerTest {
                 """);
     }
 
+    @Test
+    public void valueComparisons() {
+        final XQuerySequenceType optionalBool = typeFactory.zeroOrOne(typeFactory.itemBoolean());
+        final XQuerySequenceType bool = typeFactory.boolean_();
+        assertType("1 eq 1", bool);
+        assertType("1 ne 1", bool);
+        assertType("1 lt 1", bool);
+        assertType("1 gt 1", bool);
+        assertType("1 le 1", bool);
+        assertType("1 ge 1", bool);
+        assertType("'a' eq 'b'", bool);
+        assertType("'a' ne 'b'", bool);
+        assertType("'a' lt 'b'", bool);
+        assertType("'a' gt 'b'", bool);
+        assertType("'a' le 'b'", bool);
+        assertType("'a' ge 'b'", bool);
+        assertType("'a' eq ()", optionalBool);
+        assertType("'a' ne ()", optionalBool);
+        assertType("'a' lt ()", optionalBool);
+        assertType("'a' gt ()", optionalBool);
+        assertType("'a' le ()", optionalBool);
+        assertType("'a' ge ()", optionalBool);
+        assertType("() eq 'b'", optionalBool);
+        assertType("() ne 'b'", optionalBool);
+        assertType("() lt 'b'", optionalBool);
+        assertType("() gt 'b'", optionalBool);
+        assertType("() le 'b'", optionalBool);
+        assertType("() ge 'b'", optionalBool);
+        assertType("() eq ()", optionalBool);
+        assertType("() ne ()", optionalBool);
+        assertType("() lt ()", optionalBool);
+        assertType("() gt ()", optionalBool);
+        assertType("() le ()", optionalBool);
+        assertType("() ge ()", optionalBool);
+
+        assertThereAreErrors("'1' eq 1");
+        assertThereAreErrors("'1' ne 1");
+        assertThereAreErrors("'1' lt 1");
+        assertThereAreErrors("'1' gt 1");
+        assertThereAreErrors("'1' le 1");
+        assertThereAreErrors("'1' ge 1");
+
+        assertThereAreErrors("'1' eq true()");
+        assertThereAreErrors("'1' ne true()");
+        assertThereAreErrors("'1' lt true()");
+        assertThereAreErrors("'1' gt true()");
+        assertThereAreErrors("'1' le true()");
+        assertThereAreErrors("'1' ge true()");
+
+        assertThereAreErrors("""
+                    let $x as number+ := (1, 2, 3)
+                    return $x eq $x
+                """);
+    }
+
 
 
 

@@ -17,4 +17,5 @@ public interface XQueryItemType {
     XQueryItemType unionMerge(XQueryItemType other);
     XQueryItemType intersectionMerge(XQueryItemType other);
     XQueryItemType exceptionMerge(XQueryItemType other);
+    boolean isValueComparableWith(XQueryItemType other);
 }

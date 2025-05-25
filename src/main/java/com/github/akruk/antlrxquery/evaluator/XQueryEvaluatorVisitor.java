@@ -1213,6 +1213,12 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     private XQueryValue handleValueComparison(final ComparisonExprContext ctx) throws XQueryUnsupportedOperation {
         final var value = ctx.otherwiseExpr(0).accept(this);
         final var visitedExpression = ctx.otherwiseExpr(1).accept(this);
+        if (value.isSequence() && value.empty(valueFactory).booleanValue()) {
+            return valueFactory.emptySequence();
+        }
+        if (visitedExpression.isSequence() && visitedExpression.empty(valueFactory).booleanValue()) {
+            return valueFactory.emptySequence();
+        }
         return switch(ctx.valueComp().getText()) {
             case "eq" -> value.valueEqual(valueFactory, visitedExpression);
             case "ne" -> value.valueUnequal(valueFactory, visitedExpression);

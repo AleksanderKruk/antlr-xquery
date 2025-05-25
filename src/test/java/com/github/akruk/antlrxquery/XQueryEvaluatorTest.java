@@ -308,6 +308,28 @@ public class XQueryEvaluatorTest {
     }
 
     @Test
+    public void emptyOperandValueComparison() throws XQueryUnsupportedOperation {
+        assertResult("() eq ()", List.of());
+        assertResult("1  eq ()", List.of());
+        assertResult("() eq 1", List.of());
+        assertResult("() ne ()", List.of());
+        assertResult("1  ne ()", List.of());
+        assertResult("() ne 1", List.of());
+        assertResult("() lt ()", List.of());
+        assertResult("1  lt ()", List.of());
+        assertResult("() lt 1", List.of());
+        assertResult("() gt ()", List.of());
+        assertResult("1  gt ()", List.of());
+        assertResult("() gt 1", List.of());
+        assertResult("() le ()", List.of());
+        assertResult("1  le ()", List.of());
+        assertResult("() le 1", List.of());
+        assertResult("() ge ()", List.of());
+        assertResult("1  ge ()", List.of());
+        assertResult("() ge 1", List.of());
+    }
+
+    @Test
     public void valueComparisonsEqual() throws XQueryUnsupportedOperation {
         // A eq B 	numeric 	numeric 	op:numeric-equal(A, B) 	xs:boolean
         assertResult("1 eq 1", XQueryBoolean.TRUE);

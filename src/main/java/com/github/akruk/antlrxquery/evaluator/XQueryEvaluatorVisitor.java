@@ -1079,9 +1079,6 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             var value = ctx.rangeExpr(0).accept(this);
             if (ctx.CONCATENATION().isEmpty())
                 return value;
-            if (!value.isStringValue()) {
-                // TODO: type error
-            }
             final var operationCount = ctx.CONCATENATION().size();
             for (int i = 1; i <= operationCount; i++) {
                 final var visitedExpression = ctx.rangeExpr(i).accept(this);

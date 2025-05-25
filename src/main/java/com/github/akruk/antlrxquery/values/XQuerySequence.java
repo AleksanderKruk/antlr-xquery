@@ -239,4 +239,15 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
         var atomized = atomize();
         return valueFactory.sequence(atomized);
     }
+
+    @Override
+    public XQueryValue concatenate(XQueryValueFactory factoryValue, XQueryValue other)
+            throws XQueryUnsupportedOperation {
+        StringBuilder builder = new StringBuilder();
+        for (var e : this.value) {
+            builder.append(e.stringValue());
+        }
+        builder.append(other.stringValue());
+        return factoryValue.string(builder.toString());
+    }
 }

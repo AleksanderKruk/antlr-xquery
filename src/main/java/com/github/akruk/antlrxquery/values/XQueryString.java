@@ -22,6 +22,13 @@ public class XQueryString extends XQueryValueBase<String> {
     }
     @Override
     public XQueryValue concatenate(XQueryValueFactory valueFactory, XQueryValue other) {
+        if (other.isSequence()) {
+            StringBuilder builder = new StringBuilder(value);
+            for (var element : other.atomize()) {
+                builder.append(element.stringValue());
+            }
+            return valueFactory.string(builder.toString());
+        }
         return valueFactory.string(value + other.stringValue());
     }
 

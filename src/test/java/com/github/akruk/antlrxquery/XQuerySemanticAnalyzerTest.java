@@ -248,6 +248,23 @@ public class XQuerySemanticAnalyzerTest {
 
 
     @Test
+    public void arithmeticExpressions() {
+        assertType("1 + 1", typeFactory.number());
+        assertType("1 - 1", typeFactory.number());
+        assertType("1 * 1", typeFactory.number());
+        assertType("1 x 1", typeFactory.number());
+        assertType("1 ÷ 1", typeFactory.number());
+        assertType("1 div 1", typeFactory.number());
+        assertType("1 mod 1", typeFactory.number());
+        assertType("1 idiv 1", typeFactory.number());
+        assertThereAreErrors("() + 1");
+        assertThereAreErrors("1 + ()");
+        assertThereAreErrors("() * 1");
+        assertThereAreErrors("1 * 'a'");
+
+    }
+
+    @Test
     public void unionExpression() {
         assertType("""
             let $x as node()* := (),
@@ -267,8 +284,6 @@ public class XQuerySemanticAnalyzerTest {
             let $x as number+ := (1, 2, 3)
             return $x | $x
         """);
-
-
     }
 
 

@@ -764,14 +764,11 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             return ctx.multiplicativeExpr(0).accept(this);
         }
         final XQuerySequenceType number = typeFactory.number();
-        final var operatorCount = ctx.additiveOperator().size();
-        for (int i = 0; i <= operatorCount; i++) {
-            final var operandExpr = ctx.multiplicativeExpr(i);
+        for (final var operandExpr : ctx.multiplicativeExpr()) {
             final var operand = operandExpr.accept(this);
             if (!operand.isSubtypeOf(number)) {
-                addError(operandExpr, "Operands in additive expression must be numeric");
+                addError(operandExpr, "Operands in additive expression must be numeric, received: " + operand.toString());
             }
-            i++;
         }
         return typeFactory.number();
     }
@@ -840,15 +837,10 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             return ctx.unionExpr(0).accept(this);
         }
         final XQuerySequenceType number = typeFactory.number();
-        final var type = ctx.unionExpr(0).accept(this);
-        if (!type.isSubtypeOf(number)) {
-            addError(ctx, "Multiplicative expression requires a number as its first operand");
-        }
-        final var orCount = ctx.multiplicativeOperator().size();
-        for (int i = 1; i <= orCount; i++) {
-            final var visitedType = ctx.unionExpr(i).accept(this);
+        for (final var expr: ctx.unionExpr()) {
+            final var visitedType = expr.accept(this);
             if (!visitedType.isSubtypeOf(number)) {
-                addError(ctx, "Multiplicative expression requires a number as its first operand");
+                addError(ctx, "Multiplicative expression requires a number, received: " + visitedType.toString());
             }
         }
         return typeFactory.number();

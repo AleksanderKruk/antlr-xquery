@@ -18,20 +18,20 @@ import com.github.akruk.antlrgrammar.ANTLRv4Parser.GrammarSpecContext;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.ParserRuleSpecContext;
 
 public class InputGrammarAnalyzer {
-    record GrammarAnalysisResult(Map<String, Set<String>> children,
-                                 Map<String, Set<String>> descendants,
-                                 Map<String, Set<String>> descendantsOrSelf,
-                                 Map<String, Set<String>> following,
-                                 Map<String, Set<String>> followingOrSelf,
-                                 Map<String, Set<String>> followingSibling,
-                                 Map<String, Set<String>> followingSiblingOrSelf,
-                                 Map<String, Set<String>> ancestors,
-                                 Map<String, Set<String>> ancestorsOrSelf,
-                                 Map<String, Set<String>> parent,
-                                 Map<String, Set<String>> preceding,
-                                 Map<String, Set<String>> precedingOrSelf,
-                                 Map<String, Set<String>> precedingSibling,
-                                 Map<String, Set<String>> precedingSiblingOrSelf) {}
+    public record GrammarAnalysisResult(Map<String, Set<String>> children,
+                                        Map<String, Set<String>> descendants,
+                                        Map<String, Set<String>> descendantsOrSelf,
+                                        Map<String, Set<String>> following,
+                                        Map<String, Set<String>> followingOrSelf,
+                                        Map<String, Set<String>> followingSibling,
+                                        Map<String, Set<String>> followingSiblingOrSelf,
+                                        Map<String, Set<String>> ancestors,
+                                        Map<String, Set<String>> ancestorsOrSelf,
+                                        Map<String, Set<String>> parent,
+                                        Map<String, Set<String>> preceding,
+                                        Map<String, Set<String>> precedingOrSelf,
+                                        Map<String, Set<String>> precedingSibling,
+                                        Map<String, Set<String>> precedingSiblingOrSelf) {}
 
     Set<String> toSet(final Collection<ParseTree> els) {
         return els.stream()
@@ -61,9 +61,13 @@ public class InputGrammarAnalyzer {
         final ANTLRv4Parser antlrParser = new ANTLRv4Parser(xqueryTokens);
         final var tree = antlrParser.grammarSpec();
         final var definedNodes = XPath.findAll(tree, "//parserRuleSpec/RULE_REF", antlrParser);
+        final var terminalTokens = XPath.findAll(tree, "//parserRuleSpec//TOKEN_REF", antlrParser);
+        final var terminalTokenLiterals = XPath.findAll(tree, "//parserRuleSpec//STRING_LITERAL", antlrParser);
         final Set<String> allNodeNames = toSet(definedNodes);
+        allNodeNames.addAll(toSet(terminalTokens));
+        allNodeNames.addAll(toSet(terminalTokenLiterals));
 
-        final var childrenMapping = getChildrenMapping(antlrParser, tree, definedNodes, allNodeNames);
+        final var childrenMapping = getChildrenMapping(antlrParser, tree, allNodeNames);
         final var parentMapping = getParentMapping(antlrParser, childrenMapping, tree);
         final var ancestorMapping = getAncestorMapping(parentMapping);
         final var ancestorOrSelfMapping = addSelf(ancestorMapping);
@@ -158,7 +162,7 @@ public class InputGrammarAnalyzer {
     private Map<String, Set<String>> getDescendantMapping(final Map<String, Set<String>> childrenMapping)
     {
         final var allNodes = childrenMapping.keySet();
-        final  Map<String, Set<String>> ancestorMapping = new HashMap<>(childrenMapping.size(), 1);
+        final  Map<String, Set<String>> ancestorMapping = new HashMap<>(childrenMapping.size());
         for (final var node: allNodes) {
             final Set<String> children = childrenMapping.get(node);
 
@@ -180,10 +184,12 @@ public class InputGrammarAnalyzer {
 
     private Map<String, Set<String>> getChildrenMapping(final ANTLRv4Parser antlrParser,
                                                         final GrammarSpecContext tree,
-                                                        final Collection<ParseTree> definedNodes,
                                                         final Set<String> allNodeNames)
     {
-        final  Map<String, Set<String>> childrenMapping = new HashMap<>(definedNodes.size()*2);
+        final  Map<String, Set<String>> childrenMapping = new HashMap<>(allNodeNames.size(), 1);
+        for (var nodename : allNodeNames) {
+            childrenMapping.put(nodename, new HashSet<>());
+        }
 
         final var ruleSpecs = XPath.findAll(tree, "//parserRuleSpec", antlrParser);
         for (final ParseTree spec :ruleSpecs) {
@@ -191,9 +197,9 @@ public class InputGrammarAnalyzer {
             final String ruleRef = spec_.RULE_REF().getText();
 
             final Set<String> children = new HashSet<>();
-            final var rulerefs = XPath.findAll(spec, "//ruleref", antlrParser);
-            final var terminalTokens = XPath.findAll(spec, "//TOKEN_REF", antlrParser);
-            final var terminalTokenLiterals = XPath.findAll(spec, "//STRING_LITERAL", antlrParser);
+            final var rulerefs = XPath.findAll(spec, "/parserRuleSpec//ruleref", antlrParser);
+            final var terminalTokens = XPath.findAll(spec, "/parserRuleSpec//TOKEN_REF", antlrParser);
+            final var terminalTokenLiterals = XPath.findAll(spec, "/parserRuleSpec//STRING_LITERAL", antlrParser);
 
             children.addAll(toSet(rulerefs));
             children.addAll(toSet(terminalTokens));

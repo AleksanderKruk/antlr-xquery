@@ -818,16 +818,17 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     }
 
     private XQuerySequenceType handleNodeComp(final ComparisonExprContext ctx) {
-        final var anyNode = typeFactory.anyNode();
+        final var anyNode = typeFactory.zeroOrOne(typeFactory.itemAnyNode());
+        final var optionalBoolean = typeFactory.zeroOrOne(typeFactory.itemBoolean());
         final var visitedLeft = ctx.otherwiseExpr(0).accept(this);
         if (!visitedLeft.isSubtypeOf(anyNode)) {
-            addError(ctx.otherwiseExpr(0), "Operands of node comparison must be a one-item sequence of type 'element'");
+            addError(ctx.otherwiseExpr(0), "Operands of node comparison must be of type 'node()?', received: "+ visitedLeft.toString());
         }
         final var visitedRight = ctx.otherwiseExpr(1).accept(this);
         if (!visitedRight.isSubtypeOf(anyNode)) {
-            addError(ctx.otherwiseExpr(1), "Operands of node comparison must be a one-item sequence of type 'element'");
+            addError(ctx.otherwiseExpr(1), "Operands of node comparison must be of type 'node()?', received: " +visitedRight.toString());
         }
-        return typeFactory.boolean_();
+        return optionalBoolean;
 
     }
 

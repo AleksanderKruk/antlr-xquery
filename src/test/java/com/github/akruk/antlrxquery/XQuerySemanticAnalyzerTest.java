@@ -267,24 +267,44 @@ public class XQuerySemanticAnalyzerTest {
     @Test
     public void unionExpression() {
         assertType("""
-            let $x as node()* := (),
-                $y as node()* := (),
-                $z as node()* := ()
-            return $x | $y | $z
-        """, typeFactory.zeroOrMore(typeFactory.itemAnyNode()));
+                    let $x as node()* := (),
+                        $y as node()* := (),
+                        $z as node()* := ()
+                    return $x | $y | $z
+                """, typeFactory.zeroOrMore(typeFactory.itemAnyNode()));
 
         assertType("""
-            let $x as element(a)* := (),
-                $y as element(b)* := (),
-                $z as element(c)* := ()
-            return $x | $y | $z
-        """, typeFactory.zeroOrMore(typeFactory.itemElement(Set.of("a", "b", "c"))));
+                    let $x as element(a)* := (),
+                        $y as element(b)* := (),
+                        $z as element(c)* := ()
+                    return $x | $y | $z
+                """, typeFactory.zeroOrMore(typeFactory.itemElement(Set.of("a", "b", "c"))));
 
         assertThereAreErrors("""
-            let $x as number+ := (1, 2, 3)
-            return $x | $x
-        """);
+                    let $x as number+ := (1, 2, 3)
+                    return $x | $x
+                """);
     }
+
+    @Test
+    public void nodeComparisons() {
+        assertType("""
+                    let $x as node()? := (),
+                        $y as node()? := ()
+                    return $x is $y
+                """, typeFactory.zeroOrOne(typeFactory.itemBoolean()));
+
+        assertThereAreErrors("""
+                    let $x as number+ := (1, 2, 3)
+                    return $x is $x
+                """);
+        assertThereAreErrors("""
+                    let $x as string? := "abc"
+                    return $x is $x
+                """);
+    }
+
+
 
 
 

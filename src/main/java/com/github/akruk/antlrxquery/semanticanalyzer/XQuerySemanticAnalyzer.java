@@ -693,7 +693,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         if (ctx.CONCATENATION().isEmpty()) {
             return ctx.rangeExpr(0).accept(this);
         }
-        final XQuerySequenceType anyItemOptional = typeFactory.zeroOrOne(typeFactory.itemAnyItem());
+        final XQuerySequenceType anyItemOptional = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         for (int i = 0; i < ctx.rangeExpr().size(); i++) {
             final var visitedType = ctx.rangeExpr(i).accept(this);
             if (!visitedType.isSubtypeOf(anyItemOptional)) {

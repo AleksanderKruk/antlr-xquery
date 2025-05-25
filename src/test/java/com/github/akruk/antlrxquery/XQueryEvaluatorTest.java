@@ -392,8 +392,11 @@ public class XQueryEvaluatorTest {
     }
 
     @Test
-    public void concatenationExperssions() throws XQueryUnsupportedOperation {
+    public void concatenationExpressions() throws XQueryUnsupportedOperation {
         assertResult("'abc' || 'def' || 'ghi'", new XQueryString("abcdefghi"));
+        assertResult("""
+            () || "con" || ("cat", "enate")
+                """, new XQueryString("concatenate"));
     }
 
     @Test

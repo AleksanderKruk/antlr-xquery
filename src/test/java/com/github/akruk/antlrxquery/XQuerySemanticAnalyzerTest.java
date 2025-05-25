@@ -103,6 +103,7 @@ public class XQuerySemanticAnalyzerTest {
         assertType("'a'|| 'b'", typeFactory.string());
         assertType("'a' || ()", typeFactory.string());
         assertType(" () || ()", typeFactory.string());
+        assertType("() || 'con' || ('cat', 'enate')", typeFactory.string());
     }
 
     @Test
@@ -261,7 +262,6 @@ public class XQuerySemanticAnalyzerTest {
         assertThereAreErrors("1 + ()");
         assertThereAreErrors("() * 1");
         assertThereAreErrors("1 * 'a'");
-
     }
 
     @Test

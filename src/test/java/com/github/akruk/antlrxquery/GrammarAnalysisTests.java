@@ -32,8 +32,6 @@ public class GrammarAnalysisTests {
             B: 'b';
         """);
         final var results = analyzer.analyze(stream);
-        final var descendant = results.descendants();
-        final var descendantOrSelfs = results.descendantsOrSelf();
         final var ancestors = results.ancestors();
         final var ancestorsOrSelf = results.ancestorsOrSelf();
         final var followingSibling = results.followingSibling();
@@ -57,6 +55,26 @@ public class GrammarAnalysisTests {
         assertTrue(parents.get("B").equals(Set.of("b")));
         assertTrue(parents.get("c").equals(Set.of("x")));
         assertTrue(parents.get("'c'").equals(Set.of("c")));
+
+        final var descendant = results.descendants();
+        assertTrue(descendant.keySet().equals(allExpectedNodes));
+        assertTrue(descendant.get("x").equals(Set.of("a", "b", "c", "B", "'a'", "'c'")));
+        assertTrue(descendant.get("a").equals(Set.of("'a'")));
+        assertTrue(descendant.get("'a'").equals(Set.of()));
+        assertTrue(descendant.get("b").equals(Set.of("B")));
+        assertTrue(descendant.get("B").equals(Set.of()));
+        assertTrue(descendant.get("c").equals(Set.of("'c'")));
+        assertTrue(descendant.get("'c'").equals(Set.of()));
+
+        final var  descendantsOrSelf = results.descendantsOrSelf();
+        assertTrue(descendantsOrSelf.keySet().equals(allExpectedNodes));
+        assertTrue(descendantsOrSelf.get("x").equals(Set.of( "x", "a", "b", "c", "B", "'a'", "'c'")));
+        assertTrue(descendantsOrSelf.get("a").equals(Set.of("a", "'a'")));
+        assertTrue(descendantsOrSelf.get("'a'").equals(Set.of("'a'")));
+        assertTrue(descendantsOrSelf.get("b").equals(Set.of("b", "B")));
+        assertTrue(descendantsOrSelf.get("B").equals(Set.of("B")));
+        assertTrue(descendantsOrSelf.get("c").equals(Set.of("c", "'c'")));
+        assertTrue(descendantsOrSelf.get("'c'").equals(Set.of("'c'")));
 
 
 

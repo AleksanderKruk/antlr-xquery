@@ -108,9 +108,12 @@ public class InputGrammarAnalyzer {
 
 
     private Map<String, Set<String>> addSelf(Map<String, Set<String>> mapping) {
-        Map<String, Set<String>> selfMapping = new HashMap<>(mapping);
+        final Map<String, Set<String>> selfMapping = new HashMap<>(mapping.size(), 1);
         for (var node : mapping.keySet()) {
-            selfMapping.get(node).add(node);
+            var mapped = mapping.get(node);
+            var cloned = new HashSet<>(mapped);
+            cloned.add(node);
+            selfMapping.put(node, cloned);
         }
         return selfMapping;
     }
@@ -174,6 +177,7 @@ public class InputGrammarAnalyzer {
                 final var processedParents = new HashSet<>(childrenMapping.get(processedNode));
                 processedParents.removeAll(descendants);
                 nodesToProcess.addAll(processedParents);
+                descendants.addAll(processedParents);
                 nodesToProcess.remove(processedNode);
             }
             ancestorMapping.put(node, descendants);

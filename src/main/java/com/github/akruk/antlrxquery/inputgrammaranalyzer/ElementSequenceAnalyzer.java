@@ -5,6 +5,7 @@ import com.github.akruk.antlrgrammar.ANTLRv4ParserBaseVisitor;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.AlternativeContext;
@@ -15,8 +16,18 @@ import com.github.akruk.antlrgrammar.ANTLRv4Parser.TerminalDefContext;
 
 
 public class ElementSequenceAnalyzer extends ANTLRv4ParserBaseVisitor<Boolean> {
-    final Map<String, Set<String>> followingSiblingMapping = new HashMap<>();
-    final Map<String, Set<String>> precedingSiblingMapping = new HashMap<>();
+
+    final Map<String, Set<String>> followingSiblingMapping;
+    final Map<String, Set<String>> precedingSiblingMapping;
+
+    public ElementSequenceAnalyzer(Set<String> nodeNames) {
+        followingSiblingMapping = new HashMap<>(nodeNames.size(), 1);
+        precedingSiblingMapping = new HashMap<>(nodeNames.size(), 1);
+        for (var nodename : nodeNames) {
+            followingSiblingMapping.put(nodename, new HashSet<>());
+            precedingSiblingMapping.put(nodename, new HashSet<>());
+        }
+    }
 
     public Map<String, Set<String>> getFollowingSiblingMapping() {
         return followingSiblingMapping;
@@ -28,15 +39,11 @@ public class ElementSequenceAnalyzer extends ANTLRv4ParserBaseVisitor<Boolean> {
         return precedingSiblingMapping;
     }
 
-    ElementSequenceAnalyzer() { }
-
 
     String currentRule;
     @Override
     public Boolean visitParserRuleSpec(ParserRuleSpecContext ctx) {
         currentRule = ctx.RULE_REF().getText();
-        followingSiblingMapping.put(currentRule, new HashSet<>());
-        precedingSiblingMapping.put(currentRule, new HashSet<>());
         var visited = super.visitParserRuleSpec(ctx);
         currentRule = null;
         return visited;
@@ -45,19 +52,18 @@ public class ElementSequenceAnalyzer extends ANTLRv4ParserBaseVisitor<Boolean> {
     @Override
     public Boolean visitAlternative(AlternativeContext ctx) {
         final var size = ctx.element().size();
-        final var end = size - 1;
         final var allElementNames = ctx.element().stream()
             .map(e->{ e.accept(this); return visitedName; })
             .filter(s->s != null)
             .toList();
-        for (int i = 0; i < end; i++) {
-            final var element = allElementNames.get(i);
-            final var followingSiblings = followingSiblingMapping
-                .computeIfAbsent(element, (_) -> new HashSet<String>());
-            final var precedingSiblings = followingSiblingMapping
-                .computeIfAbsent(element, (_) -> new HashSet<String>());
-            followingSiblings.addAll(allElementNames.subList(i+1, size));
-            precedingSiblings.addAll(allElementNames.subList(0, i));
+        for (int i = 0; i < size; i++) {
+            final String element = allElementNames.get(i);
+            final Set<String> followingSiblings = followingSiblingMapping.get(element);
+            final Set<String> precedingSiblings = precedingSiblingMapping.get(element);
+            final List<String> followingSiblingElements = allElementNames.subList(i+1, size);
+            final List<String> precedingSiblingElements = allElementNames.subList(0, i);
+            followingSiblings.addAll(followingSiblingElements);
+            precedingSiblings.addAll(precedingSiblingElements);
         }
         return null;
     }

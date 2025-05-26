@@ -73,7 +73,7 @@ public class InputGrammarAnalyzer {
         final var ancestorOrSelfMapping = addSelf(ancestorMapping);
         final var descendantMapping = getDescendantMapping(childrenMapping);
         final var descendantOrSelfMapping = addSelf(descendantMapping);
-        final ElementSequenceAnalyzer analyzer = new ElementSequenceAnalyzer();
+        final ElementSequenceAnalyzer analyzer = new ElementSequenceAnalyzer(allNodeNames);
         tree.accept(analyzer);
 
         final var followingSiblingMapping = analyzer.getFollowingSiblingMapping();
@@ -153,6 +153,7 @@ public class InputGrammarAnalyzer {
                 final String processedNode = nodesToProcess.stream().findFirst().get();
                 final var processedParents = new HashSet<>(parentMapping.get(processedNode));
                 processedParents.removeAll(ancestors);
+                ancestors.addAll(processedParents);
                 nodesToProcess.addAll(processedParents);
                 nodesToProcess.remove(processedNode);
             }

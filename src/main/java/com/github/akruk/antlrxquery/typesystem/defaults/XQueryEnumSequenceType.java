@@ -338,7 +338,6 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         intersectionOccurences[oneOrMore_][oneOrMore_] = zeroOrMore;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public XQuerySequenceType intersectionMerge(XQuerySequenceType other) {
         final var other_ = (XQueryEnumSequenceType) other;

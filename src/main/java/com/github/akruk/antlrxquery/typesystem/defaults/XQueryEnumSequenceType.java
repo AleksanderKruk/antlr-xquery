@@ -534,7 +534,7 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
 
     @Override
     public XQuerySequenceType mapping(XQuerySequenceType mappingExpressionType) {
-        return (XQuerySequenceType) factoryByOccurence[occurence.ordinal()].apply(mappingExpressionType.iteratedItem());
+        return (XQuerySequenceType) factoryByOccurence[occurence.ordinal()].apply(mappingExpressionType.getItemType());
     }
 
 

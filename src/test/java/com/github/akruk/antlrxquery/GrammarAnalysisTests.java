@@ -31,9 +31,6 @@ public class GrammarAnalysisTests {
     @Test
     public void children() throws XQueryUnsupportedOperation {
         final var results = testGrammar();
-        final var followingSibling = results.followingSibling();
-        final var followingSiblingOrSelf = results.followingSiblingOrSelf();
-
         final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
 
         final var children = results.children();
@@ -135,6 +132,36 @@ public class GrammarAnalysisTests {
         assertTrue(followingSiblingOrSelf.get("B").equals(Set.of("B")));
         assertTrue(followingSiblingOrSelf.get("c").equals(Set.of("c")));
         assertTrue(followingSiblingOrSelf.get("'c'").equals(Set.of("'c'")));
+    }
+
+    @Test
+    public void precedingSibling() throws XQueryUnsupportedOperation {
+        final var results = testGrammar();
+        final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
+        final var precedingSibling = results.precedingSibling();
+        assertTrue(precedingSibling.keySet().equals(allExpectedNodes));
+        assertTrue(precedingSibling.get("x").equals(Set.of()));
+        assertTrue(precedingSibling.get("a").equals(Set.of()));
+        assertTrue(precedingSibling.get("'a'").equals(Set.of()));
+        assertTrue(precedingSibling.get("b").equals(Set.of("a")));
+        assertTrue(precedingSibling.get("B").equals(Set.of()));
+        assertTrue(precedingSibling.get("c").equals(Set.of("a", "b")));
+        assertTrue(precedingSibling.get("'c'").equals(Set.of()));
+    }
+
+    @Test
+    public void precedingSiblingOrSelf() throws XQueryUnsupportedOperation {
+        final var results = testGrammar();
+        final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
+        final var  precedingSiblingOrSelf = results.precedingSiblingOrSelf();
+        assertTrue(precedingSiblingOrSelf.keySet().equals(allExpectedNodes));
+        assertTrue(precedingSiblingOrSelf.get("x").equals(Set.of("x")));
+        assertTrue(precedingSiblingOrSelf.get("a").equals(Set.of("a")));
+        assertTrue(precedingSiblingOrSelf.get("'a'").equals(Set.of("'a'")));
+        assertTrue(precedingSiblingOrSelf.get("b").equals(Set.of("a", "b")));
+        assertTrue(precedingSiblingOrSelf.get("B").equals(Set.of("B")));
+        assertTrue(precedingSiblingOrSelf.get("c").equals(Set.of("a", "b", "c")));
+        assertTrue(precedingSiblingOrSelf.get("'c'").equals(Set.of("'c'")));
     }
 
 }

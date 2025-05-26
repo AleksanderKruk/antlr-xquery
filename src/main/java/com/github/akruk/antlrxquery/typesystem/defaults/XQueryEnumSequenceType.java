@@ -523,4 +523,19 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         return isValueComparableWith[occurence.ordinal()][cast.getOccurence().ordinal()] && itemType.isValueComparableWith(other.getItemType());
     }
 
+
+    @Override
+    public XQuerySequenceType iteratedItem() {
+        if (occurence != XQueryOccurence.ZERO)
+            return typeFactory.one(itemType);
+        else
+            return typeFactory.emptySequence();
+    }
+
+    @Override
+    public XQuerySequenceType mapping(XQuerySequenceType mappingExpressionType) {
+        return (XQuerySequenceType) factoryByOccurence[occurence.ordinal()].apply(mappingExpressionType.iteratedItem());
+    }
+
+
 }

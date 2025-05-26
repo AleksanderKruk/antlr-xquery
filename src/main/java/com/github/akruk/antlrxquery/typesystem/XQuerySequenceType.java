@@ -8,6 +8,8 @@ public interface XQuerySequenceType {
     XQuerySequenceType exceptionMerge(XQuerySequenceType other);
     XQuerySequenceType typeAlternative(XQuerySequenceType other);
     XQuerySequenceType addOptionality();
+    XQuerySequenceType iteratedItem();
+    XQuerySequenceType mapping(XQuerySequenceType mappingExpressionType);
     // subtype(A, B) judgement
     boolean isSubtypeOf(XQuerySequenceType obj);
     boolean itemtypeIsSubtypeOf(XQuerySequenceType obj);

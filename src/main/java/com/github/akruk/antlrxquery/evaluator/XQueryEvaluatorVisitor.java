@@ -110,7 +110,10 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         PRECEDING_SIBLING,
         PRECEDING,
         ANCESTOR_OR_SELF,
-        FOLLOWING_OR_SELF, FOLLOWING_SIBLING_OR_SELF, PRECEDING_SIBLING_OR_SELF, PRECEDING_OR_SELF,
+        FOLLOWING_OR_SELF,
+        FOLLOWING_SIBLING_OR_SELF,
+        PRECEDING_SIBLING_OR_SELF,
+        PRECEDING_OR_SELF,
     }
 
 

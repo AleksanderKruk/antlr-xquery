@@ -36,6 +36,25 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     List<XQuerySequenceType> visitedArgumentTypesList;
     List<TupleElementType> visitedTupleStreamType;
 
+    XQueryAxis currentAxis;
+    private enum XQueryAxis {
+        CHILD,
+        DESCENDANT,
+        SELF,
+        DESCENDANT_OR_SELF,
+        FOLLOWING_SIBLING,
+        FOLLOWING,
+        PARENT,
+        ANCESTOR,
+        PRECEDING_SIBLING,
+        PRECEDING,
+        ANCESTOR_OR_SELF,
+        FOLLOWING_OR_SELF,
+        FOLLOWING_SIBLING_OR_SELF,
+        PRECEDING_SIBLING_OR_SELF,
+        PRECEDING_OR_SELF,
+    }
+
 
     public List<String> getErrors() {
         return errors;
@@ -497,33 +516,40 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         final boolean pathExpressionFromRoot = ctx.SLASH() != null;
         if (pathExpressionFromRoot) {
             // TODO: Context nodes
+            final var savedAxis = saveAxis();
+            currentAxis = XQueryAxis.CHILD;
             final var resultingNodeSequence = ctx.relativePathExpr().accept(this);
+            currentAxis = savedAxis;
             return resultingNodeSequence;
         }
         final boolean useDescendantOrSelfAxis = ctx.SLASHES() != null;
         if (useDescendantOrSelfAxis) {
+            final var savedAxis = saveAxis();
+            currentAxis = XQueryAxis.DESCENDANT_OR_SELF;
             final var resultingNodeSequence = ctx.relativePathExpr().accept(this);
+            currentAxis = savedAxis;
             return resultingNodeSequence;
         }
         return ctx.relativePathExpr().accept(this);
     }
+
+
+
 
     @Override
     public XQuerySequenceType visitRelativePathExpr(final RelativePathExprContext ctx) {
         if (ctx.pathOperator().isEmpty()) {
             return ctx.stepExpr(0).accept(this);
         }
-        // final XQuerySequenceType visitedNodeSequence = ctx.stepExpr(0).accept(this);
         final var operationCount = ctx.pathOperator().size();
         for (int i = 1; i <= operationCount; i++) {
-            // matchedNodes = switch (ctx.pathOperator(i-1).getText()) {
-            //     case "//" -> {
-            //         List<ParseTree> descendantsOrSelf = getAllDescendantsOrSelf(matchedTreeNodes());
-            //         yield ctx.stepExpr(i).accept(this);
-            //     }
-            //     case "/" -> ctx.stepExpr(i).accept(this);
-            //     default -> null;
-            // };
+            matchedNodes = switch (ctx.pathOperator(i-1).getText()) {
+                case "//" -> {
+                    List<ParseTree> descendantsOrSelf = getAllDescendantsOrSelf(matchedTreeNodes());
+                    yield ctx.stepExpr(i).accept(this);
+                }
+                default -> ctx.stepExpr(i).accept(this);
+            };
             i++;
         }
         return null;
@@ -632,12 +658,43 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         return context.getType();
     }
 
+
+
+    @Override
+    public XQuerySequenceType visitForwardAxis(final ForwardAxisContext ctx) {
+        if (ctx.CHILD() != null) currentAxis = XQueryAxis.CHILD;
+        if (ctx.DESCENDANT() != null) currentAxis = XQueryAxis.DESCENDANT;
+        if (ctx.SELF() != null) currentAxis = XQueryAxis.SELF;
+        if (ctx.DESCENDANT_OR_SELF() != null) currentAxis = XQueryAxis.DESCENDANT_OR_SELF;
+        if (ctx.FOLLOWING_SIBLING() != null) currentAxis = XQueryAxis.FOLLOWING_SIBLING;
+        if (ctx.FOLLOWING() != null) currentAxis = XQueryAxis.FOLLOWING;
+        if (ctx.FOLLOWING_SIBLING_OR_SELF() != null) currentAxis = XQueryAxis.FOLLOWING_SIBLING_OR_SELF;
+        if (ctx.FOLLOWING_OR_SELF() != null) currentAxis = XQueryAxis.FOLLOWING_OR_SELF;
+        return null;
+    }
+
+    @Override
+    public XQuerySequenceType visitReverseAxis(final ReverseAxisContext ctx) {
+        if (ctx.PARENT() != null) currentAxis = XQueryAxis.PARENT;
+        if (ctx.ANCESTOR() != null) currentAxis = XQueryAxis.ANCESTOR;
+        if (ctx.PRECEDING_SIBLING_OR_SELF() != null) currentAxis = XQueryAxis.PRECEDING_SIBLING_OR_SELF;
+        if (ctx.PRECEDING_OR_SELF() != null) currentAxis = XQueryAxis.PRECEDING_OR_SELF;
+        if (ctx.PRECEDING_SIBLING() != null) currentAxis = XQueryAxis.PRECEDING_SIBLING;
+        if (ctx.PRECEDING() != null) currentAxis = XQueryAxis.PRECEDING;
+        if (ctx.ANCESTOR_OR_SELF() != null) currentAxis = XQueryAxis.ANCESTOR_OR_SELF;
+        return null;
+    }
+
+
     @Override
     public XQuerySequenceType visitForwardStep(final ForwardStepContext ctx) {
         if (ctx.forwardAxis() != null) {
             ctx.forwardAxis().accept(this);
         }
         else {
+            if (currentAxis == null) {
+                currentAxis = XQueryAxis.CHILD;
+            }
         }
         return ctx.nodeTest().accept(this);
     }
@@ -661,15 +718,32 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
     @Override
     public XQuerySequenceType visitNameTest(final NameTestContext ctx) {
+        var type = context.getType();
+        final XQuerySequenceType nextStepType = switch (currentAxis) {
+            case ANCESTOR -> getAllAncestors(matchedTreeNodes);
+            case ANCESTOR_OR_SELF -> getAllAncestorsOrSelf(matchedTreeNodes);
+            case CHILD -> getAllChildren(matchedTreeNodes);
+            case DESCENDANT -> getAllDescendants(matchedTreeNodes);
+            case DESCENDANT_OR_SELF -> getAllDescendantsOrSelf(matchedTreeNodes);
+            case FOLLOWING -> getAllFollowing(matchedTreeNodes);
+            case FOLLOWING_SIBLING -> getAllFollowingSiblings(matchedTreeNodes);
+            case PARENT -> getAllParents(matchedTreeNodes);
+            case PRECEDING -> getAllPreceding(matchedTreeNodes);
+            case PRECEDING_SIBLING -> getAllPrecedingSiblings(matchedTreeNodes);
+            case FOLLOWING_OR_SELF -> getAllFollowingOrSelf(matchedTreeNodes);
+            case FOLLOWING_SIBLING_OR_SELF -> getAllFollowingSiblingsOrSelf(matchedTreeNodes);
+            case PRECEDING_OR_SELF -> getAllPrecedingOrSelf(matchedTreeNodes);
+            case PRECEDING_SIBLING_OR_SELF -> getAllPrecedingSiblingsOrSelf(matchedTreeNodes);
+            case SELF -> matchedTreeNodes;
+            default -> matchedTreeNodes;
+        };
         if (ctx.wildcard() != null) {
             return switch (ctx.wildcard().getText()) {
                 case "*" -> typeFactory.zeroOrMore(typeFactory.itemAnyNode());
-                // case "*:" -> ;
-                // case ":*" -> ;
                 default -> throw new AssertionError("Not implemented wildcard");
             };
         }
-        final String name = ctx.qname().toString();
+        final String name = ctx.qname().getText();
         if (canBeTokenName.test(name)) {
             // test for token type
             final int tokenType = parser.getTokenType(name);
@@ -1051,5 +1125,12 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         // TODO: Add union types
         return trueType.typeAlternative(falseType);
     }
+
+    private XQueryAxis saveAxis() {
+        final var saved = currentAxis;
+        currentAxis = null;
+        return saved;
+    }
+
 
 }

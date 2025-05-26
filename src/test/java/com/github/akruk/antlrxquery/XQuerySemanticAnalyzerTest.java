@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.atn.ATN;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.Test;
 
@@ -13,6 +14,7 @@ import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.baseimplem
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionCaller;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQueryBaseSemanticFunctionCaller;
+import com.github.akruk.antlrxquery.testgrammars.TestParser;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryEnumTypeFactory;
@@ -23,15 +25,20 @@ public class XQuerySemanticAnalyzerTest {
 
     record AnalysisResult(XQuerySemanticAnalyzer analyzer, XQuerySequenceType expressionType) {};
 
+
+
+
+
     AnalysisResult analyze(final String text) {
         final CharStream characters = CharStreams.fromString(text);
         final Lexer xqueryLexer = new AntlrXqueryLexer(characters);
         final CommonTokenStream xqueryTokens = new CommonTokenStream(xqueryLexer);
         final AntlrXqueryParser xqueryParser = new AntlrXqueryParser(xqueryTokens);
         final ParseTree xqueryTree = xqueryParser.xquery();
+        final TestParser testParser = new TestParser(xqueryTokens);
         final XQuerySemanticFunctionCaller caller = new XQueryBaseSemanticFunctionCaller();
         final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
-            xqueryParser,
+            testParser,
             new XQueryBaseSemanticContextManager(),
             new XQueryEnumTypeFactory(),
             new XQueryMemoizedValueFactory(),
@@ -271,7 +278,60 @@ public class XQuerySemanticAnalyzerTest {
 
     }
 
+    @Test
+    public void pathExpressions() {
+        final var elementtest = typeFactory.itemElement(Set.of("test"));
+        final var anyNode = typeFactory.anyNode();
+        final var zeroOrOneNodes = typeFactory.zeroOrOne(typeFactory.itemAnyNode());
+        final var anyNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
+        final var oneOrMoreNodes = typeFactory.oneOrMore(typeFactory.itemAnyNode());
+        final var oneOrMoretests = typeFactory.oneOrMore(elementtest);
+        final var tests = typeFactory.zeroOrMore(elementtest);
+        final var zeroOrOnetest = typeFactory.zeroOrOne(elementtest);
+        final var as = typeFactory.zeroOrMore(typeFactory.itemElement(Set.of("a")));
+        assertType(".", anyNode);
+        assertType("/test", tests);
+        assertType("/test/a", as);
 
+        assertType("//*", anyNodes);
+        assertType("//test", anyNodes);
+        assertType("//test//a", as);
+
+        assertThereAreErrors("(1, 2, 3)/test");
+        assertThereAreErrors("(1, 2, 3)//test");
+
+        assertType("/child::*", anyNodes);
+        assertType("/child::test", tests);
+        assertType("/parent::*", zeroOrOneNodes);
+        assertType("/parent::test", zeroOrOnetest);
+        assertType("/descendant::*", anyNodes);
+        assertType("/descendant::test", tests);
+        assertType("/descendant-or-self::*", oneOrMoreNodes);
+        assertType("/descendant-or-self::test", oneOrMoretests);
+        assertType("/following::*", anyNodes);
+        assertType("/following::test", tests);
+        assertType("/following-or-self::*", oneOrMoreNodes);
+        assertType("/following-or-self::test", oneOrMoretests);
+        assertType("/following-sibling::*", anyNodes);
+        assertType("/following-sibling::test", tests);
+        assertType("/following-sibling-or-self::*", oneOrMoreNodes);
+        assertType("/following-sibling-or-self::test", oneOrMoretests);
+        assertType("/preceding::*", anyNodes);
+        assertType("/preceding::test", tests);
+        assertType("/preceding-or-self::*", oneOrMoreNodes);
+        assertType("/preceding-or-self::test", oneOrMoretests);
+        assertType("/preceding-sibling::*", anyNodes);
+        assertType("/preceding-sibling::test", tests);
+        assertType("/preceding-sibling-or-self::*", oneOrMoreNodes);
+        assertType("/preceding-sibling-or-self::test", oneOrMoretests);
+        assertType("/ancestor::*", anyNodes);
+        assertType("/ancestor::test", tests);
+        assertType("/ancestor-or-self::*", oneOrMoreNodes);
+        assertType("/ancestor-or-self::test", oneOrMoretests);
+        assertType("/self::*", anyNode);
+        assertType("/self::test", zeroOrOneNodes);
+
+    }
 
 
 }

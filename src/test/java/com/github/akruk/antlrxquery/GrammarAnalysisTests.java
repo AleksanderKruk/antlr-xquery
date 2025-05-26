@@ -122,4 +122,19 @@ public class GrammarAnalysisTests {
         assertTrue(followingSibling.get("'c'").equals(Set.of()));
     }
 
+    @Test
+    public void followingSiblingOrSelf() throws XQueryUnsupportedOperation {
+        final var results = testGrammar();
+        final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
+        final var followingSiblingOrSelf = results.followingSiblingOrSelf();
+        assertTrue(followingSiblingOrSelf.keySet().equals(allExpectedNodes));
+        assertTrue(followingSiblingOrSelf.get("x").equals(Set.of("x")));
+        assertTrue(followingSiblingOrSelf.get("a").equals(Set.of("b", "c", "a")));
+        assertTrue(followingSiblingOrSelf.get("'a'").equals(Set.of("'a'")));
+        assertTrue(followingSiblingOrSelf.get("b").equals(Set.of("c", "b")));
+        assertTrue(followingSiblingOrSelf.get("B").equals(Set.of("B")));
+        assertTrue(followingSiblingOrSelf.get("c").equals(Set.of("c")));
+        assertTrue(followingSiblingOrSelf.get("'c'").equals(Set.of("'c'")));
+    }
+
 }

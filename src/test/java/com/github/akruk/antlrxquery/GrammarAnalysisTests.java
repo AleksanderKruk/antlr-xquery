@@ -16,14 +16,14 @@ public class GrammarAnalysisTests {
     private GrammarAnalysisResult testGrammar() {
         InputGrammarAnalyzer analyzer = new InputGrammarAnalyzer();
         CharStream stream = CharStreams.fromString(
-                """
-                            grammar grammarname;
-                            x: a b c;
-                            a: 'a';
-                            b: B;
-                            c: 'c';
-                            B: 'b';
-                        """);
+            """
+                grammar grammarname;
+                x: a b c;
+                a: 'a';
+                b: B;
+                c: 'c';
+                B: 'b';
+        """);
         final var results = analyzer.analyze(stream);
         return results;
     }
@@ -55,7 +55,6 @@ public class GrammarAnalysisTests {
         assertTrue(descendantsOrSelf.get("B").equals(Set.of("B")));
         assertTrue(descendantsOrSelf.get("c").equals(Set.of("c", "'c'")));
         assertTrue(descendantsOrSelf.get("'c'").equals(Set.of("'c'")));
-
     }
 
 
@@ -133,6 +132,37 @@ public class GrammarAnalysisTests {
         assertTrue(followingSiblingOrSelf.get("c").equals(Set.of("c")));
         assertTrue(followingSiblingOrSelf.get("'c'").equals(Set.of("'c'")));
     }
+
+    @Test
+    public void following() throws XQueryUnsupportedOperation {
+        final var results = testGrammar();
+        final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
+        final var  following = results.following();
+        assertTrue(following.keySet().equals(allExpectedNodes));
+        assertTrue(following.get("x").equals(Set.of()));
+        assertTrue(following.get("a").equals(Set.of("b", "B", "c", "'c'")));
+        assertTrue(following.get("'a'").equals(Set.of("b", "B", "c", "'c'")));
+        assertTrue(following.get("b").equals(Set.of("c", "'c'")));
+        assertTrue(following.get("B").equals(Set.of("c", "'c'")));
+        assertTrue(following.get("c").equals(Set.of()));
+        assertTrue(following.get("'c'").equals(Set.of()));
+    }
+
+    @Test
+    public void followingOrSelf() throws XQueryUnsupportedOperation {
+        final var results = testGrammar();
+        final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
+        final var followingOrSelf = results.followingOrSelf();
+        assertTrue(followingOrSelf.keySet().equals(allExpectedNodes));
+        assertTrue(followingOrSelf.get("x").equals(Set.of("x")));
+        assertTrue(followingOrSelf.get("a").equals(Set.of("a","b", "B", "c", "'c'")));
+        assertTrue(followingOrSelf.get("'a'").equals(Set.of("'a'", "b", "B", "c", "'c'")));
+        assertTrue(followingOrSelf.get("b").equals(Set.of("b", "c", "'c'")));
+        assertTrue(followingOrSelf.get("B").equals(Set.of("B", "c", "'c'")));
+        assertTrue(followingOrSelf.get("c").equals(Set.of("c")));
+        assertTrue(followingOrSelf.get("'c'").equals(Set.of("'c'")));
+    }
+
 
     @Test
     public void precedingSibling() throws XQueryUnsupportedOperation {

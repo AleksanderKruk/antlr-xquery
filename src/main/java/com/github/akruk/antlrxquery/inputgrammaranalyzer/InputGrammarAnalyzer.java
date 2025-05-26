@@ -80,11 +80,11 @@ public class InputGrammarAnalyzer {
         final var followingSiblingOrSelfMapping = addSelf(followingSiblingMapping);
         final var precedingSiblingMapping = analyzer.getPrecedingSiblingMapping();
         final var precedingSiblingOrSelfMapping = addSelf(precedingSiblingMapping);
-        final var followingMapping = getFollowing(ancestorMapping,
+        final var followingMapping = getFollowing(ancestorOrSelfMapping,
                                                   followingSiblingMapping,
                                                   descendantOrSelfMapping);
         final var followingOrSelfMapping = addSelf(followingMapping);
-        final var precedingMapping = getPreceding(ancestorMapping,
+        final var precedingMapping = getPreceding(ancestorOrSelfMapping,
                                                     precedingSiblingMapping,
                                                     descendantOrSelfMapping);
         final var precedingOrSelfMapping = addSelf(precedingMapping);
@@ -216,17 +216,17 @@ public class InputGrammarAnalyzer {
     }
 
 
-    private Map<String, Set<String>> getFollowing(final Map<String, Set<String>> ancestorMapping,
+    private Map<String, Set<String>> getFollowing(final Map<String, Set<String>> ancestorOrSelfMapping,
                                                     final Map<String, Set<String>> followingSiblingMapping,
                                                     final Map<String, Set<String>> descendantsOrSelfMapping)
     {
-        final  Map<String, Set<String>> followingMapping = new HashMap<>(ancestorMapping.size());
-        for (var node : followingMapping.keySet()) {
+        final  Map<String, Set<String>> followingMapping = new HashMap<>(ancestorOrSelfMapping.size());
+        for (var node : ancestorOrSelfMapping.keySet()) {
             followingMapping.put(node, new HashSet<>());
         }
         for (var node  : followingMapping.keySet()) {
             var result = followingMapping.get(node);
-            var ancestors = ancestorMapping.get(node);
+            var ancestors = ancestorOrSelfMapping.get(node);
             for (var ancestor: ancestors) {
                 var followingSibling = followingSiblingMapping.get(ancestor);
                 for (var fs: followingSibling) {
@@ -238,17 +238,17 @@ public class InputGrammarAnalyzer {
         return followingMapping;
     }
 
-    private Map<String, Set<String>> getPreceding(final Map<String, Set<String>> ancestorMapping,
+    private Map<String, Set<String>> getPreceding(final Map<String, Set<String>> ancestorOrSelfMapping,
                                                     final Map<String, Set<String>> precedingSiblingMapping,
                                                     final Map<String, Set<String>> descendantsOrSelfMapping)
     {
-        final  Map<String, Set<String>> precedingMapping = new HashMap<>(ancestorMapping.size());
-        for (var node : precedingMapping.keySet()) {
+        final  Map<String, Set<String>> precedingMapping = new HashMap<>(ancestorOrSelfMapping.size());
+        for (var node : ancestorOrSelfMapping.keySet()) {
             precedingMapping.put(node, new HashSet<>());
         }
         for (var node  : precedingMapping.keySet()) {
             var result = precedingMapping.get(node);
-            var ancestors = ancestorMapping.get(node);
+            var ancestors = ancestorOrSelfMapping.get(node);
             for (var ancestor: ancestors) {
                 var precedingSibling = precedingSiblingMapping.get(ancestor);
                 for (var ps: precedingSibling) {

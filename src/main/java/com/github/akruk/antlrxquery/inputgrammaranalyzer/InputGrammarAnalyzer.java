@@ -242,7 +242,7 @@ public class InputGrammarAnalyzer {
                                                     final Map<String, Set<String>> precedingSiblingMapping,
                                                     final Map<String, Set<String>> descendantsOrSelfMapping)
     {
-        final  Map<String, Set<String>> precedingMapping = new HashMap<>(ancestorOrSelfMapping.size());
+        final  Map<String, Set<String>> precedingMapping = new HashMap<>(ancestorOrSelfMapping.size(), 1);
         for (var node : ancestorOrSelfMapping.keySet()) {
             precedingMapping.put(node, new HashSet<>());
         }

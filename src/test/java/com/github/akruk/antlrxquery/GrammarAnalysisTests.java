@@ -194,4 +194,35 @@ public class GrammarAnalysisTests {
         assertTrue(precedingSiblingOrSelf.get("'c'").equals(Set.of("'c'")));
     }
 
+
+    @Test
+    public void preceding() throws XQueryUnsupportedOperation {
+        final var results = testGrammar();
+        final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
+        final var preceding = results.preceding();
+        assertTrue(preceding.keySet().equals(allExpectedNodes));
+        assertTrue(preceding.get("x").equals(Set.of()));
+        assertTrue(preceding.get("a").equals(Set.of()));
+        assertTrue(preceding.get("'a'").equals(Set.of()));
+        assertTrue(preceding.get("b").equals(Set.of("a", "'a'")));
+        assertTrue(preceding.get("B").equals(Set.of("a", "'a'")));
+        assertTrue(preceding.get("c").equals(Set.of("a", "'a'", "b", "B")));
+        assertTrue(preceding.get("'c'").equals(Set.of("a", "'a'", "b", "B")));
+    }
+
+    @Test
+    public void precedingOrSelf() throws XQueryUnsupportedOperation {
+        final var results = testGrammar();
+        final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
+        final var  precedingOrSelf = results.precedingOrSelf();
+        assertTrue(precedingOrSelf.keySet().equals(allExpectedNodes));
+        assertTrue(precedingOrSelf.get("x").equals(Set.of("x")));
+        assertTrue(precedingOrSelf.get("a").equals(Set.of("a")));
+        assertTrue(precedingOrSelf.get("'a'").equals(Set.of("'a'")));
+        assertTrue(precedingOrSelf.get("b").equals(Set.of("a", "'a'", "b")));
+        assertTrue(precedingOrSelf.get("B").equals(Set.of("a", "'a'", "B")));
+        assertTrue(precedingOrSelf.get("c").equals(Set.of("a", "'a'", "b", "B", "c")));
+        assertTrue(precedingOrSelf.get("'c'").equals(Set.of("a", "'a'", "b", "B", "'c'")));
+    }
+
 }

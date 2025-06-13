@@ -27,11 +27,11 @@ import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
 public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQuerySequenceType>  {
     final XQuerySemanticContextManager contextManager;
-    final Parser parser;
     final List<String> errors;
     final XQueryTypeFactory typeFactory;
     final XQueryValueFactory valueFactory;
     final XQuerySemanticFunctionCaller functionCaller;
+    final Parser parser;
     XQueryVisitingSemanticContext context;
     List<XQuerySequenceType> visitedArgumentTypesList;
     List<TupleElementType> visitedTupleStreamType;

@@ -22,6 +22,11 @@ import java.util.*;
 
 public class XQueryRunner {
     public static void main(final String[] args) throws Exception {
+        runAntlrXQuery(args);
+    }
+
+    private static void runAntlrXQuery(final String[] args)
+            throws IOException, ClassNotFoundException, Exception, MalformedURLException {
         final Map<String, List<String>> argMap = parseArgs(args);
         final ValidationResult validation = validateInput(argMap);
         if (validation.status != InputStatus.OK) {

@@ -1020,19 +1020,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         return new LineEndCharPosEnd(lineEnd, charPositionInLineEnd);
     }
 
-    private void addError(final TerminalNode id, final String message) {
-        final Token start = id.getSymbol();
-        final int line = start.getLine();
-        final int charPositionInLine = start.getCharPositionInLine();
-        final LineEndCharPosEnd lineEndCharPosEnd = getLineEndCharPosEnd(start);
-        final int lineEnd = lineEndCharPosEnd.lineEnd();
-        final int charPositionInLineEnd = lineEndCharPosEnd.charPosEnd();
-        final String msg = String.format(
-            "[line:%s, column:%s] %s [/line:%s, column:%s]",
-                line, charPositionInLine, message, lineEnd, charPositionInLineEnd);
-        errors.add(msg);
-    }
-
     void addError(final ParserRuleContext where, final Function<ParserRuleContext, String> message) {
         final Token start = where.getStart();
         final Token stop = where.getStop();

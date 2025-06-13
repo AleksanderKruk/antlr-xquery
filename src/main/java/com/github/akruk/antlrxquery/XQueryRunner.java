@@ -75,7 +75,8 @@ public class XQueryRunner {
             final AntlrXqueryParser xqueryParser = new AntlrXqueryParser(xqueryTokens);
             final ParseTree xqueryTree = xqueryParser.xquery();
 
-            final ParserAndTree parserAndTree = parseTargetFile(targetFiles.get(0), lexerClass, parserClass, startingRule);
+            final String targetFile = Files.readString(Path.of(targetFiles.get(0)));
+            final ParserAndTree parserAndTree = parseTargetFile(targetFile, lexerClass, parserClass, startingRule);
             final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
                     parserAndTree.parser,
                     new XQueryBaseSemanticContextManager(),
@@ -92,7 +93,8 @@ public class XQueryRunner {
             }
 
             for (final String file : targetFiles) {
-                final XQueryValue results = executeQuery(xqueryTree, lexerClass, parserClass, startingRule, file);
+                final String fileContent = Files.readString(Path.of(file));
+                final XQueryValue results = executeQuery(xqueryTree, lexerClass, parserClass, startingRule, fileContent);
                 System.out.println("File: " + file);
                 for (final var result : results.atomize()) {
                     final String printed = result.stringValue();
@@ -207,7 +209,7 @@ public class XQueryRunner {
     }
 
     enum InputStatus {
-        OK, ERROR, EOF, NO_GRAMMARS, NO_TARGET_FILES, NO_STARTING_RULE, NO_QUERY, INVALID_QUERY, QUERY_DUPLICATION
+        OK, ERROR, EOF, NO_GRAMMARS, NO_TARGET_FILES, NO_STARTING_RULE, NO_QUERY, INVALID_QUERY, QUERY_DUPLICATION, INVALID_TARGET_FILE
     }
 
     private record ValidationResult(InputStatus status, String message) {
@@ -220,6 +222,16 @@ public class XQueryRunner {
         if (!args.containsKey("--target-files") || args.get("--target-files").isEmpty()) {
             return new ValidationResult(InputStatus.NO_TARGET_FILES, "No target files given (--target-files)");
         }
+        for (var file : args.get("--target-files")) {
+            final File targetFile = Path.of(file).toFile();
+            if (!targetFile.exists()) {
+                return new ValidationResult(InputStatus.INVALID_TARGET_FILE, "Target file does not exist: " + file);
+            }
+            if (!targetFile.isFile()) {
+                return new ValidationResult(InputStatus.INVALID_TARGET_FILE, "Target file is not a regular file: " + file);
+            }
+        }
+
         if (!args.containsKey("--starting-rule") || args.get("--starting-rule").isEmpty()) {
             return new ValidationResult(InputStatus.NO_STARTING_RULE, "No starting rule given (--starting-rule)");
         }
@@ -238,7 +250,9 @@ public class XQueryRunner {
             if (!queryFile.isDirectory())
                 return new ValidationResult(InputStatus.NO_QUERY, "Query file is a directory: " + querypath);
         }
-        return null;
+
+
+        return new ValidationResult(InputStatus.OK, null);
     }
 
     private record ExtractionResult(List<String> grammars, List<String> targetFiles, String startingRule,

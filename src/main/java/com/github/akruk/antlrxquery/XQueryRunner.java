@@ -113,9 +113,9 @@ public class XQueryRunner {
                 for (var result : results.atomize()) {
                     String printed = result.stringValue();
                     if (printed != null)
-                        System.out.print(printed);
+                        System.out.println(printed);
                     else
-                        System.out.print(result.toString());
+                        System.out.println(result.toString());
                 }
             }
         }

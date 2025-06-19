@@ -1,10 +1,13 @@
 package com.github.akruk.antlrxquery;
 
 import org.antlr.v4.Tool;
-import org.antlr.v4.parse.ANTLRParser.terminal_return;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.xpath.XPath;
 
+import com.github.akruk.antlrgrammar.ANTLRv4Lexer;
+import com.github.akruk.antlrgrammar.ANTLRv4Parser;
+import com.github.akruk.antlrgrammar.ANTLRv4Parser.ParserRuleSpecContext;
 import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.baseimplementation.XQueryBaseSemanticContextManager;
 import com.github.akruk.antlrxquery.evaluator.XQueryEvaluatorVisitor;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
@@ -56,7 +59,7 @@ public class XQueryRunner {
         antlrArgs.add("-package");
         antlrArgs.add(grammarPackage);
 
-        final Tool antlr = new Tool(antlrArgs.toArray(new String[0]));
+        final Tool antlr = new Tool(antlrArgs.toArray(String[]::new));
         antlr.processGrammarsOnCommandLine();
 
         compileJavaSources(sourceDir, outputDir);
@@ -235,13 +238,16 @@ public class XQueryRunner {
         if (!args.containsKey("--starting-rule") || args.get("--starting-rule").isEmpty()) {
             return new ValidationResult(InputStatus.NO_STARTING_RULE, "No starting rule given (--starting-rule)");
         }
+
         if (!args.containsKey("--query") && !args.containsKey("--query-file")) {
             return new ValidationResult(InputStatus.NO_QUERY, "Missing query (--query or --query-file)");
         }
+
         if (args.containsKey("--query") && args.containsKey("--query-file")) {
             return new ValidationResult(InputStatus.QUERY_DUPLICATION,
                     "Both --query and --query-file provided, please use only one.");
         }
+
         if (args.containsKey("--query-file")) {
             final String querypath = String.join(" ", args.getOrDefault("--query-file", Collections.emptyList()));
             final File queryFile = Path.of(querypath).toFile();
@@ -259,11 +265,12 @@ public class XQueryRunner {
                                     String lexerName, String parserName, String query) {
     }
 
+
+
     private static ExtractionResult extractInput(final Map<String, List<String>> args) {
         final List<String> grammars = args.get("--grammars");
         final List<String> targetFiles = args.get("--target-files");
-        // TODO: add default first starting rule
-        final String startingRule = getFirstArg(args, "--starting-rule", "");
+        final String startingRule = getFirstArg(args, "--starting-rule", getFirstRule(grammars));
         final String lexerName = getFirstArg(args, "--lexer-name", "");
         final String parserName = getFirstArg(args, "--parser-name", "");
         String query = String.join(" ", args.getOrDefault("--query", Collections.emptyList()));
@@ -276,5 +283,37 @@ public class XQueryRunner {
             }
         }
         return new ExtractionResult(grammars, targetFiles, startingRule, lexerName, parserName, query);
+    }
+
+    private static String getFirstRule(List<String> grammars) {
+        if (grammars == null || grammars.isEmpty()) return "";
+
+        for (String grammarFile : grammars) {
+            try {
+                // Read grammar file content
+                String content = Files.readString(Path.of(grammarFile));
+                CharStream input = CharStreams.fromString(content);
+
+                // Setup lexer and parser
+                ANTLRv4Lexer lexer = new ANTLRv4Lexer(input);
+                CommonTokenStream tokens = new CommonTokenStream(lexer);
+                ANTLRv4Parser parser = new ANTLRv4Parser(tokens);
+
+                // Parse grammar specification
+                ParseTree tree = parser.grammarSpec();
+
+                // Find first parser rule
+                var found = XPath.findAll(tree,  "//parserRuleSpec", parser);
+                if (!found.isEmpty()) {
+                    var first = (ParserRuleSpecContext) found.iterator().next();
+                    var firstRuleName = first.RULE_REF().getText();
+                    return firstRuleName;
+                }
+            } catch (IOException e) {
+                System.err.println("Error reading grammar file: " + grammarFile);
+                e.printStackTrace();
+            }
+        }
+        return "";
     }
 }

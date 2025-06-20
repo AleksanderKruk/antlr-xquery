@@ -1,7 +1,6 @@
 package com.github.akruk.antlrxquery.values;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;

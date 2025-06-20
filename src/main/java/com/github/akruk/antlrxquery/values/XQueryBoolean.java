@@ -43,7 +43,8 @@ public class XQueryBoolean extends XQueryValueBase<Boolean> {
         // Identity comparison is used because
         // we maintain just 2 XQueryBoolean instances
         // TRUE and FALSE
-        return valueFactory.bool(this == other);
+        return valueFactory.bool(this == other ||
+                (other.isBooleanValue() && value.equals(other.booleanValue())));
     }
 
     @Override

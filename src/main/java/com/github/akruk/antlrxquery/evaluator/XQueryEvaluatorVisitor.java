@@ -82,7 +82,6 @@ import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.values.factories.defaults.XQueryMemoizedValueFactory;
-import com.github.akruk.antlrxquery.values.XQueryBoolean;
 
 public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     final XQueryValue root;

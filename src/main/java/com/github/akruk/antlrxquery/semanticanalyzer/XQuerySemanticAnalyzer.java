@@ -333,7 +333,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     }
 
     @Override
-    public XQuerySequenceType visitWhileClause(WhileClauseContext ctx) {
+    public XQuerySequenceType visitWhileClause(final WhileClauseContext ctx) {
         final var filteringExpression = ctx.exprSingle();
         final var filteringExpressionType = filteringExpression.accept(this);
         if (!filteringExpressionType.hasEffectiveBooleanValue()) {
@@ -346,7 +346,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
 
 
-    private int addOptionality(int occurence) {
+    private int addOptionality(final int occurence) {
         return switch(returnedOccurence){
             case 0 -> 0;
             case 1 -> 2;
@@ -475,7 +475,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
 
     @Override
-    public XQuerySequenceType visitRangeExpr(RangeExprContext ctx) {
+    public XQuerySequenceType visitRangeExpr(final RangeExprContext ctx) {
         if (ctx.TO() == null) {
             return ctx.additiveExpr(0).accept(this);
         }
@@ -613,7 +613,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             return decucedType;
         }
         if (!predicateExpression.hasEffectiveBooleanValue()) {
-            var msg = String.format("Predicate requires either number* type (for item by index aquisition) or a value that has effective boolean value, provided type: %s", predicateExpression);
+            final var msg = String.format("Predicate requires either number* type (for item by index aquisition) or a value that has effective boolean value, provided type: %s", predicateExpression);
             addError(ctx.expr(), msg);
         }
         return contextType.addOptionality();
@@ -726,6 +726,24 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         // return contextArgument;
         return null;
     }
+
+    @Override
+    public XQuerySequenceType visitSimpleMapExpr(final SimpleMapExprContext ctx) {
+        if (ctx.EXCLAMATION_MARK().isEmpty())
+            return ctx.pathExpr(0).accept(this);
+        final XQuerySequenceType firstExpressionType = ctx.pathExpr(0).accept(this);
+        final XQuerySequenceType iterator = firstExpressionType.iteratedItem();
+        context.setType(iterator);
+        XQuerySequenceType result = firstExpressionType;
+        final var theRest = ctx.pathExpr().subList(1, ctx.pathExpr().size());
+        for (final var mappedExpression: theRest) {
+            final XQuerySequenceType type = mappedExpression.accept(this);
+            result = result.mapping(type);
+            context.setType(result.iteratedItem());
+        }
+        return result;
+    }
+
 
     @Override
     public XQuerySequenceType visitArrowFunctionSpecifier(final ArrowFunctionSpecifierContext ctx) {
@@ -855,14 +873,14 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     }
 
     @Override
-    public XQuerySequenceType visitOtherwiseExpr(OtherwiseExprContext ctx) {
+    public XQuerySequenceType visitOtherwiseExpr(final OtherwiseExprContext ctx) {
         if (ctx.OTHERWISE().isEmpty())
             return ctx.stringConcatExpr(0).accept(this);
         final int length = ctx.stringConcatExpr().size();
         XQuerySequenceType merged = ctx.stringConcatExpr(0).accept(this);
         for (int i = 1; i < length; i++) {
-            var expr = ctx.stringConcatExpr(i);
-            XQuerySequenceType exprType = expr.accept(this);
+            final var expr = ctx.stringConcatExpr(i);
+            final XQuerySequenceType exprType = expr.accept(this);
             merged = exprType.typeAlternative(merged);
         }
         return merged;
@@ -983,7 +1001,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     record LineEndCharPosEnd(int lineEnd, int charPosEnd) {
     }
 
-    LineEndCharPosEnd getLineEndCharPosEnd(Token end) {
+    LineEndCharPosEnd getLineEndCharPosEnd(final Token end) {
         final var string = end.getText();
         final int length = string.length();
 
@@ -1002,20 +1020,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         return new LineEndCharPosEnd(lineEnd, charPositionInLineEnd);
     }
 
-    private void addError(TerminalNode id, String message) {
-        final Token start = id.getSymbol();
-        final int line = start.getLine();
-        final int charPositionInLine = start.getCharPositionInLine();
-        final LineEndCharPosEnd lineEndCharPosEnd = getLineEndCharPosEnd(start);
-        final int lineEnd = lineEndCharPosEnd.lineEnd();
-        final int charPositionInLineEnd = lineEndCharPosEnd.charPosEnd();
-        String msg = String.format(
-            "[line:%s, column:%s] %s [/line:%s, column:%s]",
-                line, charPositionInLine, message, lineEnd, charPositionInLineEnd);
-        errors.add(msg);
-    }
-
-    void addError(ParserRuleContext where, Function<ParserRuleContext, String> message) {
+    void addError(final ParserRuleContext where, final Function<ParserRuleContext, String> message) {
         final Token start = where.getStart();
         final Token stop = where.getStop();
         final int line = start.getLine();

@@ -63,6 +63,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.RelativePathExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReturnClauseContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseAxisContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseStepContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.SimpleMapExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.StepExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.StringConcatExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.SwitchExprContext;
@@ -454,7 +455,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
 
     @Override
-    public XQueryValue visitEnclosedExpr(EnclosedExprContext ctx) {
+    public XQueryValue visitEnclosedExpr(final EnclosedExprContext ctx) {
         if (ctx.expr() == null)
             return valueFactory.emptySequence();
         return ctx.expr().accept(this);
@@ -637,7 +638,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
                                                                 .stream()
                                                                 .allMatch(XQueryValue::isNumericValue);
             if (allNumericValues) {
-                List<XQueryValue> items = new ArrayList<>();
+                final List<XQueryValue> items = new ArrayList<>();
                 for (final var sequenceIndex : visitedExpression.sequence()) {
                     final int i = sequenceIndex.numericValue().intValue() - 1;
                     if (i >= sequence.size() || i < 0) {
@@ -1161,11 +1162,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             var value = ctx.multiplicativeExpr(0).accept(this);
             if (ctx.additiveOperator().isEmpty())
                 return value;
-            if (!value.isNumericValue()) {
-                // TODO: type error
-            }
-            final var orCount = ctx.additiveOperator().size();
-            for (int i = 1; i <= orCount; i++) {
+            final var operatorCount = ctx.additiveOperator().size();
+            for (int i = 1; i <= operatorCount; i++) {
                 final var visitedExpression = ctx.multiplicativeExpr(i).accept(this);
                 value = switch (ctx.additiveOperator(i-1).getText()) {
                     case "+" -> value.add(valueFactory, visitedExpression);
@@ -1232,13 +1230,13 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
 
     @Override
-    public XQueryValue visitOtherwiseExpr(OtherwiseExprContext ctx) {
+    public XQueryValue visitOtherwiseExpr(final OtherwiseExprContext ctx) {
         if (ctx.OTHERWISE().isEmpty())
             return ctx.stringConcatExpr(0).accept(this);
         final int length = ctx.stringConcatExpr().size();
         for (int i = 0; i < length-1; i++) {
-            var expr = ctx.stringConcatExpr(i);
-            XQueryValue exprValue = expr.accept(this);
+            final var expr = ctx.stringConcatExpr(i);
+            final XQueryValue exprValue = expr.accept(this);
             if (exprValue.isSequence() && exprValue.sequence().isEmpty())
                 continue;
             return exprValue;
@@ -1341,6 +1339,32 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return ctx.arrowExpr().accept(this);
     }
 
+
+    @Override
+    public XQueryValue visitSimpleMapExpr(final SimpleMapExprContext ctx) {
+        List<PathExprContext> terms = ctx.pathExpr();
+        // if there's only one term, no mapping needed
+        if (terms.size() == 1) {
+            return terms.get(0).accept(this);
+        }
+
+        // start with the initial sequence
+        XQueryValue current = terms.get(0).accept(this);
+        List<XQueryValue> sequence = current.atomize();
+
+        // for each subsequent “! expr”
+        for (int i = 1; i < terms.size(); i++) {
+            List<XQueryValue> nextSequence = new ArrayList<>();
+            for (XQueryValue item : sequence) {
+                context.setItem(item);
+                XQueryValue mapped = terms.get(i).accept(this);
+                nextSequence.addAll(mapped.atomize());
+            }
+            sequence = nextSequence;
+        }
+
+        return valueFactory.sequence(sequence);
+    }
 
 
     @Override

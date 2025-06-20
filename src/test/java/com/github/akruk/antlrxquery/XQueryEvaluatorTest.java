@@ -1117,22 +1117,74 @@ public class XQueryEvaluatorTest {
     public void otherwiseExpression() throws XQueryUnsupportedOperation {
         final List<XQueryValue> $123 = List.of(new XQueryNumber(1), new XQueryNumber(2), new XQueryNumber(3));
         assertResult("""
-            () otherwise 1
-        """, new XQueryNumber(1));
+                    () otherwise 1
+                """, new XQueryNumber(1));
         assertResult("""
-            1 otherwise 2
-        """, new XQueryNumber(1));
+                    1 otherwise 2
+                """, new XQueryNumber(1));
         assertResult("""
-            "napis" otherwise 2
-        """, new XQueryString("napis"));
+                    "napis" otherwise 2
+                """, new XQueryString("napis"));
         assertResult("""
-            () otherwise () otherwise (1, 2, 3)
-        """, $123);
+                    () otherwise () otherwise (1, 2, 3)
+                """, $123);
         assertResult("""
-            (1, 2, 3) otherwise (4, 5, 6) otherwise (7, 8, 9)
-        """, $123);
+                    (1, 2, 3) otherwise (4, 5, 6) otherwise (7, 8, 9)
+                """, $123);
     }
 
+    @Test
+    public void simpleMapSingleValue() throws XQueryUnsupportedOperation {
+        // map on a single atomic value without let-binding
+        assertResult(
+            "1 ! (. + 1)",
+            List.of(baseFactory.number(2))
+        );
+    }
+
+
+    @Test
+    public void simpleMapSingleValueNoOp() throws XQueryUnsupportedOperation {
+        // map on a single atomic value without let-binding
+        assertResult(
+                "1 ! .",
+                List.of(baseFactory.number(1)));
+    }
+
+
+    @Test
+    public void simpleMapOverSequence() throws XQueryUnsupportedOperation {
+        // add 1 to each item in a sequence directly
+        String xquery = "(1, 2, 3) ! (. + 1)";
+        List<XQueryValue> expected = List.of(
+            baseFactory.number(2),
+            baseFactory.number(3),
+            baseFactory.number(4)
+        );
+        assertResult(xquery, expected);
+    }
+
+    @Test
+    public void chainedSimpleMapExpressions() throws XQueryUnsupportedOperation {
+        // multiply by 2 then add 1, chaining two map operators
+        String xquery = "(1, 2) ! (. * 2) ! (. + 1)";
+        List<XQueryValue> expected = List.of(
+            baseFactory.number(3),  // (1*2)+1
+            baseFactory.number(5)   // (2*2)+1
+        );
+        assertResult(xquery, expected);
+    }
+
+    @Test
+    public void simpleMapWithStringFunctions() throws XQueryUnsupportedOperation {
+        // build strings, then measure their length via chained maps
+        String xquery = "('a', 'bc') ! concat(., '-') ! string-length(.)";
+        List<XQueryValue> expected = List.of(
+            baseFactory.number(2),
+            baseFactory.number(3)
+        );
+        assertResult(xquery, expected);
+    }
 
     // Wildcards
     // All effective boolean values

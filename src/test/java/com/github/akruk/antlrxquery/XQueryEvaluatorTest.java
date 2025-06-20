@@ -19,6 +19,8 @@ import com.github.akruk.antlrxquery.values.factories.defaults.XQueryMemoizedValu
 
 import static org.junit.Assert.assertEquals;
 
+import static java.lang.Math.*;
+
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.List;
@@ -148,6 +150,62 @@ public class XQueryEvaluatorTest {
     public void falseConstant() throws XQueryUnsupportedOperation {
         assertResult("false()", baseFactory.bool(false));
     }
+
+
+    @Test
+    public void sinFunction() {
+        assertResult("sin(0)", BigDecimal.valueOf(sin(0)));
+        assertResult("sin(3.141592653589793 div 2)", BigDecimal.valueOf(sin(PI / 2)));
+    }
+
+    @Test
+    public void cosFunction() {
+        assertResult("cos(0)", BigDecimal.valueOf(cos(0)));
+        assertResult("cos(3.141592653589793)", BigDecimal.valueOf(cos(PI)));
+    }
+
+    @Test
+    public void tanFunction() {
+        assertResult("tan(0)", BigDecimal.valueOf(tan(0)));
+    }
+
+    @Test
+    public void asinFunction() {
+        assertResult("asin(0)", BigDecimal.valueOf(asin(0)));
+    }
+
+    @Test
+    public void acosFunction() {
+        assertResult("acos(1)", BigDecimal.valueOf(acos(1)));
+    }
+
+    @Test
+    public void atanFunction() {
+        assertResult("atan(1)", BigDecimal.valueOf(atan(1)));
+    }
+
+    @Test
+    public void piConstant() {
+        assertResult("pi()", BigDecimal.valueOf(PI));
+    }
+
+    @Test
+    public void expFunction() {
+        assertResult("exp(1)", BigDecimal.valueOf(exp(1)));
+    }
+
+    @Test
+    public void logFunction() {
+        assertResult("log(1)", BigDecimal.valueOf(log(1))); // should be 0
+    }
+
+    @Test
+    public void sqrtFunction() {
+        assertResult("sqrt(4)", BigDecimal.valueOf(sqrt(4))); // should be 2
+    }
+
+
+
 
     @Test
     public void or() {

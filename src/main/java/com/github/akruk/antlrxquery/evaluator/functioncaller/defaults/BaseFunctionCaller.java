@@ -13,7 +13,6 @@ import java.util.stream.Collectors;
 import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
 import com.github.akruk.antlrxquery.evaluator.functioncaller.XQueryFunctionCaller;
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
-import com.github.akruk.antlrxquery.values.XQueryBoolean;
 import com.github.akruk.antlrxquery.values.XQueryFunction;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
@@ -100,32 +99,32 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
 
         functions.put("pi", this::pi);
         functions.put("math:pi", this::pi);
-        // functions.put("exp", this::exp);
-        // functions.put("math:exp", this::exp);
-        // functions.put("exp10", this::exp10);
-        // functions.put("math:exp10", this::exp10);
-        // functions.put("log", this::log);
-        // functions.put("math:log", this::log);
-        // functions.put("log10", this::log10);
-        // functions.put("math:log10", this::log10);
-        // functions.put("pow", this::pow);
-        // functions.put("math:pow", this::pow);
-        // functions.put("sqrt", this::sqrt);
-        // functions.put("math:sqrt", this::sqrt);
-        // functions.put("sin", this::sin);
-        // functions.put("math:sin", this::sin);
-        // functions.put("cos", this::cos);
-        // functions.put("math:cos", this::cos);
-        // functions.put("tan", this::tan);
-        // functions.put("math:tan", this::tan);
-        // functions.put("asin", this::asin);
-        // functions.put("math:asin", this::asin);
-        // functions.put("acos", this::acos);
-        // functions.put("math:acos", this::acos);
-        // functions.put("atan", this::atan);
-        // functions.put("math:atan", this::atan);
-        // functions.put("atan2", this::atan2);
-        // functions.put("math:atan2", this::atan2);
+        functions.put("exp", this::exp);
+        functions.put("math:exp", this::exp);
+        functions.put("exp10", this::exp10);
+        functions.put("math:exp10", this::exp10);
+        functions.put("log", this::log);
+        functions.put("math:log", this::log);
+        functions.put("log10", this::log10);
+        functions.put("math:log10", this::log10);
+        functions.put("pow", this::pow);
+        functions.put("math:pow", this::pow);
+        functions.put("sqrt", this::sqrt);
+        functions.put("math:sqrt", this::sqrt);
+        functions.put("sin", this::sin);
+        functions.put("math:sin", this::sin);
+        functions.put("cos", this::cos);
+        functions.put("math:cos", this::cos);
+        functions.put("tan", this::tan);
+        functions.put("math:tan", this::tan);
+        functions.put("asin", this::asin);
+        functions.put("math:asin", this::asin);
+        functions.put("acos", this::acos);
+        functions.put("math:acos", this::acos);
+        functions.put("atan", this::atan);
+        functions.put("math:atan", this::atan);
+        functions.put("atan2", this::atan2);
+        functions.put("math:atan2", this::atan2);
 
         functions.put("numeric-add", this::numericAdd);
         functions.put("numeric-subtract", this::numericSubtract);
@@ -156,6 +155,101 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
             return null;
         }
     }
+
+    public XQueryValue exp(final XQueryVisitingContext context, final List<XQueryValue> args) {
+        assert args.size() == 1;
+        var arg = args.get(0);
+        if (!arg.isNumericValue()) return null;
+        return valueFactory.number(BigDecimal.valueOf(Math.exp(arg.numericValue().doubleValue())));
+    }
+
+    public XQueryValue exp10(final XQueryVisitingContext context, final List<XQueryValue> args) {
+        assert args.size() == 1;
+        var arg = args.get(0);
+        if (!arg.isNumericValue()) return null;
+        return valueFactory.number(BigDecimal.valueOf(Math.pow(10, arg.numericValue().doubleValue())));
+    }
+
+    public XQueryValue log(final XQueryVisitingContext context, final List<XQueryValue> args) {
+        assert args.size() == 1;
+        var arg = args.get(0);
+        if (!arg.isNumericValue()) return null;
+        return valueFactory.number(BigDecimal.valueOf(Math.log(arg.numericValue().doubleValue())));
+    }
+
+    public XQueryValue log10(final XQueryVisitingContext context, final List<XQueryValue> args) {
+        assert args.size() == 1;
+        var arg = args.get(0);
+        if (!arg.isNumericValue()) return null;
+        return valueFactory.number(BigDecimal.valueOf(Math.log10(arg.numericValue().doubleValue())));
+    }
+
+    public XQueryValue pow(final XQueryVisitingContext context, final List<XQueryValue> args) {
+        assert args.size() == 2;
+        var base = args.get(0);
+        var exponent = args.get(1);
+        if (!base.isNumericValue() || !exponent.isNumericValue()) return null;
+        return valueFactory.number(BigDecimal.valueOf(Math.pow(base.numericValue().doubleValue(), exponent.numericValue().doubleValue())));
+    }
+
+    public XQueryValue sqrt(final XQueryVisitingContext context, final List<XQueryValue> args) {
+        assert args.size() == 1;
+        var arg = args.get(0);
+        if (!arg.isNumericValue()) return null;
+        return valueFactory.number(BigDecimal.valueOf(Math.sqrt(arg.numericValue().doubleValue())));
+    }
+
+    public XQueryValue sin(final XQueryVisitingContext context, final List<XQueryValue> args) {
+        assert args.size() == 1;
+        var arg = args.get(0);
+        if (!arg.isNumericValue()) return null;
+        return valueFactory.number(BigDecimal.valueOf(Math.sin(arg.numericValue().doubleValue())));
+    }
+
+    public XQueryValue cos(final XQueryVisitingContext context, final List<XQueryValue> args) {
+        assert args.size() == 1;
+        var arg = args.get(0);
+        if (!arg.isNumericValue()) return null;
+        return valueFactory.number(BigDecimal.valueOf(Math.cos(arg.numericValue().doubleValue())));
+    }
+
+    public XQueryValue tan(final XQueryVisitingContext context, final List<XQueryValue> args) {
+        assert args.size() == 1;
+        var arg = args.get(0);
+        if (!arg.isNumericValue()) return null;
+        return valueFactory.number(BigDecimal.valueOf(Math.tan(arg.numericValue().doubleValue())));
+    }
+
+    public XQueryValue asin(final XQueryVisitingContext context, final List<XQueryValue> args) {
+        assert args.size() == 1;
+        var arg = args.get(0);
+        if (!arg.isNumericValue()) return null;
+        return valueFactory.number(BigDecimal.valueOf(Math.asin(arg.numericValue().doubleValue())));
+    }
+
+    public XQueryValue acos(final XQueryVisitingContext context, final List<XQueryValue> args) {
+        assert args.size() == 1;
+        var arg = args.get(0);
+        if (!arg.isNumericValue()) return null;
+        return valueFactory.number(BigDecimal.valueOf(Math.acos(arg.numericValue().doubleValue())));
+    }
+
+    public XQueryValue atan(final XQueryVisitingContext context, final List<XQueryValue> args) {
+        assert args.size() == 1;
+        var arg = args.get(0);
+        if (!arg.isNumericValue()) return null;
+        return valueFactory.number(BigDecimal.valueOf(Math.atan(arg.numericValue().doubleValue())));
+    }
+
+    public XQueryValue atan2(final XQueryVisitingContext context, final List<XQueryValue> args) {
+        assert args.size() == 2;
+        var y = args.get(0);
+        var x = args.get(1);
+        if (!y.isNumericValue() || !x.isNumericValue()) return null;
+        return valueFactory.number(BigDecimal.valueOf(Math.atan2(y.numericValue().doubleValue(), x.numericValue().doubleValue())));
+    }
+
+
 
     // fn:abs($arg as xs:numeric?) as xs:numeric?
     public XQueryValue abs(final XQueryVisitingContext context, final List<XQueryValue> args) {
@@ -210,6 +304,10 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         final var roundedNumberNormalNotation = roundedNumber.setScale(0, RoundingMode.HALF_UP);
         return valueFactory.number(roundedNumberNormalNotation);
     }
+
+
+
+
 
     public XQueryValue numericAdd(final XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 2;
@@ -327,7 +425,7 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
 
     public XQueryValue pi(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 0;
-        return valueFactory.number(new BigDecimal(Math.PI));
+        return valueFactory.number(BigDecimal.valueOf(Math.PI));
     }
 
     public XQueryValue empty(XQueryVisitingContext context, final List<XQueryValue> args) {

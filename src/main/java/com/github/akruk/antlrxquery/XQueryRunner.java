@@ -24,21 +24,31 @@ public class XQueryRunner {
         runXQueryTool(args);
     }
 
-    static void runXQueryTool(final String[] args) throws Exception
+    static void runXQueryTool(final String[] args) throws Exception {
+        runXQueryTool(args, System.in, System.out, System.err);
+    }
+
+    static void runXQueryTool(final String[] args, final InputStream inputStream,
+                             final PrintStream outputStream, final PrintStream errorStream)
+    throws Exception
     {
         final Map<String, List<String>> argMap = parseArgs(args);
         final ValidationResult validation = validateInput(argMap);
         if (validation.status != InputStatus.OK) {
-            System.err.println(validation.message);
+            errorStream.println(validation.message);
             System.exit(validation.status.ordinal());
         }
         final ExtractionResult extractedArgs = extractInput(argMap);
 
-        runXQueryTool(extractedArgs);
-
+        runXQueryTool(extractedArgs, inputStream, outputStream, errorStream);
     }
 
     static void runXQueryTool(final ExtractionResult config) throws Exception {
+        runXQueryTool(config, System.in, System.out, System.err);
+    }
+
+    static void runXQueryTool(final ExtractionResult config, final InputStream inputStream,
+                             final PrintStream outputStream, final PrintStream errorStream) throws Exception {
 
         final List<String> grammarFiles = config.grammars;
         final List<String> targetFiles = config.targetFiles;
@@ -90,7 +100,7 @@ public class XQueryRunner {
             analyzer.visit(xqueryTree);
             final var querySemanticErrors = analyzer.getErrors();
             for (final var error : querySemanticErrors) {
-                System.err.println(error);
+                errorStream.println(error);
             }
             if (!querySemanticErrors.isEmpty()) {
                 System.exit(InputStatus.INVALID_QUERY.ordinal());
@@ -99,13 +109,13 @@ public class XQueryRunner {
             for (final String file : targetFiles) {
                 final String fileContent = Files.readString(Path.of(file));
                 final XQueryValue results = executeQuery(xqueryTree, lexerClass, parserClass, startingRule, fileContent);
-                System.out.println("File: " + file);
+                outputStream.println("File: " + file);
                 for (final var result : results.atomize()) {
                     final String printed = result.stringValue();
                     if (printed != null)
-                        System.out.println(printed);
+                        outputStream.println(printed);
                     else
-                        System.out.println(result.toString());
+                        outputStream.println(result.toString());
                 }
             }
         }

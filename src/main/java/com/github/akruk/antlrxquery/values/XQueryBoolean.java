@@ -4,18 +4,8 @@ import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
 public class XQueryBoolean extends XQueryValueBase<Boolean> {
-    public static final XQueryBoolean TRUE = new XQueryBoolean(true);
-    public static final XQueryBoolean FALSE = new XQueryBoolean(false);
-
-    private XQueryBoolean(boolean bool) {
-        value = bool;
-    }
-
-    public static XQueryBoolean of(boolean bool) {
-        if (bool)
-            return TRUE;
-        else
-            return FALSE;
+    public XQueryBoolean(boolean bool, XQueryValueFactory valueFactory) {
+        super(bool, valueFactory);
     }
 
     @Override
@@ -34,49 +24,50 @@ public class XQueryBoolean extends XQueryValueBase<Boolean> {
     }
 
     @Override
-    public XQueryValue not(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation {
+    public XQueryValue not() throws XQueryUnsupportedOperation {
         return valueFactory.bool(!value);
     }
 
     @Override
-    public XQueryValue and(XQueryValueFactory valueFactory, XQueryValue other) throws XQueryUnsupportedOperation {
+    public XQueryValue and(XQueryValue other) throws XQueryUnsupportedOperation {
         return valueFactory.bool(value && other.booleanValue());
     }
 
     @Override
-    public XQueryValue or(XQueryValueFactory valueFactory, XQueryValue other) throws XQueryUnsupportedOperation {
+    public XQueryValue or(XQueryValue other) throws XQueryUnsupportedOperation {
         return valueFactory.bool(value || other.booleanValue());
     }
 
     @Override
-    public XQueryValue valueEqual(XQueryValueFactory valueFactory, XQueryValue other) {
+    public XQueryValue valueEqual(XQueryValue other) {
         // Identity comparison is used because
         // we maintain just 2 XQueryBoolean instances
         // TRUE and FALSE
-        return XQueryBoolean.of(this == other);
+        return valueFactory.bool(this == other);
     }
 
     @Override
-    public XQueryValue valueLessThan(XQueryValueFactory valueFactory, XQueryValue other) {
+    public XQueryValue valueLessThan(XQueryValue other) {
         // Identity comparison is used because
         // we maintain just 2 XQueryBoolean instances
         // TRUE and FALSE
-        return XQueryBoolean.of(this == FALSE && other != FALSE);
+        var false_ = valueFactory.bool(false);
+        return valueFactory.bool(this == false_ && other != false_);
     }
 
     @Override
-    public XQueryValue copy(XQueryValueFactory valueFactory) {
+    public XQueryValue copy() {
         return this;
     }
 
     @Override
-    public XQueryValue data(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation {
+    public XQueryValue data() throws XQueryUnsupportedOperation {
         var atomized = atomize();
         return valueFactory.sequence(atomized);
     }
 
     @Override
-    public XQueryValue empty(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation {
+    public XQueryValue empty() throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
     }
 

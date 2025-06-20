@@ -46,7 +46,7 @@ public class XQueryEvaluatorTest {
         for (int i = 0; i < result.size(); i++) {
             var expected = result.get(i);
             var received = value.sequence().get(i);
-            assertTrue(expected.valueEqual(baseFactory, received).booleanValue());
+            assertTrue(expected.valueEqual(received).booleanValue());
         }
     }
 
@@ -54,7 +54,7 @@ public class XQueryEvaluatorTest {
     public void assertResult(String xquery, XQueryValue result) throws XQueryUnsupportedOperation {
         XQueryValue value = XQuery.evaluate(null, xquery, null);
         assertNotNull(value);
-        assertTrue(result.valueEqual(baseFactory, value).booleanValue());
+        assertTrue(result.valueEqual(value).booleanValue());
     }
 
 
@@ -62,7 +62,7 @@ public class XQueryEvaluatorTest {
         TestParserAndTree parserAndTree = parseTestTree(textualTree);
         var value = XQuery.evaluate(parserAndTree.tree, xquery, parserAndTree.parser);
         assertNotNull(value);
-        assertTrue(result.valueEqual(baseFactory, value).booleanValue());
+        assertTrue(result.valueEqual(value).booleanValue());
     }
 
 
@@ -142,12 +142,12 @@ public class XQueryEvaluatorTest {
 
     @Test
     public void trueConstant() throws XQueryUnsupportedOperation {
-        assertResult("true()", XQueryBoolean.TRUE);
+        assertResult("true()", baseFactory.bool(true));
     }
 
     @Test
     public void falseConstant() throws XQueryUnsupportedOperation {
-        assertResult("false()", XQueryBoolean.FALSE);
+        assertResult("false()", baseFactory.bool(false));
     }
 
     @Test
@@ -299,12 +299,12 @@ public class XQueryEvaluatorTest {
 
     @Test
     public void generalComparison() throws XQueryUnsupportedOperation {
-        assertResult("(1, 2) = (2, 3)", XQueryBoolean.TRUE);
-        assertResult("(1, 2) != (2, 3)", XQueryBoolean.TRUE);
-        assertResult("(1, 2) < (2, 3)", XQueryBoolean.TRUE);
-        assertResult("(1, 2) <= (2, 3)", XQueryBoolean.TRUE);
-        assertResult("(1, 2) > (2, 3)", XQueryBoolean.FALSE);
-        assertResult("(1, 2) >= (2, 3)", XQueryBoolean.TRUE);
+        assertResult("(1, 2) = (2, 3)", baseFactory.bool(true));
+        assertResult("(1, 2) != (2, 3)", baseFactory.bool(true));
+        assertResult("(1, 2) < (2, 3)", baseFactory.bool(true));
+        assertResult("(1, 2) <= (2, 3)", baseFactory.bool(true));
+        assertResult("(1, 2) > (2, 3)", baseFactory.bool(false));
+        assertResult("(1, 2) >= (2, 3)", baseFactory.bool(true));
     }
 
     @Test
@@ -332,93 +332,93 @@ public class XQueryEvaluatorTest {
     @Test
     public void valueComparisonsEqual() throws XQueryUnsupportedOperation {
         // A eq B 	numeric 	numeric 	op:numeric-equal(A, B) 	xs:boolean
-        assertResult("1 eq 1", XQueryBoolean.TRUE);
+        assertResult("1 eq 1", baseFactory.bool(true));
         // A eq B 	xs:boolean 	xs:boolean 	op:boolean-equal(A, B) 	xs:boolean
-        assertResult("true() eq true()", XQueryBoolean.TRUE);
+        assertResult("true() eq true()", baseFactory.bool(true));
         // A eq B 	xs:string 	xs:string 	op:numeric-equal(fn:compare(A, B), 0) 	xs:boolean
-        assertResult("'abcd' eq 'abcd'", XQueryBoolean.TRUE);
+        assertResult("'abcd' eq 'abcd'", baseFactory.bool(true));
         // A le B 	xs:boolean 	xs:boolean 	fn:not(op:boolean-greater-than(A, B)) 	xs:boolean
     }
 
     @Test
     public void valueComparisonsNotEqual() throws XQueryUnsupportedOperation {
         // A ne B 	numeric 	numeric 	fn:not(op:numeric-equal(A, B)) 	xs:boolean
-        assertResult("1 ne 0", XQueryBoolean.TRUE);
+        assertResult("1 ne 0", baseFactory.bool(true));
         // A ne B 	xs:boolean 	xs:boolean 	fn:not(op:boolean-equal(A, B)) 	xs:boolean
-        assertResult("true() ne false()", XQueryBoolean.TRUE);
+        assertResult("true() ne false()", baseFactory.bool(true));
         // A ne B 	xs:string 	xs:string 	fn:not(op:numeric-equal(fn:compare(A, B), 0)) 	xs:boolean
-        assertResult("'abc' ne 'abcd'", XQueryBoolean.TRUE);
+        assertResult("'abc' ne 'abcd'", baseFactory.bool(true));
     }
 
     @Test
     public void valueComparisonsGreaterThan() throws XQueryUnsupportedOperation {
         // A gt B 	numeric 	numeric 	op:numeric-greater-than(A, B) 	xs:boolean
-        assertResult("3 gt 1", XQueryBoolean.TRUE);
+        assertResult("3 gt 1", baseFactory.bool(true));
         // A gt B 	xs:boolean 	xs:boolean 	op:boolean-greater-than(A, B) 	xs:boolean
-        assertResult("true() gt false()", XQueryBoolean.TRUE);
-        assertResult("false() gt true()", XQueryBoolean.FALSE);
-        assertResult("true() gt true()", XQueryBoolean.FALSE);
-        assertResult("false() gt false()", XQueryBoolean.FALSE);
+        assertResult("true() gt false()", baseFactory.bool(true));
+        assertResult("false() gt true()", baseFactory.bool(false));
+        assertResult("true() gt true()", baseFactory.bool(false));
+        assertResult("false() gt false()", baseFactory.bool(false));
         // A gt B 	xs:string 	xs:string 	op:numeric-greater-than(fn:compare(A, B), 0) 	xs:boolean
-        assertResult("'abed' gt 'abcd'", XQueryBoolean.TRUE);
+        assertResult("'abed' gt 'abcd'", baseFactory.bool(true));
     }
 
     @Test
     public void valueComparisonsGreaterOrEqual() throws XQueryUnsupportedOperation {
         // A ge B 	numeric 	numeric 	op:numeric-greater-than(A, B) or op:numeric-equal(A, B) 	xs:boolean
-        assertResult("3 ge 1", XQueryBoolean.TRUE);
-        assertResult("1 ge 1", XQueryBoolean.TRUE);
-        assertResult("0 ge 1", XQueryBoolean.FALSE);
+        assertResult("3 ge 1", baseFactory.bool(true));
+        assertResult("1 ge 1", baseFactory.bool(true));
+        assertResult("0 ge 1", baseFactory.bool(false));
         // A ge B 	xs:boolean 	xs:boolean 	xs:boolean
-        assertResult("true() ge false()", XQueryBoolean.TRUE);
-        assertResult("false() ge true()", XQueryBoolean.FALSE);
-        assertResult("true() ge true()", XQueryBoolean.TRUE);
-        assertResult("false() ge false()", XQueryBoolean.TRUE);
+        assertResult("true() ge false()", baseFactory.bool(true));
+        assertResult("false() ge true()", baseFactory.bool(false));
+        assertResult("true() ge true()", baseFactory.bool(true));
+        assertResult("false() ge false()", baseFactory.bool(true));
         // A ge B 	xs:string 	xs:string   xs:boolean
-        assertResult("'abcd' ge 'abcd'", XQueryBoolean.TRUE);
-        assertResult("'abed' ge 'abcd'", XQueryBoolean.TRUE);
+        assertResult("'abcd' ge 'abcd'", baseFactory.bool(true));
+        assertResult("'abed' ge 'abcd'", baseFactory.bool(true));
     }
 
     @Test
     public void valueComparisonsLessOrEqual() throws XQueryUnsupportedOperation {
         // A le B 	numeric 	numeric
-        assertResult("1 le 3", XQueryBoolean.TRUE);
-        assertResult("1 le 1", XQueryBoolean.TRUE);
-        assertResult("1 le 0", XQueryBoolean.FALSE);
+        assertResult("1 le 3", baseFactory.bool(true));
+        assertResult("1 le 1", baseFactory.bool(true));
+        assertResult("1 le 0", baseFactory.bool(false));
         // A le B 	xs:boolean 	xs:boolean
-        assertResult("true() le false()", XQueryBoolean.FALSE);
-        assertResult("false() le true()", XQueryBoolean.TRUE);
-        assertResult("true() le true()", XQueryBoolean.TRUE);
-        assertResult("false() le false()", XQueryBoolean.TRUE);
+        assertResult("true() le false()", baseFactory.bool(false));
+        assertResult("false() le true()", baseFactory.bool(true));
+        assertResult("true() le true()", baseFactory.bool(true));
+        assertResult("false() le false()", baseFactory.bool(true));
         // A le B 	xs:string 	xs:string
-        assertResult("'abed' le 'abcd'", XQueryBoolean.FALSE);
-        assertResult("'abcd' le 'abed'", XQueryBoolean.TRUE);
-        assertResult("'abcd' le 'abcd'", XQueryBoolean.TRUE);
+        assertResult("'abed' le 'abcd'", baseFactory.bool(false));
+        assertResult("'abcd' le 'abed'", baseFactory.bool(true));
+        assertResult("'abcd' le 'abcd'", baseFactory.bool(true));
     }
 
     @Test
     public void valueComparisonsLessThan() throws XQueryUnsupportedOperation {
         // A lt B 	numeric 	numeric 	op:numeric-less-than(A, B) 	xs:boolean
-        assertResult("1 lt 3", XQueryBoolean.TRUE);
-        assertResult("1 lt 1", XQueryBoolean.FALSE);
-        assertResult("1 lt 0", XQueryBoolean.FALSE);
+        assertResult("1 lt 3", baseFactory.bool(true));
+        assertResult("1 lt 1", baseFactory.bool(false));
+        assertResult("1 lt 0", baseFactory.bool(false));
         // A lt B 	xs:boolean 	xs:boolean 	op:boolean-less-than(A, B) 	xs:boolean
-        assertResult("true() lt false()", XQueryBoolean.FALSE);
-        assertResult("false() lt true()", XQueryBoolean.TRUE);
-        assertResult("true() lt true()", XQueryBoolean.FALSE);
-        assertResult("false() lt false()", XQueryBoolean.FALSE);
+        assertResult("true() lt false()", baseFactory.bool(false));
+        assertResult("false() lt true()", baseFactory.bool(true));
+        assertResult("true() lt true()", baseFactory.bool(false));
+        assertResult("false() lt false()", baseFactory.bool(false));
         // A lt B 	xs:string 	xs:string 	op:numeric-less-than(fn:compare(A, B), 0) 	xs:boolean
-        assertResult("'abed' lt 'abcd'", XQueryBoolean.FALSE);
-        assertResult("'abcd' lt 'abed'", XQueryBoolean.TRUE);
-        assertResult("'abcd' lt 'abcd'", XQueryBoolean.FALSE);
+        assertResult("'abed' lt 'abcd'", baseFactory.bool(false));
+        assertResult("'abcd' lt 'abed'", baseFactory.bool(true));
+        assertResult("'abcd' lt 'abcd'", baseFactory.bool(false));
     }
 
     @Test
     public void concatenationExpressions() throws XQueryUnsupportedOperation {
-        assertResult("'abc' || 'def' || 'ghi'", new XQueryString("abcdefghi"));
+        assertResult("'abc' || 'def' || 'ghi'", new XQueryString("abcdefghi", baseFactory));
         assertResult("""
             () || "con" || ("cat", "enate")
-                """, new XQueryString("concatenate"));
+                """, new XQueryString("concatenate", baseFactory));
     }
 
     @Test
@@ -603,19 +603,19 @@ public class XQueryEvaluatorTest {
 
     @Test
     public void identityNodeComparison() throws XQueryUnsupportedOperation {
-        assertResult("/test is /test", "a bc a d", XQueryBoolean.TRUE);
+        assertResult("/test is /test", "a bc a d", baseFactory.bool(true));
     }
 
     @Test
     public void beforeNode() throws XQueryUnsupportedOperation {
-        assertResult("/test << /test", "a bc a d", XQueryBoolean.FALSE);
-        assertResult("/test << /test/A[1]", "a bc a d", XQueryBoolean.TRUE);
+        assertResult("/test << /test", "a bc a d", baseFactory.bool(false));
+        assertResult("/test << /test/A[1]", "a bc a d", baseFactory.bool(true));
     }
 
     @Test
     public void afterNode() throws XQueryUnsupportedOperation {
-        assertResult("/test >> /test", "a bc a d", XQueryBoolean.FALSE);
-        assertResult("/test/A[1] >> /test", "a bc a d", XQueryBoolean.TRUE);
+        assertResult("/test >> /test", "a bc a d", baseFactory.bool(false));
+        assertResult("/test/A[1] >> /test", "a bc a d", baseFactory.bool(true));
     }
 
     @Test
@@ -637,11 +637,11 @@ public class XQueryEvaluatorTest {
 
     @Test
     public void empty() throws XQueryUnsupportedOperation {
-        assertResult("empty(())", XQueryBoolean.TRUE);
-        assertResult("empty(1)", XQueryBoolean.FALSE);
-        assertResult("empty((1,2,3))", XQueryBoolean.FALSE);
-        assertResult("empty(\"\")", XQueryBoolean.FALSE);
-        assertResult("empty(\"abcd\")", XQueryBoolean.FALSE);
+        assertResult("empty(())", baseFactory.bool(true));
+        assertResult("empty(1)", baseFactory.bool(false));
+        assertResult("empty((1,2,3))", baseFactory.bool(false));
+        assertResult("empty(\"\")", baseFactory.bool(false));
+        assertResult("empty(\"abcd\")", baseFactory.bool(false));
         // The expression fn:empty([]) returns false().
         // The expression fn:empty(map{}) returns false().
         // Assuming $in is an element with no children:
@@ -653,10 +653,10 @@ public class XQueryEvaluatorTest {
 
     @Test
     public void exists() throws XQueryUnsupportedOperation {
-        assertResult("exists(())", XQueryBoolean.FALSE);
-        assertResult("exists((1,2,3))", XQueryBoolean.TRUE);
-        assertResult("exists(\"\")", XQueryBoolean.TRUE);
-        assertResult("exists(\"abcd\")", XQueryBoolean.TRUE);
+        assertResult("exists(())", baseFactory.bool(false));
+        assertResult("exists((1,2,3))", baseFactory.bool(true));
+        assertResult("exists(\"\")", baseFactory.bool(true));
+        assertResult("exists(\"abcd\")", baseFactory.bool(true));
         // The expression fn:exists([]) returns true().
         // The expression fn:exists(map{}) returns true().
         // Assuming $in is an element with no children:
@@ -693,10 +693,10 @@ public class XQueryEvaluatorTest {
 
     @Test
     public void insertBefore() throws XQueryUnsupportedOperation {
-        var a = new XQueryString("a");
-        var b = new XQueryString("b");
-        var c = new XQueryString("c");
-        var z = new XQueryString("z");
+        var a = new XQueryString("a", baseFactory);
+        var b = new XQueryString("b", baseFactory);
+        var c = new XQueryString("c", baseFactory);
+        var z = new XQueryString("z", baseFactory);
         // The expression fn:insert-before(("a", "b", "c"), 0, "z") returns ("z", "a", "b", "c").
         assertResult("""
                 insert-before(("a", "b", "c"), 0, "z")
@@ -721,9 +721,9 @@ public class XQueryEvaluatorTest {
 
     @Test
     public void remove() throws XQueryUnsupportedOperation {
-        var a = new XQueryString("a");
-        var b = new XQueryString("b");
-        var c = new XQueryString("c");
+        var a = new XQueryString("a", baseFactory);
+        var b = new XQueryString("b", baseFactory);
+        var c = new XQueryString("c", baseFactory);
         // The expression fn:remove($abc, 0) returns ("a", "b", "c").
         assertResult("""
                 remove(("a", "b", "c"), 0)
@@ -742,15 +742,15 @@ public class XQueryEvaluatorTest {
 
     @Test
     public void reverse() throws XQueryUnsupportedOperation {
-        var a = new XQueryString("a");
-        var b = new XQueryString("b");
-        var c = new XQueryString("c");
+        var a = new XQueryString("a", baseFactory);
+        var b = new XQueryString("b", baseFactory);
+        var c = new XQueryString("c", baseFactory);
         // The expression fn:reverse($abc) returns ("c", "b", "a").
         assertResult("""
                 reverse(("a", "b", "c"))
                 """, List.of(c, b, a));
         // The expression fn:reverse(("hello")) returns ("hello").
-        assertResult("reverse((\"Hello\"))", List.of(new XQueryString("Hello")));
+        assertResult("reverse((\"Hello\"))", List.of(new XQueryString("Hello", baseFactory)));
         // The expression fn:reverse(()) returns ().
         assertResult("reverse(())", List.of());
         // The expression fn:reverse([1,2,3]) returns [1,2,3]. (The input is a sequence containing a single item (the array)).
@@ -761,9 +761,9 @@ public class XQueryEvaluatorTest {
     public void subsequence() throws XQueryUnsupportedOperation {
         // var i1 = new XQueryString("item1");
         // var i2 = new XQueryString("item2");
-        var i3 = new XQueryString("item3");
-        var i4 = new XQueryString("item4");
-        var i5 = new XQueryString("item5");
+        var i3 = new XQueryString("item3", baseFactory);
+        var i4 = new XQueryString("item4", baseFactory);
+        var i5 = new XQueryString("item5", baseFactory);
         // The expression fn:subsequence($seq, 4) returns ("item4", "item5").
         // The expression fn:subsequence($seq, 3, 2) returns ("item3", "item4").
         assertResult("""
@@ -776,11 +776,11 @@ public class XQueryEvaluatorTest {
 
     @Test
     public void distinctValues() throws XQueryUnsupportedOperation {
-        var i1 = new XQueryString("1");
-        var i2 = new XQueryString("2");
+        var i1 = new XQueryString("1", baseFactory);
+        var i2 = new XQueryString("2", baseFactory);
         assertResult("""
                 distinct-values((1, "1", 1, "1", "2", false(), false(), true(), true()))
-            """, List.of(baseFactory.number(1), i1, i2, XQueryBoolean.FALSE, XQueryBoolean.TRUE));
+            """, List.of(baseFactory.number(1), i1, i2, baseFactory.bool(false), baseFactory.bool(true)));
         assertResult("""
                 distinct-values(())
             """, List.of());
@@ -797,63 +797,63 @@ public class XQueryEvaluatorTest {
     public void oneOrMore() throws XQueryUnsupportedOperation {
         var value = XQuery.evaluate(null, "one-or-more(())", null);
         assertNull(value);
-        assertResult(" one-or-more((1, 2)) ", List.of(baseFactory.number(1), new XQueryNumber(2)));
+        assertResult(" one-or-more((1, 2)) ", List.of(baseFactory.number(1), new XQueryNumber(2, baseFactory)));
     }
 
     @Test
     public void data() throws XQueryUnsupportedOperation {
         assertResult("data(1)", List.of(baseFactory.number(1)));
-        assertResult("data('a')", List.of(new XQueryString("a")));
+        assertResult("data('a')", List.of(new XQueryString("a", baseFactory)));
     }
 
     @Test
     public void contains() throws XQueryUnsupportedOperation {
-        assertResult("contains('abc', 'bc')", XQueryBoolean.TRUE);
-        assertResult("contains('', 'bc')", XQueryBoolean.FALSE);
-        assertResult("contains('abc', '')", XQueryBoolean.TRUE);
+        assertResult("contains('abc', 'bc')", baseFactory.bool(true));
+        assertResult("contains('', 'bc')", baseFactory.bool(false));
+        assertResult("contains('abc', '')", baseFactory.bool(true));
     }
 
     @Test
     public void startsWith() throws XQueryUnsupportedOperation {
-        assertResult("starts-with('tattoo', 'tat')", XQueryBoolean.TRUE);
-        assertResult("starts-with('tattoo', 'att')", XQueryBoolean.FALSE);
+        assertResult("starts-with('tattoo', 'tat')", baseFactory.bool(true));
+        assertResult("starts-with('tattoo', 'att')", baseFactory.bool(false));
     }
 
     @Test
     public void endsWith() throws XQueryUnsupportedOperation {
-        assertResult("ends-with('tattoo', 'oo')", XQueryBoolean.TRUE);
-        assertResult("ends-with('tattoo', 'tatt')", XQueryBoolean.FALSE);
+        assertResult("ends-with('tattoo', 'oo')", baseFactory.bool(true));
+        assertResult("ends-with('tattoo', 'tatt')", baseFactory.bool(false));
     }
 
 
     @Test
     public void lowercase() throws XQueryUnsupportedOperation {
-        assertResult("lower-case('AbCdE')", new XQueryString("abcde"));
+        assertResult("lower-case('AbCdE')", new XQueryString("abcde", baseFactory));
     }
 
     @Test
     public void uppercase() throws XQueryUnsupportedOperation {
-        assertResult("upper-case('AbCdE')", new XQueryString("ABCDE"));
+        assertResult("upper-case('AbCdE')", new XQueryString("ABCDE", baseFactory));
     }
 
     @Test
     public void substring() throws XQueryUnsupportedOperation {
-        assertResult("substring('abcde', 4)", new XQueryString("de"));
-        assertResult("substring('abcde', 3, 2)", new XQueryString("cd"));
+        assertResult("substring('abcde', 4)", new XQueryString("de", baseFactory));
+        assertResult("substring('abcde', 3, 2)", new XQueryString("cd", baseFactory));
     }
 
     @Test
     public void substringBefore() throws XQueryUnsupportedOperation {
-        assertResult("substring-before('tattoo', 'attoo')", new XQueryString("t"));
-        assertResult("substring-before('tattoo', 'tatto')", new XQueryString(""));
-        assertResult("substring-before('abcde', 'f')", new XQueryString(""));
+        assertResult("substring-before('tattoo', 'attoo')", new XQueryString("t", baseFactory));
+        assertResult("substring-before('tattoo', 'tatto')", new XQueryString("", baseFactory));
+        assertResult("substring-before('abcde', 'f')", new XQueryString("", baseFactory));
     }
 
     @Test
     public void substringAfter() throws XQueryUnsupportedOperation {
-        assertResult("substring-after('tattoo', 'tat')", new XQueryString("too"));
-        assertResult("substring-after('tattoo', 'tattoo')", new XQueryString(""));
-        assertResult("substring-after('abcde', 'f')", new XQueryString(""));
+        assertResult("substring-after('tattoo', 'tat')", new XQueryString("too", baseFactory));
+        assertResult("substring-after('tattoo', 'tattoo')", new XQueryString("", baseFactory));
+        assertResult("substring-after('abcde', 'f')", new XQueryString("", baseFactory));
     }
 
     @Test
@@ -878,93 +878,93 @@ public class XQueryEvaluatorTest {
         // var i1 = new XQueryNumber(1);
         // var i2 = new XQueryNumber(2);
         // var i3 = new XQueryNumber(3);
-        var i4 = new XQueryNumber(4);
-        var i5 = new XQueryNumber(5);
+        var i4 = new XQueryNumber(4, baseFactory);
+        var i5 = new XQueryNumber(5, baseFactory);
         assertResult("(1, 2, 3, 4, 5)[. gt 3]", List.of(i4, i5));
     }
 
     @Test
     public void booleanToString() throws XQueryUnsupportedOperation {
-        assertResult("string(true())", new XQueryString("true"));
-        assertResult("string(false())", new XQueryString("false"));
+        assertResult("string(true())", new XQueryString("true", baseFactory));
+        assertResult("string(false())", new XQueryString("false", baseFactory));
     }
 
     @Test
     public void stringToString() throws XQueryUnsupportedOperation {
-        assertResult("string('abc')", new XQueryString("abc"));
+        assertResult("string('abc')", new XQueryString("abc", baseFactory));
     }
 
     @Test
     public void numberToString() throws XQueryUnsupportedOperation {
-        assertResult("string(1.2)", new XQueryString("1.2"));
+        assertResult("string(1.2)", new XQueryString("1.2", baseFactory));
     }
 
 
     @Test
     public void concat() throws XQueryUnsupportedOperation {
-        assertResult("concat('a', 'b', 'c')", new XQueryString("abc"));
+        assertResult("concat('a', 'b', 'c')", new XQueryString("abc", baseFactory));
     }
 
     @Test
     public void stringJoin() throws XQueryUnsupportedOperation {
-        assertResult("string-join(('a', 'b', 'c'))", new XQueryString("abc"));
-        assertResult("string-join(('a', 'b', 'c'), '-')", new XQueryString("a-b-c"));
+        assertResult("string-join(('a', 'b', 'c'))", new XQueryString("abc", baseFactory));
+        assertResult("string-join(('a', 'b', 'c'), '-')", new XQueryString("a-b-c", baseFactory));
     }
 
     @Test
     public void stringLength() throws XQueryUnsupportedOperation {
-        assertResult("string-length('abcde')", new XQueryNumber(5));
-        assertResult("string-length('')", new XQueryNumber(0));
+        assertResult("string-length('abcde')", new XQueryNumber(5, baseFactory));
+        assertResult("string-length('')", new XQueryNumber(0, baseFactory));
     }
 
     @Test
     public void normalization() throws XQueryUnsupportedOperation {
-        assertResult("normalize-space(' \t\n\r a    b \t \t c   \t')", new XQueryString("a b c"));
+        assertResult("normalize-space(' \t\n\r a    b \t \t c   \t')", new XQueryString("a b c", baseFactory));
     }
 
     @Test
     public void itemGetter() throws XQueryUnsupportedOperation {
-        assertResult("(1, 2, 3)[2]",  new XQueryNumber(2));
+        assertResult("(1, 2, 3)[2]",  new XQueryNumber(2, baseFactory));
     }
 
     @Test
     public void itemGetterIndices() throws XQueryUnsupportedOperation {
         assertResult("(1, 2, 3, 4, 5, 6)[()]", List.of());
-        assertResult("(1, 2, 3, 4, 5, 6)[3 to 5]", List.of( new XQueryNumber(3),
-                                                                   new XQueryNumber(4),
-                                                                   new XQueryNumber(5)));
+        assertResult("(1, 2, 3, 4, 5, 6)[3 to 5]", List.of( new XQueryNumber(3, baseFactory),
+                                                                   new XQueryNumber(4, baseFactory),
+                                                                   new XQueryNumber(5, baseFactory)));
     }
 
     @Test
     public void positionFunction() throws XQueryUnsupportedOperation {
-        assertResult("(1, 2, 3)[position() eq 2][1]", new XQueryNumber(2));
-        assertResult("(1, 2, 3)[position() eq 2]", List.of(new XQueryNumber(2)));
+        assertResult("(1, 2, 3)[position() eq 2][1]", new XQueryNumber(2, baseFactory));
+        assertResult("(1, 2, 3)[position() eq 2]", List.of(new XQueryNumber(2, baseFactory)));
     }
 
     @Test
     public void lastFunction() throws XQueryUnsupportedOperation {
-        assertResult("(1, 2, 3)[last()]", new XQueryNumber(3));
+        assertResult("(1, 2, 3)[last()]", new XQueryNumber(3, baseFactory));
     }
 
     @Test
     public void arrowExpression() throws XQueryUnsupportedOperation {
-        assertResult("'a' => string-length()", new XQueryNumber(1));
-        assertResult("'a' => string-length() => string()", new XQueryString("1"));
+        assertResult("'a' => string-length()", new XQueryNumber(1, baseFactory));
+        assertResult("'a' => string-length() => string()", new XQueryString("1", baseFactory));
     }
 
     @Test
     public void variableBinding() throws XQueryUnsupportedOperation {
-        assertResult("let $x := 1 return $x", new XQueryNumber(1));
+        assertResult("let $x := 1 return $x", new XQueryNumber(1, baseFactory));
         assertResult("let $x := 'abc', $y := 1 return ($x, $y)",
-                        List.of(new XQueryString("abc"), new XQueryNumber(1)));
+                        List.of(new XQueryString("abc", baseFactory), new XQueryNumber(1, baseFactory)));
     }
 
     @Test
     public void quantifiedExpression() throws XQueryUnsupportedOperation {
-        assertResult("some $v in (1, 2, 3, 4) satisfies $v eq 3", XQueryBoolean.TRUE);
-        assertResult("some $v in (1, 2, 3, 4) satisfies $v eq -1", XQueryBoolean.FALSE);
-        assertResult("every $v in (1, 2, 3, 4) satisfies $v gt 0", XQueryBoolean.TRUE);
-        assertResult("every $v in (1, 2, 3, 4) satisfies $v lt 4", XQueryBoolean.FALSE);
+        assertResult("some $v in (1, 2, 3, 4) satisfies $v eq 3", baseFactory.bool(true));
+        assertResult("some $v in (1, 2, 3, 4) satisfies $v eq -1", baseFactory.bool(false));
+        assertResult("every $v in (1, 2, 3, 4) satisfies $v gt 0", baseFactory.bool(true));
+        assertResult("every $v in (1, 2, 3, 4) satisfies $v lt 4", baseFactory.bool(false));
     }
 
 
@@ -1073,7 +1073,7 @@ public class XQueryEvaluatorTest {
                 case 5 return false()
                 case 4 return true()
                 default return false()
-        """, XQueryBoolean.TRUE);
+        """, baseFactory.bool(true));
         assertResult("""
             switch (0)
                 case 3 return false()
@@ -1081,7 +1081,7 @@ public class XQueryEvaluatorTest {
                 case 5 return false()
                 case 4 return false()
                 default return true()
-        """, XQueryBoolean.TRUE);
+        """, baseFactory.bool(true));
     }
 
 
@@ -1094,7 +1094,7 @@ public class XQueryEvaluatorTest {
                 case 5 return false()
                 case 4 case 0 return true()
                 default return false()
-        """, XQueryBoolean.TRUE);
+        """, baseFactory.bool(true));
         assertResult("""
             switch (0)
                 case 3 return false()
@@ -1102,7 +1102,7 @@ public class XQueryEvaluatorTest {
                 case 5 return false()
                 case 4 case 0 return true()
                 default return false()
-        """, XQueryBoolean.TRUE);
+        """, baseFactory.bool(true));
     }
 
 
@@ -1115,16 +1115,16 @@ public class XQueryEvaluatorTest {
 
     @Test
     public void otherwiseExpression() throws XQueryUnsupportedOperation {
-        final List<XQueryValue> $123 = List.of(new XQueryNumber(1), new XQueryNumber(2), new XQueryNumber(3));
+        final List<XQueryValue> $123 = List.of(new XQueryNumber(1, baseFactory), new XQueryNumber(2, baseFactory), new XQueryNumber(3, baseFactory));
         assertResult("""
                     () otherwise 1
-                """, new XQueryNumber(1));
+                """, new XQueryNumber(1, baseFactory));
         assertResult("""
                     1 otherwise 2
-                """, new XQueryNumber(1));
+                """, new XQueryNumber(1, baseFactory));
         assertResult("""
                     "napis" otherwise 2
-                """, new XQueryString("napis"));
+                """, new XQueryString("napis", baseFactory));
         assertResult("""
                     () otherwise () otherwise (1, 2, 3)
                 """, $123);

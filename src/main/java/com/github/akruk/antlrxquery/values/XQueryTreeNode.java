@@ -1,18 +1,17 @@
 package com.github.akruk.antlrxquery.values;
 
-import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
 public class XQueryTreeNode extends XQueryValueBase<ParseTree> {
-    public XQueryTreeNode(ParseTree node) {
-        value = node;
+    public XQueryTreeNode(ParseTree node, XQueryValueFactory valueFactory) {
+        super(node, valueFactory);
     }
 
     @Override
-    public XQueryValue copy(XQueryValueFactory valueFactory) {
+    public XQueryValue copy() {
         return valueFactory.node(value);
     }
 
@@ -63,23 +62,23 @@ public class XQueryTreeNode extends XQueryValueBase<ParseTree> {
     // }
 
     @Override
-    public XQueryValue valueEqual(XQueryValueFactory factoryValue, XQueryValue other) {
-        return factoryValue.bool(this == other);
+    public XQueryValue valueEqual(XQueryValue other) {
+        return valueFactory.bool(this == other);
     }
 
     @Override
-    public XQueryValue valueLessThan(XQueryValueFactory factoryValue, XQueryValue other) {
+    public XQueryValue valueLessThan(XQueryValue other) {
         return null;
     }
 
     @Override
-    public XQueryValue data(XQueryValueFactory factoryValue) throws XQueryUnsupportedOperation {
+    public XQueryValue data() throws XQueryUnsupportedOperation {
         var atomized = atomize();
-        return factoryValue.sequence(atomized);
+        return valueFactory.sequence(atomized);
     }
 
     @Override
-    public XQueryValue empty(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation {
+    public XQueryValue empty() throws XQueryUnsupportedOperation {
         throw new XQueryUnsupportedOperation();
     }
 

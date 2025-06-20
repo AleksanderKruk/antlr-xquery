@@ -536,78 +536,14 @@ public class XQueryEvaluatorTest {
 
     @Test
     public void pi() {
-        assertResult("pi()", new BigDecimal(Math.PI));
+        assertResult("pi()", BigDecimal.valueOf(Math.PI));
     }
 
     @Test
     public void namespaces() {
-        assertResult("math:pi()", new BigDecimal(Math.PI));
+        assertResult("math:pi()", BigDecimal.valueOf(Math.PI));
     }
 
-    // @Test
-    // public void exp() {
-    //     assertResult("exp(5, 2)", BigDecimal.ONE);
-    // }
-
-    // @Test
-    // public void exp10() {
-    //     assertResult("exp10(5, 2)", BigDecimal.ONE);
-    // }
-
-    // @Test
-    // public void log() {
-    //     assertResult("log(5, 2)", BigDecimal.ONE);
-    // }
-
-    // @Test
-    // public void log10() {
-    //     assertResult("log10(5, 2)", BigDecimal.ONE);
-    // }
-
-    // @Test
-    // public void pow() {
-    //     assertResult("pow(5, 2)", BigDecimal.ONE);
-    // }
-
-    // @Test
-    // public void sqrt() {
-    //     assertResult("sqrt(5, 2)", BigDecimal.ONE);
-    // }
-
-    // @Test
-    // public void sin() {
-    //     assertResult("sin(5, 2)", BigDecimal.ONE);
-    // }
-
-    // @Test
-    // public void cos() {
-    //     assertResult("cos(5, 2)", BigDecimal.ONE);
-    // }
-
-    // @Test
-    // public void tan() {
-    //     assertResult("tan(5, 2)", BigDecimal.ONE);
-    // }
-
-    // @Test
-    // public void asin() {
-    //     assertResult("asin(5, 2)", BigDecimal.ONE);
-    // }
-
-    // @Test
-    // public void acos() {
-    //     assertResult("acos(5, 2)", BigDecimal.ONE);
-    // }
-
-    // @Test
-    // public void atan() {
-    //     assertResult("atan(5, 2)", BigDecimal.ONE);
-    // }
-
-    // @Test
-    // public void atan2() {
-    //     assertResult("atan2(5, 2)", BigDecimal.ONE);
-    // }
 
     record TestParserAndTree(TestParser parser, ParseTree tree) {}
 

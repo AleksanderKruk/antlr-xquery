@@ -193,7 +193,7 @@ public class XQueryRunner {
             final File queryFile = Path.of(querypath).toFile();
             if (!queryFile.exists())
                 return new ValidationResult(InputStatus.NO_QUERY, "Query file does not exist: " + querypath);
-            if (!queryFile.isDirectory())
+            if (queryFile.isDirectory())
                 return new ValidationResult(InputStatus.NO_QUERY, "Query file is a directory: " + querypath);
         }
 

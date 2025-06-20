@@ -1,7 +1,6 @@
 package com.github.akruk.antlrxquery;
 
 import org.antlr.v4.Tool;
-import org.antlr.v4.parse.ANTLRParser.terminal_return;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTree;
 
@@ -22,6 +21,11 @@ import java.util.*;
 
 public class XQueryRunner {
     public static void main(final String[] args) throws Exception {
+        runXQueryTool(args);
+    }
+
+    static void runXQueryTool(final String[] args) throws Exception
+    {
         final Map<String, List<String>> argMap = parseArgs(args);
         final ValidationResult validation = validateInput(argMap);
         if (validation.status != InputStatus.OK) {
@@ -31,13 +35,10 @@ public class XQueryRunner {
         final ExtractionResult extractedArgs = extractInput(argMap);
 
         runXQueryTool(extractedArgs);
+
     }
 
-    /**
-     * Główna funkcja narzędzia - izolowana od walidacji i ekstrakcji argumentów
-     */
-    private static void runXQueryTool(final ExtractionResult config)
-            throws IOException, ClassNotFoundException, Exception, MalformedURLException {
+    static void runXQueryTool(final ExtractionResult config) throws Exception {
 
         final List<String> grammarFiles = config.grammars;
         final List<String> targetFiles = config.targetFiles;
@@ -110,7 +111,7 @@ public class XQueryRunner {
         }
     }
 
-    private static XQueryValue executeQuery(
+    static XQueryValue executeQuery(
             final ParseTree query,
             final Class<?> lexerClass,
             final Class<?> parserClass,
@@ -129,7 +130,7 @@ public class XQueryRunner {
     record ParserAndTree(Parser parser, ParseTree tree) {
     }
 
-    private static ParserAndTree parseTargetFile(final String input, final Class<?> lexerClass, final Class<?> parserClass, final String startingRule) throws Exception {
+    static ParserAndTree parseTargetFile(final String input, final Class<?> lexerClass, final Class<?> parserClass, final String startingRule) throws Exception {
         final CharStream charStream = CharStreams.fromString(input);
         final Lexer lexer = (Lexer) lexerClass.getConstructor(CharStream.class).newInstance(charStream);
         final CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -160,7 +161,7 @@ public class XQueryRunner {
         return map;
     }
 
-    private static ValidationResult validateInput(final Map<String, List<String>> args) {
+    static ValidationResult validateInput(final Map<String, List<String>> args) {
         if (!args.containsKey("--grammars") || args.get("--grammars").isEmpty()) {
             return new ValidationResult(InputStatus.NO_GRAMMARS, "No grammars given (--grammars)");
         }
@@ -199,7 +200,7 @@ public class XQueryRunner {
         return new ValidationResult(InputStatus.OK, null);
     }
 
-    private static ExtractionResult extractInput(final Map<String, List<String>> args) {
+    static ExtractionResult extractInput(final Map<String, List<String>> args) {
         final List<String> grammars = args.get("--grammars");
         final List<String> targetFiles = args.get("--target-files");
         // TODO: add default first starting rule
@@ -225,7 +226,7 @@ public class XQueryRunner {
         return (list != null && !list.isEmpty()) ? list.get(0) : fallback;
     }
 
-    private static String getFirstNonEmptyOrDefault(final String value, final String defaultValue) {
+    static String getFirstNonEmptyOrDefault(final String value, final String defaultValue) {
         return (value != null && !value.isEmpty()) ? value : defaultValue;
     }
 
@@ -282,10 +283,10 @@ public class XQueryRunner {
         OK, ERROR, EOF, NO_GRAMMARS, NO_TARGET_FILES, NO_STARTING_RULE, NO_QUERY, INVALID_QUERY, QUERY_DUPLICATION, INVALID_TARGET_FILE
     }
 
-    private record ValidationResult(InputStatus status, String message) {
+    record ValidationResult(InputStatus status, String message) {
     }
 
-    private record ExtractionResult(List<String> grammars, List<String> targetFiles, String startingRule,
+    record ExtractionResult(List<String> grammars, List<String> targetFiles, String startingRule,
                                     String lexerName, String parserName, String query) {
     }
 }

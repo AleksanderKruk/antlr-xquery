@@ -21,7 +21,9 @@ import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 public class BaseFunctionCaller implements XQueryFunctionCaller {
 
     private final Map<String, XQueryFunction> functions;
-    public BaseFunctionCaller() {
+    private final XQueryValueFactory valueFactory;
+    public BaseFunctionCaller(final XQueryValueFactory valueFactory) {
+        this.valueFactory = valueFactory;
         functions = new HashMap<>(200);
         functions.put("true", this::true_);
         functions.put("false", this::false_);
@@ -144,10 +146,10 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
 
     }
 
-    public XQueryValue not(final XQueryValueFactory valueFactory, final XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue not(final XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 1;
         try {
-            return args.get(0).not(valueFactory);
+            return args.get(0).not();
         } catch (final XQueryUnsupportedOperation e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -156,7 +158,7 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
     }
 
     // fn:abs($arg as xs:numeric?) as xs:numeric?
-    public XQueryValue abs(final XQueryValueFactory valueFactory, final XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue abs(final XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 1;
         final var arg = args.get(0);
         // TODO: Add type check failure
@@ -165,7 +167,7 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         return valueFactory.number(arg.numericValue().abs());
     }
 
-    public XQueryValue ceiling(final XQueryValueFactory valueFactory, final XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue ceiling(final XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 1;
         final var arg = args.get(0);
         // TODO: Add type check failure
@@ -174,7 +176,7 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         return valueFactory.number(arg.numericValue().setScale(0, RoundingMode.CEILING));
     }
 
-    public XQueryValue floor(final XQueryValueFactory valueFactory, final XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue floor(final XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 1;
         final var arg = args.get(0);
         // TODO: Add type check failure
@@ -183,7 +185,7 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         return valueFactory.number(arg.numericValue().setScale(0, RoundingMode.FLOOR));
     }
 
-    public XQueryValue round(final XQueryValueFactory valueFactory, final XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue round(final XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 1 || args.size() == 2;
         final var arg1 = args.get(0);
         final var number1 = arg1.numericValue();
@@ -209,7 +211,7 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         return valueFactory.number(roundedNumberNormalNotation);
     }
 
-    public XQueryValue numericAdd(final XQueryValueFactory valueFactory, final XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue numericAdd(final XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 2;
         final var val1 = args.get(0);
         final var val2 = args.get(1);
@@ -217,13 +219,13 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         if (!val1.isNumericValue() || !val2.isNumericValue())
             return null;
         try {
-            return val1.add(valueFactory, val2);
+            return val1.add(val2);
         } catch (final XQueryUnsupportedOperation e) {
             return null;
         }
     }
 
-    public XQueryValue numericSubtract(final XQueryValueFactory valueFactory, final XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue numericSubtract(final XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 2;
         final var val1 = args.get(0);
         final var val2 = args.get(1);
@@ -231,13 +233,13 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         if (!val1.isNumericValue() || !val2.isNumericValue())
             return null;
         try {
-            return val1.subtract(valueFactory, val2);
+            return val1.subtract(val2);
         } catch (final XQueryUnsupportedOperation e) {
             return null;
         }
     }
 
-    public XQueryValue numericMultiply(final XQueryValueFactory valueFactory, final XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue numericMultiply(final XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 2;
         final var val1 = args.get(0);
         final var val2 = args.get(1);
@@ -245,14 +247,14 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         if (!val1.isNumericValue() || !val2.isNumericValue())
             return null;
         try {
-            return val1.multiply(valueFactory, val2);
+            return val1.multiply(val2);
         } catch (final XQueryUnsupportedOperation e) {
             return null;
         }
     }
 
 
-    public XQueryValue numericDivide(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue numericDivide(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 2;
         final var val1 = args.get(0);
         final var val2 = args.get(1);
@@ -260,13 +262,13 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         if (!val1.isNumericValue() || !val2.isNumericValue())
             return null;
         try {
-            return val1.divide(valueFactory, val2);
+            return val1.divide(val2);
         } catch (final XQueryUnsupportedOperation e) {
             return null;
         }
     }
 
-    public XQueryValue numericIntegerDivide(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue numericIntegerDivide(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 2;
         final var val1 = args.get(0);
         final var val2 = args.get(1);
@@ -274,14 +276,14 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         if (!val1.isNumericValue() || !val2.isNumericValue())
             return null;
         try {
-            return val1.integerDivide(valueFactory, val2);
+            return val1.integerDivide(val2);
         } catch (final XQueryUnsupportedOperation e) {
             return null;
         }
     }
 
 
-    public XQueryValue numericMod(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue numericMod(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 2;
         final var val1 = args.get(0);
         final var val2 = args.get(1);
@@ -289,13 +291,13 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         if (!val1.isNumericValue() || !val2.isNumericValue())
             return null;
         try {
-            return val1.modulus(valueFactory, val2);
+            return val1.modulus(val2);
         } catch (final XQueryUnsupportedOperation e) {
             return null;
         }
     }
 
-    public XQueryValue numericUnaryPlus(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue numericUnaryPlus(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 1;
         final var val1 = args.get(0);
         // TODO: Add type check failure
@@ -304,7 +306,7 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         return val1;
     }
 
-    public XQueryValue numericUnaryMinus(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue numericUnaryMinus(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 1;
         final var val1 = args.get(0);
         // TODO: Add type check failure
@@ -313,109 +315,109 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         return valueFactory.number(val1.numericValue().negate());
     }
 
-    public XQueryValue true_(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue true_(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 0;
-        return XQueryBoolean.TRUE;
+        return valueFactory.bool(true);
     }
 
-    public XQueryValue false_(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue false_(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 0;
-        return XQueryBoolean.FALSE;
+        return valueFactory.bool(false);
     }
 
-    public XQueryValue pi(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue pi(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 0;
         return valueFactory.number(new BigDecimal(Math.PI));
     }
 
-    public XQueryValue empty(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue empty(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 1;
         var arg = args.get(0);
         try {
-            return arg.empty(valueFactory);
+            return arg.empty();
         } catch (XQueryUnsupportedOperation e) {
             return null;
         }
     }
 
-    public XQueryValue exists(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue exists(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 1;
         try {
-            return empty(valueFactory, context, args).not(valueFactory);
+            return empty(context, args).not();
         } catch (XQueryUnsupportedOperation e) {
             return null;
         }
     }
 
-    public XQueryValue head(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue head(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 1;
         try {
-            return args.get(0).head(valueFactory);
+            return args.get(0).head();
         } catch (XQueryUnsupportedOperation e) {
             return null;
         }
     }
 
-    public XQueryValue tail(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue tail(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 1;
         try {
-            return args.get(0).tail(valueFactory);
+            return args.get(0).tail();
         } catch (XQueryUnsupportedOperation e) {
             return null;
         }
     }
 
 
-    public XQueryValue insertBefore(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue insertBefore(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 3;
         try {
             var target = args.get(0);
             var position = args.get(1);
             var inserts = args.get(2);
-            return target.insertBefore(valueFactory, position, inserts);
+            return target.insertBefore(position, inserts);
         } catch (XQueryUnsupportedOperation e) {
             return null;
         }
     }
 
-    public XQueryValue remove(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue remove(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 2;
         try {
             var target = args.get(0);
             var position = args.get(1);
-            return target.remove(valueFactory, position);
+            return target.remove(position);
         } catch (XQueryUnsupportedOperation e) {
             return null;
         }
     }
 
-    public XQueryValue reverse(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue reverse(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 1;
         try {
             var target = args.get(0);
             if (target.isAtomic()) {
                 return valueFactory.sequence(List.of(target));
             }
-            return target.reverse(valueFactory);
+            return target.reverse();
         } catch (XQueryUnsupportedOperation e) {
             return null;
         }
     }
 
 
-    public XQueryValue subsequence(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue subsequence(XQueryVisitingContext context, final List<XQueryValue> args) {
         try {
             return switch (args.size()) {
                 case 3 -> {
                     var target = args.get(0);
                     var position = args.get(1).numericValue().intValue();
                     var length = args.get(2).numericValue().intValue();
-                    yield target.subsequence(valueFactory, position, length);
+                    yield target.subsequence(position, length);
                 }
                 case 2 -> {
                     var target = args.get(0);
                     var position = args.get(1).numericValue().intValue();
-                    yield target.subsequence(valueFactory, position);
+                    yield target.subsequence(position);
                 }
                 default -> null;
             };
@@ -424,19 +426,19 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         }
     }
 
-    public XQueryValue substring(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue substring(XQueryVisitingContext context, final List<XQueryValue> args) {
         try {
             return switch (args.size()) {
                 case 3 -> {
                     var target = args.get(0);
                     var position = args.get(1).numericValue().intValue();
                     var length = args.get(2).numericValue().intValue();
-                    yield target.substring(valueFactory, position, length);
+                    yield target.substring(position, length);
                 }
                 case 2 -> {
                     var target = args.get(0);
                     var position = args.get(1).numericValue().intValue();
-                    yield target.substring(valueFactory, position);
+                    yield target.substring(position);
                 }
                 default -> null;
             };
@@ -445,136 +447,136 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         }
     }
 
-    public XQueryValue distinctValues(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue distinctValues(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 1;
         try {
             var target = args.get(0);
-            return target.distinctValues(valueFactory);
+            return target.distinctValues();
         } catch (XQueryUnsupportedOperation e) {
             return null;
         }
     }
 
-    public XQueryValue zeroOrOne(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue zeroOrOne(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 1;
         try {
             var target = args.get(0);
-            return target.zeroOrOne(valueFactory);
+            return target.zeroOrOne();
         } catch (XQueryUnsupportedOperation e) {
             return null;
         }
     }
 
-    public XQueryValue oneOrMore(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue oneOrMore(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 1;
         try {
             var target = args.get(0);
-            return target.oneOrMore(valueFactory);
+            return target.oneOrMore();
         } catch (XQueryUnsupportedOperation e) {
             return null;
         }
     }
 
-    public XQueryValue exactlyOne(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue exactlyOne(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 1;
         try {
             var target = args.get(0);
-            return target.exactlyOne(valueFactory);
+            return target.exactlyOne();
         } catch (XQueryUnsupportedOperation e) {
             return null;
         }
     }
 
-    public XQueryValue data(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue data(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 1;
         try {
             var target = args.get(0);
-            return target.data(valueFactory);
+            return target.data();
         } catch (XQueryUnsupportedOperation e) {
             return null;
         }
     }
 
-    public XQueryValue contains(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue contains(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 2;
         try {
             var target = args.get(0);
             var what = args.get(1);
-            return target.contains(valueFactory, what);
+            return target.contains(what);
         } catch (XQueryUnsupportedOperation e) {
             return null;
         }
     }
 
-    public XQueryValue startsWith(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue startsWith(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 2;
         try {
             var target = args.get(0);
             var what = args.get(1);
-            return target.startsWith(valueFactory, what);
+            return target.startsWith(what);
         } catch (XQueryUnsupportedOperation e) {
             return null;
         }
     }
 
-    public XQueryValue endsWith(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue endsWith(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 2;
         try {
             var target = args.get(0);
             var what = args.get(1);
-            return target.endsWith(valueFactory, what);
+            return target.endsWith(what);
         } catch (XQueryUnsupportedOperation e) {
             return null;
         }
     }
 
 
-    public XQueryValue substringAfter(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue substringAfter(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 2;
         try {
             var target = args.get(0);
             var what = args.get(1);
-            return target.substringAfter(valueFactory, what);
+            return target.substringAfter(what);
         } catch (XQueryUnsupportedOperation e) {
             return null;
         }
     }
 
 
-    public XQueryValue substringBefore(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue substringBefore(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 2;
         try {
             var target = args.get(0);
             var what = args.get(1);
-            return target.substringBefore(valueFactory, what);
+            return target.substringBefore(what);
         } catch (XQueryUnsupportedOperation e) {
             return null;
         }
     }
 
 
-    public XQueryValue uppercase(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue uppercase(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 1;
         try {
             var target = args.get(0);
-            return target.uppercase(valueFactory);
+            return target.uppercase();
         } catch (XQueryUnsupportedOperation e) {
             return null;
         }
     }
 
 
-    public XQueryValue lowercase(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue lowercase(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 1;
         try {
             var target = args.get(0);
-            return target.lowercase(valueFactory);
+            return target.lowercase();
         } catch (XQueryUnsupportedOperation e) {
             return null;
         }
     }
 
-    public XQueryValue string(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue string(XQueryVisitingContext context, final List<XQueryValue> args) {
         var target = switch (args.size()) {
             case 0 -> context.getItem();
             case 1 -> args.get(0);
@@ -583,13 +585,13 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         return valueFactory.string(target.stringValue());
     }
 
-    public XQueryValue concat(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue concat(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() >= 2;
         String joined = args.stream().map(XQueryValue::stringValue).collect(Collectors.joining());
         return valueFactory.string(joined);
     }
 
-    public XQueryValue stringJoin(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue stringJoin(XQueryVisitingContext context, final List<XQueryValue> args) {
         return switch (args.size()) {
             case 1 -> {
                 var sequence = args.get(0).sequence();
@@ -606,17 +608,17 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         };
     }
 
-    public XQueryValue position(final XQueryValueFactory valueFactory, final XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue position(final XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 0;
         return valueFactory.number(context.getPosition());
     }
 
-    public XQueryValue last(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue last(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 0;
         return valueFactory.number(context.getSize());
     }
 
-    public XQueryValue stringLength(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue stringLength(XQueryVisitingContext context, final List<XQueryValue> args) {
         return switch (args.size()) {
             case 0 -> {
                 var string = context.getItem().stringValue();
@@ -635,7 +637,7 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         var trimmed = s.trim();
         return whitespace.matcher(trimmed).replaceAll(" ");
     };
-    public XQueryValue normalizeSpace(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue normalizeSpace(XQueryVisitingContext context, final List<XQueryValue> args) {
         return switch (args.size()) {
             case 0 -> {
                 String string = context.getItem().stringValue();
@@ -684,7 +686,7 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         return new ParseFlagsResult(flagBitMap, pattern, replacement);
     }
 
-    public XQueryValue replace(final XQueryValueFactory valueFactory, XQueryVisitingContext context, final List<XQueryValue> args) {
+    public XQueryValue replace(XQueryVisitingContext context, final List<XQueryValue> args) {
         return switch (args.size()) {
             case 3 -> {
                 String input = args.get(0).stringValue();
@@ -708,13 +710,13 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
     }
 
     @Override
-    public XQueryValue call(String functionName, XQueryValueFactory valueFactory, XQueryVisitingContext context,
+    public XQueryValue call(String functionName, XQueryVisitingContext context,
             List<XQueryValue> args) {
-        return functions.get(functionName).call(valueFactory, context, args);
+        return functions.get(functionName).call(context, args);
     }
 
     @Override
-    public XQueryValue getFunctionReference(String functionName, XQueryValueFactory valueFactory) {
+    public XQueryValue getFunctionReference(String functionName) {
         return valueFactory.functionReference(functions.get(functionName));
     }
 

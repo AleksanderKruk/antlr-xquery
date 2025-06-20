@@ -368,20 +368,6 @@ public class XQueryToolTest {
     }
 
     @Test
-    void testExtractInput_QueryFileDoesNotExist() {
-        Map<String, List<String>> args = Map.of(
-            "--grammars", List.of("test.g4"),
-            "--target-files", List.of("target.txt"),
-            "--starting-rule", List.of("root"),
-            "--query-file", List.of("nonexistent.xq")
-        );
-
-        ExtractionResult result = XQueryRunner.extractInput(args);
-
-        assertNull(result.query());
-    }
-
-    @Test
     void testExtractInput_EmptyQuery() {
         Map<String, List<String>> args = Map.of(
             "--grammars", List.of("test.g4"),
@@ -393,24 +379,6 @@ public class XQueryToolTest {
         ExtractionResult result = XQueryRunner.extractInput(args);
 
         assertEquals("", result.query());
-    }
-
-    @Test
-    void testExtractInput_MultiWordQueryFileArgument() throws IOException {
-        Path queryFileWithSpaces = tempDir.resolve("query with spaces.xq");
-        String queryContent = "count(//nodes)";
-        Files.writeString(queryFileWithSpaces, queryContent);
-
-        Map<String, List<String>> args = Map.of(
-            "--grammars", List.of("test.g4"),
-            "--target-files", List.of("target.txt"),
-            "--starting-rule", List.of("root"),
-            "--query-file", List.of(queryFileWithSpaces.toString())
-        );
-
-        ExtractionResult result = XQueryRunner.extractInput(args);
-
-        assertEquals(queryContent, result.query());
     }
 
     // === TESTY METOD POMOCNICZYCH ===

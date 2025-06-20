@@ -209,7 +209,7 @@ public class XQueryRunner {
         final String parserName = getFirstArg(args, "--parser-name", "");
         String query = String.join(" ", args.getOrDefault("--query", Collections.emptyList()));
         final String queryFile = String.join(" ", args.getOrDefault("--query-file", Collections.emptyList()));
-        if (query == "") {
+        if (!args.containsKey("--query")) {
             try {
                 query = Files.readString(Path.of(queryFile));
             } catch (final IOException e) {

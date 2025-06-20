@@ -1344,22 +1344,22 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
     @Override
     public XQueryValue visitSimpleMapExpr(final SimpleMapExprContext ctx) {
-        List<PathExprContext> terms = ctx.pathExpr();
+        final List<PathExprContext> terms = ctx.pathExpr();
         // if there's only one term, no mapping needed
         if (terms.size() == 1) {
             return terms.get(0).accept(this);
         }
 
         // start with the initial sequence
-        XQueryValue current = terms.get(0).accept(this);
+        final XQueryValue current = terms.get(0).accept(this);
         List<XQueryValue> sequence = current.atomize();
 
         // for each subsequent “! expr”
         for (int i = 1; i < terms.size(); i++) {
-            List<XQueryValue> nextSequence = new ArrayList<>();
-            for (XQueryValue item : sequence) {
+            final List<XQueryValue> nextSequence = new ArrayList<>();
+            for (final XQueryValue item : sequence) {
                 context.setItem(item);
-                XQueryValue mapped = terms.get(i).accept(this);
+                final XQueryValue mapped = terms.get(i).accept(this);
                 nextSequence.addAll(mapped.atomize());
             }
             sequence = nextSequence;

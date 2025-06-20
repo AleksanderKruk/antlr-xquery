@@ -19,130 +19,73 @@ import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
 public class BaseFunctionCaller implements XQueryFunctionCaller {
 
-    private final Map<String, XQueryFunction> functions;
+    private final Map<String, Map<String, XQueryFunction>> namespaceFunctions;
     private final XQueryValueFactory valueFactory;
+
     public BaseFunctionCaller(final XQueryValueFactory valueFactory) {
         this.valueFactory = valueFactory;
-        functions = new HashMap<>(200);
-        functions.put("true", this::true_);
-        functions.put("false", this::false_);
-        functions.put("not", this::not);
-        functions.put("abs", this::abs);
-        functions.put("ceiling", this::ceiling);
-        functions.put("floor", this::floor);
-        functions.put("round", this::round);
-        functions.put("empty", this::empty);
-        functions.put("exists", this::exists);
-        functions.put("head", this::head);
-        functions.put("tail", this::tail);
-        functions.put("insert-before", this::insertBefore);
-        functions.put("remove", this::remove);
-        functions.put("reverse", this::reverse);
-        functions.put("subsequence", this::subsequence);
-        functions.put("substring", this::substring);
-        functions.put("distinct-values", this::distinctValues);
-        functions.put("zero-or-one", this::zeroOrOne);
-        functions.put("one-or-more", this::oneOrMore);
-        functions.put("exactly-one", this::exactlyOne);
-        functions.put("data", this::data);
-        functions.put("contains", this::contains);
-        functions.put("starts-with", this::startsWith);
-        functions.put("ends-with", this::endsWith);
-        functions.put("substring-after", this::substringAfter);
-        functions.put("substring-before", this::substringBefore);
-        functions.put("upper-case", this::uppercase);
-        functions.put("lower-case", this::lowercase);
-        functions.put("string", this::string);
-        functions.put("concat", this::concat);
-        functions.put("string-join", this::stringJoin);
-        functions.put("string-length", this::stringLength);
-        functions.put("normalize-space", this::normalizeSpace);
-        functions.put("replace", this::replace);
-        functions.put("position", this::position);
-        functions.put("last", this::last);
-        functions.put("fn:true", this::true_);
-        functions.put("fn:false", this::false_);
-        functions.put("fn:not", this::not);
-        functions.put("fn:abs", this::abs);
-        functions.put("fn:ceiling", this::ceiling);
-        functions.put("fn:floor", this::floor);
-        functions.put("fn:round", this::round);
-        functions.put("fn:empty", this::empty);
-        functions.put("fn:exists", this::exists);
-        functions.put("fn:head", this::head);
-        functions.put("fn:tail", this::tail);
-        functions.put("fn:insert-before", this::insertBefore);
-        functions.put("fn:remove", this::remove);
-        functions.put("fn:reverse", this::reverse);
-        functions.put("fn:subsequence", this::subsequence);
-        functions.put("fn:substring", this::substring);
-        functions.put("fn:distinct-values", this::distinctValues);
-        functions.put("fn:zero-or-one", this::zeroOrOne);
-        functions.put("fn:one-or-more", this::oneOrMore);
-        functions.put("fn:exactly-one", this::exactlyOne);
-        functions.put("fn:data", this::data);
-        functions.put("fn:contains", this::contains);
-        functions.put("fn:starts-with", this::startsWith);
-        functions.put("fn:ends-with", this::endsWith);
-        functions.put("fn:substring-after", this::substringAfter);
-        functions.put("fn:substring-before", this::substringBefore);
-        functions.put("fn:upper-case", this::uppercase);
-        functions.put("fn:lower-case", this::lowercase);
-        functions.put("fn:string", this::string);
-        functions.put("fn:concat", this::concat);
-        functions.put("fn:string-join", this::stringJoin);
-        functions.put("fn:string-length", this::stringLength);
-        functions.put("fn:normalize-space", this::normalizeSpace);
-        functions.put("fn:replace", this::replace);
-        functions.put("fn:position", this::position);
-        functions.put("fn:last", this::last);
+        this.namespaceFunctions = new HashMap<>(500);
 
-        functions.put("pi", this::pi);
-        functions.put("math:pi", this::pi);
-        functions.put("exp", this::exp);
-        functions.put("math:exp", this::exp);
-        functions.put("exp10", this::exp10);
-        functions.put("math:exp10", this::exp10);
-        functions.put("log", this::log);
-        functions.put("math:log", this::log);
-        functions.put("log10", this::log10);
-        functions.put("math:log10", this::log10);
-        functions.put("pow", this::pow);
-        functions.put("math:pow", this::pow);
-        functions.put("sqrt", this::sqrt);
-        functions.put("math:sqrt", this::sqrt);
-        functions.put("sin", this::sin);
-        functions.put("math:sin", this::sin);
-        functions.put("cos", this::cos);
-        functions.put("math:cos", this::cos);
-        functions.put("tan", this::tan);
-        functions.put("math:tan", this::tan);
-        functions.put("asin", this::asin);
-        functions.put("math:asin", this::asin);
-        functions.put("acos", this::acos);
-        functions.put("math:acos", this::acos);
-        functions.put("atan", this::atan);
-        functions.put("math:atan", this::atan);
-        functions.put("atan2", this::atan2);
-        functions.put("math:atan2", this::atan2);
+        registerFunction("fn", "true", this::true_);
+        registerFunction("fn", "false", this::false_);
+        registerFunction("fn", "not", this::not);
+        registerFunction("fn", "abs", this::abs);
+        registerFunction("fn", "ceiling", this::ceiling);
+        registerFunction("fn", "floor", this::floor);
+        registerFunction("fn", "round", this::round);
+        registerFunction("fn", "empty", this::empty);
+        registerFunction("fn", "exists", this::exists);
+        registerFunction("fn", "head", this::head);
+        registerFunction("fn", "tail", this::tail);
+        registerFunction("fn", "insert-before", this::insertBefore);
+        registerFunction("fn", "remove", this::remove);
+        registerFunction("fn", "reverse", this::reverse);
+        registerFunction("fn", "subsequence", this::subsequence);
+        registerFunction("fn", "substring", this::substring);
+        registerFunction("fn", "distinct-values", this::distinctValues);
+        registerFunction("fn", "zero-or-one", this::zeroOrOne);
+        registerFunction("fn", "one-or-more", this::oneOrMore);
+        registerFunction("fn", "exactly-one", this::exactlyOne);
+        registerFunction("fn", "data", this::data);
+        registerFunction("fn", "contains", this::contains);
+        registerFunction("fn", "starts-with", this::startsWith);
+        registerFunction("fn", "ends-with", this::endsWith);
+        registerFunction("fn", "substring-after", this::substringAfter);
+        registerFunction("fn", "substring-before", this::substringBefore);
+        registerFunction("fn", "upper-case", this::uppercase);
+        registerFunction("fn", "lower-case", this::lowercase);
+        registerFunction("fn", "string", this::string);
+        registerFunction("fn", "concat", this::concat);
+        registerFunction("fn", "string-join", this::stringJoin);
+        registerFunction("fn", "string-length", this::stringLength);
+        registerFunction("fn", "normalize-space", this::normalizeSpace);
+        registerFunction("fn", "replace", this::replace);
+        registerFunction("fn", "position", this::position);
+        registerFunction("fn", "last", this::last);
 
-        functions.put("numeric-add", this::numericAdd);
-        functions.put("numeric-subtract", this::numericSubtract);
-        functions.put("numeric-multiply", this::numericMultiply);
-        functions.put("numeric-divide", this::numericDivide);
-        functions.put("numeric-integer-divide", this::numericIntegerDivide);
-        functions.put("numeric-mod", this::numericMod);
-        functions.put("numeric-unary-plus", this::numericUnaryPlus);
-        functions.put("numeric-unary-minus", this::numericUnaryMinus);
-        functions.put("op:numeric-add", this::numericAdd);
-        functions.put("op:numeric-subtract", this::numericSubtract);
-        functions.put("op:numeric-multiply", this::numericMultiply);
-        functions.put("op:numeric-divide", this::numericDivide);
-        functions.put("op:numeric-integer-divide", this::numericIntegerDivide);
-        functions.put("op:numeric-mod", this::numericMod);
-        functions.put("op:numeric-unary-plus", this::numericUnaryPlus);
-        functions.put("op:numeric-unary-minus", this::numericUnaryMinus);
+        registerFunction("math", "pi", this::pi);
+        registerFunction("math", "exp", this::exp);
+        registerFunction("math", "exp10", this::exp10);
+        registerFunction("math", "log", this::log);
+        registerFunction("math", "log10", this::log10);
+        registerFunction("math", "pow", this::pow);
+        registerFunction("math", "sqrt", this::sqrt);
+        registerFunction("math", "sin", this::sin);
+        registerFunction("math", "cos", this::cos);
+        registerFunction("math", "tan", this::tan);
+        registerFunction("math", "asin", this::asin);
+        registerFunction("math", "acos", this::acos);
+        registerFunction("math", "atan", this::atan);
+        registerFunction("math", "atan2", this::atan2);
 
+        registerFunction("op", "numeric-add", this::numericAdd);
+        registerFunction("op", "numeric-subtract", this::numericSubtract);
+        registerFunction("op", "numeric-multiply", this::numericMultiply);
+        registerFunction("op", "numeric-divide", this::numericDivide);
+        registerFunction("op", "numeric-integer-divide", this::numericIntegerDivide);
+        registerFunction("op", "numeric-mod", this::numericMod);
+        registerFunction("op", "numeric-unary-plus", this::numericUnaryPlus);
+        registerFunction("op", "numeric-unary-minus", this::numericUnaryMinus);
     }
 
     public XQueryValue not(final XQueryVisitingContext context, final List<XQueryValue> args) {
@@ -807,15 +750,39 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         };
     }
 
+    private void registerFunction(String namespace, String localName, XQueryFunction function) {
+        namespaceFunctions.computeIfAbsent(namespace, k -> new HashMap<>()).put(localName, function);
+    }
+
+    private XQueryFunction getFunction(String functionName) {
+        final String[] parts = functionName.split(":", 2);
+        String namespace = parts.length == 2 ? parts[0] : "fn";
+        String localName = parts.length == 2 ? parts[1] : parts[0];
+
+        Map<String, XQueryFunction> functionsInNs = namespaceFunctions.get(namespace);
+        if (functionsInNs == null) {
+            return null;
+        }
+        return functionsInNs.get(localName);
+    }
+
+
     @Override
-    public XQueryValue call(String functionName, XQueryVisitingContext context,
-            List<XQueryValue> args) {
-        return functions.get(functionName).call(context, args);
+    public XQueryValue call(String functionName, XQueryVisitingContext context, List<XQueryValue> args) {
+        XQueryFunction function = getFunction(functionName);
+        if (function == null) {
+            throw new IllegalArgumentException("Unknown function: " + functionName);
+        }
+        return function.call(context, args);
     }
 
     @Override
     public XQueryValue getFunctionReference(String functionName) {
-        return valueFactory.functionReference(functions.get(functionName));
+        XQueryFunction function = getFunction(functionName);
+        if (function == null) {
+            throw new IllegalArgumentException("Unknown function reference: " + functionName);
+        }
+        return valueFactory.functionReference(function);
     }
 
 }

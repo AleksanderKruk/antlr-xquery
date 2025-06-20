@@ -154,54 +154,54 @@ public class XQueryEvaluatorTest {
 
     @Test
     public void sinFunction() {
-        assertResult("sin(0)", BigDecimal.valueOf(sin(0)));
-        assertResult("sin(3.141592653589793 div 2)", BigDecimal.valueOf(sin(PI / 2)));
+        assertResult("math:sin(0)", BigDecimal.valueOf(sin(0)));
+        assertResult("math:sin(3.141592653589793 div 2)", BigDecimal.valueOf(sin(PI / 2)));
     }
 
     @Test
     public void cosFunction() {
-        assertResult("cos(0)", BigDecimal.valueOf(cos(0)));
-        assertResult("cos(3.141592653589793)", BigDecimal.valueOf(cos(PI)));
+        assertResult("math:cos(0)", BigDecimal.valueOf(cos(0)));
+        assertResult("math:cos(3.141592653589793)", BigDecimal.valueOf(cos(PI)));
     }
 
     @Test
     public void tanFunction() {
-        assertResult("tan(0)", BigDecimal.valueOf(tan(0)));
+        assertResult("math:tan(0)", BigDecimal.valueOf(tan(0)));
     }
 
     @Test
     public void asinFunction() {
-        assertResult("asin(0)", BigDecimal.valueOf(asin(0)));
+        assertResult("math:asin(0)", BigDecimal.valueOf(asin(0)));
     }
 
     @Test
     public void acosFunction() {
-        assertResult("acos(1)", BigDecimal.valueOf(acos(1)));
+        assertResult("math:acos(1)", BigDecimal.valueOf(acos(1)));
     }
 
     @Test
     public void atanFunction() {
-        assertResult("atan(1)", BigDecimal.valueOf(atan(1)));
+        assertResult("math:atan(1)", BigDecimal.valueOf(atan(1)));
     }
 
     @Test
     public void piConstant() {
-        assertResult("pi()", BigDecimal.valueOf(PI));
+        assertResult("math:pi()", BigDecimal.valueOf(PI));
     }
 
     @Test
     public void expFunction() {
-        assertResult("exp(1)", BigDecimal.valueOf(exp(1)));
+        assertResult("math:exp(1)", BigDecimal.valueOf(exp(1)));
     }
 
     @Test
     public void logFunction() {
-        assertResult("log(1)", BigDecimal.valueOf(log(1))); // should be 0
+        assertResult("math:log(1)", BigDecimal.valueOf(log(1))); // should be 0
     }
 
     @Test
     public void sqrtFunction() {
-        assertResult("sqrt(4)", BigDecimal.valueOf(sqrt(4))); // should be 2
+        assertResult("math:sqrt(4)", BigDecimal.valueOf(sqrt(4))); // should be 2
     }
 
 
@@ -506,37 +506,37 @@ public class XQueryEvaluatorTest {
 
     @Test
     public void numericAdd() {
-        assertResult("numeric-add(3, 5)", BigDecimal.valueOf(8));
+        assertResult("op:numeric-add(3, 5)", BigDecimal.valueOf(8));
     }
 
     @Test
     public void numericSubtract() {
-        assertResult("numeric-subtract(3, 5)", BigDecimal.valueOf(-2));
+        assertResult("op:numeric-subtract(3, 5)", BigDecimal.valueOf(-2));
     }
 
     @Test
     public void numericMultiply() {
-        assertResult("numeric-multiply(3, 5)", BigDecimal.valueOf(15));
+        assertResult("op:numeric-multiply(3, 5)", BigDecimal.valueOf(15));
     }
 
     @Test
     public void numericDivide() {
-        assertResult("numeric-divide(5, 5)", BigDecimal.ONE);
+        assertResult("op:numeric-divide(5, 5)", BigDecimal.ONE);
     }
 
     @Test
     public void numericIntegerDivide() {
-        assertResult("numeric-integer-divide(5, 2)", BigDecimal.valueOf(2));
+        assertResult("op:numeric-integer-divide(5, 2)", BigDecimal.valueOf(2));
     }
 
     @Test
     public void numericMod() {
-        assertResult("numeric-mod(5, 2)", BigDecimal.ONE);
+        assertResult("op:numeric-mod(5, 2)", BigDecimal.ONE);
     }
 
     @Test
     public void pi() {
-        assertResult("pi()", BigDecimal.valueOf(Math.PI));
+        assertResult("math:pi()", BigDecimal.valueOf(Math.PI));
     }
 
     @Test

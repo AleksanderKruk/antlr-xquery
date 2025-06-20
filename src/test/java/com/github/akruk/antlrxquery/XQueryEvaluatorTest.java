@@ -539,12 +539,6 @@ public class XQueryEvaluatorTest {
         assertResult("math:pi()", BigDecimal.valueOf(Math.PI));
     }
 
-    @Test
-    public void namespaces() {
-        assertResult("math:pi()", BigDecimal.valueOf(Math.PI));
-    }
-
-
     record TestParserAndTree(TestParser parser, ParseTree tree) {}
 
     TestParserAndTree parseTestTree(String text) {

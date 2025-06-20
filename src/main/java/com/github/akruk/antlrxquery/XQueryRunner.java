@@ -235,10 +235,6 @@ public class XQueryRunner {
             }
         }
 
-        if (!args.containsKey("--starting-rule") || args.get("--starting-rule").isEmpty()) {
-            return new ValidationResult(InputStatus.NO_STARTING_RULE, "No starting rule given (--starting-rule)");
-        }
-
         if (!args.containsKey("--query") && !args.containsKey("--query-file")) {
             return new ValidationResult(InputStatus.NO_QUERY, "Missing query (--query or --query-file)");
         }

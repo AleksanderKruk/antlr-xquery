@@ -43,8 +43,6 @@ LBRACKET: '[';
 RBRACKET: ']';
 LPAREN: '(';
 RPAREN: ')';
-LCURLY: '{';
-RCURLY: '}';
 COLONSTAR: ':*';
 STARCOLON: '*:';
 ALLOWING: 'allowing';
@@ -128,17 +126,38 @@ fragment DASH: '-';
 
 
 
-STRING_CONSTRUCTOR_START : '``[' -> pushMode(INSIDE_INTERPOLATION);
 
-INTERPOLATION_END    : '}`' -> popMode;
+
+STRING_INTERPOLATION_START  : '`' -> pushMode(INSIDE_INTERPOLATION);
+STRING_CONSTRUCTOR_START : '``[' -> pushMode(INSIDE_STRING_CONSTRUCTOR);
+
+LCURLY: '{';
+CONSTRUCTION_END: '}`' -> popMode;
+RCURLY: '}' -> popMode; // popping exits interpolation mode
 
 mode INSIDE_INTERPOLATION;
 
+STRING_INTERPOLATION_END  : '`' -> popMode ;
+
+INTERPOLATION_START : '{' -> pushMode(DEFAULT_MODE);
+
+INTERPOLATION_CHARS        :
+    ~[`{]+
+    | '`{' ~[`{]+
+    ;
+
+// mode AWAITING_END_OF_INTERPOLATION;
+// INTERPOLATION_RCURLY: '}' -> popMode; // popping exits interpolation mode
+
+
+
+mode INSIDE_STRING_CONSTRUCTOR;
+
 STRING_CONSTRUCTOR_END  : ']``' -> popMode ;
 
-INTERPOLATION_START : '`{' -> pushMode(DEFAULT_MODE) ;
+CONSTRUCTION_START : '`{' -> pushMode(DEFAULT_MODE) ;
 
-STRING_CHARS        :
+CONSTRUCTOR_CHARS        :
     ~[`\]]+
     | '`' ~[`\]{]+
     | ']`' ~[`\]]+

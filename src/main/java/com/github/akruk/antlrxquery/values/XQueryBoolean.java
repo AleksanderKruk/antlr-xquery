@@ -20,7 +20,17 @@ public class XQueryBoolean extends XQueryValueBase<Boolean> {
 
     @Override
     public String stringValue() {
-        return (value)? "true" : "false";
+        return (value) ? "true" : "false";
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("<");
+        sb.append(super.toString());
+        sb.append(":");
+        sb.append(stringValue());
+        sb.append(">");
+        return sb.toString();
     }
 
     @Override

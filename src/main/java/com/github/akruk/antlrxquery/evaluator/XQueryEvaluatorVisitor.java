@@ -393,9 +393,6 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             var value = ctx.andExpr(0).accept(this);
             if (ctx.OR().isEmpty())
                 return value;
-            if (!value.isBooleanValue()) {
-                // TODO: type error
-            }
             // Short circuit
             if (value.booleanValue()) {
                 return valueFactory.bool(true);
@@ -614,10 +611,6 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             return ctx.predicate().accept(this);
         }
         final var contextItem = context.getItem();
-        if (!contextItem.isFunction()) {
-            // TODO: error
-            return null;
-        }
         final var function = contextItem.functionValue();
         final var value = function.call(context, visitedArgumentList);
         return value;
@@ -1135,9 +1128,6 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             var value = ctx.comparisonExpr(0).accept(this);
             if (ctx.AND().isEmpty())
                 return value;
-            if (!value.isBooleanValue()) {
-                // TODO: type error
-            }
             // Short circuit
             if (!value.booleanValue()) {
                 return valueFactory.bool(false);
@@ -1280,9 +1270,6 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             var value = ctx.intersectExpr(0).accept(this);
             if (ctx.unionOperator().isEmpty())
                 return value;
-            if (!value.isSequence()) {
-                // TODO: type error
-            }
             final var unionCount = ctx.unionOperator().size();
             for (int i = 1; i <= unionCount; i++) {
                 final var visitedExpression = ctx.intersectExpr(i).accept(this);
@@ -1302,10 +1289,6 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             var value = ctx.instanceofExpr(0).accept(this);
             if (ctx.exceptOrIntersect().isEmpty())
                 return value;
-            if (!value.isSequence()) {
-                // TODO: type error
-                return null;
-            }
             final var operatorCount = ctx.exceptOrIntersect().size();
             for (int i = 1; i <= operatorCount; i++) {
                 final var visitedExpression = ctx.instanceofExpr(i).accept(this);
@@ -1375,9 +1358,6 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             final var value = ctx.simpleMapExpr().accept(this);
             if (ctx.MINUS() == null)
                 return value;
-            if (!value.isNumericValue()) {
-                // TODO: type error
-            }
             return value.multiply(valueFactory.number(new BigDecimal(-1)));
         } catch (final XQueryUnsupportedOperation e) {
             // TODO: handle exception

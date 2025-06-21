@@ -108,7 +108,8 @@ primaryExpr: literal
         | varRef
         | parenthesizedExpr
         | contextItemExpr
-        | functionCall;
+        | functionCall
+        | stringConstructor;
 literal: INTEGER | DECIMAL | STRING;
 varRef: DOLLAR varName;
 varName: qname;
@@ -179,3 +180,25 @@ typeName: qname;
 qname: (namespace COLON)* anyName;
 namespace: anyName;
 anyName: ID | EMPTY | COUNT;
+
+stringConstructor:
+    STRING_CONSTRUCTOR_START
+    stringConstructorContent
+    STRING_CONSTRUCTOR_END
+    ;
+
+stringConstructorContent:
+    (stringChars | stringInterpolation)*
+    ;
+
+stringChars:
+    STRING_CHARS
+    ;
+
+stringInterpolation:
+    INTERPOLATION_START
+    expr?
+    INTERPOLATION_END
+    ;
+
+

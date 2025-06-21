@@ -125,3 +125,27 @@ fragment NAME_START: [\p{Alpha}][\p{Alpha}\p{Alnum}]*;
 fragment NAME_MIDDLE: [\p{Alpha}\p{Alnum}]+;
 fragment DASH: '-';
 
+
+
+
+STRING_CONSTRUCTOR_START : '``[' -> pushMode(INSIDE_INTERPOLATION);
+
+INTERPOLATION_END    : '}`' -> popMode;
+
+mode INSIDE_INTERPOLATION;
+
+STRING_CONSTRUCTOR_END  : ']``' -> popMode ;
+
+INTERPOLATION_START : '`{' -> pushMode(DEFAULT_MODE) ;
+
+STRING_CHARS        :
+    ~[`\]]+
+    | '`' ~[`\]{]+
+    | ']`' ~[`\]]+
+    | ']' ~[`\]]+
+    ;
+
+
+
+
+

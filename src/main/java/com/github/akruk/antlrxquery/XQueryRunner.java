@@ -25,24 +25,39 @@ import java.util.*;
 
 public class XQueryRunner {
     public static void main(final String[] args) throws Exception {
-        runAntlrXQuery(args);
+        runXQueryTool(args);
     }
 
-    private static void runAntlrXQuery(final String[] args)
-            throws IOException, ClassNotFoundException, Exception, MalformedURLException {
+    public static void runXQueryTool(final String[] args) throws Exception {
+        runXQueryTool(args, System.in, System.out, System.err);
+    }
+
+    public static void runXQueryTool(final String[] args, final InputStream inputStream,
+                             final PrintStream outputStream, final PrintStream errorStream)
+    throws Exception
+    {
         final Map<String, List<String>> argMap = parseArgs(args);
         final ValidationResult validation = validateInput(argMap);
         if (validation.status != InputStatus.OK) {
-            System.err.println(validation.message);
+            errorStream.println(validation.message);
             System.exit(validation.status.ordinal());
         }
         final ExtractionResult extractedArgs = extractInput(argMap);
 
+        runXQueryTool(extractedArgs, inputStream, outputStream, errorStream);
+    }
 
-        final List<String> grammarFiles = extractedArgs.grammars;
-        final List<String> targetFiles = extractedArgs.targetFiles;
-        final String startingRule = extractedArgs.startingRule;
-        final String query = extractedArgs.query;
+    public static void runXQueryTool(final ExtractionResult config) throws Exception {
+        runXQueryTool(config, System.in, System.out, System.err);
+    }
+
+    public static void runXQueryTool(final ExtractionResult config, final InputStream inputStream,
+                             final PrintStream outputStream, final PrintStream errorStream) throws Exception {
+
+        final List<String> grammarFiles = config.grammars;
+        final List<String> targetFiles = config.targetFiles;
+        final String startingRule = config.startingRule;
+        final String query = config.query;
 
         final Path tmpDir = Files.createTempDirectory("antlr-gen");
         final Path sourceDir = tmpDir.resolve("src");
@@ -65,8 +80,8 @@ public class XQueryRunner {
         compileJavaSources(sourceDir, outputDir);
 
         try (URLClassLoader classLoader = new URLClassLoader(new URL[] { outputDir.toUri().toURL() })) {
-            final String lexerName = getFirstArg(argMap, "--lexer-name", findClassName(outputDir, "Lexer.class"));
-            final String parserName = getFirstArg(argMap, "--parser-name", findClassName(outputDir, "Parser.class"));
+            final String lexerName = getFirstNonEmptyOrDefault(config.lexerName, findClassName(outputDir, "Lexer.class"));
+            final String parserName = getFirstNonEmptyOrDefault(config.parserName, findClassName(outputDir, "Parser.class"));
 
             final Class<?> lexerClass = Class.forName(lexerName, true, classLoader);
             final Class<?> parserClass = Class.forName(parserName, true, classLoader);
@@ -89,7 +104,7 @@ public class XQueryRunner {
             analyzer.visit(xqueryTree);
             final var querySemanticErrors = analyzer.getErrors();
             for (final var error : querySemanticErrors) {
-                System.err.println(error);
+                errorStream.println(error);
             }
             if (!querySemanticErrors.isEmpty()) {
                 System.exit(InputStatus.INVALID_QUERY.ordinal());
@@ -98,19 +113,19 @@ public class XQueryRunner {
             for (final String file : targetFiles) {
                 final String fileContent = Files.readString(Path.of(file));
                 final XQueryValue results = executeQuery(xqueryTree, lexerClass, parserClass, startingRule, fileContent);
-                System.out.println("File: " + file);
+                outputStream.println("File: " + file);
                 for (final var result : results.atomize()) {
                     final String printed = result.stringValue();
                     if (printed != null)
-                        System.out.println(printed);
+                        outputStream.println(printed);
                     else
-                        System.out.println(result.toString());
+                        outputStream.println(result.toString());
                 }
             }
         }
     }
 
-    private static XQueryValue executeQuery(
+    static XQueryValue executeQuery(
             final ParseTree query,
             final Class<?> lexerClass,
             final Class<?> parserClass,
@@ -129,7 +144,7 @@ public class XQueryRunner {
     record ParserAndTree(Parser parser, ParseTree tree) {
     }
 
-    private static ParserAndTree parseTargetFile(final String input, final Class<?> lexerClass, final Class<?> parserClass, final String startingRule) throws Exception {
+    static ParserAndTree parseTargetFile(final String input, final Class<?> lexerClass, final Class<?> parserClass, final String startingRule) throws Exception {
         final CharStream charStream = CharStreams.fromString(input);
         final Lexer lexer = (Lexer) lexerClass.getConstructor(CharStream.class).newInstance(charStream);
         final CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -140,10 +155,93 @@ public class XQueryRunner {
         return new ParserAndTree(parser, tree);
     }
 
+    // === ARGUMENT PARSING AND VALIDATION ===
+
+    static Map<String, List<String>> parseArgs(final String[] args) {
+        final Map<String, List<String>> map = new HashMap<>();
+        for (int i = 0; i < args.length; i++) {
+            final String key = args[i];
+            if (key.startsWith("--")) {
+                final List<String> values = new ArrayList<>();
+                i++;
+                while (i < args.length && !args[i].startsWith("--")) {
+                    values.add(args[i]);
+                    i++;
+                }
+                i--; // go back one, loop will increment
+                map.put(key, values);
+            }
+        }
+        return map;
+    }
+
+    static ValidationResult validateInput(final Map<String, List<String>> args) {
+        if (!args.containsKey("--grammars") || args.get("--grammars").isEmpty()) {
+            return new ValidationResult(InputStatus.NO_GRAMMARS, "No grammars given (--grammars)");
+        }
+        if (!args.containsKey("--target-files") || args.get("--target-files").isEmpty()) {
+            return new ValidationResult(InputStatus.NO_TARGET_FILES, "No target files given (--target-files)");
+        }
+        for (var file : args.get("--target-files")) {
+            final File targetFile = Path.of(file).toFile();
+            if (!targetFile.exists()) {
+                return new ValidationResult(InputStatus.INVALID_TARGET_FILE, "Target file does not exist: " + file);
+            }
+            if (!targetFile.isFile()) {
+                return new ValidationResult(InputStatus.INVALID_TARGET_FILE, "Target file is not a regular file: " + file);
+            }
+        }
+
+        if (!args.containsKey("--starting-rule") || args.get("--starting-rule").isEmpty()) {
+            return new ValidationResult(InputStatus.NO_STARTING_RULE, "No starting rule given (--starting-rule)");
+        }
+        if (!args.containsKey("--query") && !args.containsKey("--query-file")) {
+            return new ValidationResult(InputStatus.NO_QUERY, "Missing query (--query or --query-file)");
+        }
+        if (args.containsKey("--query") && args.containsKey("--query-file")) {
+            return new ValidationResult(InputStatus.QUERY_DUPLICATION,
+                    "Both --query and --query-file provided, please use only one.");
+        }
+        if (args.containsKey("--query-file")) {
+            final String querypath = String.join(" ", args.getOrDefault("--query-file", Collections.emptyList()));
+            final File queryFile = Path.of(querypath).toFile();
+            if (!queryFile.exists())
+                return new ValidationResult(InputStatus.NO_QUERY, "Query file does not exist: " + querypath);
+            if (queryFile.isDirectory())
+                return new ValidationResult(InputStatus.NO_QUERY, "Query file is a directory: " + querypath);
+        }
+
+        return new ValidationResult(InputStatus.OK, null);
+    }
+
+    static ExtractionResult extractInput(final Map<String, List<String>> args) {
+        final List<String> grammars = args.get("--grammars");
+        final List<String> targetFiles = args.get("--target-files");
+        // TODO: add default first starting rule
+        final String startingRule = getFirstArg(args, "--starting-rule", getFirstRule(grammars));
+        final String lexerName = getFirstArg(args, "--lexer-name", "");
+        final String parserName = getFirstArg(args, "--parser-name", "");
+        String query = String.join(" ", args.getOrDefault("--query", Collections.emptyList()));
+        final String queryFile = String.join(" ", args.getOrDefault("--query-file", Collections.emptyList()));
+        if (!args.containsKey("--query")) {
+            try {
+                query = Files.readString(Path.of(queryFile));
+            } catch (final IOException e) {
+                query = null;
+            }
+        }
+        return new ExtractionResult(grammars, targetFiles, startingRule, lexerName, parserName, query);
+    }
+
+    // === UTILITY METHODS ===
 
     static String getFirstArg(final Map<String, List<String>> args, final String key, final String fallback) {
         final List<String> list = args.get(key);
         return (list != null && !list.isEmpty()) ? list.get(0) : fallback;
+    }
+
+    static String getFirstNonEmptyOrDefault(final String value, final String defaultValue) {
+        return (value != null && !value.isEmpty()) ? value : defaultValue;
     }
 
     static void compileJavaSources(final Path sourceDir, final Path outputDir) throws IOException {
@@ -193,95 +291,40 @@ public class XQueryRunner {
                 .replaceAll("\\.class$", "");
     }
 
-    static Map<String, List<String>> parseArgs(final String[] args) {
-        final Map<String, List<String>> map = new HashMap<>();
-        for (int i = 0; i < args.length; i++) {
-            final String key = args[i];
-            if (key.startsWith("--")) {
-                final List<String> values = new ArrayList<>();
-                i++;
-                while (i < args.length && !args[i].startsWith("--")) {
-                    values.add(args[i]);
-                    i++;
-                }
-                i--; // go back one, loop will increment
-                map.put(key, values);
-            }
-        }
-        return map;
-    }
+    // === DATA STRUCTURES ===
 
     enum InputStatus {
         OK, ERROR, EOF, NO_GRAMMARS, NO_TARGET_FILES, NO_STARTING_RULE, NO_QUERY, INVALID_QUERY, QUERY_DUPLICATION, INVALID_TARGET_FILE
     }
 
-    private record ValidationResult(InputStatus status, String message) {
+    record ValidationResult(InputStatus status, String message) {
     }
 
-    private static ValidationResult validateInput(final Map<String, List<String>> args) {
-        if (!args.containsKey("--grammars") || args.get("--grammars").isEmpty()) {
-            return new ValidationResult(InputStatus.NO_GRAMMARS, "No grammars given (--grammars)");
-        }
-        if (!args.containsKey("--target-files") || args.get("--target-files").isEmpty()) {
-            return new ValidationResult(InputStatus.NO_TARGET_FILES, "No target files given (--target-files)");
-        }
-        for (var file : args.get("--target-files")) {
-            final File targetFile = Path.of(file).toFile();
-            if (!targetFile.exists()) {
-                return new ValidationResult(InputStatus.INVALID_TARGET_FILE, "Target file does not exist: " + file);
-            }
-            if (!targetFile.isFile()) {
-                return new ValidationResult(InputStatus.INVALID_TARGET_FILE, "Target file is not a regular file: " + file);
-            }
-        }
-
-        if (!args.containsKey("--query") && !args.containsKey("--query-file")) {
-            return new ValidationResult(InputStatus.NO_QUERY, "Missing query (--query or --query-file)");
-        }
-
-        if (args.containsKey("--query") && args.containsKey("--query-file")) {
-            return new ValidationResult(InputStatus.QUERY_DUPLICATION,
-                    "Both --query and --query-file provided, please use only one.");
-        }
-
-        if (args.containsKey("--query-file")) {
-            final String querypath = String.join(" ", args.getOrDefault("--query-file", Collections.emptyList()));
-            final File queryFile = Path.of(querypath).toFile();
-            if (!queryFile.exists())
-                return new ValidationResult(InputStatus.NO_QUERY, "Query file does not exist: " + querypath);
-            if (!queryFile.isDirectory())
-                return new ValidationResult(InputStatus.NO_QUERY, "Query file is a directory: " + querypath);
-        }
-
-
-        return new ValidationResult(InputStatus.OK, null);
-    }
-
-    private record ExtractionResult(List<String> grammars, List<String> targetFiles, String startingRule,
+    record ExtractionResult(List<String> grammars, List<String> targetFiles, String startingRule,
                                     String lexerName, String parserName, String query) {
     }
 
 
 
-    private static ExtractionResult extractInput(final Map<String, List<String>> args) {
-        final List<String> grammars = args.get("--grammars");
-        final List<String> targetFiles = args.get("--target-files");
-        final String startingRule = getFirstArg(args, "--starting-rule", getFirstRule(grammars));
-        final String lexerName = getFirstArg(args, "--lexer-name", "");
-        final String parserName = getFirstArg(args, "--parser-name", "");
-        String query = String.join(" ", args.getOrDefault("--query", Collections.emptyList()));
-        final String queryFile = String.join(" ", args.getOrDefault("--query-file", Collections.emptyList()));
-        if (query == "") {
-            try {
-                query = Files.readString(Path.of(queryFile));
-            } catch (final IOException e) {
-                query = null;
-            }
-        }
-        return new ExtractionResult(grammars, targetFiles, startingRule, lexerName, parserName, query);
-    }
+    // private static ExtractionResult extractInput(final Map<String, List<String>> args) {
+    //     final List<String> grammars = args.get("--grammars");
+    //     final List<String> targetFiles = args.get("--target-files");
+    //     final String startingRule = getFirstArg(args, "--starting-rule", getFirstRule(grammars));
+    //     final String lexerName = getFirstArg(args, "--lexer-name", "");
+    //     final String parserName = getFirstArg(args, "--parser-name", "");
+    //     String query = String.join(" ", args.getOrDefault("--query", Collections.emptyList()));
+    //     final String queryFile = String.join(" ", args.getOrDefault("--query-file", Collections.emptyList()));
+    //     if (query == "") {
+    //         try {
+    //             query = Files.readString(Path.of(queryFile));
+    //         } catch (final IOException e) {
+    //             query = null;
+    //         }
+    //     }
+    //     return new ExtractionResult(grammars, targetFiles, startingRule, lexerName, parserName, query);
+    // }
 
-    private static String getFirstRule(List<String> grammars) {
+    static String getFirstRule(List<String> grammars) {
         if (grammars == null || grammars.isEmpty()) return "";
 
         for (String grammarFile : grammars) {

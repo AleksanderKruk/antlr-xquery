@@ -6,8 +6,8 @@ import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
 public class XQueryString extends XQueryValueBase<String> {
-    public XQueryString(String string) {
-        value = string;
+    public XQueryString(String string, XQueryValueFactory valueFactory) {
+        super(string, valueFactory);
     }
 
     @Override
@@ -21,7 +21,7 @@ public class XQueryString extends XQueryValueBase<String> {
         return !value.isEmpty();
     }
     @Override
-    public XQueryValue concatenate(XQueryValueFactory valueFactory, XQueryValue other) {
+    public XQueryValue concatenate(XQueryValue other) {
         if (other.isSequence()) {
             StringBuilder builder = new StringBuilder(value);
             for (var element : other.atomize()) {
@@ -33,110 +33,110 @@ public class XQueryString extends XQueryValueBase<String> {
     }
 
     @Override
-    public XQueryValue valueEqual(XQueryValueFactory valueFactory, XQueryValue other) {
+    public XQueryValue valueEqual(XQueryValue other) {
         if (!other.isStringValue()) {
-            return XQueryBoolean.FALSE;
+            return valueFactory.bool(false);
         }
-        return XQueryBoolean.of(value.compareTo(other.stringValue()) == 0);
+        return valueFactory.bool(value.compareTo(other.stringValue()) == 0);
     }
 
     @Override
-    public XQueryValue valueLessThan(XQueryValueFactory valueFactory, XQueryValue other) {
+    public XQueryValue valueLessThan(XQueryValue other) {
         if (!other.isStringValue()) {
-            return XQueryBoolean.FALSE;
+            return valueFactory.bool(false);
         }
-        return XQueryBoolean.of(value.compareTo(other.stringValue()) < 0);
+        return valueFactory.bool(value.compareTo(other.stringValue()) < 0);
     }
 
     @Override
-    public XQueryValue valueGreaterThan(XQueryValueFactory valueFactory, XQueryValue other) {
+    public XQueryValue valueGreaterThan(XQueryValue other) {
         if (!other.isStringValue()) {
-            return XQueryBoolean.FALSE;
+            return valueFactory.bool(false);
         }
-        return XQueryBoolean.of(value.compareTo(other.stringValue()) > 0);
+        return valueFactory.bool(value.compareTo(other.stringValue()) > 0);
     }
 
     @Override
-    public XQueryValue valueGreaterEqual(XQueryValueFactory valueFactory, XQueryValue other) {
+    public XQueryValue valueGreaterEqual(XQueryValue other) {
         if (!other.isStringValue()) {
-            return XQueryBoolean.FALSE;
+            return valueFactory.bool(false);
         }
-        return XQueryBoolean.of(value.compareTo(other.stringValue()) >= 0);
+        return valueFactory.bool(value.compareTo(other.stringValue()) >= 0);
     }
 
     @Override
-    public XQueryValue valueLessEqual(XQueryValueFactory valueFactory, XQueryValue other) {
+    public XQueryValue valueLessEqual(XQueryValue other) {
         if (!other.isStringValue()) {
-            return XQueryBoolean.FALSE;
+            return valueFactory.bool(false);
         }
-        return XQueryBoolean.of(value.compareTo(other.stringValue()) <= 0);
+        return valueFactory.bool(value.compareTo(other.stringValue()) <= 0);
     }
 
     @Override
-    public XQueryValue copy(XQueryValueFactory valueFactory) {
+    public XQueryValue copy() {
         return valueFactory.string(value);
     }
 
     @Override
-    public XQueryValue empty(XQueryValueFactory valueFactory) {
-        return XQueryBoolean.FALSE;
+    public XQueryValue empty() {
+        return valueFactory.bool(false);
     }
 
     @Override
-    public XQueryValue head(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation {
+    public XQueryValue head() throws XQueryUnsupportedOperation {
         if (value.isEmpty())
             return valueFactory.emptySequence();
         return valueFactory.string(value.substring(0, 1));
     }
 
     @Override
-    public XQueryValue tail(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation {
+    public XQueryValue tail() throws XQueryUnsupportedOperation {
         if (value.isEmpty())
             return valueFactory.emptySequence();
         return valueFactory.string(value.substring(1));
     }
 
     @Override
-    public XQueryValue data(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation {
+    public XQueryValue data() throws XQueryUnsupportedOperation {
         var atomized = atomize();
         return valueFactory.sequence(atomized);
     }
 
     @Override
-    public XQueryValue contains(XQueryValueFactory valueFactory, XQueryValue other) throws XQueryUnsupportedOperation {
+    public XQueryValue contains(XQueryValue other) throws XQueryUnsupportedOperation {
         if (value.isEmpty())
-            return XQueryBoolean.FALSE;
+            return valueFactory.bool(false);
         if (other.stringValue().isEmpty())
-            return XQueryBoolean.TRUE;
-        return XQueryBoolean.of(value.contains(other.stringValue()));
+            return valueFactory.bool(true);
+        return valueFactory.bool(value.contains(other.stringValue()));
     }
 
     @Override
-    public XQueryValue startsWith(XQueryValueFactory valueFactory, XQueryValue other) throws XQueryUnsupportedOperation {
+    public XQueryValue startsWith(XQueryValue other) throws XQueryUnsupportedOperation {
         if (value.isEmpty())
-            return XQueryBoolean.FALSE;
+            return valueFactory.bool(false);
         if (other.stringValue().isEmpty())
-            return XQueryBoolean.TRUE;
-        return XQueryBoolean.of(value.startsWith(other.stringValue()));
+            return valueFactory.bool(true);
+        return valueFactory.bool(value.startsWith(other.stringValue()));
     }
 
 
     @Override
-    public XQueryValue endsWith(XQueryValueFactory valueFactory, XQueryValue other) throws XQueryUnsupportedOperation {
+    public XQueryValue endsWith(XQueryValue other) throws XQueryUnsupportedOperation {
         if (value.isEmpty())
-            return XQueryBoolean.FALSE;
+            return valueFactory.bool(false);
         if (other.stringValue().isEmpty())
-            return XQueryBoolean.TRUE;
-        return XQueryBoolean.of(value.endsWith(other.stringValue()));
+            return valueFactory.bool(true);
+        return valueFactory.bool(value.endsWith(other.stringValue()));
     }
 
     @Override
-    public XQueryValue substring(XQueryValueFactory valueFactory, int startingLoc) throws XQueryUnsupportedOperation {
-        return substring(valueFactory, startingLoc, value.length()-startingLoc+1);
+    public XQueryValue substring(int startingLoc) throws XQueryUnsupportedOperation {
+        return substring(startingLoc, value.length()-startingLoc+1);
     }
 
     @Override
-    public XQueryValue substring(XQueryValueFactory valueFactory, int startingLoc, int length) throws XQueryUnsupportedOperation {
+    public XQueryValue substring(int startingLoc, int length) throws XQueryUnsupportedOperation {
         int currentLength = value.length();
         if (startingLoc > currentLength) {
             return valueFactory.emptySequence();
@@ -150,8 +150,8 @@ public class XQueryString extends XQueryValueBase<String> {
 
 
     @Override
-    public XQueryValue substringBefore(XQueryValueFactory valueFactory, XQueryValue splitstring) throws XQueryUnsupportedOperation {
-        if (splitstring.empty(valueFactory).booleanValue())
+    public XQueryValue substringBefore(XQueryValue splitstring) throws XQueryUnsupportedOperation {
+        if (splitstring.empty().booleanValue())
             return valueFactory.emptyString();
         var escapedSplitstring = Pattern.quote(splitstring.stringValue());
         String[] splitString = value.split(escapedSplitstring, 2);
@@ -161,8 +161,8 @@ public class XQueryString extends XQueryValueBase<String> {
     }
 
     @Override
-    public XQueryValue substringAfter(XQueryValueFactory valueFactory, XQueryValue splitstring) throws XQueryUnsupportedOperation {
-        if (splitstring.empty(valueFactory).booleanValue())
+    public XQueryValue substringAfter(XQueryValue splitstring) throws XQueryUnsupportedOperation {
+        if (splitstring.empty().booleanValue())
             return valueFactory.emptyString();
         var splitstringValue = splitstring.stringValue();
         var escapedSplitstring = Pattern.quote(splitstringValue);
@@ -173,12 +173,12 @@ public class XQueryString extends XQueryValueBase<String> {
     }
 
     @Override
-    public XQueryValue uppercase(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation {
+    public XQueryValue uppercase() throws XQueryUnsupportedOperation {
         return valueFactory.string(value.toUpperCase());
     }
 
     @Override
-    public XQueryValue lowercase(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation {
+    public XQueryValue lowercase() throws XQueryUnsupportedOperation {
         return valueFactory.string(value.toLowerCase());
     }
 

@@ -4,13 +4,13 @@ import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
 public class XQueryFunctionReference extends XQueryValueBase<XQueryFunction> {
 
-    public XQueryFunctionReference(XQueryFunction xQueryFunction) {
-        value = xQueryFunction;
+    public XQueryFunctionReference(XQueryFunction xQueryFunction, XQueryValueFactory valueFactory) {
+        super(xQueryFunction, valueFactory);
     }
 
     @Override
-    public XQueryValue valueEqual(XQueryValueFactory valueFactory, XQueryValue other) {
-        return XQueryBoolean.of(value == other.functionValue());
+    public XQueryValue valueEqual(XQueryValue other) {
+        return valueFactory.bool(value == other.functionValue());
     }
 
     @Override
@@ -24,17 +24,17 @@ public class XQueryFunctionReference extends XQueryValueBase<XQueryFunction> {
     }
 
     @Override
-    public XQueryValue valueLessThan(XQueryValueFactory valueFactory, XQueryValue other) {
+    public XQueryValue valueLessThan(XQueryValue other) {
         // TODO Auto-generated method stub
         return null;
     }
     @Override
-    public XQueryValue copy(XQueryValueFactory valueFactory) {
+    public XQueryValue copy() {
         return valueFactory.functionReference(value);
     }
 
     @Override
-    public XQueryValue empty(XQueryValueFactory valueFactory) {
+    public XQueryValue empty() {
         return valueFactory.bool(false);
     }
 }

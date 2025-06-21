@@ -1,6 +1,5 @@
 package com.github.akruk.antlrxquery.typesystem.defaults;
 
-import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 
@@ -190,7 +189,6 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         final var enumItemType1 = this.getItemType();
         final var enumItemType2 = other.getItemType();
         final var sequenceGetterWithoutFactory = mergedOccurences[enumType1.getOccurence().ordinal()][enumType2.getOccurence().ordinal()];
-        @SuppressWarnings({ "rawtypes", "unchecked" })
 		Function<XQueryItemType, XQuerySequenceType> sequenceGetter = (Function) sequenceGetterWithoutFactory.apply(typeFactory);
         if (enumItemType1 == null && enumItemType2 == null) {
             return sequenceGetter.apply(typeFactory.itemAnyItem());
@@ -338,7 +336,6 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         intersectionOccurences[oneOrMore_][oneOrMore_] = zeroOrMore;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public XQuerySequenceType intersectionMerge(XQuerySequenceType other) {
         final var other_ = (XQueryEnumSequenceType) other;
@@ -523,5 +520,20 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
             return true;
         return isValueComparableWith[occurence.ordinal()][cast.getOccurence().ordinal()] && itemType.isValueComparableWith(other.getItemType());
     }
+
+
+    @Override
+    public XQuerySequenceType iteratedItem() {
+        if (occurence != XQueryOccurence.ZERO)
+            return typeFactory.one(itemType);
+        else
+            return typeFactory.emptySequence();
+    }
+
+    @Override
+    public XQuerySequenceType mapping(XQuerySequenceType mappingExpressionType) {
+        return (XQuerySequenceType) factoryByOccurence[occurence.ordinal()].apply(mappingExpressionType.getItemType());
+    }
+
 
 }

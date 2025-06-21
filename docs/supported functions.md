@@ -81,7 +81,7 @@ Function                                              | Is implemented | Comment
 `fn:idref`                                            |                |
 `antlr:start`                                         |                | non-standard, equivalent to $start in grammar
 `antlr:stop`                                          |                | non-standard, equivalent to $stop in grammar
-`antlr:line`                                           |                | non-standard, equivalent to $ctx in grammar
+`antlr:line`                                          |                | non-standard, equivalent to $ctx in grammar
 `antlr:ctx`                                           |                | non-standard, equivalent to $ctx in grammar
 
 ## Sequence functions
@@ -131,19 +131,19 @@ Function                                           | Is implemented | Comment
 `fn:round`                                         | yes            |
 `fn:round-half-to-even`                            |                |
 `math:pi`                                          | yes            |
-`math:exp`                                         |                |
-`math:exp10`                                       |                |
-`math:log`                                         |                |
-`math:log10`                                       |                |
-`math:pow`                                         |                |
-`math:sqrt`                                        |                |
-`math:sin`                                         |                |
-`math:cos`                                         |                |
-`math:tan`                                         |                |
-`math:asin`                                        |                |
-`math:acos`                                        |                |
-`math:atan`                                        |                |
-`math:atan2`                                       |                |
+`math:exp`                                         | yes            |
+`math:exp10`                                       | yes            |
+`math:log`                                         | yes            |
+`math:log10`                                       | yes            |
+`math:pow`                                         | yes            |
+`math:sqrt`                                        | yes            |
+`math:sin`                                         | yes            |
+`math:cos`                                         | yes            |
+`math:tan`                                         | yes            |
+`math:asin`                                        | yes            |
+`math:acos`                                        | yes            |
+`math:atan`                                        | yes            |
+`math:atan2`                                       | yes            |
 
 
 ## Array functions

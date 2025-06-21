@@ -15,6 +15,16 @@ public class XQueryString extends XQueryValueBase<String> {
         return value;
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("<");
+        sb.append(super.toString());
+        sb.append(":");
+        sb.append(value);
+        sb.append(">");
+        return sb.toString();
+    }
+
 
     @Override
     public Boolean effectiveBooleanValue() {

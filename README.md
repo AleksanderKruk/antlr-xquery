@@ -37,6 +37,7 @@ The first step is the implementation of
     [ --stdout ]
     [ --stderr ]
     [ --stdlog ]
+    [ --output-format [text | type-marked | internal | serialized ] ]
     [ --verbose ]
 ```
 

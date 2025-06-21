@@ -75,14 +75,15 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         // at this point visitedTupleStream should contain all tuples
         final var expressionValue = ctx.returnClause().accept(this);
         contextManager.leaveScope();
-        returnedOccurence = saveReturnedOccurence;
+        returnedOccurrence = saveReturnedOccurence;
         return expressionValue;
     }
 
-    private int returnedOccurence = 1;
+    private int returnedOccurrence = 1;
+
     private int saveReturnedOccurence() {
-        final var saved = returnedOccurence;
-        returnedOccurence = 1;
+        final var saved = returnedOccurrence;
+        returnedOccurrence = 1;
         return saved;
 	}
 
@@ -113,7 +114,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         for (final var forBinding : ctx.forBinding()) {
             final String variableName = forBinding.varName().getText();
             final XQuerySequenceType sequenceType = forBinding.exprSingle().accept(this);
-            returnedOccurence = mergeFLWOROccurence(sequenceType);
+            returnedOccurrence = mergeFLWOROccurrence(sequenceType);
 
             if (forBinding.positionalVar() != null) {
                 final String positionalVariableName = forBinding.positionalVar().varName().getText();
@@ -269,7 +270,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         if (!filteringExpressionType.hasEffectiveBooleanValue()) {
             addError(filteringExpression, "Filtering expression must have effective boolean value");
         }
-        returnedOccurence = addOptionality(returnedOccurence);
+        returnedOccurrence = addOptionality(returnedOccurrence);
         return null;
     }
 
@@ -281,49 +282,38 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     }
 
 
-    int occurence(final XQuerySequenceType type) {
-        if (type.isZero())
-            return 0;
-        if (type.isOne())
-            return 1;
-        if (type.isZeroOrOne())
-            return 2;
-        if (type.isZeroOrMore())
-            return 3;
+    private static final int[][] OCCURRENCE_MERGE_AUTOMATA = {
+        // returnedOccurrence 0 (Zero)
+        {0, 0, 0, 0, 0},
+        // returnedOccurrence 1 (One)
+        {0, 1, 2, 3, 4},
+        // returnedOccurrence 2 (ZeroOrOne)
+        {0, 2, 2, 3, 3},
+        // returnedOccurrence 3 (ZeroOrMore)
+        {0, 3, 3, 3, 3},
+        // returnedOccurrence 4 (OneOrMore/Other)
+        {0, 4, 3, 3, 4}
+    };
+
+    private int occurrence(final XQuerySequenceType type) {
+        if (type.isZero()) return 0;
+        if (type.isOne()) return 1;
+        if (type.isZeroOrOne()) return 2;
+        if (type.isZeroOrMore()) return 3;
         return 4;
     }
 
-    int mergeFLWOROccurence(final XQuerySequenceType type) {
-        return switch(returnedOccurence) {
-            case 0 -> 0;
-            case 1 -> occurence(type);
-            case 2 -> switch (occurence(type)) {
-                  case 0 -> 0;
-                  case 1 -> 2;
-                  case 2 -> 2;
-                  case 3 -> 3;
-                  default -> 3;
-                };
-
-            case 3 -> switch (occurence(type)) {
-                  case 0 -> 0;
-                  default -> 3;
-                };
-            default -> switch (occurence(type)) {
-                  case 0 -> 0;
-                  case 1 -> 4;
-                  case 4 -> 4;
-                  default -> 3;
-                };
-        };
+    private int mergeFLWOROccurrence(final XQuerySequenceType type) {
+        int typeOccurrence = occurrence(type);
+        return OCCURRENCE_MERGE_AUTOMATA[returnedOccurrence][typeOccurrence];
     }
 
     @Override
     public XQuerySequenceType visitReturnClause(final ReturnClauseContext ctx) {
         final var type = ctx.exprSingle().accept(this);
         final var itemType = type.getItemType();
-        returnedOccurence = mergeFLWOROccurence(type);
-        return switch (returnedOccurence) {
+        returnedOccurrence = mergeFLWOROccurrence(type);
+        return switch (returnedOccurrence) {
             case 0 -> typeFactory.emptySequence();
             case 1 -> typeFactory.one(itemType);
             case 2 -> typeFactory.zeroOrOne(itemType);
@@ -339,7 +329,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         if (!filteringExpressionType.hasEffectiveBooleanValue()) {
             addError(filteringExpression, "Filtering expression must have effective boolean value");
         }
-        returnedOccurence = addOptionality(returnedOccurence);
+        returnedOccurrence = addOptionality(returnedOccurrence);
         return null;
 
     }
@@ -347,7 +337,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
 
     private int addOptionality(final int occurence) {
-        return switch(returnedOccurence){
+        return switch(returnedOccurrence){
             case 0 -> 0;
             case 1 -> 2;
             case 2 -> 2;
@@ -582,17 +572,17 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
     // @Override
     // public XQuerySequenceType visitPostfix(PostfixContext ctx) {
-        // if (ctx.predicate() != null) {
-        //     return ctx.predicate().accept(this);
-        // }
-        // final var contextItem = context.getItem();
-        // if (!contextItem.isFunction()) {
-        //     // TODO: error
-        //     return null;
-        // }
-        // final var function = contextItem.functionValue();
-        // final var value = function.call(typeFactory, context, visitedArgumentTypesList);
-        // return value;
+    //     if (ctx.predicate() != null) {
+    //         return ctx.predicate().accept(this);
+    //     }
+    //     final var contextItem = context.getItem();
+    //     if (!contextItem.isFunction()) {
+    //         // TODO: error
+    //         return null;
+    //     }
+    //     final var function = contextItem.functionValue();
+    //     final var value = function.call(typeFactory, context, visitedArgumentTypesList);
+    //     return value;
     // }
 
     @Override

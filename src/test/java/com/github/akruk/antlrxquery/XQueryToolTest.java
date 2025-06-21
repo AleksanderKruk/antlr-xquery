@@ -293,7 +293,7 @@ public class XQueryToolTest {
     // === TESTY EXTRACTINPUT ===
 
     @Test
-    void testExtractInput_AllArgumentsProvided() {
+    void testExtractInput_AllArgumentsProvided() throws IOException {
         Map<String, List<String>> args = Map.of(
             "--grammars", List.of("grammar1.g4", "grammar2.g4"),
             "--target-files", List.of("file1.txt", "file2.txt"),
@@ -314,7 +314,7 @@ public class XQueryToolTest {
     }
 
     @Test
-    void testExtractInput_MinimalArguments() {
+    void testExtractInput_MinimalArguments() throws IOException {
         Map<String, List<String>> args = Map.of(
             "--grammars", List.of("test.g4"),
             "--target-files", List.of("target.txt"),
@@ -333,7 +333,7 @@ public class XQueryToolTest {
     }
 
     @Test
-    void testExtractInput_EmptyOptionalFields() {
+    void testExtractInput_EmptyOptionalFields() throws IOException {
         Map<String, List<String>> args = Map.of(
             "--grammars", List.of("test.g4"),
             "--target-files", List.of("target.txt"),
@@ -368,7 +368,7 @@ public class XQueryToolTest {
     }
 
     @Test
-    void testExtractInput_EmptyQuery() {
+    void testExtractInput_EmptyQuery() throws IOException {
         Map<String, List<String>> args = Map.of(
             "--grammars", List.of("test.g4"),
             "--target-files", List.of("target.txt"),

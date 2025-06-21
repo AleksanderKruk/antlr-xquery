@@ -751,7 +751,7 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
     }
 
     private void registerFunction(String namespace, String localName, XQueryFunction function) {
-        namespaceFunctions.computeIfAbsent(namespace, k -> new HashMap<>()).put(localName, function);
+        namespaceFunctions.computeIfAbsent(namespace, _ -> new HashMap<>()).put(localName, function);
     }
 
     private XQueryFunction getFunction(String functionName) {

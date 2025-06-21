@@ -304,26 +304,6 @@ public class XQueryRunner {
                                     String lexerName, String parserName, String query) {
     }
 
-
-
-    // private static ExtractionResult extractInput(final Map<String, List<String>> args) {
-    //     final List<String> grammars = args.get("--grammars");
-    //     final List<String> targetFiles = args.get("--target-files");
-    //     final String startingRule = getFirstArg(args, "--starting-rule", getFirstRule(grammars));
-    //     final String lexerName = getFirstArg(args, "--lexer-name", "");
-    //     final String parserName = getFirstArg(args, "--parser-name", "");
-    //     String query = String.join(" ", args.getOrDefault("--query", Collections.emptyList()));
-    //     final String queryFile = String.join(" ", args.getOrDefault("--query-file", Collections.emptyList()));
-    //     if (query == "") {
-    //         try {
-    //             query = Files.readString(Path.of(queryFile));
-    //         } catch (final IOException e) {
-    //             query = null;
-    //         }
-    //     }
-    //     return new ExtractionResult(grammars, targetFiles, startingRule, lexerName, parserName, query);
-    // }
-
     static String getFirstRule(List<String> grammars) {
         if (grammars == null || grammars.isEmpty()) return "";
 

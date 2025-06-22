@@ -1047,4 +1047,10 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         return trueType.typeAlternative(falseType);
     }
 
+    @Override
+    public XQuerySequenceType visitStringConstructor(StringConstructorContext ctx) {
+        return typeFactory.string();
+    }
+
+
 }

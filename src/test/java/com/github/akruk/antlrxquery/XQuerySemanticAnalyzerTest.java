@@ -375,6 +375,10 @@ public class XQuerySemanticAnalyzerTest {
     }
 
 
+    @Test
+    public void stringConstructor() {
+        assertType("``[]``", typeFactory.string());
+    }
 
 
 

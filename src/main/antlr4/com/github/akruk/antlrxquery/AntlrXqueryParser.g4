@@ -109,7 +109,7 @@ primaryExpr: literal
         | parenthesizedExpr
         | contextItemExpr
         | functionCall
-        | stringInterpolation
+        // | stringInterpolation
         | stringConstructor;
 literal: INTEGER | DECIMAL | STRING;
 varRef: DOLLAR varName;
@@ -204,23 +204,23 @@ constructorInterpolation:
 
 
 
-stringInterpolation:
-    STRING_INTERPOLATION_START
-    stringInterpolationContent
-    STRING_INTERPOLATION_END?
-    ;
+// stringInterpolation:
+//     STRING_INTERPOLATION_START
+//     stringInterpolationContent
+//     STRING_INTERPOLATION_END?
+//     ;
 
-stringInterpolationContent:
-    (interpolationChars | interpolationInterpolation)*
-    ;
+// stringInterpolationContent:
+//     (interpolationChars | interpolationInterpolation)*
+//     ;
 
-interpolationChars:
-    INTERPOLATION_CHARS
-    ;
+// interpolationChars:
+//     INTERPOLATION_CHARS
+//     ;
 
-interpolationInterpolation:
-    INTERPOLATION_START
-    expr?
-    RCURLY
-    ;
+// interpolationInterpolation:
+//     INTERPOLATION_START
+//     expr?
+//     RCURLY
+//     ;
 

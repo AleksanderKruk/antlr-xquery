@@ -26,6 +26,8 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.ArrowFunctionSpecifierCont
 import com.github.akruk.antlrxquery.AntlrXqueryParser.AxisStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.CastableExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ComparisonExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.ConstructorCharsContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.ConstructorInterpolationContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ContextItemExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.CountClauseContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.EnclosedExprContext;
@@ -66,6 +68,8 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.SimpleMapExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.StepExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.StringConcatExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.StringConstructorContentContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.StringConstructorContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.SwitchExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.TreatExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.UnaryExprContext;
@@ -1577,4 +1581,162 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
                 contextManager.provideVariable(e.positionalName, e.index);
         }
     }
+
+    @Override
+    public XQueryValue visitStringConstructor(final StringConstructorContext ctx) {
+        final StringBuilder result = new StringBuilder();
+
+        // Przetwórz zawartość string constructora
+        if (ctx.stringConstructorContent() != null) {
+            final XQueryValue contentValue = ctx.stringConstructorContent().accept(this);
+            result.append(contentValue.stringValue());
+        }
+
+        return valueFactory.string(result.toString());
+    }
+
+    @Override
+    public XQueryValue visitStringConstructorContent(final StringConstructorContentContext ctx) {
+        final StringBuilder result = new StringBuilder();
+
+        for (int i = 0; i < ctx.getChildCount(); i++) {
+            final var child = ctx.getChild(i);
+
+            if (child instanceof ConstructorCharsContext) {
+                // simple chars - unescape and append
+                final ConstructorCharsContext charsCtx = (ConstructorCharsContext) child;
+                final XQueryValue charsValue = charsCtx.accept(this);
+                result.append(charsValue.stringValue());
+
+            } else if (child instanceof ConstructorInterpolationContext) {
+                // interpolation - evaluate and append
+                final ConstructorInterpolationContext interpolationCtx = (ConstructorInterpolationContext) child;
+                final XQueryValue interpolationValue = interpolationCtx.accept(this);
+                result.append(interpolationValue.stringValue());
+            }
+        }
+
+        return valueFactory.string(result.toString());
+    }
+
+
+@Override
+public XQueryValue visitConstructorChars(final ConstructorCharsContext ctx) {
+    StringBuilder result = new StringBuilder();
+
+    // Iterujemy przez wszystkie dzieci w kolejności wystąpienia
+    for (int i = 0; i < ctx.getChildCount(); i++) {
+        ParseTree child = ctx.getChild(i);
+
+        if (child instanceof TerminalNode) {
+            TerminalNode terminal = (TerminalNode) child;
+            result.append(terminal.getText());
+        }
+    }
+
+    return valueFactory.string(unescapeConstructorChars(result.toString()));
+}
+
+
+    @Override
+    public XQueryValue visitConstructorInterpolation(final ConstructorInterpolationContext ctx) {
+        // Is { expr } or {} ?
+        if (ctx.expr() != null) {
+            // { expr } -> expr.stringValue()
+            final XQueryValue exprValue = ctx.expr().accept(this);
+            return valueFactory.string(processInterpolationValue(exprValue));
+        } else {
+            // {} -> empty string
+            return valueFactory.string("");
+        }
+    }
+
+    private String unescapeConstructorChars(final String str) {
+        if (str == null || str.isEmpty()) {
+            return str;
+        }
+
+        final StringBuilder result = new StringBuilder();
+        final int length = str.length();
+
+        for (int i = 0; i < length; i++) {
+            final char ch = str.charAt(i);
+
+            if (ch == '`' && i + 1 < length) {
+                final char nextChar = str.charAt(i + 1);
+                if (nextChar == '`') {
+                    // Escaped backtick: `` -> `
+                    result.append('`');
+                    i++;
+                } else if (nextChar == '{') {
+                    // Escaped opening brace sequence: `{ -> {
+                    result.append('{');
+                    i++;
+                } else {
+                    // Normal backtick
+                    result.append(ch);
+                }
+            } else if (ch == '\\' && i + 1 < length) {
+                final char nextChar = str.charAt(i + 1);
+                switch (nextChar) {
+                    case '\\':
+                        // Escaped backslash: \\ -> \
+                        result.append('\\');
+                        i++;
+                        break;
+                    case 'n':
+                        // Newline: \n -> newline
+                        result.append('\n');
+                        i++;
+                        break;
+                    case 't':
+                        // Tab: \t -> tab
+                        result.append('\t');
+                        i++;
+                        break;
+                    case 'r':
+                        // Carriage return: \r -> CR
+                        result.append('\r');
+                        i++;
+                        break;
+                    case '"':
+                        // Escaped double quote: \" -> "
+                        result.append('"');
+                        i++;
+                        break;
+                    case '\'':
+                        // Escaped single quote: \' -> '
+                        result.append('\'');
+                        i++;
+                        break;
+                    case '{':
+                        // Escaped opening brace: \{ -> {
+                        result.append('{');
+                        i++;
+                        break;
+                    case '}':
+                        // Escaped closing brace: \} -> }
+                        result.append('}');
+                        i++;
+                        break;
+                    default:
+                        // Nierozpoznany escape - pozostaw jak jest
+                        result.append(ch);
+                        break;
+                }
+            } else {
+                // Normal character
+                result.append(ch);
+            }
+        }
+
+        return result.toString();
+    }
+
+    private String processInterpolationValue(final XQueryValue value) {
+        return value.atomize().stream()
+            .map(XQueryValue::stringValue)
+            .collect(Collectors.joining(" "));
+    }
+
 }

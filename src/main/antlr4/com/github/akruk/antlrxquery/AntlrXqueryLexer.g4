@@ -1,4 +1,5 @@
 lexer grammar AntlrXqueryLexer;
+
 INTEGER: Digits;
 DECIMAL: (DOT Digits) | (Digits DOT Digits?);
 fragment Digits: [0-9]+;
@@ -43,8 +44,6 @@ LBRACKET: '[';
 RBRACKET: ']';
 LPAREN: '(';
 RPAREN: ')';
-LCURLY: '{';
-RCURLY: '}';
 COLONSTAR: ':*';
 STARCOLON: '*:';
 ALLOWING: 'allowing';
@@ -118,10 +117,47 @@ PERCENTAGE: '%';
 
 
 ID: NAME_START (DASH NAME_MIDDLE)*
-// [\p{Alpha}][\p{Alpha}\p{Alnum}-]*
     ; /* Replace with antlr compatible */
 
 fragment NAME_START: [\p{Alpha}][\p{Alpha}\p{Alnum}]*;
 fragment NAME_MIDDLE: [\p{Alpha}\p{Alnum}]+;
 fragment DASH: '-';
+
+// STRING_INTERPOLATION_START  : '`' -> pushMode(INSIDE_INTERPOLATION);
+STRING_CONSTRUCTOR_START : '``[' -> pushMode(INSIDE_STRING_CONSTRUCTOR);
+CONSTRUCTION_END: '}`' -> popMode;
+
+LCURLY: '{';
+RCURLY: '}';
+
+
+
+// mode INSIDE_INTERPOLATION;
+
+// STRING_INTERPOLATION_END  : '`' -> popMode;
+
+// INTERPOLATION_START : '{' -> pushMode(DEFAULT_MODE);
+
+// INTERPOLATION_CHARS        :
+//     ~[`{]+
+//     | '`{' ~[`{]+
+//     ;
+
+mode INSIDE_STRING_CONSTRUCTOR;
+
+STRING_CONSTRUCTOR_END  : ']``' -> popMode ;
+
+CONSTRUCTION_START : '`{' -> pushMode(DEFAULT_MODE) ;
+
+CONSTRUCTOR_CHARS        :
+  ~[`\]]+
+    ;
+
+BACKTICK: '`';
+BRACKET: ']';
+
+
+
+
+
 

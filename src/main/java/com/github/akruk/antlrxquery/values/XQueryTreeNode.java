@@ -25,6 +25,18 @@ public class XQueryTreeNode extends XQueryValueBase<ParseTree> {
         return value.getText();
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("<");
+        sb.append(super.toString());
+        sb.append(":");
+        sb.append(value.getClass().getSimpleName());
+        sb.append(":");
+        sb.append(value.getText());
+        sb.append("/>");
+        return sb.toString();
+    }
+
     // private record LineEndCharPosEnd(int lineEnd, int charPosEnd) {}
 
     // static private LineEndCharPosEnd getLineEndCharPosEnd(Token end) {

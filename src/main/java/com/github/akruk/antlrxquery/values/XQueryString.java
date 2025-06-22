@@ -21,7 +21,7 @@ public class XQueryString extends XQueryValueBase<String> {
         sb.append(super.toString());
         sb.append(":");
         sb.append(value);
-        sb.append(">");
+        sb.append("/>");
         return sb.toString();
     }
 

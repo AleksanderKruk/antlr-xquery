@@ -29,7 +29,7 @@ public class XQueryBoolean extends XQueryValueBase<Boolean> {
         sb.append(super.toString());
         sb.append(":");
         sb.append(stringValue());
-        sb.append(">");
+        sb.append("/>");
         return sb.toString();
     }
 

@@ -13,6 +13,19 @@ public class XQueryFunctionReference extends XQueryValueBase<XQueryFunction> {
         return valueFactory.bool(value == other.functionValue());
     }
 
+
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("<");
+        sb.append(super.toString());
+        sb.append(":");
+        sb.append(value.toString());
+        sb.append("/>");
+        return sb.toString();
+    }
+
+
     @Override
     public XQueryFunction functionValue() {
         return value;
@@ -25,7 +38,6 @@ public class XQueryFunctionReference extends XQueryValueBase<XQueryFunction> {
 
     @Override
     public XQueryValue valueLessThan(XQueryValue other) {
-        // TODO Auto-generated method stub
         return null;
     }
     @Override

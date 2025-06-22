@@ -20,6 +20,21 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
     }
 
     @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("<");
+        sb.append(super.toString());
+        sb.append(":");
+        int lastIndex = value.size() - 1;
+        for (int i = 0; i < value.size()-1; i++) {
+            sb.append(value.get(i).toString());
+            sb.append(", ");
+        }
+        sb.append(value.get(lastIndex).toString());
+        sb.append("/>");
+        return sb.toString();
+    }
+
+    @Override
     public Boolean effectiveBooleanValue() {
         return value.isEmpty();
     }

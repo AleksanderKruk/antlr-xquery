@@ -150,11 +150,12 @@ STRING_CONSTRUCTOR_END  : ']``' -> popMode ;
 CONSTRUCTION_START : '`{' -> pushMode(DEFAULT_MODE) ;
 
 CONSTRUCTOR_CHARS        :
-    ~[`\]]+
-    | '`' ~[`\]{]+
-    | ']`' ~[`\]]+
-    | ']' ~[`\]]+
+  ~[`\]]+
     ;
+
+BACKTICK: '`';
+BRACKET: ']';
+
 
 
 

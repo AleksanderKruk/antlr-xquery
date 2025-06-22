@@ -193,7 +193,7 @@ stringConstructorContent:
     ;
 
 constructorChars:
-    CONSTRUCTOR_CHARS
+    (CONSTRUCTOR_CHARS | BACKTICK | BRACKET)+
     ;
 
 constructorInterpolation:

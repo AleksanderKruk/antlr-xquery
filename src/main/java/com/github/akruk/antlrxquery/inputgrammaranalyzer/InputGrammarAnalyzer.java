@@ -11,6 +11,7 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.tree.xpath.XPath;
 import com.github.akruk.antlrgrammar.ANTLRv4Lexer;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser;
@@ -31,7 +32,9 @@ public class InputGrammarAnalyzer {
                                         Map<String, Set<String>> preceding,
                                         Map<String, Set<String>> precedingOrSelf,
                                         Map<String, Set<String>> precedingSibling,
-                                        Map<String, Set<String>> precedingSiblingOrSelf) {}
+                                        Map<String, Set<String>> precedingSiblingOrSelf,
+                                        Set<String> simpleTokens)
+    {}
 
     Set<String> toSet(final Collection<ParseTree> els) {
         return els.stream()
@@ -81,31 +84,76 @@ public class InputGrammarAnalyzer {
         final var precedingSiblingMapping = analyzer.getPrecedingSiblingMapping();
         final var precedingSiblingOrSelfMapping = addSelf(precedingSiblingMapping);
         final var followingMapping = getFollowing(ancestorOrSelfMapping,
-                                                  followingSiblingMapping,
-                                                  descendantOrSelfMapping);
+                followingSiblingMapping,
+                descendantOrSelfMapping);
         final var followingOrSelfMapping = addSelf(followingMapping);
         final var precedingMapping = getPreceding(ancestorOrSelfMapping,
-                                                    precedingSiblingMapping,
-                                                    descendantOrSelfMapping);
+                precedingSiblingMapping,
+                descendantOrSelfMapping);
         final var precedingOrSelfMapping = addSelf(precedingMapping);
+
+        final Set<String> simpleTokens = getSimpleTokens(antlrParser, tree);
+
         final var gatheredData = new GrammarAnalysisResult(childrenMapping,
-                                                    descendantMapping,
-                                                    descendantOrSelfMapping,
-                                                    followingMapping,
-                                                    followingOrSelfMapping,
-                                                    followingSiblingMapping,
-                                                    followingSiblingOrSelfMapping,
-                                                    ancestorMapping,
-                                                    ancestorOrSelfMapping,
-                                                    parentMapping,
-                                                    precedingMapping,
-                                                    precedingOrSelfMapping,
-                                                    precedingSiblingMapping,
-                                                    precedingSiblingOrSelfMapping);
+                descendantMapping,
+                descendantOrSelfMapping,
+                followingMapping,
+                followingOrSelfMapping,
+                followingSiblingMapping,
+                followingSiblingOrSelfMapping,
+                ancestorMapping,
+                ancestorOrSelfMapping,
+                parentMapping,
+                precedingMapping,
+                precedingOrSelfMapping,
+                precedingSiblingMapping,
+                precedingSiblingOrSelfMapping,
+                simpleTokens);
         return gatheredData;
     }
 
 
+    Set<String> getSimpleTokens(final ANTLRv4Parser antlrParser, final GrammarSpecContext tree) {
+        final var lexerRules = XPath.findAll(tree, "//lexerRuleSpec", antlrParser);
+        final var parserRules = XPath.findAll(tree, "//parserRuleSpec", antlrParser);
+        final var combinedRules = new HashSet<>(lexerRules.size() + parserRules.size());
+        combinedRules.addAll(lexerRules);
+        final var simpleLexerRules = combinedRules.stream()
+            .filter(rule-> {
+                final var ruleSpec = (ANTLRv4Parser.LexerRuleSpecContext) rule;
+                final var ruleBlock = ruleSpec.lexerRuleBlock();
+                final var allAtoms = XPath.findAll(ruleBlock, "//lexerAtom", antlrParser);
+                final var allAtomsAreCharSet = allAtoms.stream()
+                    .map(n->(ANTLRv4Parser.LexerAtomContext) n )
+                    .flatMap(a-> a.children.stream())
+                    .allMatch(atom -> atom instanceof TerminalNode);
+                return ruleSpec.FRAGMENT() == null
+                        && ruleBlock.children.size() == 1
+                        && allAtomsAreCharSet;
+                }).map(rule -> {
+                    final var ruleSpec = (ANTLRv4Parser.LexerRuleSpecContext) rule;
+                    var ruleName = ruleSpec.TOKEN_REF().getText();
+                    return ruleName;
+                }).collect(Collectors.toSet());
+        final var simpleParserRules = combinedRules.stream()
+            .filter(rule-> {
+                final var ruleSpec = (ANTLRv4Parser.ParserRuleSpecContext) rule;
+                final var ruleBlock = ruleSpec.ruleBlock();
+                final var allAtoms = XPath.findAll(ruleBlock, "//atom", antlrParser);
+                final var allLiterals = XPath.findAll(ruleBlock, "//STRING_LITERAL", antlrParser);
+                final var elementOptions = XPath.findAll(ruleBlock, "//elementOptions", antlrParser);
+                return ruleBlock.children.size() == 1
+                    && elementOptions.size() == 0
+                    && allAtoms.size() == allLiterals.size()
+                        ;
+                }).map(rule -> {
+                    final var ruleSpec = (ANTLRv4Parser.LexerRuleSpecContext) rule;
+                    var ruleName = ruleSpec.TOKEN_REF().getText();
+                    return ruleName;
+                }).collect(Collectors.toSet());
+        simpleLexerRules.addAll(simpleParserRules);
+        return simpleLexerRules;
+    }
 
     private Map<String, Set<String>> addSelf(Map<String, Set<String>> mapping) {
         final Map<String, Set<String>> selfMapping = new HashMap<>(mapping.size(), 1);

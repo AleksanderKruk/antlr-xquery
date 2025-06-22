@@ -225,4 +225,11 @@ public class GrammarAnalysisTests {
         assertTrue(precedingOrSelf.get("'c'").equals(Set.of("a", "'a'", "b", "B", "'c'")));
     }
 
+    @Test
+    public void simpleTokens() throws XQueryUnsupportedOperation {
+        final var results = testGrammar();
+        final var allExpectedNodes = Set.of("a", "b", "c", "d");
+        final var  simpleTokens = results.simpleTokens();
+        assertEquals(allExpectedNodes, simpleTokens);
+    }
 }

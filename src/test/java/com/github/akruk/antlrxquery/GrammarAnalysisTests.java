@@ -13,24 +13,50 @@ import static org.junit.Assert.*;
 
 public class GrammarAnalysisTests {
 
-    private GrammarAnalysisResult testGrammar() {
+
+    private GrammarAnalysisResult analyzeGrammar(String grammar) {
         InputGrammarAnalyzer analyzer = new InputGrammarAnalyzer();
-        CharStream stream = CharStreams.fromString(
-            """
-                grammar grammarname;
-                x: a b c;
-                a: 'a';
-                b: B;
-                c: 'c';
-                B: 'b';
-        """);
+        CharStream stream = CharStreams.fromString(grammar);
         final var results = analyzer.analyze(stream);
         return results;
     }
 
+    private GrammarAnalysisResult relationshipGrammar() {
+        final String grammar = """
+            grammar grammarname;
+            x: a b c;
+            a: 'a';
+            b: B;
+            c: 'c';
+            B: 'b';
+        """;
+        return analyzeGrammar(grammar);
+    }
+
+    private GrammarAnalysisResult simpleTokenTestGrammar() {
+        String grammar = """
+            grammar grammarname;
+            A: 'a';
+            B: 'b' 'c' 'd';
+            C: 'bcd';
+            fragment D: 'd';
+            fragment E: 'e';
+            F: D E;
+            G: 'a'+;
+            H: 'a'*;
+            I: 'e' 'a'?;
+            J: 'e' | 'h';
+            K: 'e' | [abcd];
+            I: [abcd];
+            J: ~'h';
+        """;
+        return analyzeGrammar(grammar);
+    }
+
+
     @Test
     public void children() throws XQueryUnsupportedOperation {
-        final var results = testGrammar();
+        final var results = relationshipGrammar();
         final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
 
         final var children = results.children();
@@ -44,7 +70,7 @@ public class GrammarAnalysisTests {
 
     @Test
     public void descendants() throws XQueryUnsupportedOperation {
-        final var results = testGrammar();
+        final var results = relationshipGrammar();
         final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
         final var descendantsOrSelf = results.descendantsOrSelf();
         assertTrue(descendantsOrSelf.keySet().equals(allExpectedNodes));
@@ -60,7 +86,7 @@ public class GrammarAnalysisTests {
 
     @Test
     public void descendantsOrSelf() throws XQueryUnsupportedOperation {
-        final var results = testGrammar();
+        final var results = relationshipGrammar();
         final var descendant = results.descendants();
         final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
         assertTrue(descendant.keySet().equals(allExpectedNodes));
@@ -75,7 +101,7 @@ public class GrammarAnalysisTests {
 
     @Test
     public void ancestors() throws XQueryUnsupportedOperation {
-        final var results = testGrammar();
+        final var results = relationshipGrammar();
         final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
         final var ancestors = results.ancestors();
         assertTrue(ancestors.keySet().equals(allExpectedNodes));
@@ -90,7 +116,7 @@ public class GrammarAnalysisTests {
 
     @Test
     public void ancestorsOrSelf() throws XQueryUnsupportedOperation {
-        final var results = testGrammar();
+        final var results = relationshipGrammar();
         final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
         final var ancestorsOrSelf = results.ancestorsOrSelf();
         assertTrue(ancestorsOrSelf.keySet().equals(allExpectedNodes));
@@ -105,7 +131,7 @@ public class GrammarAnalysisTests {
 
     @Test
     public void followingSibling() throws XQueryUnsupportedOperation {
-        final var results = testGrammar();
+        final var results = relationshipGrammar();
         final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
         final var followingSibling = results.followingSibling();
         assertTrue(followingSibling.keySet().equals(allExpectedNodes));
@@ -120,7 +146,7 @@ public class GrammarAnalysisTests {
 
     @Test
     public void followingSiblingOrSelf() throws XQueryUnsupportedOperation {
-        final var results = testGrammar();
+        final var results = relationshipGrammar();
         final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
         final var followingSiblingOrSelf = results.followingSiblingOrSelf();
         assertTrue(followingSiblingOrSelf.keySet().equals(allExpectedNodes));
@@ -135,7 +161,7 @@ public class GrammarAnalysisTests {
 
     @Test
     public void following() throws XQueryUnsupportedOperation {
-        final var results = testGrammar();
+        final var results = relationshipGrammar();
         final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
         final var  following = results.following();
         assertTrue(following.keySet().equals(allExpectedNodes));
@@ -150,7 +176,7 @@ public class GrammarAnalysisTests {
 
     @Test
     public void followingOrSelf() throws XQueryUnsupportedOperation {
-        final var results = testGrammar();
+        final var results = relationshipGrammar();
         final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
         final var followingOrSelf = results.followingOrSelf();
         assertTrue(followingOrSelf.keySet().equals(allExpectedNodes));
@@ -166,7 +192,7 @@ public class GrammarAnalysisTests {
 
     @Test
     public void precedingSibling() throws XQueryUnsupportedOperation {
-        final var results = testGrammar();
+        final var results = relationshipGrammar();
         final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
         final var precedingSibling = results.precedingSibling();
         assertTrue(precedingSibling.keySet().equals(allExpectedNodes));
@@ -181,7 +207,7 @@ public class GrammarAnalysisTests {
 
     @Test
     public void precedingSiblingOrSelf() throws XQueryUnsupportedOperation {
-        final var results = testGrammar();
+        final var results = relationshipGrammar();
         final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
         final var  precedingSiblingOrSelf = results.precedingSiblingOrSelf();
         assertTrue(precedingSiblingOrSelf.keySet().equals(allExpectedNodes));
@@ -197,7 +223,7 @@ public class GrammarAnalysisTests {
 
     @Test
     public void preceding() throws XQueryUnsupportedOperation {
-        final var results = testGrammar();
+        final var results = relationshipGrammar();
         final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
         final var preceding = results.preceding();
         assertTrue(preceding.keySet().equals(allExpectedNodes));
@@ -212,7 +238,7 @@ public class GrammarAnalysisTests {
 
     @Test
     public void precedingOrSelf() throws XQueryUnsupportedOperation {
-        final var results = testGrammar();
+        final var results = relationshipGrammar();
         final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
         final var  precedingOrSelf = results.precedingOrSelf();
         assertTrue(precedingOrSelf.keySet().equals(allExpectedNodes));
@@ -227,7 +253,26 @@ public class GrammarAnalysisTests {
 
     @Test
     public void simpleTokens() throws XQueryUnsupportedOperation {
-        final var results = testGrammar();
+        final var results = simpleTokenTestGrammar();
+        final var simpleTokens = results.simpleTokens();
+        // only strings
+        assertTrue(simpleTokens.contains("A"));
+        assertTrue(simpleTokens.contains("B"));
+        assertTrue(simpleTokens.contains("C"));
+
+        // no fragments
+        assertFalse(simpleTokens.contains("D"));
+        assertFalse(simpleTokens.contains("E"));
+
+        // recursive simplicity
+        assertTrue(simpleTokens.contains("F"));
+
+
+    }
+
+    @Test
+    public void simpleTokensRecursiveSimplicity() throws XQueryUnsupportedOperation {
+        final var results = simpleTokenTestGrammar();
         final var allExpectedNodes = Set.of("a", "b", "c", "d");
         final var  simpleTokens = results.simpleTokens();
         assertEquals(allExpectedNodes, simpleTokens);

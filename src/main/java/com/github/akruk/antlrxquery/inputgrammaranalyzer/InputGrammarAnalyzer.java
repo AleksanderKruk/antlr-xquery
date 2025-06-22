@@ -114,28 +114,30 @@ public class InputGrammarAnalyzer {
 
 
     Set<String> getSimpleTokens(final ANTLRv4Parser antlrParser, final GrammarSpecContext tree) {
+        // final var matcher = antlrParser.compileParseTreePattern("<STRING_LITERAL>", ANTLRv4Parser.RULE_ruleBlock);
+        // final var lexerMatcher = antlrParser.compileParseTreePattern("<STRING_LITERAL>", ANTLRv4Parser.RULE_lexerRuleBlock);
         final var lexerRules = XPath.findAll(tree, "//lexerRuleSpec", antlrParser);
         final var parserRules = XPath.findAll(tree, "//parserRuleSpec", antlrParser);
-        final var combinedRules = new HashSet<>(lexerRules.size() + parserRules.size());
-        combinedRules.addAll(lexerRules);
-        final var simpleLexerRules = combinedRules.stream()
+        final var simpleLexerRules = lexerRules.stream()
             .filter(rule-> {
-                final var ruleSpec = (ANTLRv4Parser.LexerRuleSpecContext) rule;
-                final var ruleBlock = ruleSpec.lexerRuleBlock();
-                final var allAtoms = XPath.findAll(ruleBlock, "//lexerAtom", antlrParser);
-                final var allAtomsAreCharSet = allAtoms.stream()
-                    .map(n->(ANTLRv4Parser.LexerAtomContext) n )
-                    .flatMap(a-> a.children.stream())
-                    .allMatch(atom -> atom instanceof TerminalNode);
-                return ruleSpec.FRAGMENT() == null
-                        && ruleBlock.children.size() == 1
-                        && allAtomsAreCharSet;
+                    final var ruleSpec = (ANTLRv4Parser.LexerRuleSpecContext) rule;
+                    if (ruleSpec.FRAGMENT() != null)
+                        return false;
+                    final var ruleBlock = ruleSpec.lexerRuleBlock();
+                    if (ruleBlock.children.size() != 1)
+                        return false;
+                    final var allAtoms = XPath.findAll(ruleBlock, "//lexerAtom", antlrParser);
+                    final var allLiterals = XPath.findAll(ruleBlock, "//STRING_LITERAL", antlrParser);
+                    if (allAtoms.size() != allLiterals.size())
+                        return false;
+                    final var elementOptions = XPath.findAll(ruleBlock, "//elementOptions", antlrParser);
+                    return elementOptions.size() == 0;
                 }).map(rule -> {
                     final var ruleSpec = (ANTLRv4Parser.LexerRuleSpecContext) rule;
                     var ruleName = ruleSpec.TOKEN_REF().getText();
                     return ruleName;
                 }).collect(Collectors.toSet());
-        final var simpleParserRules = combinedRules.stream()
+        final var simpleParserRules = parserRules.stream()
             .filter(rule-> {
                 final var ruleSpec = (ANTLRv4Parser.ParserRuleSpecContext) rule;
                 final var ruleBlock = ruleSpec.ruleBlock();
@@ -144,11 +146,10 @@ public class InputGrammarAnalyzer {
                 final var elementOptions = XPath.findAll(ruleBlock, "//elementOptions", antlrParser);
                 return ruleBlock.children.size() == 1
                     && elementOptions.size() == 0
-                    && allAtoms.size() == allLiterals.size()
-                        ;
+                    && allAtoms.size() == allLiterals.size();
                 }).map(rule -> {
-                    final var ruleSpec = (ANTLRv4Parser.LexerRuleSpecContext) rule;
-                    var ruleName = ruleSpec.TOKEN_REF().getText();
+                    final var ruleSpec = (ANTLRv4Parser.ParserRuleSpecContext) rule;
+                    var ruleName = ruleSpec.RULE_REF().getText();
                     return ruleName;
                 }).collect(Collectors.toSet());
         simpleLexerRules.addAll(simpleParserRules);

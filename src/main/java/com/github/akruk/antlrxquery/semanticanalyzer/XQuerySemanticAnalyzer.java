@@ -348,20 +348,47 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     @Override
     public XQuerySequenceType visitLiteral(final LiteralContext ctx) {
         if (ctx.STRING() != null) {
-            final String text = ctx.getText();
-            final String removepars = ctx.getText().substring(1, text.length() - 1);
-            final String string = unescapeString(removepars);
-            valueFactory.string(string);
+            final String rawText = ctx.getText();
+            final String content = unescapeString(rawText.substring(1, rawText.length() - 1));
+            valueFactory.string(content);
             return typeFactory.string();
         }
 
-        if (ctx.INTEGER() != null) {
-            valueFactory.number(new BigDecimal(ctx.INTEGER().getText()));
+        final var numeric = ctx.numericLiteral();
+        if (numeric.IntegerLiteral() != null) {
+            final String value = numeric.IntegerLiteral().getText();
+            valueFactory.number(new BigDecimal(value));
             return typeFactory.number();
         }
-        valueFactory.number(new BigDecimal(ctx.DECIMAL().getText()));
-        return typeFactory.number();
+
+        if (numeric.HexIntegerLiteral() != null) {
+            final String raw = numeric.HexIntegerLiteral().getText();
+            final String hex = raw.replace("_", "").substring(2);
+            valueFactory.number(new BigDecimal(new java.math.BigInteger(hex, 16)));
+            return typeFactory.number();
+        }
+
+        if (numeric.BinaryIntegerLiteral() != null) {
+            final String raw = numeric.BinaryIntegerLiteral().getText();
+            final String binary = raw.replace("_", "").substring(2);
+            valueFactory.number(new BigDecimal(new java.math.BigInteger(binary, 2)));
+            return typeFactory.number();
+        }
+
+        if (numeric.DecimalLiteral() != null) {
+            final String cleaned = numeric.DecimalLiteral().getText().replace("_", "");
+            valueFactory.number(new BigDecimal(cleaned));
+            return typeFactory.number();
+        }
+
+        if (numeric.DoubleLiteral() != null) {
+            final String cleaned = numeric.DoubleLiteral().getText().replace("_", "");
+            valueFactory.number(new BigDecimal(cleaned));
+            return typeFactory.number();
+        }
+        return null;
     }
+
 
     @Override
     public XQuerySequenceType visitParenthesizedExpr(final ParenthesizedExprContext ctx) {

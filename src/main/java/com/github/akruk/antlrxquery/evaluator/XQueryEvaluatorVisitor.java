@@ -271,17 +271,39 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     @Override
     public XQueryValue visitLiteral(final LiteralContext ctx) {
         if (ctx.STRING() != null) {
-            final String text = ctx.getText();
-            final String removepars = ctx.getText().substring(1, text.length() - 1);
-            final String string = unescapeString(removepars);
-            return valueFactory.string(string);
+            final String rawText = ctx.getText();
+            final String content = unescapeString(rawText.substring(1, rawText.length() - 1));
+            return valueFactory.string(content);
         }
 
-        if (ctx.INTEGER() != null) {
-            return valueFactory.number(new BigDecimal(ctx.INTEGER().getText()));
+        final var numeric = ctx.numericLiteral();
+        if (numeric.IntegerLiteral() != null) {
+            final String value = numeric.IntegerLiteral().getText();
+            return valueFactory.number(new BigDecimal(value));
         }
 
-        return valueFactory.number(new BigDecimal(ctx.DECIMAL().getText()));
+        if (numeric.HexIntegerLiteral() != null) {
+            final String raw = numeric.HexIntegerLiteral().getText();
+            final String hex = raw.replace("_", "").substring(2);
+            return valueFactory.number(new BigDecimal(new java.math.BigInteger(hex, 16)));
+        }
+
+        if (numeric.BinaryIntegerLiteral() != null) {
+            final String raw = numeric.BinaryIntegerLiteral().getText();
+            final String binary = raw.replace("_", "").substring(2);
+            return valueFactory.number(new BigDecimal(new java.math.BigInteger(binary, 2)));
+        }
+
+        if (numeric.DecimalLiteral() != null) {
+            final String cleaned = numeric.DecimalLiteral().getText().replace("_", "");
+            return valueFactory.number(new BigDecimal(cleaned));
+        }
+
+        if (numeric.DoubleLiteral() != null) {
+            final String cleaned = numeric.DoubleLiteral().getText().replace("_", "");
+            return valueFactory.number(new BigDecimal(cleaned));
+        }
+        return null;
     }
 
     @Override

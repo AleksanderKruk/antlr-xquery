@@ -279,28 +279,6 @@ public class InputGrammarAnalyzer {
         return false;
     }
 
-
-
-
-
-            // final var parserRules = XPath.findAll(tree, "//parserRuleSpec", antlrParser);
-            // final var simpleParserRules = parserRules.stream()
-            //     .filter(rule-> {
-            //         final var ruleSpec = (ANTLRv4Parser.ParserRuleSpecContext) rule;
-            //         final var ruleBlock = ruleSpec.ruleBlock();
-            //         final var allAtoms = XPath.findAll(ruleBlock, "//atom", antlrParser);
-            //         final var allLiterals = XPath.findAll(ruleBlock, "//STRING_LITERAL", antlrParser);
-            //         final var elementOptions = XPath.findAll(ruleBlock, "//elementOptions", antlrParser);
-            //         return ruleBlock.children.size() == 1
-            //             && elementOptions.size() == 0
-            //             && allAtoms.size() == allLiterals.size();
-            //         }).map(rule -> {
-            //             final var ruleSpec = (ANTLRv4Parser.ParserRuleSpecContext) rule;
-            //             var ruleName = ruleSpec.RULE_REF().getText();
-            //             return ruleName;
-            //         }).collect(Collectors.toSet());
-            // simpleLexerRules.addAll(simpleParserRules);
-
     private String getLexerRuleName(final ParseTree rule) {
         final var ruleSpec = (ANTLRv4Parser.LexerRuleSpecContext) rule;
         final var ruleName = ruleSpec.TOKEN_REF().getText();

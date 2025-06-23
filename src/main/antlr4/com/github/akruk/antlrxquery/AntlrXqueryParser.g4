@@ -111,7 +111,18 @@ primaryExpr: literal
         | functionCall
         // | stringInterpolation
         | stringConstructor;
-literal: INTEGER | DECIMAL | STRING;
+literal:
+  numericLiteral
+  | STRING;
+
+numericLiteral
+    : IntegerLiteral
+    | HexIntegerLiteral
+    | BinaryIntegerLiteral
+    | DecimalLiteral
+    |  DoubleLiteral
+    ;
+
 varRef: DOLLAR varName;
 varName: qname;
 parenthesizedExpr: LPAREN expr? RPAREN;
@@ -146,7 +157,7 @@ nameTest	:	qname | wildcard;
 
 functionType:	annotation* (anyFunctionType | typedFunctionType);
 annotation	:	PERCENTAGE qname (LPAREN annotationValue (',' annotationValue)* RPAREN)?;
-annotationValue:	STRING | ('-'? (INTEGER | DECIMAL)) | (qname LPAREN RPAREN);
+annotationValue:	STRING | ('-'? numericLiteral) | (qname LPAREN RPAREN);
 anyFunctionType	:	FUNCTION LPAREN '*' RPAREN;
 typedFunctionType	:	FUNCTION LPAREN (typedFunctionParam (',' typedFunctionParam)*)? RPAREN 'as' sequenceType;
 typedFunctionParam	:	('$' qname 'as')? sequenceType;

@@ -1,8 +1,28 @@
 lexer grammar AntlrXqueryLexer;
 
-INTEGER: Digits;
-DECIMAL: (DOT Digits) | (Digits DOT Digits?);
 fragment Digits: [0-9]+;
+fragment DEC_DIGIT      : [0-9];
+fragment HEX_DIGIT      : [0-9a-fA-F];
+fragment BINARY_DIGIT   : [01];
+
+fragment E              : [eE];
+fragment UNDER          : '_';
+
+fragment HEX_PREFIX     : '0x';
+fragment BIN_PREFIX     : '0b';
+
+IntegerLiteral         : DEC_DIGIT ( (DEC_DIGIT | UNDER)* DEC_DIGIT )?;
+HexIntegerLiteral      : HEX_PREFIX HEX_DIGIT ( (HEX_DIGIT | UNDER)* HEX_DIGIT )?;
+BinaryIntegerLiteral   : BIN_PREFIX BINARY_DIGIT ( (BINARY_DIGIT | UNDER)* BINARY_DIGIT )?;
+DecimalLiteral
+    : (DOT DEC_DIGIT ( (DEC_DIGIT | UNDER)* DEC_DIGIT )?)
+    | (DEC_DIGIT ( (DEC_DIGIT | UNDER)* DEC_DIGIT )? DOT DEC_DIGIT* );
+DoubleLiteral
+    : (DOT DEC_DIGIT ( (DEC_DIGIT | UNDER)* DEC_DIGIT )?
+       | DEC_DIGIT ( (DEC_DIGIT | UNDER)* DEC_DIGIT )? DOT DEC_DIGIT* )
+      E (PLUS | MINUS)? DEC_DIGIT ( (DEC_DIGIT | UNDER)* DEC_DIGIT )?;
+
+
 
 STRING: ('"' ('""' | ~["&])* '"')
     | ('\'' ('\'\'' | ~['&])* '\'');

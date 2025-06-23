@@ -271,14 +271,18 @@ public class GrammarAnalysisTests {
         assertTrue(simpleTokens.contains("FF"));
         assertTrue(simpleTokens.contains("FFF"));
 
+        // no modifiers
+        assertFalse(simpleTokens.contains("G"));
+        assertFalse(simpleTokens.contains("H"));
+        assertFalse(simpleTokens.contains("I"));
 
-    }
+        // no alternatives
+        assertFalse(simpleTokens.contains("J"));
+        assertFalse(simpleTokens.contains("K"));
 
-    @Test
-    public void simpleTokensRecursiveSimplicity() throws XQueryUnsupportedOperation {
-        final var results = simpleTokenTestGrammar();
-        final var allExpectedNodes = Set.of("a", "b", "c", "d");
-        final var  simpleTokens = results.simpleTokens();
-        assertEquals(allExpectedNodes, simpleTokens);
+        // no character classes
+        assertFalse(simpleTokens.contains("L"));
+        // no sets
+        assertFalse(simpleTokens.contains("M"));
     }
 }

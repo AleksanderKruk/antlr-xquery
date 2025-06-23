@@ -132,29 +132,30 @@ public class InputGrammarAnalyzer {
         final Set<ParseTree> previousSimpleRules = normalRules.stream()
             .filter(rule -> isSimpleLexerRule(antlrParser, rule))
             .collect(Collectors.toSet());
-        final Set<ParseTree> remaining = new HashSet<>(lexerRules);
-        remaining.removeAll(previousSimpleRules);
-        remaining.removeAll(previousSimpleFragments);
+        final Set<ParseTree> remainingFragments = new HashSet<>(fragmentRules);
+        final Set<ParseTree> remainingRules = new HashSet<>(normalRules);
+        remainingRules.removeAll(previousSimpleRules);
+        remainingFragments.removeAll(previousSimpleFragments);
         int previousSimpleRuleCount = 0;
         int currentSimpleRuleCount = 0;
         do {
             previousSimpleRuleCount = previousSimpleFragments.size() + previousSimpleRules.size();
             final Set<String> previousFragmentRuleNames = previousSimpleFragments.stream().map(this::getLexerRuleName).collect(Collectors.toSet());
             final Set<String> previousSimpleRuleNames = previousSimpleRules.stream().map(this::getLexerRuleName).collect(Collectors.toSet());
-            final Set<ParseTree> simpleRecursiveFragmentLexerRules = remaining.stream()
+            final Set<ParseTree> simpleRecursiveFragmentLexerRules = remainingFragments.stream()
                 .filter(rule-> isSimpleFragmentedLexerRule(antlrParser, rule, previousSimpleRuleNames, previousFragmentRuleNames))
                 .collect(Collectors.toSet());
-            remaining.removeAll(simpleRecursiveFragmentLexerRules);
+            remainingFragments.removeAll(simpleRecursiveFragmentLexerRules);
             previousSimpleFragments.addAll(simpleRecursiveFragmentLexerRules);
 
             final Set<String> simpleRecursiveFragmentLexerRuleNames = simpleRecursiveFragmentLexerRules.stream()
                 .map(this::getLexerRuleName)
                 .collect(Collectors.toSet());
 
-            final var simpleRecursiveLexerRules = remaining.stream()
+            final var simpleRecursiveLexerRules = remainingRules.stream()
                 .filter(rule-> isSimpleFragmentedLexerRule(antlrParser, rule, previousFragmentRuleNames, simpleRecursiveFragmentLexerRuleNames ))
                 .collect(Collectors.toSet());
-            remaining.removeAll(simpleRecursiveLexerRules);
+            remainingRules.removeAll(simpleRecursiveLexerRules);
             previousSimpleRules.addAll(simpleRecursiveLexerRules);
 
             currentSimpleRuleCount = previousSimpleFragments.size() + previousSimpleRules.size();
@@ -192,12 +193,24 @@ public class InputGrammarAnalyzer {
         final var ruleBlock = ruleSpec.lexerRuleBlock();
         if (ruleBlock.children.size() != 1)
             return false;
+        final var allAlts = XPath.findAll(ruleBlock, "//lexerAlt", antlrParser);
+        if (allAlts.size() != 1)
+            return false;
+        final var notSets = XPath.findAll(ruleBlock, "//notSet", antlrParser);
+        if (!notSets.isEmpty())
+            return false;
+        final var charRange = XPath.findAll(ruleBlock, "//characterRange", antlrParser);
+        if (!charRange.isEmpty())
+            return false;
+        final var wildcard = XPath.findAll(ruleBlock, "//wildcard", antlrParser);
+        if (!wildcard.isEmpty())
+            return false;
         final var allAtoms = XPath.findAll(ruleBlock, "//lexerAtom", antlrParser);
         final var allLiterals = XPath.findAll(ruleBlock, "//STRING_LITERAL", antlrParser);
         if (allAtoms.size() != allLiterals.size())
             return false;
-        final var elementOptions = XPath.findAll(ruleBlock, "//elementOptions", antlrParser);
-        return elementOptions.size() == 0;
+        final var suffixes = XPath.findAll(ruleBlock, "//ebnfSuffix", antlrParser);
+        return suffixes.size() == 0;
     }
 
     private boolean isSimpleFragmentedLexerRule(final ANTLRv4Parser antlrParser,
@@ -209,13 +222,31 @@ public class InputGrammarAnalyzer {
         final var ruleBlock = ruleSpec.lexerRuleBlock();
         if (ruleBlock.children.size() != 1)
             return false;
+        final var allAlts = XPath.findAll(ruleBlock, "//lexerAlt", antlrParser);
+        if (allAlts.size() != 1)
+            return false;
+        final var notSets = XPath.findAll(ruleBlock, "//notSet", antlrParser);
+        if (!notSets.isEmpty())
+            return false;
+        final var charRange = XPath.findAll(ruleBlock, "//characterRange", antlrParser);
+        if (!charRange.isEmpty())
+            return false;
+        final var wildcard = XPath.findAll(ruleBlock, "//wildcard", antlrParser);
+        if (!wildcard.isEmpty())
+            return false;
+        final var refs = XPath.findAll(ruleSpec.lexerRuleBlock(), "//TOKEN_REF", antlrParser);
+        final var allSimpleRefs = refs.stream().allMatch(ref -> {
+            var name = ref.getText();
+            return simpleRules.contains(name) || simpleFragments.contains(name);
+        });
+        if (!allSimpleRefs)
+            return false;
         final var allAtoms = XPath.findAll(ruleBlock, "//lexerAtom", antlrParser);
         final var allLiterals = XPath.findAll(ruleBlock, "//STRING_LITERAL", antlrParser);
-        final var allRefs = XPath.findAll(ruleBlock, "//STRING_LITERAL", antlrParser);
-        if (allAtoms.size() != allLiterals.size())
+        if (allAtoms.size() != (allLiterals.size() + refs.size()))
             return false;
-        final var elementOptions = XPath.findAll(ruleBlock, "//elementOptions", antlrParser);
-        return elementOptions.size() == 0;
+        final var suffixes = XPath.findAll(ruleBlock, "//ebnfSuffix", antlrParser);
+        return suffixes.size() == 0;
     }
 
 

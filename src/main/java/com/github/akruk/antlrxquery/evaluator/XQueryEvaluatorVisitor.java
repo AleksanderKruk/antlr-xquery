@@ -66,18 +66,21 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.ReturnClauseContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseAxisContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.SimpleMapExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.SlidingWindowClauseContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.StepExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.StringConcatExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.StringConstructorContentContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.StringConstructorContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.SwitchExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.TreatExprContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.TumblingWindowClauseContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.UnaryExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.UnionExprContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarRefContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.WhereClauseContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.WhileClauseContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.WindowClauseContext;
 import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.XQueryDynamicContextManager;
 import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.baseimplementation.XQueryBaseDynamicContextManager;
 import com.github.akruk.antlrxquery.evaluator.functioncaller.XQueryFunctionCaller;
@@ -181,6 +184,33 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return null;
     }
 
+    @Override
+    public XQueryValue visitOrderByClause(final OrderByClauseContext ctx) {
+        final int sortingExprCount = ctx.orderSpecList().orderSpec().size();
+        final var orderSpecs = ctx.orderSpecList().orderSpec();
+        final int[] modifierMaskArray = orderSpecs.stream()
+            .map(OrderSpecContext::orderModifier)
+            .mapToInt(m->{
+                final int isDescending = m.DESCENDING() != null? 1 : 0;
+                final int isEmptyLeast = m.LEAST() != null? 1 : 0;
+                final int mask = (isDescending << 1) | isEmptyLeast;
+                return mask;
+            })
+            .toArray();
+        visitedTupleStream = visitedTupleStream.sorted((tuple1, tuple2) -> {
+            var comparator = comparatorFromNthOrderSpec(orderSpecs, modifierMaskArray, 0);
+            for (int i = 1; i < sortingExprCount; i++) {
+                final var nextComparator = comparatorFromNthOrderSpec(orderSpecs, modifierMaskArray, i);
+                comparator = comparator.thenComparing(nextComparator);
+            }
+            return comparator.compare(tuple1, tuple2);
+        }).map(tuple->{
+            provideVariables(tuple);
+            return tuple;
+        });
+        return null;
+    }
+
 
 
     @Override
@@ -249,13 +279,6 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitVarRef(final VarRefContext ctx) {
-        final String variableName = ctx.varName().getText();
-        final XQueryValue variableValue = contextManager.getVariable(variableName);
-        return variableValue;
-    }
-
-    @Override
     public XQueryValue visitReturnClause(final ReturnClauseContext ctx) {
         final List<XQueryValue> results = visitedTupleStream.map((_) -> {
             final XQueryValue value = ctx.exprSingle().accept(this);
@@ -267,6 +290,25 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         }
         return valueFactory.sequence(results);
     }
+
+    @Override
+    public XQueryValue visitWhileClause(final WhileClauseContext ctx) {
+        final var filteringExpression = ctx.exprSingle();
+        visitedTupleStream = visitedTupleStream.takeWhile(_ -> {
+            final XQueryValue filter = filteringExpression.accept(this);
+            return filter.effectiveBooleanValue();
+        });
+        return null;
+    }
+
+
+    @Override
+    public XQueryValue visitVarRef(final VarRefContext ctx) {
+        final String variableName = ctx.varName().getText();
+        final XQueryValue variableValue = contextManager.getVariable(variableName);
+        return variableValue;
+    }
+
 
     @Override
     public XQueryValue visitLiteral(final LiteralContext ctx) {
@@ -1504,16 +1546,6 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         };
     }
 
-    @Override
-    public XQueryValue visitWhileClause(final WhileClauseContext ctx) {
-        final var filteringExpression = ctx.exprSingle();
-        visitedTupleStream = visitedTupleStream.takeWhile(_ -> {
-            final XQueryValue filter = filteringExpression.accept(this);
-            return filter.effectiveBooleanValue();
-        });
-        return null;
-    }
-
 
     @Override
     public XQueryValue visitIfExpr(final IfExprContext ctx) {
@@ -1536,31 +1568,158 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitOrderByClause(final OrderByClauseContext ctx) {
-        final int sortingExprCount = ctx.orderSpecList().orderSpec().size();
-        final var orderSpecs = ctx.orderSpecList().orderSpec();
-        final int[] modifierMaskArray = orderSpecs.stream()
-            .map(OrderSpecContext::orderModifier)
-            .mapToInt(m->{
-                final int isDescending = m.DESCENDING() != null? 1 : 0;
-                final int isEmptyLeast = m.LEAST() != null? 1 : 0;
-                final int mask = (isDescending << 1) | isEmptyLeast;
-                return mask;
-            })
-            .toArray();
-        visitedTupleStream = visitedTupleStream.sorted((tuple1, tuple2) -> {
-            var comparator = comparatorFromNthOrderSpec(orderSpecs, modifierMaskArray, 0);
-            for (int i = 1; i < sortingExprCount; i++) {
-                final var nextComparator = comparatorFromNthOrderSpec(orderSpecs, modifierMaskArray, i);
-                comparator = comparator.thenComparing(nextComparator);
-            }
-            return comparator.compare(tuple1, tuple2);
-        }).map(tuple->{
-            provideVariables(tuple);
-            return tuple;
-        });
+    public XQueryValue visitWindowClause(final WindowClauseContext ctx) {
+        if (ctx.tumblingWindowClause() != null) {
+            return visitTumblingWindowClause(ctx.tumblingWindowClause());
+        } else if (ctx.slidingWindowClause() != null) {
+            return visitSlidingWindowClause(ctx.slidingWindowClause());
+        }
         return null;
     }
+
+    public XQueryValue visitTumblingWindowClause(final TumblingWindowClauseContext ctx) {
+        final String windowVarName = ctx.varNameAndType().qname().getText();
+        final XQueryValue sequence = ctx.exprSingle().accept(this);
+
+        final String startPosVarName = ctx.windowStartCondition() != null &&
+                ctx.windowStartCondition().windowVars().positionalVar() != null ?
+                ctx.windowStartCondition().windowVars().positionalVar().varName().getText() : null;
+
+        final XQueryValue startCondition = ctx.windowStartCondition() != null &&
+                ctx.windowStartCondition().exprSingle() != null ?
+                ctx.windowStartCondition().exprSingle().accept(this) : valueFactory.bool(true);
+
+        final String endPosVarName = ctx.windowEndCondition() != null &&
+                ctx.windowEndCondition().windowVars().positionalVar() != null ?
+                ctx.windowEndCondition().windowVars().positionalVar().varName().getText() : null;
+
+        final XQueryValue endCondition = ctx.windowEndCondition() != null &&
+                ctx.windowEndCondition().exprSingle() != null ?
+                ctx.windowEndCondition().exprSingle().accept(this) : valueFactory.bool(true);
+
+        visitedTupleStream = visitedTupleStream.flatMap(tuple -> {
+            final List<TupleElement> newTupleElements = new ArrayList<>(tuple);
+            final SubSequenceInfo subSequenceInfo = extractSubSequenceWithIndices(sequence, startCondition, endCondition, false);
+
+            final TupleElement windowElement = new TupleElement(windowVarName, valueFactory.sequence(subSequenceInfo.subSequence), null, null);
+            newTupleElements.add(windowElement);
+
+            if (startPosVarName != null) {
+                newTupleElements.add(new TupleElement(startPosVarName, valueFactory.number(subSequenceInfo.startIndex + 1), null, null));
+            }
+            if (endPosVarName != null) {
+                newTupleElements.add(new TupleElement(endPosVarName, valueFactory.number(subSequenceInfo.endIndex + 1), null, null));
+            }
+
+            contextManager.provideVariable(windowVarName, valueFactory.sequence(subSequenceInfo.subSequence));
+            if (startPosVarName != null) {
+                contextManager.provideVariable(startPosVarName, valueFactory.number(subSequenceInfo.startIndex + 1));
+            }
+            if (endPosVarName != null) {
+                contextManager.provideVariable(endPosVarName, valueFactory.number(subSequenceInfo.endIndex + 1));
+            }
+
+            return Stream.of(newTupleElements);
+        });
+
+        return null;
+    }
+
+    public XQueryValue visitSlidingWindowClause(final SlidingWindowClauseContext ctx) {
+        final String windowVarName = ctx.varNameAndType().qname().getText();
+        final XQueryValue sequence = ctx.exprSingle().accept(this);
+
+        final String startPosVarName = ctx.windowStartCondition() != null &&
+                ctx.windowStartCondition().windowVars().positionalVar() != null ?
+                ctx.windowStartCondition().windowVars().positionalVar().varName().getText() : null;
+
+        final XQueryValue startCondition = ctx.windowStartCondition() != null &&
+                ctx.windowStartCondition().exprSingle() != null ?
+                ctx.windowStartCondition().exprSingle().accept(this) : valueFactory.bool(true);
+
+        final String endPosVarName = ctx.windowEndCondition() != null &&
+                ctx.windowEndCondition().windowVars().positionalVar() != null ?
+                ctx.windowEndCondition().windowVars().positionalVar().varName().getText() : null;
+
+        final XQueryValue endCondition = ctx.windowEndCondition() != null &&
+                ctx.windowEndCondition().exprSingle() != null ?
+                ctx.windowEndCondition().exprSingle().accept(this) : valueFactory.bool(true);
+
+        visitedTupleStream = visitedTupleStream.flatMap(tuple -> {
+            final List<TupleElement> newTupleElements = new ArrayList<>(tuple);
+            final SubSequenceInfo subSequenceInfo = extractSubSequenceWithIndices(sequence, startCondition, endCondition, true);
+
+            final TupleElement windowElement = new TupleElement(windowVarName, valueFactory.sequence(subSequenceInfo.subSequence), null, null);
+            newTupleElements.add(windowElement);
+
+            if (startPosVarName != null) {
+                newTupleElements.add(new TupleElement(startPosVarName, valueFactory.number(subSequenceInfo.startIndex + 1), null, null));
+            }
+            if (endPosVarName != null) {
+                newTupleElements.add(new TupleElement(endPosVarName, valueFactory.number(subSequenceInfo.endIndex + 1), null, null));
+            }
+
+            contextManager.provideVariable(windowVarName, valueFactory.sequence(subSequenceInfo.subSequence));
+            if (startPosVarName != null) {
+                contextManager.provideVariable(startPosVarName, valueFactory.number(subSequenceInfo.startIndex + 1));
+            }
+            if (endPosVarName != null) {
+                contextManager.provideVariable(endPosVarName, valueFactory.number(subSequenceInfo.endIndex + 1));
+            }
+
+            return Stream.of(newTupleElements);
+        });
+
+        return null;
+    }
+
+    private static class SubSequenceInfo {
+        List<XQueryValue> subSequence;
+        int startIndex;
+        int endIndex;
+
+        SubSequenceInfo(List<XQueryValue> subSequence, int startIndex, int endIndex) {
+            this.subSequence = subSequence;
+            this.startIndex = startIndex;
+            this.endIndex = endIndex;
+        }
+    }
+
+private SubSequenceInfo extractSubSequenceWithIndices(XQueryValue sequence, XQueryValue startCondition, XQueryValue endCondition, boolean sliding) {
+    List<XQueryValue> sequenceList = sequence.sequence();
+    List<XQueryValue> subSequence = new ArrayList<>();
+    int startIndex = 0;
+
+    while (startIndex < sequenceList.size()) {
+        if (startCondition.effectiveBooleanValue()) {
+            int endIndex = startIndex;
+            while (endIndex < sequenceList.size() && !endCondition.effectiveBooleanValue()) {
+                endIndex++;
+            }
+
+            if (endIndex < sequenceList.size()) {
+                subSequence.addAll(sequenceList.subList(startIndex, endIndex + 1));
+                int nextStartIndex = sliding ? startIndex + 1 : endIndex + 1;
+                if (nextStartIndex >= sequenceList.size()) {
+                    break;
+                }
+                startIndex = nextStartIndex;
+            } else {
+                break;
+            }
+        } else {
+            startIndex++;
+        }
+    }
+
+    if (!subSequence.isEmpty()) {
+        return new SubSequenceInfo(subSequence, startIndex, startIndex + subSequence.size() - 1);
+    }
+
+    return new SubSequenceInfo(subSequence, -1, -1);
+}
+
+
 
     private int compareValues(final XQueryValue value1, final XQueryValue value2) {
         if (value1.valueEqual(value2).booleanValue()) {
@@ -1622,14 +1781,14 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
 @Override
 public XQueryValue visitConstructorChars(final ConstructorCharsContext ctx) {
-    StringBuilder result = new StringBuilder();
+    final StringBuilder result = new StringBuilder();
 
     // Iterujemy przez wszystkie dzieci w kolejności wystąpienia
     for (int i = 0; i < ctx.getChildCount(); i++) {
-        ParseTree child = ctx.getChild(i);
+        final ParseTree child = ctx.getChild(i);
 
         if (child instanceof TerminalNode) {
-            TerminalNode terminal = (TerminalNode) child;
+            final TerminalNode terminal = (TerminalNode) child;
             result.append(terminal.getText());
         }
     }

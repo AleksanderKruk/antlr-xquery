@@ -42,13 +42,15 @@ public class GrammarAnalysisTests {
             fragment D: 'd';
             fragment E: 'e';
             F: D E;
+            FF: D 'k';
+            FFF: 'h' E;
             G: 'a'+;
             H: 'a'*;
             I: 'e' 'a'?;
             J: 'e' | 'h';
             K: 'e' | [abcd];
-            I: [abcd];
-            J: ~'h';
+            L: [abcd];
+            M: ~'h';
         """;
         return analyzeGrammar(grammar);
     }
@@ -266,6 +268,8 @@ public class GrammarAnalysisTests {
 
         // recursive simplicity
         assertTrue(simpleTokens.contains("F"));
+        assertTrue(simpleTokens.contains("FF"));
+        assertTrue(simpleTokens.contains("FFF"));
 
 
     }

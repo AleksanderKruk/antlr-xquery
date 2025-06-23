@@ -118,53 +118,72 @@ public class InputGrammarAnalyzer {
 
 
     Set<String> getSimpleTokens(final ANTLRv4Parser antlrParser, final GrammarSpecContext tree) {
-        // final var matcher = antlrParser.compileParseTreePattern("<STRING_LITERAL>", ANTLRv4Parser.RULE_ruleBlock);
-        // final var lexerMatcher = antlrParser.compileParseTreePattern("<STRING_LITERAL>", ANTLRv4Parser.RULE_lexerRuleBlock);
         final var lexerRules = XPath.findAll(tree, "//lexerRuleSpec", antlrParser);
         final Predicate<ParseTree> isFragment = rule -> {
             final var ruleSpec = (ANTLRv4Parser.LexerRuleSpecContext) rule;
             return (ruleSpec.FRAGMENT() != null);
         };
         final var partitionedByIsFragment = lexerRules.stream().collect(Collectors.partitioningBy(isFragment));
-        final var simpleFragments = partitionedByIsFragment.get(true).stream()
+        final var fragmentRules = partitionedByIsFragment.get(true);
+        final var normalRules = partitionedByIsFragment.get(false);
+        final Set<ParseTree> previousSimpleFragments = fragmentRules.stream()
             .filter(rule -> isSimpleLexerRule(antlrParser, rule))
-            .map(this::getLexerRuleName)
             .collect(Collectors.toSet());
-
-        final var simpleLexerRules = partitionedByIsFragment.get(false).stream()
-            .filter(rule-> isSimpleLexerRule(antlrParser, rule))
-            .map(this::getLexerRuleName)
+        final Set<ParseTree> previousSimpleRules = normalRules.stream()
+            .filter(rule -> isSimpleLexerRule(antlrParser, rule))
             .collect(Collectors.toSet());
+        final Set<ParseTree> remaining = new HashSet<>(lexerRules);
+        remaining.removeAll(previousSimpleRules);
+        remaining.removeAll(previousSimpleFragments);
+        int previousSimpleRuleCount = 0;
+        int currentSimpleRuleCount = 0;
+        do {
+            previousSimpleRuleCount = previousSimpleFragments.size() + previousSimpleRules.size();
+            final Set<String> previousFragmentRuleNames = previousSimpleFragments.stream().map(this::getLexerRuleName).collect(Collectors.toSet());
+            final Set<String> previousSimpleRuleNames = previousSimpleRules.stream().map(this::getLexerRuleName).collect(Collectors.toSet());
+            final Set<ParseTree> simpleRecursiveFragmentLexerRules = remaining.stream()
+                .filter(rule-> isSimpleFragmentedLexerRule(antlrParser, rule, previousSimpleRuleNames, previousFragmentRuleNames))
+                .collect(Collectors.toSet());
+            remaining.removeAll(simpleRecursiveFragmentLexerRules);
+            previousSimpleFragments.addAll(simpleRecursiveFragmentLexerRules);
 
-        final var simpleRecursiveLexerRules = partitionedByIsFragment.get(false).stream()
-            .filter(rule-> isSimpleFragmentedLexerRule(antlrParser, rule, simpleLexerRules, simpleFragments))
-            .map(this::getLexerRuleName)
-            .collect(Collectors.toSet());
+            final Set<String> simpleRecursiveFragmentLexerRuleNames = simpleRecursiveFragmentLexerRules.stream()
+                .map(this::getLexerRuleName)
+                .collect(Collectors.toSet());
 
+            final var simpleRecursiveLexerRules = remaining.stream()
+                .filter(rule-> isSimpleFragmentedLexerRule(antlrParser, rule, previousFragmentRuleNames, simpleRecursiveFragmentLexerRuleNames ))
+                .collect(Collectors.toSet());
+            remaining.removeAll(simpleRecursiveLexerRules);
+            previousSimpleRules.addAll(simpleRecursiveLexerRules);
 
-        final var parserRules = XPath.findAll(tree, "//parserRuleSpec", antlrParser);
-        final var simpleParserRules = parserRules.stream()
-            .filter(rule-> {
-                final var ruleSpec = (ANTLRv4Parser.ParserRuleSpecContext) rule;
-                final var ruleBlock = ruleSpec.ruleBlock();
-                final var allAtoms = XPath.findAll(ruleBlock, "//atom", antlrParser);
-                final var allLiterals = XPath.findAll(ruleBlock, "//STRING_LITERAL", antlrParser);
-                final var elementOptions = XPath.findAll(ruleBlock, "//elementOptions", antlrParser);
-                return ruleBlock.children.size() == 1
-                    && elementOptions.size() == 0
-                    && allAtoms.size() == allLiterals.size();
-                }).map(rule -> {
-                    final var ruleSpec = (ANTLRv4Parser.ParserRuleSpecContext) rule;
-                    var ruleName = ruleSpec.RULE_REF().getText();
-                    return ruleName;
-                }).collect(Collectors.toSet());
-        simpleLexerRules.addAll(simpleParserRules);
-        return simpleLexerRules;
+            currentSimpleRuleCount = previousSimpleFragments.size() + previousSimpleRules.size();
+        } while (previousSimpleRuleCount == currentSimpleRuleCount);
+        return previousSimpleRules.stream().map(this::getLexerRuleName).collect(Collectors.toSet());
+
     }
 
-    private String getLexerRuleName(ParseTree rule) {
+            // final var parserRules = XPath.findAll(tree, "//parserRuleSpec", antlrParser);
+            // final var simpleParserRules = parserRules.stream()
+            //     .filter(rule-> {
+            //         final var ruleSpec = (ANTLRv4Parser.ParserRuleSpecContext) rule;
+            //         final var ruleBlock = ruleSpec.ruleBlock();
+            //         final var allAtoms = XPath.findAll(ruleBlock, "//atom", antlrParser);
+            //         final var allLiterals = XPath.findAll(ruleBlock, "//STRING_LITERAL", antlrParser);
+            //         final var elementOptions = XPath.findAll(ruleBlock, "//elementOptions", antlrParser);
+            //         return ruleBlock.children.size() == 1
+            //             && elementOptions.size() == 0
+            //             && allAtoms.size() == allLiterals.size();
+            //         }).map(rule -> {
+            //             final var ruleSpec = (ANTLRv4Parser.ParserRuleSpecContext) rule;
+            //             var ruleName = ruleSpec.RULE_REF().getText();
+            //             return ruleName;
+            //         }).collect(Collectors.toSet());
+            // simpleLexerRules.addAll(simpleParserRules);
+
+    private String getLexerRuleName(final ParseTree rule) {
         final var ruleSpec = (ANTLRv4Parser.LexerRuleSpecContext) rule;
-        var ruleName = ruleSpec.TOKEN_REF().getText();
+        final var ruleName = ruleSpec.TOKEN_REF().getText();
         return ruleName;
     }
 
@@ -200,11 +219,11 @@ public class InputGrammarAnalyzer {
     }
 
 
-    private Map<String, Set<String>> addSelf(Map<String, Set<String>> mapping) {
+    private Map<String, Set<String>> addSelf(final Map<String, Set<String>> mapping) {
         final Map<String, Set<String>> selfMapping = new HashMap<>(mapping.size(), 1);
-        for (var node : mapping.keySet()) {
-            var mapped = mapping.get(node);
-            var cloned = new HashSet<>(mapped);
+        for (final var node : mapping.keySet()) {
+            final var mapped = mapping.get(node);
+            final var cloned = new HashSet<>(mapped);
             cloned.add(node);
             selfMapping.put(node, cloned);
         }
@@ -285,7 +304,7 @@ public class InputGrammarAnalyzer {
                                                         final Set<String> allNodeNames)
     {
         final  Map<String, Set<String>> childrenMapping = new HashMap<>(allNodeNames.size(), 1);
-        for (var nodename : allNodeNames) {
+        for (final var nodename : allNodeNames) {
             childrenMapping.put(nodename, new HashSet<>());
         }
 
@@ -314,16 +333,16 @@ public class InputGrammarAnalyzer {
                                                     final Map<String, Set<String>> descendantsOrSelfMapping)
     {
         final  Map<String, Set<String>> followingMapping = new HashMap<>(ancestorOrSelfMapping.size());
-        for (var node : ancestorOrSelfMapping.keySet()) {
+        for (final var node : ancestorOrSelfMapping.keySet()) {
             followingMapping.put(node, new HashSet<>());
         }
-        for (var node  : followingMapping.keySet()) {
-            var result = followingMapping.get(node);
-            var ancestors = ancestorOrSelfMapping.get(node);
-            for (var ancestor: ancestors) {
-                var followingSibling = followingSiblingMapping.get(ancestor);
-                for (var fs: followingSibling) {
-                    var descendantOrSelfs = descendantsOrSelfMapping.get(fs);
+        for (final var node  : followingMapping.keySet()) {
+            final var result = followingMapping.get(node);
+            final var ancestors = ancestorOrSelfMapping.get(node);
+            for (final var ancestor: ancestors) {
+                final var followingSibling = followingSiblingMapping.get(ancestor);
+                for (final var fs: followingSibling) {
+                    final var descendantOrSelfs = descendantsOrSelfMapping.get(fs);
                     result.addAll(descendantOrSelfs);
                 }
             }
@@ -336,16 +355,16 @@ public class InputGrammarAnalyzer {
                                                     final Map<String, Set<String>> descendantsOrSelfMapping)
     {
         final  Map<String, Set<String>> precedingMapping = new HashMap<>(ancestorOrSelfMapping.size(), 1);
-        for (var node : ancestorOrSelfMapping.keySet()) {
+        for (final var node : ancestorOrSelfMapping.keySet()) {
             precedingMapping.put(node, new HashSet<>());
         }
-        for (var node  : precedingMapping.keySet()) {
-            var result = precedingMapping.get(node);
-            var ancestors = ancestorOrSelfMapping.get(node);
-            for (var ancestor: ancestors) {
-                var precedingSibling = precedingSiblingMapping.get(ancestor);
-                for (var ps: precedingSibling) {
-                    var descendantOrSelfs = descendantsOrSelfMapping.get(ps);
+        for (final var node  : precedingMapping.keySet()) {
+            final var result = precedingMapping.get(node);
+            final var ancestors = ancestorOrSelfMapping.get(node);
+            for (final var ancestor: ancestors) {
+                final var precedingSibling = precedingSiblingMapping.get(ancestor);
+                for (final var ps: precedingSibling) {
+                    final var descendantOrSelfs = descendantsOrSelfMapping.get(ps);
                     result.addAll(descendantOrSelfs);
                 }
             }

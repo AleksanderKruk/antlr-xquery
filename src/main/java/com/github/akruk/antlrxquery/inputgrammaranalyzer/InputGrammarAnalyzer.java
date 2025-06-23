@@ -3,6 +3,7 @@ package com.github.akruk.antlrxquery.inputgrammaranalyzer;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -17,6 +18,7 @@ import com.github.akruk.antlrgrammar.ANTLRv4Lexer;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.GrammarSpecContext;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.ParserRuleSpecContext;
+import com.github.akruk.antlrgrammar.ANTLRv4Parser.TerminalDefContext;
 
 public class InputGrammarAnalyzer {
     public record GrammarAnalysisResult(Map<String, Set<String>> children,
@@ -33,7 +35,8 @@ public class InputGrammarAnalyzer {
                                         Map<String, Set<String>> precedingOrSelf,
                                         Map<String, Set<String>> precedingSibling,
                                         Map<String, Set<String>> precedingSiblingOrSelf,
-                                        Set<String> simpleTokens)
+                                        Set<String> simpleTokens,
+                                        Set<String> simpleRules)
     {}
 
     Set<String> toSet(final Collection<ParseTree> els) {
@@ -93,6 +96,7 @@ public class InputGrammarAnalyzer {
         final var precedingOrSelfMapping = addSelf(precedingMapping);
 
         final Set<String> simpleTokens = getSimpleTokens(antlrParser, tree);
+        final Set<String> simpleRules = getSimpleRules(tree, antlrParser, simpleTokens);
 
         final var gatheredData = new GrammarAnalysisResult(childrenMapping,
                 descendantMapping,
@@ -108,7 +112,8 @@ public class InputGrammarAnalyzer {
                 precedingOrSelfMapping,
                 precedingSiblingMapping,
                 precedingSiblingOrSelfMapping,
-                simpleTokens);
+                simpleTokens,
+                simpleRules);
         return gatheredData;
     }
 
@@ -155,10 +160,128 @@ public class InputGrammarAnalyzer {
             previousSimpleRules.addAll(simpleRecursiveLexerRules);
 
             currentSimpleRuleCount = previousSimpleFragments.size() + previousSimpleRules.size();
-        } while (previousSimpleRuleCount == currentSimpleRuleCount);
+        } while (previousSimpleRuleCount != currentSimpleRuleCount);
         return previousSimpleRules.stream().map(this::getLexerRuleName).collect(Collectors.toSet());
 
     }
+
+
+
+
+    public Set<String> getSimpleRules(GrammarSpecContext tree, ANTLRv4Parser antlrParser, Set<String> simpleTokens) {
+        // Step 1: Collect all parser rules
+        Collection<ParseTree> allParserRules = XPath.findAll(tree, "//parserRuleSpec", antlrParser);
+
+        // Track simple rules and pending rules
+        Set<String> simpleRules = new HashSet<>(allParserRules.size());
+        Set<ParseTree> pendingRules = new HashSet<>(allParserRules);
+
+        int previousCount;
+        do {
+            previousCount = simpleRules.size();
+            Iterator<ParseTree> iterator = pendingRules.iterator();
+
+            while (iterator.hasNext()) {
+                ParseTree rule = iterator.next();
+                ANTLRv4Parser.ParserRuleSpecContext ruleCtx = (ANTLRv4Parser.ParserRuleSpecContext) rule;
+                String ruleName = ruleCtx.RULE_REF().getText();
+
+                // Check if rule meets simplicity criteria
+                if (isSimpleRule(ruleCtx, simpleTokens, simpleRules)) {
+                    simpleRules.add(ruleName);
+                    iterator.remove();
+                }
+            }
+        } while (simpleRules.size() > previousCount); // Iterate until no new additions
+
+        return simpleRules;
+    }
+
+    private boolean isSimpleRule(final ANTLRv4Parser.ParserRuleSpecContext rule,
+                                 final Set<String> simpleTokens,
+                                 final Set<String> simpleRules)
+    {
+        // Check for single alternative
+        ANTLRv4Parser.RuleAltListContext altList = rule.ruleBlock().ruleAltList();
+        for (final var alt : altList.labeledAlt()) {
+            if (alt.POUND() != null) {
+                final var id = alt.identifier().getText();
+                if (isSimpleAlternative(alt.alternative(), simpleTokens, simpleRules)) {
+                    simpleRules.add(id);
+                }
+            }
+        }
+
+        if (altList.labeledAlt().size() != 1) return false;
+
+        ANTLRv4Parser.LabeledAltContext alt = altList.labeledAlt(0);
+        return isSimpleAlternative(alt.alternative(), simpleTokens, simpleRules);
+    }
+
+    private boolean isSimpleAlternative(ANTLRv4Parser.AlternativeContext alt,
+                                    Set<String> simpleTokens,
+                                    Set<String> simpleRules) {
+        for (ANTLRv4Parser.ElementContext element : alt.element()) {
+            if (!isSimpleElement(element, simpleTokens, simpleRules)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isSimpleElement(ANTLRv4Parser.ElementContext element,
+                                Set<String> simpleTokens,
+                                Set<String> simpleRules) {
+        // Reject elements with modifiers/quantifiers
+        if (element.ebnfSuffix() != null) return false;
+
+        // Handle labeled elements (e.g., k='c')
+        if (element.labeledElement() != null) {
+            ANTLRv4Parser.LabeledElementContext labeled = element.labeledElement();
+            if (labeled.atom() != null)
+                return isSimpleAtom(labeled.atom(), simpleTokens, simpleRules);
+            return isSimpleBlock(labeled.block(), simpleTokens, simpleRules);
+        }
+        // Handle atomic elements
+        else if (element.atom() != null) {
+            return isSimpleAtom(element.atom(), simpleTokens, simpleRules);
+        }
+        // Handle parenthesized blocks
+        else if (element.ebnf() != null && element.ebnf().block() != null) {
+            return isSimpleBlock(element.ebnf().block(), simpleTokens, simpleRules);
+        }
+        return false;
+    }
+
+    private boolean isSimpleBlock(ANTLRv4Parser.BlockContext block,
+                                Set<String> simpleTokens,
+                                Set<String> simpleRules) {
+        // Must contain exactly one alternative
+        if (block.altList().alternative().size() != 1) return false;
+        return isSimpleAlternative(block.altList().alternative(0), simpleTokens, simpleRules);
+    }
+
+    private boolean isSimpleAtom(ANTLRv4Parser.AtomContext atom,
+                                Set<String> simpleTokens,
+                                Set<String> simpleRules) {
+        // Terminal tokens (strings or token references)
+        if (atom.terminalDef() != null) {
+            TerminalDefContext term = atom.terminalDef();
+            if (term.TOKEN_REF() != null) {
+                return simpleTokens.contains(term.TOKEN_REF().getText());
+            }
+            return true; // String literals are always simple
+        }
+        // Rule references
+        else if (atom.ruleref() != null) {
+            return simpleRules.contains(atom.ruleref().RULE_REF().getText());
+        }
+        return false;
+    }
+
+
+
+
 
             // final var parserRules = XPath.findAll(tree, "//parserRuleSpec", antlrParser);
             // final var simpleParserRules = parserRules.stream()

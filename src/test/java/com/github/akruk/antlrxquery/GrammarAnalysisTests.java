@@ -15,8 +15,8 @@ public class GrammarAnalysisTests {
 
 
     private GrammarAnalysisResult analyzeGrammar(String grammar) {
-        InputGrammarAnalyzer analyzer = new InputGrammarAnalyzer();
-        CharStream stream = CharStreams.fromString(grammar);
+        final InputGrammarAnalyzer analyzer = new InputGrammarAnalyzer();
+        final CharStream stream = CharStreams.fromString(grammar);
         final var results = analyzer.analyze(stream);
         return results;
     }
@@ -51,6 +51,33 @@ public class GrammarAnalysisTests {
             K: 'e' | [abcd];
             L: [abcd];
             M: ~'h';
+        """;
+        return analyzeGrammar(grammar);
+    }
+
+    private GrammarAnalysisResult simpleRuleTestGrammar() {
+        String grammar = """
+            grammar grammarname;
+            a: 'a';
+            b: 'a' | 'b';
+            c: 'a'    # d
+                | 'b' # e;
+            f: k='c';
+            g: z=('c');
+            h: z=('c'|'b');
+            i: A;
+            j: A|;
+            jj: a a a;
+            jjj: a c c;
+            jjjj: a a A B;
+
+            k: 'a'+;
+            l: 'a'*;
+            m: 'e' 'a'?;
+            n: 'e' | 'h';
+            r: ~'h';
+            A: 'A';
+            B: 'B';
         """;
         return analyzeGrammar(grammar);
     }
@@ -285,4 +312,45 @@ public class GrammarAnalysisTests {
         // no sets
         assertFalse(simpleTokens.contains("M"));
     }
+
+    @Test
+    public void simpleRules() throws XQueryUnsupportedOperation {
+        final var results = simpleRuleTestGrammar();
+        final var simpleRules = results.simpleRules();
+        // only strings
+        assertTrue(simpleRules.contains("a"));
+        // no alternatives
+        assertFalse(simpleRules.contains("b"));
+        // named labels
+        assertFalse(simpleRules.contains("c"));
+        assertTrue(simpleRules.contains("d"));
+        assertTrue(simpleRules.contains("e"));
+
+        assertTrue(simpleRules.contains("f"));
+        // parenthesis
+        assertTrue(simpleRules.contains("g"));
+        assertFalse(simpleRules.contains("h"));
+
+        assertTrue(simpleRules.contains("i"));
+        assertFalse(simpleRules.contains("j"));
+
+        // recursive simplicity
+        assertTrue(simpleRules.contains("jj"));
+        assertFalse(simpleRules.contains("jjj"));
+        assertTrue(simpleRules.contains("jjjj"));
+
+
+        // no modifiers
+        assertFalse(simpleRules.contains("k"));
+        assertFalse(simpleRules.contains("l"));
+        assertFalse(simpleRules.contains("m"));
+
+        // no alternatives
+        assertFalse(simpleRules.contains("n"));
+
+        // no sets
+        assertFalse(simpleRules.contains("r"));
+    }
+
+
 }

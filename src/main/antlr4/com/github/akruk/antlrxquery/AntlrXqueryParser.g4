@@ -11,6 +11,7 @@ exprSingle: fLWORExpr
         | orExpr;
 fLWORExpr: initialClause intermediateClause* returnClause;
 initialClause: forClause
+            | windowClause
             | letClause;
 intermediateClause: initialClause
                 | whereClause
@@ -203,7 +204,6 @@ constructorInterpolation:
     ;
 
 
-
 // stringInterpolation:
 //     STRING_INTERPOLATION_START
 //     stringInterpolationContent
@@ -223,4 +223,44 @@ constructorInterpolation:
 //     expr?
 //     RCURLY
 //     ;
+
+windowClause
+    : FOR (tumblingWindowClause | slidingWindowClause)
+    ;
+
+tumblingWindowClause
+    : TUMBLING WINDOW varNameAndType IN exprSingle windowStartCondition? windowEndCondition?
+    ;
+
+slidingWindowClause
+    : SLIDING WINDOW varNameAndType IN exprSingle windowStartCondition? windowEndCondition
+    ;
+
+varNameAndType
+    : DOLLAR qname typeDeclaration?
+    ;
+
+windowStartCondition
+    : START windowVars (WHEN exprSingle)?
+    ;
+
+windowEndCondition
+    : ONLY? END windowVars (WHEN exprSingle)?
+    ;
+
+windowVars
+    : currentVar? positionalVar? previousVar? nextVar?
+    ;
+
+currentVar
+    : varName
+    ;
+
+previousVar
+    : PREVIOUS varName
+    ;
+
+nextVar
+    : NEXT varName
+    ;
 

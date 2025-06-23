@@ -5,6 +5,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.CharStream;
@@ -16,6 +19,7 @@ import org.antlr.v4.runtime.tree.xpath.XPath;
 import com.github.akruk.antlrgrammar.ANTLRv4Lexer;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.GrammarSpecContext;
+import com.github.akruk.antlrgrammar.ANTLRv4Parser.LexerRuleSpecContext;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.ParserRuleSpecContext;
 
 public class InputGrammarAnalyzer {
@@ -117,26 +121,28 @@ public class InputGrammarAnalyzer {
         // final var matcher = antlrParser.compileParseTreePattern("<STRING_LITERAL>", ANTLRv4Parser.RULE_ruleBlock);
         // final var lexerMatcher = antlrParser.compileParseTreePattern("<STRING_LITERAL>", ANTLRv4Parser.RULE_lexerRuleBlock);
         final var lexerRules = XPath.findAll(tree, "//lexerRuleSpec", antlrParser);
+        final Predicate<ParseTree> isFragment = rule -> {
+            final var ruleSpec = (ANTLRv4Parser.LexerRuleSpecContext) rule;
+            return (ruleSpec.FRAGMENT() != null);
+        };
+        final var partitionedByIsFragment = lexerRules.stream().collect(Collectors.partitioningBy(isFragment));
+        final var simpleFragments = partitionedByIsFragment.get(true).stream()
+            .filter(rule -> isSimpleLexerRule(antlrParser, rule))
+            .map(this::getLexerRuleName)
+            .collect(Collectors.toSet());
+
+        final var simpleLexerRules = partitionedByIsFragment.get(false).stream()
+            .filter(rule-> isSimpleLexerRule(antlrParser, rule))
+            .map(this::getLexerRuleName)
+            .collect(Collectors.toSet());
+
+        final var simpleRecursiveLexerRules = partitionedByIsFragment.get(false).stream()
+            .filter(rule-> isSimpleFragmentedLexerRule(antlrParser, rule, simpleLexerRules, simpleFragments))
+            .map(this::getLexerRuleName)
+            .collect(Collectors.toSet());
+
+
         final var parserRules = XPath.findAll(tree, "//parserRuleSpec", antlrParser);
-        final var simpleLexerRules = lexerRules.stream()
-            .filter(rule-> {
-                    final var ruleSpec = (ANTLRv4Parser.LexerRuleSpecContext) rule;
-                    if (ruleSpec.FRAGMENT() != null)
-                        return false;
-                    final var ruleBlock = ruleSpec.lexerRuleBlock();
-                    if (ruleBlock.children.size() != 1)
-                        return false;
-                    final var allAtoms = XPath.findAll(ruleBlock, "//lexerAtom", antlrParser);
-                    final var allLiterals = XPath.findAll(ruleBlock, "//STRING_LITERAL", antlrParser);
-                    if (allAtoms.size() != allLiterals.size())
-                        return false;
-                    final var elementOptions = XPath.findAll(ruleBlock, "//elementOptions", antlrParser);
-                    return elementOptions.size() == 0;
-                }).map(rule -> {
-                    final var ruleSpec = (ANTLRv4Parser.LexerRuleSpecContext) rule;
-                    var ruleName = ruleSpec.TOKEN_REF().getText();
-                    return ruleName;
-                }).collect(Collectors.toSet());
         final var simpleParserRules = parserRules.stream()
             .filter(rule-> {
                 final var ruleSpec = (ANTLRv4Parser.ParserRuleSpecContext) rule;
@@ -155,6 +161,44 @@ public class InputGrammarAnalyzer {
         simpleLexerRules.addAll(simpleParserRules);
         return simpleLexerRules;
     }
+
+    private String getLexerRuleName(ParseTree rule) {
+        final var ruleSpec = (ANTLRv4Parser.LexerRuleSpecContext) rule;
+        var ruleName = ruleSpec.TOKEN_REF().getText();
+        return ruleName;
+    }
+
+    private boolean isSimpleLexerRule(final ANTLRv4Parser antlrParser, final ParseTree rule) {
+        final var ruleSpec = (ANTLRv4Parser.LexerRuleSpecContext) rule;
+        final var ruleBlock = ruleSpec.lexerRuleBlock();
+        if (ruleBlock.children.size() != 1)
+            return false;
+        final var allAtoms = XPath.findAll(ruleBlock, "//lexerAtom", antlrParser);
+        final var allLiterals = XPath.findAll(ruleBlock, "//STRING_LITERAL", antlrParser);
+        if (allAtoms.size() != allLiterals.size())
+            return false;
+        final var elementOptions = XPath.findAll(ruleBlock, "//elementOptions", antlrParser);
+        return elementOptions.size() == 0;
+    }
+
+    private boolean isSimpleFragmentedLexerRule(final ANTLRv4Parser antlrParser,
+                                                final ParseTree rule,
+                                                final Set<String> simpleRules,
+                                                final Set<String> simpleFragments)
+    {
+        final var ruleSpec = (ANTLRv4Parser.LexerRuleSpecContext) rule;
+        final var ruleBlock = ruleSpec.lexerRuleBlock();
+        if (ruleBlock.children.size() != 1)
+            return false;
+        final var allAtoms = XPath.findAll(ruleBlock, "//lexerAtom", antlrParser);
+        final var allLiterals = XPath.findAll(ruleBlock, "//STRING_LITERAL", antlrParser);
+        final var allRefs = XPath.findAll(ruleBlock, "//STRING_LITERAL", antlrParser);
+        if (allAtoms.size() != allLiterals.size())
+            return false;
+        final var elementOptions = XPath.findAll(ruleBlock, "//elementOptions", antlrParser);
+        return elementOptions.size() == 0;
+    }
+
 
     private Map<String, Set<String>> addSelf(Map<String, Set<String>> mapping) {
         final Map<String, Set<String>> selfMapping = new HashMap<>(mapping.size(), 1);

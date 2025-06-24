@@ -22,42 +22,52 @@ public class XQueryMemoizedValueFactory implements XQueryValueFactory{
     private Map<Integer, XQueryValue> createdIntegers = new HashMap<>();
     private Map<String, XQueryValue> createdStrings = new HashMap<>();
     private Map<List<XQueryValue>, XQueryValue> createdSequences = new HashMap<>();
+
+
+    private XQueryBoolean TRUE = new XQueryBoolean(true, this);
+    private XQueryBoolean FALSE = new XQueryBoolean(false, this);
+
+
     @Override
     public XQueryValue bool(boolean v) {
-        return XQueryBoolean.of(v);
+        if (v) {
+            return TRUE;
+        } else {
+            return FALSE;
+        }
     }
 
     @Override
     public XQueryValue functionReference(XQueryFunction f) {
-        return new XQueryFunctionReference(f);
+        return new XQueryFunctionReference(f, this);
     }
 
     @Override
     public XQueryValue node(ParseTree v) {
-        XQueryValue returnedNode = createdNodes.computeIfAbsent(v, t -> new XQueryTreeNode(v));
+        XQueryValue returnedNode = createdNodes.computeIfAbsent(v, _ -> new XQueryTreeNode(v, this));
         return returnedNode;
     }
 
     @Override
     public XQueryValue number(BigDecimal d) {
-        XQueryValue returnedNumber = createdNumbers.computeIfAbsent(d, t -> new XQueryNumber(d));
+        XQueryValue returnedNumber = createdNumbers.computeIfAbsent(d, _ -> new XQueryNumber(d, this));
         return returnedNumber;
     }
     @Override
     public XQueryValue number(int integer) {
-        XQueryValue returnedNumber = createdIntegers.computeIfAbsent(integer, t -> new XQueryNumber(integer));
+        XQueryValue returnedNumber = createdIntegers.computeIfAbsent(integer, _ -> new XQueryNumber(integer, this));
         return returnedNumber;
     }
 
     @Override
     public XQueryValue sequence(List<XQueryValue> v) {
-        XQueryValue returnedSequence = createdSequences.computeIfAbsent(v, t -> new XQuerySequence(v));
+        XQueryValue returnedSequence = createdSequences.computeIfAbsent(v, _ -> new XQuerySequence(v, this));
         return returnedSequence;
     }
 
     @Override
     public XQueryValue string(String s) {
-        XQueryValue returnedString = createdStrings.computeIfAbsent(s, t -> new XQueryString(s));
+        XQueryValue returnedString = createdStrings.computeIfAbsent(s, _ -> new XQueryString(s, this));
         return returnedString;
     }
 

@@ -1,17 +1,23 @@
 package com.github.akruk.antlrxquery.typesystem.defaults;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiPredicate;
+import java.util.function.BinaryOperator;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "rawtypes" })
 public class XQueryEnumItemType implements XQueryItemType {
     private final XQueryTypes type;
+    private final BinaryOperator[][] unionItemMerger;
+    private final BinaryOperator[][] intersectionItemMerger;
+    private final XQueryTypeFactory typeFactory;
 
     public XQueryEnumItemType(XQueryTypes type,
                                 List<XQuerySequenceType> argumentTypes,
@@ -19,7 +25,8 @@ public class XQueryEnumItemType implements XQueryItemType {
                                 XQuerySequenceType arrayType,
                                 XQueryEnumItemType key,
                                 XQuerySequenceType mapValueType,
-                                Set<String> elementNames)
+                                Set<String> elementNames,
+                                XQueryTypeFactory factory)
     {
         this.type = type;
         this.argumentTypes = argumentTypes;
@@ -28,6 +35,50 @@ public class XQueryEnumItemType implements XQueryItemType {
         this.mapKeyType = key;
         this.mapValueType = mapValueType;
         this.elementNames = elementNames;
+        this.typeFactory = factory;
+
+        // Union merging preparation
+        final int element = XQueryTypes.ELEMENT.ordinal();
+        final int anyNode = XQueryTypes.ANY_NODE.ordinal();
+
+        unionItemMerger = new BinaryOperator[typesCount][typesCount];
+        unionItemMerger[element][element] = (i1, i2) -> {
+            final var i1_ = (XQueryEnumItemType) i1;
+            final var i2_ = (XQueryEnumItemType) i2;
+            final var i1Elements = i1_.getElementNames();
+            final var i2ELements = i2_.getElementNames();
+            final Set<String> mergedElements = new HashSet<>(i1Elements.size() + i2ELements.size());
+            mergedElements.addAll(i1Elements);
+            mergedElements.addAll(i2ELements);
+            return typeFactory.itemElement(mergedElements);
+        };
+        final BinaryOperator<XQueryItemType> anyNodeReturn = (_, _) -> {
+            return typeFactory.itemAnyNode();
+        };
+        unionItemMerger[element][anyNode] = anyNodeReturn;
+        unionItemMerger[anyNode][element] = anyNodeReturn;
+        unionItemMerger[anyNode][anyNode] = anyNodeReturn;
+
+
+
+        intersectionItemMerger = new BinaryOperator[typesCount][typesCount];
+        intersectionItemMerger[element][element] = (i1, i2) -> {
+            final var i1_ = (XQueryEnumItemType) i1;
+            final var i2_ = (XQueryEnumItemType) i2;
+            final var i1Elements = i1_.getElementNames();
+            final var i2ELements = i2_.getElementNames();
+            final Set<String> mergedElements = new HashSet<>(i1Elements.size());
+            mergedElements.addAll(i1Elements);
+            mergedElements.retainAll(i2ELements);
+            return typeFactory.itemElement(mergedElements);
+        };
+        intersectionItemMerger[element][anyNode] = (i1, _) -> {
+            return i1;
+        };
+        intersectionItemMerger[anyNode][element] = (_, i2) -> {
+            return i2;
+        };
+        intersectionItemMerger[anyNode][anyNode] = anyNodeReturn;
     }
 
     private final List<XQuerySequenceType> argumentTypes;
@@ -100,10 +151,9 @@ public class XQueryEnumItemType implements XQueryItemType {
     }
 
     private static final int typesCount = XQueryTypes.values().length;
-    private static final BiPredicate<XQueryEnumItemType, XQueryEnumItemType> alwaysTrue = (t1, t2) -> true;
-    private static final BiPredicate<XQueryEnumItemType, XQueryEnumItemType> alwaysFalse = (t1, t2) -> false;
+    private static final BiPredicate<XQueryEnumItemType, XQueryEnumItemType> alwaysTrue = (_, _) -> true;
+    private static final BiPredicate<XQueryEnumItemType, XQueryEnumItemType> alwaysFalse = (_, _) -> false;
 
-    @SuppressWarnings("rawtypes")
     private static final BiPredicate[][] itemtypeIsSubtypeOf;
     static {
         itemtypeIsSubtypeOf = new BiPredicate[typesCount][typesCount];
@@ -130,7 +180,7 @@ public class XQueryEnumItemType implements XQueryItemType {
         final int string = XQueryTypes.STRING.ordinal();
 
         itemtypeIsSubtypeOf[anyArray][anyMap] = alwaysTrue;
-        itemtypeIsSubtypeOf[anyArray][map] = (x, y) -> {
+        itemtypeIsSubtypeOf[anyArray][map] = (_, y) -> {
             XQueryEnumItemTypeMap y_ = (XQueryEnumItemTypeMap) y;
             var mapKeyType = (XQueryEnumItemType) y_.getMapKeyType();
             boolean isNumber = mapKeyType.getType() == XQueryTypes.NUMBER;
@@ -138,7 +188,7 @@ public class XQueryEnumItemType implements XQueryItemType {
         };
 
         itemtypeIsSubtypeOf[anyArray][anyFunction] = alwaysTrue;
-        itemtypeIsSubtypeOf[anyArray][function] = (x, y) -> {
+        itemtypeIsSubtypeOf[anyArray][function] = (_, y) -> {
             XQueryEnumItemTypeFunction y_ = (XQueryEnumItemTypeFunction) y;
             var argumentTypes = y_.getArgumentTypes();
             if (argumentTypes.size() != 1)
@@ -174,7 +224,7 @@ public class XQueryEnumItemType implements XQueryItemType {
         };
 
         final var canBeKey = booleanEnumArray(XQueryTypes.NUMBER, XQueryTypes.BOOLEAN, XQueryTypes.STRING, XQueryTypes.ENUM);
-        itemtypeIsSubtypeOf[function][anyMap] = (x, y) -> {
+        itemtypeIsSubtypeOf[function][anyMap] = (x, _) -> {
             XQueryEnumItemTypeFunction x_ = (XQueryEnumItemTypeFunction) x;
             // function must have one argument
             if (x_.getArgumentTypes().size() != 1)
@@ -201,7 +251,7 @@ public class XQueryEnumItemType implements XQueryItemType {
                     && returnedCanBeValue;
         };
 
-        itemtypeIsSubtypeOf[function][anyArray] = (x, y) -> {
+        itemtypeIsSubtypeOf[function][anyArray] = (x, _) -> {
             XQueryEnumItemTypeFunction x_ = (XQueryEnumItemTypeFunction) x;
             // function must have one argument
             if (x_.getArgumentTypes().size() != 1)
@@ -291,7 +341,7 @@ public class XQueryEnumItemType implements XQueryItemType {
         };
 
 
-        itemtypeIsSubtypeOf[map][anyArray] = (x, y) -> {
+        itemtypeIsSubtypeOf[map][anyArray] = (x, _) -> {
             XQueryEnumItemType x_ = (XQueryEnumItemType) x;
             // map must have a key that is a number
             var key = (XQueryEnumItemType) x_.getMapKeyType();
@@ -455,7 +505,7 @@ public class XQueryEnumItemType implements XQueryItemType {
                 castableAs[i][j] = i == j;
             }
         }
-        final int number = XQueryTypes.NUMBER.ordinal();
+        // final int number = XQueryTypes.NUMBER.ordinal();
         final int string = XQueryTypes.STRING.ordinal();
         final int anyItem = XQueryTypes.ANY_ITEM.ordinal();
         for (int i = 0; i < typesCount; i++) {
@@ -470,5 +520,43 @@ public class XQueryEnumItemType implements XQueryItemType {
             return false;
         var typed = (XQueryEnumItemType) itemType;
         return castableAs[type.ordinal()][typed.getType().ordinal()];
+    }
+
+    @Override
+    public XQueryItemType unionMerge(XQueryItemType other) {
+        var other_ = (XQueryEnumItemType) other;
+        return (XQueryItemType)unionItemMerger[type.ordinal()][other_.getType().ordinal()].apply(this, other);
+    }
+
+    @Override
+    public XQueryItemType intersectionMerge(XQueryItemType other) {
+        var other_ = (XQueryEnumItemType) other;
+        return (XQueryItemType)intersectionItemMerger[type.ordinal()][other_.getType().ordinal()].apply(this, other);
+    }
+
+    @Override
+    public XQueryItemType exceptionMerge(XQueryItemType other) {
+        return this;
+    }
+
+    private static final boolean[][] isValueComparableWith;
+    static {
+        final int number = XQueryTypes.NUMBER.ordinal();
+        final int boolean_ = XQueryTypes.BOOLEAN.ordinal();
+        final int enum_ = XQueryTypes.ENUM.ordinal();
+        final int string = XQueryTypes.STRING.ordinal();
+        isValueComparableWith = new boolean[typesCount][typesCount];
+        isValueComparableWith[string][string] = true;
+        isValueComparableWith[number][number] = true;
+        isValueComparableWith[boolean_][boolean_] = true;
+        isValueComparableWith[enum_][string] = true;
+        isValueComparableWith[string][enum_] = true;
+    }
+
+
+    @Override
+    public boolean isValueComparableWith(XQueryItemType other) {
+        var other_ = (XQueryEnumItemType) other;
+        return isValueComparableWith[type.ordinal()][other_.getType().ordinal()];
     }
 }

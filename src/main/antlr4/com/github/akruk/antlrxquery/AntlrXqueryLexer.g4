@@ -1,7 +1,53 @@
 lexer grammar AntlrXqueryLexer;
-INTEGER: Digits;
-DECIMAL: (DOT Digits) | (Digits DOT Digits?);
+
 fragment Digits: [0-9]+;
+fragment DEC_DIGIT      : [0-9];
+fragment HEX_DIGIT      : [0-9a-fA-F];
+fragment BINARY_DIGIT   : [01];
+
+fragment E              : [eE];
+fragment UNDER          : '_';
+
+fragment HEX_PREFIX     : '0x';
+fragment BIN_PREFIX     : '0b';
+
+IntegerLiteral
+    : DigitSeq
+    ;
+
+HexIntegerLiteral
+    : HEX_PREFIX HexDigitSeq
+    ;
+
+BinaryIntegerLiteral
+    : BIN_PREFIX BinaryDigitSeq
+    ;
+
+DecimalLiteral
+    : DOT DigitSeq                          // np. .75
+    | DigitSeq DOT DigitSeq?               // np. 1.2 lub 1.
+    ;
+
+DoubleLiteral
+    : (DOT DigitSeq | DigitSeq DOT DigitSeq?) ExponentPart
+    ;
+
+fragment DigitSeq
+    : DEC_DIGIT ( (DEC_DIGIT | UNDER)* DEC_DIGIT )?
+    ;
+
+fragment HexDigitSeq
+    : HEX_DIGIT ( (HEX_DIGIT | UNDER)* HEX_DIGIT )?
+    ;
+
+fragment BinaryDigitSeq
+    : BINARY_DIGIT ( (BINARY_DIGIT | UNDER)* BINARY_DIGIT )?
+    ;
+
+fragment ExponentPart
+    : [eE] (PLUS | MINUS)? DigitSeq
+    ;
+
 
 STRING: ('"' ('""' | CHARREF | PREDEFINED_ENTITY_REF | ~["&])* '"')
     | ('\'' ('\'\'' | CHARREF | PREDEFINED_ENTITY_REF | ~['&])* '\'');
@@ -16,7 +62,7 @@ fragment PREDEFINED_ENTITY_REF:
 
 
 
-COMMENT: '(:' .*? ':)';
+COMMENT: '(:' .*? ':)'-> channel(HIDDEN);
 WS: [\p{White_Space}]+ -> channel(HIDDEN);
 FOR: 'for';
 COMMA: ',';
@@ -24,10 +70,12 @@ AT: 'at';
 LET: 'let';
 COUNT: 'count';
 WHERE: 'where';
+WHILE: 'while';
 DOLLAR: '$';
 CHILD: 'child';
 DESCENDANT: 'descendant';
 SELF: 'self';
+OTHERWISE: 'otherwise';
 DESCENDANT_OR_SELF: 'descendant-or-self';
 ANCESTOR_OR_SELF: 'ancestor-or-self';
 FOLLOWING_OR_SELF: 'following-or-self';
@@ -90,10 +138,10 @@ LT: 'lt';
 LE: 'le';
 GT: 'gt';
 GE: 'ge';
-MINUS: '-';
 CONCATENATION: '||';
 UNION_OP: '|';
 EXCLAMATION_MARK: '!';
+MINUS: '-';
 ARROW: '=>';
 EQ_OP: '=';
 NE_OP: '!=';
@@ -124,10 +172,47 @@ PERCENTAGE: '%';
 
 
 ID: NAME_START (DASH NAME_MIDDLE)*
-// [\p{Alpha}][\p{Alpha}\p{Alnum}-]*
     ; /* Replace with antlr compatible */
 
 fragment NAME_START: [\p{Alpha}][\p{Alpha}\p{Alnum}]*;
 fragment NAME_MIDDLE: [\p{Alpha}\p{Alnum}]+;
 fragment DASH: '-';
+
+// STRING_INTERPOLATION_START  : '`' -> pushMode(INSIDE_INTERPOLATION);
+STRING_CONSTRUCTOR_START : '``[' -> pushMode(INSIDE_STRING_CONSTRUCTOR);
+CONSTRUCTION_END: '}`' -> popMode;
+
+LCURLY: '{';
+RCURLY: '}';
+
+
+
+// mode INSIDE_INTERPOLATION;
+
+// STRING_INTERPOLATION_END  : '`' -> popMode;
+
+// INTERPOLATION_START : '{' -> pushMode(DEFAULT_MODE);
+
+// INTERPOLATION_CHARS        :
+//     ~[`{]+
+//     | '`{' ~[`{]+
+//     ;
+
+mode INSIDE_STRING_CONSTRUCTOR;
+
+STRING_CONSTRUCTOR_END  : ']``' -> popMode ;
+
+CONSTRUCTION_START : '`{' -> pushMode(DEFAULT_MODE) ;
+
+CONSTRUCTOR_CHARS        :
+  ~[`\]]+
+    ;
+
+BACKTICK: '`';
+BRACKET: ']';
+
+
+
+
+
 

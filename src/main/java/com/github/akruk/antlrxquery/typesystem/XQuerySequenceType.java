@@ -6,6 +6,10 @@ public interface XQuerySequenceType {
     XQuerySequenceType unionMerge(XQuerySequenceType other);
     XQuerySequenceType intersectionMerge(XQuerySequenceType other);
     XQuerySequenceType exceptionMerge(XQuerySequenceType other);
+    XQuerySequenceType typeAlternative(XQuerySequenceType other);
+    XQuerySequenceType addOptionality();
+    XQuerySequenceType iteratedItem();
+    XQuerySequenceType mapping(XQuerySequenceType mappingExpressionType);
     // subtype(A, B) judgement
     boolean isSubtypeOf(XQuerySequenceType obj);
     boolean itemtypeIsSubtypeOf(XQuerySequenceType obj);
@@ -16,4 +20,5 @@ public interface XQuerySequenceType {
     boolean isZero();
     boolean hasEffectiveBooleanValue();
     boolean castableAs(XQuerySequenceType other);
+    boolean isValueComparableWith(XQuerySequenceType other);
 }

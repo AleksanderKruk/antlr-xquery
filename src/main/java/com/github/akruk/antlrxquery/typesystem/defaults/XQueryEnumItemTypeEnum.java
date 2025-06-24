@@ -2,14 +2,16 @@ package com.github.akruk.antlrxquery.typesystem.defaults;
 
 import java.util.Set;
 
+import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+
 public class XQueryEnumItemTypeEnum extends XQueryEnumItemType {
 
   final Set<String> enumMembers;
   public Set<String> getEnumMembers() {
     return enumMembers;
   }
-  public XQueryEnumItemTypeEnum (Set<String> enumMembers) {
-    super(XQueryTypes.ENUM, null, null, null, null, null, null);
+  public XQueryEnumItemTypeEnum (Set<String> enumMembers, XQueryTypeFactory factory) {
+    super(XQueryTypes.ENUM, null, null, null, null, null, null, factory);
     this.enumMembers = enumMembers;
   }
 

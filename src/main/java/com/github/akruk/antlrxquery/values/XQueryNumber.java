@@ -7,12 +7,12 @@ import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
 public class XQueryNumber extends XQueryValueBase<BigDecimal> {
-    public XQueryNumber(BigDecimal n) {
-        value = n;
+    public XQueryNumber(final BigDecimal n, final XQueryValueFactory valueFactory) {
+        super(n, valueFactory);
     }
 
-    public XQueryNumber(int i) {
-        value = new BigDecimal(i);
+    public XQueryNumber(final int i, final XQueryValueFactory valueFactory) {
+        super(new BigDecimal(i), valueFactory);
     }
 
     @Override
@@ -25,6 +25,15 @@ public class XQueryNumber extends XQueryValueBase<BigDecimal> {
         return value.toString();
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("<");
+        sb.append(super.toString());
+        sb.append(":");
+        sb.append(value);
+        sb.append("/>");
+        return sb.toString();
+    }
 
     @Override
     public Boolean effectiveBooleanValue() {
@@ -32,62 +41,62 @@ public class XQueryNumber extends XQueryValueBase<BigDecimal> {
     }
 
     @Override
-    public XQueryValue add(XQueryValueFactory valueFactory, XQueryValue other) throws XQueryUnsupportedOperation {
+    public XQueryValue add(final XQueryValue other) throws XQueryUnsupportedOperation {
         return valueFactory.number(value.add(other.numericValue(), MathContext.UNLIMITED));
     }
 
     @Override
-    public XQueryValue subtract(XQueryValueFactory valueFactory, XQueryValue other) throws XQueryUnsupportedOperation {
+    public XQueryValue subtract(final XQueryValue other) throws XQueryUnsupportedOperation {
         return valueFactory.number(value.subtract(other.numericValue(), MathContext.UNLIMITED));
     }
 
     @Override
-    public XQueryValue multiply(XQueryValueFactory valueFactory, XQueryValue other) throws XQueryUnsupportedOperation {
+    public XQueryValue multiply(final XQueryValue other) throws XQueryUnsupportedOperation {
         return valueFactory.number(value.multiply(other.numericValue(), MathContext.UNLIMITED));
     }
 
     @Override
-    public XQueryValue divide(XQueryValueFactory valueFactory, XQueryValue other) throws XQueryUnsupportedOperation {
+    public XQueryValue divide(final XQueryValue other) throws XQueryUnsupportedOperation {
         return valueFactory.number(value.divide(other.numericValue(), MathContext.UNLIMITED));
     }
 
     @Override
-    public XQueryValue integerDivide(XQueryValueFactory valueFactory, XQueryValue other) throws XQueryUnsupportedOperation {
+    public XQueryValue integerDivide(final XQueryValue other) throws XQueryUnsupportedOperation {
         return valueFactory.number(value.divideToIntegralValue(other.numericValue()));
     }
 
     @Override
-    public XQueryValue modulus(XQueryValueFactory valueFactory, XQueryValue other) throws XQueryUnsupportedOperation {
+    public XQueryValue modulus(final XQueryValue other) throws XQueryUnsupportedOperation {
         return valueFactory.number(value.remainder(other.numericValue()));
     }
 
     @Override
-    public XQueryValue valueEqual(XQueryValueFactory valueFactory, XQueryValue other) {
+    public XQueryValue valueEqual(final XQueryValue other) {
         if (!other.isNumericValue())
-            return XQueryBoolean.FALSE;
-        return XQueryBoolean.of(value.compareTo(other.numericValue()) == 0);
+            return valueFactory.bool(false);
+        return valueFactory.bool(value.compareTo(other.numericValue()) == 0);
     }
 
     @Override
-    public XQueryValue valueLessThan(XQueryValueFactory valueFactory, XQueryValue other) {
+    public XQueryValue valueLessThan(final XQueryValue other) {
         if (!other.isNumericValue())
-            return XQueryBoolean.FALSE;
-        return XQueryBoolean.of(value.compareTo(other.numericValue()) == -1);
+            return valueFactory.bool(false);
+        return valueFactory.bool(value.compareTo(other.numericValue()) == -1);
     }
 
     @Override
-    public XQueryValue copy(XQueryValueFactory valueFactory) {
+    public XQueryValue copy() {
         return valueFactory.number(value);
     }
 
     @Override
-    public XQueryValue data(XQueryValueFactory valueFactory) throws XQueryUnsupportedOperation {
-        var atomized = atomize();
+    public XQueryValue data() throws XQueryUnsupportedOperation {
+        final var atomized = atomize();
         return valueFactory.sequence(atomized);
     }
 
     @Override
-    public XQueryValue empty(XQueryValueFactory valueFactory) {
+    public XQueryValue empty() {
         return valueFactory.bool(false);
     }
 }

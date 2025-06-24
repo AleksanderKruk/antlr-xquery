@@ -43,6 +43,21 @@ Type designation | Interpretation
 `number` | one-element-sequence of type `number`
 `boolean` | one-element-sequence of type `boolean`
 
+### Compound item types
+Compound item types consist of other item types.
+There are arrays, maps, records and enums.
+
+Type designation | Interpretation
+--- | ---
+`array(T)`                             | array of sequence type T
+`array(*)`                             | array of any item type, equivalent to `array(item())`
+`map(KeyType, ValueType)`              | map of primary type to any sequenceType
+`map(*)`                               | map of item() to item() (`map(item(), item())`)
+`record(x as number, y as string+)`    | map containing exactly 2 string keys "x" and "y" that map to `number` and `string+` respectively
+`record(x as number, y as string+, *)` | map containing at least 2 string keys "x" and "y" that map to `number` and `string+` respectively
+`record(*)`                            | same as `map(*)`
+`enum("true", "false")`                | item can contain string "true" or string "false"
+
 ## Expression semantics
 
 ### Sequence range expression
@@ -58,36 +73,41 @@ achieved by 'merging' types of values `v1` and `v2` and `v3` and ... using the f
 2. Occurence is deduced using the following table
 
 (v1, v2)  | 0 | 1 | ? | \* | \+
----    |---|---|---|--- |---
-**0**  | 0 | 1 | ? | *  | +
-**1**  | 1 | + | + | +  | +
-**?**  | ? | + | * | *  | +
-**\*** | * | + | * | *  | +
-**\+** | + | + | + | +  | +
+---       |---|---|---|--- |---
+**0**     | 0 | 1 | ? | *  | +
+**1**     | 1 | + | + | +  | +
+**?**     | ? | + | * | *  | +
+**\***    | * | + | * | *  | +
+**\+**    | + | + | + | +  | +
 
+```
+()            -> empty-sequence()
+(T)           -> T
+(T, T, T)     -> T | T | T -> T+
+(T1, T2, T3)  -> T1 | T2 | T3
+```
 
 ### Union operator
 Union operators have the same semantics as sequence constructor operator.
 ```xquery
-v1 union v2 -> merged
+<node():o1> union <node():o2> -> node():o2
 ```
-
-
-**Merging occurence semantics:**
-(v1, v2)  | 0 | 1 | ? | \* | \+
----    |---|---|---|--- |---
-**0**  | 0 | 1 | ? | *  | +
-**1**  | 1 | + | + | +  | +
-**?**  | ? | + | * | *  | +
-**\*** | * | + | * | *  | +
-**\+** | + | + | + | +  | +
+**Union occurence merging semantics:**
+(o1, o2)  | 0 | 1 | ? | \* | \+
+---       |---|---|---|--- |---
+**0**     | 0 | 1 | ? | *  | +
+**1**     | 1 | + | + | +  | +
+**?**     | ? | + | * | *  | +
+**\***    | * | + | * | *  | +
+**\+**    | + | + | + | +  | +
 
 
 ### Intersect operator
 The deduced type resulting from `intersect` operator is
-achieved by 'merging' types of values `v1` and `v2` and `v3` and ... using the following rules:
-1. Item type is that of left hand side expression
-2. Occurence is deduced using the following table
+achieved by 'merging' node sequences of occurences `o1` and `o2` and ... using the following rules:
+```xquery
+<node():o1> intersect <node():o2> -> node():o2
+```
 
 v1 intersect v2  | 0 | 1 | ? | \* | \+
 ---              |---|---|---|--- |---
@@ -99,11 +119,8 @@ v1 intersect v2  | 0 | 1 | ? | \* | \+
 
 ### Except operator
 The deduced type resulting from `except` operator is
-achieved by 'merging' types of values `v1` and `v2` and `v3` and ... using the following rules:
-1. Item type is that of left hand side expression
-2. Occurence is deduced using the following table
-
-v1 except v2  | 0 | 1 | ? | \* | \+
+achieved by 'merging' node sequences of occurences `o1` and `o2` and ... using the following rules:
+o1 except o2  | 0 | 1 | ? | \* | \+
 ---           |---|---|---|--- |---
 **0**         | 0 | 0 | 0 | 0  | 0
 **1**         | 1 | ? | ? | ?  | ?
@@ -114,24 +131,37 @@ v1 except v2  | 0 | 1 | ? | \* | \+
 ### Arithmetic operators
 Arithmetic operators take `number`s as arguments and return
 `number` as the resulting type.
+```xquery
+# addition
+<number> + <number> -> number
+# subtraction
+<number> - <number> -> number
+# multiplication
+<number> * <number> -> number
+<number> x <number> -> number
+# division
+<number> ÷ <number> -> number
+<number> div <number> -> number
+# modulus
+<number> mod <number> -> number
+```
 
 ### String concatenation
-Arithmetic operators take item types that can be converted to string as arguments and return `string` as the resulting type.
-
-
-
-
+Concatenation operator takes as argument either an `empty-sequence` or `string` and returns string
+```
+<string?> || <string?> -> string
+```
 
 ### Logical expressions
 Logical expressions take values that have effective boolean value as arguments and return `boolean` as the resulting type.
 ```xquery
-Effective Boolean Value Type or Effective Boolean Value Type
-Effective Boolean Value Type and Effective Boolean Value Type
+<Effective Boolean Value Type> or  <Effective Boolean Value Type> -> boolean
+<Effective Boolean Value Type> and <Effective Boolean Value Type> -> boolean
 ```
 
 #### Effective boolean value
-Type     |Has effective boolean value?
----      |---
+Type       | Has effective boolean value?
+---        | ---
 `any()`    | no
 `any()?`   | yes, whether or not item is present
 `any()*`   | yes, whether or not sequence has items
@@ -139,17 +169,17 @@ Type     |Has effective boolean value?
 `boolean()`| yes
 `number()` | yes, whether or not number equals zero
 `string()` | yes, whether or not string is not empty
-`node()`  | no
+`node()`   | no
 
 ### Value comparisons
 Value comparisons are used to compare directly item types.
 ```xquery
-T eq T -> boolean
-T ne T -> boolean
-T lt T -> boolean
-T gt T -> boolean
-T le T -> boolean
-T ge T -> boolean
+<T?> eq <T?> -> boolean
+<T?> ne <T?> -> boolean
+<T?> lt <T?> -> boolean
+<T?> gt <T?> -> boolean
+<T?> le <T?> -> boolean
+<T?> ge <T?> -> boolean
 ```
 T needs to be a single item type, same for both operands.
 
@@ -157,21 +187,21 @@ T needs to be a single item type, same for both operands.
 ### General comparisons
 General comparisons are expanded value comparisons. They work both for single item values as well as multi item values.
 ```xquery
-T* =  T* -> boolean
-T* != T* -> boolean
-T* >  T* -> boolean
-T* <  T* -> boolean
-T* >= T* -> boolean
-T* <= T* -> boolean
+<T*> =  <T*> -> boolean
+<T*> != <T*> -> boolean
+<T*> >  <T*> -> boolean
+<T*> <  <T*> -> boolean
+<T*> >= <T*> -> boolean
+<T*> <= <T*> -> boolean
 ```
 T can be any sequence type, as long as the item type can be compared by value.
 
 ### Node comparisons
 Node comparisons take one item sequences of `node()` and return `boolean`.
 ```xquery
-node() is node() -> boolean
-node() << node() -> boolean
-node() >> node() -> boolean
+<node()> is <node()> -> boolean
+<node()> << <node()> -> boolean
+<node()> >> <node()> -> boolean
 ```
 
 ### Arrow expression
@@ -183,7 +213,7 @@ Arg1Type => function(Arg1Type , *) as ReturnedType -> ReturnedType
 ### Simple map expression
 Simple map expressions are interpreted as a sequence type with the item type of the mapped expression, and the occurence same as that of the mapped type.
 ```xquery
-MappedType() ! ExpressionType -> ExpressionType
+MappedType()  ! ExpressionType -> ExpressionType
 MappedType()? ! ExpressionType -> ExpressionType?
 MappedType()* ! ExpressionType -> ExpressionType*
 MappedType()+ ! ExpressionType -> ExpressionType+
@@ -247,10 +277,10 @@ InputExpressionType treat as SequenceType -> SequenceType
 ### Filter expression
 ```xquery
 	empty-list() -> empty-list()
-	T1[EffectiveBooleanType] -> T1?
-	T1?[EffectiveBooleanType] -> T1?
-	T1*[EffectiveBooleanType] -> T1*
-	T1+[EffectiveBooleanType] -> T1*
+	T [<EffectiveBooleanType>] -> T?
+	T?[<EffectiveBooleanType>] -> T?
+	T*[<EffectiveBooleanType>] -> T*
+	T+[<EffectiveBooleanType>] -> T*
 ```
 
 

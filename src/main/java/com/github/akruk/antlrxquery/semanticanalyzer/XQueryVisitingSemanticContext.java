@@ -6,11 +6,11 @@ public class XQueryVisitingSemanticContext {
     private XQuerySequenceType itemType;
     private XQuerySequenceType positionType;
 
-    public XQuerySequenceType getItemType() {
+    public XQuerySequenceType getType() {
         return itemType;
     }
 
-    public void setItemType(XQuerySequenceType item) {
+    public void setType(XQuerySequenceType item) {
         this.itemType = item;
     }
 

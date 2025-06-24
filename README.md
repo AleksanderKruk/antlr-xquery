@@ -27,17 +27,18 @@ The first step is the implementation of
 <!-- -l --language > -->
 ```
 ./antlr-xquery
-    [ --grammars <grammar-paths>    		]
+    [ --grammars <grammar-paths> ]
     [  --query <xquery-cli-expression>
-     | --query-file <xquery-path>       	]
-    [ --starting-rule <starting-rule-name> 	]
-    [ --files <target-file-paths> 			]
-    [ --compile 							]
-    [ --stdin	 							]
-    [ --stdout	 							]
-    [ --stderr	 							]
-    [ --stdlog	 							]
-    [ --verbose	 							]
+     | --query-file <xquery-path> ]
+    [ --starting-rule <starting-rule-name> ]
+    [ --files <target-file-paths> ]
+    [ --compile ]
+    [ --stdin	]
+    [ --stdout ]
+    [ --stderr ]
+    [ --stdlog ]
+    [ --output-format [text | type-marked | internal | serialized ] ]
+    [ --verbose ]
 ```
 
 ## Rationale

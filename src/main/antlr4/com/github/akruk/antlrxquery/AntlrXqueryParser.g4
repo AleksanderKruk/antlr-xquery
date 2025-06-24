@@ -14,6 +14,7 @@ initialClause: forClause
             | letClause;
 intermediateClause: initialClause
                 | whereClause
+                | whileClause
                 | orderByClause
                 | countClause;
 forClause: FOR forBinding (COMMA forBinding)*;
@@ -24,13 +25,18 @@ letClause: LET letBinding (COMMA letBinding)*;
 letBinding: DOLLAR varName typeDeclaration? ASSIGNMENT_OP exprSingle;
 countClause: COUNT DOLLAR varName;
 whereClause: WHERE exprSingle;
+whileClause: WHILE exprSingle;
 orderByClause: ((ORDER BY) | (STABLE ORDER BY)) orderSpecList;
 orderSpecList: orderSpec (COMMA orderSpec)*;
 orderSpec: exprSingle orderModifier;
 orderModifier: (ASCENDING | DESCENDING)? (EMPTY (GREATEST | LEAST))?;
 returnClause: RETURN exprSingle;
 quantifiedExpr: (SOME | EVERY) DOLLAR varName typeDeclaration? IN exprSingle (COMMA DOLLAR varName typeDeclaration? IN exprSingle)* SATISFIES exprSingle;
-ifExpr: IF LPAREN condition=expr RPAREN THEN ifValue=exprSingle ELSE elseValue=exprSingle;
+ifExpr	:	IF LPAREN expr RPAREN (unbracedActions | bracedAction);
+otherwiseExpr	:	stringConcatExpr (OTHERWISE stringConcatExpr)*;
+unbracedActions	:	THEN exprSingle ELSE exprSingle;
+bracedAction	:	enclosedExpr;
+enclosedExpr	:	LCURLY expr? RCURLY;
 
 switchExpr: SWITCH  LPAREN switchedExpr=expr RPAREN switchCaseClause+ DEFAULT RETURN defaultExpr=exprSingle;
 switchCaseClause: (CASE switchCaseOperand)+ RETURN exprSingle;
@@ -38,7 +44,7 @@ switchCaseOperand: exprSingle;
 
 orExpr: andExpr ( OR andExpr)*;
 andExpr: comparisonExpr ( AND comparisonExpr )*;
-comparisonExpr: stringConcatExpr  ((valueComp | generalComp | nodeComp) stringConcatExpr)?;
+comparisonExpr: otherwiseExpr ((valueComp | generalComp | nodeComp) otherwiseExpr)?;
 stringConcatExpr: rangeExpr ( CONCATENATION rangeExpr )*;
 rangeExpr: additiveExpr (TO additiveExpr)?;
 additiveExpr: multiplicativeExpr (additiveOperator multiplicativeExpr)*;
@@ -102,8 +108,21 @@ primaryExpr: literal
         | varRef
         | parenthesizedExpr
         | contextItemExpr
-        | functionCall;
-literal: INTEGER | DECIMAL | STRING;
+        | functionCall
+        // | stringInterpolation
+        | stringConstructor;
+literal:
+  numericLiteral
+  | STRING;
+
+numericLiteral
+    : IntegerLiteral
+    | HexIntegerLiteral
+    | BinaryIntegerLiteral
+    | DecimalLiteral
+    |  DoubleLiteral
+    ;
+
 varRef: DOLLAR varName;
 varName: qname;
 parenthesizedExpr: LPAREN expr? RPAREN;
@@ -138,7 +157,7 @@ nameTest	:	qname | wildcard;
 
 functionType:	annotation* (anyFunctionType | typedFunctionType);
 annotation	:	PERCENTAGE qname (LPAREN annotationValue (',' annotationValue)* RPAREN)?;
-annotationValue:	STRING | ('-'? (INTEGER | DECIMAL)) | (qname LPAREN RPAREN);
+annotationValue:	STRING | ('-'? numericLiteral) | (qname LPAREN RPAREN);
 anyFunctionType	:	FUNCTION LPAREN '*' RPAREN;
 typedFunctionType	:	FUNCTION LPAREN (typedFunctionParam (',' typedFunctionParam)*)? RPAREN 'as' sequenceType;
 typedFunctionParam	:	('$' qname 'as')? sequenceType;
@@ -173,3 +192,46 @@ typeName: qname;
 qname: (namespace COLON)* anyName;
 namespace: anyName;
 anyName: ID | EMPTY | COUNT;
+
+stringConstructor:
+    STRING_CONSTRUCTOR_START
+    stringConstructorContent
+    STRING_CONSTRUCTOR_END
+    ;
+
+stringConstructorContent:
+    (constructorChars | constructorInterpolation)*
+    ;
+
+constructorChars:
+    (CONSTRUCTOR_CHARS | BACKTICK | BRACKET)+
+    ;
+
+constructorInterpolation:
+    CONSTRUCTION_START
+    expr?
+    CONSTRUCTION_END
+    ;
+
+
+
+// stringInterpolation:
+//     STRING_INTERPOLATION_START
+//     stringInterpolationContent
+//     STRING_INTERPOLATION_END?
+//     ;
+
+// stringInterpolationContent:
+//     (interpolationChars | interpolationInterpolation)*
+//     ;
+
+// interpolationChars:
+//     INTERPOLATION_CHARS
+//     ;
+
+// interpolationInterpolation:
+//     INTERPOLATION_START
+//     expr?
+//     RCURLY
+//     ;
+

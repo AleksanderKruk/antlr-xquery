@@ -20,6 +20,8 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.*;
 import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.XQuerySemanticContextManager;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.charescaper.XQueryCharEscaper;
+import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper;
+import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper.XQuerySemanticCharEscaperResult;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionCaller;
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
@@ -350,7 +352,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     public XQuerySequenceType visitLiteral(final LiteralContext ctx) {
         if (ctx.STRING() != null) {
             final String rawText = ctx.getText();
-            final String content = unescapeString(rawText.substring(1, rawText.length() - 1));
+            final String content = unescapeString(ctx, rawText.substring(1, rawText.length() - 1));
             valueFactory.string(content);
             return typeFactory.string();
         }
@@ -420,9 +422,13 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         return previousExprType;
     }
 
-    private String unescapeString(final String str) {
-        final var charEscaper = new XQueryCharEscaper();
-        return charEscaper.escapeChars(str);
+    private String unescapeString(ParserRuleContext where, final String str) {
+        final var charEscaper = new XQuerySemanticCharEscaper();
+        XQuerySemanticCharEscaperResult result = charEscaper.escapeWithDiagnostics(str);
+        for (var e : result.errors()){
+            addError(where, e.message());
+        }
+        return result.unescaped();
     }
 
     @Override

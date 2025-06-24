@@ -356,7 +356,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
         final var numeric = ctx.numericLiteral();
         if (numeric.IntegerLiteral() != null) {
-            final String value = numeric.IntegerLiteral().getText();
+            final String value = numeric.IntegerLiteral().getText().replace("_", "");
             valueFactory.number(new BigDecimal(value));
             return typeFactory.number();
         }

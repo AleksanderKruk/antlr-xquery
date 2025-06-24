@@ -11,17 +11,42 @@ fragment UNDER          : '_';
 fragment HEX_PREFIX     : '0x';
 fragment BIN_PREFIX     : '0b';
 
-IntegerLiteral         : DEC_DIGIT ( (DEC_DIGIT | UNDER)* DEC_DIGIT )?;
-HexIntegerLiteral      : HEX_PREFIX HEX_DIGIT ( (HEX_DIGIT | UNDER)* HEX_DIGIT )?;
-BinaryIntegerLiteral   : BIN_PREFIX BINARY_DIGIT ( (BINARY_DIGIT | UNDER)* BINARY_DIGIT )?;
-DecimalLiteral
-    : (DOT DEC_DIGIT ( (DEC_DIGIT | UNDER)* DEC_DIGIT )?)
-    | (DEC_DIGIT ( (DEC_DIGIT | UNDER)* DEC_DIGIT )? DOT DEC_DIGIT* );
-DoubleLiteral
-    : (DOT DEC_DIGIT ( (DEC_DIGIT | UNDER)* DEC_DIGIT )?
-       | DEC_DIGIT ( (DEC_DIGIT | UNDER)* DEC_DIGIT )? DOT DEC_DIGIT* )
-      E (PLUS | MINUS)? DEC_DIGIT ( (DEC_DIGIT | UNDER)* DEC_DIGIT )?;
+IntegerLiteral
+    : DigitSeq
+    ;
 
+HexIntegerLiteral
+    : HEX_PREFIX HexDigitSeq
+    ;
+
+BinaryIntegerLiteral
+    : BIN_PREFIX BinaryDigitSeq
+    ;
+
+DecimalLiteral
+    : DOT DigitSeq                          // np. .75
+    | DigitSeq DOT DigitSeq?               // np. 1.2 lub 1.
+    ;
+
+DoubleLiteral
+    : (DOT DigitSeq | DigitSeq DOT DigitSeq?) ExponentPart
+    ;
+
+fragment DigitSeq
+    : DEC_DIGIT ( (DEC_DIGIT | UNDER)* DEC_DIGIT )?
+    ;
+
+fragment HexDigitSeq
+    : HEX_DIGIT ( (HEX_DIGIT | UNDER)* HEX_DIGIT )?
+    ;
+
+fragment BinaryDigitSeq
+    : BINARY_DIGIT ( (BINARY_DIGIT | UNDER)* BINARY_DIGIT )?
+    ;
+
+fragment ExponentPart
+    : [eE] (PLUS | MINUS)? DigitSeq
+    ;
 
 
 STRING: ('"' ('""' | ~["&])* '"')

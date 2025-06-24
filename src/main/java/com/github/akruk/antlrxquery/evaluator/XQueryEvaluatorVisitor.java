@@ -278,7 +278,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
         final var numeric = ctx.numericLiteral();
         if (numeric.IntegerLiteral() != null) {
-            final String value = numeric.IntegerLiteral().getText();
+            final String value = numeric.IntegerLiteral().getText().replace("_", "");
             return valueFactory.number(new BigDecimal(value));
         }
 

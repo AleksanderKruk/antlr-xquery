@@ -2,7 +2,6 @@ package com.github.akruk.antlrxquery.values;
 
 import java.util.regex.Pattern;
 
-import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
 public class XQueryString extends XQueryValueBase<String> {
@@ -93,27 +92,27 @@ public class XQueryString extends XQueryValueBase<String> {
     }
 
     @Override
-    public XQueryValue head() throws XQueryUnsupportedOperation {
+    public XQueryValue head() {
         if (value.isEmpty())
             return valueFactory.emptySequence();
         return valueFactory.string(value.substring(0, 1));
     }
 
     @Override
-    public XQueryValue tail() throws XQueryUnsupportedOperation {
+    public XQueryValue tail() {
         if (value.isEmpty())
             return valueFactory.emptySequence();
         return valueFactory.string(value.substring(1));
     }
 
     @Override
-    public XQueryValue data() throws XQueryUnsupportedOperation {
+    public XQueryValue data() {
         var atomized = atomize();
         return valueFactory.sequence(atomized);
     }
 
     @Override
-    public XQueryValue contains(XQueryValue other) throws XQueryUnsupportedOperation {
+    public XQueryValue contains(XQueryValue other) {
         if (value.isEmpty())
             return valueFactory.bool(false);
         if (other.stringValue().isEmpty())
@@ -122,7 +121,7 @@ public class XQueryString extends XQueryValueBase<String> {
     }
 
     @Override
-    public XQueryValue startsWith(XQueryValue other) throws XQueryUnsupportedOperation {
+    public XQueryValue startsWith(XQueryValue other) {
         if (value.isEmpty())
             return valueFactory.bool(false);
         if (other.stringValue().isEmpty())
@@ -132,7 +131,7 @@ public class XQueryString extends XQueryValueBase<String> {
 
 
     @Override
-    public XQueryValue endsWith(XQueryValue other) throws XQueryUnsupportedOperation {
+    public XQueryValue endsWith(XQueryValue other) {
         if (value.isEmpty())
             return valueFactory.bool(false);
         if (other.stringValue().isEmpty())
@@ -141,12 +140,12 @@ public class XQueryString extends XQueryValueBase<String> {
     }
 
     @Override
-    public XQueryValue substring(int startingLoc) throws XQueryUnsupportedOperation {
+    public XQueryValue substring(int startingLoc) {
         return substring(startingLoc, value.length()-startingLoc+1);
     }
 
     @Override
-    public XQueryValue substring(int startingLoc, int length) throws XQueryUnsupportedOperation {
+    public XQueryValue substring(int startingLoc, int length) {
         int currentLength = value.length();
         if (startingLoc > currentLength) {
             return valueFactory.emptySequence();
@@ -160,7 +159,7 @@ public class XQueryString extends XQueryValueBase<String> {
 
 
     @Override
-    public XQueryValue substringBefore(XQueryValue splitstring) throws XQueryUnsupportedOperation {
+    public XQueryValue substringBefore(XQueryValue splitstring) {
         if (splitstring.empty().booleanValue())
             return valueFactory.emptyString();
         var escapedSplitstring = Pattern.quote(splitstring.stringValue());
@@ -171,7 +170,7 @@ public class XQueryString extends XQueryValueBase<String> {
     }
 
     @Override
-    public XQueryValue substringAfter(XQueryValue splitstring) throws XQueryUnsupportedOperation {
+    public XQueryValue substringAfter(XQueryValue splitstring) {
         if (splitstring.empty().booleanValue())
             return valueFactory.emptyString();
         var splitstringValue = splitstring.stringValue();
@@ -183,12 +182,12 @@ public class XQueryString extends XQueryValueBase<String> {
     }
 
     @Override
-    public XQueryValue uppercase() throws XQueryUnsupportedOperation {
+    public XQueryValue uppercase() {
         return valueFactory.string(value.toUpperCase());
     }
 
     @Override
-    public XQueryValue lowercase() throws XQueryUnsupportedOperation {
+    public XQueryValue lowercase() {
         return valueFactory.string(value.toLowerCase());
     }
 

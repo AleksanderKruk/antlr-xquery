@@ -2,7 +2,6 @@ package com.github.akruk.antlrxquery.values;
 
 import java.util.ArrayList;
 import java.util.List;
-import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
 public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
@@ -67,7 +66,7 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
     }
 
     @Override
-    public XQueryValue union(XQueryValue otherSequence) throws XQueryUnsupportedOperation {
+    public XQueryValue union(XQueryValue otherSequence) {
         var newSequence = new ArrayList<XQueryValue>();
         newSequence.addAll(value);
         newSequence.addAll(otherSequence.sequence());
@@ -75,7 +74,7 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
     }
 
     @Override
-    public XQueryValue intersect(XQueryValue otherSequence) throws XQueryUnsupportedOperation {
+    public XQueryValue intersect(XQueryValue otherSequence) {
         var otherSequenceValue = otherSequence.sequence();
         var newSequence = new ArrayList<XQueryValue>(otherSequenceValue.size());
         for (var element : value) {
@@ -90,7 +89,7 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
 
 
     @Override
-    public XQueryValue except(XQueryValue otherSequence) throws XQueryUnsupportedOperation {
+    public XQueryValue except(XQueryValue otherSequence) {
         var otherSequenceValue = otherSequence.sequence();
         var newSequence = new ArrayList<XQueryValue>(otherSequenceValue.size());
         NEXT_ELEMENT:
@@ -114,13 +113,13 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
 
 
     @Override
-    public XQueryValue empty() throws XQueryUnsupportedOperation {
+    public XQueryValue empty() {
         return valueFactory.bool(value.isEmpty());
     }
 
 
     @Override
-    public XQueryValue head() throws XQueryUnsupportedOperation {
+    public XQueryValue head() {
         if (value.isEmpty())
             return valueFactory.emptySequence();
         return value.get(0);
@@ -128,7 +127,7 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
 
 
     @Override
-    public XQueryValue tail() throws XQueryUnsupportedOperation {
+    public XQueryValue tail() {
         if (value.isEmpty())
             return valueFactory.emptySequence();
         return valueFactory.sequence(value.subList(1, value.size()));
@@ -136,12 +135,12 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
 
     @Override
     public XQueryValue insertBefore(XQueryValue position, XQueryValue inserted)
-    throws XQueryUnsupportedOperation
+
     {
         var newSequence = new ArrayList<XQueryValue>(value.size());
         newSequence.addAll(value);
         if (!position.isNumericValue())
-            throw new XQueryUnsupportedOperation();
+            return null;
         int positionIndex = position.numericValue().intValue();
         if (positionIndex > value.size()) {
             newSequence.addAll(inserted.atomize());
@@ -156,12 +155,12 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
     }
 
     @Override
-    public XQueryValue remove(XQueryValue position) throws XQueryUnsupportedOperation
+    public XQueryValue remove(XQueryValue position)
     {
         var newSequence = new ArrayList<XQueryValue>(value.size());
         newSequence.addAll(value);
         if (!position.isNumericValue())
-            throw new XQueryUnsupportedOperation();
+            return null;
         int positionIndex = position.numericValue().intValue();
         if (positionIndex > value.size()) {
             return valueFactory.sequence(newSequence);
@@ -175,7 +174,7 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
 
 
     @Override
-    public XQueryValue reverse() throws XQueryUnsupportedOperation
+    public XQueryValue reverse()
     {
         var newSequence = List.copyOf(value);
         return valueFactory.sequence(newSequence.reversed());
@@ -184,12 +183,12 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
 
 
     @Override
-    public XQueryValue subsequence(int startingLoc) throws XQueryUnsupportedOperation {
+    public XQueryValue subsequence(int startingLoc) {
         return subsequence(startingLoc, value.size()-startingLoc+1);
     }
 
     @Override
-    public XQueryValue subsequence(int startingLoc, int length) throws XQueryUnsupportedOperation {
+    public XQueryValue subsequence(int startingLoc, int length) {
         int currentLength = value.size();
         if (startingLoc > currentLength) {
             return valueFactory.emptySequence();
@@ -201,7 +200,7 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
     }
 
     @Override
-    public XQueryValue distinctValues() throws XQueryUnsupportedOperation {
+    public XQueryValue distinctValues() {
         int currentLength = value.size();
         if (currentLength == 0) {
             return valueFactory.emptySequence();
@@ -218,7 +217,7 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
     }
 
     @Override
-    public XQueryValue zeroOrOne() throws XQueryUnsupportedOperation {
+    public XQueryValue zeroOrOne() {
         return switch (value.size()) {
             case 0, 1 -> this;
             default -> null;
@@ -226,7 +225,7 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
     }
 
     @Override
-    public XQueryValue oneOrMore() throws XQueryUnsupportedOperation {
+    public XQueryValue oneOrMore() {
         return switch (value.size()) {
             case 0 -> null;
             default -> this;
@@ -234,7 +233,7 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
     }
 
     @Override
-    public XQueryValue exactlyOne() throws XQueryUnsupportedOperation {
+    public XQueryValue exactlyOne() {
         return switch (value.size()) {
             case 1 -> this;
             default -> null;
@@ -242,13 +241,13 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
     }
 
     @Override
-    public XQueryValue data() throws XQueryUnsupportedOperation {
+    public XQueryValue data() {
         var atomized = atomize();
         return valueFactory.sequence(atomized);
     }
 
     @Override
-    public XQueryValue concatenate(XQueryValue other) throws XQueryUnsupportedOperation {
+    public XQueryValue concatenate(XQueryValue other) {
         StringBuilder builder = new StringBuilder();
         for (var e : this.value) {
             builder.append(e.stringValue());

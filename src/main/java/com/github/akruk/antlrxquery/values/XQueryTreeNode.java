@@ -2,7 +2,6 @@ package com.github.akruk.antlrxquery.values;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
 public class XQueryTreeNode extends XQueryValueBase<ParseTree> {
@@ -84,14 +83,14 @@ public class XQueryTreeNode extends XQueryValueBase<ParseTree> {
     }
 
     @Override
-    public XQueryValue data() throws XQueryUnsupportedOperation {
+    public XQueryValue data() {
         var atomized = atomize();
         return valueFactory.sequence(atomized);
     }
 
     @Override
-    public XQueryValue empty() throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
+    public XQueryValue empty() {
+        return null;
     }
 
 }

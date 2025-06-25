@@ -2,7 +2,6 @@ package com.github.akruk.antlrxquery;
 
 import org.junit.Test;
 
-import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
@@ -58,7 +57,7 @@ public class XQueryTypesTest {
 
 
     @Test
-    public void stringDirectEquality() throws XQueryUnsupportedOperation {
+    public void stringDirectEquality() {
         assertEquals(string, string);
         assertNotEquals(string, number);
         assertNotEquals(string, emptySequence);
@@ -68,7 +67,7 @@ public class XQueryTypesTest {
     }
 
     @Test
-    public void stringIsSubtypeOf() throws XQueryUnsupportedOperation {
+    public void stringIsSubtypeOf() {
         assertTrue(string.isSubtypeOf(string));
         assertFalse(string.isSubtypeOf(number));
         assertFalse(string.isSubtypeOf(emptySequence));

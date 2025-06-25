@@ -1,6 +1,5 @@
 package com.github.akruk.antlrxquery.values;
 
-import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
 public class XQueryBoolean extends XQueryValueBase<Boolean> {
@@ -34,17 +33,17 @@ public class XQueryBoolean extends XQueryValueBase<Boolean> {
     }
 
     @Override
-    public XQueryValue not() throws XQueryUnsupportedOperation {
+    public XQueryValue not() {
         return valueFactory.bool(!value);
     }
 
     @Override
-    public XQueryValue and(XQueryValue other) throws XQueryUnsupportedOperation {
+    public XQueryValue and(XQueryValue other) {
         return valueFactory.bool(value && other.booleanValue());
     }
 
     @Override
-    public XQueryValue or(XQueryValue other) throws XQueryUnsupportedOperation {
+    public XQueryValue or(XQueryValue other) {
         return valueFactory.bool(value || other.booleanValue());
     }
 
@@ -72,14 +71,14 @@ public class XQueryBoolean extends XQueryValueBase<Boolean> {
     }
 
     @Override
-    public XQueryValue data() throws XQueryUnsupportedOperation {
+    public XQueryValue data() {
         var atomized = atomize();
         return valueFactory.sequence(atomized);
     }
 
     @Override
-    public XQueryValue empty() throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
+    public XQueryValue empty() {
+        return null;
     }
 
 

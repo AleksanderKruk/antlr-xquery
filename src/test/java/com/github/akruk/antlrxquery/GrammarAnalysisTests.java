@@ -4,7 +4,6 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.junit.Test;
 
-import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 import com.github.akruk.antlrxquery.inputgrammaranalyzer.InputGrammarAnalyzer;
 import com.github.akruk.antlrxquery.inputgrammaranalyzer.InputGrammarAnalyzer.GrammarAnalysisResult;
 import java.util.Set;
@@ -84,7 +83,7 @@ public class GrammarAnalysisTests {
 
 
     @Test
-    public void children() throws XQueryUnsupportedOperation {
+    public void children() {
         final var results = relationshipGrammar();
         final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
 
@@ -98,7 +97,7 @@ public class GrammarAnalysisTests {
     }
 
     @Test
-    public void descendants() throws XQueryUnsupportedOperation {
+    public void descendants() {
         final var results = relationshipGrammar();
         final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
         final var descendantsOrSelf = results.descendantsOrSelf();
@@ -114,7 +113,7 @@ public class GrammarAnalysisTests {
 
 
     @Test
-    public void descendantsOrSelf() throws XQueryUnsupportedOperation {
+    public void descendantsOrSelf() {
         final var results = relationshipGrammar();
         final var descendant = results.descendants();
         final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
@@ -129,7 +128,7 @@ public class GrammarAnalysisTests {
     }
 
     @Test
-    public void ancestors() throws XQueryUnsupportedOperation {
+    public void ancestors() {
         final var results = relationshipGrammar();
         final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
         final var ancestors = results.ancestors();
@@ -144,7 +143,7 @@ public class GrammarAnalysisTests {
     }
 
     @Test
-    public void ancestorsOrSelf() throws XQueryUnsupportedOperation {
+    public void ancestorsOrSelf() {
         final var results = relationshipGrammar();
         final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
         final var ancestorsOrSelf = results.ancestorsOrSelf();
@@ -159,7 +158,7 @@ public class GrammarAnalysisTests {
     }
 
     @Test
-    public void followingSibling() throws XQueryUnsupportedOperation {
+    public void followingSibling() {
         final var results = relationshipGrammar();
         final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
         final var followingSibling = results.followingSibling();
@@ -174,7 +173,7 @@ public class GrammarAnalysisTests {
     }
 
     @Test
-    public void followingSiblingOrSelf() throws XQueryUnsupportedOperation {
+    public void followingSiblingOrSelf() {
         final var results = relationshipGrammar();
         final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
         final var followingSiblingOrSelf = results.followingSiblingOrSelf();
@@ -189,7 +188,7 @@ public class GrammarAnalysisTests {
     }
 
     @Test
-    public void following() throws XQueryUnsupportedOperation {
+    public void following() {
         final var results = relationshipGrammar();
         final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
         final var  following = results.following();
@@ -204,7 +203,7 @@ public class GrammarAnalysisTests {
     }
 
     @Test
-    public void followingOrSelf() throws XQueryUnsupportedOperation {
+    public void followingOrSelf() {
         final var results = relationshipGrammar();
         final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
         final var followingOrSelf = results.followingOrSelf();
@@ -220,7 +219,7 @@ public class GrammarAnalysisTests {
 
 
     @Test
-    public void precedingSibling() throws XQueryUnsupportedOperation {
+    public void precedingSibling() {
         final var results = relationshipGrammar();
         final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
         final var precedingSibling = results.precedingSibling();
@@ -235,7 +234,7 @@ public class GrammarAnalysisTests {
     }
 
     @Test
-    public void precedingSiblingOrSelf() throws XQueryUnsupportedOperation {
+    public void precedingSiblingOrSelf() {
         final var results = relationshipGrammar();
         final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
         final var  precedingSiblingOrSelf = results.precedingSiblingOrSelf();
@@ -251,7 +250,7 @@ public class GrammarAnalysisTests {
 
 
     @Test
-    public void preceding() throws XQueryUnsupportedOperation {
+    public void preceding() {
         final var results = relationshipGrammar();
         final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
         final var preceding = results.preceding();
@@ -266,7 +265,7 @@ public class GrammarAnalysisTests {
     }
 
     @Test
-    public void precedingOrSelf() throws XQueryUnsupportedOperation {
+    public void precedingOrSelf() {
         final var results = relationshipGrammar();
         final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
         final var  precedingOrSelf = results.precedingOrSelf();
@@ -281,7 +280,7 @@ public class GrammarAnalysisTests {
     }
 
     @Test
-    public void simpleTokens() throws XQueryUnsupportedOperation {
+    public void simpleTokens() {
         final var results = simpleTokenTestGrammar();
         final var simpleTokens = results.simpleTokens();
         // only strings
@@ -314,7 +313,7 @@ public class GrammarAnalysisTests {
     }
 
     @Test
-    public void simpleRules() throws XQueryUnsupportedOperation {
+    public void simpleRules() {
         final var results = simpleRuleTestGrammar();
         final var simpleRules = results.simpleRules();
         // only strings

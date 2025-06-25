@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
 public abstract class XQueryValueBase<T> implements XQueryValue {
@@ -104,59 +103,59 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
 
 
     @Override
-    public XQueryValue not() throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
+    public XQueryValue not() {
+        return null;
 	}
 
     @Override
-    public XQueryValue and(final XQueryValue other) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
+    public XQueryValue and(final XQueryValue other) {
+        return null;
 	}
 
     @Override
-    public XQueryValue or(final XQueryValue other) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
+    public XQueryValue or(final XQueryValue other) {
+        return null;
 	}
 
 
     @Override
-    public XQueryValue add(final XQueryValue other) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
+    public XQueryValue add(final XQueryValue other) {
+        return null;
 	}
 
     @Override
-    public XQueryValue subtract(final XQueryValue other) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
+    public XQueryValue subtract(final XQueryValue other) {
+        return null;
 
 	}
 
   @Override
-  public XQueryValue multiply(final XQueryValue other) throws XQueryUnsupportedOperation {
-    throw new XQueryUnsupportedOperation();
+  public XQueryValue multiply(final XQueryValue other) {
+    return null;
 
 	}
 
   @Override
-  public XQueryValue divide(final XQueryValue other) throws XQueryUnsupportedOperation {
-    throw new XQueryUnsupportedOperation();
+  public XQueryValue divide(final XQueryValue other) {
+    return null;
 
 	}
 
   @Override
-  public XQueryValue integerDivide(final XQueryValue other) throws XQueryUnsupportedOperation {
-    throw new XQueryUnsupportedOperation();
+  public XQueryValue integerDivide(final XQueryValue other) {
+    return null;
 
 	}
 
   @Override
-  public XQueryValue modulus(final XQueryValue other) throws XQueryUnsupportedOperation {
-    throw new XQueryUnsupportedOperation();
+  public XQueryValue modulus(final XQueryValue other) {
+    return null;
 
 	}
 
     @Override
-    public XQueryValue concatenate(final XQueryValue other) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
+    public XQueryValue concatenate(final XQueryValue other) {
+        return null;
 
 	}
 
@@ -277,134 +276,134 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
 	}
 
     @Override
-    public XQueryValue union(final XQueryValue otherSequence) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
+    public XQueryValue union(final XQueryValue otherSequence) {
+        return null;
     }
 
 
     @Override
-    public XQueryValue intersect(final XQueryValue otherSequence) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
+    public XQueryValue intersect(final XQueryValue otherSequence) {
+        return null;
     }
 
     @Override
-    public XQueryValue except(final XQueryValue other) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-
-    @Override
-    public XQueryValue head() throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    @Override
-    public XQueryValue tail() throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    @Override
-    public XQueryValue insertBefore(final XQueryValue position, final XQueryValue inserted) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    @Override
-    public XQueryValue insertAfter(final XQueryValue position, final XQueryValue inserted) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    @Override
-    public XQueryValue remove(final XQueryValue position) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    @Override
-    public XQueryValue reverse() throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    @Override
-    public XQueryValue subsequence(final int startingLoc) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    @Override
-    public XQueryValue subsequence(final int startingLoc, final int length) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    @Override
-    public XQueryValue distinctValues() throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
+    public XQueryValue except(final XQueryValue other) {
+        return null;
     }
 
 
     @Override
-    public XQueryValue zeroOrOne() throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
+    public XQueryValue head() {
+        return null;
+    }
+
+    @Override
+    public XQueryValue tail() {
+        return null;
+    }
+
+    @Override
+    public XQueryValue insertBefore(final XQueryValue position, final XQueryValue inserted) {
+        return null;
+    }
+
+    @Override
+    public XQueryValue insertAfter(final XQueryValue position, final XQueryValue inserted) {
+        return null;
+    }
+
+    @Override
+    public XQueryValue remove(final XQueryValue position) {
+        return null;
+    }
+
+    @Override
+    public XQueryValue reverse() {
+        return null;
+    }
+
+    @Override
+    public XQueryValue subsequence(final int startingLoc) {
+        return null;
+    }
+
+    @Override
+    public XQueryValue subsequence(final int startingLoc, final int length) {
+        return null;
+    }
+
+    @Override
+    public XQueryValue distinctValues() {
+        return null;
     }
 
 
     @Override
-    public XQueryValue oneOrMore() throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    @Override
-    public XQueryValue exactlyOne() throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
+    public XQueryValue zeroOrOne() {
+        return null;
     }
 
 
     @Override
-    public XQueryValue data() throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
+    public XQueryValue oneOrMore() {
+        return null;
+    }
+
+    @Override
+    public XQueryValue exactlyOne() {
+        return null;
     }
 
 
     @Override
-    public XQueryValue substring(final int other) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    @Override
-    public XQueryValue substring(final int startingLoc, final int length) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
-    }
-
-    @Override
-    public XQueryValue contains(final XQueryValue other) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
+    public XQueryValue data() {
+        return null;
     }
 
 
     @Override
-    public XQueryValue startsWith(final XQueryValue other) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
+    public XQueryValue substring(final int other) {
+        return null;
     }
 
     @Override
-    public XQueryValue endsWith(final XQueryValue other) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
+    public XQueryValue substring(final int startingLoc, final int length) {
+        return null;
     }
 
     @Override
-    public XQueryValue lowercase() throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
+    public XQueryValue contains(final XQueryValue other) {
+        return null;
+    }
+
+
+    @Override
+    public XQueryValue startsWith(final XQueryValue other) {
+        return null;
     }
 
     @Override
-    public XQueryValue uppercase() throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
+    public XQueryValue endsWith(final XQueryValue other) {
+        return null;
     }
 
     @Override
-    public XQueryValue substringBefore(final XQueryValue splitstring) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
+    public XQueryValue lowercase() {
+        return null;
     }
 
     @Override
-    public XQueryValue substringAfter(final XQueryValue splitstring) throws XQueryUnsupportedOperation {
-        throw new XQueryUnsupportedOperation();
+    public XQueryValue uppercase() {
+        return null;
+    }
+
+    @Override
+    public XQueryValue substringBefore(final XQueryValue splitstring) {
+        return null;
+    }
+
+    @Override
+    public XQueryValue substringAfter(final XQueryValue splitstring) {
+        return null;
     }
 }

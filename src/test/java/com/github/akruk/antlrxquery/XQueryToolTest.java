@@ -25,7 +25,6 @@ public class XQueryToolTest {
 
     @BeforeEach
     void setUp() throws IOException {
-        // Utworzenie plików testowych
         validGrammarFile = tempDir.resolve("test.g4");
         Files.writeString(validGrammarFile, "grammar Test;");
 
@@ -35,8 +34,6 @@ public class XQueryToolTest {
         validQueryFile = tempDir.resolve("query.xq");
         Files.writeString(validQueryFile, "for $x in //node return $x");
     }
-
-    // === TESTY PARSEARGS ===
 
     @Test
     void testParseArgs_EmptyArgs() {

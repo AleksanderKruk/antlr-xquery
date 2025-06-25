@@ -1,9 +1,11 @@
 package com.github.akruk.antlrxquery.inputgrammaranalyzer;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -13,6 +15,7 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.tree.xpath.XPath;
 import com.github.akruk.antlrgrammar.ANTLRv4Lexer;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser;
@@ -36,7 +39,8 @@ public class InputGrammarAnalyzer {
                                         Map<String, Set<String>> precedingSibling,
                                         Map<String, Set<String>> precedingSiblingOrSelf,
                                         Set<String> simpleTokens,
-                                        Set<String> simpleRules)
+                                        Set<String> simpleRules,
+                                        Map<String, List<String>> enumerationTokens)
     {}
 
     Set<String> toSet(final Collection<ParseTree> els) {
@@ -98,6 +102,9 @@ public class InputGrammarAnalyzer {
         final Set<String> simpleTokens = getSimpleTokens(antlrParser, tree);
         final Set<String> simpleRules = getSimpleRules(tree, antlrParser, simpleTokens);
 
+        final Map<String, List<String>> enumerationTokens = getEnumTokens(tree, antlrParser, simpleTokens, simpleRules);
+
+
         final var gatheredData = new GrammarAnalysisResult(childrenMapping,
                 descendantMapping,
                 descendantOrSelfMapping,
@@ -113,12 +120,67 @@ public class InputGrammarAnalyzer {
                 precedingSiblingMapping,
                 precedingSiblingOrSelfMapping,
                 simpleTokens,
-                simpleRules);
+                simpleRules,
+                enumerationTokens);
         return gatheredData;
     }
 
+    private Map<String, List<String>> getEnumTokens(GrammarSpecContext tree,
+                                                ANTLRv4Parser antlrParser,
+                                                Set<String> simpleTokens)
+    {
 
-    Set<String> getSimpleTokens(final ANTLRv4Parser antlrParser, final GrammarSpecContext tree) {
+        final Map<String, List<String>> enumTokens = new HashMap<>();
+        final Collection<ParseTree> lexerRules = XPath.findAll(tree, "//lexerRuleSpec", antlrParser);
+
+        for (ParseTree rule : lexerRules) {
+            final ANTLRv4Parser.LexerRuleSpecContext ruleSpec = (ANTLRv4Parser.LexerRuleSpecContext) rule;
+
+            // Pomijanie reguł fragmentów
+            if (ruleSpec.FRAGMENT() != null) continue;
+
+            final TerminalNode tokenRef = ruleSpec.TOKEN_REF();
+            if (tokenRef == null) continue;
+
+            final String tokenName = tokenRef.getText();
+            final Collection<ParseTree> alternatives = XPath.findAll(ruleSpec, "//lexerAlt", antlrParser);
+
+            final List<String> literalValues = new ArrayList<>();
+            for (ParseTree alt : alternatives) {
+                final var elements = XPath.findAll(alt, ".//lexerElement", antlrParser);
+
+                // Sprawdzanie czy alternatywa jest pojedynczym literałem lub prostym tokenem
+                if (elements.size() == 1) {
+                    final ParseTree element = elements.iterator().next();
+
+                    // Bezpośredni literał łańcuchowy
+                    final var stringLiterals = XPath.findAll(element, "STRING_LITERAL", antlrParser);
+                    if (!stringLiterals.isEmpty()) {
+                        literalValues.add(stringLiterals.iterator().next().getText());
+                    }
+                    // Referencja do prostego tokenu
+                    else {
+                        final var tokenRefs = XPath.findAll(element, "TOKEN_REF", antlrParser);
+                        if (!tokenRefs.isEmpty() && simpleTokens.contains(tokenRefs.get(0).getText())) {
+                            literalValues.add(tokenRefs.iterator().next().getText());
+                        }
+                    }
+                }
+            }
+
+            // Warunek: co najmniej 2 unikalne reprezentacje
+            if (literalValues.size() >= 2) {
+                enumTokens.put(tokenName, literalValues);
+            }
+        }
+
+        return enumTokens;
+    }
+
+
+
+    Set<String> getSimpleTokens(final ANTLRv4Parser antlrParser, final GrammarSpecContext tree)
+    {
         final var lexerRules = XPath.findAll(tree, "//lexerRuleSpec", antlrParser);
         final Predicate<ParseTree> isFragment = rule -> {
             final var ruleSpec = (ANTLRv4Parser.LexerRuleSpecContext) rule;

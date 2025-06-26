@@ -47,11 +47,6 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
     }
 
     @Override
-    public XQueryValue reference() {
-        return null;
-    }
-
-    @Override
     public XQueryFunction functionValue() {
         return null;
     }
@@ -79,11 +74,6 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
     @Override
     public boolean isSequence() {
         return sequence() != null;
-    }
-
-    @Override
-    public boolean isReference() {
-        return reference() != null;
     }
 
     @Override

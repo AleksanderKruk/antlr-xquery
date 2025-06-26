@@ -13,12 +13,10 @@ public interface XQueryValue {
     public XQueryFunction functionValue();
     public Boolean effectiveBooleanValue();
     public List<XQueryValue> sequence();
-    public XQueryValue reference();
     public boolean isNumericValue();
     public boolean isStringValue();
     public boolean isBooleanValue();
     public boolean isSequence();
-    public boolean isReference();
     public boolean isAtomic();
     public boolean isNode();
     public boolean isFunction();

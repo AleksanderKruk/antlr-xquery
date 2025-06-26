@@ -1376,7 +1376,7 @@ public XQueryValue visitConstructorChars(final ConstructorCharsContext ctx) {
                         i++;
                         break;
                     default:
-                        // Nierozpoznany escape - pozostaw jak jest
+                        // Unrecognized escape, ignore...
                         result.append(ch);
                         break;
                 }

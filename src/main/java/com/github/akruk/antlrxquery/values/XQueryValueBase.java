@@ -57,6 +57,11 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
     }
 
     @Override
+    public boolean isError() {
+        return false;
+    }
+
+    @Override
     public boolean isNumericValue() {
         return numericValue() != null;
     }

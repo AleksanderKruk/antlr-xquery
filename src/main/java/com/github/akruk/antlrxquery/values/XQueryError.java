@@ -545,4 +545,9 @@ public class XQueryError implements XQueryValue {
         return null;
     }
 
+    @Override
+    public boolean isError() {
+        return true;
+    }
+
 }

@@ -20,6 +20,7 @@ public interface XQueryValue {
     public boolean isAtomic();
     public boolean isNode();
     public boolean isFunction();
+    public boolean isError();
     public List<XQueryValue> atomize();
     public XQueryValue copy();
     public XQueryValue empty();

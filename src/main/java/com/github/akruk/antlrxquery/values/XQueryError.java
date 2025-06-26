@@ -5,34 +5,60 @@ import java.util.List;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 
-public enum XQueryError implements XQueryValue {
-    MissingDynamicContextComponent("XPDY0002", "Evaluation relies on a missing component of the dynamic context."),
-    TreatAsTypeMismatch("XPDY0050", "Dynamic type does not match required sequence type in 'treat as'."),
-    ImplementationLimitExceeded("XPDY0130", "Implementation-dependent limit exceeded."),
-    DuplicateAttributeNames("XQDY0025", "Constructed element has attributes with non-distinct names."),
-    InvalidProcessingInstructionContent("XQDY0026", "Content of computed processing instruction contains '?>'."),
-    UnexpectedValidationResult("XQDY0027", "Validation result root element does not have the expected validity property."),
-    InvalidProcessingInstructionNameCast("XQDY0041", "The name expression in a computed processing instruction cannot be cast to xs:NCName."),
-    InvalidAttributeNodeName("XQDY0044", "Invalid node-name in a computed attribute constructor due to namespace rules."),
-    InvalidValidateOperand("XQDY0061", "validate expression operand must have exactly one element child."),
-    XmlProcessingInstructionDisallowed("XQDY0064", "Computed processing instruction name must not be 'XML' (case insensitive)."),
-    InvalidCommentContent("XQDY0072", "Computed comment contains '--' or ends with '-'."),
-    InvalidQNameConversion("XQDY0074", "Name expression cannot be converted to an expanded QName."),
-    MissingElementDeclaration("XQDY0084", "Validated element lacks top-level declaration in strict mode."),
-    XmlIdConstraintViolation("XQDY0091", "xml:id attribute construction encountered an XML ID error."),
-    InvalidXmlSpaceValue("XQDY0092", "Constructed xml:space attribute has invalid value."),
-    InvalidElementNodeName("XQDY0096", "Invalid node-name in computed element constructor due to namespace rules."),
-    InvalidNamespaceBinding("XQDY0101", "Invalid computed namespace constructor bindings."),
-    ConflictingNamespaceBindings("XQDY0102", "Conflicting or duplicate namespace bindings in element constructor."),
-    DuplicateMapKeys("XQDY0137", "Duplicate keys in a map."),
-    MixedNodesAndAtomicInPath("XPTY0018", "Path operator result contains both nodes and non-nodes."),
-    PathLhsNotNodes("XPTY0019", "Path expression left-hand side does not evaluate to sequence of nodes."),
-    AxisStepContextItemNotNode("XPTY0020", "Context item is not a node in an axis step."),
-    NamespaceSensitiveCastOnUntyped("XPTY0117", "Namespace-sensitive coercion on untypedAtomic."),
-    InvalidTypeInForMember("XPTY0141", "Incorrect type for collection in 'for member' or 'for key/value' clause."),
-    AxisStepAlwaysEmpty("XPTY0144", "Axis step will always return an empty sequence due to implausible type."),
-    LookupAlwaysEmpty("XPTY0145", "Lookup expression will always return an empty sequence due to implausible type.");
-    ;
+public class XQueryError implements XQueryValue {
+
+    public static final XQueryError MissingDynamicContextComponent =
+        new XQueryError("XPDY0002", "Evaluation relies on a missing component of the dynamic context.");
+    public static final XQueryError TreatAsTypeMismatch =
+        new XQueryError("XPDY0050", "Dynamic type does not match required sequence type in 'treat as'.");
+    public static final XQueryError ImplementationLimitExceeded =
+        new XQueryError("XPDY0130", "Implementation-dependent limit exceeded.");
+    public static final XQueryError DuplicateAttributeNames =
+        new XQueryError("XQDY0025", "Constructed element has attributes with non-distinct names.");
+    public static final XQueryError InvalidProcessingInstructionContent =
+        new XQueryError("XQDY0026", "Content of computed processing instruction contains '?>'.");
+    public static final XQueryError UnexpectedValidationResult =
+        new XQueryError("XQDY0027", "Validation result root element does not have the expected validity property.");
+    public static final XQueryError InvalidProcessingInstructionNameCast =
+        new XQueryError("XQDY0041", "The name expression in a computed processing instruction cannot be cast to xs:NCName.");
+    public static final XQueryError InvalidAttributeNodeName =
+        new XQueryError("XQDY0044", "Invalid node-name in a computed attribute constructor due to namespace rules.");
+    public static final XQueryError InvalidValidateOperand =
+        new XQueryError("XQDY0061", "validate expression operand must have exactly one element child.");
+    public static final XQueryError XmlProcessingInstructionDisallowed =
+        new XQueryError("XQDY0064", "Computed processing instruction name must not be 'XML' (case insensitive).");
+    public static final XQueryError InvalidCommentContent =
+        new XQueryError("XQDY0072", "Computed comment contains '--' or ends with '-'.");
+    public static final XQueryError InvalidQNameConversion =
+        new XQueryError("XQDY0074", "Name expression cannot be converted to an expanded QName.");
+    public static final XQueryError MissingElementDeclaration =
+        new XQueryError("XQDY0084", "Validated element lacks top-level declaration in strict mode.");
+    public static final XQueryError XmlIdConstraintViolation =
+        new XQueryError("XQDY0091", "xml:id attribute construction encountered an XML ID error.");
+    public static final XQueryError InvalidXmlSpaceValue =
+        new XQueryError("XQDY0092", "Constructed xml:space attribute has invalid value.");
+    public static final XQueryError InvalidElementNodeName =
+        new XQueryError("XQDY0096", "Invalid node-name in computed element constructor due to namespace rules.");
+    public static final XQueryError InvalidNamespaceBinding =
+        new XQueryError("XQDY0101", "Invalid computed namespace constructor bindings.");
+    public static final XQueryError ConflictingNamespaceBindings =
+        new XQueryError("XQDY0102", "Conflicting or duplicate namespace bindings in element constructor.");
+    public static final XQueryError DuplicateMapKeys =
+        new XQueryError("XQDY0137", "Duplicate keys in a map.");
+    public static final XQueryError MixedNodesAndAtomicInPath =
+        new XQueryError("XPTY0018", "Path operator result contains both nodes and non-nodes.");
+    public static final XQueryError PathLhsNotNodes =
+        new XQueryError("XPTY0019", "Path expression left-hand side does not evaluate to sequence of nodes.");
+    public static final XQueryError AxisStepContextItemNotNode =
+        new XQueryError("XPTY0020", "Context item is not a node in an axis step.");
+    public static final XQueryError NamespaceSensitiveCastOnUntyped =
+        new XQueryError("XPTY0117", "Namespace-sensitive coercion on untypedAtomic.");
+    public static final XQueryError InvalidTypeInForMember =
+        new XQueryError("XPTY0141", "Incorrect type for collection in 'for member' or 'for key/value' clause.");
+    public static final XQueryError AxisStepAlwaysEmpty =
+        new XQueryError("XPTY0144", "Axis step will always return an empty sequence due to implausible type.");
+    public static final XQueryError LookupAlwaysEmpty =
+        new XQueryError("XPTY0145", "Lookup expression will always return an empty sequence due to implausible type.");
 
     private final String code;
     private final String description;

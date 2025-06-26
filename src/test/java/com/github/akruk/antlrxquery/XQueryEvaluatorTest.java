@@ -1378,7 +1378,12 @@ public class XQueryEvaluatorTest {
 
     @Test
     public void tumblingWindowTest() throws XQueryUnsupportedOperation {
-        String xquery = "for tumbling window $w in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10) start at $s when true() end at $e when $e - $s eq 2 return $w";
+        String xquery = """
+                for tumbling window $w in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+                    start at $s when true()
+                    end at $e when $e - $s eq 2
+                    return $w
+            """;
         List<XQueryValue> expected = Arrays.asList(
             baseFactory.sequence(List.of(baseFactory.number(1), baseFactory.number(2), baseFactory.number(3))),
             baseFactory.sequence(List.of(baseFactory.number(4), baseFactory.number(5), baseFactory.number(6))),
@@ -1389,7 +1394,12 @@ public class XQueryEvaluatorTest {
 
     @Test
     public void slidingWindowTest() throws XQueryUnsupportedOperation {
-        String xquery = "for sliding window $w in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10) start at $s when true() end at $e when $e - $s eq 2 return $w";
+        String xquery = """
+            for sliding window $w in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+                start at $s when true()
+                end at $e when $e - $s eq 2
+                return $w
+            """;
         List<XQueryValue> expected = Arrays.asList(
             baseFactory.sequence(List.of(baseFactory.number(1), baseFactory.number(2), baseFactory.number(3))),
             baseFactory.sequence(List.of(baseFactory.number(2), baseFactory.number(3), baseFactory.number(4))),
@@ -1405,7 +1415,10 @@ public class XQueryEvaluatorTest {
 
     @Test
     public void tumblingWindowWithPositionalVariablesTest() throws XQueryUnsupportedOperation {
-        String xquery = "for tumbling window $w in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10) start $s at $sPos end $e at $ePos when $ePos - $sPos eq 2 return ($s, $e)";
+        String xquery = """
+                for tumbling window $w in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+                    start $s at $sPos end $e at $ePos when $ePos - $sPos eq 2 return ($s, $e)
+            """;
         List<XQueryValue> expected = Arrays.asList(
             baseFactory.sequence(List.of(baseFactory.number(1), baseFactory.number(3))),
             baseFactory.sequence(List.of(baseFactory.number(4), baseFactory.number(6))),

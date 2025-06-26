@@ -114,6 +114,15 @@ public class test {
     }
 
 
+    public static interface x {
+        boolean isTrue();
+    }
+    public static class p {
+        boolean isTrue() {
+            return true;
+        }
+    }
+
     public static void main(String[] args) {
         final int lettercount = letter.values().length;
         final letter[] integers = Random.from(RandomGenerator.getDefault())

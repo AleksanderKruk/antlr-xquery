@@ -19,7 +19,7 @@ import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryEnumType
 import com.github.akruk.antlrxquery.values.factories.defaults.XQueryMemoizedValueFactory;
 
 public class XQuerySemanticAnalyzerTest {
-    XQueryTypeFactory typeFactory = new XQueryEnumTypeFactory();
+    final XQueryTypeFactory typeFactory = new XQueryEnumTypeFactory();
 
     record AnalysisResult(XQuerySemanticAnalyzer analyzer, XQuerySequenceType expressionType) {};
 
@@ -29,7 +29,7 @@ public class XQuerySemanticAnalyzerTest {
         final CommonTokenStream xqueryTokens = new CommonTokenStream(xqueryLexer);
         final AntlrXqueryParser xqueryParser = new AntlrXqueryParser(xqueryTokens);
         final ParseTree xqueryTree = xqueryParser.xquery();
-        final XQuerySemanticFunctionCaller caller = new XQueryBaseSemanticFunctionCaller();
+        final XQuerySemanticFunctionCaller caller = new XQueryBaseSemanticFunctionCaller(typeFactory);
         final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
             xqueryParser,
             new XQueryBaseSemanticContextManager(),

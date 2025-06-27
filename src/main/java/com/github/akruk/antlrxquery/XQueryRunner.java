@@ -12,6 +12,7 @@ import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.baseimplem
 import com.github.akruk.antlrxquery.evaluator.XQueryEvaluatorVisitor;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQueryBaseSemanticFunctionCaller;
+import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryEnumTypeFactory;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.defaults.XQueryMemoizedValueFactory;
@@ -96,12 +97,13 @@ public class XQueryRunner {
 
             final String targetFile = Files.readString(Path.of(targetFiles.get(0)));
             final ParserAndTree parserAndTree = parseTargetFile(targetFile, lexerClass, parserClass, startingRule);
+            final XQueryTypeFactory typeFactory = new XQueryEnumTypeFactory();
             final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
                     parserAndTree.parser,
                     new XQueryBaseSemanticContextManager(),
-                    new XQueryEnumTypeFactory(),
+                    typeFactory,
                     new XQueryMemoizedValueFactory(),
-                    new XQueryBaseSemanticFunctionCaller());
+                    new XQueryBaseSemanticFunctionCaller(typeFactory));
             analyzer.visit(xqueryTree);
             final var querySemanticErrors = analyzer.getErrors();
             for (final var error : querySemanticErrors) {

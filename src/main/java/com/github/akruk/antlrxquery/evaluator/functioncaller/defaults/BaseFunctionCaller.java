@@ -430,18 +430,24 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
     public XQueryValue zeroOrOne(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 1;
         var target = args.get(0);
+        if (!target.isSequence())
+            return target;
         return target.zeroOrOne();
     }
 
     public XQueryValue oneOrMore(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 1;
         var target = args.get(0);
+        if (!target.isSequence())
+            return target;
         return target.oneOrMore();
     }
 
     public XQueryValue exactlyOne(XQueryVisitingContext context, final List<XQueryValue> args) {
         assert args.size() == 1;
         var target = args.get(0);
+        if (!target.isSequence())
+            return target;
         return target.exactlyOne();
     }
 

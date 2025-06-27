@@ -168,7 +168,7 @@ public class XQueryError implements XQueryValue {
     public static final XQueryError ExactlyOneWrongArity = new XQueryError("FORG0005",
             "fn:exactly-one called with wrong item count.");
     public static final XQueryError InvalidArgumentType = new XQueryError("FORG0006",
-            "Invalid argument type for fn:max/min/avg.");
+            "Invalid argument type");
     public static final XQueryError InconsistentTimezones = new XQueryError("FORG0008",
             "Inconsistent timezones in fn:dateTime.");
     public static final XQueryError ResolveUriError = new XQueryError("FORG0009", "Error resolving relative URI.");

@@ -1,6 +1,5 @@
 package com.github.akruk.antlrxquery.values;
 
-import java.util.List;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 

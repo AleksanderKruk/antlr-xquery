@@ -401,4 +401,7 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
     public XQueryValue substringAfter(final XQueryValue splitstring) {
         return null;
     }
+
+
+
 }

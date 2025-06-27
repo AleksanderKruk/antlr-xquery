@@ -35,7 +35,7 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
 
     @Override
     public Boolean effectiveBooleanValue() {
-        return value.isEmpty();
+        return !value.isEmpty();
     }
 
     @Override
@@ -140,7 +140,7 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
         var newSequence = new ArrayList<XQueryValue>(value.size());
         newSequence.addAll(value);
         if (!position.isNumericValue())
-            return null;
+            return XQueryError.InvalidArgumentType;
         int positionIndex = position.numericValue().intValue();
         if (positionIndex > value.size()) {
             newSequence.addAll(inserted.atomize());
@@ -160,7 +160,7 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
         var newSequence = new ArrayList<XQueryValue>(value.size());
         newSequence.addAll(value);
         if (!position.isNumericValue())
-            return null;
+            return XQueryError.InvalidArgumentType;
         int positionIndex = position.numericValue().intValue();
         if (positionIndex > value.size()) {
             return valueFactory.sequence(newSequence);
@@ -171,7 +171,6 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
         newSequence.remove(positionIndex-1);
         return valueFactory.sequence(newSequence);
     }
-
 
     @Override
     public XQueryValue reverse()
@@ -220,24 +219,18 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
     public XQueryValue zeroOrOne() {
         return switch (value.size()) {
             case 0, 1 -> this;
-            default -> null;
+            default -> XQueryError.ZeroOrOneWrongArity;
         };
     }
 
     @Override
     public XQueryValue oneOrMore() {
-        return switch (value.size()) {
-            case 0 -> null;
-            default -> this;
-        };
+        return value.isEmpty() ? XQueryError.OneOrMoreEmpty : this;
     }
 
     @Override
     public XQueryValue exactlyOne() {
-        return switch (value.size()) {
-            case 1 -> this;
-            default -> null;
-        };
+        return value.size() == 1 ? this : XQueryError.ExactlyOneWrongArity;
     }
 
     @Override

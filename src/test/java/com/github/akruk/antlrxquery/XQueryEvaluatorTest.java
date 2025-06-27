@@ -10,6 +10,7 @@ import org.junit.Test;
 import com.github.akruk.antlrxquery.evaluator.XQuery;
 import com.github.akruk.antlrxquery.testgrammars.TestLexer;
 import com.github.akruk.antlrxquery.testgrammars.TestParser;
+import com.github.akruk.antlrxquery.values.XQueryError;
 import com.github.akruk.antlrxquery.values.XQueryNumber;
 import com.github.akruk.antlrxquery.values.XQueryString;
 import com.github.akruk.antlrxquery.values.XQueryValue;
@@ -904,14 +905,15 @@ public class XQueryEvaluatorTest {
     @Test
     public void zeroOrOne() {
         var value = XQuery.evaluate(null, "zero-or-one((1, 2))", null);
-        assertNull(value);
+        assertEquals(XQueryError.ZeroOrOneWrongArity, value);
         assertResult("zero-or-one(())", List.of());
+        assertResult("zero-or-one(1)", baseFactory.number(1));
     }
 
     @Test
     public void oneOrMore() {
         var value = XQuery.evaluate(null, "one-or-more(())", null);
-        assertNull(value);
+        assertEquals(XQueryError.OneOrMoreEmpty, value);
         assertResult(" one-or-more((1, 2)) ", List.of(baseFactory.number(1), new XQueryNumber(2, baseFactory)));
     }
 

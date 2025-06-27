@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
 import com.github.akruk.antlrxquery.evaluator.functioncaller.XQueryFunctionCaller;
+import com.github.akruk.antlrxquery.values.XQueryError;
 import com.github.akruk.antlrxquery.values.XQueryFunction;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
@@ -87,481 +88,409 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         registerFunction("op", "numeric-unary-minus", this::numericUnaryMinus);
     }
 
-    public XQueryValue not(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1;
+    public XQueryValue not(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         return args.get(0).not();
     }
 
-    public XQueryValue exp(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1;
+    public XQueryValue exp(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         var arg = args.get(0);
-        if (!arg.isNumericValue()) return null;
+        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
         return valueFactory.number(BigDecimal.valueOf(Math.exp(arg.numericValue().doubleValue())));
     }
 
-    public XQueryValue exp10(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1;
+    public XQueryValue exp10(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         var arg = args.get(0);
-        if (!arg.isNumericValue()) return null;
+        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
         return valueFactory.number(BigDecimal.valueOf(Math.pow(10, arg.numericValue().doubleValue())));
     }
 
-    public XQueryValue log(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1;
+    public XQueryValue log(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         var arg = args.get(0);
-        if (!arg.isNumericValue()) return null;
-        return valueFactory.number(BigDecimal.valueOf(Math.log(arg.numericValue().doubleValue())));
+        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
+        double v = arg.numericValue().doubleValue();
+        if (v <= 0 || Double.isNaN(v)) return XQueryError.InvalidArgumentType;
+        return valueFactory.number(BigDecimal.valueOf(Math.log(v)));
     }
 
-    public XQueryValue log10(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1;
+    public XQueryValue log10(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         var arg = args.get(0);
-        if (!arg.isNumericValue()) return null;
-        return valueFactory.number(BigDecimal.valueOf(Math.log10(arg.numericValue().doubleValue())));
+        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
+        double v = arg.numericValue().doubleValue();
+        if (v <= 0 || Double.isNaN(v)) return XQueryError.InvalidArgumentType;
+        return valueFactory.number(BigDecimal.valueOf(Math.log10(v)));
     }
 
-    public XQueryValue pow(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 2;
+    public XQueryValue pow(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
         var base = args.get(0);
         var exponent = args.get(1);
-        if (!base.isNumericValue() || !exponent.isNumericValue()) return null;
+        if (!base.isNumericValue() || !exponent.isNumericValue()) return XQueryError.InvalidArgumentType;
         return valueFactory.number(BigDecimal.valueOf(Math.pow(base.numericValue().doubleValue(), exponent.numericValue().doubleValue())));
     }
 
-    public XQueryValue sqrt(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1;
+    public XQueryValue sqrt(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         var arg = args.get(0);
-        if (!arg.isNumericValue()) return null;
-        return valueFactory.number(BigDecimal.valueOf(Math.sqrt(arg.numericValue().doubleValue())));
+        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
+        double v = arg.numericValue().doubleValue();
+        if (v < 0) return XQueryError.InvalidArgumentType;
+        return valueFactory.number(BigDecimal.valueOf(Math.sqrt(v)));
     }
 
-    public XQueryValue sin(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1;
+    public XQueryValue sin(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         var arg = args.get(0);
-        if (!arg.isNumericValue()) return null;
+        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
         return valueFactory.number(BigDecimal.valueOf(Math.sin(arg.numericValue().doubleValue())));
     }
 
-    public XQueryValue cos(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1;
+    public XQueryValue cos(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         var arg = args.get(0);
-        if (!arg.isNumericValue()) return null;
+        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
         return valueFactory.number(BigDecimal.valueOf(Math.cos(arg.numericValue().doubleValue())));
     }
 
-    public XQueryValue tan(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1;
+    public XQueryValue tan(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         var arg = args.get(0);
-        if (!arg.isNumericValue()) return null;
+        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
         return valueFactory.number(BigDecimal.valueOf(Math.tan(arg.numericValue().doubleValue())));
     }
 
-    public XQueryValue asin(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1;
+    public XQueryValue asin(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         var arg = args.get(0);
-        if (!arg.isNumericValue()) return null;
-        return valueFactory.number(BigDecimal.valueOf(Math.asin(arg.numericValue().doubleValue())));
+        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
+        double v = arg.numericValue().doubleValue();
+        if (v < -1 || v > 1) return XQueryError.InvalidArgumentType;
+        return valueFactory.number(BigDecimal.valueOf(Math.asin(v)));
     }
 
-    public XQueryValue acos(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1;
+    public XQueryValue acos(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         var arg = args.get(0);
-        if (!arg.isNumericValue()) return null;
-        return valueFactory.number(BigDecimal.valueOf(Math.acos(arg.numericValue().doubleValue())));
+        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
+        double v = arg.numericValue().doubleValue();
+        if (v < -1 || v > 1) return XQueryError.InvalidArgumentType;
+        return valueFactory.number(BigDecimal.valueOf(Math.acos(v)));
     }
 
-    public XQueryValue atan(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1;
+    public XQueryValue atan(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         var arg = args.get(0);
-        if (!arg.isNumericValue()) return null;
+        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
         return valueFactory.number(BigDecimal.valueOf(Math.atan(arg.numericValue().doubleValue())));
     }
 
-    public XQueryValue atan2(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 2;
+    public XQueryValue atan2(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
         var y = args.get(0);
         var x = args.get(1);
-        if (!y.isNumericValue() || !x.isNumericValue()) return null;
+        if (!y.isNumericValue() || !x.isNumericValue()) return XQueryError.InvalidArgumentType;
         return valueFactory.number(BigDecimal.valueOf(Math.atan2(y.numericValue().doubleValue(), x.numericValue().doubleValue())));
     }
 
 
-
-    // fn:abs($arg as xs:numeric?) as xs:numeric?
-    public XQueryValue abs(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1;
-        final var arg = args.get(0);
-        // TODO: Add type check failure
-        if (!arg.isNumericValue())
-            return null;
+    public XQueryValue abs(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
+        var arg = args.get(0);
+        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
         return valueFactory.number(arg.numericValue().abs());
     }
 
-    public XQueryValue ceiling(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1;
-        final var arg = args.get(0);
-        // TODO: Add type check failure
-        if (!arg.isNumericValue())
-            return null;
+    public XQueryValue ceiling(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
+        var arg = args.get(0);
+        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
         return valueFactory.number(arg.numericValue().setScale(0, RoundingMode.CEILING));
     }
 
-    public XQueryValue floor(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1;
-        final var arg = args.get(0);
-        // TODO: Add type check failure
-        if (!arg.isNumericValue())
-            return null;
+    public XQueryValue floor(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
+        var arg = args.get(0);
+        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
         return valueFactory.number(arg.numericValue().setScale(0, RoundingMode.FLOOR));
     }
 
-    public XQueryValue round(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1 || args.size() == 2;
-        final var arg1 = args.get(0);
-        final var number1 = arg1.numericValue();
-        final var negativeNumber = number1.compareTo(BigDecimal.ZERO) == -1;
-        final var oneArg = args.size() == 1;
-        if (oneArg && negativeNumber) {
-            return valueFactory.number(number1.setScale(0, RoundingMode.HALF_DOWN));
+    public XQueryValue round(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() < 1 || args.size() > 2) return XQueryError.WrongNumberOfArguments;
+        var arg = args.get(0);
+        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
+        var number = arg.numericValue();
+        boolean isNegative = number.signum() < 0;
+
+        int scale = 0;
+        if (args.size() == 2) {
+            var scaleArg = args.get(1);
+            if (!scaleArg.isNumericValue()) return XQueryError.InvalidArgumentType;
+            scale = scaleArg.numericValue().intValue();
         }
-        if (oneArg) {
-            return valueFactory.number(number1.setScale(0, RoundingMode.HALF_UP));
+
+        RoundingMode mode = isNegative ? RoundingMode.HALF_DOWN : RoundingMode.HALF_UP;
+        try {
+            return valueFactory.number(number.setScale(scale, mode));
+        } catch (ArithmeticException e) {
+            return XQueryError.NumericOverflowUnderflow;
         }
-        final var number2 = args.get(1).numericValue();
-        final int scale = number2.intValue();
-        if (negativeNumber) {
-            return valueFactory.number(arg1.numericValue().setScale(scale, RoundingMode.HALF_DOWN));
-        }
-        if (scale > 0) {
-            final var roundedNumberNormalNotation = number1.setScale(scale, RoundingMode.HALF_UP);
-            return valueFactory.number(roundedNumberNormalNotation);
-        }
-        final var roundedNumber = number1.setScale(scale, RoundingMode.HALF_UP);
-        final var roundedNumberNormalNotation = roundedNumber.setScale(0, RoundingMode.HALF_UP);
-        return valueFactory.number(roundedNumberNormalNotation);
     }
 
-
-
-
-
-    public XQueryValue numericAdd(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 2;
-        final var val1 = args.get(0);
-        final var val2 = args.get(1);
-        // TODO: Add type check failure
-        if (!val1.isNumericValue() || !val2.isNumericValue())
-            return null;
-        return val1.add(val2);
+    public XQueryValue numericAdd(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
+        var a = args.get(0); var b = args.get(1);
+        if (!a.isNumericValue() || !b.isNumericValue()) return XQueryError.InvalidArgumentType;
+        return a.add(b);
     }
 
-    public XQueryValue numericSubtract(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 2;
-        final var val1 = args.get(0);
-        final var val2 = args.get(1);
-        // TODO: Add type check failure
-        if (!val1.isNumericValue() || !val2.isNumericValue())
-            return null;
-        return val1.subtract(val2);
+    public XQueryValue numericSubtract(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
+        var a = args.get(0); var b = args.get(1);
+        if (!a.isNumericValue() || !b.isNumericValue()) return XQueryError.InvalidArgumentType;
+        return a.subtract(b);
     }
 
-    public XQueryValue numericMultiply(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 2;
-        final var val1 = args.get(0);
-        final var val2 = args.get(1);
-        // TODO: Add type check failure
-        if (!val1.isNumericValue() || !val2.isNumericValue())
-            return null;
-        return val1.multiply(val2);
+    public XQueryValue numericMultiply(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
+        var a = args.get(0); var b = args.get(1);
+        if (!a.isNumericValue() || !b.isNumericValue()) return XQueryError.InvalidArgumentType;
+        return a.multiply(b);
     }
 
-
-    public XQueryValue numericDivide(XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 2;
-        final var val1 = args.get(0);
-        final var val2 = args.get(1);
-        // TODO: Add type check failure
-        if (!val1.isNumericValue() || !val2.isNumericValue())
-            return null;
-        return val1.divide(val2);
+    public XQueryValue numericDivide(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
+        var a = args.get(0); var b = args.get(1);
+        if (!a.isNumericValue() || !b.isNumericValue()) return XQueryError.InvalidArgumentType;
+        return a.divide(b);
     }
 
-    public XQueryValue numericIntegerDivide(XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 2;
-        final var val1 = args.get(0);
-        final var val2 = args.get(1);
-        // TODO: Add type check failure
-        if (!val1.isNumericValue() || !val2.isNumericValue())
-            return null;
-        return val1.integerDivide(val2);
+    public XQueryValue numericIntegerDivide(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
+        var a = args.get(0); var b = args.get(1);
+        if (!a.isNumericValue() || !b.isNumericValue()) return XQueryError.InvalidArgumentType;
+        return a.integerDivide(b);
     }
 
-
-    public XQueryValue numericMod(XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 2;
-        final var val1 = args.get(0);
-        final var val2 = args.get(1);
-        // TODO: Add type check failure
-        if (!val1.isNumericValue() || !val2.isNumericValue())
-            return null;
-        return val1.modulus(val2);
+    public XQueryValue numericMod(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
+        var a = args.get(0); var b = args.get(1);
+        if (!a.isNumericValue() || !b.isNumericValue()) return XQueryError.InvalidArgumentType;
+        return a.modulus(b);
     }
 
-    public XQueryValue numericUnaryPlus(XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1;
-        final var val1 = args.get(0);
-        // TODO: Add type check failure
-        if (!val1.isNumericValue())
-            return null;
-        return val1;
+    public XQueryValue numericUnaryPlus(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
+        var a = args.get(0);
+        if (!a.isNumericValue()) return XQueryError.InvalidArgumentType;
+        return a;
     }
 
-    public XQueryValue numericUnaryMinus(XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1;
-        final var val1 = args.get(0);
-        // TODO: Add type check failure
-        if (!val1.isNumericValue())
-            return null;
-        return valueFactory.number(val1.numericValue().negate());
+    public XQueryValue numericUnaryMinus(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
+        var a = args.get(0);
+        if (!a.isNumericValue()) return XQueryError.InvalidArgumentType;
+        return valueFactory.number(a.numericValue().negate());
     }
 
-    public XQueryValue true_(XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 0;
+    public XQueryValue true_(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (!args.isEmpty()) return XQueryError.WrongNumberOfArguments;
         return valueFactory.bool(true);
     }
 
-    public XQueryValue false_(XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 0;
+    public XQueryValue false_(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (!args.isEmpty()) return XQueryError.WrongNumberOfArguments;
         return valueFactory.bool(false);
     }
 
-    public XQueryValue pi(XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 0;
+    public XQueryValue pi(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (!args.isEmpty()) return XQueryError.WrongNumberOfArguments;
         return valueFactory.number(BigDecimal.valueOf(Math.PI));
     }
 
-    public XQueryValue empty(XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1;
-        var arg = args.get(0);
-        return arg.empty();
+    public XQueryValue empty(XQueryVisitingContext ctx, List<XQueryValue> args) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
+        return args.get(0).empty();
     }
 
-    public XQueryValue exists(XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1;
-        return empty(context, args).not();
+    public XQueryValue exists(XQueryVisitingContext ctx, List<XQueryValue> args) {
+        var result = empty(ctx, args);
+        if (result.isError()) return result;
+        return result.not();
     }
 
-    public XQueryValue head(XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1;
+    public XQueryValue head(XQueryVisitingContext ctx, List<XQueryValue> args) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         return args.get(0).head();
     }
 
-    public XQueryValue tail(XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1;
+    public XQueryValue tail(XQueryVisitingContext ctx, List<XQueryValue> args) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         return args.get(0).tail();
     }
 
-
-    public XQueryValue insertBefore(XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 3;
-        var target = args.get(0);
-        var position = args.get(1);
-        var inserts = args.get(2);
-        return target.insertBefore(position, inserts);
+    public XQueryValue insertBefore(XQueryVisitingContext ctx, List<XQueryValue> args) {
+        if (args.size() != 3) return XQueryError.WrongNumberOfArguments;
+        return args.get(0).insertBefore(args.get(1), args.get(2));
     }
 
-    public XQueryValue remove(XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 2;
-        var target = args.get(0);
-        var position = args.get(1);
-        return target.remove(position);
+    public XQueryValue remove(XQueryVisitingContext ctx, List<XQueryValue> args) {
+        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
+        return args.get(0).remove(args.get(1));
     }
 
-    public XQueryValue reverse(XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1;
+    public XQueryValue reverse(XQueryVisitingContext ctx, List<XQueryValue> args) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         var target = args.get(0);
-        if (target.isAtomic()) {
-            return valueFactory.sequence(List.of(target));
+        return target.isAtomic()
+            ? valueFactory.sequence(List.of(target))
+            : target.reverse();
+    }
+
+    public XQueryValue subsequence(XQueryVisitingContext ctx, List<XQueryValue> args) {
+        if (args.size() == 2 || args.size() == 3) {
+            var target = args.get(0);
+            if (!args.get(1).isNumericValue()) return XQueryError.InvalidArgumentType;
+            int position = args.get(1).numericValue().intValue();
+            if (args.size() == 2) {
+                return target.subsequence(position);
+            } else {
+                if (!args.get(2).isNumericValue()) return XQueryError.InvalidArgumentType;
+                int length = args.get(2).numericValue().intValue();
+                return target.subsequence(position, length);
+            }
         }
-        return target.reverse();
+        return XQueryError.WrongNumberOfArguments;
     }
 
-
-    public XQueryValue subsequence(XQueryVisitingContext context, final List<XQueryValue> args) {
-        return switch (args.size()) {
-            case 3 -> {
-                var target = args.get(0);
-                var position = args.get(1).numericValue().intValue();
-                var length = args.get(2).numericValue().intValue();
-                yield target.subsequence(position, length);
+    public XQueryValue substring(XQueryVisitingContext ctx, List<XQueryValue> args) {
+        if (args.size() == 2 || args.size() == 3) {
+            var target = args.get(0);
+            if (!args.get(1).isNumericValue()) return XQueryError.InvalidArgumentType;
+            int position = args.get(1).numericValue().intValue();
+            if (args.size() == 2) {
+                return target.substring(position);
+            } else {
+                if (!args.get(2).isNumericValue()) return XQueryError.InvalidArgumentType;
+                int length = args.get(2).numericValue().intValue();
+                return target.substring(position, length);
             }
-            case 2 -> {
-                var target = args.get(0);
-                var position = args.get(1).numericValue().intValue();
-                yield target.subsequence(position);
-            }
-            default -> null;
-        };
+        }
+        return XQueryError.WrongNumberOfArguments;
     }
 
-    public XQueryValue substring(XQueryVisitingContext context, final List<XQueryValue> args) {
-        return switch (args.size()) {
-            case 3 -> {
-                var target = args.get(0);
-                var position = args.get(1).numericValue().intValue();
-                var length = args.get(2).numericValue().intValue();
-                yield target.substring(position, length);
-            }
-            case 2 -> {
-                var target = args.get(0);
-                var position = args.get(1).numericValue().intValue();
-                yield target.substring(position);
-            }
-            default -> null;
-        };
+    public XQueryValue distinctValues(XQueryVisitingContext ctx, List<XQueryValue> args) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
+        return args.get(0).distinctValues();
     }
 
-    public XQueryValue distinctValues(XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1;
+    public XQueryValue zeroOrOne(XQueryVisitingContext ctx, List<XQueryValue> args) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         var target = args.get(0);
-        return target.distinctValues();
+        return target.isSequence() ? target.zeroOrOne() : target;
     }
 
-    public XQueryValue zeroOrOne(XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1;
+    public XQueryValue oneOrMore(XQueryVisitingContext ctx, List<XQueryValue> args) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         var target = args.get(0);
-        if (!target.isSequence())
-            return target;
-        return target.zeroOrOne();
+        return target.isSequence() ? target.oneOrMore() : target;
     }
 
-    public XQueryValue oneOrMore(XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1;
+    public XQueryValue exactlyOne(XQueryVisitingContext ctx, List<XQueryValue> args) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         var target = args.get(0);
-        if (!target.isSequence())
-            return target;
-        return target.oneOrMore();
+        return target.isSequence() ? target.exactlyOne() : target;
     }
 
-    public XQueryValue exactlyOne(XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1;
-        var target = args.get(0);
-        if (!target.isSequence())
-            return target;
-        return target.exactlyOne();
+    public XQueryValue data(XQueryVisitingContext ctx, List<XQueryValue> args) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
+        return args.get(0).data();
     }
 
-    public XQueryValue data(XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1;
-        var target = args.get(0);
-        return target.data();
+    public XQueryValue contains(XQueryVisitingContext ctx, List<XQueryValue> args) {
+        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
+        return args.get(0).contains(args.get(1));
     }
 
-    public XQueryValue contains(XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 2;
-        var target = args.get(0);
-        var what = args.get(1);
-        return target.contains(what);
+    public XQueryValue startsWith(XQueryVisitingContext ctx, List<XQueryValue> args) {
+        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
+        return args.get(0).startsWith(args.get(1));
     }
 
-    public XQueryValue startsWith(XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 2;
-        var target = args.get(0);
-        var what = args.get(1);
-        return target.startsWith(what);
+    public XQueryValue endsWith(XQueryVisitingContext ctx, List<XQueryValue> args) {
+        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
+        return args.get(0).endsWith(args.get(1));
     }
 
-    public XQueryValue endsWith(XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 2;
-        var target = args.get(0);
-        var what = args.get(1);
-        return target.endsWith(what);
+    public XQueryValue substringAfter(XQueryVisitingContext ctx, List<XQueryValue> args) {
+        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
+        return args.get(0).substringAfter(args.get(1));
     }
 
-
-    public XQueryValue substringAfter(XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 2;
-        var target = args.get(0);
-        var what = args.get(1);
-        return target.substringAfter(what);
+    public XQueryValue substringBefore(XQueryVisitingContext ctx, List<XQueryValue> args) {
+        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
+        return args.get(0).substringBefore(args.get(1));
     }
 
-
-    public XQueryValue substringBefore(XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 2;
-        var target = args.get(0);
-        var what = args.get(1);
-        return target.substringBefore(what);
+    public XQueryValue uppercase(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
+        return args.get(0).uppercase();
     }
 
-
-    public XQueryValue uppercase(XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1;
-        var target = args.get(0);
-        return target.uppercase();
+    public XQueryValue lowercase(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
+        return args.get(0).lowercase();
     }
 
-
-    public XQueryValue lowercase(XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 1;
-        var target = args.get(0);
-        return target.lowercase();
-    }
-
-    public XQueryValue string(XQueryVisitingContext context, final List<XQueryValue> args) {
-        var target = switch (args.size()) {
-            case 0 -> context.getItem();
-            case 1 -> args.get(0);
-            default -> null;
-        };
+    public XQueryValue string(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() > 1) return XQueryError.WrongNumberOfArguments;
+        var target = args.isEmpty() ? context.getItem() : args.get(0);
         return valueFactory.string(target.stringValue());
     }
 
-    public XQueryValue concat(XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() >= 2;
+    public XQueryValue concat(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() < 2) return XQueryError.WrongNumberOfArguments;
         String joined = args.stream().map(XQueryValue::stringValue).collect(Collectors.joining());
         return valueFactory.string(joined);
     }
 
-    public XQueryValue stringJoin(XQueryVisitingContext context, final List<XQueryValue> args) {
-        return switch (args.size()) {
-            case 1 -> {
-                var sequence = args.get(0).sequence();
-                String joined = sequence.stream().map(XQueryValue::stringValue).collect(Collectors.joining());
-                yield valueFactory.string(joined);
-            }
-            case 2 -> {
-                var sequence = args.get(0).sequence();
-                var delimiter = args.get(1).stringValue();
-                String joined = sequence.stream().map(XQueryValue::stringValue).collect(Collectors.joining(delimiter));
-                yield valueFactory.string(joined);
-            }
-            default -> null;
-        };
+    public XQueryValue stringJoin(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() == 1) {
+            var sequence = args.get(0).sequence();
+            String joined = sequence.stream().map(XQueryValue::stringValue).collect(Collectors.joining());
+            return valueFactory.string(joined);
+        } else if (args.size() == 2) {
+            var sequence = args.get(0).sequence();
+            var delimiter = args.get(1).stringValue();
+            String joined = sequence.stream().map(XQueryValue::stringValue).collect(Collectors.joining(delimiter));
+            return valueFactory.string(joined);
+        } else {
+            return XQueryError.WrongNumberOfArguments;
+        }
     }
 
-    public XQueryValue position(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 0;
+    public XQueryValue position(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (!args.isEmpty()) return XQueryError.WrongNumberOfArguments;
         return valueFactory.number(context.getPosition());
     }
 
-    public XQueryValue last(XQueryVisitingContext context, final List<XQueryValue> args) {
-        assert args.size() == 0;
+    public XQueryValue last(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (!args.isEmpty()) return XQueryError.WrongNumberOfArguments;
         return valueFactory.number(context.getSize());
     }
 
-    public XQueryValue stringLength(XQueryVisitingContext context, final List<XQueryValue> args) {
-        return switch (args.size()) {
-            case 0 -> {
-                var string = context.getItem().stringValue();
-                yield valueFactory.number(string.length());
-            }
-            case 1 -> {
-                var string = args.get(0).stringValue();
-                yield valueFactory.number(string.length());
-            }
-            default -> null;
-        };
+    public XQueryValue stringLength(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() == 0) {
+            var str = context.getItem().stringValue();
+            return valueFactory.number(str.length());
+        } else if (args.size() == 1) {
+            return valueFactory.number(args.get(0).stringValue().length());
+        } else {
+            return XQueryError.WrongNumberOfArguments;
+        }
     }
 
     public Pattern whitespace = Pattern.compile("\\s+");
@@ -569,22 +498,16 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         var trimmed = s.trim();
         return whitespace.matcher(trimmed).replaceAll(" ");
     };
-    public XQueryValue normalizeSpace(XQueryVisitingContext context, final List<XQueryValue> args) {
-        return switch (args.size()) {
-            case 0 -> {
-                String string = context.getItem().stringValue();
-                String normalized = normalize.apply(string);
-                yield valueFactory.string(normalized);
-            }
-            case 1 -> {
-                String string = args.get(0).stringValue();
-                String normalized = normalize.apply(string);
-                yield valueFactory.string(normalized);
-            }
-            default -> null;
-        };
+    public XQueryValue normalizeSpace(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() == 0) {
+            String s = context.getItem().stringValue();
+            return valueFactory.string(normalize.apply(s));
+        } else if (args.size() == 1) {
+            return valueFactory.string(normalize.apply(args.get(0).stringValue()));
+        } else {
+            return XQueryError.WrongNumberOfArguments;
+        }
     }
-
     record ParseFlagsResult(int flags, String newPattern, String newReplacement) {}
 
     public ParseFlagsResult parseFlags(String flags, String pattern, String replacement) {
@@ -618,29 +541,35 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         return new ParseFlagsResult(flagBitMap, pattern, replacement);
     }
 
-    public XQueryValue replace(XQueryVisitingContext context, final List<XQueryValue> args) {
-        return switch (args.size()) {
-            case 3 -> {
+    public XQueryValue replace(XQueryVisitingContext context, List<XQueryValue> args) {
+        if (args.size() == 3) {
+            try {
                 String input = args.get(0).stringValue();
                 String pattern = args.get(1).stringValue();
                 String replacement = args.get(2).stringValue();
                 String result = input.replaceAll(pattern, replacement);
-                yield valueFactory.string(result);
+                return valueFactory.string(result);
+            } catch (Exception e) {
+                return XQueryError.InvalidRegex;
             }
-            case 4 -> {
+        } else if (args.size() == 4) {
+            try {
                 String input = args.get(0).stringValue();
                 String pattern = args.get(1).stringValue();
                 String replacement = args.get(2).stringValue();
                 String flags = args.get(3).stringValue();
-                ParseFlagsResult parsedFlags = parseFlags(flags, pattern, replacement);
-                var matcher = Pattern.compile(parsedFlags.newPattern(), parsedFlags.flags()).matcher(input);
-                String result = matcher.replaceAll(parsedFlags.newReplacement());
-                yield valueFactory.string(result);
+                var parsed = parseFlags(flags, pattern, replacement);
+                Pattern compiled = Pattern.compile(parsed.newPattern(), parsed.flags());
+                String result = compiled.matcher(input).replaceAll(parsed.newReplacement());
+                return valueFactory.string(result);
+            } catch (Exception e) {
+                return XQueryError.InvalidRegexFlags;
             }
-            default -> null;
-        };
+        } else {
+            return XQueryError.WrongNumberOfArguments;
+        }
     }
-
+ 
     private void registerFunction(String namespace, String localName, XQueryFunction function) {
         namespaceFunctions.computeIfAbsent(namespace, _ -> new HashMap<>()).put(localName, function);
     }

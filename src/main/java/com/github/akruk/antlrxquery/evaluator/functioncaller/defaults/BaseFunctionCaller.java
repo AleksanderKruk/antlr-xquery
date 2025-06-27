@@ -586,12 +586,11 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         return functionsInNs.get(localName);
     }
 
-
     @Override
     public XQueryValue call(String functionName, XQueryVisitingContext context, List<XQueryValue> args) {
         XQueryFunction function = getFunction(functionName);
         if (function == null) {
-            throw new IllegalArgumentException("Unknown function: " + functionName);
+            return XQueryError.UnknownFunction;
         }
         return function.call(context, args);
     }
@@ -600,9 +599,10 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
     public XQueryValue getFunctionReference(String functionName) {
         XQueryFunction function = getFunction(functionName);
         if (function == null) {
-            throw new IllegalArgumentException("Unknown function reference: " + functionName);
+            return XQueryError.UnknownFunction;
         }
         return valueFactory.functionReference(function);
     }
+
 
 }

@@ -14,6 +14,7 @@ initialClause: forClause
             | windowClause
             | letClause;
 intermediateClause: initialClause
+                | windowClause
                 | whereClause
                 | whileClause
                 | orderByClause

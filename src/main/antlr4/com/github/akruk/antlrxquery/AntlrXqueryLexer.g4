@@ -4,6 +4,16 @@ INTEGER: Digits;
 DECIMAL: (DOT Digits) | (Digits DOT Digits?);
 fragment Digits: [0-9]+;
 
+TUMBLING: 'tumbling';
+SLIDING: 'sliding';
+WINDOW: 'window';
+START: 'start';
+END: 'end';
+ONLY: 'only';
+WHEN: 'when';
+PREVIOUS: 'previous';
+NEXT: 'next';
+
 STRING: ('"' ('""' | ~["&])* '"')
     | ('\'' ('\'\'' | ~['&])* '\'');
 
@@ -155,14 +165,4 @@ CONSTRUCTOR_CHARS        :
 
 BACKTICK: '`';
 BRACKET: ']';
-
-TUMBLING: 'tumbling';
-SLIDING: 'sliding';
-WINDOW: 'window';
-START: 'start';
-END: 'end';
-ONLY: 'only';
-WHEN: 'when';
-PREVIOUS: 'previous';
-NEXT: 'next';
 

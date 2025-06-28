@@ -12,6 +12,7 @@ import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 import com.github.akruk.antlrxquery.testgrammars.TestLexer;
 import com.github.akruk.antlrxquery.testgrammars.TestParser;
 import com.github.akruk.antlrxquery.values.XQueryNumber;
+import com.github.akruk.antlrxquery.values.XQuerySequence;
 import com.github.akruk.antlrxquery.values.XQueryString;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
@@ -65,6 +66,51 @@ public class XQueryEvaluatorTest {
         var value = XQuery.evaluate(parserAndTree.tree, xquery, parserAndTree.parser);
         assertNotNull(value);
         assertTrue(result.valueEqual(value).booleanValue());
+    }
+
+
+    public static boolean deepEquals(XQueryValue sequence1, XQueryValue sequence2) {
+        if (sequence1 == sequence2) {
+            return true;
+        }
+
+        if (sequence1 == null || sequence2 == null) {
+            return false;
+        }
+
+        List<XQueryValue> seq1 = sequence1.sequence();
+        List<XQueryValue> seq2 = sequence2.sequence();
+
+        if (seq1.size() != seq2.size()) {
+            return false;
+        }
+
+        for (int i = 0; i < seq1.size(); i++) {
+            XQueryValue element1 = seq1.get(i);
+            XQueryValue element2 = seq2.get(i);
+
+            if (!deepEqualsElements(element1, element2)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static boolean deepEqualsElements(XQueryValue element1, XQueryValue element2) {
+        if (element1 == element2) {
+            return true;
+        }
+
+        if (element1 == null || element2 == null) {
+            return false;
+        }
+
+        if (element1.sequence() != null && element2.sequence() != null) {
+            return deepEquals(element1, element2);
+        }
+
+        return true;
     }
 
 
@@ -1383,13 +1429,16 @@ public class XQueryEvaluatorTest {
                     start at $s when true()
                     end at $e when $e - $s eq 2
                     return $w
-            """;
+                """;
+        XQueryValue value = XQuery.evaluate(null, xquery, null);
         List<XQueryValue> expected = Arrays.asList(
             baseFactory.sequence(List.of(baseFactory.number(1), baseFactory.number(2), baseFactory.number(3))),
             baseFactory.sequence(List.of(baseFactory.number(4), baseFactory.number(5), baseFactory.number(6))),
-            baseFactory.sequence(List.of(baseFactory.number(7), baseFactory.number(8), baseFactory.number(9)))
+            baseFactory.sequence(List.of(baseFactory.number(7), baseFactory.number(8), baseFactory.number(9))),
+            baseFactory.sequence(List.of(baseFactory.number(10)))
         );
-        assertResult(xquery, expected);
+        XQueryValue expectedSequence = baseFactory.sequence(expected);
+        assertTrue(deepEquals(expectedSequence, value));
     }
 
     @Test

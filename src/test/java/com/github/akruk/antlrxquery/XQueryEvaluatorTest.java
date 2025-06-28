@@ -12,7 +12,6 @@ import com.github.akruk.antlrxquery.exceptions.XQueryUnsupportedOperation;
 import com.github.akruk.antlrxquery.testgrammars.TestLexer;
 import com.github.akruk.antlrxquery.testgrammars.TestParser;
 import com.github.akruk.antlrxquery.values.XQueryNumber;
-import com.github.akruk.antlrxquery.values.XQuerySequence;
 import com.github.akruk.antlrxquery.values.XQueryString;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
@@ -26,6 +25,7 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.Arrays;
 import java.util.List;
+
 import static org.junit.Assert.*;
 
 public class XQueryEvaluatorTest {
@@ -1470,19 +1470,29 @@ public class XQueryEvaluatorTest {
     public void tumblingWindowWithPositionalVariablesTest() throws XQueryUnsupportedOperation {
         String xquery = """
                 for tumbling window $w in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-                    start $s at $sPos end $e at $ePos when $ePos - $sPos eq 2 return ($s, $e)
+                        start $s at $sPos end $e at $ePos when $ePos - $sPos eq 2
+                    return ($s, $e)
             """;
+        XQueryValue value = XQuery.evaluate(null, xquery, null);
         List<XQueryValue> expected = Arrays.asList(
             baseFactory.sequence(List.of(baseFactory.number(1), baseFactory.number(3))),
             baseFactory.sequence(List.of(baseFactory.number(4), baseFactory.number(6))),
-            baseFactory.sequence(List.of(baseFactory.number(7), baseFactory.number(9)))
+            baseFactory.sequence(List.of(baseFactory.number(7), baseFactory.number(9))),
+            baseFactory.sequence(List.of(baseFactory.number(10), baseFactory.number(10)))
         );
-        assertResult(xquery, expected);
+        XQueryValue expectedSequence = baseFactory.sequence(expected);
+        assertTrue(deepEquals(expectedSequence, value));
     }
 
     @Test
     public void slidingWindowWithPositionalVariablesTest() throws XQueryUnsupportedOperation {
-        String xquery = "for sliding window $w in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10) start $s at $sPos end $e at $ePos when $ePos - $sPos eq 2 return ($s, $e)";
+        String xquery = """
+            for sliding window $w in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+                start $s at $sPos
+                end $e at $ePos when $ePos - $sPos eq 2
+            return ($s, $e)
+        """;
+        XQueryValue value = XQuery.evaluate(null, xquery, null);
         List<XQueryValue> expected = Arrays.asList(
             baseFactory.sequence(List.of(baseFactory.number(1), baseFactory.number(3))),
             baseFactory.sequence(List.of(baseFactory.number(2), baseFactory.number(4))),
@@ -1490,9 +1500,13 @@ public class XQueryEvaluatorTest {
             baseFactory.sequence(List.of(baseFactory.number(4), baseFactory.number(6))),
             baseFactory.sequence(List.of(baseFactory.number(5), baseFactory.number(7))),
             baseFactory.sequence(List.of(baseFactory.number(6), baseFactory.number(8))),
-            baseFactory.sequence(List.of(baseFactory.number(7), baseFactory.number(9)))
+            baseFactory.sequence(List.of(baseFactory.number(7), baseFactory.number(9))),
+            baseFactory.sequence(List.of(baseFactory.number(8), baseFactory.number(10))),
+            baseFactory.sequence(List.of(baseFactory.number(9), baseFactory.number(10))),
+            baseFactory.sequence(List.of(baseFactory.number(10), baseFactory.number(10)))
         );
-        assertResult(xquery, expected);
+        XQueryValue expectedSequence = baseFactory.sequence(expected);
+        assertTrue(deepEquals(expectedSequence, value));
     }
 
 

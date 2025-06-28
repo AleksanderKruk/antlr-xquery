@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -84,6 +83,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.WhileClauseContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.WindowClauseContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.WindowEndConditionContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.WindowStartConditionContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.WindowVarsContext;
 import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.XQueryDynamicContextManager;
 import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.baseimplementation.XQueryBaseDynamicContextManager;
 import com.github.akruk.antlrxquery.evaluator.functioncaller.XQueryFunctionCaller;
@@ -1542,16 +1542,21 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         final String windowVarName = ctx.varNameAndType().qname().getText();
         final XQueryValue sequence = ctx.exprSingle().accept(this);
 
-        final String startPosVarName = ctx.windowStartCondition() != null &&
-                ctx.windowStartCondition().windowVars().positionalVar() != null ?
-                ctx.windowStartCondition().windowVars().positionalVar().varName().getText() : null;
+        final String startVarName = getStartCurrentVarName(ctx.windowStartCondition());
+        final String startPosVarName = getStartPositionalVarName(ctx.windowStartCondition());
+        final String startPrevVarName = getStartPreviousVarName(ctx.windowStartCondition());
+        final String startNextVarName = getStartNextVarName(ctx.windowStartCondition());
 
-        final String endPosVarName = ctx.windowEndCondition() != null &&
-                ctx.windowEndCondition().windowVars().positionalVar() != null ?
-                ctx.windowEndCondition().windowVars().positionalVar().varName().getText() : null;
+        final String endVarName = getEndCurrentVarName(ctx.windowEndCondition());
+        final String endPosVarName = getEndPositionalVarName(ctx.windowEndCondition());
+        final String endPrevVarName = getEndPreviousVarName(ctx.windowEndCondition());
+        final String endNextVarName = getEndNextVarName(ctx.windowEndCondition());
 
         visitedTupleStream = visitedTupleStream.flatMap(tuple ->
-            processSubSequences(sequence, ctx, false, windowVarName, startPosVarName, endPosVarName, new ArrayList<>(tuple))
+            processTumblingWindowSubSequences(sequence, ctx, windowVarName,
+                startVarName, startPosVarName, startPrevVarName, startNextVarName,
+                endVarName, endPosVarName, endPrevVarName, endNextVarName,
+                new ArrayList<>(tuple))
         );
 
         return null;
@@ -1561,53 +1566,98 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         final String windowVarName = ctx.varNameAndType().qname().getText();
         final XQueryValue sequence = ctx.exprSingle().accept(this);
 
-        final String startPosVarName = ctx.windowStartCondition() != null &&
-                ctx.windowStartCondition().windowVars().positionalVar() != null ?
-                ctx.windowStartCondition().windowVars().positionalVar().varName().getText() : null;
+        final String startVarName = getStartCurrentVarName(ctx.windowStartCondition());
+        final String startPosVarName = getStartPositionalVarName(ctx.windowStartCondition());
+        final String startPrevVarName = getStartPreviousVarName(ctx.windowStartCondition());
+        final String startNextVarName = getStartNextVarName(ctx.windowStartCondition());
 
-        final String endPosVarName = ctx.windowEndCondition() != null &&
-                ctx.windowEndCondition().windowVars().positionalVar() != null ?
-                ctx.windowEndCondition().windowVars().positionalVar().varName().getText() : null;
+        final String endVarName = getEndCurrentVarName(ctx.windowEndCondition());
+        final String endPosVarName = getEndPositionalVarName(ctx.windowEndCondition());
+        final String endPrevVarName = getEndPreviousVarName(ctx.windowEndCondition());
+        final String endNextVarName = getEndNextVarName(ctx.windowEndCondition());
 
         visitedTupleStream = visitedTupleStream.flatMap(tuple ->
-            processSubSequences(sequence, ctx, true, windowVarName, startPosVarName, endPosVarName, new ArrayList<>(tuple))
+            processSlidingWindowSubSequences(sequence, ctx, windowVarName,
+                startVarName, startPosVarName, startPrevVarName, startNextVarName,
+                endVarName, endPosVarName, endPrevVarName, endNextVarName,
+                new ArrayList<>(tuple))
         );
 
         return null;
     }
 
-    private Stream<List<TupleElement>> processSubSequences(XQueryValue sequence, Object windowCtx, boolean sliding,
-            String windowVarName, String startPosVarName, String endPosVarName, List<TupleElement> initialTupleElements) {
+    private String getStartCurrentVarName(final WindowStartConditionContext condition) {
+        return condition != null && condition.windowVars() != null && condition.windowVars().currentVar() != null ?
+            condition.windowVars().currentVar().varRef().varName().getText() : null;
+    }
 
-        List<XQueryValue> sequenceList = sequence.sequence();
-        List<List<TupleElement>> allTuples = new ArrayList<>();
+    private String getStartPositionalVarName(final WindowStartConditionContext condition) {
+        return condition != null && condition.windowVars() != null && condition.windowVars().positionalVar() != null ?
+            condition.windowVars().positionalVar().varName().getText() : null;
+    }
+
+    private String getStartPreviousVarName(final WindowStartConditionContext condition) {
+        return condition != null && condition.windowVars() != null && condition.windowVars().previousVar() != null ?
+            condition.windowVars().previousVar().varRef().varName().getText() : null;
+    }
+
+    private String getStartNextVarName(final WindowStartConditionContext condition) {
+        return condition != null && condition.windowVars() != null && condition.windowVars().nextVar() != null ?
+            condition.windowVars().nextVar().varRef().varName().getText() : null;
+    }
+
+    private String getEndCurrentVarName(final WindowEndConditionContext condition) {
+        return condition != null && condition.windowVars() != null && condition.windowVars().currentVar() != null ?
+            condition.windowVars().currentVar().varRef().varName().getText() : null;
+    }
+
+    private String getEndPositionalVarName(final WindowEndConditionContext condition) {
+        return condition != null && condition.windowVars() != null && condition.windowVars().positionalVar() != null ?
+            condition.windowVars().positionalVar().varName().getText() : null;
+    }
+
+    private String getEndPreviousVarName(final WindowEndConditionContext condition) {
+        return condition != null && condition.windowVars() != null && condition.windowVars().previousVar() != null ?
+            condition.windowVars().previousVar().varRef().varName().getText() : null;
+    }
+
+    private String getEndNextVarName(final WindowEndConditionContext condition) {
+        return condition != null && condition.windowVars() != null && condition.windowVars().nextVar() != null ?
+            condition.windowVars().nextVar().varRef().varName().getText() : null;
+    }
+
+    private Stream<List<TupleElement>> processTumblingWindowSubSequences(final XQueryValue sequence, final TumblingWindowClauseContext ctx,
+        final String windowVarName, final String startVarName, final String startPosVarName, final String startPrevVarName, final String startNextVarName,
+        final String endVarName, final String endPosVarName, final String endPrevVarName, final String endNextVarName, final List<TupleElement> initialTupleElements) {
+
+        final List<XQueryValue> sequenceList = sequence.sequence();
+        final List<List<TupleElement>> allTuples = new ArrayList<>();
         int startIndex = 0;
 
         while (startIndex < sequenceList.size()) {
-            if (isStartConditionMet(windowCtx, startIndex, sequenceList)) {
-                int endIndex = findEndIndex(windowCtx, startIndex, sequenceList);
+            final WindowStartConditionContext windowStartCondition = ctx.windowStartCondition();
+            if (isStartConditionMet(windowStartCondition, startIndex, sequenceList)) {
+                final WindowEndConditionContext windowEndCondition = ctx.windowEndCondition();
+                final int endIndex = findEndIndex(windowStartCondition, windowEndCondition, startIndex, sequenceList);
 
-                if (endIndex < sequenceList.size() || !isOnlyEnd(windowCtx)) {
-                    List<XQueryValue> subSequence = sequenceList.subList(startIndex, endIndex + 1);
-                    List<TupleElement> windowTupleElements = new ArrayList<>(initialTupleElements);
+                if (endIndex < sequenceList.size() || !isOnlyEnd(windowEndCondition)) {
+                    final List<XQueryValue> subSequence = sequenceList.subList(startIndex, endIndex + 1);
+                    final List<TupleElement> windowTupleElements = new ArrayList<>(initialTupleElements);
 
-                    TupleElement windowElement = new TupleElement(windowVarName, valueFactory.sequence(subSequence), null, null);
-                    windowTupleElements.add(windowElement);
-
-                    if (startPosVarName != null) {
-                        windowTupleElements.add(new TupleElement(startPosVarName, valueFactory.number(startIndex + 1), null, null));
-                    }
-                    if (endPosVarName != null) {
-                        windowTupleElements.add(new TupleElement(endPosVarName, valueFactory.number(endIndex + 1), null, null));
-                    }
+                    addWindowVariables(windowTupleElements, windowVarName, subSequence, startIndex, endIndex,
+                        startVarName, startPosVarName, startPrevVarName, startNextVarName,
+                        endVarName, endPosVarName, endPrevVarName, endNextVarName);
 
                     allTuples.add(windowTupleElements);
-
-                    startIndex = sliding ? startIndex + 1 : endIndex + 1;
+                    if (endIndex + 1 > sequenceList.size() - 1)
+                        break;
+                    startIndex = endIndex + 1;
                 } else {
                     break;
                 }
             } else {
+                if (startIndex + 1 > sequenceList.size() - 1)
+                    break;
                 startIndex++;
             }
         }
@@ -1615,139 +1665,167 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return allTuples.stream();
     }
 
-    private boolean isStartConditionMet(Object windowCtx, int currentIndex, List<XQueryValue> sequenceList) {
-        if (windowCtx instanceof TumblingWindowClauseContext) {
-            TumblingWindowClauseContext ctx = (TumblingWindowClauseContext) windowCtx;
-            if (ctx.windowStartCondition() != null && ctx.windowStartCondition().exprSingle() != null) {
-                provideVariablesForCondition(ctx.windowStartCondition(), currentIndex, sequenceList);
-                return ctx.windowStartCondition().exprSingle().accept(this).effectiveBooleanValue();
+    private Stream<List<TupleElement>> processSlidingWindowSubSequences(final XQueryValue sequence, final SlidingWindowClauseContext ctx,
+        final String windowVarName, final String startVarName, final String startPosVarName, final String startPrevVarName, final String startNextVarName,
+        final String endVarName, final String endPosVarName, final String endPrevVarName, final String endNextVarName, final List<TupleElement> initialTupleElements) {
+
+        final List<XQueryValue> sequenceList = sequence.sequence();
+        final List<List<TupleElement>> allTuples = new ArrayList<>();
+        int startIndex = 0;
+
+        while (startIndex < sequenceList.size()) {
+            final WindowStartConditionContext windowStartCondition = ctx.windowStartCondition();
+            if (isStartConditionMet(windowStartCondition, startIndex, sequenceList)) {
+                final WindowEndConditionContext windowEndCondition = ctx.windowEndCondition();
+                final int endIndex = findEndIndex(windowStartCondition, windowEndCondition, startIndex, sequenceList);
+
+                if (endIndex < sequenceList.size() || !isOnlyEnd(windowEndCondition)) {
+                    final List<XQueryValue> subSequence = sequenceList.subList(startIndex, endIndex + 1);
+                    final List<TupleElement> windowTupleElements = new ArrayList<>(initialTupleElements);
+
+                    addWindowVariables(windowTupleElements, windowVarName, subSequence, startIndex, endIndex,
+                        startVarName, startPosVarName, startPrevVarName, startNextVarName,
+                        endVarName, endPosVarName, endPrevVarName, endNextVarName);
+
+                    allTuples.add(windowTupleElements);
+                    if (startIndex + 1 > sequenceList.size() - 1)
+                        break;
+                    startIndex++;
+                } else {
+                    break;
+                }
+            } else {
+                if (startIndex + 1 > sequenceList.size() - 1)
+                    break;
+                startIndex++;
             }
-        } else if (windowCtx instanceof SlidingWindowClauseContext) {
-            SlidingWindowClauseContext ctx = (SlidingWindowClauseContext) windowCtx;
-            if (ctx.windowStartCondition() != null && ctx.windowStartCondition().exprSingle() != null) {
-                provideVariablesForCondition(ctx.windowStartCondition(), currentIndex, sequenceList);
-                return ctx.windowStartCondition().exprSingle().accept(this).effectiveBooleanValue();
-            }
+        }
+
+        return allTuples.stream();
+    }
+
+    private void addWindowVariables(final List<TupleElement> windowTupleElements, final String windowVarName, final List<XQueryValue> subSequence,
+        final int startIndex, final int endIndex, final String startVarName, final String startPosVarName, final String startPrevVarName, final String startNextVarName,
+        final String endVarName, final String endPosVarName, final String endPrevVarName, final String endNextVarName) {
+
+        windowTupleElements.add(new TupleElement(windowVarName, valueFactory.sequence(subSequence), null, null));
+
+        addStartVariables(windowTupleElements, subSequence, startIndex, startVarName, startPosVarName, startPrevVarName, startNextVarName);
+        addEndVariables(windowTupleElements, subSequence, endIndex, endVarName, endPosVarName, endPrevVarName, endNextVarName);
+    }
+
+    private void addStartVariables(final List<TupleElement> windowTupleElements, final List<XQueryValue> subSequence, final int startIndex,
+        final String startVarName, final String startPosVarName, final String startPrevVarName, final String startNextVarName) {
+
+        if (startVarName != null) {
+            windowTupleElements.add(new TupleElement(startVarName, subSequence.get(0), null, null));
+        }
+        if (startPosVarName != null) {
+            windowTupleElements.add(new TupleElement(startPosVarName, valueFactory.number(startIndex + 1), null, null));
+        }
+        if (startPrevVarName != null) {
+            windowTupleElements.add(new TupleElement(startPrevVarName, startIndex > 0 ? subSequence.get(0) : valueFactory.emptySequence(), null, null));
+        }
+        if (startNextVarName != null) {
+            windowTupleElements.add(new TupleElement(startNextVarName, startIndex < subSequence.size() - 1 ? subSequence.get(1) : valueFactory.emptySequence(), null, null));
+        }
+    }
+
+    private void addEndVariables(final List<TupleElement> windowTupleElements, final List<XQueryValue> subSequence, final int endIndex,
+        final String endVarName, final String endPosVarName, final String endPrevVarName, final String endNextVarName) {
+
+        if (endVarName != null) {
+            windowTupleElements.add(new TupleElement(endVarName, subSequence.get(subSequence.size() - 1), null, null));
+        }
+        if (endPosVarName != null) {
+            windowTupleElements.add(new TupleElement(endPosVarName, valueFactory.number(endIndex + 1), null, null));
+        }
+        if (endPrevVarName != null) {
+            windowTupleElements.add(new TupleElement(endPrevVarName, subSequence.size() > 1 ? subSequence.get(subSequence.size() - 2) : valueFactory.emptySequence(), null, null));
+        }
+        if (endNextVarName != null) {
+            windowTupleElements.add(new TupleElement(endNextVarName, valueFactory.emptySequence(), null, null));
+        }
+    }
+
+    private boolean isStartConditionMet(final WindowStartConditionContext ctx, final int currentIndex, final List<XQueryValue> sequenceList) {
+        if (ctx != null && ctx.exprSingle() != null) {
+            provideVariablesForCondition(ctx, currentIndex, sequenceList);
+            return ctx.exprSingle().accept(this).effectiveBooleanValue();
         }
         return true;
     }
 
-    private int findEndIndex(Object windowCtx, int startIndex, List<XQueryValue> sequenceList) {
+    private int findEndIndex(final WindowStartConditionContext startCtx,
+            final WindowEndConditionContext ctx,
+            final int startIndex,
+            final List<XQueryValue> sequenceList)
+    {
         int endIndex = startIndex;
-        boolean isOnlyEnd = isOnlyEnd(windowCtx);
-
-        if (windowCtx instanceof TumblingWindowClauseContext) {
-            TumblingWindowClauseContext ctx = (TumblingWindowClauseContext) windowCtx;
-            if (ctx.windowEndCondition() != null && ctx.windowEndCondition().exprSingle() != null) {
-                while (endIndex < sequenceList.size()) {
-                    provideVariablesForCondition(ctx.windowEndCondition(), endIndex, sequenceList);
-                    if (ctx.windowEndCondition().exprSingle().accept(this).effectiveBooleanValue()) {
-                        break;
-                    }
-                    if (endIndex + 1 > sequenceList.size()-1) {
-                        break;
-                    }
-                    endIndex++;
+        if (ctx != null && ctx.exprSingle() != null) {
+            while (endIndex < sequenceList.size()) {
+                provideVariablesForCondition(startCtx, startIndex, sequenceList);
+                provideVariablesForCondition(ctx, endIndex, sequenceList);
+                if (ctx.exprSingle().accept(this).effectiveBooleanValue()) {
+                    break;
                 }
-            } else {
-                endIndex = sequenceList.size() - 1;
+                if (endIndex + 1 > sequenceList.size()-1)
+                    break;
+                endIndex++;
             }
-        } else if (windowCtx instanceof SlidingWindowClauseContext) {
-            SlidingWindowClauseContext ctx = (SlidingWindowClauseContext) windowCtx;
-            if (ctx.windowEndCondition() != null && ctx.windowEndCondition().exprSingle() != null) {
-                while (endIndex < sequenceList.size()) {
-                    provideVariablesForCondition(ctx.windowEndCondition(), endIndex, sequenceList);
-                    if (ctx.windowEndCondition().exprSingle().accept(this).effectiveBooleanValue()) {
-                        break;
-                    }
-                    if (endIndex + 1 > sequenceList.size()-1) {
-                        break;
-                    }
-                    endIndex++;
-                }
-            } else {
-                endIndex = sequenceList.size() - 1;
-            }
+        } else {
+            endIndex = sequenceList.size() - 1;
         }
-
-        if (isOnlyEnd && endIndex == sequenceList.size() - 1 && !isEndConditionMet(windowCtx, endIndex, sequenceList)) {
-            endIndex--;
-        }
-
         return endIndex;
     }
 
-    private boolean isOnlyEnd(Object windowCtx) {
-        if (windowCtx instanceof TumblingWindowClauseContext) {
-            TumblingWindowClauseContext ctx = (TumblingWindowClauseContext) windowCtx;
-            return ctx.windowEndCondition() != null && ctx.windowEndCondition().ONLY() != null;
-        } else if (windowCtx instanceof SlidingWindowClauseContext) {
-            SlidingWindowClauseContext ctx = (SlidingWindowClauseContext) windowCtx;
-            return ctx.windowEndCondition() != null && ctx.windowEndCondition().ONLY() != null;
-        }
-        return false;
+    private boolean isOnlyEnd(final WindowEndConditionContext ctx) {
+        return ctx != null && ctx.ONLY() != null;
     }
 
-    private boolean isEndConditionMet(Object windowCtx, int currentIndex, List<XQueryValue> sequenceList) {
-        if (windowCtx instanceof TumblingWindowClauseContext) {
-            TumblingWindowClauseContext ctx = (TumblingWindowClauseContext) windowCtx;
-            if (ctx.windowEndCondition() != null && ctx.windowEndCondition().exprSingle() != null) {
-                provideVariablesForCondition(ctx.windowEndCondition(), currentIndex, sequenceList);
-                return ctx.windowEndCondition().exprSingle().accept(this).effectiveBooleanValue();
-            }
-        } else if (windowCtx instanceof SlidingWindowClauseContext) {
-            SlidingWindowClauseContext ctx = (SlidingWindowClauseContext) windowCtx;
-            if (ctx.windowEndCondition() != null && ctx.windowEndCondition().exprSingle() != null) {
-                provideVariablesForCondition(ctx.windowEndCondition(), currentIndex, sequenceList);
-                return ctx.windowEndCondition().exprSingle().accept(this).effectiveBooleanValue();
-            }
-        }
-        return false;
+    private void provideVariablesForCondition(final WindowStartConditionContext ctx, final int currentIndex, final List<XQueryValue> sequenceList) {
+        final var windowVars = ctx.windowVars();
+        provideCurrentVariable(windowVars, currentIndex, sequenceList);
+        providePositionalVariable(windowVars, currentIndex);
+        providePreviousVariable(windowVars, currentIndex, sequenceList);
+        provideNextVariable(windowVars, currentIndex, sequenceList);
     }
 
-    private void provideVariablesForCondition(Object conditionCtx, int currentIndex, List<XQueryValue> sequenceList) {
-        if (conditionCtx instanceof WindowStartConditionContext) {
-            WindowStartConditionContext ctx = (WindowStartConditionContext) conditionCtx;
-            if (ctx.windowVars().currentVar() != null) {
-                String currentVarName = ctx.windowVars().currentVar().varName().getText();
-                contextManager.provideVariable(currentVarName, sequenceList.get(currentIndex));
-            }
-            if (ctx.windowVars().positionalVar() != null) {
-                String positionalVarName = ctx.windowVars().positionalVar().varName().getText();
-                contextManager.provideVariable(positionalVarName, valueFactory.number(currentIndex + 1));
-            }
-            if (ctx.windowVars().previousVar() != null) {
-                String previousVarName = ctx.windowVars().previousVar().varName().getText();
-                contextManager.provideVariable(previousVarName, currentIndex > 0 ? sequenceList.get(currentIndex - 1) : valueFactory.emptySequence());
-            }
-            if (ctx.windowVars().nextVar() != null) {
-                String nextVarName = ctx.windowVars().nextVar().varName().getText();
-                contextManager.provideVariable(nextVarName, currentIndex < sequenceList.size() - 1 ? sequenceList.get(currentIndex + 1) : valueFactory.emptySequence());
-            }
-        } else if (conditionCtx instanceof WindowEndConditionContext) {
-            WindowEndConditionContext ctx = (WindowEndConditionContext) conditionCtx;
-            if (ctx.windowVars().currentVar() != null) {
-                String currentVarName = ctx.windowVars().currentVar().varName().getText();
-                contextManager.provideVariable(currentVarName, sequenceList.get(currentIndex));
-            }
-            if (ctx.windowVars().positionalVar() != null) {
-                String positionalVarName = ctx.windowVars().positionalVar().varName().getText();
-                contextManager.provideVariable(positionalVarName, valueFactory.number(currentIndex + 1));
-            }
-            if (ctx.windowVars().previousVar() != null) {
-                String previousVarName = ctx.windowVars().previousVar().varName().getText();
-                contextManager.provideVariable(previousVarName, currentIndex > 0 ? sequenceList.get(currentIndex - 1) : valueFactory.emptySequence());
-            }
-            if (ctx.windowVars().nextVar() != null) {
-                String nextVarName = ctx.windowVars().nextVar().varName().getText();
-                contextManager.provideVariable(nextVarName, currentIndex < sequenceList.size() - 1 ? sequenceList.get(currentIndex + 1) : valueFactory.emptySequence());
-            }
+    private void provideVariablesForCondition(final WindowEndConditionContext ctx, final int currentIndex, final List<XQueryValue> sequenceList) {
+        final var windowVars = ctx.windowVars();
+        provideCurrentVariable(windowVars, currentIndex, sequenceList);
+        providePositionalVariable(windowVars, currentIndex);
+        providePreviousVariable(windowVars, currentIndex, sequenceList);
+        provideNextVariable(windowVars, currentIndex, sequenceList);
+    }
+
+    private void provideCurrentVariable(final WindowVarsContext vars, final int currentIndex, final List<XQueryValue> sequenceList) {
+        if (vars.currentVar() != null) {
+            final String currentVarName = vars.currentVar().varRef().varName().getText();
+            contextManager.provideVariable(currentVarName, sequenceList.get(currentIndex));
         }
     }
 
+    private void providePositionalVariable(final WindowVarsContext vars, final int currentIndex) {
+        if (vars.positionalVar() != null) {
+            final String positionalVarName = vars.positionalVar().varName().getText();
+            contextManager.provideVariable(positionalVarName, valueFactory.number(currentIndex + 1));
+        }
+    }
 
+    private void providePreviousVariable(final WindowVarsContext vars, final int currentIndex, final List<XQueryValue> sequenceList) {
+        if (vars.previousVar() != null) {
+            final String previousVarName = vars.previousVar().varRef().varName().getText();
+            contextManager.provideVariable(previousVarName, currentIndex > 0 ? sequenceList.get(currentIndex - 1) : valueFactory.emptySequence());
+        }
+    }
 
-
+    private void provideNextVariable(final WindowVarsContext vars, final int currentIndex, final List<XQueryValue> sequenceList) {
+        if (vars.nextVar() != null) {
+            final String nextVarName = vars.nextVar().varRef().varName().getText();
+            contextManager.provideVariable(nextVarName, currentIndex < sequenceList.size() - 1 ? sequenceList.get(currentIndex + 1) : valueFactory.emptySequence());
+        }
+    }
 
     private int compareValues(final XQueryValue value1, final XQueryValue value2) {
         if (value1.valueEqual(value2).booleanValue()) {

@@ -254,14 +254,14 @@ windowVars
     ;
 
 currentVar
-    : varName
+    : varRef
     ;
 
 previousVar
-    : PREVIOUS varName
+    : PREVIOUS varRef
     ;
 
 nextVar
-    : NEXT varName
+    : NEXT varRef
     ;
 

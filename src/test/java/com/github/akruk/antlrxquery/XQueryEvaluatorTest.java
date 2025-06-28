@@ -1449,6 +1449,7 @@ public class XQueryEvaluatorTest {
                 end at $e when $e - $s eq 2
                 return $w
             """;
+        XQueryValue value = XQuery.evaluate(null, xquery, null);
         List<XQueryValue> expected = Arrays.asList(
             baseFactory.sequence(List.of(baseFactory.number(1), baseFactory.number(2), baseFactory.number(3))),
             baseFactory.sequence(List.of(baseFactory.number(2), baseFactory.number(3), baseFactory.number(4))),
@@ -1457,9 +1458,12 @@ public class XQueryEvaluatorTest {
             baseFactory.sequence(List.of(baseFactory.number(5), baseFactory.number(6), baseFactory.number(7))),
             baseFactory.sequence(List.of(baseFactory.number(6), baseFactory.number(7), baseFactory.number(8))),
             baseFactory.sequence(List.of(baseFactory.number(7), baseFactory.number(8), baseFactory.number(9))),
-            baseFactory.sequence(List.of(baseFactory.number(8), baseFactory.number(9), baseFactory.number(10)))
+            baseFactory.sequence(List.of(baseFactory.number(8), baseFactory.number(9), baseFactory.number(10))),
+            baseFactory.sequence(List.of(baseFactory.number(9), baseFactory.number(10))),
+            baseFactory.sequence(List.of(baseFactory.number(10)))
         );
-        assertResult(xquery, expected);
+        XQueryValue expectedSequence = baseFactory.sequence(expected);
+        assertTrue(deepEquals(expectedSequence, value));
     }
 
     @Test

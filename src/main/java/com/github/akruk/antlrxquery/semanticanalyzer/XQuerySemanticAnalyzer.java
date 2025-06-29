@@ -19,10 +19,9 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.*;
 import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.XQuerySemanticContextManager;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
-import com.github.akruk.antlrxquery.charescaper.XQueryCharEscaper;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper.XQuerySemanticCharEscaperResult;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionCaller;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager;
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
@@ -33,7 +32,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     final List<String> errors;
     final XQueryTypeFactory typeFactory;
     final XQueryValueFactory valueFactory;
-    final XQuerySemanticFunctionCaller functionCaller;
+    final IXQuerySemanticFunctionManager functionCaller;
     final Parser parser;
     XQueryVisitingSemanticContext context;
     List<XQuerySequenceType> visitedArgumentTypesList;
@@ -51,7 +50,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             final XQuerySemanticContextManager contextManager,
             final XQueryTypeFactory typeFactory,
             final XQueryValueFactory valueFactory,
-            final XQuerySemanticFunctionCaller functionCaller)
+            final IXQuerySemanticFunctionManager functionCaller)
     {
         this.context = new XQueryVisitingSemanticContext();
         this.parser = parser;
@@ -442,9 +441,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         final var savedArgs = saveVisitedArguments();
 
         ctx.argumentList().accept(this);
-        final var callAnalysisResult = functionCaller.call(namespace, functionName,
-                                                            typeFactory, context,
-                                                            visitedArgumentTypesList);
+        final var callAnalysisResult = functionCaller.call(namespace, functionName, context, visitedArgumentTypesList);
         errors.addAll(callAnalysisResult.errors());
 
         visitedArgumentTypesList = savedArgs;

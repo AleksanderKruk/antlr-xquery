@@ -11,7 +11,7 @@ import com.github.akruk.antlrgrammar.ANTLRv4Parser.ParserRuleSpecContext;
 import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.baseimplementation.XQueryBaseSemanticContextManager;
 import com.github.akruk.antlrxquery.evaluator.XQueryEvaluatorVisitor;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQueryBaseSemanticFunctionCaller;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQuerySemanticFunctionManager;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryEnumTypeFactory;
 import com.github.akruk.antlrxquery.values.XQueryValue;
@@ -103,7 +103,7 @@ public class XQueryRunner {
                     new XQueryBaseSemanticContextManager(),
                     typeFactory,
                     new XQueryMemoizedValueFactory(),
-                    new XQueryBaseSemanticFunctionCaller(typeFactory));
+                    new XQuerySemanticFunctionManager(typeFactory));
             analyzer.visit(xqueryTree);
             final var querySemanticErrors = analyzer.getErrors();
             for (final var error : querySemanticErrors) {

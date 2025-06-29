@@ -11,8 +11,8 @@ import org.junit.Test;
 
 import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.baseimplementation.XQueryBaseSemanticContextManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionCaller;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQueryBaseSemanticFunctionCaller;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQuerySemanticFunctionManager;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryEnumTypeFactory;
@@ -29,7 +29,7 @@ public class XQuerySemanticAnalyzerTest {
         final CommonTokenStream xqueryTokens = new CommonTokenStream(xqueryLexer);
         final AntlrXqueryParser xqueryParser = new AntlrXqueryParser(xqueryTokens);
         final ParseTree xqueryTree = xqueryParser.xquery();
-        final XQuerySemanticFunctionCaller caller = new XQueryBaseSemanticFunctionCaller(typeFactory);
+        final IXQuerySemanticFunctionManager caller = new XQuerySemanticFunctionManager(typeFactory);
         final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
             xqueryParser,
             new XQueryBaseSemanticContextManager(),

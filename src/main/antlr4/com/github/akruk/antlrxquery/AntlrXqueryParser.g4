@@ -100,7 +100,17 @@ wildcard: STAR
         | (STARCOLON ID);
 postfixExpr: primaryExpr (postfix)*;
 postfix: predicate | argumentList;
-argumentList: LPAREN (argument (COMMA argument)*)? RPAREN;
+argumentList: LPAREN (positionalArguments (COMMA keywordArguments)? | keywordArguments)? RPAREN;
+positionalArguments: argument (COMMA argument)*;
+keywordArguments: keywordArgument (COMMA keywordArgument)* ;
+keywordArgument: qname ASSIGNMENT_OP argument;
+argument: exprSingle | argumentPlaceholder;
+argumentPlaceholder: QUESTION_MARK;
+
+
+// (PositionalArguments ("," KeywordArguments)?) | KeywordArguments
+
+
 predicateList: predicate*;
 predicate: LBRACKET expr RBRACKET;
 arrowFunctionSpecifier: ID | varRef | parenthesizedExpr;
@@ -128,8 +138,6 @@ varName: qname;
 parenthesizedExpr: LPAREN expr? RPAREN;
 contextItemExpr: DOT;
 functionCall: functionName argumentList;
-argument: exprSingle | argumentPlaceholder;
-argumentPlaceholder: QUESTION_MARK;
 typeDeclaration: AS sequenceType;
 // sequenceType: qname occurrenceIndicator?;
 occurrenceIndicator: QUESTION_MARK | STAR | PLUS;

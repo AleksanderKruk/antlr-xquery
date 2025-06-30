@@ -97,7 +97,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         );
         register("fn", "exists", List.of(sequence), typeFactory.boolean_()
         );
-        register("fn", "head", List.of(sequence), optionalItem));
+        register("fn", "head", List.of(sequence), optionalItem);
         register("fn", "tail", List.of(sequence), zeroOrMoreItems);
 
         final ArgumentSpecification insert =
@@ -3163,7 +3163,7 @@ register("xs", "string",
                 final var partitioned = remainingArgs.parallelStream()
                                                      .collect(usedAsKeywordCriterion);
                 // all the arguments that HAVE NOT been used as keywords in call need to be optional
-                if (partitioned.get(false).parallelStream().noneMatch(ArgumentSpecification::isRequired)) {
+                if (!partitioned.get(false).parallelStream().noneMatch(ArgumentSpecification::isRequired)) {
                     continue SPECIFICATION;
                 }
                 // all the arguments that HAVE been used as keywords in call need to have matching type

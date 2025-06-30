@@ -22,6 +22,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper.XQuerySemanticCharEscaperResult;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager.CallAnalysisResult;
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
@@ -35,7 +36,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     final IXQuerySemanticFunctionManager functionCaller;
     final Parser parser;
     XQueryVisitingSemanticContext context;
-    List<XQuerySequenceType> visitedArgumentTypesList;
+    List<XQuerySequenceType> visitedPositionalArguments;
+    Map<String, XQuerySequenceType> visitedKeywordArguments;
     List<TupleElementType> visitedTupleStreamType;
 
 
@@ -306,7 +308,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     }
 
     private int mergeFLWOROccurrence(final XQuerySequenceType type) {
-        int typeOccurrence = occurrence(type);
+        final int typeOccurrence = occurrence(type);
         return OCCURRENCE_MERGE_AUTOMATA[returnedOccurrence][typeOccurrence];
     }
 
@@ -421,10 +423,10 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         return previousExprType;
     }
 
-    private String unescapeString(ParserRuleContext where, final String str) {
+    private String unescapeString(final ParserRuleContext where, final String str) {
         final var charEscaper = new XQuerySemanticCharEscaper();
-        XQuerySemanticCharEscaperResult result = charEscaper.escapeWithDiagnostics(str);
-        for (var e : result.errors()){
+        final XQuerySemanticCharEscaperResult result = charEscaper.escapeWithDiagnostics(str);
+        for (final var e : result.errors()){
             addError(where, e.message());
         }
         return result.unescaped();
@@ -439,12 +441,16 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         final String functionName = (hasNamespace)? namespaces[1] : namespaces[0];
 
         final var savedArgs = saveVisitedArguments();
+        final var savedKwargs = saveVisitedKeywordArguments();
 
         ctx.argumentList().accept(this);
-        final var callAnalysisResult = functionCaller.call(namespace, functionName, context, visitedArgumentTypesList);
+
+        final CallAnalysisResult callAnalysisResult = functionCaller.call(
+            namespace, functionName, visitedPositionalArguments, visitedKeywordArguments, context);
         errors.addAll(callAnalysisResult.errors());
 
-        visitedArgumentTypesList = savedArgs;
+        visitedPositionalArguments = savedArgs;
+        visitedKeywordArguments = savedKwargs;
         return callAnalysisResult.result();
     }
 
@@ -569,7 +575,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         for (final var predicate : ctx.predicateList().predicate()) {
             stepResult = predicate.accept(this);
         }
-        visitedArgumentTypesList = savedArgs;
+        visitedPositionalArguments = savedArgs;
         return stepResult;
     }
 
@@ -594,7 +600,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             context.setType(value);
             value = postfix.accept(this);
         }
-        visitedArgumentTypesList = savedArgs;
+        visitedPositionalArguments = savedArgs;
         return value;
     }
 
@@ -987,13 +993,28 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     @Override
     public XQuerySequenceType visitArgument(final ArgumentContext ctx) {
         final var value =  super.visitArgument(ctx);
-        visitedArgumentTypesList.add(value);
+        visitedPositionalArguments.add(value);
         return value;
     }
 
+    @Override
+    public XQuerySequenceType visitKeywordArgument(KeywordArgumentContext ctx) {
+        final var value =  super.visitKeywordArgument(ctx);
+        visitedKeywordArguments.put(ctx.qname().getText(), value);
+        return value;
+
+    }
+
+
     private List<XQuerySequenceType> saveVisitedArguments() {
-        final var saved = visitedArgumentTypesList;
-        visitedArgumentTypesList = new ArrayList<>();
+        final var saved = visitedPositionalArguments;
+        visitedPositionalArguments = new ArrayList<>();
+        return saved;
+    }
+
+    private Map<String, XQuerySequenceType> saveVisitedKeywordArguments() {
+        final var saved = visitedKeywordArguments;
+        visitedKeywordArguments = new HashMap<>();
         return saved;
     }
 
@@ -1076,7 +1097,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     }
 
     @Override
-    public XQuerySequenceType visitStringConstructor(StringConstructorContext ctx) {
+    public XQuerySequenceType visitStringConstructor(final StringConstructorContext ctx) {
         return typeFactory.string();
     }
 

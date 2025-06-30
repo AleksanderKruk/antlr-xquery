@@ -727,30 +727,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         return typeFactory.string();
     }
 
-    private XQuerySequenceType handleArrowExpr(final OrExprContext ctx) {
-        // final var savedArgs = saveVisitedArguments();
-        // var contextArgument = ctx.orExpr(0).accept(this);
-        // visitedArgumentTypesList.add(contextArgument);
-        // // var isString = !value.isStringValue();
-        // // var isFunction = !func
-        // final var arrowCount = ctx.ARROW().size();
-        // for (int i = 0; i < arrowCount; i++) {
-        //     final var visitedFunction = ctx.arrowFunctionSpecifier(i).accept(this);
-        //     if (visitedFunction == null) {
-        //         final TerminalNode functionName = ctx.arrowFunctionSpecifier(i).ID();
-        //         addError(functionName, String.format("%s is unknown function name", functionName.getText()));
-        //     }
-        //     ctx.argumentList(i).accept(this); // visitedArgumentList is set to function's args
-        //     // contextArgument = visitedFunction.functionValue().call(typeFactory, context, visitedArgumentTypesList);
-        //     visitedArgumentTypesList = new ArrayList<>();
-        //     visitedArgumentTypesList.add(contextArgument);
-        //     i++;
-        // }
-        // visitedArgumentTypesList = savedArgs;
-        // return contextArgument;
-        return null;
-    }
-
     @Override
     public XQuerySequenceType visitSimpleMapExpr(final SimpleMapExprContext ctx) {
         if (ctx.EXCLAMATION_MARK().isEmpty())
@@ -1017,15 +993,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         visitedKeywordArguments = new HashMap<>();
         return saved;
     }
-
-    private List<TupleElementType> saveVisitedTupleStream() {
-        final List<TupleElementType> saved = visitedTupleStreamType;
-        visitedTupleStreamType = List.of();
-        return saved;
-    }
-
-
-
 
     void addError(final ParserRuleContext where, final String message) {
         final Token start = where.getStart();

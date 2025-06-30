@@ -7,9 +7,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.antlr.v4.runtime.atn.ArrayPredictionContext;
-import org.apache.commons.compress.harmony.unpack200.ClassBands;
-
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQueryVisitingSemanticContext;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager;
@@ -110,12 +107,6 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // --------------------------------------------------------------------
         // String functions
         // --------------------------------------------------------------------
-        final ArgumentSpecification sourceString = new ArgumentSpecification("sourceString", true,
-                typeFactory.one(typeFactory.itemString()));
-        final ArgumentSpecification pattern = new ArgumentSpecification("pattern", true, typeFactory.string());
-        final ArgumentSpecification flags = new ArgumentSpecification("flags", true,
-                typeFactory.one(typeFactory.itemString()));
-
         final ArgumentSpecification optionalStringValue = new ArgumentSpecification("value", true,
                 typeFactory.zeroOrOne(typeFactory.itemString()));
         register("fn", "substring",

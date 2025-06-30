@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.atn.ArrayPredictionContext;
+import org.apache.commons.compress.harmony.unpack200.ClassBands;
 
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQueryVisitingSemanticContext;
@@ -2643,7 +2644,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
     record SpecAndErrors(FunctionSpecification spec, List<String> errors) {
     }
 
-    SpecAndErrors getFunctionSpecification(String namespace, String name, List<FunctionSpecification> namedFunctions, long requiredArity) {
+    SpecAndErrors getFunctionSpecification(final String namespace, final String name, final List<FunctionSpecification> namedFunctions, final long requiredArity) {
         final List<String> mismatchReasons = new ArrayList<>();
         for (final FunctionSpecification spec : namedFunctions) {
             final List<String> reasons = new ArrayList<>();
@@ -2657,7 +2658,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
             return new SpecAndErrors(spec, List.of());
         }
         // If no spec matched, return all mismatch reasons
-        String errorMessage = "No matching function " + namespace + ":" + name + " for arity " + requiredArity +
+        final String errorMessage = "No matching function " + namespace + ":" + name + " for arity " + requiredArity +
                 (mismatchReasons.isEmpty() ? "" : ". Reasons:\n" + String.join("\n", mismatchReasons));
         return new SpecAndErrors(null, List.of(errorMessage));
     }
@@ -2683,14 +2684,14 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
 
         final List<String> mismatchReasons = new ArrayList<>();
 
-        SpecAndErrors specAndErrors = getFunctionSpecification(namespace, name, namedFunctions, requiredArity);
+        final SpecAndErrors specAndErrors = getFunctionSpecification(namespace, name, namedFunctions, requiredArity);
         if (specAndErrors.spec == null) {
             return new CallAnalysisResult(anyItems, specAndErrors.errors);
         }
-        var spec = specAndErrors.spec;
+        final var spec = specAndErrors.spec;
         // used positional arguments need to have matching types
-        List<String> reasons = new ArrayList<>();
-        boolean positionalTypeMismatch = tryToMatchPositionalArgs(positionalargs, positionalArgsCount, spec, reasons);
+        final List<String> reasons = new ArrayList<>();
+        final boolean positionalTypeMismatch = tryToMatchPositionalArgs(positionalargs, positionalArgsCount, spec, reasons);
 
         if (positionalTypeMismatch) {
             mismatchReasons.add("Function " + name + ": " + String.join("; ", reasons));
@@ -2715,14 +2716,14 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         checkIfAllNotUsedArgumentsAreOptional(name, mismatchReasons, reasons, partitioned);
         // all the arguments that HAVE been used as keywords in call need to have
         // matching type
-        boolean keywordTypeMismatch = checkIfTypesMatchForKeywordArgs(keywordArgs, reasons, partitioned);
+        final boolean keywordTypeMismatch = checkIfTypesMatchForKeywordArgs(keywordArgs, reasons, partitioned);
         if (keywordTypeMismatch) {
             mismatchReasons.add("Function " + name + ": " + String.join("; ", reasons));
         }
         if (mismatchReasons.isEmpty()) {
             return new CallAnalysisResult(spec.returnedType, List.of());
         }
-        StringBuilder stringBuilder = new StringBuilder();
+        final StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("No matching function ");
         stringBuilder.append(namespace);
         stringBuilder.append(":");
@@ -2733,7 +2734,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         return handleNoMatchingFunction(stringBuilder.toString(), spec.returnedType);
     }
 
-    private boolean checkIfTypesMatchForKeywordArgs(final Map<String, XQuerySequenceType> keywordArgs, List<String> reasons,
+    private boolean checkIfTypesMatchForKeywordArgs(final Map<String, XQuerySequenceType> keywordArgs, final List<String> reasons,
             final Map<Boolean, List<ArgumentSpecification>> partitioned) {
         boolean keywordTypeMismatch = false;
         for (final ArgumentSpecification arg : partitioned.get(true)) {
@@ -2747,7 +2748,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         return keywordTypeMismatch;
     }
 
-    private void checkIfAllNotUsedArgumentsAreOptional(final String name, final List<String> mismatchReasons, List<String> reasons,
+    private void checkIfAllNotUsedArgumentsAreOptional(final String name, final List<String> mismatchReasons, final List<String> reasons,
             final Map<Boolean, List<ArgumentSpecification>> partitioned) {
         // all the arguments that HAVE NOT been used as keywords in call need to be
         // optional
@@ -2762,7 +2763,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
     }
 
     private void checkIfKeywordNotAlreadyInPositionalArgs(final String name, final Map<String, XQuerySequenceType> keywordArgs,
-            final List<String> mismatchReasons, List<String> reasons, final List<String> remainingArgNames) {
+            final List<String> mismatchReasons, final List<String> reasons, final List<String> remainingArgNames) {
         if (!remainingArgNames.containsAll(keywordArgs.keySet())) {
             reasons.add("Keyword argument(s) overlap with positional arguments: " + keywordArgs.keySet().stream()
                     .filter(k -> !remainingArgNames.contains(k)).collect(Collectors.joining(", ")));
@@ -2771,7 +2772,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
     }
 
     private void checkIfCorrectKeywordNames(final String name, final Map<String, XQuerySequenceType> keywordArgs,
-            final List<String> mismatchReasons, List<String> reasons, final List<String> allArgNames) {
+            final List<String> mismatchReasons, final List<String> reasons, final List<String> allArgNames) {
         if (!allArgNames.containsAll(keywordArgs.keySet())) {
             reasons.add("Unknown keyword argument(s): " + keywordArgs.keySet().stream()
                     .filter(k -> !allArgNames.contains(k)).collect(Collectors.joining(", ")));
@@ -2780,7 +2781,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
     }
 
     private boolean tryToMatchPositionalArgs(final List<XQuerySequenceType> positionalargs,
-            final int positionalArgsCount, FunctionSpecification spec, List<String> reasons) {
+            final int positionalArgsCount, final FunctionSpecification spec, final List<String> reasons) {
         boolean positionalTypeMismatch = false;
         for (int i = 0; i < positionalArgsCount; i++) {
             final var positionalArg = positionalargs.get(i);
@@ -2800,15 +2801,27 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         if (!namespaces.containsKey(namespace)) {
             return handleUnknownNamespace(namespace, "Unknown function namespace: " + namespace, fallback);
         }
-
         final var namespaceFunctions = namespaces.get(namespace);
         if (!namespaceFunctions.containsKey(functionName)) {
             return handleUnknownFunction(namespace, functionName, "Unknown function: " + namespace + ":" + functionName,
                     fallback);
         }
 
-        return new CallAnalysisResult(fallback,
-                List.of("Unknown function reference: " + namespace + ":" + functionName));
+        final var namedFunctions = namespaceFunctions.get(functionName);
+        final SpecAndErrors specAndErrors = getFunctionSpecification(namespace, functionName, namedFunctions, arity);
+        if (specAndErrors.spec == null) {
+            final StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append("Unknown function reference: ");
+            stringBuilder.append(namespace);
+            stringBuilder.append(":");
+            stringBuilder.append(functionName);
+            stringBuilder.append("#");
+            stringBuilder.append(arity);
+            return new CallAnalysisResult(fallback,
+                    List.of(stringBuilder.toString()));
+        }
+        return new CallAnalysisResult(specAndErrors.spec.returnedType, specAndErrors.errors);
+
     }
 
     private String wrongNumberOfArguments(final String functionName, final int expected, final int actual) {
@@ -2828,7 +2841,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
     public XQuerySemanticError register(final String namespace,
             final String functionName,
             final List<ArgumentSpecification> args,
-            final XQuerySequenceType returnedType) {
+            final XQuerySequenceType returnedType)
+    {
         final long minArity = args.stream().filter(arg -> arg.isRequired()).collect(Collectors.counting());
         final long maxArity = args.size();
         if (!namespaces.containsKey(namespace)) {

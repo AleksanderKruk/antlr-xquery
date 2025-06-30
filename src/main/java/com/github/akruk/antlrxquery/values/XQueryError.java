@@ -213,7 +213,7 @@ public class XQueryError implements XQueryValue {
     private final String code;
     private final String description;
 
-    XQueryError(String code, String description) {
+    XQueryError(final String code, final String description) {
         this.code = code;
         this.description = description;
     }
@@ -317,122 +317,122 @@ public class XQueryError implements XQueryValue {
     }
 
     @Override
-    public XQueryValue and(XQueryValue other) {
+    public XQueryValue and(final XQueryValue other) {
         return null;
     }
 
     @Override
-    public XQueryValue or(XQueryValue other) {
+    public XQueryValue or(final XQueryValue other) {
         return null;
     }
 
     @Override
-    public XQueryValue add(XQueryValue other) {
+    public XQueryValue add(final XQueryValue other) {
         return null;
     }
 
     @Override
-    public XQueryValue subtract(XQueryValue other) {
+    public XQueryValue subtract(final XQueryValue other) {
         return null;
     }
 
     @Override
-    public XQueryValue multiply(XQueryValue other) {
+    public XQueryValue multiply(final XQueryValue other) {
         return null;
     }
 
     @Override
-    public XQueryValue divide(XQueryValue other) {
+    public XQueryValue divide(final XQueryValue other) {
         return null;
     }
 
     @Override
-    public XQueryValue integerDivide(XQueryValue other) {
+    public XQueryValue integerDivide(final XQueryValue other) {
         return null;
     }
 
     @Override
-    public XQueryValue modulus(XQueryValue other) {
+    public XQueryValue modulus(final XQueryValue other) {
         return null;
     }
 
     @Override
-    public XQueryValue concatenate(XQueryValue other) {
+    public XQueryValue concatenate(final XQueryValue other) {
         return null;
     }
 
     @Override
-    public XQueryValue valueEqual(XQueryValue other) {
+    public XQueryValue valueEqual(final XQueryValue other) {
         return null;
     }
 
     @Override
-    public XQueryValue valueUnequal(XQueryValue other) {
+    public XQueryValue valueUnequal(final XQueryValue other) {
         return null;
     }
 
     @Override
-    public XQueryValue valueLessThan(XQueryValue other) {
+    public XQueryValue valueLessThan(final XQueryValue other) {
         return null;
     }
 
     @Override
-    public XQueryValue valueLessEqual(XQueryValue other) {
+    public XQueryValue valueLessEqual(final XQueryValue other) {
         return null;
     }
 
     @Override
-    public XQueryValue valueGreaterThan(XQueryValue other) {
+    public XQueryValue valueGreaterThan(final XQueryValue other) {
         return null;
     }
 
     @Override
-    public XQueryValue valueGreaterEqual(XQueryValue other) {
+    public XQueryValue valueGreaterEqual(final XQueryValue other) {
         return null;
     }
 
     @Override
-    public XQueryValue generalEqual(XQueryValue other) {
+    public XQueryValue generalEqual(final XQueryValue other) {
         return null;
     }
 
     @Override
-    public XQueryValue generalUnequal(XQueryValue other) {
+    public XQueryValue generalUnequal(final XQueryValue other) {
         return null;
     }
 
     @Override
-    public XQueryValue generalLessThan(XQueryValue other) {
+    public XQueryValue generalLessThan(final XQueryValue other) {
         return null;
     }
 
     @Override
-    public XQueryValue generalLessEqual(XQueryValue other) {
+    public XQueryValue generalLessEqual(final XQueryValue other) {
         return null;
     }
 
     @Override
-    public XQueryValue generalGreaterThan(XQueryValue other) {
+    public XQueryValue generalGreaterThan(final XQueryValue other) {
         return null;
     }
 
     @Override
-    public XQueryValue generalGreaterEqual(XQueryValue other) {
+    public XQueryValue generalGreaterEqual(final XQueryValue other) {
         return null;
     }
 
     @Override
-    public XQueryValue union(XQueryValue otherSequence) {
+    public XQueryValue union(final XQueryValue otherSequence) {
         return null;
     }
 
     @Override
-    public XQueryValue intersect(XQueryValue otherSequence) {
+    public XQueryValue intersect(final XQueryValue otherSequence) {
         return null;
     }
 
     @Override
-    public XQueryValue except(XQueryValue other) {
+    public XQueryValue except(final XQueryValue other) {
         return null;
     }
 
@@ -447,17 +447,17 @@ public class XQueryError implements XQueryValue {
     }
 
     @Override
-    public XQueryValue insertBefore(XQueryValue position, XQueryValue inserted) {
+    public XQueryValue insertBefore(final XQueryValue position, final XQueryValue inserted) {
         return null;
     }
 
     @Override
-    public XQueryValue insertAfter(XQueryValue position, XQueryValue inserted) {
+    public XQueryValue insertAfter(final XQueryValue position, final XQueryValue inserted) {
         return null;
     }
 
     @Override
-    public XQueryValue remove(XQueryValue position) {
+    public XQueryValue remove(final XQueryValue position) {
         return null;
     }
 
@@ -467,12 +467,12 @@ public class XQueryError implements XQueryValue {
     }
 
     @Override
-    public XQueryValue subsequence(int startingLoc) {
+    public XQueryValue subsequence(final int startingLoc) {
         return null;
     }
 
     @Override
-    public XQueryValue subsequence(int startingLoc, int length) {
+    public XQueryValue subsequence(final int startingLoc, final int length) {
         return null;
     }
 
@@ -502,17 +502,17 @@ public class XQueryError implements XQueryValue {
     }
 
     @Override
-    public XQueryValue contains(XQueryValue other) {
+    public XQueryValue contains(final XQueryValue other) {
         return null;
     }
 
     @Override
-    public XQueryValue startsWith(XQueryValue other) {
+    public XQueryValue startsWith(final XQueryValue other) {
         return null;
     }
 
     @Override
-    public XQueryValue endsWith(XQueryValue other) {
+    public XQueryValue endsWith(final XQueryValue other) {
         return null;
     }
 
@@ -527,22 +527,22 @@ public class XQueryError implements XQueryValue {
     }
 
     @Override
-    public XQueryValue substring(int startingLoc) {
+    public XQueryValue substring(final int startingLoc) {
         return null;
     }
 
     @Override
-    public XQueryValue substring(int startingLoc, int length) {
+    public XQueryValue substring(final int startingLoc, final int length) {
         return null;
     }
 
     @Override
-    public XQueryValue substringBefore(XQueryValue splitstring) {
+    public XQueryValue substringBefore(final XQueryValue splitstring) {
         return null;
     }
 
     @Override
-    public XQueryValue substringAfter(XQueryValue splitstring) {
+    public XQueryValue substringAfter(final XQueryValue splitstring) {
         return null;
     }
 

@@ -4,7 +4,7 @@ import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
 public class XQueryBoolean extends XQueryValueBase<Boolean> {
 
-    public XQueryBoolean(boolean bool, XQueryValueFactory valueFactory) {
+    public XQueryBoolean(final boolean bool, final XQueryValueFactory valueFactory) {
         super(bool, valueFactory);
     }
 
@@ -34,25 +34,25 @@ public class XQueryBoolean extends XQueryValueBase<Boolean> {
     }
 
     @Override
-    public XQueryValue and(XQueryValue other) {
+    public XQueryValue and(final XQueryValue other) {
         if (!other.isBooleanValue()) return XQueryError.InvalidArgumentType;
         return valueFactory.bool(value && other.booleanValue());
     }
 
     @Override
-    public XQueryValue or(XQueryValue other) {
+    public XQueryValue or(final XQueryValue other) {
         if (!other.isBooleanValue()) return XQueryError.InvalidArgumentType;
         return valueFactory.bool(value || other.booleanValue());
     }
 
     @Override
-    public XQueryValue valueEqual(XQueryValue other) {
+    public XQueryValue valueEqual(final XQueryValue other) {
         if (!other.isBooleanValue()) return valueFactory.bool(false);
         return valueFactory.bool(value.equals(other.booleanValue()));
     }
 
     @Override
-    public XQueryValue valueLessThan(XQueryValue other) {
+    public XQueryValue valueLessThan(final XQueryValue other) {
         if (!other.isBooleanValue()) return XQueryError.InvalidArgumentType;
         return valueFactory.bool(!value && other.booleanValue());
     }

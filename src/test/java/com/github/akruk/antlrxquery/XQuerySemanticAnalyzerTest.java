@@ -36,37 +36,37 @@ public class XQuerySemanticAnalyzerTest {
             new XQueryEnumTypeFactory(),
             new XQueryMemoizedValueFactory(),
             caller);
-        var lastVisitedType = analyzer.visit(xqueryTree);
+        final var lastVisitedType = analyzer.visit(xqueryTree);
         return new AnalysisResult(analyzer, lastVisitedType);
     }
 
-    void assertNoErrors(AnalysisResult analyzer) {
+    void assertNoErrors(final AnalysisResult analyzer) {
         assertTrue(analyzer.analyzer.getErrors().size() == 0);
     }
 
-    void assertThereAreErrors(String xquery) {
-        var analysisResult = analyze(xquery);
+    void assertThereAreErrors(final String xquery) {
+        final var analysisResult = analyze(xquery);
         assertThereAreErrors(analysisResult);
     }
 
-    void assertThereAreErrors(AnalysisResult analyzer) {
+    void assertThereAreErrors(final AnalysisResult analyzer) {
         assertTrue(analyzer.analyzer.getErrors().size() != 0);
     }
 
-    void assertType(AnalysisResult result, XQuerySequenceType expectedType) {
+    void assertType(final AnalysisResult result, final XQuerySequenceType expectedType) {
         assertNoErrors(result);
         assertTrue(result.expressionType.equals(expectedType));
     }
 
-    void assertType(String xquery, XQuerySequenceType expectedType) {
-        var analysisResult = analyze(xquery);
+    void assertType(final String xquery, final XQuerySequenceType expectedType) {
+        final var analysisResult = analyze(xquery);
         assertNoErrors(analysisResult);
         assertTrue(analysisResult.expressionType.equals(expectedType));
     }
 
     @Test
     public void numericLiteralTypes() {
-        var number = typeFactory.number();
+        final var number = typeFactory.number();
 
         // Integer literals
         assertType("123", number);

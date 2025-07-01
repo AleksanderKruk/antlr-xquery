@@ -975,9 +975,14 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
     @Override
     public XQuerySequenceType visitKeywordArgument(KeywordArgumentContext ctx) {
-        final var value =  super.visitKeywordArgument(ctx);
-        visitedKeywordArguments.put(ctx.qname().getText(), value);
-        return value;
+        final ExprSingleContext keywordAssignedTypeExpr = ctx.argument().exprSingle();
+        if (keywordAssignedTypeExpr != null) {
+            final var keywordType = keywordAssignedTypeExpr.accept(this);
+            final String keyword = ctx.qname().getText();
+            visitedKeywordArguments.put(keyword, keywordType);
+        }
+        // TODO: add placeholder
+        return null;
 
     }
 

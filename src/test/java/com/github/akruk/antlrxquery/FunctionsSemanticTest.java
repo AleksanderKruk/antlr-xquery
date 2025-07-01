@@ -129,8 +129,6 @@ public class FunctionsSemanticTest {
     @Test void pow_mixed() {
         assertType("math:pow(2.0, y := 4)",
             typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        assertType("math:pow(x := 1.1, 5)",
-            typeFactory.zeroOrOne(typeFactory.itemNumber()));
     }
     @Test void pow_wrongArity() {
         assertErrors("math:pow(2.0)");

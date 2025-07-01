@@ -13,7 +13,7 @@ public class XQueryEnumItemTypeRecord extends XQueryEnumItemType {
   }
 
   public XQueryEnumItemTypeRecord(Map<String, XQuerySequenceType> keyValuePairs, XQueryTypeFactory factory ) {
-    super(XQueryTypes.RECORD, null, null, null, null, null, null, factory);
+    super(XQueryTypes.RECORD, null, null, null, null, null, null, factory, null);
     this.recordFields = keyValuePairs;
   }
 

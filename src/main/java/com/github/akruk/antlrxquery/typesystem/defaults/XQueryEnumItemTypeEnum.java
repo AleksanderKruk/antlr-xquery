@@ -11,7 +11,7 @@ public class XQueryEnumItemTypeEnum extends XQueryEnumItemType {
     return enumMembers;
   }
   public XQueryEnumItemTypeEnum (Set<String> enumMembers, XQueryTypeFactory factory) {
-    super(XQueryTypes.ENUM, null, null, null, null, null, null, factory);
+    super(XQueryTypes.ENUM, null, null, null, null, null, null, factory, null);
     this.enumMembers = enumMembers;
   }
 

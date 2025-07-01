@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.BinaryOperator;
-import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
@@ -26,7 +25,8 @@ public class XQueryEnumItemType implements XQueryItemType {
                                 final XQueryEnumItemType key,
                                 final XQuerySequenceType mapValueType,
                                 final Set<String> elementNames,
-                                final XQueryTypeFactory factory)
+                                final XQueryTypeFactory factory,
+                                final List<XQueryItemType> itemTypes)
     {
         this.type = type;
         this.argumentTypes = argumentTypes;

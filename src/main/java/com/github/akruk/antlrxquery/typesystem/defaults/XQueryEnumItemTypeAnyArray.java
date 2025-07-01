@@ -5,7 +5,7 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 public class XQueryEnumItemTypeAnyArray extends XQueryEnumItemType {
 
   public XQueryEnumItemTypeAnyArray(XQueryTypeFactory factory) {
-    super(XQueryTypes.ANY_ARRAY, null, null, null, null, null, null, factory);
+    super(XQueryTypes.ANY_ARRAY, null, null, null, null, null, null, factory, null);
   }
 
 }

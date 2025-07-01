@@ -28,7 +28,7 @@ public class XQueryEnumItemType implements XQueryItemType {
                                 final XQuerySequenceType mapValueType,
                                 final Set<String> elementNames,
                                 final XQueryTypeFactory factory,
-                                final List<XQueryItemType> itemTypes)
+                                final Collection<XQueryItemType> itemTypes)
     {
         this.type = type;
         this.argumentTypes = argumentTypes;

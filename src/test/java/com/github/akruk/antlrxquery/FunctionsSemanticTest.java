@@ -143,4 +143,68 @@ public class FunctionsSemanticTest {
         assertErrors("math:pow('x', 5)");
         assertErrors("math:pow(2.0, 'y')");
     }
+
+    // --- math:atan($value as xs:double?) as xs:double? ------------------------
+
+    @Test void atan_positional() {
+        assertType("math:atan(1.0)",
+            typeFactory.zeroOrOne(typeFactory.itemNumber()));
+    }
+    @Test void atan_named() {
+        assertType("math:atan(value := 0.0)",
+            typeFactory.zeroOrOne(typeFactory.itemNumber()));
+    }
+    @Test void atan_missing() {
+        assertErrors("math:atan()");
+    }
+    @Test void atan_tooMany() {
+        assertErrors("math:atan(1.0, 2.0)");
+    }
+    @Test void atan_wrongType() {
+        assertErrors("math:atan('foo')");
+    }
+
+    // --- math:atan2($y as xs:double, $x as xs:double) as xs:double ------------
+
+    @Test void atan2_positional() {
+        assertType("math:atan2(1.0, 1.0)",
+            typeFactory.one(typeFactory.itemNumber()));
+    }
+    @Test void atan2_named() {
+        assertType("math:atan2(y := 1.0, x := 2.0)",
+            typeFactory.one(typeFactory.itemNumber()));
+    }
+    @Test void atan2_mixed() {
+        assertType("math:atan2(3.0, x := 4.0)",
+            typeFactory.one(typeFactory.itemNumber()));
+    }
+
+    @Test void atan2_missingArg() {
+        assertErrors("math:atan2(1.0)");
+        assertErrors("math:atan2()");
+    }
+    @Test void atan2_wrongNames() {
+        assertErrors("math:atan2(a := 1.0, b := 2.0)");
+    }
+    @Test void atan2_wrongTypes() {
+        assertErrors("math:atan2(1.0, 'abc')");
+        assertErrors("math:atan2('y', 2.0)");
+    }
+
+    // --- math:sinh, math:cosh, math:tanh (identyczna sygnatura) ---------------
+
+    @Test void hyperbolic_functions() {
+        for (String fn : List.of("sinh", "cosh", "tanh")) {
+            assertType("math:"+fn+"(0.0)",
+                typeFactory.zeroOrOne(typeFactory.itemNumber()));
+            assertType("math:"+fn+"(value := 1.1)",
+                typeFactory.zeroOrOne(typeFactory.itemNumber()));
+            assertErrors("math:"+fn+"()");
+            assertErrors("math:"+fn+"(1.0, 2.0)");
+            assertErrors("math:"+fn+"('abc')");
+            assertErrors("math:"+fn+"(val := 2.0)");
+        }
+    }
+
+
 }

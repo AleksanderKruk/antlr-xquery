@@ -9,9 +9,7 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 public class XQueryChoiceItemType extends XQueryEnumItemType {
     public XQueryChoiceItemType(List<XQueryItemType> itemTypes, XQueryTypeFactory factory) {
         super(XQueryTypes.CHOICE, null, null, null, null, null, null, factory, itemTypes);
-        //TODO Auto-generated constructor stub
     }
 
-    Collection<XQueryItemType> itemTypes;
 
 }

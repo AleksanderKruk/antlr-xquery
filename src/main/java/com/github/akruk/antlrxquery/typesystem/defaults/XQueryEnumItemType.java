@@ -1,5 +1,6 @@
 package com.github.akruk.antlrxquery.typesystem.defaults;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -17,6 +18,7 @@ public class XQueryEnumItemType implements XQueryItemType {
     private final BinaryOperator[][] unionItemMerger;
     private final BinaryOperator[][] intersectionItemMerger;
     private final XQueryTypeFactory typeFactory;
+    private final Collection<XQueryItemType> itemTypes;
 
     public XQueryEnumItemType(final XQueryTypes type,
                                 final List<XQuerySequenceType> argumentTypes,
@@ -36,6 +38,7 @@ public class XQueryEnumItemType implements XQueryItemType {
         this.mapValueType = mapValueType;
         this.elementNames = elementNames;
         this.typeFactory = factory;
+        this.itemTypes = itemTypes;
 
         // Union merging preparation
         final int element = XQueryTypes.ELEMENT.ordinal();

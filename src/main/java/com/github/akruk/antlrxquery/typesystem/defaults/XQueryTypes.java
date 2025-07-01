@@ -24,6 +24,8 @@ public enum XQueryTypes {
     BOOLEAN,
     STRING,
     NUMBER,
+
+    CHOICE,
     ;
 
 }

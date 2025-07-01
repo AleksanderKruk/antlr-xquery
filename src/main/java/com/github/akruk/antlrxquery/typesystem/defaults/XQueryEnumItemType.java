@@ -429,35 +429,16 @@ public class XQueryEnumItemType implements XQueryItemType {
         return array;
     }
 
-    private static boolean[] booleanEnumArray(Predicate<XQueryTypes> predicateForTrueValues) {
-        var array = new boolean[XQueryTypes.values().length];
-        for (int j = 0; j < array.length; j++) {
-            XQueryTypes tested = XQueryTypes.values()[j];
-            array[j] = predicateForTrueValues.test(tested);
-        }
-        return array;
-    }
-
-    private static final boolean[] isNode = booleanEnumArray(XQueryTypes.ANY_NODE, XQueryTypes.ELEMENT);
-
-    @Override
-    public boolean isNode() {
-        return isNode[type.ordinal()];
-    }
-
-    private static final boolean[] isElement = isNode;
-
-    @Override
-    public boolean isElement() {
-        return isElement[type.ordinal()];
-    }
+    // private static boolean[] booleanEnumArray(Predicate<XQueryTypes> predicateForTrueValues) {
+    //     var array = new boolean[XQueryTypes.values().length];
+    //     for (int j = 0; j < array.length; j++) {
+    //         XQueryTypes tested = XQueryTypes.values()[j];
+    //         array[j] = predicateForTrueValues.test(tested);
+    //     }
+    //     return array;
+    // }
 
     private static final boolean[] isFunction = booleanEnumArray(XQueryTypes.ANY_FUNCTION, XQueryTypes.FUNCTION);
-
-    @Override
-    public boolean isFunction() {
-        return isFunction[type.ordinal()];
-    }
 
     @Override
     public boolean isFunction(XQuerySequenceType otherReturnedType, List<XQuerySequenceType> otherArgumentTypes) {
@@ -468,34 +449,17 @@ public class XQueryEnumItemType implements XQueryItemType {
                         .allMatch(i -> this.argumentTypes.get(i).equals(otherArgumentTypes.get(i)));
     }
 
-    private static final boolean[] isMap = booleanEnumArray(XQueryTypes.MAP, XQueryTypes.ANY_MAP);
-
-    @Override
-    public boolean isMap() {
-        return isMap[type.ordinal()];
-    }
-
-    private static final boolean[] isArray = booleanEnumArray(XQueryTypes.ARRAY, XQueryTypes.ANY_ARRAY);
-
-    @Override
-    public boolean isArray() {
-        return isArray[type.ordinal()];
-    }
-
+    private static final boolean[] noEffectiveBooleanValue = booleanEnumArray(XQueryTypes.FUNCTION,
+                                                                                XQueryTypes.ANY_ARRAY,
+                                                                                XQueryTypes.MAP,
+                                                                                XQueryTypes.ANY_MAP,
+                                                                                XQueryTypes.ARRAY,
+                                                                                XQueryTypes.ANY_ARRAY);
     @Override
     public boolean hasEffectiveBooleanValue() {
-        return !this.isFunction()
-                && !this.isMap()
-                && !this.isArray();
+        // TODO: verify unions
+        return noEffectiveBooleanValue[type.ordinal()];
     }
-
-    private static final boolean[] isAtomic = booleanEnumArray(t -> t != XQueryTypes.ELEMENT
-                                                                    && t != XQueryTypes.FUNCTION);
-    @Override
-    public boolean isAtomic() {
-        return isAtomic[type.ordinal()];
-    }
-
 
     private static final boolean[][] castableAs;
     static {

@@ -604,21 +604,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         return value;
     }
 
-    // @Override
-    // public XQuerySequenceType visitPostfix(PostfixContext ctx) {
-    //     if (ctx.predicate() != null) {
-    //         return ctx.predicate().accept(this);
-    //     }
-    //     final var contextItem = context.getItem();
-    //     if (!contextItem.isFunction()) {
-    //         // TODO: error
-    //         return null;
-    //     }
-    //     final var function = contextItem.functionValue();
-    //     final var value = function.call(typeFactory, context, visitedArgumentTypesList);
-    //     return value;
-    // }
-
     @Override
     public XQuerySequenceType visitPredicate(final PredicateContext ctx) {
         final var contextType = context.getType();

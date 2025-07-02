@@ -237,6 +237,9 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
 
     @Override
     public XQuerySequenceType choice(Collection<XQueryItemType> items) {
+        if (items.size() == 1) {
+            return one(items.stream().findFirst().get());
+        }
         return one(itemChoice(items));
     }
 }

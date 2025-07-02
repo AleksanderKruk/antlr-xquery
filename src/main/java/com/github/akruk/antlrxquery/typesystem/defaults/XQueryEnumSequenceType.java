@@ -1,7 +1,9 @@
 package com.github.akruk.antlrxquery.typesystem.defaults;
 
+import java.util.List;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
@@ -193,6 +195,7 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         if (enumItemType1 == null && enumItemType2 == null) {
             return sequenceGetter.apply(typeFactory.itemAnyItem());
         }
+
         if (enumItemType1 == null) {
             return sequenceGetter.apply(enumItemType2);
         }
@@ -207,7 +210,8 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         if (itemType2MoreGeneral) {
             return sequenceGetter.apply(enumItemType2);
         }
-        return sequenceGetter.apply(typeFactory.itemAnyItem());
+
+        return sequenceGetter.apply(typeFactory.itemChoice(List.of(enumItemType1, enumItemType2)));
 
     }
 

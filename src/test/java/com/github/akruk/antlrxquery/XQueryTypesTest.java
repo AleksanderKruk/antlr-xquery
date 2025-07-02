@@ -924,10 +924,27 @@ public class XQueryTypesTest {
     @Test
     public void choiceItemTypeSubtyping() {
         final var numberOrBool = typeFactory.choice(Set.of(typeFactory.itemNumber(), typeFactory.itemBoolean()));
+        final var boolOrNumber = typeFactory.choice(Set.of(typeFactory.itemBoolean(), typeFactory.itemNumber()));
+        final var stringOrBool = typeFactory.choice(Set.of(typeFactory.itemString(), typeFactory.itemBoolean()));
+        final var stringOrBoolOrNumber = typeFactory.choice(Set.of(typeFactory.itemString(), typeFactory.itemBoolean(), typeFactory.itemNumber()));
+
         assertTrue(number.isSubtypeOf(numberOrBool));
         assertTrue(boolean_.isSubtypeOf(numberOrBool));
         assertFalse(numberOrBool.isSubtypeOf(number));
         assertFalse(numberOrBool.isSubtypeOf(boolean_));
+        assertFalse(numberOrBool.isSubtypeOf(boolean_));
+
+        assertTrue(numberOrBool.isSubtypeOf(anyItem));
+        assertFalse(anyItem.isSubtypeOf(numberOrBool));
+
+        assertFalse(numberOrBool.isSubtypeOf(stringOrBool));
+
+        assertTrue(numberOrBool.isSubtypeOf(boolOrNumber));
+        assertTrue(boolOrNumber.isSubtypeOf(numberOrBool));
+
+        assertTrue(numberOrBool.isSubtypeOf(stringOrBoolOrNumber));
+        assertTrue(stringOrBool.isSubtypeOf(stringOrBoolOrNumber));
+        assertFalse(stringOrBoolOrNumber.isSubtypeOf(numberOrBool));
     }
 
 

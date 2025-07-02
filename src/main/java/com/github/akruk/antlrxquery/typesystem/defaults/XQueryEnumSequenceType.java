@@ -146,11 +146,6 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         = typeFactory -> (item) -> typeFactory.oneOrMore(item);
 
     static {
-        final int zeroOrdinal = ZERO;
-        final int oneOrdinal = ONE;
-        final int zeroOrOneOrdinal = ZERO_OR_ONE;
-        final int zeroOrMoreOrdinal = ZERO_OR_MORE;
-        final int oneOrMoreOrdinal = ONE_OR_MORE;
         mergedOccurences[ZERO][ZERO] = zero;
         mergedOccurences[ZERO][ONE] = one;
         mergedOccurences[ZERO][ZERO_OR_ONE] = zeroOrOne;

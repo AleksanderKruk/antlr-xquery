@@ -171,8 +171,16 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
     @Override
     public XQuerySequenceType visitChoiceItemType(final ChoiceItemTypeContext ctx) {
-        // TODO: Implement choice item type
-        return typeFactory.anyItem();
+        List<ItemTypeContext> itemTypes = ctx.itemType();
+        if (itemTypes.size() == 1) {
+            return ctx.itemType(0).accept(this);
+        }
+        var choiceItemNames = itemTypes.stream().map(i->i.getText()).collect(Collectors.toSet());
+        if (choiceItemNames.size() != itemTypes.size()) {
+            addError(ctx, "Duplicated type signatures in choice item type declaration");
+        }
+        var choiceItems = itemTypes.stream().map(i->i.accept(this)).map(sequenceType->sequenceType.getItemType()).toList();
+        return typeFactory.choice(choiceItems);
     }
 
     @Override

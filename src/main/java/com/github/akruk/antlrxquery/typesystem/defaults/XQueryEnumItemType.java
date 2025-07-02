@@ -482,8 +482,10 @@ public class XQueryEnumItemType implements XQueryItemType {
                                                                                 XQueryTypes.ANY_ARRAY);
     @Override
     public boolean hasEffectiveBooleanValue() {
-        // TODO: verify unions
-        return noEffectiveBooleanValue[type.ordinal()];
+        if (type == XQueryTypes.CHOICE) {
+            return itemTypes.stream().allMatch(itemType->itemType.hasEffectiveBooleanValue());
+        }
+        return !noEffectiveBooleanValue[type.ordinal()];
     }
 
     private static final boolean[][] castableAs;

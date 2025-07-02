@@ -3,7 +3,6 @@ package com.github.akruk.antlrxquery.typesystem.defaults;
 import java.util.List;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
@@ -11,6 +10,11 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class XQueryEnumSequenceType implements XQuerySequenceType {
+    private static final int ONE_OR_MORE = XQueryOccurence.ONE_OR_MORE.ordinal();
+    private static final int ZERO_OR_MORE = XQueryOccurence.ZERO_OR_MORE.ordinal();
+    private static final int ZERO_OR_ONE = XQueryOccurence.ZERO_OR_ONE.ordinal();
+    private static final int ONE = XQueryOccurence.ONE.ordinal();
+    private static final int ZERO = XQueryOccurence.ZERO.ordinal();
     private final XQueryEnumItemType itemType;
     private final XQueryOccurence occurence;
     private final XQueryTypeFactory typeFactory;
@@ -24,11 +28,11 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         this.itemType = itemType;
         this.occurence = occurence;
         this.factoryByOccurence = new Function[XQueryOccurence.values().length];
-        this.factoryByOccurence[XQueryOccurence.ZERO.ordinal()] = _ -> typeFactory.emptySequence();
-        this.factoryByOccurence[XQueryOccurence.ONE.ordinal()] = i -> typeFactory.one((XQueryItemType)i);
-        this.factoryByOccurence[XQueryOccurence.ZERO_OR_ONE.ordinal()] = i -> typeFactory.zeroOrOne((XQueryItemType)i);
-        this.factoryByOccurence[XQueryOccurence.ZERO_OR_MORE.ordinal()] = i -> typeFactory.zeroOrMore((XQueryItemType)i);
-        this.factoryByOccurence[XQueryOccurence.ONE_OR_MORE.ordinal()] = i -> typeFactory.oneOrMore((XQueryItemType)i);
+        this.factoryByOccurence[ZERO] = _ -> typeFactory.emptySequence();
+        this.factoryByOccurence[ONE] = i -> typeFactory.one((XQueryItemType)i);
+        this.factoryByOccurence[ZERO_OR_ONE] = i -> typeFactory.zeroOrOne((XQueryItemType)i);
+        this.factoryByOccurence[ZERO_OR_MORE] = i -> typeFactory.zeroOrMore((XQueryItemType)i);
+        this.factoryByOccurence[ONE_OR_MORE] = i -> typeFactory.oneOrMore((XQueryItemType)i);
     }
 
     private static boolean isNullableEquals(final Object one, final Object other) {
@@ -64,28 +68,23 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
                 isSubtypeOf[i][j] = alwaysFalse;
             }
         }
-        final int zero = XQueryOccurence.ZERO.ordinal();
-        final int one = XQueryOccurence.ONE.ordinal();
-        final int zeroOrOne = XQueryOccurence.ZERO_OR_ONE.ordinal();
-        final int zeroOrMore = XQueryOccurence.ZERO_OR_MORE.ordinal();
-        final int oneOrMore = XQueryOccurence.ONE_OR_MORE.ordinal();
-        isSubtypeOf[zero][zero] = alwaysTrue;
-        isSubtypeOf[zero][zeroOrOne] = alwaysTrue;
-        isSubtypeOf[zero][zeroOrMore] = alwaysTrue;
+        isSubtypeOf[ZERO][ZERO] = alwaysTrue;
+        isSubtypeOf[ZERO][ZERO_OR_ONE] = alwaysTrue;
+        isSubtypeOf[ZERO][ZERO_OR_MORE] = alwaysTrue;
 
-        isSubtypeOf[zeroOrOne][zeroOrOne] = XQueryEnumSequenceType::isSubtypeItemtype;
-        isSubtypeOf[zeroOrOne][zeroOrMore] = XQueryEnumSequenceType::isSubtypeItemtype;
+        isSubtypeOf[ZERO_OR_ONE][ZERO_OR_ONE] = XQueryEnumSequenceType::isSubtypeItemtype;
+        isSubtypeOf[ZERO_OR_ONE][ZERO_OR_MORE] = XQueryEnumSequenceType::isSubtypeItemtype;
         ;
 
-        isSubtypeOf[zeroOrMore][zeroOrMore] = XQueryEnumSequenceType::isSubtypeItemtype;
+        isSubtypeOf[ZERO_OR_MORE][ZERO_OR_MORE] = XQueryEnumSequenceType::isSubtypeItemtype;
 
-        isSubtypeOf[one][one] = XQueryEnumSequenceType::isSubtypeItemtype;
-        isSubtypeOf[one][oneOrMore] = XQueryEnumSequenceType::isSubtypeItemtype;
-        isSubtypeOf[one][zeroOrMore] = XQueryEnumSequenceType::isSubtypeItemtype;
-        isSubtypeOf[one][zeroOrOne] = XQueryEnumSequenceType::isSubtypeItemtype;
+        isSubtypeOf[ONE][ONE] = XQueryEnumSequenceType::isSubtypeItemtype;
+        isSubtypeOf[ONE][ONE_OR_MORE] = XQueryEnumSequenceType::isSubtypeItemtype;
+        isSubtypeOf[ONE][ZERO_OR_MORE] = XQueryEnumSequenceType::isSubtypeItemtype;
+        isSubtypeOf[ONE][ZERO_OR_ONE] = XQueryEnumSequenceType::isSubtypeItemtype;
 
-        isSubtypeOf[oneOrMore][zeroOrMore] = XQueryEnumSequenceType::isSubtypeItemtype;
-        isSubtypeOf[oneOrMore][oneOrMore] = XQueryEnumSequenceType::isSubtypeItemtype;
+        isSubtypeOf[ONE_OR_MORE][ZERO_OR_MORE] = XQueryEnumSequenceType::isSubtypeItemtype;
+        isSubtypeOf[ONE_OR_MORE][ONE_OR_MORE] = XQueryEnumSequenceType::isSubtypeItemtype;
     }
 
     private static boolean isSubtypeItemtype(final Object x, final Object y) {
@@ -147,40 +146,40 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         = typeFactory -> (item) -> typeFactory.oneOrMore(item);
 
     static {
-        final int zeroOrdinal = XQueryOccurence.ZERO.ordinal();
-        final int oneOrdinal = XQueryOccurence.ONE.ordinal();
-        final int zeroOrOneOrdinal = XQueryOccurence.ZERO_OR_ONE.ordinal();
-        final int zeroOrMoreOrdinal = XQueryOccurence.ZERO_OR_MORE.ordinal();
-        final int oneOrMoreOrdinal = XQueryOccurence.ONE_OR_MORE.ordinal();
-        mergedOccurences[zeroOrdinal][zeroOrdinal] = zero;
-        mergedOccurences[zeroOrdinal][oneOrdinal] = one;
-        mergedOccurences[zeroOrdinal][zeroOrOneOrdinal] = zeroOrOne;
-        mergedOccurences[zeroOrdinal][zeroOrMoreOrdinal] = zeroOrMore;
-        mergedOccurences[zeroOrdinal][oneOrMoreOrdinal] = oneOrMore;
+        final int zeroOrdinal = ZERO;
+        final int oneOrdinal = ONE;
+        final int zeroOrOneOrdinal = ZERO_OR_ONE;
+        final int zeroOrMoreOrdinal = ZERO_OR_MORE;
+        final int oneOrMoreOrdinal = ONE_OR_MORE;
+        mergedOccurences[ZERO][ZERO] = zero;
+        mergedOccurences[ZERO][ONE] = one;
+        mergedOccurences[ZERO][ZERO_OR_ONE] = zeroOrOne;
+        mergedOccurences[ZERO][ZERO_OR_MORE] = zeroOrMore;
+        mergedOccurences[ZERO][ONE_OR_MORE] = oneOrMore;
 
-        mergedOccurences[oneOrdinal][zeroOrdinal] = one;
-        mergedOccurences[oneOrdinal][oneOrdinal] = oneOrMore;
-        mergedOccurences[oneOrdinal][zeroOrOneOrdinal] = oneOrMore;
-        mergedOccurences[oneOrdinal][zeroOrMoreOrdinal] = oneOrMore;
-        mergedOccurences[oneOrdinal][oneOrMoreOrdinal] = oneOrMore;
+        mergedOccurences[ONE][ZERO] = one;
+        mergedOccurences[ONE][ONE] = oneOrMore;
+        mergedOccurences[ONE][ZERO_OR_ONE] = oneOrMore;
+        mergedOccurences[ONE][ZERO_OR_MORE] = oneOrMore;
+        mergedOccurences[ONE][ONE_OR_MORE] = oneOrMore;
 
-        mergedOccurences[zeroOrOneOrdinal][zeroOrdinal] = zeroOrOne;
-        mergedOccurences[zeroOrOneOrdinal][oneOrdinal] = oneOrMore;
-        mergedOccurences[zeroOrOneOrdinal][zeroOrOneOrdinal] = zeroOrMore;
-        mergedOccurences[zeroOrOneOrdinal][zeroOrMoreOrdinal] = zeroOrMore;
-        mergedOccurences[zeroOrOneOrdinal][oneOrMoreOrdinal] = oneOrMore;
+        mergedOccurences[ZERO_OR_ONE][ZERO] = zeroOrOne;
+        mergedOccurences[ZERO_OR_ONE][ONE] = oneOrMore;
+        mergedOccurences[ZERO_OR_ONE][ZERO_OR_ONE] = zeroOrMore;
+        mergedOccurences[ZERO_OR_ONE][ZERO_OR_MORE] = zeroOrMore;
+        mergedOccurences[ZERO_OR_ONE][ONE_OR_MORE] = oneOrMore;
 
-        mergedOccurences[zeroOrMoreOrdinal][zeroOrdinal] = zeroOrMore;
-        mergedOccurences[zeroOrMoreOrdinal][oneOrdinal] = oneOrMore;
-        mergedOccurences[zeroOrMoreOrdinal][zeroOrOneOrdinal] = zeroOrMore;
-        mergedOccurences[zeroOrMoreOrdinal][zeroOrMoreOrdinal] = zeroOrMore;
-        mergedOccurences[zeroOrMoreOrdinal][oneOrMoreOrdinal] = oneOrMore;
+        mergedOccurences[ZERO_OR_MORE][ZERO] = zeroOrMore;
+        mergedOccurences[ZERO_OR_MORE][ONE] = oneOrMore;
+        mergedOccurences[ZERO_OR_MORE][ZERO_OR_ONE] = zeroOrMore;
+        mergedOccurences[ZERO_OR_MORE][ZERO_OR_MORE] = zeroOrMore;
+        mergedOccurences[ZERO_OR_MORE][ONE_OR_MORE] = oneOrMore;
 
-        mergedOccurences[oneOrMoreOrdinal][zeroOrdinal] = oneOrMore;
-        mergedOccurences[oneOrMoreOrdinal][oneOrdinal] = oneOrMore;
-        mergedOccurences[oneOrMoreOrdinal][zeroOrOneOrdinal] = oneOrMore;
-        mergedOccurences[oneOrMoreOrdinal][zeroOrMoreOrdinal] = oneOrMore;
-        mergedOccurences[oneOrMoreOrdinal][oneOrMoreOrdinal] = oneOrMore;
+        mergedOccurences[ONE_OR_MORE][ZERO] = oneOrMore;
+        mergedOccurences[ONE_OR_MORE][ONE] = oneOrMore;
+        mergedOccurences[ONE_OR_MORE][ZERO_OR_ONE] = oneOrMore;
+        mergedOccurences[ONE_OR_MORE][ZERO_OR_MORE] = oneOrMore;
+        mergedOccurences[ONE_OR_MORE][ONE_OR_MORE] = oneOrMore;
     }
 
 
@@ -238,11 +237,11 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         final XQueryOccurence zeroOrMore = XQueryOccurence.ZERO_OR_MORE;
         final XQueryOccurence oneOrMore = XQueryOccurence.ONE_OR_MORE;
 
-        final int zero_ = XQueryOccurence.ZERO.ordinal();
-        final int one_ = XQueryOccurence.ONE.ordinal();
-        final int zeroOrOne_ = XQueryOccurence.ZERO_OR_ONE.ordinal();
-        final int zeroOrMore_ = XQueryOccurence.ZERO_OR_MORE.ordinal();
-        final int oneOrMore_ = XQueryOccurence.ONE_OR_MORE.ordinal();
+        final int zero_ = ZERO;
+        final int one_ = ONE;
+        final int zeroOrOne_ = ZERO_OR_ONE;
+        final int zeroOrMore_ = ZERO_OR_MORE;
+        final int oneOrMore_ = ONE_OR_MORE;
 
         unionOccurences[zero_][zero_] = zero;
         unionOccurences[zero_][one_] = one;
@@ -303,11 +302,11 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         final XQueryOccurence zeroOrMore = XQueryOccurence.ZERO_OR_MORE;
         // final XQueryOccurence oneOrMore = XQueryOccurence.ONE_OR_MORE;
 
-        final int zero_ = XQueryOccurence.ZERO.ordinal();
-        final int one_ = XQueryOccurence.ONE.ordinal();
-        final int zeroOrOne_ = XQueryOccurence.ZERO_OR_ONE.ordinal();
-        final int zeroOrMore_ = XQueryOccurence.ZERO_OR_MORE.ordinal();
-        final int oneOrMore_ = XQueryOccurence.ONE_OR_MORE.ordinal();
+        final int zero_ = ZERO;
+        final int one_ = ONE;
+        final int zeroOrOne_ = ZERO_OR_ONE;
+        final int zeroOrMore_ = ZERO_OR_MORE;
+        final int oneOrMore_ = ONE_OR_MORE;
 
         intersectionOccurences[zero_][zero_] = zero;
         intersectionOccurences[zero_][one_] = zero;
@@ -368,11 +367,11 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         final XQueryOccurence zeroOrMore = XQueryOccurence.ZERO_OR_MORE;
         final XQueryOccurence oneOrMore = XQueryOccurence.ONE_OR_MORE;
 
-        final int zero_ = XQueryOccurence.ZERO.ordinal();
-        final int one_ = XQueryOccurence.ONE.ordinal();
-        final int zeroOrOne_ = XQueryOccurence.ZERO_OR_ONE.ordinal();
-        final int zeroOrMore_ = XQueryOccurence.ZERO_OR_MORE.ordinal();
-        final int oneOrMore_ = XQueryOccurence.ONE_OR_MORE.ordinal();
+        final int zero_ = ZERO;
+        final int one_ = ONE;
+        final int zeroOrOne_ = ZERO_OR_ONE;
+        final int zeroOrMore_ = ZERO_OR_MORE;
+        final int oneOrMore_ = ONE_OR_MORE;
 
         exceptOccurences[zero_][zero_] = zero;
         exceptOccurences[zero_][one_] = zero;
@@ -417,11 +416,11 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
 
     private static XQueryOccurence[][] typeAlternativeOccurence = new XQueryOccurence[XQueryOccurence.values().length][XQueryOccurence.values().length];
     static {
-        final int zeroOrdinal = XQueryOccurence.ZERO.ordinal();
-        final int oneOrdinal = XQueryOccurence.ONE.ordinal();
-        final int zeroOrOneOrdinal = XQueryOccurence.ZERO_OR_ONE.ordinal();
-        final int zeroOrMoreOrdinal = XQueryOccurence.ZERO_OR_MORE.ordinal();
-        final int oneOrMoreOrdinal = XQueryOccurence.ONE_OR_MORE.ordinal();
+        final int zeroOrdinal = ZERO;
+        final int oneOrdinal = ONE;
+        final int zeroOrOneOrdinal = ZERO_OR_ONE;
+        final int zeroOrMoreOrdinal = ZERO_OR_MORE;
+        final int oneOrMoreOrdinal = ONE_OR_MORE;
         typeAlternativeOccurence[zeroOrdinal][zeroOrdinal] = XQueryOccurence.ZERO;
         typeAlternativeOccurence[zeroOrdinal][oneOrdinal] = XQueryOccurence.ZERO_OR_ONE;
         typeAlternativeOccurence[zeroOrdinal][zeroOrOneOrdinal] = XQueryOccurence.ZERO_OR_ONE;
@@ -495,9 +494,9 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
 
     private static final boolean[][] isValueComparableWith;
     static {
-        final int zero_ = XQueryOccurence.ZERO.ordinal();
-        final int one_ = XQueryOccurence.ONE.ordinal();
-        final int zeroOrOne_ = XQueryOccurence.ZERO_OR_ONE.ordinal();
+        final int zero_ = ZERO;
+        final int one_ = ONE;
+        final int zeroOrOne_ = ZERO_OR_ONE;
         isValueComparableWith = new boolean[occurenceCount][occurenceCount];
         for (int i = 0; i < isValueComparableWith.length; i++) {
             for (int j = 0; j < isValueComparableWith.length; j++) {

@@ -923,7 +923,11 @@ public class XQueryTypesTest {
 
     @Test
     public void choiceItemTypeSubtyping() {
-        var numberOrBool = typeFactory;
+        final var numberOrBool = typeFactory.choice(Set.of(typeFactory.itemNumber(), typeFactory.itemBoolean()));
+        assertTrue(number.isSubtypeOf(numberOrBool));
+        assertTrue(boolean_.isSubtypeOf(numberOrBool));
+        assertFalse(numberOrBool.isSubtypeOf(number));
+        assertFalse(numberOrBool.isSubtypeOf(boolean_));
     }
 
 

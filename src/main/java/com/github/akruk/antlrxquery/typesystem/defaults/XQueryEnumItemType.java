@@ -20,6 +20,9 @@ public class XQueryEnumItemType implements XQueryItemType {
     private final XQueryTypeFactory typeFactory;
     private final Collection<XQueryItemType> itemTypes;
 
+    public Collection<XQueryItemType> getItemTypes() {
+        return itemTypes;
+    }
     public XQueryEnumItemType(final XQueryTypes type,
                                 final List<XQuerySequenceType> argumentTypes,
                                 final XQuerySequenceType returnedType,
@@ -181,6 +184,32 @@ public class XQueryEnumItemType implements XQueryItemType {
         final int anyArray = XQueryTypes.ANY_ARRAY.ordinal();
         final int enum_ = XQueryTypes.ENUM.ordinal();
         final int string = XQueryTypes.STRING.ordinal();
+        final int choice = XQueryTypes.CHOICE.ordinal();
+
+        final BiPredicate<XQueryItemType, XQueryItemType> choicesubtype = (x, y) -> {
+            final XQueryEnumItemType y_ = (XQueryEnumItemType) y;
+            final var items = y_.getItemTypes();
+            final boolean anyIsSubtype = items.stream().anyMatch(i-> x.itemtypeIsSubtypeOf(i));
+            return anyIsSubtype;
+        };
+
+        for (int i = 0; i < typesCount; i++) {
+            itemtypeIsSubtypeOf[i][choice] = choicesubtype;
+        }
+
+        itemtypeIsSubtypeOf[choice][choice] = (x, y) -> {
+            final XQueryEnumItemType x_ = (XQueryEnumItemType) x;
+            final XQueryEnumItemType y_ = (XQueryEnumItemType) y;
+            final var xItems = x_.getItemTypes();
+            final var yItems = y_.getItemTypes();
+            final var allPresent = xItems.stream().allMatch(xItem->{
+                final boolean anyIsSubtype = yItems.stream().anyMatch(i-> xItem.itemtypeIsSubtypeOf(i));
+                return anyIsSubtype;
+            });
+            return allPresent;
+        }
+        ;
+
 
         itemtypeIsSubtypeOf[anyArray][anyMap] = alwaysTrue;
         itemtypeIsSubtypeOf[anyArray][map] = (_, y) -> {
@@ -411,6 +440,8 @@ public class XQueryEnumItemType implements XQueryItemType {
             }
             return true;
         };
+
+        // itemtypeIsSubtypeOf[choice][choice]
 
 
     }

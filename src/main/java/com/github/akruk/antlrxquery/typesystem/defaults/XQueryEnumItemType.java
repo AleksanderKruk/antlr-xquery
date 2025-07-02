@@ -15,6 +15,8 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class XQueryEnumItemType implements XQueryItemType {
     private final XQueryTypes type;
+    private final int typeOrdinal;
+
     private final BinaryOperator[][] unionItemMerger;
     private final BinaryOperator[][] intersectionItemMerger;
     private final XQueryTypeFactory typeFactory;
@@ -34,6 +36,7 @@ public class XQueryEnumItemType implements XQueryItemType {
                                 final Collection<XQueryItemType> itemTypes)
     {
         this.type = type;
+        this.typeOrdinal = type.ordinal();
         this.argumentTypes = argumentTypes;
         this.returnedType = returnedType;
         this.arrayType = arrayType;
@@ -440,10 +443,6 @@ public class XQueryEnumItemType implements XQueryItemType {
             }
             return true;
         };
-
-        // itemtypeIsSubtypeOf[choice][choice]
-
-
     }
 
     @Override
@@ -451,7 +450,7 @@ public class XQueryEnumItemType implements XQueryItemType {
         if (!(obj instanceof XQueryEnumItemType))
             return false;
         final var typed = (XQueryEnumItemType) obj;
-        return itemtypeIsSubtypeOf[type.ordinal()][typed.getType().ordinal()].test(this, obj);
+        return itemtypeIsSubtypeOf[typeOrdinal][typed.getType().ordinal()].test(this, obj);
     }
 
 
@@ -467,7 +466,7 @@ public class XQueryEnumItemType implements XQueryItemType {
 
     @Override
     public boolean isFunction(final XQuerySequenceType otherReturnedType, final List<XQuerySequenceType> otherArgumentTypes) {
-        return isFunction[type.ordinal()]
+        return isFunction[typeOrdinal]
                 && this.returnedType.equals(otherReturnedType)
                 && this.argumentTypes.size() == otherArgumentTypes.size()
                 && IntStream.range(0, this.argumentTypes.size())
@@ -485,7 +484,7 @@ public class XQueryEnumItemType implements XQueryItemType {
         if (type == XQueryTypes.CHOICE) {
             return itemTypes.stream().allMatch(itemType->itemType.hasEffectiveBooleanValue());
         }
-        return !noEffectiveBooleanValue[type.ordinal()];
+        return !noEffectiveBooleanValue[typeOrdinal];
     }
 
     private static final boolean[][] castableAs;
@@ -510,19 +509,19 @@ public class XQueryEnumItemType implements XQueryItemType {
         if (!(itemType instanceof XQueryEnumItemType))
             return false;
         final var typed = (XQueryEnumItemType) itemType;
-        return castableAs[type.ordinal()][typed.getType().ordinal()];
+        return castableAs[typeOrdinal][typed.getType().ordinal()];
     }
 
     @Override
     public XQueryItemType unionMerge(final XQueryItemType other) {
         final var other_ = (XQueryEnumItemType) other;
-        return (XQueryItemType)unionItemMerger[type.ordinal()][other_.getType().ordinal()].apply(this, other);
+        return (XQueryItemType)unionItemMerger[typeOrdinal][other_.getType().ordinal()].apply(this, other);
     }
 
     @Override
     public XQueryItemType intersectionMerge(final XQueryItemType other) {
         final var other_ = (XQueryEnumItemType) other;
-        return (XQueryItemType)intersectionItemMerger[type.ordinal()][other_.getType().ordinal()].apply(this, other);
+        return (XQueryItemType)intersectionItemMerger[typeOrdinal][other_.getType().ordinal()].apply(this, other);
     }
 
     @Override
@@ -548,6 +547,6 @@ public class XQueryEnumItemType implements XQueryItemType {
     @Override
     public boolean isValueComparableWith(final XQueryItemType other) {
         final var other_ = (XQueryEnumItemType) other;
-        return isValueComparableWith[type.ordinal()][other_.getType().ordinal()];
+        return isValueComparableWith[typeOrdinal][other_.getType().ordinal()];
     }
 }

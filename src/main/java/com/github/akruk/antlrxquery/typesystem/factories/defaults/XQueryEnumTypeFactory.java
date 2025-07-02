@@ -1,5 +1,6 @@
 package com.github.akruk.antlrxquery.typesystem.factories.defaults;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -229,4 +230,13 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
                 _ -> new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ONE_OR_MORE));
     }
 
+    @Override
+    public XQueryItemType itemChoice(Collection<XQueryItemType> items) {
+        return new XQueryChoiceItemType(items, this);
+    }
+
+    @Override
+    public XQuerySequenceType choice(Collection<XQueryItemType> items) {
+        return one(itemChoice(items));
+    }
 }

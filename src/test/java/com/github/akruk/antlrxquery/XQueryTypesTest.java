@@ -920,4 +920,12 @@ public class XQueryTypesTest {
         assertEquals(merged$any2, typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
     }
 
+
+    @Test
+    public void choiceItemTypeSubtyping() {
+        var numberOrBool = typeFactory;
+    }
+
+
+
 }

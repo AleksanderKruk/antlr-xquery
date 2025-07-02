@@ -432,15 +432,6 @@ public class XQueryEnumItemType implements XQueryItemType {
         return array;
     }
 
-    // private static boolean[] booleanEnumArray(Predicate<XQueryTypes> predicateForTrueValues) {
-    //     var array = new boolean[XQueryTypes.values().length];
-    //     for (int j = 0; j < array.length; j++) {
-    //         XQueryTypes tested = XQueryTypes.values()[j];
-    //         array[j] = predicateForTrueValues.test(tested);
-    //     }
-    //     return array;
-    // }
-
     private static final boolean[] isFunction = booleanEnumArray(XQueryTypes.ANY_FUNCTION, XQueryTypes.FUNCTION);
 
     @Override

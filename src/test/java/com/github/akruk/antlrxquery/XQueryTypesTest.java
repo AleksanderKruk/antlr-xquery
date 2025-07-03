@@ -3,6 +3,7 @@ package com.github.akruk.antlrxquery;
 import org.junit.Test;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
+import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryEnumTypeFactory;
@@ -35,7 +36,11 @@ public class XQueryTypesTest {
     final XQuerySequenceType anyMap = typeFactory.anyMap();
     final XQuerySequenceType anyItem = typeFactory.anyItem();
     final XQuerySequenceType anyFunction = typeFactory.anyFunction();
-    final XQuerySequenceType recordAny = typeFactory.record(Map.of("foo", typeFactory.anyItem(), "bar", typeFactory.anyItem()));
+
+    final XQueryRecordField requiredAnyItem = new XQueryRecordField(typeFactory.anyItem(), true);
+    final XQueryRecordField requiredNumber = new XQueryRecordField(typeFactory.number(), true);
+    final XQueryRecordField requiredString = new XQueryRecordField(typeFactory.string(), true);
+    final XQuerySequenceType recordAny = typeFactory.record(Map.of("foo", requiredAnyItem, "bar", requiredAnyItem));
 
     final XQueryItemType itemError = typeFactory.itemError();
     final XQueryItemType itemAnyFunction = typeFactory.itemAnyFunction();
@@ -51,8 +56,8 @@ public class XQueryTypesTest {
     final XQueryItemType itemABenum = typeFactory.itemEnum(Set.of("A", "B"));
     final XQueryItemType itemABCenum = typeFactory.itemEnum(Set.of("A", "B", "C"));
     final XQueryItemType itemABCDenum = typeFactory.itemEnum(Set.of("A", "B", "C", "D"));
-    final XQueryItemType itemRecordAny = typeFactory.itemRecord(Map.of("foo", typeFactory.anyItem(), "bar", typeFactory.anyItem()));
-    final XQueryItemType itemRecordString = typeFactory.itemRecord(Map.of("foo", typeFactory.string(), "bar", typeFactory.string()));
+    final XQueryItemType itemRecordAny = typeFactory.itemRecord(Map.of("foo", requiredAnyItem, "bar", requiredAnyItem));
+    final XQueryItemType itemRecordString = typeFactory.itemRecord(Map.of("foo", requiredString, "bar", requiredString));
 
 
 
@@ -552,11 +557,6 @@ public class XQueryTypesTest {
         final var tested = itemRecordAny;
         final var numberToItem = typeFactory.itemFunction(typeFactory.anyItem(), List.of(typeFactory.number()));
         final var numberToString = typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.number()));
-        final var itemFooBarHoo = typeFactory.itemRecord(
-                Map.of("foo", typeFactory.string(), "bar", typeFactory.string(), "hoo", typeFactory.string()));
-        final var itemFooBarNum = typeFactory
-                .itemRecord(Map.of("foo", typeFactory.number(), "bar", typeFactory.string()));
-
         assertFalse(tested.itemtypeIsSubtypeOf(itemError));
         assertTrue(tested.itemtypeIsSubtypeOf(itemAnyItem));
         assertFalse(tested.itemtypeIsSubtypeOf(itemAnyNode));
@@ -601,6 +601,11 @@ public class XQueryTypesTest {
         assertTrue(itemRecordString.itemtypeIsSubtypeOf(itemRecordString));
         assertFalse(itemRecordAny.itemtypeIsSubtypeOf(itemRecordString));
 
+
+        final var itemFooBarHoo = typeFactory.itemRecord(
+                Map.of("foo", requiredString, "bar", requiredString, "hoo", requiredString));
+        final var itemFooBarNum = typeFactory
+                .itemRecord(Map.of("foo", requiredNumber, "bar", requiredString));
         assertTrue(itemRecordString.itemtypeIsSubtypeOf(itemFooBarHoo));
         assertFalse(itemFooBarHoo.itemtypeIsSubtypeOf(itemRecordString));
         assertFalse(itemRecordString.itemtypeIsSubtypeOf(itemFooBarNum));
@@ -945,6 +950,104 @@ public class XQueryTypesTest {
         assertTrue(numberOrBool.isSubtypeOf(stringOrBoolOrNumber));
         assertTrue(stringOrBool.isSubtypeOf(stringOrBoolOrNumber));
         assertFalse(stringOrBoolOrNumber.isSubtypeOf(numberOrBool));
+    }
+
+    @Test
+    public void extensibleRecordsSubtyping() {
+        final var numberRequired = new XQueryRecordField(typeFactory.number(), true);
+        final var a_number = typeFactory.extensibleRecord( Map.of("a", numberRequired));
+        final var a_number_b_string = typeFactory.extensibleRecord(
+            Map.of("a", numberRequired)
+        );
+        assertTrue(a_number.isSubtypeOf(anyMap));
+        //         3.3.2.8 Subtyping Records
+        // Given item types A and B, A ⊆ B is true if any of the following apply:
+
+        // A is map(*) and B is record(*).
+        assertTrue(anyMap.isSubtypeOf(anyMap));
+
+        // All of the following are true:
+        // A is a record type.
+        // B is map(*) or record(*).
+        assertTrue(a_number.isSubtypeOf(anyMap));
+
+        final var anyItemRequired = new XQueryRecordField(anyItem, true);
+        // Examples:
+        // record(longitude, latitude) ⊆ map(*)
+        final var longitudeLatitudeRecord = typeFactory.record(Map.of("longitude", anyItemRequired,
+                                                                      "latitude", anyItemRequired));
+        assertTrue(longitudeLatitudeRecord.isSubtypeOf(anyMap));
+
+        // record(longitude, latitude, *) ⊆ record(*)
+        final var longitudeLatitudeRecordExtensible = typeFactory.record(Map.of("longitude", anyItemRequired,
+                                                                                "latitude", anyItemRequired));
+        longitudeLatitudeRecordExtensible.isSubtypeOf(anyMap);
+
+        // All of the following are true:
+        // A is a non-extensible record type
+        // B is map(K, V)
+        // K is either xs:string or xs:anyAtomicType
+        // For every field F in A, where T is the declared type of F (or its default, item()*), T ⊑ V .
+        // Examples:
+        // record(x, y) ⊆ map(xs:string, item()*)
+        final var xy = typeFactory.record(Map.of("x", anyItemRequired, "y", anyItemRequired));
+        final XQuerySequenceType anyItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
+        final var mapStringItem = typeFactory.map(typeFactory.itemString(),
+                                                  anyItems);
+        xy.isSubtypeOf(mapStringItem);
+
+        // record(x as xs:double, y as xs:double) ⊆ map(xs:string, xs:double)
+        final var xy_number = typeFactory.record(Map.of("x", numberRequired, "y", numberRequired));
+        final var mapStringNumber = typeFactory.map(typeFactory.itemString(), typeFactory.number());
+        xy_number.isSubtypeOf(mapStringNumber);
+
+        // All of the following are true:
+        // A is a non-extensible record type.
+        // B is a non-extensible record type.
+        // Every field in A is also declared in B.
+        // Every mandatory field in B is also declared as mandatory in A.
+        // For every field that is declared in both A and B, where the declared type in A is T and the declared type in B is U, T ⊑ U .
+        // Examples:
+        // record(x, y) ⊆ record(x, y, z?)
+        final var anyItemsRequired = new XQueryRecordField(anyItems, true);
+        final var xyz = typeFactory.record(Map.of("x", anyItemsRequired, "y", anyItemsRequired, "z", anyItemsRequired));
+        xy.isSubtypeOf(xyz);
+
+        // All of the following are true:
+
+        // A is an extensible record type
+
+        // B is an extensible record type
+
+        // Every mandatory field in B is also declared as mandatory in A.
+
+        // For every field that is declared in both A and B, where the declared type in A is T and the declared type in B is U, T ⊑ U .
+
+        // For every field that is declared in B but not in A, the declared type in B is item()*.
+
+        // Examples:
+        // record(x, y, z, *) ⊆ record(x, y, *)
+
+        // record(x?, y?, z?, *) ⊆ record(x, y, *)
+
+        // record(x as xs:integer, y as xs:integer, *) ⊆ record(x as xs:decimal, y as xs:integer*, *)
+
+        // record(x as xs:integer, *) ⊆ record(x as xs:decimal, y as item(), *)
+
+        // All of the following are true:
+
+        // A is a non-extensible record type.
+
+        // B is an extensible record type.
+
+        // Every mandatory field in B is also declared as mandatory in A.
+
+        // For every field that is declared in both A and B, where the declared type in A is T and the declared type in B is U, T ⊑ U .
+
+        // Examples:
+        // record(x, y as xs:integer) ⊆ record(x, y as xs:decimal, *)
+
+        // record(y as xs:integer) ⊆ record(x?, y as xs:decimal, *)
     }
 
 

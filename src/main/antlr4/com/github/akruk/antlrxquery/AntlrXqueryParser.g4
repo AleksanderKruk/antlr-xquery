@@ -164,30 +164,30 @@ nameTestUnion	:	nameTest ('|' nameTest)*;
 nameTest	:	qname | wildcard;
 
 functionType:	annotation* (anyFunctionType | typedFunctionType);
-annotation	:	PERCENTAGE qname (LPAREN annotationValue (',' annotationValue)* RPAREN)?;
+annotation	:	PERCENTAGE qname (LPAREN annotationValue (COMMA annotationValue)* RPAREN)?;
 annotationValue:	STRING | ('-'? numericLiteral) | (qname LPAREN RPAREN);
-anyFunctionType	:	FUNCTION LPAREN '*' RPAREN;
-typedFunctionType	:	FUNCTION LPAREN (typedFunctionParam (',' typedFunctionParam)*)? RPAREN 'as' sequenceType;
+anyFunctionType	:	FUNCTION LPAREN STAR RPAREN;
+typedFunctionType	:	FUNCTION LPAREN (typedFunctionParam (COMMA typedFunctionParam)*)? RPAREN 'as' sequenceType;
 typedFunctionParam	:	('$' qname 'as')? sequenceType;
 
 mapType	:	anyMapType | typedMapType;
-anyMapType	:	MAP LPAREN '*' RPAREN;
-typedMapType	:	MAP LPAREN itemType ',' sequenceType RPAREN;
+anyMapType	:	MAP LPAREN STAR RPAREN;
+typedMapType	:	MAP LPAREN itemType COMMA sequenceType RPAREN;
 
 
 recordType:	anyRecordType | typedRecordType;
-anyRecordType: RECORD LPAREN '*' RPAREN;
-typedRecordType: RECORD LPAREN (fieldDeclaration (',' fieldDeclaration)*)? extensibleFlag? RPAREN;
-extensibleFlag:	',' '*';
-fieldDeclaration	:	fieldName '?'? ('as' sequenceType)?;
+anyRecordType: RECORD LPAREN STAR RPAREN;
+typedRecordType: RECORD LPAREN (fieldDeclaration (COMMA fieldDeclaration)*)? extensibleFlag? RPAREN;
+extensibleFlag:	COMMA STAR;
+fieldDeclaration	:	fieldName QUESTION_MARK? (AS sequenceType)?;
 fieldName	:	ID;
 
 
 arrayType	:	anyArrayType | typedArrayType;
-anyArrayType	:	ARRAY LPAREN '*' RPAREN;
+anyArrayType	:	ARRAY LPAREN STAR RPAREN;
 typedArrayType	:	ARRAY LPAREN sequenceType RPAREN;
 
-enumerationType	:	ENUM LPAREN STRING (',' STRING)* RPAREN;
+enumerationType	:	ENUM LPAREN STRING (COMMA STRING)* RPAREN;
 
 choiceItemType	:	LPAREN itemType ('|' itemType)* RPAREN;
 

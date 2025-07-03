@@ -9,11 +9,16 @@ import java.util.function.BinaryOperator;
 import java.util.stream.IntStream;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
+import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class XQueryEnumItemType implements XQueryItemType {
+    private static final int STRING = XQueryTypes.STRING.ordinal();
+    private static final int ENUM = XQueryTypes.ENUM.ordinal();
+    private static final int BOOLEAN = XQueryTypes.BOOLEAN.ordinal();
+    private static final int NUMBER = XQueryTypes.NUMBER.ordinal();
     private final XQueryTypes type;
     private final int typeOrdinal;
 
@@ -185,8 +190,8 @@ public class XQueryEnumItemType implements XQueryItemType {
         final int record = XQueryTypes.RECORD.ordinal();
         final int anyMap = XQueryTypes.ANY_MAP.ordinal();
         final int anyArray = XQueryTypes.ANY_ARRAY.ordinal();
-        final int enum_ = XQueryTypes.ENUM.ordinal();
-        final int string = XQueryTypes.STRING.ordinal();
+        final int enum_ = ENUM;
+        final int string = STRING;
         final int choice = XQueryTypes.CHOICE.ordinal();
 
         final BiPredicate<XQueryItemType, XQueryItemType> choicesubtype = (x, y) -> {
@@ -401,8 +406,8 @@ public class XQueryEnumItemType implements XQueryItemType {
                 return false;
             final var yFieldType = y_.getMapValueType();
             for (final var key : x_.getRecordFields().keySet()) {
-                final var xFieldType = x_.getRecordFields().get(key);
-                if (!xFieldType.isSubtypeOf(yFieldType))
+                final XQueryRecordField xFieldType = x_.getRecordFields().get(key);
+                if (!xFieldType.type().isSubtypeOf(yFieldType))
                     return false;
             }
             return true;
@@ -423,7 +428,7 @@ public class XQueryEnumItemType implements XQueryItemType {
             final var yReturnedType = y_.getReturnedType();
             for (final var key : x_.getRecordFields().keySet()) {
                 final var xFieldType = x_.getRecordFields().get(key);
-                if (!xFieldType.isSubtypeOf(yReturnedType))
+                if (!xFieldType.type().isSubtypeOf(yReturnedType))
                     return false;
             }
             return true;
@@ -438,7 +443,7 @@ public class XQueryEnumItemType implements XQueryItemType {
             for (final var key : x_.getRecordFields().keySet()) {
                 final var xFieldType = x_.getRecordFields().get(key);
                 final var yFieldType = y_.getRecordFields().get(key);
-                if (!xFieldType.isSubtypeOf(yFieldType))
+                if (!xFieldType.type().isSubtypeOf(yFieldType.type()))
                     return false;
             }
             return true;
@@ -496,7 +501,7 @@ public class XQueryEnumItemType implements XQueryItemType {
             }
         }
         // final int number = XQueryTypes.NUMBER.ordinal();
-        final int string = XQueryTypes.STRING.ordinal();
+        final int string = STRING;
         final int anyItem = XQueryTypes.ANY_ITEM.ordinal();
         for (int i = 0; i < typesCount; i++) {
             castableAs[i][anyItem] = true;
@@ -531,16 +536,12 @@ public class XQueryEnumItemType implements XQueryItemType {
 
     private static final boolean[][] isValueComparableWith;
     static {
-        final int number = XQueryTypes.NUMBER.ordinal();
-        final int boolean_ = XQueryTypes.BOOLEAN.ordinal();
-        final int enum_ = XQueryTypes.ENUM.ordinal();
-        final int string = XQueryTypes.STRING.ordinal();
         isValueComparableWith = new boolean[typesCount][typesCount];
-        isValueComparableWith[string][string] = true;
-        isValueComparableWith[number][number] = true;
-        isValueComparableWith[boolean_][boolean_] = true;
-        isValueComparableWith[enum_][string] = true;
-        isValueComparableWith[string][enum_] = true;
+        isValueComparableWith[STRING][STRING] = true;
+        isValueComparableWith[NUMBER][NUMBER] = true;
+        isValueComparableWith[BOOLEAN][BOOLEAN] = true;
+        isValueComparableWith[ENUM][STRING] = true;
+        isValueComparableWith[STRING][ENUM] = true;
     }
 
 

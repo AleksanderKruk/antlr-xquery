@@ -24,6 +24,7 @@ import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper.XQuery
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager.CallAnalysisResult;
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
+import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
@@ -248,13 +249,17 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             return typeFactory.anyMap();
         }
         final var record = ctx.typedRecordType();
-        final Map<String, XQuerySequenceType> fields = new HashMap<>();
-        // TODO: extensible flag
-        // TODO: optional fields
-        for (final var field : record.fieldDeclaration()) {
+        final var fieldDeclarations = record.fieldDeclaration();
+        final Map<String, XQueryRecordField> fields = new HashMap<>(fieldDeclarations.size());
+        for (final var field : fieldDeclarations) {
             final String fieldName = field.fieldName().getText();
             final XQuerySequenceType fieldType = field.sequenceType().accept(this);
-            fields.put(fieldName, fieldType);
+            final boolean isRequired = field.QUESTION_MARK() != null;
+            final XQueryRecordField recordField = new XQueryRecordField(fieldType, isRequired);
+            fields.put(fieldName, recordField);
+        }
+        if (record.extensibleFlag() == null) {
+            return typeFactory.extensibleRecord(fields);
         }
         return typeFactory.record(fields);
     }

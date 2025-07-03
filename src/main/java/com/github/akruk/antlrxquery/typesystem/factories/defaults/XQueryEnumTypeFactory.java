@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
+import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.defaults.*;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
@@ -45,8 +46,13 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
     private final XQuerySequenceType EMPTY_SEQUENCE = new XQueryEnumEmptySequenceType(this);
 
     @Override
-    public XQueryItemType itemRecord(Map<String, XQuerySequenceType> fields) {
+    public XQueryItemType itemRecord(Map<String, XQueryRecordField> fields) {
         return new XQueryEnumItemTypeRecord(fields, this);
+    }
+
+    @Override
+    public XQueryItemType itemExtensibleRecord(Map<String, XQueryRecordField> fields) {
+        return new XQueryEnumItemTypeExtensibleRecord(fields, this);
     }
 
     @Override
@@ -164,8 +170,13 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
     }
 
     @Override
-    public XQuerySequenceType record(Map<String, XQuerySequenceType> fields) {
+    public XQuerySequenceType record(Map<String, XQueryRecordField> fields) {
         return one(itemRecord(fields));
+    }
+
+    @Override
+    public XQuerySequenceType extensibleRecord(Map<String, XQueryRecordField> fields) {
+        return one(itemExtensibleRecord(fields));
     }
 
     @Override

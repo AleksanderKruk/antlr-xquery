@@ -226,47 +226,35 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         final int occurenceCount = XQueryOccurence.values().length;
         unionOccurences = new XQueryOccurence[occurenceCount][occurenceCount];
 
-        final XQueryOccurence zero = XQueryOccurence.ZERO;
-        final XQueryOccurence one = XQueryOccurence.ONE;
-        final XQueryOccurence zeroOrOne = XQueryOccurence.ZERO_OR_ONE;
-        final XQueryOccurence zeroOrMore = XQueryOccurence.ZERO_OR_MORE;
-        final XQueryOccurence oneOrMore = XQueryOccurence.ONE_OR_MORE;
+        unionOccurences[ZERO][ZERO] = XQueryOccurence.ZERO;
+        unionOccurences[ZERO][ONE] = XQueryOccurence.ONE;
+        unionOccurences[ZERO][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_ONE;
+        unionOccurences[ZERO][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
+        unionOccurences[ZERO][ONE_OR_MORE] = XQueryOccurence.ONE_OR_MORE;
 
-        final int zero_ = ZERO;
-        final int one_ = ONE;
-        final int zeroOrOne_ = ZERO_OR_ONE;
-        final int zeroOrMore_ = ZERO_OR_MORE;
-        final int oneOrMore_ = ONE_OR_MORE;
+        unionOccurences[ONE][ZERO] = XQueryOccurence.ONE;
+        unionOccurences[ONE][ONE] = XQueryOccurence.ONE_OR_MORE;
+        unionOccurences[ONE][ZERO_OR_ONE] = XQueryOccurence.ONE_OR_MORE;
+        unionOccurences[ONE][ZERO_OR_MORE] = XQueryOccurence.ONE_OR_MORE;
+        unionOccurences[ONE][ONE_OR_MORE] = XQueryOccurence.ONE_OR_MORE;
 
-        unionOccurences[zero_][zero_] = zero;
-        unionOccurences[zero_][one_] = one;
-        unionOccurences[zero_][zeroOrOne_] = zeroOrOne;
-        unionOccurences[zero_][zeroOrMore_] = zeroOrMore;
-        unionOccurences[zero_][oneOrMore_] = oneOrMore;
+        unionOccurences[ZERO_OR_ONE][ZERO] = XQueryOccurence.ZERO_OR_ONE;
+        unionOccurences[ZERO_OR_ONE][ONE] = XQueryOccurence.ONE_OR_MORE;
+        unionOccurences[ZERO_OR_ONE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_MORE;
+        unionOccurences[ZERO_OR_ONE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
+        unionOccurences[ZERO_OR_ONE][ONE_OR_MORE] = XQueryOccurence.ONE_OR_MORE;
 
-        unionOccurences[one_][zero_] = one;
-        unionOccurences[one_][one_] = oneOrMore;
-        unionOccurences[one_][zeroOrOne_] = oneOrMore;
-        unionOccurences[one_][zeroOrMore_] = oneOrMore;
-        unionOccurences[one_][oneOrMore_] = oneOrMore;
+        unionOccurences[ZERO_OR_MORE][ZERO] = XQueryOccurence.ZERO_OR_MORE;
+        unionOccurences[ZERO_OR_MORE][ONE] = XQueryOccurence.ONE_OR_MORE;
+        unionOccurences[ZERO_OR_MORE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_MORE;
+        unionOccurences[ZERO_OR_MORE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
+        unionOccurences[ZERO_OR_MORE][ONE_OR_MORE] = XQueryOccurence.ONE_OR_MORE;
 
-        unionOccurences[zeroOrOne_][zero_] = zeroOrOne;
-        unionOccurences[zeroOrOne_][one_] = oneOrMore;
-        unionOccurences[zeroOrOne_][zeroOrOne_] = zeroOrMore;
-        unionOccurences[zeroOrOne_][zeroOrMore_] = zeroOrMore;
-        unionOccurences[zeroOrOne_][oneOrMore_] = oneOrMore;
-
-        unionOccurences[zeroOrMore_][zero_] = zeroOrMore;
-        unionOccurences[zeroOrMore_][one_] = oneOrMore;
-        unionOccurences[zeroOrMore_][zeroOrOne_] = zeroOrMore;
-        unionOccurences[zeroOrMore_][zeroOrMore_] = zeroOrMore;
-        unionOccurences[zeroOrMore_][oneOrMore_] = oneOrMore;
-
-        unionOccurences[oneOrMore_][zero_] = oneOrMore;
-        unionOccurences[oneOrMore_][one_] = oneOrMore;
-        unionOccurences[oneOrMore_][zeroOrOne_] = oneOrMore;
-        unionOccurences[oneOrMore_][zeroOrMore_] = oneOrMore;
-        unionOccurences[oneOrMore_][oneOrMore_] = oneOrMore;
+        unionOccurences[ONE_OR_MORE][ZERO] = XQueryOccurence.ONE_OR_MORE;
+        unionOccurences[ONE_OR_MORE][ONE] = XQueryOccurence.ONE_OR_MORE;
+        unionOccurences[ONE_OR_MORE][ZERO_OR_ONE] = XQueryOccurence.ONE_OR_MORE;
+        unionOccurences[ONE_OR_MORE][ZERO_OR_MORE] = XQueryOccurence.ONE_OR_MORE;
+        unionOccurences[ONE_OR_MORE][ONE_OR_MORE] = XQueryOccurence.ONE_OR_MORE;
     }
 
 
@@ -356,47 +344,35 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         final int occurenceCount = XQueryOccurence.values().length;
         exceptOccurences = new XQueryOccurence[occurenceCount][occurenceCount];
 
-        final XQueryOccurence zero = XQueryOccurence.ZERO;
-        final XQueryOccurence one = XQueryOccurence.ONE;
-        final XQueryOccurence zeroOrOne = XQueryOccurence.ZERO_OR_ONE;
-        final XQueryOccurence zeroOrMore = XQueryOccurence.ZERO_OR_MORE;
-        final XQueryOccurence oneOrMore = XQueryOccurence.ONE_OR_MORE;
+        exceptOccurences[ZERO][ZERO] = XQueryOccurence.ZERO;
+        exceptOccurences[ZERO][ONE] = XQueryOccurence.ZERO;
+        exceptOccurences[ZERO][ZERO_OR_ONE] = XQueryOccurence.ZERO;
+        exceptOccurences[ZERO][ZERO_OR_MORE] = XQueryOccurence.ZERO;
+        exceptOccurences[ZERO][ONE_OR_MORE] = XQueryOccurence.ZERO;
 
-        final int zero_ = ZERO;
-        final int one_ = ONE;
-        final int zeroOrOne_ = ZERO_OR_ONE;
-        final int zeroOrMore_ = ZERO_OR_MORE;
-        final int oneOrMore_ = ONE_OR_MORE;
+        exceptOccurences[ONE][ZERO] = XQueryOccurence.ONE;
+        exceptOccurences[ONE][ONE] = XQueryOccurence.ZERO_OR_ONE;
+        exceptOccurences[ONE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_ONE;
+        exceptOccurences[ONE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_ONE;
+        exceptOccurences[ONE][ONE_OR_MORE] = XQueryOccurence.ZERO_OR_ONE;
 
-        exceptOccurences[zero_][zero_] = zero;
-        exceptOccurences[zero_][one_] = zero;
-        exceptOccurences[zero_][zeroOrOne_] = zero;
-        exceptOccurences[zero_][zeroOrMore_] = zero;
-        exceptOccurences[zero_][oneOrMore_] = zero;
+        exceptOccurences[ZERO_OR_ONE][ZERO] = XQueryOccurence.ZERO_OR_ONE;
+        exceptOccurences[ZERO_OR_ONE][ONE] = XQueryOccurence.ZERO_OR_ONE;
+        exceptOccurences[ZERO_OR_ONE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_ONE;
+        exceptOccurences[ZERO_OR_ONE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_ONE;
+        exceptOccurences[ZERO_OR_ONE][ONE_OR_MORE] = XQueryOccurence.ZERO_OR_ONE;
 
-        exceptOccurences[one_][zero_] = one;
-        exceptOccurences[one_][one_] = zeroOrOne;
-        exceptOccurences[one_][zeroOrOne_] = zeroOrOne;
-        exceptOccurences[one_][zeroOrMore_] = zeroOrOne;
-        exceptOccurences[one_][oneOrMore_] = zeroOrOne;
+        exceptOccurences[ZERO_OR_MORE][ZERO] = XQueryOccurence.ZERO_OR_MORE;
+        exceptOccurences[ZERO_OR_MORE][ONE] = XQueryOccurence.ZERO_OR_MORE;
+        exceptOccurences[ZERO_OR_MORE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_MORE;
+        exceptOccurences[ZERO_OR_MORE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
+        exceptOccurences[ZERO_OR_MORE][ONE_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
 
-        exceptOccurences[zeroOrOne_][zero_] = zeroOrOne;
-        exceptOccurences[zeroOrOne_][one_] = zeroOrOne;
-        exceptOccurences[zeroOrOne_][zeroOrOne_] = zeroOrOne;
-        exceptOccurences[zeroOrOne_][zeroOrMore_] = zeroOrOne;
-        exceptOccurences[zeroOrOne_][oneOrMore_] = zeroOrOne;
-
-        exceptOccurences[zeroOrMore_][zero_] = zeroOrMore;
-        exceptOccurences[zeroOrMore_][one_] = zeroOrMore;
-        exceptOccurences[zeroOrMore_][zeroOrOne_] = zeroOrMore;
-        exceptOccurences[zeroOrMore_][zeroOrMore_] = zeroOrMore;
-        exceptOccurences[zeroOrMore_][oneOrMore_] = zeroOrMore;
-
-        exceptOccurences[oneOrMore_][zero_] = oneOrMore;
-        exceptOccurences[oneOrMore_][one_] = zeroOrMore;
-        exceptOccurences[oneOrMore_][zeroOrOne_] = zeroOrMore;
-        exceptOccurences[oneOrMore_][zeroOrMore_] = zeroOrMore;
-        exceptOccurences[oneOrMore_][oneOrMore_] = zeroOrMore;
+        exceptOccurences[ONE_OR_MORE][ZERO] = XQueryOccurence.ONE_OR_MORE;
+        exceptOccurences[ONE_OR_MORE][ONE] = XQueryOccurence.ZERO_OR_MORE;
+        exceptOccurences[ONE_OR_MORE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_MORE;
+        exceptOccurences[ONE_OR_MORE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
+        exceptOccurences[ONE_OR_MORE][ONE_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
     }
 
     @Override
@@ -489,26 +465,23 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
 
     private static final boolean[][] isValueComparableWith;
     static {
-        final int zero_ = ZERO;
-        final int one_ = ONE;
-        final int zeroOrOne_ = ZERO_OR_ONE;
         isValueComparableWith = new boolean[occurenceCount][occurenceCount];
         for (int i = 0; i < isValueComparableWith.length; i++) {
             for (int j = 0; j < isValueComparableWith.length; j++) {
                 isValueComparableWith[i][j] = false;
             }
         }
-        isValueComparableWith[zero_][zero_] = true;
-        isValueComparableWith[zero_][one_] = true;
-        isValueComparableWith[zero_][zeroOrOne_] = true;
+        isValueComparableWith[ZERO][ZERO] = true;
+        isValueComparableWith[ZERO][ONE] = true;
+        isValueComparableWith[ZERO][ZERO_OR_ONE] = true;
 
-        isValueComparableWith[one_][zero_] = true;
-        isValueComparableWith[one_][one_] = true;
-        isValueComparableWith[one_][zeroOrOne_] = true;
+        isValueComparableWith[ONE][ZERO] = true;
+        isValueComparableWith[ONE][ONE] = true;
+        isValueComparableWith[ONE][ZERO_OR_ONE] = true;
 
-        isValueComparableWith[zeroOrOne_][one_] = true;
-        isValueComparableWith[zeroOrOne_][zero_] = true;
-        isValueComparableWith[zeroOrOne_][zeroOrOne_] = true;
+        isValueComparableWith[ZERO_OR_ONE][ONE] = true;
+        isValueComparableWith[ZERO_OR_ONE][ZERO] = true;
+        isValueComparableWith[ZERO_OR_ONE][ZERO_OR_ONE] = true;
     }
 
     @Override

@@ -956,9 +956,6 @@ public class XQueryTypesTest {
     public void extensibleRecordsSubtyping() {
         final var numberRequired = new XQueryRecordField(typeFactory.number(), true);
         final var a_number = typeFactory.extensibleRecord( Map.of("a", numberRequired));
-        final var a_number_b_string = typeFactory.extensibleRecord(
-            Map.of("a", numberRequired)
-        );
         assertTrue(a_number.isSubtypeOf(anyMap));
         //         3.3.2.8 Subtyping Records
         // Given item types A and B, A ⊆ B is true if any of the following apply:

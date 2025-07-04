@@ -5,8 +5,13 @@ import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 public class XQueryVisitingSemanticContext {
     private XQuerySequenceType itemType;
     private XQuerySequenceType positionType;
+    private XQuerySequenceType sizeType;
 
-    public XQuerySequenceType getType() {
+    public void setSizeType(XQuerySequenceType sizeType) {
+		this.sizeType = sizeType;
+	}
+
+	public XQuerySequenceType getType() {
         return itemType;
     }
 
@@ -18,8 +23,8 @@ public class XQueryVisitingSemanticContext {
         return positionType;
     }
 
-    public XQuerySequenceType  getSizeType() {
-        return positionType;
+    public XQuerySequenceType getSizeType() {
+        return sizeType;
     }
 
     public void setPositionType(XQuerySequenceType positionType) {

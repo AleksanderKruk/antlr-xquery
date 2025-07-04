@@ -2601,7 +2601,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
             XQuerySequenceType returnedType,
             XQuerySequenceType requiredContextValueType,
             boolean requiresPosition,
-            boolean requiresLength) {
+            boolean requiresSize) {
     }
 
     final Map<String, Map<String, List<FunctionSpecification>>> namespaces;
@@ -2648,11 +2648,13 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
     }
 
     @Override
-    public CallAnalysisResult call(final String namespace,
+    public CallAnalysisResult call(
+            final String namespace,
             final String name,
             final List<XQuerySequenceType> positionalargs,
             final Map<String, XQuerySequenceType> keywordArgs,
-            final XQueryVisitingSemanticContext context) {
+            final XQueryVisitingSemanticContext context)
+    {
         final var anyItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         if (!namespaces.containsKey(namespace)) {
             return handleUnknownNamespace(namespace, "Unknown function namespace: " + namespace, anyItems);
@@ -2682,6 +2684,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
             mismatchReasons.add("Function " + name + ": " + String.join("; ", reasons));
         }
 
+        checkIfCorrectContext(spec, context, mismatchReasons);
+
         final List<String> allArgNames = spec.args.stream().map(ArgumentSpecification::name).toList();
         // used keywords need to match argument names in function declaration
         checkIfCorrectKeywordNames(name, keywordArgs, mismatchReasons, reasons, allArgNames);
@@ -2699,6 +2703,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         final var partitioned = remainingArgs.parallelStream()
                 .collect(usedAsKeywordCriterion);
         checkIfAllNotUsedArgumentsAreOptional(name, mismatchReasons, reasons, partitioned);
+
         // all the arguments that HAVE been used as keywords in call need to have
         // matching type
         final boolean keywordTypeMismatch = checkIfTypesMatchForKeywordArgs(keywordArgs, reasons, partitioned);
@@ -2708,6 +2713,35 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         if (mismatchReasons.isEmpty()) {
             return new CallAnalysisResult(spec.returnedType, List.of());
         }
+        final String message = getNoMatchingFunctionMessage(namespace, name, requiredArity, mismatchReasons);
+        return handleNoMatchingFunction(message, spec.returnedType);
+    }
+
+    private void checkIfCorrectContext(FunctionSpecification spec, XQueryVisitingSemanticContext context, List<String> mismatchReasons)
+    {
+        if (spec.requiresPosition && context.getPositionType() == null) {
+            mismatchReasons.add("Function requires context position");
+        }
+        if (spec.requiresSize && context.getSizeType() == null) {
+            mismatchReasons.add("Function requires context size");
+        }
+        if (!context.getType().isSubtypeOf(spec.requiredContextValueType)) {
+            String message = getIncorrectContextValueMessage(spec, context);
+			mismatchReasons.add(message);
+        }
+	}
+
+    private String getIncorrectContextValueMessage(FunctionSpecification spec, XQueryVisitingSemanticContext context) {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("Invalid context value: ");
+        stringBuilder.append(context.getType().toString());
+        stringBuilder.append(" is not subtype of ");
+        stringBuilder.append(spec.requiredContextValueType.toString());
+        return stringBuilder.toString();
+    }
+
+	private String getNoMatchingFunctionMessage(final String namespace, final String name, final int requiredArity,
+            final List<String> mismatchReasons) {
         final StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("No matching function ");
         stringBuilder.append(namespace);
@@ -2716,7 +2750,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         stringBuilder.append(" for arity ");
         stringBuilder.append(requiredArity);
         stringBuilder.append((mismatchReasons.isEmpty() ? "" : ". Reasons:\n" + String.join("\n", mismatchReasons)));
-        return handleNoMatchingFunction(stringBuilder.toString(), spec.returnedType);
+        return stringBuilder.toString();
     }
 
     private boolean checkIfTypesMatchForKeywordArgs(final Map<String, XQuerySequenceType> keywordArgs,

@@ -29,24 +29,15 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         this.typeFactory = typeFactory;
         this.namespaces = new HashMap<>(6);
 
-        // --------------------------------------------------------------------
-        // 0-argument functions
-        // --------------------------------------------------------------------
         register("fn", "true", List.of(), typeFactory.boolean_());
         register("fn", "false", List.of(), typeFactory.boolean_());
         register("fn", "position", List.of(), typeFactory.number());
         register("fn", "last", List.of(), typeFactory.number());
 
-        // --------------------------------------------------------------------
-        // Boolean functions
-        // --------------------------------------------------------------------
         final XQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         final ArgumentSpecification argItems = new ArgumentSpecification("input", true, zeroOrMoreItems);
         register("fn", "not", List.of(argItems), typeFactory.boolean_());
 
-        // --------------------------------------------------------------------
-        // Numeric functions
-        // --------------------------------------------------------------------
         final XQuerySequenceType optionalNumber = typeFactory.zeroOrOne(typeFactory.itemNumber());
         final ArgumentSpecification valueNum = new ArgumentSpecification("value", true,
                 optionalNumber);
@@ -69,9 +60,6 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         register("fn", "round",
                 List.of(valueNum, precision, roundingMode), optionalNumber);
 
-        // --------------------------------------------------------------------
-        // Sequence-manipulation
-        // --------------------------------------------------------------------
         final ArgumentSpecification sequence = new ArgumentSpecification("input", true, zeroOrMoreItems);
         final ArgumentSpecification position = new ArgumentSpecification("position", true,
                 typeFactory.one(typeFactory.itemNumber()));
@@ -104,9 +92,6 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         register("fn", "subsequence",
                 List.of(sequence, start, optionalLength), zeroOrMoreItems);
 
-        // --------------------------------------------------------------------
-        // String functions
-        // --------------------------------------------------------------------
         final ArgumentSpecification optionalStringValue = new ArgumentSpecification("value", true,
                 typeFactory.zeroOrOne(typeFactory.itemString()));
         register("fn", "substring",

@@ -63,11 +63,11 @@ public class ParseAndFormatFunctionsSemanticTest {
     // fn:parse-integer($value as xs:string?, $radix as xs:integer? := 10) as xs:integer?
     @Test void parseInteger_validDefaultRadix() {
         assertType("fn:parse-integer('123')",
-            typeFactory.zeroOrOne(typeFactory.itemInteger()));
+            typeFactory.zeroOrOne(typeFactory.itemNumber()));
     }
     @Test void parseInteger_validExplicitRadix() {
         assertType("fn:parse-integer('FF', 16)",
-            typeFactory.zeroOrOne(typeFactory.itemInteger()));
+            typeFactory.zeroOrOne(typeFactory.itemNumber()));
     }
     @Test void parseInteger_missingValue() {
         assertErr("fn:parse-integer()");

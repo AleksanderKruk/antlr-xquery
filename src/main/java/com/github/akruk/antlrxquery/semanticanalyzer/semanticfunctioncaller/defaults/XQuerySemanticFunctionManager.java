@@ -2594,8 +2594,14 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
 
     }
 
-    record FunctionSpecification(long minArity, long maxArity, List<ArgumentSpecification> args,
-            XQuerySequenceType returnedType) {
+    record FunctionSpecification(
+            long minArity,
+            long maxArity,
+            List<ArgumentSpecification> args,
+            XQuerySequenceType returnedType,
+            XQuerySequenceType requiredContextValueType,
+            boolean requiresPosition,
+            boolean requiresLength) {
     }
 
     final Map<String, Map<String, List<FunctionSpecification>>> namespaces;
@@ -2612,7 +2618,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         return new CallAnalysisResult(fallbackType, errors);
     }
 
-    private CallAnalysisResult handleNoMatchingFunction(final String errorMessageSupplier, final XQuerySequenceType fallbackType) {
+    private CallAnalysisResult handleNoMatchingFunction(final String errorMessageSupplier,
+            final XQuerySequenceType fallbackType) {
         final List<String> errors = List.of(errorMessageSupplier);
         return new CallAnalysisResult(fallbackType, errors);
     }
@@ -2620,7 +2627,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
     record SpecAndErrors(FunctionSpecification spec, List<String> errors) {
     }
 
-    SpecAndErrors getFunctionSpecification(final String namespace, final String name, final List<FunctionSpecification> namedFunctions, final long requiredArity) {
+    SpecAndErrors getFunctionSpecification(final String namespace, final String name,
+            final List<FunctionSpecification> namedFunctions, final long requiredArity) {
         final List<String> mismatchReasons = new ArrayList<>();
         for (final FunctionSpecification spec : namedFunctions) {
             final List<String> reasons = new ArrayList<>();
@@ -2667,7 +2675,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         final var spec = specAndErrors.spec;
         // used positional arguments need to have matching types
         final List<String> reasons = new ArrayList<>();
-        final boolean positionalTypeMismatch = tryToMatchPositionalArgs(positionalargs, positionalArgsCount, spec, reasons);
+        final boolean positionalTypeMismatch = tryToMatchPositionalArgs(positionalargs, positionalArgsCount, spec,
+                reasons);
 
         if (positionalTypeMismatch) {
             mismatchReasons.add("Function " + name + ": " + String.join("; ", reasons));
@@ -2710,7 +2719,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         return handleNoMatchingFunction(stringBuilder.toString(), spec.returnedType);
     }
 
-    private boolean checkIfTypesMatchForKeywordArgs(final Map<String, XQuerySequenceType> keywordArgs, final List<String> reasons,
+    private boolean checkIfTypesMatchForKeywordArgs(final Map<String, XQuerySequenceType> keywordArgs,
+            final List<String> reasons,
             final Map<Boolean, List<ArgumentSpecification>> partitioned) {
         boolean keywordTypeMismatch = false;
         for (final ArgumentSpecification arg : partitioned.get(true)) {
@@ -2724,7 +2734,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         return keywordTypeMismatch;
     }
 
-    private void checkIfAllNotUsedArgumentsAreOptional(final String name, final List<String> mismatchReasons, final List<String> reasons,
+    private void checkIfAllNotUsedArgumentsAreOptional(final String name, final List<String> mismatchReasons,
+            final List<String> reasons,
             final Map<Boolean, List<ArgumentSpecification>> partitioned) {
         // all the arguments that HAVE NOT been used as keywords in call need to be
         // optional
@@ -2738,7 +2749,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         }
     }
 
-    private void checkIfKeywordNotAlreadyInPositionalArgs(final String name, final Map<String, XQuerySequenceType> keywordArgs,
+    private void checkIfKeywordNotAlreadyInPositionalArgs(final String name,
+            final Map<String, XQuerySequenceType> keywordArgs,
             final List<String> mismatchReasons, final List<String> reasons, final List<String> remainingArgNames) {
         if (!remainingArgNames.containsAll(keywordArgs.keySet())) {
             reasons.add("Keyword argument(s) overlap with positional arguments: " + keywordArgs.keySet().stream()
@@ -2813,18 +2825,30 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         return new CallAnalysisResult(typeFactory.boolean_(), List.of());
     }
 
-    @Override
-    public XQuerySemanticError register(final String namespace,
+    public XQuerySemanticError register(
+            final String namespace,
             final String functionName,
             final List<ArgumentSpecification> args,
-            final XQuerySequenceType returnedType)
-    {
+            final XQuerySequenceType returnedType) {
+        return register(namespace, functionName, args, returnedType, null, false, false);
+    }
+
+    @Override
+    public XQuerySemanticError register(
+            final String namespace,
+            final String functionName,
+            final List<ArgumentSpecification> args,
+            final XQuerySequenceType returnedType,
+            final XQuerySequenceType requiredContextValueType,
+            final boolean requiresPosition,
+            final boolean requiresLength) {
         final long minArity = args.stream().filter(arg -> arg.isRequired()).collect(Collectors.counting());
         final long maxArity = args.size();
         if (!namespaces.containsKey(namespace)) {
             final Map<String, List<FunctionSpecification>> functions = new HashMap<>();
             final List<FunctionSpecification> functionList = new ArrayList<>();
-            functionList.add(new FunctionSpecification(minArity, maxArity, args, returnedType));
+            functionList.add(new FunctionSpecification(minArity, maxArity, args, returnedType, requiredContextValueType,
+                    requiresPosition, requiresLength));
             functions.put(functionName, functionList);
             namespaces.put(namespace, functions);
             return null;
@@ -2832,7 +2856,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         final var namespaceMapping = namespaces.get(namespace);
         if (!namespaceMapping.containsKey(functionName)) {
             final List<FunctionSpecification> functionList = new ArrayList<>();
-            functionList.add(new FunctionSpecification(minArity, maxArity, args, returnedType));
+            functionList.add(new FunctionSpecification(minArity, maxArity, args, returnedType, requiredContextValueType,
+                    requiresPosition, requiresLength));
             namespaceMapping.put(functionName, functionList);
             return null;
         }

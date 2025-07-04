@@ -15,9 +15,13 @@ public interface IXQuerySemanticFunctionManager {
                                    List<XQuerySequenceType> positionalargs,
                                    Map<String, XQuerySequenceType> keywordArgs,
                                    XQueryVisitingSemanticContext context);
-    public XQuerySemanticError register(String namespace,
-                                        String functionName,
-                                        List<ArgumentSpecification> args,
-                                        XQuerySequenceType returnedType);
+    public XQuerySemanticError register(
+            final String namespace,
+            final String functionName,
+            final List<ArgumentSpecification> args,
+            final XQuerySequenceType returnedType,
+            final XQuerySequenceType requiredContextValueType,
+            final boolean requiresPosition,
+            final boolean requiresLength);
     public CallAnalysisResult getFunctionReference(String namespace, String functionName, int arity);
 }

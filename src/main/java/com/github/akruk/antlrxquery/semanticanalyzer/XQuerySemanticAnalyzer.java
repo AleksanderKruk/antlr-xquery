@@ -63,7 +63,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         this.contextManager = contextManager;
         this.contextManager.enterContext();
         this.context.setType(typeFactory.anyNode());
-        this.context.setPositionType(typeFactory.number());
+        this.context.setPositionType(null);
+        this.context.setSizeType(null);
         this.errors = new ArrayList<>();
     }
 

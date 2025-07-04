@@ -1,5 +1,7 @@
 package com.github.akruk.antlrxquery.functiontests.thematic;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrxquery.functiontests.FunctionsSemanticTest;
@@ -131,4 +133,46 @@ public class SequenceFunctionsTest extends FunctionsSemanticTest {
         assertErrors("fn:slice(1, 'a')");
     }
 
-    // fn:subsequence($input as item()*, $start as xs:double, $
+    // fn:subsequence($input as item()*, $start as xs:double, $length? := ()) as item()*
+    @Test public void subsequence_valid() {
+        assertType("fn:subsequence((1,2,3), 2.0)",
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+    }
+    @Test public void subsequence_withLength() {
+        assertType("fn:subsequence((1,2,3), 1.0, 2.0)",
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+    }
+    @Test public void subsequence_wrongArityOrType() {
+        assertErrors("fn:subsequence(1)");
+        assertErrors("fn:subsequence((1), 'x')");
+    }
+
+    // fn:tail($input as item()*) as item()*
+    @Test public void tail_various() {
+        assertType("fn:tail()",
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+        assertType("fn:tail(1,2)",
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+    }
+    // fn:trunk($input as item()*) as item()*
+    @Test public void trunk_various() {
+        assertType("fn:trunk()",
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+        assertType("fn:trunk('a','b')",
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+    }
+
+    // fn:unordered($input as item()*) as item()*
+    @Test public void unordered_various() {
+        assertType("fn:unordered()",
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+        assertType("fn:unordered(1,2,3)",
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+    }
+
+    // fn:void($input as item()* := ()) as empty-sequence()
+    @Test public void void_defaultAndVarious() {
+        assertNoErrors("fn:void()");
+        assertNoErrors("fn:void(1,2,3)");
+    }
+}

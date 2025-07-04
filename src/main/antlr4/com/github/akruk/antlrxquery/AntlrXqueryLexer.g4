@@ -72,6 +72,7 @@ OR:'or';
 AND: 'and';
 TO: 'to';
 DIV: 'div';
+DIV_OP: '÷';
 IDIV: 'idiv';
 MOD: 'mod';
 UNION: 'union';
@@ -124,6 +125,7 @@ OF: 'of';
 TREAT: 'treat';
 CAST: 'cast';
 PERCENTAGE: '%';
+MULTIPLICATION: 'x';
 
 
 ID: NAME_START (DASH NAME_MIDDLE)*

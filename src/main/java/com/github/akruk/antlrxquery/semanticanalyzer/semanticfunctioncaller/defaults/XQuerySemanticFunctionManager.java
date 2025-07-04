@@ -2725,7 +2725,9 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         if (spec.requiresSize && context.getSizeType() == null) {
             mismatchReasons.add("Function requires context size");
         }
-        if (!context.getType().isSubtypeOf(spec.requiredContextValueType)) {
+        if (spec.requiredContextValueType != null
+            && !context.getType().isSubtypeOf(spec.requiredContextValueType))
+        {
             String message = getIncorrectContextValueMessage(spec, context);
 			mismatchReasons.add(message);
         }

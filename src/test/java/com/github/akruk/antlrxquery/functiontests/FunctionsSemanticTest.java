@@ -15,8 +15,6 @@ import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryEnumTypeFactory;
 import com.github.akruk.antlrxquery.values.factories.defaults.XQueryMemoizedValueFactory;
 
-import java.util.List;
-
 public class FunctionsSemanticTest {
     protected XQueryEnumTypeFactory typeFactory;
     protected XQuerySemanticFunctionManager fnManager;

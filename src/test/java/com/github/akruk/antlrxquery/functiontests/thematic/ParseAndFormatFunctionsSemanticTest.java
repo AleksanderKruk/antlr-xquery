@@ -5,6 +5,9 @@ import org.junit.jupiter.api.Test;
 import com.github.akruk.antlrxquery.functiontests.FunctionsSemanticTest;
 
 public class ParseAndFormatFunctionsSemanticTest extends FunctionsSemanticTest {
+    // ++++ fn:number
+
+
     // fn:parse-integer($value as xs:string?, $radix as xs:integer? := 10) as xs:integer?
     @Test void parseInteger_validDefaultRadix() {
         assertType("fn:parse-integer('123')",

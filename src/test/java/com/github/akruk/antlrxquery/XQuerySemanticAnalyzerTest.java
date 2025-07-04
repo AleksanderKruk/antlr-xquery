@@ -409,62 +409,6 @@ public class XQuerySemanticAnalyzerTest {
     }
 
 
-    // @Test
-    // public void distinctOrderedNodes_noArgs() {
-    //     var r = analyze("fn:distinct-ordered-nodes()");
-    //     assertNoErrors(r);
-    //     assertTrue(typeFactory.zeroOrMore(typeFactory.itemAnyNode()).equals(r.expressionType()));
-    // }
-
-    // @Test
-    // public void distinctOrderedNodes_withNodes() {
-    //     var r = analyze("fn:distinct-ordered-nodes(<a/>, <b/>)");
-    //     assertNoErrors(r);
-    // }
-
-    @Test
-    public void distinctOrderedNodes_wrongType() {
-        assertThereAreErrors("fn:distinct-ordered-nodes(1, 'x')");
-    }
-
-    // --- fn:innermost(node()*) as node()* ---
-
-    // @Test
-    // public void innermost_defaults() {
-    //     var r = analyze("fn:innermost()");
-    //     assertNoErrors(r);
-    //     assertTrue(typeFactory.zeroOrMore(typeFactory.itemAnyNode()).equals(r.expressionType()));
-    // }
-
-    // @Test
-    // public void innermost_withNodes() {
-    //     assertNoErrors(analyze("fn:innermost(<a/><a><b/></a>)"));
-    // }
-
-    @Test
-    public void innermost_bad() {
-        assertThereAreErrors("fn:innermost( 'x' )");
-    }
-
-    // --- fn:outermost(node()*) as node()* ---
-
-    @Test
-    public void outermost_defaults() {
-        var r = analyze("fn:outermost()");
-        assertNoErrors(r);
-        assertTrue(typeFactory.zeroOrMore(typeFactory.itemAnyNode()).equals(r.expressionType()));
-    }
-
-    @Test
-    public void outermost_withNodes() {
-        assertNoErrors(analyze("fn:outermost(<a/><a><b/></a>)"));
-    }
-
-    @Test
-    public void outermost_bad() {
-        assertThereAreErrors("fn:outermost(0)");
-    }
-
     // --- fn:error(QName? :=(), string? :=(), item()* :=.) as item()* ---
 
     @Test

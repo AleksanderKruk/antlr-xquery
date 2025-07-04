@@ -19,11 +19,13 @@ public enum XQueryTypes {
 
     ENUM,
     RECORD,
-
+    EXTENSIBLE_RECORD,
 
     BOOLEAN,
     STRING,
     NUMBER,
+
+    CHOICE,
     ;
 
 }

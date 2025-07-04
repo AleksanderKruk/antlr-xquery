@@ -24,6 +24,7 @@ import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper.XQuery
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager.CallAnalysisResult;
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
+import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
@@ -171,8 +172,16 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
     @Override
     public XQuerySequenceType visitChoiceItemType(final ChoiceItemTypeContext ctx) {
-        // TODO: Implement choice item type
-        return typeFactory.anyItem();
+        List<ItemTypeContext> itemTypes = ctx.itemType();
+        if (itemTypes.size() == 1) {
+            return ctx.itemType(0).accept(this);
+        }
+        var choiceItemNames = itemTypes.stream().map(i->i.getText()).collect(Collectors.toSet());
+        if (choiceItemNames.size() != itemTypes.size()) {
+            addError(ctx, "Duplicated type signatures in choice item type declaration");
+        }
+        var choiceItems = itemTypes.stream().map(i->i.accept(this)).map(sequenceType->sequenceType.getItemType()).toList();
+        return typeFactory.choice(choiceItems);
     }
 
     @Override
@@ -240,13 +249,17 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             return typeFactory.anyMap();
         }
         final var record = ctx.typedRecordType();
-        final Map<String, XQuerySequenceType> fields = new HashMap<>();
-        // TODO: extensible flag
-        // TODO: optional fields
-        for (final var field : record.fieldDeclaration()) {
+        final var fieldDeclarations = record.fieldDeclaration();
+        final Map<String, XQueryRecordField> fields = new HashMap<>(fieldDeclarations.size());
+        for (final var field : fieldDeclarations) {
             final String fieldName = field.fieldName().getText();
             final XQuerySequenceType fieldType = field.sequenceType().accept(this);
-            fields.put(fieldName, fieldType);
+            final boolean isRequired = field.QUESTION_MARK() != null;
+            final XQueryRecordField recordField = new XQueryRecordField(fieldType, isRequired);
+            fields.put(fieldName, recordField);
+        }
+        if (record.extensibleFlag() == null) {
+            return typeFactory.extensibleRecord(fields);
         }
         return typeFactory.record(fields);
     }
@@ -603,21 +616,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         visitedPositionalArguments = savedArgs;
         return value;
     }
-
-    // @Override
-    // public XQuerySequenceType visitPostfix(PostfixContext ctx) {
-    //     if (ctx.predicate() != null) {
-    //         return ctx.predicate().accept(this);
-    //     }
-    //     final var contextItem = context.getItem();
-    //     if (!contextItem.isFunction()) {
-    //         // TODO: error
-    //         return null;
-    //     }
-    //     final var function = contextItem.functionValue();
-    //     final var value = function.call(typeFactory, context, visitedArgumentTypesList);
-    //     return value;
-    // }
 
     @Override
     public XQuerySequenceType visitPredicate(final PredicateContext ctx) {

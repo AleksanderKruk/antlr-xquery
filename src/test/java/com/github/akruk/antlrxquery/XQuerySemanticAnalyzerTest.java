@@ -2,6 +2,7 @@ package com.github.akruk.antlrxquery;
 
 import static org.junit.Assert.assertTrue;
 
+import java.util.List;
 import java.util.Set;
 
 import org.antlr.v4.runtime.*;
@@ -100,7 +101,7 @@ public class XQuerySemanticAnalyzerTest {
     public void parenthesizedExpression() {
         assertType("()", typeFactory.emptySequence());
         assertType("(1)", typeFactory.number());
-        assertType("(1, 'a')", typeFactory.oneOrMore(typeFactory.itemAnyItem()));
+        assertType("(1, 'a')", typeFactory.oneOrMore(typeFactory.itemChoice(List.of(typeFactory.itemNumber(), typeFactory.itemString()))));
         assertType("(1, 2, 3)", typeFactory.oneOrMore(typeFactory.itemNumber()));
         assertType("((), (), (1))", typeFactory.number());
         assertType("((), (1), (1))", typeFactory.oneOrMore(typeFactory.itemNumber()));

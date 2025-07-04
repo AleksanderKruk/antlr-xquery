@@ -1,5 +1,6 @@
 package com.github.akruk.antlrxquery.typesystem.factories.defaults;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -7,6 +8,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
+import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.defaults.*;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
@@ -44,8 +46,13 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
     private final XQuerySequenceType EMPTY_SEQUENCE = new XQueryEnumEmptySequenceType(this);
 
     @Override
-    public XQueryItemType itemRecord(Map<String, XQuerySequenceType> fields) {
+    public XQueryItemType itemRecord(Map<String, XQueryRecordField> fields) {
         return new XQueryEnumItemTypeRecord(fields, this);
+    }
+
+    @Override
+    public XQueryItemType itemExtensibleRecord(Map<String, XQueryRecordField> fields) {
+        return new XQueryEnumItemTypeExtensibleRecord(fields, this);
     }
 
     @Override
@@ -163,8 +170,13 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
     }
 
     @Override
-    public XQuerySequenceType record(Map<String, XQuerySequenceType> fields) {
+    public XQuerySequenceType record(Map<String, XQueryRecordField> fields) {
         return one(itemRecord(fields));
+    }
+
+    @Override
+    public XQuerySequenceType extensibleRecord(Map<String, XQueryRecordField> fields) {
+        return one(itemExtensibleRecord(fields));
     }
 
     @Override
@@ -229,4 +241,16 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
                 _ -> new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ONE_OR_MORE));
     }
 
+    @Override
+    public XQueryItemType itemChoice(Collection<XQueryItemType> items) {
+        return new XQueryChoiceItemType(items, this);
+    }
+
+    @Override
+    public XQuerySequenceType choice(Collection<XQueryItemType> items) {
+        if (items.size() == 1) {
+            return one(items.stream().findFirst().get());
+        }
+        return one(itemChoice(items));
+    }
 }

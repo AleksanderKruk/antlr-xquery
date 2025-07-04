@@ -1,10 +1,12 @@
 package com.github.akruk.antlrxquery.typesystem.factories;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
+import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 
 public interface XQueryTypeFactory {
@@ -22,7 +24,9 @@ public interface XQueryTypeFactory {
     public XQueryItemType itemMap(XQueryItemType keyType, XQuerySequenceType valueType);
     public XQueryItemType itemArray(XQuerySequenceType itemType);
     public XQueryItemType itemFunction(XQuerySequenceType returnType, List<XQuerySequenceType> argumentTypes);
-    public XQueryItemType itemRecord(Map<String, XQuerySequenceType> fields);
+    public XQueryItemType itemRecord(Map<String, XQueryRecordField> fields);
+    public XQueryItemType itemExtensibleRecord(Map<String, XQueryRecordField> fields);
+    public XQueryItemType itemChoice(Collection<XQueryItemType> items);
 
     public XQuerySequenceType error();
     public XQuerySequenceType string();
@@ -33,13 +37,16 @@ public interface XQueryTypeFactory {
     public XQuerySequenceType array(XQuerySequenceType itemType);
     public XQuerySequenceType anyMap();
     public XQuerySequenceType map(XQueryItemType mapKeyType, XQuerySequenceType mapValueType);
-    public XQuerySequenceType record(Map<String, XQuerySequenceType> fields);
+    public XQuerySequenceType record(Map<String, XQueryRecordField> fields);
+    public XQuerySequenceType extensibleRecord(Map<String, XQueryRecordField> fields);
     public XQuerySequenceType element(Set<String> elementName);
     public XQuerySequenceType anyFunction();
     public XQuerySequenceType function(XQuerySequenceType returnType, List<XQuerySequenceType> argumentTypes);
+    public XQuerySequenceType choice(Collection<XQueryItemType> items);
     public XQuerySequenceType anyItem();
     public XQuerySequenceType boolean_();
     public XQuerySequenceType emptySequence();
+
     public XQuerySequenceType one(XQueryItemType itemType);
     public XQuerySequenceType zeroOrOne(XQueryItemType itemType);
     public XQuerySequenceType zeroOrMore(XQueryItemType itemType);

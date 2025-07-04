@@ -1011,40 +1011,72 @@ public class XQueryTypesTest {
         xy.isSubtypeOf(xyz);
 
         // All of the following are true:
-
         // A is an extensible record type
-
         // B is an extensible record type
-
         // Every mandatory field in B is also declared as mandatory in A.
-
         // For every field that is declared in both A and B, where the declared type in A is T and the declared type in B is U, T ⊑ U .
-
         // For every field that is declared in B but not in A, the declared type in B is item()*.
-
         // Examples:
         // record(x, y, z, *) ⊆ record(x, y, *)
+        final var xyzExtensible = typeFactory.extensibleRecord(
+            Map.of("x", anyItemsRequired, "y", anyItemsRequired, "z", anyItemsRequired)
+        );
+        final var xyExtensible = typeFactory.extensibleRecord(
+            Map.of("x", anyItemsRequired, "y", anyItemsRequired)
+        );
+        assertTrue(xyzExtensible.isSubtypeOf(xyExtensible));
 
-        // record(x?, y?, z?, *) ⊆ record(x, y, *)
+        // Error in documentation?
+        // ??? record(x?, y?, z?, *) ⊆ record(x, y, *) ???
+        // more likely: record(x, y, z?, *) ⊆ record(x, y, *)
+        final var anyItemsOptional = new XQueryRecordField(anyItems, false);
+        final var xyzExtensibleOptional = typeFactory.extensibleRecord(
+            Map.of("x", anyItemsRequired, "y", anyItemsRequired, "z", anyItemsOptional)
+        );
+        assertTrue(xyzExtensibleOptional.isSubtypeOf(xyExtensible));
 
         // record(x as xs:integer, y as xs:integer, *) ⊆ record(x as xs:decimal, y as xs:integer*, *)
+        final var xyExtensibleIntegers = typeFactory.extensibleRecord(
+            Map.of("x", numberRequired, "y", numberRequired)
+        );
+        final var xyExtensibleIntegers2 = typeFactory.extensibleRecord(
+            Map.of("x", numberRequired, "y", new XQueryRecordField(typeFactory.zeroOrMore(typeFactory.itemNumber()), true))
+        );
+        xyExtensibleIntegers.isSubtypeOf(xyExtensibleIntegers2);
 
         // record(x as xs:integer, *) ⊆ record(x as xs:decimal, y as item(), *)
+        final var xExtensibleInteger = typeFactory.extensibleRecord(
+            Map.of("x", numberRequired)
+        );
+        final var xyExtensibleIntegerItem = typeFactory.extensibleRecord(
+            Map.of("x", numberRequired, "y", new XQueryRecordField(typeFactory.anyItem(), true))
+        );
+        xExtensibleInteger.isSubtypeOf(xyExtensibleIntegerItem);
+
 
         // All of the following are true:
-
         // A is a non-extensible record type.
-
         // B is an extensible record type.
-
         // Every mandatory field in B is also declared as mandatory in A.
-
         // For every field that is declared in both A and B, where the declared type in A is T and the declared type in B is U, T ⊑ U .
-
         // Examples:
         // record(x, y as xs:integer) ⊆ record(x, y as xs:decimal, *)
+        final var record_x_any_y_number = typeFactory.record(
+            Map.of("x", anyItemsRequired,"y", numberRequired)
+        );
+        final var extensible_record_x_any_y_number = typeFactory.extensibleRecord(
+            Map.of("x", anyItemsRequired,"y", numberRequired)
+        );
+        assertTrue(record_x_any_y_number.isSubtypeOf(extensible_record_x_any_y_number));
 
         // record(y as xs:integer) ⊆ record(x?, y as xs:decimal, *)
+        final var record_y_number = typeFactory.record(
+            Map.of("y", numberRequired)
+        );
+        final var extensible_record_x_any_y_number_2 = typeFactory.extensibleRecord(
+            Map.of("x", anyItemsOptional,"y", numberRequired)
+        );
+        assertTrue(record_y_number.isSubtypeOf(extensible_record_x_any_y_number_2));
     }
 
 

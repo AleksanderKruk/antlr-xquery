@@ -3,6 +3,7 @@ package com.github.akruk.antlrxquery.typesystem.defaults;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.BinaryOperator;
@@ -188,6 +189,7 @@ public class XQueryEnumItemType implements XQueryItemType {
         final int array = XQueryTypes.ARRAY.ordinal();
         final int map = XQueryTypes.MAP.ordinal();
         final int record = XQueryTypes.RECORD.ordinal();
+        final int extensibleRecord = XQueryTypes.EXTENSIBLE_RECORD.ordinal();
         final int anyMap = XQueryTypes.ANY_MAP.ordinal();
         final int anyArray = XQueryTypes.ANY_ARRAY.ordinal();
         final int enum_ = ENUM;
@@ -356,6 +358,7 @@ public class XQueryEnumItemType implements XQueryItemType {
             return xArrayItemType.isSubtypeOf(yArrayItemType);
         };
 
+        itemtypeIsSubtypeOf[extensibleRecord][anyFunction] = alwaysTrue;
         itemtypeIsSubtypeOf[record][anyFunction] = alwaysTrue;
         itemtypeIsSubtypeOf[anyMap][anyFunction] = alwaysTrue;
 
@@ -397,42 +400,15 @@ public class XQueryEnumItemType implements XQueryItemType {
         };
 
         itemtypeIsSubtypeOf[record][anyMap] = alwaysTrue;
-        itemtypeIsSubtypeOf[record][map] = (x, y) -> {
-            final var x_ = (XQueryEnumItemTypeRecord) x;
-            final var y_ = (XQueryEnumItemTypeMap) y;
-            final var keyItemType = (XQueryEnumItemType) y_.getMapKeyType();
-            if (keyItemType.getType() != XQueryTypes.STRING
-                && keyItemType.getType() != XQueryTypes.ANY_ITEM)
-                return false;
-            final var yFieldType = y_.getMapValueType();
-            for (final var key : x_.getRecordFields().keySet()) {
-                final XQueryRecordField xFieldType = x_.getRecordFields().get(key);
-                if (!xFieldType.type().isSubtypeOf(yFieldType))
-                    return false;
-            }
-            return true;
-        };
+        itemtypeIsSubtypeOf[extensibleRecord][anyMap] = alwaysTrue;
+        itemtypeIsSubtypeOf[record][map] = XQueryEnumItemType::recordIsSubtypeOfMap;
+        // itemtypeIsSubtypeOf[extensibleRecord][map] = XQueryEnumItemType::recordIsSubtypeOfMap;
+
 
         itemtypeIsSubtypeOf[record][anyFunction] = alwaysTrue;
-        itemtypeIsSubtypeOf[record][function] = (x, y) -> {
-            final var x_ = (XQueryEnumItemTypeRecord) x;
-            final var y_ = (XQueryEnumItemTypeFunction) y;
-            final var yArgumentTypes = y_.getArgumentTypes();
-            if (yArgumentTypes.size() != 1)
-                return false;
-            final var yFieldType = (XQueryEnumSequenceType) yArgumentTypes.get(0);
-            final var yFieldItemType = (XQueryEnumItemType) yFieldType.getItemType();
-            if (yFieldItemType.getType() != XQueryTypes.STRING
-                && yFieldItemType.getType() != XQueryTypes.ANY_ITEM)
-                return false;
-            final var yReturnedType = y_.getReturnedType();
-            for (final var key : x_.getRecordFields().keySet()) {
-                final var xFieldType = x_.getRecordFields().get(key);
-                if (!xFieldType.type().isSubtypeOf(yReturnedType))
-                    return false;
-            }
-            return true;
-        };
+        itemtypeIsSubtypeOf[extensibleRecord][anyFunction] = alwaysTrue;
+        itemtypeIsSubtypeOf[record][function] = XQueryEnumItemType::recordIsSubtypeOfFunction;
+        itemtypeIsSubtypeOf[extensibleRecord][function] = XQueryEnumItemType::recordIsSubtypeOfFunction;
 
         itemtypeIsSubtypeOf[record][record] = (x, y) -> {
             final var x_ = (XQueryEnumItemTypeRecord) x;
@@ -448,6 +424,110 @@ public class XQueryEnumItemType implements XQueryItemType {
             }
             return true;
         };
+        itemtypeIsSubtypeOf[extensibleRecord][extensibleRecord] = (x, y) -> {
+            // All of the following are true:
+            // A is an extensible record type
+            // B is an extensible record type
+            final var x_ = (XQueryEnumItemTypeRecord) x;
+            final var y_ = (XQueryEnumItemTypeRecord) y;
+            // Every mandatory field in B is also declared as mandatory in A.
+            if (!areAllMandatoryFieldsPresent(x_, y_)) {
+                return false;
+            }
+            // For every field that is declared in both A and B, where the declared type in A is T
+            // and the declared type in B is U, T ⊑ U .
+            if  (!isEveryDeclaredFieldSubtype(x_, y_)) {
+                return false;
+            }
+            // For every field that is declared in B but not in A, the declared type in B is item()*.
+            return true;
+        };
+
+        itemtypeIsSubtypeOf[record][extensibleRecord] = (x, y) -> {
+            // All of the following are true:
+            // A is a non-extensible record type.
+            // B is an extensible record type.
+            final var x_ = (XQueryEnumItemTypeRecord) x;
+            final var y_ = (XQueryEnumItemTypeRecord) y;
+            // Every mandatory field in B is also declared as mandatory in A.
+            if (!areAllMandatoryFieldsPresent(x_, y_)) {
+                return false;
+            }
+            // For every field that is declared in both A and B, where the declared type in A is T
+            // and the declared type in B is U, T ⊑ U .
+            return isEveryDeclaredFieldSubtype(x_, y_);
+        };
+
+
+    }
+
+    private static boolean isEveryDeclaredFieldSubtype(final XQueryEnumItemTypeRecord x_, final XQueryEnumItemTypeRecord y_) {
+        final Map<String, XQueryRecordField> recordFieldsX = x_.getRecordFields();
+        final var commonFields = new HashSet<String>(recordFieldsX.keySet());
+        final Map<String, XQueryRecordField> recordFieldsY = y_.getRecordFields();
+        commonFields.retainAll(recordFieldsY.keySet());
+        for (final String commonField : commonFields) {
+            final var xFieldType = recordFieldsX.get(commonField);
+            final var yFieldType = recordFieldsY.get(commonField);
+            if (!xFieldType.type().isSubtypeOf(yFieldType.type()))
+                return false;
+        }
+        return true;
+    }
+
+    private static boolean areAllMandatoryFieldsPresent(final XQueryEnumItemTypeRecord x_, final XQueryEnumItemTypeRecord y_)
+    {
+        final var mandatoryFieldsX = new HashSet<String>();
+        getMandatoryFields(x_, mandatoryFieldsX);
+        final var mandatoryFieldsY = new HashSet<String>();
+        getMandatoryFields(y_, mandatoryFieldsY);
+        final boolean allMandatoryFieldsPresent = mandatoryFieldsX.containsAll(mandatoryFieldsY);
+        return allMandatoryFieldsPresent;
+    }
+
+    private static void getMandatoryFields(final XQueryEnumItemTypeRecord x_, final HashSet<String> mandatoryFieldsX) {
+        for (var field : x_.getRecordFields().keySet()) {
+            var recordInfo = x_.getRecordFields().get(field);
+            if (recordInfo.isRequired()) {
+                mandatoryFieldsX.add(field);
+            }
+        }
+    }
+
+    private static boolean recordIsSubtypeOfFunction(Object x, Object y) {
+        final var x_ = (XQueryEnumItemTypeRecord) x;
+        final var y_ = (XQueryEnumItemTypeFunction) y;
+        final var yArgumentTypes = y_.getArgumentTypes();
+        if (yArgumentTypes.size() != 1)
+            return false;
+        final var yFieldType = (XQueryEnumSequenceType) yArgumentTypes.get(0);
+        final var yFieldItemType = (XQueryEnumItemType) yFieldType.getItemType();
+        if (yFieldItemType.getType() != XQueryTypes.STRING
+            && yFieldItemType.getType() != XQueryTypes.ANY_ITEM)
+            return false;
+        final var yReturnedType = y_.getReturnedType();
+        for (final var key : x_.getRecordFields().keySet()) {
+            final var xFieldType = x_.getRecordFields().get(key);
+            if (!xFieldType.type().isSubtypeOf(yReturnedType))
+                return false;
+        }
+        return true;
+    }
+
+    private static boolean recordIsSubtypeOfMap(Object x, Object y) {
+        final var x_ = (XQueryEnumItemTypeRecord) x;
+        final var y_ = (XQueryEnumItemTypeMap) y;
+        final var keyItemType = (XQueryEnumItemType) y_.getMapKeyType();
+        if (keyItemType.getType() != XQueryTypes.STRING
+            && keyItemType.getType() != XQueryTypes.ANY_ITEM)
+            return false;
+        final var yFieldType = y_.getMapValueType();
+        for (final var key : x_.getRecordFields().keySet()) {
+            final XQueryRecordField xFieldType = x_.getRecordFields().get(key);
+            if (!xFieldType.type().isSubtypeOf(yFieldType))
+                return false;
+        }
+        return true;
     }
 
     @Override

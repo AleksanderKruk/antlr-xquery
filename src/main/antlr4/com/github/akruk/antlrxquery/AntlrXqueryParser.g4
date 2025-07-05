@@ -11,8 +11,10 @@ exprSingle: fLWORExpr
         | orExpr;
 fLWORExpr: initialClause intermediateClause* returnClause;
 initialClause: forClause
+            | windowClause
             | letClause;
 intermediateClause: initialClause
+                | windowClause
                 | whereClause
                 | whileClause
                 | orderByClause
@@ -67,7 +69,7 @@ forwardStep: forwardAxis? nodeTest;
 
 additiveOperator: PLUS | MINUS;
 unionOperator: UNION | UNION_OP;
-multiplicativeOperator: STAR | DIV | IDIV | MOD;
+multiplicativeOperator: STAR | DIV | DIV_OP | IDIV | MOD | MULTIPLICATION;
 generalComp: EQ_OP | NE_OP | LT_OP | LE_OP | GT_OP | GE_OP;
 valueComp: EQ | NE | LT | LE | GT | GE;
 nodeComp: IS | PRECEDING_OP | FOLLOWING_OP;
@@ -199,7 +201,89 @@ typeName: qname;
 
 qname: (namespace COLON)* anyName;
 namespace: anyName;
-anyName: ID | EMPTY | COUNT;
+anyName: ID
+        | EMPTY
+        | COUNT
+        | MULTIPLICATION
+        | ALLOWING
+        | ANCESTOR
+        | ANCESTOR_OR_SELF
+        | AND
+        | ARRAY
+        | AS
+        | ASCENDING
+        | AT
+        | BY
+        | CASE
+        | CAST
+        | CHILD
+        | COLLATION
+        | COUNT
+        //
+        | DEFAULT
+        | DESCENDANT
+        | DESCENDANT_OR_SELF
+        | DESCENDING
+        | ELEMENT
+        | ELSE
+        | EMPTY
+        | EMPTY_SEQUENCE
+        | END
+        | ENUM
+        | EQ
+        | EVERY
+        | EXCEPT
+        | FOLLOWING
+        | FOLLOWING_OR_SELF
+        | FOLLOWING_SIBLING
+        | FOLLOWING_SIBLING_OR_SELF
+        | FOR
+        | FUNCTION
+        | GE
+        | GREATEST
+        | GT
+        | IDIV
+        | IF
+        | IN
+        | INSTANCE
+        | INTERSECT
+        | IS
+        | ITEM
+        | LE
+        | LEAST
+        | LET
+        | LT
+        | MAP
+        | MOD
+        | MULTIPLICATION
+        | NE
+        | NEXT
+        | NODE
+        | OF
+        | ONLY
+        | PARENT
+        | PRECEDING
+        | PRECEDING_OR_SELF
+        | PRECEDING_SIBLING
+        | PRECEDING_SIBLING_OR_SELF
+        | PREVIOUS
+        | RECORD
+        | RETURN
+        | SATISFIES
+        | SELF
+        | SLIDING
+        | SOME
+        | THEN
+        | TO
+        | THEN
+        | TREAT
+        | TUMBLING
+        | UNION
+        | WHEN
+        | WHERE
+        | WHILE
+        | WINDOW
+        ;
 
 stringConstructor:
     STRING_CONSTRUCTOR_START
@@ -222,7 +306,6 @@ constructorInterpolation:
     ;
 
 
-
 // stringInterpolation:
 //     STRING_INTERPOLATION_START
 //     stringInterpolationContent
@@ -242,4 +325,44 @@ constructorInterpolation:
 //     expr?
 //     RCURLY
 //     ;
+
+windowClause
+    : FOR (tumblingWindowClause | slidingWindowClause)
+    ;
+
+tumblingWindowClause
+    : TUMBLING WINDOW varNameAndType IN exprSingle windowStartCondition? windowEndCondition?
+    ;
+
+slidingWindowClause
+    : SLIDING WINDOW varNameAndType IN exprSingle windowStartCondition? windowEndCondition
+    ;
+
+varNameAndType
+    : DOLLAR qname typeDeclaration?
+    ;
+
+windowStartCondition
+    : START windowVars (WHEN exprSingle)?
+    ;
+
+windowEndCondition
+    : ONLY? END windowVars (WHEN exprSingle)?
+    ;
+
+windowVars
+    : currentVar? positionalVar? previousVar? nextVar?
+    ;
+
+currentVar
+    : varRef
+    ;
+
+previousVar
+    : PREVIOUS varRef
+    ;
+
+nextVar
+    : NEXT varRef
+    ;
 

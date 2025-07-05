@@ -61,6 +61,16 @@ fragment PREDEFINED_ENTITY_REF:
   | '&quot;';
 
 
+TUMBLING: 'tumbling';
+SLIDING: 'sliding';
+WINDOW: 'window';
+START: 'start';
+END: 'end';
+ONLY: 'only';
+WHEN: 'when';
+PREVIOUS: 'previous';
+NEXT: 'next';
+
 
 COMMENT: '(:' .*? ':)'-> channel(HIDDEN);
 WS: [\p{White_Space}]+ -> channel(HIDDEN);
@@ -117,6 +127,7 @@ OR:'or';
 AND: 'and';
 TO: 'to';
 DIV: 'div';
+DIV_OP: '÷';
 IDIV: 'idiv';
 MOD: 'mod';
 UNION: 'union';
@@ -169,6 +180,7 @@ OF: 'of';
 TREAT: 'treat';
 CAST: 'cast';
 PERCENTAGE: '%';
+MULTIPLICATION: 'x';
 
 
 ID: NAME_START (DASH NAME_MIDDLE)*
@@ -210,9 +222,4 @@ CONSTRUCTOR_CHARS        :
 
 BACKTICK: '`';
 BRACKET: ']';
-
-
-
-
-
 

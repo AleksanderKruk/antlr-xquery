@@ -1553,7 +1553,7 @@ public class XQueryEvaluatorTest {
 
 
     @Test
-    public void tumblingWindowTest() throws XQueryUnsupportedOperation {
+    public void tumblingWindowTest() {
         String xquery = """
                 for tumbling window $w in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
                     start at $s when true()
@@ -1572,7 +1572,7 @@ public class XQueryEvaluatorTest {
     }
 
     @Test
-    public void slidingWindowTest() throws XQueryUnsupportedOperation {
+    public void slidingWindowTest() {
         String xquery = """
             for sliding window $w in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
                 start at $s when true()
@@ -1597,7 +1597,7 @@ public class XQueryEvaluatorTest {
     }
 
     @Test
-    public void tumblingWindowWithPositionalVariablesTest() throws XQueryUnsupportedOperation {
+    public void tumblingWindowWithPositionalVariablesTest() {
         String xquery = """
                 for tumbling window $w in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
                         start $s at $sPos end $e at $ePos when $ePos - $sPos eq 2
@@ -1615,7 +1615,7 @@ public class XQueryEvaluatorTest {
     }
 
     @Test
-    public void slidingWindowWithPositionalVariablesTest() throws XQueryUnsupportedOperation {
+    public void slidingWindowWithPositionalVariablesTest() {
         String xquery = """
             for sliding window $w in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
                 start $s at $sPos

@@ -20,77 +20,11 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.charescaper.XQueryCharEscaper;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.AbbrevReverseStepContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.AdditiveExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.AndExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ArgumentContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ArrowExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ArrowFunctionSpecifierContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.AxisStepContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.CastableExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ComparisonExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ConstructorCharsContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ConstructorInterpolationContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ContextItemExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.CountClauseContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.EnclosedExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ExprSingleContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.FLWORExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ForBindingContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ForClauseContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ForwardAxisContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ForwardStepContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionCallContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.IfExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.InstanceofExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.IntersectExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.LetBindingContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.LetClauseContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.LiteralContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.MultiplicativeExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.NameTestContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.NodeTestContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.OrExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.OrderByClauseContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.OrderSpecContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.OtherwiseExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.PathExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.PositionalVarContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.PostfixContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.PostfixExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.PredicateContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.QnameContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.QuantifiedExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.RangeExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.RelativePathExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ReturnClauseContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseAxisContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ReverseStepContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.SimpleMapExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.SlidingWindowClauseContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.StepExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.StringConcatExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.StringConstructorContentContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.StringConstructorContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.SwitchExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.TreatExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.TumblingWindowClauseContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.UnaryExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.UnionExprContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.VarRefContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.WhereClauseContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.WhileClauseContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.WindowClauseContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.WindowEndConditionContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.WindowStartConditionContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.WindowVarsContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.*;
 import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.XQueryDynamicContextManager;
 import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.baseimplementation.XQueryBaseDynamicContextManager;
-import com.github.akruk.antlrxquery.evaluator.functioncaller.XQueryFunctionCaller;
-import com.github.akruk.antlrxquery.evaluator.functioncaller.defaults.BaseFunctionCaller;
+import com.github.akruk.antlrxquery.evaluator.functionmanager.IXQueryEvaluatingFunctionManager;
+import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.EvaluatingFunctionManager;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.values.factories.defaults.XQueryMemoizedValueFactory;
@@ -102,7 +36,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     final Parser parser;
     final XQueryDynamicContextManager contextManager;
     final XQueryValueFactory valueFactory;
-    final XQueryFunctionCaller functionCaller;
+    final IXQueryEvaluatingFunctionManager functionManager;
 
     XQueryValue matchedNodes;
     Stream<List<TupleElement>> visitedTupleStream;
@@ -126,7 +60,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser, final XQueryValueFactory valueFactory) {
         this(tree, parser, new XQueryBaseDynamicContextManager(),
                 valueFactory,
-                new BaseFunctionCaller(valueFactory));
+                new EvaluatingFunctionManager(valueFactory));
     }
 
     public XQueryEvaluatorVisitor(
@@ -134,7 +68,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             final Parser parser,
             final XQueryDynamicContextManager contextManager,
             final XQueryValueFactory valueFactory,
-            final XQueryFunctionCaller functionCaller) {
+            final IXQueryEvaluatingFunctionManager functionCaller) {
         this.root = valueFactory.node(tree);
         this.context = new XQueryVisitingContext();
         this.context.setItem(root);
@@ -142,7 +76,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         this.context.setSize(0);
         this.parser = parser;
         this.valueFactory = valueFactory;
-        this.functionCaller = functionCaller;
+        this.functionManager = functionCaller;
         this.contextManager = contextManager;
         contextManager.enterContext();
     }
@@ -393,7 +327,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         final var savedArgs = saveVisitedArguments();
         final var savedKwargs = saveVisitedKeywordArguments();
         ctx.argumentList().accept(this);
-        final var value = functionCaller.call(namespace, functionName, context, visitedArgumentList, visitedKeywordArguments);
+        final var value = functionManager.call(namespace, functionName, context, visitedArgumentList, visitedKeywordArguments);
         visitedArgumentList = savedArgs;
         visitedKeywordArguments = savedKwargs;
         return value;
@@ -664,9 +598,10 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         if (ctx.predicate() != null) {
             return ctx.predicate().accept(this);
         }
+        // TODO: verify logic
         final var contextItem = context.getItem();
         final var function = contextItem.functionValue();
-        final var value = function.call(context, visitedArgumentList);
+        final var value = function.call(context, visitedArgumentList, visitedKeywordArguments);
         return value;
     }
 
@@ -908,8 +843,10 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         final var arrowCount = ctx.ARROW().size();
         for (int i = 0; i < arrowCount; i++) {
             ctx.argumentList(i).accept(this); // visitedArgumentList is set to function's args
+                                              // it has to be called before visiting arrowFunctionSpecifier
+                                              // because arity of arguments is needed for function lookup
             final var visitedFunction = ctx.arrowFunctionSpecifier(i).accept(this);
-            contextArgument = visitedFunction.functionValue().call(context, visitedArgumentList);
+            contextArgument = visitedFunction.functionValue().call(context, visitedArgumentList, visitedKeywordArguments);
             visitedArgumentList = new ArrayList<>();
             visitedArgumentList.add(contextArgument);
         }
@@ -923,7 +860,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             final String[] parts = resolveNamespace(ctx.ID().getText());
             final String namespace = parts.length == 2 ? parts[0] : "fn";
             final String localName = parts.length == 2 ? parts[1] : parts[0];
-            return functionCaller.getFunctionReference(namespace, localName, visitedArgumentList.size());
+            return functionManager.getFunctionReference(namespace, localName, visitedArgumentList.size());
         }
         if (ctx.varRef() != null)
             return ctx.varRef().accept(this);

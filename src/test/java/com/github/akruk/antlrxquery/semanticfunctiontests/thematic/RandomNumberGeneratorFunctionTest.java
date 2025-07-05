@@ -1,6 +1,6 @@
-package com.github.akruk.antlrxquery.functiontests.thematic;
+package com.github.akruk.antlrxquery.semanticfunctiontests.thematic;
 
-import com.github.akruk.antlrxquery.functiontests.FunctionsSemanticTest;
+import com.github.akruk.antlrxquery.semanticfunctiontests.FunctionsSemanticTest;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 
 import org.junit.jupiter.api.Test;

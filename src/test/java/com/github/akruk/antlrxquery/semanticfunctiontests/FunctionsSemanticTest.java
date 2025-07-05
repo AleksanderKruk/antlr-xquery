@@ -1,4 +1,4 @@
-package com.github.akruk.antlrxquery.functiontests;
+package com.github.akruk.antlrxquery.semanticfunctiontests;
 import static org.junit.jupiter.api.Assertions.*;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;

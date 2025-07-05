@@ -1,7 +1,7 @@
-package com.github.akruk.antlrxquery.functiontests.thematic;
+package com.github.akruk.antlrxquery.semanticfunctiontests.thematic;
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.functiontests.FunctionsSemanticTest;
+import com.github.akruk.antlrxquery.semanticfunctiontests.FunctionsSemanticTest;
 
 public class ProcessingBooleanFunctionsTest extends FunctionsSemanticTest {
 

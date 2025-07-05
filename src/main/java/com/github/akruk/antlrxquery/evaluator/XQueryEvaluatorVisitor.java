@@ -18,7 +18,6 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.*;
 import com.github.akruk.antlrxquery.charescaper.XQueryCharEscaper;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.AbbrevReverseStepContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.AdditiveExprContext;

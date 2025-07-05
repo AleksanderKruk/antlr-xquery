@@ -472,21 +472,20 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         namespaceFunctions.computeIfAbsent(namespace, _ -> new HashMap<>()).put(localName, function);
     }
 
-    private XQueryFunction getFunction(String functionName) {
-        final String[] parts = functionName.split(":", 2);
-        String namespace = parts.length == 2 ? parts[0] : "fn";
-        String localName = parts.length == 2 ? parts[1] : parts[0];
-
+    private XQueryFunction getFunction(String namespace, String functionName, long arity) {
         Map<String, XQueryFunction> functionsInNs = namespaceFunctions.get(namespace);
         if (functionsInNs == null) {
             return null;
         }
-        return functionsInNs.get(localName);
+        return functionsInNs.get(functionName);
     }
 
     @Override
-    public XQueryValue call(String functionName, XQueryVisitingContext context, List<XQueryValue> args) {
-        XQueryFunction function = getFunction(functionName);
+    public XQueryValue call(String namespace, String functionName, XQueryVisitingContext context,
+            List<XQueryValue> args, Map<String, XQueryValue> kwargs)
+    {
+        final long arity = args.size() + kwargs.size();
+        XQueryFunction function = getFunction(namespace, functionName, arity);
         if (function == null) {
             return XQueryError.UnknownFunction;
         }
@@ -494,13 +493,11 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
     }
 
     @Override
-    public XQueryValue getFunctionReference(String functionName) {
-        XQueryFunction function = getFunction(functionName);
+    public XQueryValue getFunctionReference(String namespace, String functionName, long arity) {
+        XQueryFunction function = getFunction(namespace, functionName, arity);
         if (function == null) {
             return XQueryError.UnknownFunction;
         }
         return valueFactory.functionReference(function);
     }
-
-
 }

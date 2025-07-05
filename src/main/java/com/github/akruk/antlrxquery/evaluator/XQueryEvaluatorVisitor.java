@@ -3,6 +3,7 @@ package com.github.akruk.antlrxquery.evaluator;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -109,6 +110,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     List<XQueryValue> visitedArgumentList;
     XQueryVisitingContext context;
     INodeGetter nodeGetter = new NodeGetter();
+    private Map<String, XQueryValue> visitedKeywordArguments;
 
     private record TupleElement(String name, XQueryValue value, String positionalName, XQueryValue index) {
     };
@@ -384,13 +386,23 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
     @Override
     public XQueryValue visitFunctionCall(final FunctionCallContext ctx) {
-        final var functionName = ctx.functionName().getText();
+        final String[] parts = resolveNamespace(ctx.functionName().getText());
+        final String namespace = parts.length == 2 ? parts[0] : "fn";
+        final String functionName = parts.length == 2 ? parts[1] : parts[0];
         // TODO: error handling missing function
         final var savedArgs = saveVisitedArguments();
+        final var savedKwargs = saveVisitedKeywordArguments();
         ctx.argumentList().accept(this);
-        final var value = functionCaller.call(functionName, context, visitedArgumentList);
+        final var value = functionCaller.call(namespace, functionName, context, visitedArgumentList, visitedKeywordArguments);
         visitedArgumentList = savedArgs;
+        visitedKeywordArguments = savedKwargs;
         return value;
+    }
+
+    private Map<String, XQueryValue> saveVisitedKeywordArguments() {
+        final var saved = visitedKeywordArguments;
+        visitedKeywordArguments = new HashMap<>();
+        return saved;
     }
 
     public static <T> Stream<List<T>> cartesianProduct(final List<List<T>> lists) {
@@ -895,8 +907,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         // var isFunction = !func
         final var arrowCount = ctx.ARROW().size();
         for (int i = 0; i < arrowCount; i++) {
-            final var visitedFunction = ctx.arrowFunctionSpecifier(i).accept(this);
             ctx.argumentList(i).accept(this); // visitedArgumentList is set to function's args
+            final var visitedFunction = ctx.arrowFunctionSpecifier(i).accept(this);
             contextArgument = visitedFunction.functionValue().call(context, visitedArgumentList);
             visitedArgumentList = new ArrayList<>();
             visitedArgumentList.add(contextArgument);
@@ -907,12 +919,21 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
     @Override
     public XQueryValue visitArrowFunctionSpecifier(final ArrowFunctionSpecifierContext ctx) {
-        if (ctx.ID() != null)
-            return functionCaller.getFunctionReference(ctx.ID().getText());
+        if (ctx.ID() != null) {
+            final String[] parts = resolveNamespace(ctx.ID().getText());
+            final String namespace = parts.length == 2 ? parts[0] : "fn";
+            final String localName = parts.length == 2 ? parts[1] : parts[0];
+            return functionCaller.getFunctionReference(namespace, localName, visitedArgumentList.size());
+        }
         if (ctx.varRef() != null)
             return ctx.varRef().accept(this);
         return ctx.parenthesizedExpr().accept(this);
 
+    }
+
+    private String[] resolveNamespace(final String functionName) {
+        final String[] parts = functionName.split(":", 2);
+        return parts;
     }
 
     @Override

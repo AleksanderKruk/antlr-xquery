@@ -1,6 +1,5 @@
 package com.github.akruk.antlrxquery.evaluator.functioncaller.defaults;
 
-import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.List;
@@ -12,6 +11,7 @@ import java.util.stream.Collectors;
 
 import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
 import com.github.akruk.antlrxquery.evaluator.functioncaller.XQueryFunctionCaller;
+import com.github.akruk.antlrxquery.evaluator.functioncaller.defaults.functions.MathFunctions;
 import com.github.akruk.antlrxquery.values.XQueryError;
 import com.github.akruk.antlrxquery.values.XQueryFunction;
 import com.github.akruk.antlrxquery.values.XQueryValue;
@@ -21,10 +21,12 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
 
     private final Map<String, Map<String, XQueryFunction>> namespaceFunctions;
     private final XQueryValueFactory valueFactory;
+    private final MathFunctions mathFunctions;
 
     public BaseFunctionCaller(final XQueryValueFactory valueFactory) {
         this.valueFactory = valueFactory;
         this.namespaceFunctions = new HashMap<>(500);
+        this.mathFunctions = new MathFunctions(valueFactory);
 
         registerFunction("fn", "true", this::true_);
         registerFunction("fn", "false", this::false_);
@@ -63,20 +65,24 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
         registerFunction("fn", "position", this::position);
         registerFunction("fn", "last", this::last);
 
-        registerFunction("math", "pi", this::pi);
-        registerFunction("math", "exp", this::exp);
-        registerFunction("math", "exp10", this::exp10);
-        registerFunction("math", "log", this::log);
-        registerFunction("math", "log10", this::log10);
-        registerFunction("math", "pow", this::pow);
-        registerFunction("math", "sqrt", this::sqrt);
-        registerFunction("math", "sin", this::sin);
-        registerFunction("math", "cos", this::cos);
-        registerFunction("math", "tan", this::tan);
-        registerFunction("math", "asin", this::asin);
-        registerFunction("math", "acos", this::acos);
-        registerFunction("math", "atan", this::atan);
-        registerFunction("math", "atan2", this::atan2);
+        registerFunction("math", "pi", mathFunctions::pi);
+        registerFunction("math", "e", mathFunctions::e);
+        registerFunction("math", "exp", mathFunctions::exp);
+        registerFunction("math", "exp10", mathFunctions::exp10);
+        registerFunction("math", "log", mathFunctions::log);
+        registerFunction("math", "log10", mathFunctions::log10);
+        registerFunction("math", "pow", mathFunctions::pow);
+        registerFunction("math", "sqrt", mathFunctions::sqrt);
+        registerFunction("math", "sin", mathFunctions::sin);
+        registerFunction("math", "cos", mathFunctions::cos);
+        registerFunction("math", "tan", mathFunctions::tan);
+        registerFunction("math", "asin", mathFunctions::asin);
+        registerFunction("math", "acos", mathFunctions::acos);
+        registerFunction("math", "atan", mathFunctions::atan);
+        registerFunction("math", "atan2", mathFunctions::atan2);
+        registerFunction("math", "sinh", mathFunctions::sinh);
+        registerFunction("math", "cosh", mathFunctions::cosh);
+        registerFunction("math", "tanh", mathFunctions::tanh);
 
         registerFunction("op", "numeric-add", this::numericAdd);
         registerFunction("op", "numeric-subtract", this::numericSubtract);
@@ -91,109 +97,6 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
     public XQueryValue not(XQueryVisitingContext context, List<XQueryValue> args) {
         if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         return args.get(0).not();
-    }
-
-    public XQueryValue exp(XQueryVisitingContext context, List<XQueryValue> args) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
-        var arg = args.get(0);
-        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
-        return valueFactory.number(BigDecimal.valueOf(Math.exp(arg.numericValue().doubleValue())));
-    }
-
-    public XQueryValue exp10(XQueryVisitingContext context, List<XQueryValue> args) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
-        var arg = args.get(0);
-        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
-        return valueFactory.number(BigDecimal.valueOf(Math.pow(10, arg.numericValue().doubleValue())));
-    }
-
-    public XQueryValue log(XQueryVisitingContext context, List<XQueryValue> args) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
-        var arg = args.get(0);
-        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
-        double v = arg.numericValue().doubleValue();
-        if (v <= 0 || Double.isNaN(v)) return XQueryError.InvalidArgumentType;
-        return valueFactory.number(BigDecimal.valueOf(Math.log(v)));
-    }
-
-    public XQueryValue log10(XQueryVisitingContext context, List<XQueryValue> args) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
-        var arg = args.get(0);
-        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
-        double v = arg.numericValue().doubleValue();
-        if (v <= 0 || Double.isNaN(v)) return XQueryError.InvalidArgumentType;
-        return valueFactory.number(BigDecimal.valueOf(Math.log10(v)));
-    }
-
-    public XQueryValue pow(XQueryVisitingContext context, List<XQueryValue> args) {
-        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
-        var base = args.get(0);
-        var exponent = args.get(1);
-        if (!base.isNumericValue() || !exponent.isNumericValue()) return XQueryError.InvalidArgumentType;
-        return valueFactory.number(BigDecimal.valueOf(Math.pow(base.numericValue().doubleValue(), exponent.numericValue().doubleValue())));
-    }
-
-    public XQueryValue sqrt(XQueryVisitingContext context, List<XQueryValue> args) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
-        var arg = args.get(0);
-        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
-        double v = arg.numericValue().doubleValue();
-        if (v < 0) return XQueryError.InvalidArgumentType;
-        return valueFactory.number(BigDecimal.valueOf(Math.sqrt(v)));
-    }
-
-    public XQueryValue sin(XQueryVisitingContext context, List<XQueryValue> args) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
-        var arg = args.get(0);
-        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
-        return valueFactory.number(BigDecimal.valueOf(Math.sin(arg.numericValue().doubleValue())));
-    }
-
-    public XQueryValue cos(XQueryVisitingContext context, List<XQueryValue> args) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
-        var arg = args.get(0);
-        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
-        return valueFactory.number(BigDecimal.valueOf(Math.cos(arg.numericValue().doubleValue())));
-    }
-
-    public XQueryValue tan(XQueryVisitingContext context, List<XQueryValue> args) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
-        var arg = args.get(0);
-        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
-        return valueFactory.number(BigDecimal.valueOf(Math.tan(arg.numericValue().doubleValue())));
-    }
-
-    public XQueryValue asin(XQueryVisitingContext context, List<XQueryValue> args) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
-        var arg = args.get(0);
-        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
-        double v = arg.numericValue().doubleValue();
-        if (v < -1 || v > 1) return XQueryError.InvalidArgumentType;
-        return valueFactory.number(BigDecimal.valueOf(Math.asin(v)));
-    }
-
-    public XQueryValue acos(XQueryVisitingContext context, List<XQueryValue> args) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
-        var arg = args.get(0);
-        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
-        double v = arg.numericValue().doubleValue();
-        if (v < -1 || v > 1) return XQueryError.InvalidArgumentType;
-        return valueFactory.number(BigDecimal.valueOf(Math.acos(v)));
-    }
-
-    public XQueryValue atan(XQueryVisitingContext context, List<XQueryValue> args) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
-        var arg = args.get(0);
-        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
-        return valueFactory.number(BigDecimal.valueOf(Math.atan(arg.numericValue().doubleValue())));
-    }
-
-    public XQueryValue atan2(XQueryVisitingContext context, List<XQueryValue> args) {
-        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
-        var y = args.get(0);
-        var x = args.get(1);
-        if (!y.isNumericValue() || !x.isNumericValue()) return XQueryError.InvalidArgumentType;
-        return valueFactory.number(BigDecimal.valueOf(Math.atan2(y.numericValue().doubleValue(), x.numericValue().doubleValue())));
     }
 
 
@@ -304,11 +207,6 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
     public XQueryValue false_(XQueryVisitingContext context, List<XQueryValue> args) {
         if (!args.isEmpty()) return XQueryError.WrongNumberOfArguments;
         return valueFactory.bool(false);
-    }
-
-    public XQueryValue pi(XQueryVisitingContext context, List<XQueryValue> args) {
-        if (!args.isEmpty()) return XQueryError.WrongNumberOfArguments;
-        return valueFactory.number(BigDecimal.valueOf(Math.PI));
     }
 
     public XQueryValue empty(XQueryVisitingContext ctx, List<XQueryValue> args) {
@@ -569,7 +467,7 @@ public class BaseFunctionCaller implements XQueryFunctionCaller {
             return XQueryError.WrongNumberOfArguments;
         }
     }
- 
+
     private void registerFunction(String namespace, String localName, XQueryFunction function) {
         namespaceFunctions.computeIfAbsent(namespace, _ -> new HashMap<>()).put(localName, function);
     }

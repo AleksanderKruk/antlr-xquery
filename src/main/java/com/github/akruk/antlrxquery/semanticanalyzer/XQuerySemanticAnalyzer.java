@@ -18,11 +18,11 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 import com.github.akruk.antlrxquery.AntlrXqueryParser.*;
 import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.XQuerySemanticContextManager;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager.CallAnalysisResult;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper.XQuerySemanticCharEscaperResult;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager.CallAnalysisResult;
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
@@ -34,7 +34,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     final List<String> errors;
     final XQueryTypeFactory typeFactory;
     final XQueryValueFactory valueFactory;
-    final IXQuerySemanticFunctionManager functionCaller;
+    final IXQuerySemanticFunctionManager functionManager;
     final Parser parser;
     XQueryVisitingSemanticContext context;
     List<XQuerySequenceType> visitedPositionalArguments;
@@ -59,7 +59,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         this.parser = parser;
         this.typeFactory = typeFactory;
         this.valueFactory = valueFactory;
-        this.functionCaller = functionCaller;
+        this.functionManager = functionCaller;
         this.contextManager = contextManager;
         this.contextManager.enterContext();
         this.context.setType(typeFactory.anyNode());
@@ -459,7 +459,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
         ctx.argumentList().accept(this);
 
-        final CallAnalysisResult callAnalysisResult = functionCaller.call(
+        final CallAnalysisResult callAnalysisResult = functionManager.call(
             namespace, functionName, visitedPositionalArguments, visitedKeywordArguments, context);
         errors.addAll(callAnalysisResult.errors());
 

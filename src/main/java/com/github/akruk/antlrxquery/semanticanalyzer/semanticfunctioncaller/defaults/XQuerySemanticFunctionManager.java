@@ -20,9 +20,6 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
                 final XQueryVisitingSemanticContext context,
                 final List<XQuerySequenceType> types);
     }
-
-    // private final FunctionTrie functionTrie = new FunctionTrie();
-
     private final XQueryTypeFactory typeFactory;
 
     public XQuerySemanticFunctionManager(final XQueryTypeFactory typeFactory) {
@@ -2877,7 +2874,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
             final XQuerySequenceType returnedType,
             final XQuerySequenceType requiredContextValueType,
             final boolean requiresPosition,
-            final boolean requiresLength) {
+            final boolean requiresLength)
+    {
         final long minArity = args.stream().filter(arg -> arg.isRequired()).collect(Collectors.counting());
         final long maxArity = args.size();
         if (!namespaces.containsKey(namespace)) {

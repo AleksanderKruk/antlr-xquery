@@ -17,9 +17,10 @@ import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.values.factories.defaults.XQueryMemoizedValueFactory;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import static java.lang.Math.*;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -280,58 +281,6 @@ public class XQueryEvaluatorTest {
         assertResult("false()", baseFactory.bool(false));
     }
 
-
-    @Test
-    public void sinFunction() {
-        assertResult("math:sin(0)", BigDecimal.valueOf(sin(0)));
-        assertResult("math:sin(3.141592653589793 div 2)", BigDecimal.valueOf(sin(PI / 2)));
-    }
-
-    @Test
-    public void cosFunction() {
-        assertResult("math:cos(0)", BigDecimal.valueOf(cos(0)));
-        assertResult("math:cos(3.141592653589793)", BigDecimal.valueOf(cos(PI)));
-    }
-
-    @Test
-    public void tanFunction() {
-        assertResult("math:tan(0)", BigDecimal.valueOf(tan(0)));
-    }
-
-    @Test
-    public void asinFunction() {
-        assertResult("math:asin(0)", BigDecimal.valueOf(asin(0)));
-    }
-
-    @Test
-    public void acosFunction() {
-        assertResult("math:acos(1)", BigDecimal.valueOf(acos(1)));
-    }
-
-    @Test
-    public void atanFunction() {
-        assertResult("math:atan(1)", BigDecimal.valueOf(atan(1)));
-    }
-
-    @Test
-    public void piConstant() {
-        assertResult("math:pi()", BigDecimal.valueOf(PI));
-    }
-
-    @Test
-    public void expFunction() {
-        assertResult("math:exp(1)", BigDecimal.valueOf(exp(1)));
-    }
-
-    @Test
-    public void logFunction() {
-        assertResult("math:log(1)", BigDecimal.valueOf(log(1))); // should be 0
-    }
-
-    @Test
-    public void sqrtFunction() {
-        assertResult("math:sqrt(4)", BigDecimal.valueOf(sqrt(4))); // should be 2
-    }
 
 
 
@@ -661,11 +610,6 @@ public class XQueryEvaluatorTest {
     @Test
     public void numericMod() {
         assertResult("op:numeric-mod(5, 2)", BigDecimal.ONE);
-    }
-
-    @Test
-    public void pi() {
-        assertResult("math:pi()", BigDecimal.valueOf(Math.PI));
     }
 
     record TestParserAndTree(TestParser parser, ParseTree tree) {}

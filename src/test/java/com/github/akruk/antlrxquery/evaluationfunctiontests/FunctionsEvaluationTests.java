@@ -48,7 +48,7 @@ public class FunctionsEvaluationTests {
     public void assertResult(String xquery, XQueryValue result) {
         XQueryValue value = XQuery.evaluate(null, xquery, null);
         assertNotNull(value);
-        assertTrue(result.valueEqual(value).booleanValue());
+        assertTrue(result == value || result.valueEqual(value).booleanValue());
     }
 
 

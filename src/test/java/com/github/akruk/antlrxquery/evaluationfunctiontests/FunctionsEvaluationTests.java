@@ -50,8 +50,14 @@ public class FunctionsEvaluationTests {
     public void assertResult(String xquery, XQueryValue result) {
         XQueryValue value = XQuery.evaluate(null, xquery, null);
         assertNotNull(value);
-        assertFalse(value instanceof XQueryError, "Value is error: " + ((XQueryError) value).getDescription());
+        assertFalse(value instanceof XQueryError, () ->"Value is error: " + ((XQueryError) value).getDescription());
         assertTrue(result == value || result.valueEqual(value).booleanValue());
+    }
+
+    public void assertError(String xquery, XQueryValue result) {
+        XQueryValue value = XQuery.evaluate(null, xquery, null);
+        assertNotNull(value);
+        assertTrue(result == value);
     }
 
 

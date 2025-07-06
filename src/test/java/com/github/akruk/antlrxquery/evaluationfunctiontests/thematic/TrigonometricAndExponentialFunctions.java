@@ -72,7 +72,7 @@ public class TrigonometricAndExponentialFunctions extends FunctionsEvaluationTes
 
     @Test
     public void eWithArgsError() {
-        assertResult("math:e(1)", XQueryError.WrongNumberOfArguments);
+        assertError("math:e(1)", XQueryError.WrongNumberOfArguments);
     }
 
     @Test
@@ -83,13 +83,13 @@ public class TrigonometricAndExponentialFunctions extends FunctionsEvaluationTes
 
     @Test
     public void sinhArityErrors() {
-        assertResult("math:sinh()", XQueryError.WrongNumberOfArguments);
-        assertResult("math:sinh(1, 2)", XQueryError.WrongNumberOfArguments);
+        assertError("math:sinh()", XQueryError.WrongNumberOfArguments);
+        assertError("math:sinh(1, 2)", XQueryError.WrongNumberOfArguments);
     }
 
     @Test
     public void sinhInvalidType() {
-        assertResult("math:sinh('x')", XQueryError.InvalidArgumentType);
+        assertError("math:sinh('x')", XQueryError.InvalidArgumentType);
     }
 
     @Test
@@ -100,13 +100,13 @@ public class TrigonometricAndExponentialFunctions extends FunctionsEvaluationTes
 
     @Test
     public void coshArityErrors() {
-        assertResult("math:cosh()", XQueryError.WrongNumberOfArguments);
-        assertResult("math:cosh(1, 2)", XQueryError.WrongNumberOfArguments);
+        assertError("math:cosh()", XQueryError.WrongNumberOfArguments);
+        assertError("math:cosh(1, 2)", XQueryError.WrongNumberOfArguments);
     }
 
     @Test
     public void coshInvalidType() {
-        assertResult("math:cosh('x')", XQueryError.InvalidArgumentType);
+        assertError("math:cosh('x')", XQueryError.InvalidArgumentType);
     }
 
     @Test
@@ -117,12 +117,12 @@ public class TrigonometricAndExponentialFunctions extends FunctionsEvaluationTes
 
     @Test
     public void tanhArityErrors() {
-        assertResult("math:tanh()", XQueryError.WrongNumberOfArguments);
-        assertResult("math:tanh(1, 2)", XQueryError.WrongNumberOfArguments);
+        assertError("math:tanh()", XQueryError.WrongNumberOfArguments);
+        assertError("math:tanh(1, 2)", XQueryError.WrongNumberOfArguments);
     }
 
     @Test
     public void tanhInvalidType() {
-        assertResult("math:tanh('x')", XQueryError.InvalidArgumentType);
+        assertError("math:tanh('x')", XQueryError.InvalidArgumentType);
     }
 }

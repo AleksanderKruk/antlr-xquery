@@ -1,6 +1,7 @@
 package com.github.akruk.antlrxquery.evaluator.functionmanager.defaults;
 
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,77 +46,78 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         this.mathFunctions = new MathFunctions(valueFactory);
         this.functionsOnStringValues = new FunctionsOnStringValues(valueFactory);
 
-        registerFunction("fn", "true", this::true_);
-        registerFunction("fn", "false", this::false_);
-        registerFunction("fn", "not", this::not);
-        registerFunction("fn", "abs", this::abs);
-        registerFunction("fn", "ceiling", this::ceiling);
-        registerFunction("fn", "floor", this::floor);
-        registerFunction("fn", "round", this::round);
-        registerFunction("fn", "empty", this::empty);
-        registerFunction("fn", "exists", this::exists);
-        registerFunction("fn", "head", this::head);
-        registerFunction("fn", "tail", this::tail);
-        registerFunction("fn", "insert-before", this::insertBefore);
-        registerFunction("fn", "remove", this::remove);
-        registerFunction("fn", "reverse", this::reverse);
-        registerFunction("fn", "subsequence", this::subsequence);
-        registerFunction("fn", "distinct-values", this::distinctValues);
-        registerFunction("fn", "zero-or-one", this::zeroOrOne);
-        registerFunction("fn", "one-or-more", this::oneOrMore);
-        registerFunction("fn", "exactly-one", this::exactlyOne);
-        registerFunction("fn", "data", this::data);
-        registerFunction("fn", "contains", this::contains);
-        registerFunction("fn", "starts-with", this::startsWith);
-        registerFunction("fn", "ends-with", this::endsWith);
-        registerFunction("fn", "substring-after", this::substringAfter);
-        registerFunction("fn", "substring-before", this::substringBefore);
-        registerFunction("fn", "upper-case", this::uppercase);
-        registerFunction("fn", "lower-case", this::lowercase);
-        registerFunction("fn", "string", this::string);
+        registerFunction("fn", "true", this::true_, 0, 0, Map.of());
+        registerFunction("fn", "false", this::false_, 0, 0, Map.of());
+        registerFunction("fn", "not", this::not, 0, 0, Map.of());
 
-        registerFunction("fn", "char", functionsOnStringValues::char_);
-        registerFunction("fn", "characters", functionsOnStringValues::characters);
-        registerFunction("fn", "graphemes", functionsOnStringValues::graphemes);
-        registerFunction("fn", "concat", functionsOnStringValues::concat);
-        registerFunction("fn", "string-join", functionsOnStringValues::stringJoin);
-        registerFunction("fn", "substring", functionsOnStringValues::substring);
-        registerFunction("fn", "string-length", functionsOnStringValues::stringLength);
-        registerFunction("fn", "normalize-space", functionsOnStringValues::normalizeSpace);
-        registerFunction("fn", "normalize-unicode", functionsOnStringValues::normalizeUnicode);
-        registerFunction("fn", "translate", functionsOnStringValues::translate);
+        registerFunction("fn", "abs", this::abs, 0, 0, Map.of());
+        registerFunction("fn", "ceiling", this::ceiling, 0, 0, Map.of());
+        registerFunction("fn", "floor", this::floor, 0, 0, Map.of());
+        registerFunction("fn", "round", this::round, 0, 0, Map.of());
+        registerFunction("fn", "empty", this::empty, 0, 0, Map.of());
+        registerFunction("fn", "exists", this::exists, 0, 0, Map.of());
+        registerFunction("fn", "head", this::head, 0, 0, Map.of());
+        registerFunction("fn", "tail", this::tail, 0, 0, Map.of());
+        registerFunction("fn", "insert-before", this::insertBefore, 0, 0, Map.of());
+        registerFunction("fn", "remove", this::remove, 0, 0, Map.of());
+        registerFunction("fn", "reverse", this::reverse, 0, 0, Map.of());
+        registerFunction("fn", "subsequence", this::subsequence, 0, 0, Map.of());
+        registerFunction("fn", "distinct-values", this::distinctValues, 0, 0, Map.of());
+        registerFunction("fn", "zero-or-one", this::zeroOrOne, 0, 0, Map.of());
+        registerFunction("fn", "one-or-more", this::oneOrMore, 0, 0, Map.of());
+        registerFunction("fn", "exactly-one", this::exactlyOne, 0, 0, Map.of());
+        registerFunction("fn", "data", this::data, 0, 0, Map.of());
+        registerFunction("fn", "contains", this::contains, 0, 0, Map.of());
+        registerFunction("fn", "starts-with", this::startsWith, 0, 0, Map.of());
+        registerFunction("fn", "ends-with", this::endsWith, 0, 0, Map.of());
+        registerFunction("fn", "substring-after", this::substringAfter, 0, 0, Map.of());
+        registerFunction("fn", "substring-before", this::substringBefore, 0, 0, Map.of());
+        registerFunction("fn", "upper-case", this::uppercase, 0, 0, Map.of());
+        registerFunction("fn", "lower-case", this::lowercase, 0, 0, Map.of());
+        registerFunction("fn", "string", this::string, 0, 0, Map.of());
 
-        registerFunction("fn", "replace", this::replace);
-        registerFunction("fn", "position", this::position);
-        registerFunction("fn", "last", this::last);
+        registerFunction("fn", "char", functionsOnStringValues::char_, 0, 0, Map.of());
+        registerFunction("fn", "characters", functionsOnStringValues::characters, 0, 0, Map.of());
+        registerFunction("fn", "graphemes", functionsOnStringValues::graphemes, 0, 0, Map.of());
+        registerFunction("fn", "concat", functionsOnStringValues::concat, 0, 0, Map.of());
+        registerFunction("fn", "string-join", functionsOnStringValues::stringJoin, 0, 0, Map.of());
+        registerFunction("fn", "substring", functionsOnStringValues::substring, 0, 0, Map.of());
+        registerFunction("fn", "string-length", functionsOnStringValues::stringLength, 0, 0, Map.of());
+        registerFunction("fn", "normalize-space", functionsOnStringValues::normalizeSpace, 0, 0, Map.of());
+        registerFunction("fn", "normalize-unicode", functionsOnStringValues::normalizeUnicode, 0, 0, Map.of());
+        registerFunction("fn", "translate", functionsOnStringValues::translate, 0, 0, Map.of());
 
-        registerFunction("math", "pi", mathFunctions::pi);
-        registerFunction("math", "e", mathFunctions::e);
-        registerFunction("math", "exp", mathFunctions::exp);
-        registerFunction("math", "exp10", mathFunctions::exp10);
-        registerFunction("math", "log", mathFunctions::log);
-        registerFunction("math", "log10", mathFunctions::log10);
-        registerFunction("math", "pow", mathFunctions::pow);
-        registerFunction("math", "sqrt", mathFunctions::sqrt);
-        registerFunction("math", "sin", mathFunctions::sin);
-        registerFunction("math", "cos", mathFunctions::cos);
-        registerFunction("math", "tan", mathFunctions::tan);
-        registerFunction("math", "asin", mathFunctions::asin);
-        registerFunction("math", "acos", mathFunctions::acos);
-        registerFunction("math", "atan", mathFunctions::atan);
-        registerFunction("math", "atan2", mathFunctions::atan2);
-        registerFunction("math", "sinh", mathFunctions::sinh);
-        registerFunction("math", "cosh", mathFunctions::cosh);
-        registerFunction("math", "tanh", mathFunctions::tanh);
+        registerFunction("fn", "replace", this::replace, 0, 0, Map.of());
+        registerFunction("fn", "position", this::position, 0, 0, Map.of());
+        registerFunction("fn", "last", this::last, 0, 0, Map.of());
 
-        registerFunction("op", "numeric-add", this::numericAdd);
-        registerFunction("op", "numeric-subtract", this::numericSubtract);
-        registerFunction("op", "numeric-multiply", this::numericMultiply);
-        registerFunction("op", "numeric-divide", this::numericDivide);
-        registerFunction("op", "numeric-integer-divide", this::numericIntegerDivide);
-        registerFunction("op", "numeric-mod", this::numericMod);
-        registerFunction("op", "numeric-unary-plus", this::numericUnaryPlus);
-        registerFunction("op", "numeric-unary-minus", this::numericUnaryMinus);
+        registerFunction("math", "pi", mathFunctions::pi, 0, 0, Map.of());
+        registerFunction("math", "e", mathFunctions::e, 0, 0, Map.of());
+        registerFunction("math", "exp", mathFunctions::exp, 1, 1, Map.of());
+        registerFunction("math", "exp10", mathFunctions::exp10,1, 1, Map.of());
+        registerFunction("math", "log", mathFunctions::log, 1, 1, Map.of());
+        registerFunction("math", "log10", mathFunctions::log10, 1, 1, Map.of());
+        registerFunction("math", "pow", mathFunctions::pow, 2, 2, Map.of());
+        registerFunction("math", "sqrt", mathFunctions::sqrt, 1, 1, Map.of());
+        registerFunction("math", "sin", mathFunctions::sin, 1, 1, Map.of());
+        registerFunction("math", "cos", mathFunctions::cos, 1, 1, Map.of());
+        registerFunction("math", "tan", mathFunctions::tan, 1, 1, Map.of());
+        registerFunction("math", "asin", mathFunctions::asin, 1, 1, Map.of());
+        registerFunction("math", "acos", mathFunctions::acos, 1, 1, Map.of());
+        registerFunction("math", "atan", mathFunctions::atan, 1, 1, Map.of());
+        registerFunction("math", "atan2", mathFunctions::atan2, 2, 2, Map.of());
+        registerFunction("math", "sinh", mathFunctions::sinh, 1, 1, Map.of());
+        registerFunction("math", "cosh", mathFunctions::cosh, 1, 1, Map.of());
+        registerFunction("math", "tanh", mathFunctions::tanh, 1, 1, Map.of());
+
+        registerFunction("op", "numeric-add", this::numericAdd, 0, 0, Map.of());
+        registerFunction("op", "numeric-subtract", this::numericSubtract, 0, 0, Map.of());
+        registerFunction("op", "numeric-multiply", this::numericMultiply, 0, 0, Map.of());
+        registerFunction("op", "numeric-divide", this::numericDivide, 0, 0, Map.of());
+        registerFunction("op", "numeric-integer-divide", this::numericIntegerDivide, 0, 0, Map.of());
+        registerFunction("op", "numeric-mod", this::numericMod, 0, 0, Map.of());
+        registerFunction("op", "numeric-unary-plus", this::numericUnaryPlus, 0, 0, Map.of());
+        registerFunction("op", "numeric-unary-minus", this::numericUnaryMinus, 0, 0, Map.of());
     }
 
     public XQueryValue not(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
@@ -432,8 +434,11 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         }
     }
 
-    private void registerFunction(String namespace, String localName, XQueryFunction function) {
-        // namespaces.computeIfAbsent(namespace, _ -> new HashMap<>()).put(localName, function);
+    private void registerFunction(String namespace, String localName, XQueryFunction function, int minArity, int maxArity, Map<String, ParseTree> defaultArguments) {
+        final FunctionEntry functionEntry = new FunctionEntry(function, minArity, maxArity, defaultArguments);
+        final Map<String, List<FunctionEntry>> namespaceFunctions = namespaces.computeIfAbsent(namespace, _ -> new HashMap<>());
+        final List<FunctionEntry> functionsWithDesiredName = namespaceFunctions.computeIfAbsent(localName, _ -> new ArrayList<FunctionEntry>());
+        functionsWithDesiredName.add(functionEntry);
     }
 
     public static record FunctionOrError(FunctionEntry entry, XQueryValue error) {
@@ -447,10 +452,10 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
             return new FunctionOrError(null, XQueryError.UnknownFunctionName);
         }
         List<FunctionEntry> functionsWithGivenName = functionsInNs.get(functionName);
-        Predicate<FunctionEntry> withinArityRange = f -> !(f.minArity() <= arity && arity <= f.maxArity());
+        Predicate<FunctionEntry> withinArityRange = f -> (f.minArity() <= arity && arity <= f.maxArity());
         Optional<FunctionEntry> functionWithRequiredArity = functionsWithGivenName.stream().filter(withinArityRange).findFirst();
         if (!functionWithRequiredArity.isPresent())
-            return new FunctionOrError(null, XQueryError.WrongFunctionArity);
+            return new FunctionOrError(null, XQueryError.WrongNumberOfArguments);
         return new FunctionOrError(functionWithRequiredArity.get(), null);
     }
 

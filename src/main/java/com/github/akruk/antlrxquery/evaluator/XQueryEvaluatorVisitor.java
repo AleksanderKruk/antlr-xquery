@@ -58,9 +58,16 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser, final XQueryValueFactory valueFactory) {
-        this(tree, parser, new XQueryBaseDynamicContextManager(),
-                valueFactory,
-                new EvaluatingFunctionManager(valueFactory));
+        this.root = valueFactory.node(tree);
+        this.context = new XQueryVisitingContext();
+        this.context.setItem(root);
+        this.context.setPosition(0);
+        this.context.setSize(0);
+        this.parser = parser;
+        this.valueFactory = valueFactory;
+        this.functionManager = new EvaluatingFunctionManager(this, valueFactory);
+        this.contextManager = new XQueryBaseDynamicContextManager();
+        contextManager.enterContext();
     }
 
     public XQueryEvaluatorVisitor(
@@ -68,7 +75,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             final Parser parser,
             final XQueryDynamicContextManager contextManager,
             final XQueryValueFactory valueFactory,
-            final IXQueryEvaluatingFunctionManager functionCaller) {
+            final IXQueryEvaluatingFunctionManager functionCaller)
+    {
         this.root = valueFactory.node(tree);
         this.context = new XQueryVisitingContext();
         this.context.setItem(root);

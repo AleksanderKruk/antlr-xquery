@@ -24,6 +24,8 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionManager {
 
+    private static final ParseTree CONTEXT_VALUE = getTree(".", parser -> parser.contextItemExpr());
+
     public interface XQuerySemanticFunction {
         public CallAnalysisResult call(final XQueryTypeFactory typeFactory,
                 final XQueryVisitingSemanticContext context,
@@ -155,44 +157,13 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         List.of(replaceValue, replacePattern, replacement, replaceFlags),
         //         typeFactory.string());
 
-        // // fn:string(
-        // //  as item()? := .
-        // // ) as xs:string
-        // final ArgumentSpecification stringValue = new ArgumentSpecification("value", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
-        // register("fn", "string",
-        //         List.of(stringValue),
-        //         typeFactory.string());
-
-        // // fn:concat(
-        // //  as xs:anyAtomicType* := ()
-        // // ) as xs:string
-        // final ArgumentSpecification concatValues = new ArgumentSpecification("values", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("fn", "concat",
-        //         List.of(concatValues),
-        //         typeFactory.string());
-
-        // // fn:string-join(
-        // //  as xs:anyAtomicType* := (),
-        // //  as xs:string? := ""
-        // // ) as xs:string
-        // final ArgumentSpecification joinValues = new ArgumentSpecification("values", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification separator = new ArgumentSpecification("separator", false,
-        //         optionalString));
-        // register("fn", "string-join",
-        //         List.of(joinValues, separator),
-        //         typeFactory.string());
-
-        // // fn:string-length(
-        // //  as xs:string? := fn:string(.)
-        // // ) as xs:integer
-        final ArgumentSpecification lengthValue = new ArgumentSpecification("value", optionalString, stringAtContextValue);
-        register("fn", "string-length",
-                List.of(lengthValue),
-                typeFactory.number() // or typeFactory.integer() if available
-        );
+        // fn:string(
+        //  as item()? := .
+        // ) as xs:string
+        final ArgumentSpecification stringValue = new ArgumentSpecification("value", typeFactory.zeroOrOne(typeFactory.itemAnyItem()), CONTEXT_VALUE);
+        register("fn", "string",
+                List.of(stringValue),
+                typeFactory.string());
 
         // // fn:zero-or-one(
         // //  as item()*
@@ -798,9 +769,29 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
                 typeFactory.zeroOrMore(typeFactory.itemString()));
 
         final ArgumentSpecification sjValues = new ArgumentSpecification("values", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null);
-        final ArgumentSpecification sjSeparator = new ArgumentSpecification("separator", optionalString, emptyString);
+        final ArgumentSpecification sjSeparator = new ArgumentSpecification("separator", optionalString, EMPTY_STRING);
         register("fn", "string-join",
                 List.of(sjValues, sjSeparator),
+                typeFactory.string());
+
+        final ParseTree EMPTY_LIST = getTree("()", p->p.parenthesizedExpr());
+
+        // fn:concat(
+        //  as xs:anyAtomicType* := ()
+        // ) as xs:string
+        final ArgumentSpecification concatValues = new ArgumentSpecification("values", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), EMPTY_LIST);
+        register("fn", "concat",
+                List.of(concatValues),
+                typeFactory.string());
+
+        // fn:string-join(
+        //  as xs:anyAtomicType* := (),
+        //  as xs:string? := ""
+        // ) as xs:string
+        final ArgumentSpecification joinValues = new ArgumentSpecification("values", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), EMPTY_LIST);
+        final ArgumentSpecification separator = new ArgumentSpecification("separator", optionalString, EMPTY_STRING);
+        register("fn", "string-join",
+                List.of(joinValues, separator),
                 typeFactory.string());
 
         // fn:substring(
@@ -815,13 +806,22 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
                 List.of(substrValue, substrStart, substrLength),
                 typeFactory.string());
 
+        // // fn:string-length(
+        // //  as xs:string? := fn:string(.)
+        // // ) as xs:integer
+        final ArgumentSpecification lengthValue = new ArgumentSpecification("value", optionalString, STRING_AT_CONTEXT_VALUE);
+        register("fn", "string-length",
+                List.of(lengthValue),
+                typeFactory.number() // or typeFactory.integer() if available
+        );
+
 
 
         // fn:normalize-space( as xs:string? := fn:string(.)) as xs:string
-        // final ArgumentSpecification nsValue = new ArgumentSpecification("value", false, optionalString));
-        // register("fn", "normalize-space",
-        //         List.of(nsValue),
-        //         typeFactory.string());
+        final ArgumentSpecification nsValue = new ArgumentSpecification("value", optionalString, STRING_AT_CONTEXT_VALUE);
+        register("fn", "normalize-space",
+                List.of(nsValue),
+                typeFactory.string());
 
         // fn:normalize-unicode(
         //  as xs:string?,
@@ -2549,8 +2549,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
     }
 
     final Map<String, Map<String, List<FunctionSpecification>>> namespaces;
-    private static final ParseTree stringAtContextValue = XQuerySemanticFunctionManager.getTree("fn:string(.)", (parser) -> parser.functionCall());
-    private static final ParseTree emptyString = XQuerySemanticFunctionManager.getTree("\"\"", (parser)->parser.literal());
+    private static final ParseTree STRING_AT_CONTEXT_VALUE = XQuerySemanticFunctionManager.getTree("fn:string(.)", (parser) -> parser.functionCall());
+    private static final ParseTree EMPTY_STRING = XQuerySemanticFunctionManager.getTree("\"\"", (parser)->parser.literal());
 
     private CallAnalysisResult handleUnknownNamespace(final String namespace, final String errorMessageSupplier,
             final XQuerySequenceType fallbackType) {

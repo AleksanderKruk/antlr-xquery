@@ -4,13 +4,19 @@ import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
-import java.util.function.UnaryOperator;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.antlr.v4.runtime.tree.ParseTree;
+
+import com.github.akruk.antlrxquery.evaluator.XQueryEvaluatorVisitor;
 import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.IXQueryEvaluatingFunctionManager;
+import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.FunctionsOnStringValues;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.MathFunctions;
 import com.github.akruk.antlrxquery.values.XQueryError;
 import com.github.akruk.antlrxquery.values.XQueryFunction;
@@ -23,18 +29,21 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
             XQueryFunction function,
             long minArity,
             long maxArity,
-            List<String> argNames
-            ) {
+            Map<String, ParseTree> defaultArguments) {
     }
 
     private final Map<String, Map<String, List<FunctionEntry>>> namespaces;
     private final XQueryValueFactory valueFactory;
     private final MathFunctions mathFunctions;
+    private final FunctionsOnStringValues functionsOnStringValues;
+    private final XQueryEvaluatorVisitor evaluator;
 
-    public EvaluatingFunctionManager(final XQueryValueFactory valueFactory) {
+    public EvaluatingFunctionManager(final XQueryEvaluatorVisitor evaluator, final XQueryValueFactory valueFactory) {
         this.valueFactory = valueFactory;
+        this.evaluator = evaluator;
         this.namespaces = new HashMap<>(10);
         this.mathFunctions = new MathFunctions(valueFactory);
+        this.functionsOnStringValues = new FunctionsOnStringValues(valueFactory);
 
         registerFunction("fn", "true", this::true_);
         registerFunction("fn", "false", this::false_);
@@ -51,7 +60,6 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         registerFunction("fn", "remove", this::remove);
         registerFunction("fn", "reverse", this::reverse);
         registerFunction("fn", "subsequence", this::subsequence);
-        registerFunction("fn", "substring", this::substring);
         registerFunction("fn", "distinct-values", this::distinctValues);
         registerFunction("fn", "zero-or-one", this::zeroOrOne);
         registerFunction("fn", "one-or-more", this::oneOrMore);
@@ -65,10 +73,18 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         registerFunction("fn", "upper-case", this::uppercase);
         registerFunction("fn", "lower-case", this::lowercase);
         registerFunction("fn", "string", this::string);
-        registerFunction("fn", "concat", this::concat);
-        registerFunction("fn", "string-join", this::stringJoin);
-        registerFunction("fn", "string-length", this::stringLength);
-        registerFunction("fn", "normalize-space", this::normalizeSpace);
+
+        registerFunction("fn", "char", functionsOnStringValues::char_);
+        registerFunction("fn", "characters", functionsOnStringValues::characters);
+        registerFunction("fn", "graphemes", functionsOnStringValues::graphemes);
+        registerFunction("fn", "concat", functionsOnStringValues::concat);
+        registerFunction("fn", "string-join", functionsOnStringValues::stringJoin);
+        registerFunction("fn", "substring", functionsOnStringValues::substring);
+        registerFunction("fn", "string-length", functionsOnStringValues::stringLength);
+        registerFunction("fn", "normalize-space", functionsOnStringValues::normalizeSpace);
+        registerFunction("fn", "normalize-unicode", functionsOnStringValues::normalizeUnicode);
+        registerFunction("fn", "translate", functionsOnStringValues::translate);
+
         registerFunction("fn", "replace", this::replace);
         registerFunction("fn", "position", this::position);
         registerFunction("fn", "last", this::last);
@@ -272,22 +288,6 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         return XQueryError.WrongNumberOfArguments;
     }
 
-    public XQueryValue substring(XQueryVisitingContext ctx, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() == 2 || args.size() == 3) {
-            var target = args.get(0);
-            if (!args.get(1).isNumericValue()) return XQueryError.InvalidArgumentType;
-            int position = args.get(1).numericValue().intValue();
-            if (args.size() == 2) {
-                return target.substring(position);
-            } else {
-                if (!args.get(2).isNumericValue()) return XQueryError.InvalidArgumentType;
-                int length = args.get(2).numericValue().intValue();
-                return target.substring(position, length);
-            }
-        }
-        return XQueryError.WrongNumberOfArguments;
-    }
-
     public XQueryValue distinctValues(XQueryVisitingContext ctx, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
         if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         return args.get(0).distinctValues();
@@ -357,27 +357,6 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         return valueFactory.string(target.stringValue());
     }
 
-    public XQueryValue concat(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() < 2) return XQueryError.WrongNumberOfArguments;
-        String joined = args.stream().map(XQueryValue::stringValue).collect(Collectors.joining());
-        return valueFactory.string(joined);
-    }
-
-    public XQueryValue stringJoin(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() == 1) {
-            var sequence = args.get(0).sequence();
-            String joined = sequence.stream().map(XQueryValue::stringValue).collect(Collectors.joining());
-            return valueFactory.string(joined);
-        } else if (args.size() == 2) {
-            var sequence = args.get(0).sequence();
-            var delimiter = args.get(1).stringValue();
-            String joined = sequence.stream().map(XQueryValue::stringValue).collect(Collectors.joining(delimiter));
-            return valueFactory.string(joined);
-        } else {
-            return XQueryError.WrongNumberOfArguments;
-        }
-    }
-
     public XQueryValue position(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
         if (!args.isEmpty()) return XQueryError.WrongNumberOfArguments;
         return valueFactory.number(context.getPosition());
@@ -388,32 +367,6 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         return valueFactory.number(context.getSize());
     }
 
-    public XQueryValue stringLength(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() == 0) {
-            var str = context.getItem().stringValue();
-            return valueFactory.number(str.length());
-        } else if (args.size() == 1) {
-            return valueFactory.number(args.get(0).stringValue().length());
-        } else {
-            return XQueryError.WrongNumberOfArguments;
-        }
-    }
-
-    public Pattern whitespace = Pattern.compile("\\s+");
-    public UnaryOperator<String> normalize = (String s) -> {
-        var trimmed = s.trim();
-        return whitespace.matcher(trimmed).replaceAll(" ");
-    };
-    public XQueryValue normalizeSpace(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() == 0) {
-            String s = context.getItem().stringValue();
-            return valueFactory.string(normalize.apply(s));
-        } else if (args.size() == 1) {
-            return valueFactory.string(normalize.apply(args.get(0).stringValue()));
-        } else {
-            return XQueryError.WrongNumberOfArguments;
-        }
-    }
     record ParseFlagsResult(int flags, String newPattern, String newReplacement) {}
 
     public ParseFlagsResult parseFlags(String flags, String pattern, String replacement) {
@@ -483,13 +436,22 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         // namespaces.computeIfAbsent(namespace, _ -> new HashMap<>()).put(localName, function);
     }
 
-    private XQueryFunction getFunction(String namespace, String functionName, long arity) {
-        // Map<String, XQueryFunction> functionsInNs = namespaces.get(namespace);
-        // if (functionsInNs == null) {
-        //     return null;
-        // }
-        // return functionsInNs.get(functionName);
-        return null;
+    public static record FunctionOrError(FunctionEntry entry, XQueryValue error) {
+        public boolean isError() {
+            return error != null;
+        }
+    }
+    private FunctionOrError getFunction(String namespace, String functionName, long arity) {
+        Map<String, List<FunctionEntry>> functionsInNs = namespaces.get(namespace);
+        if (functionsInNs == null) {
+            return new FunctionOrError(null, XQueryError.UnknownFunctionName);
+        }
+        List<FunctionEntry> functionsWithGivenName = functionsInNs.get(functionName);
+        Predicate<FunctionEntry> withinArityRange = f -> !(f.minArity() <= arity && arity <= f.maxArity());
+        Optional<FunctionEntry> functionWithRequiredArity = functionsWithGivenName.stream().filter(withinArityRange).findFirst();
+        if (!functionWithRequiredArity.isPresent())
+            return new FunctionOrError(null, XQueryError.WrongFunctionArity);
+        return new FunctionOrError(functionWithRequiredArity.get(), null);
     }
 
     @Override
@@ -497,19 +459,29 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
             List<XQueryValue> args, Map<String, XQueryValue> keywordArgs)
     {
         final long arity = args.size() + keywordArgs.size();
-        XQueryFunction function = getFunction(namespace, functionName, arity);
-        if (function == null) {
-            return XQueryError.UnknownFunction;
-        }
+        FunctionOrError functionOrError = getFunction(namespace, functionName, arity);
+        if (functionOrError.isError())
+            return functionOrError.error();
+        FunctionEntry functionEntry = functionOrError.entry();
+        // functionEntry.defaultArguments;
+        final var function = functionEntry.function;
+        final var defaultArgs = functionEntry.defaultArguments;
+        final Stream<String> defaultedArgumentNames = functionEntry.defaultArguments.keySet().stream().filter(name-> !keywordArgs.containsKey(name));
+        final Map<String, XQueryValue> defaultedArguments = defaultedArgumentNames.collect(Collectors.toMap(name->name, name->{
+                ParseTree default_ = defaultArgs.get(name);
+                return default_.accept(evaluator);
+            }));
+        keywordArgs.putAll(defaultedArguments);
         return function.call(context, args, keywordArgs);
     }
 
     @Override
     public XQueryValue getFunctionReference(String namespace, String functionName, long arity) {
-        XQueryFunction function = getFunction(namespace, functionName, arity);
-        if (function == null) {
-            return XQueryError.UnknownFunction;
+        FunctionOrError function = getFunction(namespace, functionName, arity);
+        if (function.isError()) {
+            return XQueryError.UnknownFunctionName;
         }
-        return valueFactory.functionReference(function);
+        // return function.entry().function;
+        return null;
     }
 }

@@ -1,6 +1,7 @@
 package com.github.akruk.antlrxquery.evaluationfunctiontests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -15,6 +16,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import com.github.akruk.antlrxquery.evaluator.XQuery;
 import com.github.akruk.antlrxquery.testgrammars.TestLexer;
 import com.github.akruk.antlrxquery.testgrammars.TestParser;
+import com.github.akruk.antlrxquery.values.XQueryError;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.values.factories.defaults.XQueryMemoizedValueFactory;
@@ -48,6 +50,7 @@ public class FunctionsEvaluationTests {
     public void assertResult(String xquery, XQueryValue result) {
         XQueryValue value = XQuery.evaluate(null, xquery, null);
         assertNotNull(value);
+        assertFalse(value instanceof XQueryError, "Value is error: " + ((XQueryError) value).getDescription());
         assertTrue(result == value || result.valueEqual(value).booleanValue());
     }
 

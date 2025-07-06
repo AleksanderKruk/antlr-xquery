@@ -208,7 +208,8 @@ public class XQueryError implements XQueryValue {
             "XSLT transformation has been disabled.");
     public static final XQueryError XsltInvalidOutputCharacters = new XQueryError("FOXT0006",
             "XSLT output contains non-accepted characters.");
-    public static final XQueryValue UnknownFunction = new XQueryError("AXQY0001", "Called function that is not registered");
+    public static final XQueryValue UnknownFunctionName = new XQueryError("AXQY0001", "Called function that is not registered");
+    public static final XQueryValue WrongFunctionArity = new XQueryError("AXQY0002", "Called function with wrong arity");
 
     private final String code;
     private final String description;

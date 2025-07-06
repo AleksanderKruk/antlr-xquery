@@ -18,8 +18,9 @@ public class FunctionsOnStringValues {
     }
 
     public XQueryValue concat(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() < 2) return XQueryError.WrongNumberOfArguments;
-        String joined = args.stream().map(XQueryValue::stringValue).collect(Collectors.joining());
+        if (args.size() >= 2) return XQueryError.WrongNumberOfArguments;
+        if (args.size() == 0) return valueFactory.string(context.getItem().stringValue());
+        String joined = args.get(0).atomize().stream().map(XQueryValue::stringValue).collect(Collectors.joining());
         return valueFactory.string(joined);
     }
 

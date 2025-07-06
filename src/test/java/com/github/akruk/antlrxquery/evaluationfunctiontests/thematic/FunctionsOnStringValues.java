@@ -8,7 +8,7 @@ import com.github.akruk.antlrxquery.values.*;
 public class FunctionsOnStringValues extends FunctionsEvaluationTests {
     @Test
     public void concat() {
-        assertResult("concat('a', 'b', 'c')", new XQueryString("abc", baseFactory));
+        assertResult("concat(('a', 'b', 'c'))", new XQueryString("abc", baseFactory));
     }
 
     @Test

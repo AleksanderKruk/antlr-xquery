@@ -82,6 +82,17 @@ public class FunctionsOnStringValues {
         }
     }
 
+    public XQueryValue uppercase(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
+        return args.get(0).uppercase();
+    }
+
+    public XQueryValue lowercase(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
+        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
+        return args.get(0).lowercase();
+    }
+
+
 
     public XQueryValue char_(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
         return null;

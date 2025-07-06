@@ -72,20 +72,20 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         registerFunction("fn", "ends-with", this::endsWith, 0, 0, Map.of());
         registerFunction("fn", "substring-after", this::substringAfter, 0, 0, Map.of());
         registerFunction("fn", "substring-before", this::substringBefore, 0, 0, Map.of());
-        registerFunction("fn", "upper-case", this::uppercase, 0, 0, Map.of());
-        registerFunction("fn", "lower-case", this::lowercase, 0, 0, Map.of());
         registerFunction("fn", "string", this::string, 0, 0, Map.of());
 
-        registerFunction("fn", "char", functionsOnStringValues::char_, 0, 0, Map.of());
-        registerFunction("fn", "characters", functionsOnStringValues::characters, 0, 0, Map.of());
-        registerFunction("fn", "graphemes", functionsOnStringValues::graphemes, 0, 0, Map.of());
-        registerFunction("fn", "concat", functionsOnStringValues::concat, 0, 0, Map.of());
-        registerFunction("fn", "string-join", functionsOnStringValues::stringJoin, 0, 0, Map.of());
-        registerFunction("fn", "substring", functionsOnStringValues::substring, 0, 0, Map.of());
-        registerFunction("fn", "string-length", functionsOnStringValues::stringLength, 0, 0, Map.of());
-        registerFunction("fn", "normalize-space", functionsOnStringValues::normalizeSpace, 0, 0, Map.of());
-        registerFunction("fn", "normalize-unicode", functionsOnStringValues::normalizeUnicode, 0, 0, Map.of());
-        registerFunction("fn", "translate", functionsOnStringValues::translate, 0, 0, Map.of());
+        registerFunction("fn", "char", functionsOnStringValues::char_, 1, 1, Map.of());
+        registerFunction("fn", "characters", functionsOnStringValues::characters, 1, 1, Map.of());
+        registerFunction("fn", "graphemes", functionsOnStringValues::graphemes, 1, 1, Map.of());
+        registerFunction("fn", "concat", functionsOnStringValues::concat, 0, 1, Map.of());
+        registerFunction("fn", "string-join", functionsOnStringValues::stringJoin, 1, 2, Map.of());
+        registerFunction("fn", "substring", functionsOnStringValues::substring, 2, 3, Map.of());
+        registerFunction("fn", "string-length", functionsOnStringValues::stringLength, 0, 1, Map.of());
+        registerFunction("fn", "normalize-space", functionsOnStringValues::normalizeSpace, 0, 1, Map.of());
+        registerFunction("fn", "normalize-unicode", functionsOnStringValues::normalizeUnicode, 1, 2, Map.of());
+        registerFunction("fn", "upper-case", functionsOnStringValues::uppercase, 1, 1, Map.of());
+        registerFunction("fn", "lower-case", functionsOnStringValues::lowercase, 1, 1, Map.of());
+        registerFunction("fn", "translate", functionsOnStringValues::translate, 3, 3, Map.of());
 
         registerFunction("fn", "replace", this::replace, 0, 0, Map.of());
         registerFunction("fn", "position", this::position, 0, 0, Map.of());
@@ -341,16 +341,6 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
     public XQueryValue substringBefore(XQueryVisitingContext ctx, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
         if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
         return args.get(0).substringBefore(args.get(1));
-    }
-
-    public XQueryValue uppercase(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
-        return args.get(0).uppercase();
-    }
-
-    public XQueryValue lowercase(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
-        return args.get(0).lowercase();
     }
 
     public XQueryValue string(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {

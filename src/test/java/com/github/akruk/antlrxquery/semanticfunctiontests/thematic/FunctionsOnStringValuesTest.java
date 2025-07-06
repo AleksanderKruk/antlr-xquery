@@ -9,11 +9,11 @@ public class FunctionsOnStringValuesTest extends FunctionsSemanticTest {
     // fn:char($value as xs:string|xs:positiveInteger) as xs:string
     @Test public void char_withString() {
         assertType("fn:char('A')",
-            typeFactory.one(typeFactory.itemString()));
+            typeFactory.string());
     }
     @Test public void char_withInteger() {
         assertType("fn:char(65)",
-            typeFactory.one(typeFactory.itemString()));
+            typeFactory.string());
     }
     @Test public void char_wrongType() {
         assertErrors("fn:char(<a/>)");
@@ -52,11 +52,11 @@ public class FunctionsOnStringValuesTest extends FunctionsSemanticTest {
     // fn:concat($values as xs:anyAtomicType* := ()) as xs:string
     @Test public void concat_noArgs() {
         assertType("fn:concat()",
-            typeFactory.one(typeFactory.itemString()));
+            typeFactory.string());
     }
     @Test public void concat_mixed() {
         assertType("fn:concat('x', 1, 'y')",
-            typeFactory.one(typeFactory.itemString()));
+            typeFactory.string());
     }
     @Test public void concat_invalid() {
         assertErrors("fn:concat(<x/>)");
@@ -65,11 +65,11 @@ public class FunctionsOnStringValuesTest extends FunctionsSemanticTest {
     // fn:string-join($values as xs:anyAtomicType*, $separator as xs:string? := '') as xs:string
     @Test public void stringJoin_defaultSep() {
         assertType("fn:string-join(('a','b'))",
-            typeFactory.one(typeFactory.itemString()));
+            typeFactory.string());
     }
     @Test public void stringJoin_namedSep() {
         assertType("fn:string-join(('x','y'), separator := ',')",
-            typeFactory.one(typeFactory.itemString()));
+            typeFactory.string());
     }
     @Test public void stringJoin_bad() {
         assertErrors("fn:string-join(('a'), 5)");
@@ -78,11 +78,11 @@ public class FunctionsOnStringValuesTest extends FunctionsSemanticTest {
     // fn:substring($value as xs:string?, $start as xs:double, $length as xs:double? := ()) as xs:string
     @Test public void substring_minimal() {
         assertType("fn:substring('hello', 2)",
-            typeFactory.one(typeFactory.itemString()));
+            typeFactory.string());
     }
     @Test public void substring_withLength() {
         assertType("fn:substring('hello', 2, 3)",
-            typeFactory.one(typeFactory.itemString()));
+            typeFactory.string());
     }
     @Test public void substring_wrong() {
         assertErrors("fn:substring(123,1)");
@@ -92,11 +92,11 @@ public class FunctionsOnStringValuesTest extends FunctionsSemanticTest {
     // fn:string-length($value as xs:string? := fn:string(.)) as xs:integer
     @Test public void stringLength_arg() {
         assertType("fn:string-length('abc')",
-            typeFactory.one(typeFactory.itemNumber()));
+            typeFactory.number());
     }
     @Test public void stringLength_default() {
         assertType("fn:string-length()",
-            typeFactory.one(typeFactory.itemNumber()));
+            typeFactory.number());
     }
     @Test public void stringLength_bad() {
         assertErrors("fn:string-length(1)");
@@ -105,11 +105,11 @@ public class FunctionsOnStringValuesTest extends FunctionsSemanticTest {
     // fn:normalize-space($value as xs:string? := fn:string(.)) as xs:string
     @Test public void normalizeSpace_arg() {
         assertType("fn:normalize-space('  a  b  ')",
-            typeFactory.one(typeFactory.itemString()));
+            typeFactory.string());
     }
     @Test public void normalizeSpace_default() {
         assertType("fn:normalize-space()",
-            typeFactory.one(typeFactory.itemString()));
+            typeFactory.string());
     }
     @Test public void normalizeSpace_invalid() {
         assertErrors("fn:normalize-space(1)");
@@ -118,11 +118,11 @@ public class FunctionsOnStringValuesTest extends FunctionsSemanticTest {
     // fn:normalize-unicode($value as xs:string?, $form as xs:string? := 'NFC') as xs:string
     @Test public void normalizeUnicode_minimal() {
         assertType("fn:normalize-unicode('zażółć')",
-            typeFactory.one(typeFactory.itemString()));
+            typeFactory.string());
     }
     @Test public void normalizeUnicode_withForm() {
         assertType("fn:normalize-unicode('x','NFD')",
-            typeFactory.one(typeFactory.itemString()));
+            typeFactory.string());
     }
     @Test public void normalizeUnicode_badForm() {
         assertErrors("fn:normalize-unicode('x', 5)");
@@ -131,7 +131,7 @@ public class FunctionsOnStringValuesTest extends FunctionsSemanticTest {
     // fn:upper-case($value as xs:string?) as xs:string
     @Test public void upperCase_arg() {
         assertType("fn:upper-case('abc')",
-            typeFactory.one(typeFactory.itemString()));
+            typeFactory.string());
     }
     @Test public void upperCase_missing() {
         assertErrors("fn:upper-case()");
@@ -143,7 +143,7 @@ public class FunctionsOnStringValuesTest extends FunctionsSemanticTest {
     // fn:lower-case($value as xs:string?) as xs:string
     @Test public void lowerCase_arg() {
         assertType("fn:lower-case('ABC')",
-            typeFactory.one(typeFactory.itemString()));
+            typeFactory.string());
     }
     @Test public void lowerCase_invalid() {
         assertErrors("fn:lower-case(false())");
@@ -152,7 +152,7 @@ public class FunctionsOnStringValuesTest extends FunctionsSemanticTest {
     // fn:translate($value as xs:string?, $replace as xs:string, $with as xs:string) as xs:string
     @Test public void translate_valid() {
         assertType("fn:translate('abc','a','A')",
-            typeFactory.one(typeFactory.itemString()));
+            typeFactory.string());
     }
     @Test public void translate_missing() {
         assertErrors("fn:translate()");

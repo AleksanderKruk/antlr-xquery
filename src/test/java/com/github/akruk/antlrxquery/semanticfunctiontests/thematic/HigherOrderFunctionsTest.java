@@ -34,7 +34,7 @@ public class HigherOrderFunctionsTest extends FunctionsSemanticTest {
     @Test public void functionArity_valid() {
         assertType(
             "fn:function-arity(string#1)",
-            typeFactory.one(typeFactory.itemNumber())
+            typeFactory.number()
         );
     }
     @Test public void functionArity_errors() {
@@ -46,7 +46,7 @@ public class HigherOrderFunctionsTest extends FunctionsSemanticTest {
     @Test public void functionIdentity_valid() {
         assertType(
             "fn:function-identity(boolean#1)",
-            typeFactory.one(typeFactory.itemString())
+            typeFactory.string()
         );
     }
     @Test public void functionIdentity_wrong() {

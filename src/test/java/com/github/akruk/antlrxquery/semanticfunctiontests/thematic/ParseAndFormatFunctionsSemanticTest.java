@@ -33,11 +33,11 @@ public class ParseAndFormatFunctionsSemanticTest extends FunctionsSemanticTest {
     // fn:format-integer($value as xs:integer?, $picture as xs:string, $language as xs:string? := ()) as xs:string
     @Test void formatInteger_minimal() {
         assertType("fn:format-integer(42, '000')",
-            typeFactory.one(typeFactory.itemString()));
+            typeFactory.string());
     }
     @Test void formatInteger_withLanguage() {
         assertType("fn:format-integer(7, '#', 'en')",
-            typeFactory.one(typeFactory.itemString()));
+            typeFactory.string());
     }
     @Test void formatInteger_missingValueOrPicture() {
         assertErrors("fn:format-integer()");
@@ -56,15 +56,15 @@ public class ParseAndFormatFunctionsSemanticTest extends FunctionsSemanticTest {
     // fn:format-number($value as xs:numeric?, $picture as xs:string, $options as (xs:string|map(*))? := ()) as xs:string
     @Test void formatNumber_minimal() {
         assertType("fn:format-number(123.45, '#0.00')",
-            typeFactory.one(typeFactory.itemString()));
+            typeFactory.string());
     }
     @Test void formatNumber_withOptionsAsString() {
         assertType("fn:format-number(1.2, '0.0', 'decimal-separator=.')",
-            typeFactory.one(typeFactory.itemString()));
+            typeFactory.string());
     }
     @Test void formatNumber_withOptionsAsMap() {
         assertType("fn:format-number(3.14, '#.##', map{ 'decimal-separator' : '.' })",
-            typeFactory.one(typeFactory.itemString()));
+            typeFactory.string());
     }
     @Test void formatNumber_missingArgs() {
         assertErrors("fn:format-number()");

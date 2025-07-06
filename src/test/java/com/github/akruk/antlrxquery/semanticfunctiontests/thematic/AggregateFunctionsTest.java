@@ -10,9 +10,9 @@ public class AggregateFunctionsTest extends FunctionsSemanticTest {
     @Test
     public void count_emptySequenceAndMultipleItems() {
         assertType("fn:count(())",
-            typeFactory.one(typeFactory.itemNumber()));
+            typeFactory.number());
         assertType("fn:count(1,2,3)",
-            typeFactory.one(typeFactory.itemNumber()));
+            typeFactory.number());
     }
     @Test
     public void count_missingArgument() {

@@ -1,6 +1,5 @@
 package com.github.akruk.antlrxquery.semanticfunctiontests.thematic;
 
-import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrxquery.semanticfunctiontests.FunctionsSemanticTest;
 

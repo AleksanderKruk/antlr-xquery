@@ -249,8 +249,8 @@ public class ProcessingMapFunctionsTest extends FunctionsSemanticTest {
     @Test public void sizeMap_valid() {
         assertType(
             "map:size(map{'a':1})",
-            typeFactory.one(typeFactory.itemNumber())
-        );
+            typeFactory.number())
+        ;
     }
     @Test public void sizeMap_errors() {
         assertErrors("map:size()");

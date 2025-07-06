@@ -1,7 +1,5 @@
 package com.github.akruk.antlrxquery.semanticfunctiontests.thematic;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrxquery.semanticfunctiontests.FunctionsSemanticTest;
@@ -105,7 +103,7 @@ public class SequenceFunctionsTest extends FunctionsSemanticTest {
 
     // fn:reverse($input as item()*) as item()*
     @Test public void reverse_various() {
-        assertType("fn:reverse()",
+        assertType("fn:reverse(())",
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         assertType("fn:reverse(1,2,3)",
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()));

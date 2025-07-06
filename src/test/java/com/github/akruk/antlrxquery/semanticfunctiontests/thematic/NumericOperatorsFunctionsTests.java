@@ -1,6 +1,5 @@
 package com.github.akruk.antlrxquery.semanticfunctiontests.thematic;
 
-import java.math.BigDecimal;
 
 import org.junit.jupiter.api.Test;
 

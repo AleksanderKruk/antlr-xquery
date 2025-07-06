@@ -79,13 +79,13 @@ public class NodeIdentifierFunctionsTest extends FunctionsSemanticTest {
     @Test public void generateId_defaultNode() {
         assertType(
             "fn:generate-id()",
-            typeFactory.one(typeFactory.itemString())
+            typeFactory.string()
         );
     }
     @Test public void generateId_withNode() {
         assertType(
             "fn:generate-id(<a/>)",
-            typeFactory.one(typeFactory.itemString())
+            typeFactory.string()
         );
     }
     @Test public void generateId_wrongType() {

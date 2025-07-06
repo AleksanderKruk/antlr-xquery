@@ -8,7 +8,7 @@ public class OtherFunctionsOnNodesTest extends FunctionsSemanticTest{
 
     @Test
     public void name_default() {
-        assertType("fn:name()",typeFactory.one(typeFactory.itemString()));
+        assertType("fn:name()",typeFactory.string());
     }
 
     // @Test
@@ -23,7 +23,7 @@ public class OtherFunctionsOnNodesTest extends FunctionsSemanticTest{
 
     @Test
     public void localName_default() {
-        assertType("fn:local-name()",typeFactory.one(typeFactory.itemString()));
+        assertType("fn:local-name()",typeFactory.string());
     }
 
     // @Test
@@ -38,7 +38,7 @@ public class OtherFunctionsOnNodesTest extends FunctionsSemanticTest{
 
     @Test
     public void namespaceUri_default() {
-        assertType("fn:namespace-uri()",typeFactory.one(typeFactory.itemString()));
+        assertType("fn:namespace-uri()",typeFactory.string());
     }
 
     // @Test

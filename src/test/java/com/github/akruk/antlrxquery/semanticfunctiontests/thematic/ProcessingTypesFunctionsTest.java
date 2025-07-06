@@ -24,13 +24,13 @@ public class ProcessingTypesFunctionsTest extends FunctionsSemanticTest {
     @Test public void typeOf_noArgs() {
         assertType(
             "fn:type-of()",
-            typeFactory.one(typeFactory.itemString())
+            typeFactory.string()
         );
     }
     @Test public void typeOf_withValues() {
         assertType(
             "fn:type-of(1, <a/>, 'text')",
-            typeFactory.one(typeFactory.itemString())
+            typeFactory.string()
         );
     }
     @Test public void typeOf_tooManyArgs() {

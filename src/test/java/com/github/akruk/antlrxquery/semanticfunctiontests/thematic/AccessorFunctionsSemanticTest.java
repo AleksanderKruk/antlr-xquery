@@ -38,7 +38,7 @@ public class AccessorFunctionsSemanticTest extends FunctionsSemanticTest {
 
     @Test
     public void string_defaultContext() {
-        assertType("fn:string()", typeFactory.one(typeFactory.itemString()));
+        assertType("fn:string()", typeFactory.string());
     }
 
     @Test

@@ -1,6 +1,5 @@
 package com.github.akruk.antlrxquery.semanticfunctiontests.thematic;
 
-import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrxquery.semanticfunctiontests.FunctionsSemanticTest;
@@ -11,8 +10,8 @@ public class StringAndCollationFunctionsTest extends FunctionsSemanticTest {
     @Test
     public void codepointsToString_noArgs() {
         assertType(
-            "fn:codepoints-to-string()",
-            typeFactory.one(typeFactory.itemString())
+            "fn:codepoints-to-string(())",
+            typeFactory.string()
         );
     }
 
@@ -20,7 +19,7 @@ public class StringAndCollationFunctionsTest extends FunctionsSemanticTest {
     public void codepointsToString_withInts() {
         assertType(
             "fn:codepoints-to-string(65, 66, 67)",
-            typeFactory.one(typeFactory.itemString())
+            typeFactory.string()
         );
     }
 
@@ -90,7 +89,7 @@ public class StringAndCollationFunctionsTest extends FunctionsSemanticTest {
     public void collation_requiredOptions() {
         assertType(
             "fn:collation(map{})",
-            typeFactory.one(typeFactory.itemString())
+            typeFactory.string()
         );
     }
 

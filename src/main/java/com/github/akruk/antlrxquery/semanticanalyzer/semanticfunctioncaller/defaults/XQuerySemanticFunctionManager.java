@@ -4,9 +4,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CodePointCharStream;
+import org.antlr.v4.runtime.tree.ParseTree;
+import com.github.akruk.antlrxquery.AntlrXqueryLexer;
+import com.github.akruk.antlrxquery.AntlrXqueryParser;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQueryVisitingSemanticContext;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager;
@@ -25,6 +34,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
     public XQuerySemanticFunctionManager(final XQueryTypeFactory typeFactory) {
         this.typeFactory = typeFactory;
         this.namespaces = new HashMap<>(6);
+
+        final XQuerySequenceType optionalString = typeFactory.zeroOrOne(typeFactory.itemString());
 
         register("fn", "true", List.of(), typeFactory.boolean_());
         register("fn", "false", List.of(), typeFactory.boolean_());
@@ -47,7 +58,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // //                 "half-toward-zero",
         // //                 "half-away-from-zero",
         // //                 "half-to-even")));
-        // final ArgumentSpecification roundingMode = new ArgumentSpecification("mode", typeFactory.one(typeFactory.itemNumber()), null);
+        // final ArgumentSpecification roundingMode = new ArgumentSpecification("mode", typeFactory.number()), null);
 
         // register("fn", "abs", List.of(valueNum), optionalNumber);
         // register("fn", "ceiling", List.of(valueNum), optionalNumber);
@@ -56,7 +67,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         List.of(valueNum, precision, roundingMode), optionalNumber);
 
         // final ArgumentSpecification sequence = new ArgumentSpecification("input", zeroOrMoreItems, null);
-        // final ArgumentSpecification position = new ArgumentSpecification("position", typeFactory.one(typeFactory.itemNumber()), null);
+        // final ArgumentSpecification position = new ArgumentSpecification("position", typeFactory.number()), null);
 
         // final var optionalItem = typeFactory.zeroOrOne(typeFactory.itemAnyItem());
 
@@ -86,12 +97,12 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // register("fn", "subsequence",
         //         List.of(sequence, start, optionalLength), zeroOrMoreItems);
 
-        // final ArgumentSpecification optionalStringValue = new ArgumentSpecification("value", typeFactory.zeroOrOne(typeFactory.itemString()), null);
+        // final ArgumentSpecification optionalStringValue = new ArgumentSpecification("value", optionalString), null);
         // register("fn", "substring",
         //         List.of(optionalStringValue, start, optionalLength),
         //         typeFactory.string());
 
-        // final ArgumentSpecification optionalSubstring = new ArgumentSpecification("substring", typeFactory.zeroOrOne(typeFactory.itemString()), null);
+        // final ArgumentSpecification optionalSubstring = new ArgumentSpecification("substring", optionalString), null);
 
         // // TODO: collation
         // register("fn", "contains",
@@ -127,25 +138,25 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // register("fn", "lower-case", List.of(optionalStringValue), typeFactory.string());
 
         // // fn:replace(
-        // // $value as xs:string? := (),
-        // // $pattern as xs:string,
-        // // $replacement as (xs:string | fn(xs:untypedAtomic, xs:untypedAtomic*) as
+        // //  as xs:string? := (),
+        // //  as xs:string,
+        // //  as (xs:string | fn(xs:untypedAtomic, xs:untypedAtomic*) as
         // // item()?)? := (),
-        // // $flags as xs:string? := ''
+        // //  as xs:string? := ''
         // // ) as xs:string
-        // final ArgumentSpecification replaceValue = new ArgumentSpecification("value", false, typeFactory.zeroOrOne(typeFactory.itemString()));
-        // final ArgumentSpecification replacePattern = new ArgumentSpecification("pattern", typeFactory.one(typeFactory.itemString()), null);
+        // final ArgumentSpecification replaceValue = new ArgumentSpecification("value", false, optionalString));
+        // final ArgumentSpecification replacePattern = new ArgumentSpecification("pattern", typeFactory.string(), null);
         // final ArgumentSpecification replacement = new ArgumentSpecification("replacement", false,
         //         // string or function – approximate as any item?
         //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
         // final ArgumentSpecification replaceFlags = new ArgumentSpecification("flags", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // register("fn", "replace",
         //         List.of(replaceValue, replacePattern, replacement, replaceFlags),
         //         typeFactory.string());
 
         // // fn:string(
-        // // $value as item()? := .
+        // //  as item()? := .
         // // ) as xs:string
         // final ArgumentSpecification stringValue = new ArgumentSpecification("value", false,
         //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
@@ -154,7 +165,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.string());
 
         // // fn:concat(
-        // // $values as xs:anyAtomicType* := ()
+        // //  as xs:anyAtomicType* := ()
         // // ) as xs:string
         // final ArgumentSpecification concatValues = new ArgumentSpecification("values", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
@@ -163,29 +174,28 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.string());
 
         // // fn:string-join(
-        // // $values as xs:anyAtomicType* := (),
-        // // $separator as xs:string? := ""
+        // //  as xs:anyAtomicType* := (),
+        // //  as xs:string? := ""
         // // ) as xs:string
         // final ArgumentSpecification joinValues = new ArgumentSpecification("values", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // final ArgumentSpecification separator = new ArgumentSpecification("separator", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // register("fn", "string-join",
         //         List.of(joinValues, separator),
         //         typeFactory.string());
 
         // // fn:string-length(
-        // // $value as xs:string? := fn:string(.)
+        // //  as xs:string? := fn:string(.)
         // // ) as xs:integer
-        // final ArgumentSpecification lengthValue = new ArgumentSpecification("value", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
-        // register("fn", "string-length",
-        //         List.of(lengthValue),
-        //         typeFactory.number() // or typeFactory.integer() if available
-        // );
+        final ArgumentSpecification lengthValue = new ArgumentSpecification("value", optionalString, stringAtContextValue);
+        register("fn", "string-length",
+                List.of(lengthValue),
+                typeFactory.number() // or typeFactory.integer() if available
+        );
 
         // // fn:zero-or-one(
-        // // $input as item()*
+        // //  as item()*
         // // ) as item()?
         // final ArgumentSpecification z1Input = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
@@ -194,7 +204,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
 
         // // fn:one-or-more(
-        // // $input as item()*
+        // //  as item()*
         // // ) as item()+
         // final ArgumentSpecification o1Input = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
@@ -203,7 +213,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.oneOrMore(typeFactory.itemAnyItem()));
 
         // // fn:exactly-one(
-        // // $input as item()*
+        // //  as item()*
         // // ) as item()
         // final ArgumentSpecification e1Input = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
@@ -212,7 +222,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.one(typeFactory.itemAnyItem()));
 
         // // fn:data(
-        // // $input as item()* := .
+        // //  as item()* := .
         // // ) as xs:anyAtomicType*
         // final ArgumentSpecification dataInput = new ArgumentSpecification("input", false,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
@@ -221,31 +231,31 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
         // // fn:distinct-values(
-        // // $values as xs:anyAtomicType*,
-        // // $collation as xs:string? := fn:default-collation()
+        // //  as xs:anyAtomicType*,
+        // //  as xs:string? := fn:default-collation()
         // // ) as xs:anyAtomicType*
         // final ArgumentSpecification distinctValues = new ArgumentSpecification("values", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // final ArgumentSpecification collation = new ArgumentSpecification("collation", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // register("fn", "distinct-values",
         //         List.of(distinctValues, collation),
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
         // // op:numeric-multiply(
-        // // $arg1 as xs:numeric,
-        // // $arg2 as xs:numeric
+        // //  as xs:numeric,
+        // //  as xs:numeric
         // // ) as xs:numeric
         // final ArgumentSpecification nmArg1 = new ArgumentSpecification("arg1", true,
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
         // final ArgumentSpecification nmArg2 = new ArgumentSpecification("arg2", true,
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
         // register("op", "numeric-multiply",
         //         List.of(nmArg1, nmArg2),
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
 
         // // 2) fn:median(
-        // // $arg as xs:double*
+        // //  as xs:double*
         // // ) as xs:double?
         // final ArgumentSpecification medianArg = new ArgumentSpecification("arg", true,
         //         typeFactory.zeroOrMore(typeFactory.itemNumber()));
@@ -254,16 +264,16 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
 
         // // 3) fn:node-name(
-        // // $node as node()? := .
+        // //  as node()? := .
         // // ) as xs:QName?
         // final ArgumentSpecification nodeNameNode = new ArgumentSpecification("node", false,
         //         typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
         // register("fn", "node-name",
         //         List.of(nodeNameNode),
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
 
         // // 4) fn:nilled(
-        // // $node as node()? := .
+        // //  as node()? := .
         // // ) as xs:boolean?
         // final ArgumentSpecification nilledNode = new ArgumentSpecification("node", false,
         //         typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
@@ -272,25 +282,25 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrOne(typeFactory.itemBoolean()));
 
         // // 5) fn:base-uri(
-        // // $node as node()? := .
+        // //  as node()? := .
         // // ) as xs:anyURI?
         // final ArgumentSpecification baseUriNode = new ArgumentSpecification("node", false,
         //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
         // register("fn", "base-uri",
         //         List.of(baseUriNode),
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
 
         // // 6) fn:document-uri(
-        // // $node as node()? := .
+        // //  as node()? := .
         // // ) as xs:anyURI?
         // final ArgumentSpecification docUriNode = new ArgumentSpecification("node", false,
         //         typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
         // register("fn", "document-uri",
         //         List.of(docUriNode),
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
 
         // // 7) fn:name(
-        // // $node as node()? := .
+        // //  as node()? := .
         // // ) as xs:string
         // final ArgumentSpecification nameNode = new ArgumentSpecification("node", false,
         //         typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
@@ -299,7 +309,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.string());
 
         // // 8) fn:local-name(
-        // // $node as node()? := .
+        // //  as node()? := .
         // // ) as xs:string
         // final ArgumentSpecification localNameNode = new ArgumentSpecification("node", false,
         //         typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
@@ -308,7 +318,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.string());
 
         // // 9) fn:namespace-uri(
-        // // $node as node()? := .
+        // //  as node()? := .
         // // ) as xs:anyURI
         // final ArgumentSpecification nsUriNode = new ArgumentSpecification("node", false,
         //         typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
@@ -317,11 +327,11 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.string());
 
         // // 10) fn:lang(
-        // // $language as xs:string?,
-        // // $node as node() := .
+        // //  as xs:string?,
+        // //  as node() := .
         // // ) as xs:boolean
         // final ArgumentSpecification langValue = new ArgumentSpecification("language", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // final ArgumentSpecification langNode = new ArgumentSpecification("node", false,
         //         typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
         // register("fn", "lang",
@@ -329,7 +339,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.boolean_());
 
         // // 11) fn:root(
-        // // $node as node()? := .
+        // //  as node()? := .
         // // ) as node()?
         // final ArgumentSpecification rootNode = new ArgumentSpecification("node", false,
         //         typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
@@ -338,8 +348,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
 
         // // 12) fn:path(
-        // // $node as node()? := .
-        // // $options as map(*)? := {}
+        // //  as node()? := .
+        // //  as map(*)? := {}
         // // ) as xs:string?
         // final ArgumentSpecification pathNode = new ArgumentSpecification("node", false,
         //         typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
@@ -347,10 +357,10 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrOne(typeFactory.itemAnyMap()));
         // register("fn", "path",
         //         List.of(pathNode, pathOptions),
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
 
         // // fn:has-children(
-        // // $node as node()? := .
+        // //  as node()? := .
         // // ) as xs:boolean
         // final ArgumentSpecification hasChildrenNode = new ArgumentSpecification("node", false,
         //         typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
@@ -359,7 +369,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.boolean_());
 
         // // fn:siblings(
-        // // $node as node()? := .
+        // //  as node()? := .
         // // ) as node()*
         // final ArgumentSpecification siblingsNode = new ArgumentSpecification("node", false,
         //         typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
@@ -368,7 +378,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrMore(typeFactory.itemAnyNode()));
 
         // // fn:distinct-ordered-nodes(
-        // // $nodes as node()*
+        // //  as node()*
         // // ) as node()*
         // final ArgumentSpecification distinctOrderedInput = new ArgumentSpecification("nodes", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyNode()));
@@ -377,7 +387,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrMore(typeFactory.itemAnyNode()));
 
         // // fn:innermost(
-        // // $nodes as node()*
+        // //  as node()*
         // // ) as node()*
         // final ArgumentSpecification innermostInput = new ArgumentSpecification("nodes", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyNode()));
@@ -386,7 +396,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrMore(typeFactory.itemAnyNode()));
 
         // // fn:outermost(
-        // // $nodes as node()*
+        // //  as node()*
         // // ) as node()*
         // final ArgumentSpecification outermostInput = new ArgumentSpecification("nodes", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyNode()));
@@ -395,14 +405,14 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrMore(typeFactory.itemAnyNode()));
 
         // // fn:error(
-        // // $code as xs:QName? := (),
-        // // $description as xs:string? := (),
-        // // $value as item()* := .
+        // //  as xs:QName? := (),
+        // //  as xs:string? := (),
+        // //  as item()* := .
         // // ) as item()*
         // final ArgumentSpecification errorCode = new ArgumentSpecification("code", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // final ArgumentSpecification errorDescription = new ArgumentSpecification("description", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // final ArgumentSpecification errorValue = new ArgumentSpecification("value", false,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // register("fn", "error",
@@ -410,125 +420,125 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
         // // fn:trace(
-        // // $input as item()*,
-        // // $label as xs:string? := ()
+        // //  as item()*,
+        // //  as xs:string? := ()
         // // ) as item()*
         // final ArgumentSpecification traceInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // final ArgumentSpecification traceLabel = new ArgumentSpecification("label", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // register("fn", "trace",
         //         List.of(traceInput, traceLabel),
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
         // // fn:message(
-        // // $input as item()*,
-        // // $label as xs:string? := ()
+        // //  as item()*,
+        // //  as xs:string? := ()
         // // ) as empty-sequence()
         // final ArgumentSpecification messageInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // final ArgumentSpecification messageLabel = new ArgumentSpecification("label", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // register("fn", "message",
         //         List.of(messageInput, messageLabel),
         //         typeFactory.emptySequence());
 
         // // op:numeric-add(
-        // // $arg1 as xs:numeric,
-        // // $arg2 as xs:numeric
+        // //  as xs:numeric,
+        // //  as xs:numeric
         // // ) as xs:numeric
         // final ArgumentSpecification addArg1 = new ArgumentSpecification("arg1", true,
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
         // final ArgumentSpecification addArg2 = new ArgumentSpecification("arg2", true,
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
         // register("op", "numeric-add",
         //         List.of(addArg1, addArg2),
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
 
         // // op:numeric-subtract(
-        // // $arg1 as xs:numeric,
-        // // $arg2 as xs:numeric
+        // //  as xs:numeric,
+        // //  as xs:numeric
         // // ) as xs:numeric
         // final ArgumentSpecification subArg1 = new ArgumentSpecification("arg1", true,
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
         // final ArgumentSpecification subArg2 = new ArgumentSpecification("arg2", true,
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
         // register("op", "numeric-subtract",
         //         List.of(subArg1, subArg2),
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
 
         // // op:numeric-multiply(
-        // // $arg1 as xs:numeric,
-        // // $arg2 as xs:numeric
+        // //  as xs:numeric,
+        // //  as xs:numeric
         // // ) as xs:numeric
         // final ArgumentSpecification mulArg1 = new ArgumentSpecification("arg1", true,
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
         // final ArgumentSpecification mulArg2 = new ArgumentSpecification("arg2", true,
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
         // register("op", "numeric-multiply",
         //         List.of(mulArg1, mulArg2),
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
 
         // // op:numeric-divide(
-        // // $arg1 as xs:numeric,
-        // // $arg2 as xs:numeric
+        // //  as xs:numeric,
+        // //  as xs:numeric
         // // ) as xs:numeric
         // final ArgumentSpecification divArg1 = new ArgumentSpecification("arg1", true,
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
         // final ArgumentSpecification divArg2 = new ArgumentSpecification("arg2", true,
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
         // register("op", "numeric-divide",
         //         List.of(divArg1, divArg2),
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
 
         // // op:numeric-integer-divide(
-        // // $arg1 as xs:numeric,
-        // // $arg2 as xs:numeric
+        // //  as xs:numeric,
+        // //  as xs:numeric
         // // ) as xs:integer
         // final ArgumentSpecification idivArg1 = new ArgumentSpecification("arg1", true,
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
         // final ArgumentSpecification idivArg2 = new ArgumentSpecification("arg2", true,
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
         // register("op", "numeric-integer-divide",
         //         List.of(idivArg1, idivArg2),
         //         typeFactory.number());
 
         // // op:numeric-mod(
-        // // $arg1 as xs:numeric,
-        // // $arg2 as xs:numeric
+        // //  as xs:numeric,
+        // //  as xs:numeric
         // // ) as xs:numeric
         // final ArgumentSpecification modArg1 = new ArgumentSpecification("arg1", true,
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
         // final ArgumentSpecification modArg2 = new ArgumentSpecification("arg2", true,
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
         // register("op", "numeric-mod",
         //         List.of(modArg1, modArg2),
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
 
         // // op:numeric-unary-plus(
-        // // $arg as xs:numeric
+        // //  as xs:numeric
         // // ) as xs:numeric
         // final ArgumentSpecification upArg = new ArgumentSpecification("arg", true,
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
         // register("op", "numeric-unary-plus",
         //         List.of(upArg),
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
 
         // // op:numeric-unary-minus(
-        // // $arg as xs:numeric
+        // //  as xs:numeric
         // // ) as xs:numeric
         // final ArgumentSpecification umArg = new ArgumentSpecification("arg", true,
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
         // register("op", "numeric-unary-minus",
         //         List.of(umArg),
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
 
         // // fn:parse-integer(
-        // // $value as xs:string?,
-        // // $radix as xs:integer? := 10
+        // //  as xs:string?,
+        // //  as xs:integer? := 10
         // // ) as xs:integer?
         // final ArgumentSpecification parseIntValue = new ArgumentSpecification("value", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // final ArgumentSpecification parseIntRadix = new ArgumentSpecification("radix", false,
         //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
         // register("fn", "parse-integer",
@@ -536,29 +546,29 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
 
         // // fn:format-integer(
-        // // $value as xs:integer?,
-        // // $picture as xs:string,
-        // // $language as xs:string? := ()
+        // //  as xs:integer?,
+        // //  as xs:string,
+        // //  as xs:string? := ()
         // // ) as xs:string
         // final ArgumentSpecification fmtIntValue = new ArgumentSpecification("value", true,
         //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
         // final ArgumentSpecification fmtIntPicture = new ArgumentSpecification("picture", true,
-        //         typeFactory.one(typeFactory.itemString()));
+        //         typeFactory.string());
         // final ArgumentSpecification fmtIntLanguage = new ArgumentSpecification("language", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // register("fn", "format-integer",
         //         List.of(fmtIntValue, fmtIntPicture, fmtIntLanguage),
         //         typeFactory.string());
 
         // // fn:format-number(
-        // // $value as xs:numeric?,
-        // // $picture as xs:string,
-        // // $options as (xs:string | map(*))? := ()
+        // //  as xs:numeric?,
+        // //  as xs:string,
+        // //  as (xs:string | map(*))? := ()
         // // ) as xs:string
         // final ArgumentSpecification fmtNumValue = new ArgumentSpecification("value", true,
         //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
         // final ArgumentSpecification fmtNumPicture = new ArgumentSpecification("picture", true,
-        //         typeFactory.one(typeFactory.itemString()));
+        //         typeFactory.string());
         // final ArgumentSpecification fmtNumOptions = new ArgumentSpecification("options", false,
         //         // approximate union of string or map(*) with any-item
         //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
@@ -569,477 +579,431 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // math:pi() as xs:double
         register("math", "pi",
                 List.of(),
-                typeFactory.one(typeFactory.itemNumber()));
+                typeFactory.number());
 
         // math:e() as xs:double
         register("math", "e",
                 List.of(),
-                typeFactory.one(typeFactory.itemNumber()));
+                typeFactory.number());
 
-        // math:exp(
-        // $value as xs:double?
-        // ) as xs:double?
-        final ArgumentSpecification expValue = new ArgumentSpecification("value", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
+        final XQuerySequenceType optionalNumber = typeFactory.zeroOrOne(typeFactory.itemNumber());
+
+        // math:exp(  as xs:double?  ) as xs:double?
+        final ArgumentSpecification expValue = new ArgumentSpecification("value", optionalNumber, null);
         register("math", "exp",
                 List.of(expValue),
-                typeFactory.zeroOrOne(typeFactory.itemNumber()));
+                optionalNumber);
 
-        // math:exp10(
-        // $value as xs:double?
-        // ) as xs:double?
-        final ArgumentSpecification exp10Value = new ArgumentSpecification("value", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
+        // math:exp10(  as xs:double?  ) as xs:double?
+        final ArgumentSpecification exp10Value = new ArgumentSpecification("value", optionalNumber, null);
         register("math", "exp10",
                 List.of(exp10Value),
-                typeFactory.zeroOrOne(typeFactory.itemNumber()));
+                optionalNumber);
 
-        // math:log(
-        // $value as xs:double?
-        // ) as xs:double?
-        final ArgumentSpecification logValue = new ArgumentSpecification("value", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
+        // math:log(  as xs:double?  ) as xs:double?
+        final ArgumentSpecification logValue = new ArgumentSpecification("value", optionalNumber, null);
         register("math", "log",
                 List.of(logValue),
-                typeFactory.zeroOrOne(typeFactory.itemNumber()));
+                optionalNumber);
 
-        // math:log10(
-        // $value as xs:double?
-        // ) as xs:double?
-        final ArgumentSpecification log10Value = new ArgumentSpecification("value", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
+        // math:log10(  as xs:double?  ) as xs:double?
+        final ArgumentSpecification log10Value = new ArgumentSpecification("value", optionalNumber, null);
         register("math", "log10",
                 List.of(log10Value),
-                typeFactory.zeroOrOne(typeFactory.itemNumber()));
+                optionalNumber);
 
         // math:pow(
-        // $x as xs:double?,
-        // $y as xs:numeric
+        //  as xs:double?,
+        //  as xs:numeric
         // ) as xs:double?
-        final ArgumentSpecification powX = new ArgumentSpecification("x", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
-        final ArgumentSpecification powY = new ArgumentSpecification("y", typeFactory.one(typeFactory.itemNumber()), null);
+        final ArgumentSpecification powX = new ArgumentSpecification("x", optionalNumber, null);
+        final ArgumentSpecification powY = new ArgumentSpecification("y", typeFactory.number(), null);
         register("math", "pow",
                 List.of(powX, powY),
-                typeFactory.zeroOrOne(typeFactory.itemNumber()));
+                optionalNumber);
 
         // math:sqrt(
-        // $value as xs:double?
+        //  as xs:double?
         // ) as xs:double?
-        final ArgumentSpecification sqrtValue = new ArgumentSpecification("value", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
+        final ArgumentSpecification sqrtValue = new ArgumentSpecification("value", optionalNumber, null);
         register("math", "sqrt",
                 List.of(sqrtValue),
-                typeFactory.zeroOrOne(typeFactory.itemNumber()));
+                optionalNumber);
 
         // math:sin(
-        // $radians as xs:double?
+        //  as xs:double?
         // ) as xs:double?
-        final ArgumentSpecification sinValue = new ArgumentSpecification("radians", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
+        final ArgumentSpecification sinValue = new ArgumentSpecification("radians", optionalNumber, null);
         register("math", "sin",
                 List.of(sinValue),
-                typeFactory.zeroOrOne(typeFactory.itemNumber()));
+                optionalNumber);
 
         // math:cos(
-        // $radians as xs:double?
+        //  as xs:double?
         // ) as xs:double?
-        final ArgumentSpecification cosValue = new ArgumentSpecification("radians", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
+        final ArgumentSpecification cosValue = new ArgumentSpecification("radians", optionalNumber, null);
         register("math", "cos",
                 List.of(cosValue),
-                typeFactory.zeroOrOne(typeFactory.itemNumber()));
+                optionalNumber);
 
         // math:tan(
-        // $radians as xs:double?
+        //  as xs:double?
         // ) as xs:double?
-        final ArgumentSpecification tanValue = new ArgumentSpecification("radians", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
+        final ArgumentSpecification tanValue = new ArgumentSpecification("radians", optionalNumber, null);
         register("math", "tan",
                 List.of(tanValue),
-                typeFactory.zeroOrOne(typeFactory.itemNumber()));
+                optionalNumber);
 
         // math:asin(
-        // $value as xs:double?
+        //  as xs:double?
         // ) as xs:double?
-        final ArgumentSpecification asinValue = new ArgumentSpecification("value", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
+        final ArgumentSpecification asinValue = new ArgumentSpecification("value", optionalNumber, null);
         register("math", "asin",
                 List.of(asinValue),
-                typeFactory.zeroOrOne(typeFactory.itemNumber()));
+                optionalNumber);
 
         // math:acos(
-        // $value as xs:double?
+        //  as xs:double?
         // ) as xs:double?
-        final ArgumentSpecification acosValue = new ArgumentSpecification("value", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
+        final ArgumentSpecification acosValue = new ArgumentSpecification("value", optionalNumber, null);
         register("math", "acos",
                 List.of(acosValue),
-                typeFactory.zeroOrOne(typeFactory.itemNumber()));
+                optionalNumber);
         // math:atan(
-        // $value as xs:double?
+        //  as xs:double?
         // ) as xs:double?
-        final ArgumentSpecification atanVal = new ArgumentSpecification("value", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
+        final ArgumentSpecification atanVal = new ArgumentSpecification("value", optionalNumber, null);
         register("math", "atan",
                 List.of(atanVal),
-                typeFactory.zeroOrOne(typeFactory.itemNumber()));
+                optionalNumber);
 
         // math:atan2(
-        // $y as xs:double,
-        // $x as xs:double
+        //  as xs:double,
+        //  as xs:double
         // ) as xs:double
-        final ArgumentSpecification atan2Y = new ArgumentSpecification("y", typeFactory.one(typeFactory.itemNumber()), null);
-        final ArgumentSpecification atan2X = new ArgumentSpecification("x", typeFactory.one(typeFactory.itemNumber()), null);
+        final ArgumentSpecification atan2Y = new ArgumentSpecification("y", typeFactory.number(), null);
+        final ArgumentSpecification atan2X = new ArgumentSpecification("x", typeFactory.number(), null);
         register("math", "atan2",
                 List.of(atan2Y, atan2X),
-                typeFactory.one(typeFactory.itemNumber()));
+                typeFactory.number());
 
         // math:sinh(
-        // $value as xs:double?
+        //  as xs:double?
         // ) as xs:double?
-        final ArgumentSpecification sinhVal = new ArgumentSpecification("value", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
+        final ArgumentSpecification sinhVal = new ArgumentSpecification("value", optionalNumber, null);
         register("math", "sinh",
                 List.of(sinhVal),
-                typeFactory.zeroOrOne(typeFactory.itemNumber()));
+                optionalNumber);
 
         // math:cosh(
-        // $value as xs:double?
+        //  as xs:double?
         // ) as xs:double?
-        final ArgumentSpecification coshVal = new ArgumentSpecification("value", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
+        final ArgumentSpecification coshVal = new ArgumentSpecification("value", optionalNumber, null);
         register("math", "cosh",
                 List.of(coshVal),
-                typeFactory.zeroOrOne(typeFactory.itemNumber()));
+                optionalNumber);
 
         // math:tanh(
-        // $value as xs:double?
+        //  as xs:double?
         // ) as xs:double?
-        final ArgumentSpecification tanhVal = new ArgumentSpecification("value", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
+        final ArgumentSpecification tanhVal = new ArgumentSpecification("value", optionalNumber, null);
         register("math", "tanh",
                 List.of(tanhVal),
-                typeFactory.zeroOrOne(typeFactory.itemNumber()));
+                optionalNumber);
 
         // // fn:codepoints-to-string(
-        // // $values as xs:integer*
+        // //  as xs:integer*
         // // ) as xs:string
         // final ArgumentSpecification cpsValues = new ArgumentSpecification("values", true,
         //         typeFactory.zeroOrMore(typeFactory.itemNumber()));
         // register("fn", "codepoints-to-string",
         //         List.of(cpsValues),
-        //         typeFactory.one(typeFactory.itemString()));
+        //         typeFactory.string());
 
         // // fn:string-to-codepoints(
-        // // $value as xs:string?
+        // //  as xs:string?
         // // ) as xs:integer*
         // final ArgumentSpecification stcpValue = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // register("fn", "string-to-codepoints",
         //         List.of(stcpValue),
         //         typeFactory.zeroOrMore(typeFactory.itemNumber()));
 
         // // fn:codepoint-equal(
-        // // $value1 as xs:string?,
-        // // $value2 as xs:string?
+        // //  as xs:string?,
+        // //  as xs:string?
         // // ) as xs:boolean?
         // final ArgumentSpecification cpEq1 = new ArgumentSpecification("value1", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // final ArgumentSpecification cpEq2 = new ArgumentSpecification("value2", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // register("fn", "codepoint-equal",
         //         List.of(cpEq1, cpEq2),
         //         typeFactory.zeroOrOne(typeFactory.itemBoolean()));
 
         // // fn:collation(
-        // // $options as map(*)
+        // //  as map(*)
         // // ) as xs:string
         // final ArgumentSpecification collationOpts = new ArgumentSpecification("options", true,
         //         typeFactory.one(typeFactory.itemAnyMap()));
         // register("fn", "collation",
         //         List.of(collationOpts),
-        //         typeFactory.one(typeFactory.itemString()));
+        //         typeFactory.string());
 
         // // fn:collation-available(
-        // // $collation as xs:string,
-        // // $usage as enum('compare','key','substring')* := ()
+        // //  as xs:string,
+        // //  as enum('compare','key','substring')* := ()
         // // ) as xs:boolean
         // final ArgumentSpecification colAvailColl = new ArgumentSpecification("collation", true,
-        //         typeFactory.one(typeFactory.itemString()));
+        //         typeFactory.string());
         // final ArgumentSpecification colAvailUsage = new ArgumentSpecification("usage", false,
         //         typeFactory.zeroOrMore(typeFactory.itemEnum(Set.of("compare", "key", "substring"))));
         // register("fn", "collation-available",
         //         List.of(colAvailColl, colAvailUsage),
         //         typeFactory.boolean_());
         // // fn:contains-token(
-        // // $value as xs:string*,
-        // // $token as xs:string,
-        // // $collation as xs:string? := fn:default-collation()
+        // //  as xs:string*,
+        // //  as xs:string,
+        // //  as xs:string? := fn:default-collation()
         // // ) as xs:boolean
         // final ArgumentSpecification ctValue = new ArgumentSpecification("value", true,
         //         typeFactory.zeroOrMore(typeFactory.itemString()));
         // final ArgumentSpecification ctToken = new ArgumentSpecification("token", true,
-        //         typeFactory.one(typeFactory.itemString()));
+        //         typeFactory.string());
         // final ArgumentSpecification ctColl = new ArgumentSpecification("collation", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // register("fn", "contains-token",
         //         List.of(ctValue, ctToken, ctColl),
         //         typeFactory.boolean_());
 
-        // // fn:char(
-        // // $value as (xs:string | xs:positiveInteger)
-        // // ) as xs:string
-        // // ArgumentSpecification charVal =
-        // // new ArgumentSpecification("value", true,
-        // // typeFactory.one(typeFactory.union(
-        // // typeFactory.itemString(),
-        // // typeFactory.itemNumber()
-        // // )));
-        // // register("fn", "char",
-        // // List.of(charVal),
-        // // typeFactory.one(typeFactory.itemString())
-        // // );
+        // fn:char(
+        //  as (xs:string | xs:positiveInteger)
+        // ) as xs:string
+        XQuerySequenceType stringOrNumber = typeFactory.choice(List.of(typeFactory.itemString(), typeFactory.itemNumber()));
+        ArgumentSpecification charVal = new ArgumentSpecification("value", stringOrNumber, null);
+        register("fn", "char", List.of(charVal), typeFactory.string());
 
-        // // fn:characters($value as xs:string?) as xs:string*
-        // final ArgumentSpecification charactersValue = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
-        // register("fn", "characters",
-        //         List.of(charactersValue),
-        //         typeFactory.zeroOrMore(typeFactory.itemString()));
 
-        // // fn:graphemes($value as xs:string?) as xs:string*
-        // final ArgumentSpecification graphemesValue = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
-        // register("fn", "graphemes",
-        //         List.of(graphemesValue),
-        //         typeFactory.zeroOrMore(typeFactory.itemString()));
 
-        // // fn:string-join(
-        // // $values as xs:anyAtomicType*,
-        // // $separator as xs:string? := ""
-        // // ) as xs:string
-        // final ArgumentSpecification sjValues = new ArgumentSpecification("values", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification sjSeparator = new ArgumentSpecification("separator", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
-        // register("fn", "string-join",
-        //         List.of(sjValues, sjSeparator),
-        //         typeFactory.string());
+        // fn:characters( as xs:string?) as xs:string*
+        final ArgumentSpecification charactersValue = new ArgumentSpecification("value", optionalString, null);
+        register("fn", "characters",
+                List.of(charactersValue),
+                typeFactory.zeroOrMore(typeFactory.itemString()));
 
-        // // fn:substring(
-        // // $value as xs:string?,
-        // // $start as xs:double,
-        // // $length as xs:double? := ()
-        // // ) as xs:string
-        // final ArgumentSpecification substrValue = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
-        // final ArgumentSpecification substrStart = new ArgumentSpecification("start", true,
-        //         typeFactory.one(typeFactory.itemNumber()));
-        // final ArgumentSpecification substrLength = new ArgumentSpecification("length", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        // register("fn", "substring",
-        //         List.of(substrValue, substrStart, substrLength),
-        //         typeFactory.string());
+        // fn:graphemes( as xs:string?) as xs:string*
+        final ArgumentSpecification graphemesValue = new ArgumentSpecification("value", optionalString, null);
+        register("fn", "graphemes",
+                List.of(graphemesValue),
+                typeFactory.zeroOrMore(typeFactory.itemString()));
 
-        // // fn:string-length($value as xs:string? := fn:string(.)) as xs:integer
-        // final ArgumentSpecification slValue = new ArgumentSpecification("value", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
-        // register("fn", "string-length",
-        //         List.of(slValue),
-        //         typeFactory.number());
+        final ArgumentSpecification sjValues = new ArgumentSpecification("values", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null);
+        final ArgumentSpecification sjSeparator = new ArgumentSpecification("separator", optionalString, emptyString);
+        register("fn", "string-join",
+                List.of(sjValues, sjSeparator),
+                typeFactory.string());
 
-        // // fn:normalize-space($value as xs:string? := fn:string(.)) as xs:string
-        // final ArgumentSpecification nsValue = new ArgumentSpecification("value", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        // fn:substring(
+        //  as xs:string?,
+        //  as xs:double,
+        //  as xs:double? := ()
+        // ) as xs:string
+        final ArgumentSpecification substrValue = new ArgumentSpecification("value", optionalString, null);
+        final ArgumentSpecification substrStart = new ArgumentSpecification("start", typeFactory.number(), null);
+        final ArgumentSpecification substrLength = new ArgumentSpecification("length", optionalNumber, new ParenthesizedExprContext(null, 0));
+        register("fn", "substring",
+                List.of(substrValue, substrStart, substrLength),
+                typeFactory.string());
+
+
+
+        // fn:normalize-space( as xs:string? := fn:string(.)) as xs:string
+        // final ArgumentSpecification nsValue = new ArgumentSpecification("value", false, optionalString));
         // register("fn", "normalize-space",
         //         List.of(nsValue),
         //         typeFactory.string());
 
-        // // fn:normalize-unicode(
-        // // $value as xs:string?,
-        // // $form as xs:string? := "NFC"
-        // // ) as xs:string
-        // final ArgumentSpecification nuValue = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
-        // final ArgumentSpecification nuForm = new ArgumentSpecification("form", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
-        // register("fn", "normalize-unicode",
-        //         List.of(nuValue, nuForm),
-        //         typeFactory.string());
+        // fn:normalize-unicode(
+        //  as xs:string?,
+        //  as xs:string? := "NFC"
+        // ) as xs:string
+        final ParseTree nfc = XQuerySemanticFunctionManager.getTree("\"NFC\"", parser -> parser.literal());
+        final ArgumentSpecification nuValue = new ArgumentSpecification("value", optionalString, null);
+        final ArgumentSpecification nuForm = new ArgumentSpecification("form", optionalString, nfc);
+        register("fn", "normalize-unicode",
+                List.of(nuValue, nuForm),
+                typeFactory.string());
 
-        // // fn:upper-case($value as xs:string?) as xs:string
-        // final ArgumentSpecification ucValue = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
-        // register("fn", "upper-case",
-        //         List.of(ucValue),
-        //         typeFactory.string());
+        // fn:upper-case( as xs:string?) as xs:string
+        final ArgumentSpecification ucValue = new ArgumentSpecification("value", optionalString, null);
+        register("fn", "upper-case",
+                List.of(ucValue),
+                typeFactory.string());
 
-        // // fn:lower-case($value as xs:string?) as xs:string
-        // final ArgumentSpecification lcValue = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
-        // register("fn", "lower-case",
-        //         List.of(lcValue),
-        //         typeFactory.string());
+        // fn:lower-case( as xs:string?) as xs:string
+        final ArgumentSpecification lcValue = new ArgumentSpecification("value", optionalString, null);
+        register("fn", "lower-case",
+                List.of(lcValue),
+                typeFactory.string());
 
-        // // fn:translate(
-        // // $value as xs:string?,
-        // // $replace as xs:string,
-        // // $with as xs:string
-        // // ) as xs:string
-        // final ArgumentSpecification trValue = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
-        // final ArgumentSpecification trFrom = new ArgumentSpecification("replace", true,
-        //         typeFactory.one(typeFactory.itemString()));
-        // final ArgumentSpecification trTo = new ArgumentSpecification("with", true,
-        //         typeFactory.one(typeFactory.itemString()));
-        // register("fn", "translate",
-        //         List.of(trValue, trFrom, trTo),
-        //         typeFactory.string());
+        // fn:translate(
+        //  as xs:string?,
+        //  as xs:string,
+        //  as xs:string
+        // ) as xs:string
+        final ArgumentSpecification trValue = new ArgumentSpecification("value", optionalString, null);
+        final ArgumentSpecification trFrom = new ArgumentSpecification("replace", typeFactory.string(), null);
+        final ArgumentSpecification trTo = new ArgumentSpecification("with", typeFactory.string(), null);
+        register("fn", "translate",
+                List.of(trValue, trFrom, trTo),
+                typeFactory.string());
 
         // // fn:hash(
-        // // $value as (xs:string | xs:hexBinary | xs:base64Binary)?,
-        // // $algorithm as xs:string? := "MD5",
-        // // $options as map(*)? := {}
+        // //  $value as (xs:string | xs:hexBinary | xs:base64Binary)?,
+        // //  $algorithm as xs:string? := "MD5",
+        // //  $options as map(*)? := {}
         // // ) as xs:hexBinary?
-        // // ArgumentSpecification hashValue =
-        // // new ArgumentSpecification("value", false,
-        // // typeFactory.zeroOrOne(
-        // // typeFactory.union(
-        // // typeFactory.itemString(),
-        // // typeFactory.itemHexBinary(),
-        // // typeFactory.itemBase64Binary()
-        // // )
-        // // ));
-        // // ArgumentSpecification hashAlg =
-        // // new ArgumentSpecification("algorithm", false,
-        // // typeFactory.zeroOrOne(typeFactory.itemString()));
-        // // ArgumentSpecification hashOpts =
-        // // new ArgumentSpecification("options", false,
-        // // typeFactory.zeroOrOne(typeFactory.itemAnyMap()));
-        // // register("fn", "hash",
-        // // List.of(hashValue, hashAlg, hashOpts),
-        // // typeFactory.zeroOrOne(typeFactory.itemHexBinary())
-        // // );
+        // ArgumentSpecification hashValue = new ArgumentSpecification("value", optionalString, null);
+        // ArgumentSpecification hashAlg = new ArgumentSpecification("algorithm", optionalString, getTree("\"MD5\"", p->p.literal()));
+        // ArgumentSpecification hashOpts = new ArgumentSpecification("options", typeFactory.zeroOrOne(typeFactory.itemAnyMap()), getTree("{}", t -> t));
+        // register("fn", "hash",
+        // List.of(hashValue, hashAlg, hashOpts),
+        // typeFactory.zeroOrOne(typeFactory.itemHexBinary())
+        // );
 
         // // fn:contains(
-        // // $value as xs:string?,
-        // // $substring as xs:string?,
-        // // $collation as xs:string? := fn:default-collation()
+        // //  as xs:string?,
+        // //  as xs:string?,
+        // //  as xs:string? := fn:default-collation()
         // // ) as xs:boolean
         // final ArgumentSpecification cValue = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // final ArgumentSpecification cSubstr = new ArgumentSpecification("substring", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // final ArgumentSpecification cColl = new ArgumentSpecification("collation", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // register("fn", "contains",
         //         List.of(cValue, cSubstr, cColl),
         //         typeFactory.boolean_());
         // // fn:starts-with(
-        // // $value as xs:string?,
-        // // $substring as xs:string?,
-        // // $collation as xs:string? := fn:default-collation()
+        // //  as xs:string?,
+        // //  as xs:string?,
+        // //  as xs:string? := fn:default-collation()
         // // ) as xs:boolean
         // final ArgumentSpecification swValue = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // final ArgumentSpecification swSubstring = new ArgumentSpecification("substring", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // final ArgumentSpecification swCollation = new ArgumentSpecification("collation", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // register("fn", "starts-with",
         //         List.of(swValue, swSubstring, swCollation),
         //         typeFactory.boolean_());
 
         // // fn:ends-with(
-        // // $value as xs:string?,
-        // // $substring as xs:string?,
-        // // $collation as xs:string? := fn:default-collation()
+        // //  as xs:string?,
+        // //  as xs:string?,
+        // //  as xs:string? := fn:default-collation()
         // // ) as xs:boolean
         // final ArgumentSpecification ewValue = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // final ArgumentSpecification ewSubstring = new ArgumentSpecification("substring", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // final ArgumentSpecification ewCollation = new ArgumentSpecification("collation", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // register("fn", "ends-with",
         //         List.of(ewValue, ewSubstring, ewCollation),
         //         typeFactory.boolean_());
 
         // // fn:substring-before(
-        // // $value as xs:string?,
-        // // $substring as xs:string?,
-        // // $collation as xs:string? := fn:default-collation()
+        // //  as xs:string?,
+        // //  as xs:string?,
+        // //  as xs:string? := fn:default-collation()
         // // ) as xs:string
         // final ArgumentSpecification sbValue = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // final ArgumentSpecification sbSubstring = new ArgumentSpecification("substring", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // final ArgumentSpecification sbCollation = new ArgumentSpecification("collation", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // register("fn", "substring-before",
         //         List.of(sbValue, sbSubstring, sbCollation),
         //         typeFactory.string());
 
         // // fn:substring-after(
-        // // $value as xs:string?,
-        // // $substring as xs:string?,
-        // // $collation as xs:string? := fn:default-collation()
+        // //  as xs:string?,
+        // //  as xs:string?,
+        // //  as xs:string? := fn:default-collation()
         // // ) as xs:string
         // final ArgumentSpecification saValue = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // final ArgumentSpecification saSubstring = new ArgumentSpecification("substring", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // final ArgumentSpecification saCollation = new ArgumentSpecification("collation", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // register("fn", "substring-after",
         //         List.of(saValue, saSubstring, saCollation),
         //         typeFactory.string());
 
         // // fn:matches(
-        // // $value as xs:string?,
-        // // $pattern as xs:string,
-        // // $flags as xs:string? := ""
+        // //  as xs:string?,
+        // //  as xs:string,
+        // //  as xs:string? := ""
         // // ) as xs:boolean
         // final ArgumentSpecification mValue = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // final ArgumentSpecification mPattern = new ArgumentSpecification("pattern", true,
-        //         typeFactory.one(typeFactory.itemString()));
+        //         typeFactory.string());
         // final ArgumentSpecification mFlags = new ArgumentSpecification("flags", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // register("fn", "matches",
         //         List.of(mValue, mPattern, mFlags),
         //         typeFactory.boolean_());
 
         // // fn:replace(
-        // // $value as xs:string?,
-        // // $pattern as xs:string,
-        // // $replacement as (xs:string | fn(...))? := (),
-        // // $flags as xs:string? := ''
+        // //  as xs:string?,
+        // //  as xs:string,
+        // //  as (xs:string | fn(...))? := (),
+        // //  as xs:string? := ''
         // // ) as xs:string
         // final ArgumentSpecification rValue = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // final ArgumentSpecification rPattern = new ArgumentSpecification("pattern", true,
-        //         typeFactory.one(typeFactory.itemString()));
+        //         typeFactory.string());
         // final ArgumentSpecification rReplacement = new ArgumentSpecification("replacement", false,
         //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
         // final ArgumentSpecification rFlags = new ArgumentSpecification("flags", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // register("fn", "replace",
         //         List.of(rValue, rPattern, rReplacement, rFlags),
         //         typeFactory.string());
 
         // // fn:tokenize(
-        // // $value as xs:string?,
-        // // $pattern as xs:string? := (),
-        // // $flags as xs:string? := ""
+        // //  as xs:string?,
+        // //  as xs:string? := (),
+        // //  as xs:string? := ""
         // // ) as xs:string*
         // final ArgumentSpecification tValue = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // final ArgumentSpecification tPattern = new ArgumentSpecification("pattern", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // final ArgumentSpecification tFlags2 = new ArgumentSpecification("flags", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // register("fn", "tokenize",
         //         List.of(tValue, tPattern, tFlags2),
         //         typeFactory.zeroOrMore(typeFactory.itemString()));
 
         // // fn:analyze-string(
-        // // $value as xs:string?,
-        // // $pattern as xs:string,
-        // // $flags as xs:string? := ""
+        // //  as xs:string?,
+        // //  as xs:string,
+        // //  as xs:string? := ""
         // // ) as element(fn:analyze-string-result)
         // final ArgumentSpecification aValue = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // final ArgumentSpecification aPattern = new ArgumentSpecification("pattern", true,
-        //         typeFactory.one(typeFactory.itemString()));
+        //         typeFactory.string());
         // final ArgumentSpecification aFlags = new ArgumentSpecification("flags", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // register("fn", "analyze-string",
         //         List.of(aValue, aPattern, aFlags),
         //         typeFactory.one(typeFactory.itemElement(Set.of("fn:analyze-string-result"))));
@@ -1054,7 +1018,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         List.of(),
         //         typeFactory.boolean_());
 
-        // // op:boolean-equal($value1 as xs:boolean, $value2 as xs:boolean) as xs:boolean
+        // // op:boolean-equal( as xs:boolean,  as xs:boolean) as xs:boolean
         // final ArgumentSpecification boolEq1 = new ArgumentSpecification("value1", true,
         //         typeFactory.one(typeFactory.itemBoolean()));
         // final ArgumentSpecification boolEq2 = new ArgumentSpecification("value2", true,
@@ -1063,7 +1027,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         List.of(boolEq1, boolEq2),
         //         typeFactory.boolean_());
 
-        // // op:boolean-less-than($arg1 as xs:boolean, $arg2 as xs:boolean) as xs:boolean
+        // // op:boolean-less-than( as xs:boolean,  as xs:boolean) as xs:boolean
         // final ArgumentSpecification boolLt1 = new ArgumentSpecification("arg1", true,
         //         typeFactory.one(typeFactory.itemBoolean()));
         // final ArgumentSpecification boolLt2 = new ArgumentSpecification("arg2", true,
@@ -1072,14 +1036,14 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         List.of(boolLt1, boolLt2),
         //         typeFactory.boolean_());
 
-        // // fn:boolean($input as item()*) as xs:boolean
+        // // fn:boolean( as item()*) as xs:boolean
         // final ArgumentSpecification booleanInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // register("fn", "boolean",
         //         List.of(booleanInput),
         //         typeFactory.boolean_());
 
-        // // fn:not($input as item()*) as xs:boolean
+        // // fn:not( as item()*) as xs:boolean
         // final ArgumentSpecification notInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // register("fn", "not",
@@ -1090,51 +1054,51 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // final ArgumentSpecification input = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
-        // // fn:empty($input as item()*) as xs:boolean
+        // // fn:empty( as item()*) as xs:boolean
         // register("fn", "empty",
         //         List.of(input),
         //         typeFactory.boolean_());
 
-        // // fn:exists($input as item()*) as xs:boolean
+        // // fn:exists( as item()*) as xs:boolean
         // register("fn", "exists",
         //         List.of(input),
         //         typeFactory.boolean_());
 
-        // // fn:foot($input as item()*) as item()?
+        // // fn:foot( as item()*) as item()?
         // register("fn", "foot",
         //         List.of(input),
         //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
 
-        // // fn:head($input as item()*) as item()?
+        // // fn:head( as item()*) as item()?
         // register("fn", "head",
         //         List.of(input),
         //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
 
-        // // fn:identity($input as item()*) as item()*
+        // // fn:identity( as item()*) as item()*
         // register("fn", "identity",
         //         List.of(input),
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
-        // // fn:items-at($input as item()*, $at as xs:integer*) as item()*
+        // // fn:items-at( as item()*,  as xs:integer*) as item()*
         // final ArgumentSpecification at = new ArgumentSpecification("at", true,
         //         typeFactory.zeroOrMore(typeFactory.itemNumber()));
         // register("fn", "items-at",
         //         List.of(input, at),
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
-        // // fn:replicate($input as item()*, $count as xs:nonNegativeInteger) as item()*
+        // // fn:replicate( as item()*,  as xs:nonNegativeInteger) as item()*
         // final ArgumentSpecification count = new ArgumentSpecification("count", true,
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
         // register("fn", "replicate",
         //         List.of(input, count),
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
-        // // fn:reverse($input as item()*) as item()*
+        // // fn:reverse( as item()*) as item()*
         // register("fn", "reverse",
         //         List.of(input),
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
-        // // fn:sequence-join($input as item()*, $separator as item()*) as item()*
+        // // fn:sequence-join( as item()*,  as item()*) as item()*
         // final ArgumentSpecification seqJoinInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // final ArgumentSpecification seqJoinSeparator = new ArgumentSpecification("separator", true,
@@ -1143,8 +1107,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         List.of(seqJoinInput, seqJoinSeparator),
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
-        // // fn:slice($input as item()*, $start as xs:integer? := (), $end as xs:integer?
-        // // := (), $step as xs:integer? := ()) as item()*
+        // // fn:slice( as item()*,  as xs:integer? := (),  as xs:integer?
+        // // := (),  as xs:integer? := ()) as item()*
         // final ArgumentSpecification sliceInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // final ArgumentSpecification sliceStart = new ArgumentSpecification("start", false,
@@ -1157,47 +1121,47 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         List.of(sliceInput, sliceStart, sliceEnd, sliceStep),
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
-        // // fn:subsequence($input as item()*, $start as xs:double, $length as xs:double?
+        // // fn:subsequence( as item()*,  as xs:double,  as xs:double?
         // // := ()) as item()*
         // final ArgumentSpecification subInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // final ArgumentSpecification subStart = new ArgumentSpecification("start", true,
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
         // final ArgumentSpecification subLength = new ArgumentSpecification("length", false,
         //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
         // register("fn", "subsequence",
         //         List.of(subInput, subStart, subLength),
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
-        // // fn:tail($input as item()*) as item()*
+        // // fn:tail( as item()*) as item()*
         // final ArgumentSpecification tailInput2 = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // register("fn", "tail",
         //         List.of(tailInput2),
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
-        // // fn:trunk($input as item()*) as item()*
+        // // fn:trunk( as item()*) as item()*
         // final ArgumentSpecification trunkInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // register("fn", "trunk",
         //         List.of(trunkInput),
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
-        // // fn:unordered($input as item()*) as item()*
+        // // fn:unordered( as item()*) as item()*
         // final ArgumentSpecification unorderedInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // register("fn", "unordered",
         //         List.of(unorderedInput),
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
-        // // fn:void($input as item()* := ()) as empty-sequence()
+        // // fn:void( as item()* := ()) as empty-sequence()
         // final ArgumentSpecification voidInput = new ArgumentSpecification("input", false,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // register("fn", "void",
         //         List.of(voidInput),
         //         typeFactory.emptySequence());
 
-        // // fn:atomic-equal($value1 as xs:anyAtomicType, $value2 as xs:anyAtomicType) as
+        // // fn:atomic-equal( as xs:anyAtomicType,  as xs:anyAtomicType) as
         // // xs:boolean
         // final ArgumentSpecification atomicEq1 = new ArgumentSpecification("value1", true,
         //         typeFactory.one(typeFactory.itemAnyItem()));
@@ -1207,7 +1171,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         List.of(atomicEq1, atomicEq2),
         //         typeFactory.boolean_());
 
-        // // fn:deep-equal($input1 as item()*, $input2 as item()*, $options as
+        // // fn:deep-equal( as item()*,  as item()*,  as
         // // (xs:string|map(*))? := {}) as xs:boolean
         // final ArgumentSpecification deepInput1 = new ArgumentSpecification("input1", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
@@ -1219,60 +1183,60 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         List.of(deepInput1, deepInput2, deepOptions),
         //         typeFactory.boolean_());
 
-        // // fn:compare($value1 as xs:anyAtomicType?, $value2 as xs:anyAtomicType?,
-        // // $collation as xs:string? := fn:default-collation()) as xs:integer?
+        // // fn:compare( as xs:anyAtomicType?,  as xs:anyAtomicType?,
+        // //  as xs:string? := fn:default-collation()) as xs:integer?
         // final ArgumentSpecification compareValue1 = new ArgumentSpecification("value1", false,
         //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
         // final ArgumentSpecification compareValue2 = new ArgumentSpecification("value2", false,
         //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
         // final ArgumentSpecification compareCollation = new ArgumentSpecification("collation", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // register("fn", "compare",
         //         List.of(compareValue1, compareValue2, compareCollation),
         //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
         // // fn:distinct-values(
-        // // $values as xs:anyAtomicType*,
-        // // $collation as xs:string? := fn:default-collation()
+        // //  as xs:anyAtomicType*,
+        // //  as xs:string? := fn:default-collation()
         // // ) as xs:anyAtomicType*
         // final ArgumentSpecification distinctVals = new ArgumentSpecification("values", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // final ArgumentSpecification distinctColl = new ArgumentSpecification("collation", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // register("fn", "distinct-values",
         //         List.of(distinctVals, distinctColl),
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
         // // fn:duplicate-values(
-        // // $values as xs:anyAtomicType*,
-        // // $collation as xs:string? := fn:default-collation()
+        // //  as xs:anyAtomicType*,
+        // //  as xs:string? := fn:default-collation()
         // // ) as xs:anyAtomicType*
         // final ArgumentSpecification duplicateVals = new ArgumentSpecification("values", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // final ArgumentSpecification duplicateColl = new ArgumentSpecification("collation", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // register("fn", "duplicate-values",
         //         List.of(duplicateVals, duplicateColl),
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
         // // fn:index-of(
-        // // $input as xs:anyAtomicType*,
-        // // $target as xs:anyAtomicType,
-        // // $collation as xs:string? := fn:default-collation()
+        // //  as xs:anyAtomicType*,
+        // //  as xs:anyAtomicType,
+        // //  as xs:string? := fn:default-collation()
         // // ) as xs:integer*
         // final ArgumentSpecification indexInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // final ArgumentSpecification indexTarget = new ArgumentSpecification("target", true,
         //         typeFactory.one(typeFactory.itemAnyItem()));
         // final ArgumentSpecification indexColl = new ArgumentSpecification("collation", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // register("fn", "index-of",
         //         List.of(indexInput, indexTarget, indexColl),
         //         typeFactory.zeroOrMore(typeFactory.itemNumber()));
 
         // // fn:starts-with-subsequence(
-        // // $input as item()*,
-        // // $subsequence as item()*,
-        // // $compare as (fn(item(),item()) as xs:boolean?)? := fn:deep-equal#2
+        // //  as item()*,
+        // //  as item()*,
+        // //  as (fn(item(),item()) as xs:boolean?)? := fn:deep-equal#2
         // // ) as xs:boolean
         // final ArgumentSpecification swsInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
@@ -1285,9 +1249,9 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.boolean_());
 
         // // fn:ends-with-subsequence(
-        // // $input as item()*,
-        // // $subsequence as item()*,
-        // // $compare as (fn(item(),item()) as xs:boolean?)? := fn:deep-equal#2
+        // //  as item()*,
+        // //  as item()*,
+        // //  as (fn(item(),item()) as xs:boolean?)? := fn:deep-equal#2
         // // ) as xs:boolean
         // final ArgumentSpecification ewsInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
@@ -1300,9 +1264,9 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.boolean_());
 
         // // fn:contains-subsequence(
-        // // $input as item()*,
-        // // $subsequence as item()*,
-        // // $compare as (fn(item(),item()) as xs:boolean?)? := fn:deep-equal#2
+        // //  as item()*,
+        // //  as item()*,
+        // //  as (fn(item(),item()) as xs:boolean?)? := fn:deep-equal#2
         // // ) as xs:boolean
         // final ArgumentSpecification cssInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
@@ -1314,35 +1278,35 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         List.of(cssInput, cssSubseq, cssCompare),
         //         typeFactory.boolean_());
 
-        // // fn:zero-or-one($input as item()*) as item()?
+        // // fn:zero-or-one( as item()*) as item()?
         // final ArgumentSpecification z1Input2 = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // register("fn", "zero-or-one",
         //         List.of(z1Input2),
         //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
 
-        // // fn:one-or-more($input as item()*) as item()+
+        // // fn:one-or-more( as item()*) as item()+
         // final ArgumentSpecification o1Input2 = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // register("fn", "one-or-more",
         //         List.of(o1Input2),
         //         typeFactory.oneOrMore(typeFactory.itemAnyItem()));
 
-        // // fn:exactly-one($input as item()*) as item()
+        // // fn:exactly-one( as item()*) as item()
         // final ArgumentSpecification e1Input2 = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // register("fn", "exactly-one",
         //         List.of(e1Input2),
         //         typeFactory.one(typeFactory.itemAnyItem()));
 
-        // // fn:count($input as item()*) as xs:integer
+        // // fn:count( as item()*) as xs:integer
         // final ArgumentSpecification countInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // register("fn", "count",
         //         List.of(countInput),
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
 
-        // // fn:avg($values as xs:anyAtomicType*) as xs:anyAtomicType?
+        // // fn:avg( as xs:anyAtomicType*) as xs:anyAtomicType?
         // final ArgumentSpecification avgValues = new ArgumentSpecification("values", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // register("fn", "avg",
@@ -1350,32 +1314,32 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
 
         // // fn:max(
-        // // $values as xs:anyAtomicType*,
-        // // $collation as xs:string? := fn:default-collation()
+        // //  as xs:anyAtomicType*,
+        // //  as xs:string? := fn:default-collation()
         // // ) as xs:anyAtomicType?
         // final ArgumentSpecification maxValues = new ArgumentSpecification("values", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // final ArgumentSpecification maxColl = new ArgumentSpecification("collation", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // register("fn", "max",
         //         List.of(maxValues, maxColl),
         //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
 
         // // fn:min(
-        // // $values as xs:anyAtomicType*,
-        // // $collation as xs:string? := fn:default-collation()
+        // //  as xs:anyAtomicType*,
+        // //  as xs:string? := fn:default-collation()
         // // ) as xs:anyAtomicType?
         // final ArgumentSpecification minValues = new ArgumentSpecification("values", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // final ArgumentSpecification minColl = new ArgumentSpecification("collation", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // register("fn", "min",
         //         List.of(minValues, minColl),
         //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
 
         // // fn:sum(
-        // // $values as xs:anyAtomicType*,
-        // // $zero as xs:anyAtomicType? := 0
+        // //  as xs:anyAtomicType*,
+        // //  as xs:anyAtomicType? := 0
         // // ) as xs:anyAtomicType?
         // final ArgumentSpecification sumValues = new ArgumentSpecification("values", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
@@ -1386,56 +1350,56 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
 
         // // fn:all-equal(
-        // // $values as xs:anyAtomicType*,
-        // // $collation as xs:string? := fn:default-collation()
+        // //  as xs:anyAtomicType*,
+        // //  as xs:string? := fn:default-collation()
         // // ) as xs:boolean
         // final ArgumentSpecification allEqualValues = new ArgumentSpecification("values", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // final ArgumentSpecification allEqualCollation = new ArgumentSpecification("collation", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // register("fn", "all-equal",
         //         List.of(allEqualValues, allEqualCollation),
         //         typeFactory.boolean_());
 
         // // // fn:all-different(
-        // // // $values as xs:anyAtomicType*,
-        // // // $collation as xs:string? := fn:default-collation()
+        // // //  as xs:anyAtomicType*,
+        // // //  as xs:string? := fn:default-collation()
         // // // ) as xs:boolean
         // // final ArgumentSpecification allDiffValues = new ArgumentSpecification("values", true,
         // //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // // final ArgumentSpecification allDiffCollation = new ArgumentSpecification("collation", false,
-        // //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        // //         optionalString));
         // // register("fn", "all-different",
         // //         List.of(allDiffValues, allDiffCollation),
         // //         typeFactory.boolean_());
 
         // // // fn:collection(
-        // // // $source as xs:string? := ()
+        // // //  as xs:string? := ()
         // // // ) as item()*
         // // final ArgumentSpecification colSource = new ArgumentSpecification("source", false,
-        // //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        // //         optionalString));
         // // register("fn", "collection",
         // //         List.of(colSource),
         // //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
         // // fn:unparsed-text(
-        // // $source as xs:string?,
-        // // $options as (xs:string|map(*))? := ()
+        // //  as xs:string?,
+        // //  as (xs:string|map(*))? := ()
         // // ) as xs:string?
         // final ArgumentSpecification utSource = new ArgumentSpecification("source", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // final ArgumentSpecification utOptions = new ArgumentSpecification("options", false,
         //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
         // register("fn", "unparsed-text",
         //         List.of(utSource, utOptions),
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
 
         // // fn:unparsed-text-lines(
-        // // $source as xs:string?,
-        // // $options as (xs:string|map(*))? := ()
+        // //  as xs:string?,
+        // //  as (xs:string|map(*))? := ()
         // // ) as xs:string*
         // final ArgumentSpecification utlSource = new ArgumentSpecification("source", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // final ArgumentSpecification utlOptions = new ArgumentSpecification("options", false,
         //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
         // register("fn", "unparsed-text-lines",
@@ -1443,11 +1407,11 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrMore(typeFactory.itemString()));
 
         // // fn:unparsed-text-available(
-        // // $source as xs:string?,
-        // // $options as (xs:string|map(*))? := ()
+        // //  as xs:string?,
+        // //  as (xs:string|map(*))? := ()
         // // ) as xs:boolean
         // final ArgumentSpecification utaSource = new ArgumentSpecification("source", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // final ArgumentSpecification utaOptions = new ArgumentSpecification("options", false,
         //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
         // register("fn", "unparsed-text-available",
@@ -1455,13 +1419,13 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.boolean_());
 
         // // fn:environment-variable(
-        // // $name as xs:string
+        // //  as xs:string
         // // ) as xs:string?
         // final ArgumentSpecification envName = new ArgumentSpecification("name", true,
-        //         typeFactory.one(typeFactory.itemString()));
+        //         typeFactory.string());
         // register("fn", "environment-variable",
         //         List.of(envName),
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
 
         // // fn:available-environment-variables() as xs:string*
         // register("fn", "available-environment-variables",
@@ -1471,16 +1435,16 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // // fn:position() as xs:integer
         // register("fn", "position",
         //         List.of(),
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
 
         // // fn:last() as xs:integer
         // register("fn", "last",
         //         List.of(),
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
 
         // // fn:function-lookup(
-        // // $name as xs:QName,
-        // // $arity as xs:integer
+        // //  as xs:QName,
+        // //  as xs:integer
         // // ) as fn(*)?
         // final ArgumentSpecification lookupName = new ArgumentSpecification("name", true, typeFactory.string());
         // final ArgumentSpecification lookupArity = new ArgumentSpecification("arity", true, typeFactory.number());
@@ -1488,21 +1452,21 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         List.of(lookupName, lookupArity), typeFactory.zeroOrOne(typeFactory.itemAnyFunction()));
 
         // // fn:function-name(
-        // // $function as fn(*)
+        // //  as fn(*)
         // // ) as xs:QName?
         // final ArgumentSpecification fnNameArg = new ArgumentSpecification("function", true, typeFactory.anyFunction());
         // register("fn", "function-name",
         //         List.of(fnNameArg),
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
 
         // // fn:function-arity(
-        // // $function as fn(*)
+        // //  as fn(*)
         // // ) as xs:integer
         // final ArgumentSpecification fnArityArg = new ArgumentSpecification("function", true, typeFactory.anyFunction());
         // register("fn", "function-arity",
         //         List.of(fnArityArg), typeFactory.number());
         // // fn:function-identity(
-        // // $function as fn(*)
+        // //  as fn(*)
         // // ) as xs:string
         // final ArgumentSpecification functionIdentityFn = new ArgumentSpecification("function", true,
         //         typeFactory.anyFunction());
@@ -1510,8 +1474,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         List.of(functionIdentityFn), typeFactory.string());
 
         // // fn:apply(
-        // // $function as fn(*),
-        // // $arguments as array(*)
+        // //  as fn(*),
+        // //  as array(*)
         // // ) as item()*
         // final ArgumentSpecification applyFn = new ArgumentSpecification("function", true, typeFactory.anyFunction());
         // final ArgumentSpecification applyArgs = new ArgumentSpecification("arguments", true, typeFactory.anyArray());
@@ -1520,9 +1484,9 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
         // // fn:do-until(
-        // // $input as item()*,
-        // // $action as fn(item()*, xs:integer) as item()*,
-        // // $predicate as fn(item()*, xs:integer) as xs:boolean?
+        // //  as item()*,
+        // //  as fn(item()*, xs:integer) as item()*,
+        // //  as fn(item()*, xs:integer) as xs:boolean?
         // // ) as item()*
         // final var predicateItem = typeFactory.itemFunction(typeFactory.zeroOrOne(typeFactory.itemBoolean()),
         //         List.of(zeroOrMoreItems, typeFactory.number()));
@@ -1538,8 +1502,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
         // // fn:every(
-        // // $input as item()*,
-        // // $predicate as fn(item(), xs:integer) as xs:boolean? := fn:boolean#1
+        // //  as item()*,
+        // //  as fn(item(), xs:integer) as xs:boolean? := fn:boolean#1
         // // ) as xs:boolean
         // final ArgumentSpecification everyInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
@@ -1550,8 +1514,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.boolean_());
 
         // // fn:filter(
-        // // $input as item()*,
-        // // $predicate as fn(item(), xs:integer) as xs:boolean?
+        // //  as item()*,
+        // //  as fn(item(), xs:integer) as xs:boolean?
         // // ) as item()*
         // final ArgumentSpecification filterInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
@@ -1564,9 +1528,9 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         List.of(zeroOrMoreItems, typeFactory.anyItem()));
 
         // // fn:fold-left(
-        // // $input as item()*,
-        // // $init as item()*,
-        // // $action as fn(item()*, item()) as item()*
+        // //  as item()*,
+        // //  as item()*,
+        // //  as fn(item()*, item()) as item()*
         // // ) as item()*
         // final ArgumentSpecification foldLeftInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
@@ -1578,9 +1542,9 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         List.of(foldLeftInput, foldLeftInit, foldLeftAction),
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // // fn:fold-right(
-        // // $input as item()*,
-        // // $init as item()*,
-        // // $action as fn(item(), item()*) as item()*
+        // //  as item()*,
+        // //  as item()*,
+        // //  as fn(item(), item()*) as item()*
         // // ) as item()*
         // final ArgumentSpecification frInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
@@ -1595,8 +1559,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // final var rightActionItem = typeFactory.itemFunction(zeroOrMoreItems,
         //         List.of(typeFactory.anyItem(), zeroOrMoreItems));
         // // fn:for-each(
-        // // $input as item()*,
-        // // $action as fn(item(), xs:integer) as item()*
+        // //  as item()*,
+        // //  as fn(item(), xs:integer) as item()*
         // // ) as item()*
         // final ArgumentSpecification feInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
@@ -1607,9 +1571,9 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         zeroOrMoreItems);
 
         // // fn:for-each-pair(
-        // // $input1 as item()*,
-        // // $input2 as item()*,
-        // // $action as fn(item(), item(), xs:integer) as item()*
+        // //  as item()*,
+        // //  as item()*,
+        // //  as fn(item(), item(), xs:integer) as item()*
         // // ) as item()*
         // final ArgumentSpecification fepInput1 = new ArgumentSpecification("input1", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
@@ -1622,14 +1586,14 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
         // // fn:highest(
-        // // $input as item()*,
-        // // $collation as xs:string? := fn:default-collation(),
-        // // $key as (fn(item()) as xs:anyAtomicType*)? := fn:data#1
+        // //  as item()*,
+        // //  as xs:string? := fn:default-collation(),
+        // //  as (fn(item()) as xs:anyAtomicType*)? := fn:data#1
         // // ) as item()*
         // final ArgumentSpecification hiInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // final ArgumentSpecification hiColl = new ArgumentSpecification("collation", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // final ArgumentSpecification hiKey = new ArgumentSpecification("key", false,
         //         typeFactory.zeroOrOne(predicateItem));
         // register("fn", "highest",
@@ -1637,8 +1601,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
         // // fn:index-where(
-        // // $input as item()*,
-        // // $predicate as fn(item(), xs:integer) as xs:boolean?
+        // //  as item()*,
+        // //  as fn(item(), xs:integer) as xs:boolean?
         // // ) as xs:integer*
         // final ArgumentSpecification iwInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
@@ -1649,14 +1613,14 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrMore(typeFactory.itemNumber()));
 
         // // fn:lowest(
-        // // $input as item()*,
-        // // $collation as xs:string? := fn:default-collation(),
-        // // $key as (fn(item()) as xs:anyAtomicType*)? := fn:data#1
+        // //  as item()*,
+        // //  as xs:string? := fn:default-collation(),
+        // //  as (fn(item()) as xs:anyAtomicType*)? := fn:data#1
         // // ) as item()*
         // final ArgumentSpecification loInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // final ArgumentSpecification loColl = new ArgumentSpecification("collation", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // final ArgumentSpecification loKey = new ArgumentSpecification("key", false,
         //         typeFactory.zeroOrOne(typeFactory.itemFunction(typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
         //                 List.of(typeFactory.anyItem()))));
@@ -1665,8 +1629,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
         // // fn:partial-apply(
-        // // $function as fn(*),
-        // // $arguments as map(xs:positiveInteger, item()*)
+        // //  as fn(*),
+        // //  as map(xs:positiveInteger, item()*)
         // // ) as fn(*)
         // final ArgumentSpecification paFn = new ArgumentSpecification("function", true,
         //         typeFactory.one(typeFactory.itemAnyFunction()));
@@ -1677,8 +1641,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.one(typeFactory.itemAnyFunction()));
 
         // // fn:partition(
-        // // $input as item()*,
-        // // $split-when as fn(item()*, item(), xs:integer) as xs:boolean?
+        // //  as item()*,
+        // // -when as fn(item()*, item(), xs:integer) as xs:boolean?
         // // ) as array(item())*
         // final ArgumentSpecification pInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
@@ -1690,9 +1654,9 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrMore(typeFactory.itemAnyArray()));
 
         // // fn:scan-left(
-        // // $input as item()*,
-        // // $init as item()*,
-        // // $action as fn(item()*, item()) as item()*
+        // //  as item()*,
+        // //  as item()*,
+        // //  as fn(item()*, item()) as item()*
         // // ) as array()*
         // final ArgumentSpecification slInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
@@ -1705,9 +1669,9 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrMore(typeFactory.itemAnyArray()));
 
         // // fn:scan-right(
-        // // $input as item()*,
-        // // $init as item()*,
-        // // $action as fn(item(), item()*) as item()*
+        // //  as item()*,
+        // //  as item()*,
+        // //  as fn(item(), item()*) as item()*
         // // ) as array()*
         // final ArgumentSpecification srInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
@@ -1720,8 +1684,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrMore(typeFactory.itemAnyArray()));
 
         // // fn:some(
-        // // $input as item()*,
-        // // $predicate as fn(item(), xs:integer) as xs:boolean? := fn:boolean#1
+        // //  as item()*,
+        // //  as fn(item(), xs:integer) as xs:boolean? := fn:boolean#1
         // // ) as xs:boolean
         // final ArgumentSpecification someInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
@@ -1732,16 +1696,16 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.boolean_());
 
         // // // fn:sort(
-        // // // $input as item()*,
-        // // // $collation as xs:string? := fn:default-collation(),
-        // // // $key as fn(item()) as xs:anyAtomicType* := fn:data#1
+        // // //  as item()*,
+        // // //  as xs:string? := fn:default-collation(),
+        // // //  as fn(item()) as xs:anyAtomicType* := fn:data#1
         // // // ) as item()*
         // // ArgumentSpecification sortInput =
         // // new ArgumentSpecification("input", true,
         // // typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // // ArgumentSpecification sortColl =
         // // new ArgumentSpecification("collation", false,
-        // // typeFactory.zeroOrOne(typeFactory.itemString()));
+        // // optionalString));
         // // ArgumentSpecification sortKey =
         // // new ArgumentSpecification("key", false,
         // // typeFactory.one(typeFactory.itemFunction(typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
@@ -1751,8 +1715,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // // typeFactory.zeroOrMore(typeFactory.itemAnyItem())
         // // );
         // // // fn:sort-by(
-        // // // $input as item()*,
-        // // // $keys as record(key? as (fn(item()) as xs:anyAtomicType*)?,
+        // // //  as item()*,
+        // // //  as record(key? as (fn(item()) as xs:anyAtomicType*)?,
         // // // collation? as xs:string?,
         // // // order? as enum('ascending','descending')?)*
         // // // ) as item()*
@@ -1771,8 +1735,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         List.of(typeFactory.anyItem(), typeFactory.anyItem()));
 
         // // fn:sort-with(
-        // // $input as item()*,
-        // // $comparators as (fn(item(),item()) as xs:integer)*
+        // //  as item()*,
+        // //  as (fn(item(),item()) as xs:integer)*
         // // ) as item()*
         // final ArgumentSpecification sortWithInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
@@ -1783,9 +1747,9 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
         // // fn:subsequence-where(
-        // // $input as item()*,
-        // // $from as fn(item(),xs:integer) as xs:boolean? := true#0,
-        // // $to as fn(item(),xs:integer) as xs:boolean? := false#0
+        // //  as item()*,
+        // //  as fn(item(),xs:integer) as xs:boolean? := true#0,
+        // //  as fn(item(),xs:integer) as xs:boolean? := false#0
         // // ) as item()*
         // final ArgumentSpecification subseqWhereInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
@@ -1798,8 +1762,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
         // // fn:take-while(
-        // // $input as item()*,
-        // // $predicate as fn(item(),xs:integer) as xs:boolean?
+        // //  as item()*,
+        // //  as fn(item(),xs:integer) as xs:boolean?
         // // ) as item()*
         // final ArgumentSpecification takeWhileInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
@@ -1810,8 +1774,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
         // // // fn:transitive-closure(
-        // // // $node as node()?,
-        // // // $step as fn(node()) as node()*
+        // // //  as node()?,
+        // // //  as fn(node()) as node()*
         // // // ) as node()*
         // // ArgumentSpecification tcNode =
         // // new ArgumentSpecification("node", false,
@@ -1828,9 +1792,9 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         List.of(zeroOrMoreItems, typeFactory.number()));
 
         // // fn:while-do(
-        // // $input as item()*,
-        // // $predicate as fn(item()*,xs:integer) as xs:boolean?,
-        // // $action as fn(item()*,xs:integer) as item()*
+        // //  as item()*,
+        // //  as fn(item()*,xs:integer) as xs:boolean?,
+        // //  as fn(item()*,xs:integer) as item()*
         // // ) as item()*
         // final ArgumentSpecification whileDoInput = new ArgumentSpecification("input", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
@@ -1843,7 +1807,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
         // // fn:transform(
-        // // $options as map(*)
+        // //  as map(*)
         // // ) as map(*)
         // final ArgumentSpecification transformOptions = new ArgumentSpecification("options", true,
         //         typeFactory.one(typeFactory.itemAnyMap()));
@@ -1852,21 +1816,21 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.one(typeFactory.itemAnyMap()));
 
         // // fn:op(
-        // // $operator as xs:string
+        // //  as xs:string
         // // ) as fn(item()*,item()) as item()*
         // final ArgumentSpecification opOperator = new ArgumentSpecification("operator", true,
-        //         typeFactory.one(typeFactory.itemString()));
+        //         typeFactory.string());
         // register("fn", "op",
         //         List.of(opOperator),
         //         typeFactory.one(leftActionItem));
 
         // // map:build(
-        // // $input as item()*,
-        // // $key as (fn($item as item(), $position as xs:integer) as
+        // //  as item()*,
+        // //  as (fn( as item(),  as xs:integer) as
         // xs:anyAtomicType*)? := fn:identity#1,
-        // // $value as (fn($item as item(), $position as xs:integer) as item()*)? :=
+        // //  as (fn( as item(),  as xs:integer) as item()*)? :=
         // fn:identity#1,
-        // // $options as map(*)? := {}
+        // //  as map(*)? := {}
         // // ) as map(*)
         // ArgumentSpecification mbInput =
         // new ArgumentSpecification("input", true,
@@ -1885,7 +1849,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // typeFactory.one(typeFactory.itemAnyMap())
         // );
 
-        // // map:contains($map as map(*), $key as xs:anyAtomicType) as xs:boolean
+        // // map:contains( as map(*),  as xs:anyAtomicType) as xs:boolean
         // ArgumentSpecification mcMap =
         // new ArgumentSpecification("map", true,
         // typeFactory.one(typeFactory.itemAnyMap()));
@@ -1897,7 +1861,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // typeFactory.boolean_()
         // );
 
-        // // map:empty($map as map(*)) as xs:boolean
+        // // map:empty( as map(*)) as xs:boolean
         // ArgumentSpecification meMap =
         // new ArgumentSpecification("map", true,
         // typeFactory.one(typeFactory.itemAnyMap()));
@@ -1906,7 +1870,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // typeFactory.boolean_()
         // );
 
-        // // map:entries($map as map(*)) as map(*)*
+        // // map:entries( as map(*)) as map(*)*
         // ArgumentSpecification mentMap =
         // new ArgumentSpecification("map", true,
         // typeFactory.one(typeFactory.itemAnyMap()));
@@ -1915,7 +1879,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // typeFactory.zeroOrMore(typeFactory.itemAnyMap())
         // );
 
-        // // map:entry($key as xs:anyAtomicType, $value as item()*) as map(*)
+        // // map:entry( as xs:anyAtomicType,  as item()*) as map(*)
         // ArgumentSpecification mentKey =
         // new ArgumentSpecification("key", true,
         // typeFactory.one(typeFactory.itemAnyItem()));
@@ -1927,8 +1891,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // typeFactory.one(typeFactory.itemAnyMap())
         // );
 
-        // // map:filter($map as map(*), $predicate as fn($key as xs:anyAtomicType,
-        // $value as item()*) as xs:boolean?) as map(*)
+        // // map:filter( as map(*),  as fn( as xs:anyAtomicType,
+        //  as item()*) as xs:boolean?) as map(*)
         // ArgumentSpecification mfMap =
         // new ArgumentSpecification("map", true,
         // typeFactory.one(typeFactory.itemAnyMap()));
@@ -1940,7 +1904,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // typeFactory.one(typeFactory.itemAnyMap())
         // );
 
-        // // map:find($input as item()*, $key as xs:anyAtomicType) as array(*)
+        // // map:find( as item()*,  as xs:anyAtomicType) as array(*)
         // ArgumentSpecification mfindInput =
         // new ArgumentSpecification("input", true,
         // typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
@@ -1952,8 +1916,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // typeFactory.one(typeFactory.itemAnyArray())
         // );
 
-        // // map:for-each($map as map(*), $action as fn($key as xs:anyAtomicType,
-        // $value as item()*) as item()*) as item()*
+        // // map:for-each( as map(*),  as fn( as xs:anyAtomicType,
+        //  as item()*) as item()*) as item()*
         // ArgumentSpecification mfeMap =
         // new ArgumentSpecification("map", true,
         // typeFactory.one(typeFactory.itemAnyMap()));
@@ -1965,7 +1929,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // typeFactory.zeroOrMore(typeFactory.itemAnyItem())
         // );
 
-        // // map:get($map as map(*), $key as xs:anyAtomicType, $default as item()* :=
+        // // map:get( as map(*),  as xs:anyAtomicType,  as item()* :=
         // ()) as item()*
         // ArgumentSpecification mgMap =
         // new ArgumentSpecification("map", true,
@@ -1981,7 +1945,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // typeFactory.zeroOrMore(typeFactory.itemAnyItem())
         // );
 
-        // // map:items($map as map(*)) as item()*
+        // // map:items( as map(*)) as item()*
         // ArgumentSpecification mitemsMap =
         // new ArgumentSpecification("map", true,
         // typeFactory.one(typeFactory.itemAnyMap()));
@@ -1990,7 +1954,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // typeFactory.zeroOrMore(typeFactory.itemAnyItem())
         // );
 
-        // // map:keys($map as map(*)) as xs:anyAtomicType*
+        // // map:keys( as map(*)) as xs:anyAtomicType*
         // ArgumentSpecification mkeysMap =
         // new ArgumentSpecification("map", true,
         // typeFactory.one(typeFactory.itemAnyMap()));
@@ -1999,8 +1963,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // typeFactory.zeroOrMore(typeFactory.itemAnyItem())
         // );
         // // map:keys-where(
-        // // $map as map(*),
-        // // $predicate as fn($key as xs:anyAtomicType, $value as item()*) as
+        // //  as map(*),
+        // //  as fn( as xs:anyAtomicType,  as item()*) as
         // xs:boolean?
         // // ) as xs:anyAtomicType*
         // ArgumentSpecification kwMap =
@@ -2015,8 +1979,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // );
 
         // // map:merge(
-        // // $maps as map(*)*,
-        // // $options as map(*)? := {}
+        // //  as map(*)*,
+        // //  as map(*)? := {}
         // // ) as map(*)
         // ArgumentSpecification mmMaps =
         // new ArgumentSpecification("maps", true,
@@ -2030,8 +1994,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // );
 
         // // map:of-pairs(
-        // // $input as key-value-pair*,
-        // // $options as map(*)? := {}
+        // //  as key-value-pair*,
+        // //  as map(*)? := {}
         // // ) as map(*)
         // ArgumentSpecification opInput =
         // new ArgumentSpecification("input", true,
@@ -2045,8 +2009,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // );
 
         // // map:pair(
-        // // $key as xs:anyAtomicType,
-        // // $value as item()*
+        // //  as xs:anyAtomicType,
+        // //  as item()*
         // // ) as key-value-pair
         // ArgumentSpecification mpKey =
         // new ArgumentSpecification("key", true,
@@ -2060,7 +2024,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // );
 
         // // map:pairs(
-        // // $map as map(*)
+        // //  as map(*)
         // // ) as key-value-pair*
         // ArgumentSpecification mpsMap =
         // new ArgumentSpecification("map", true,
@@ -2071,9 +2035,9 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // );
 
         // // map:put(
-        // // $map as map(*),
-        // // $key as xs:anyAtomicType,
-        // // $value as item()*
+        // //  as map(*),
+        // //  as xs:anyAtomicType,
+        // //  as item()*
         // // ) as map(*)
         // ArgumentSpecification mputMap =
         // new ArgumentSpecification("map", true,
@@ -2090,8 +2054,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // );
 
         // // map:remove(
-        // // $map as map(*),
-        // // $keys as xs:anyAtomicType*
+        // //  as map(*),
+        // //  as xs:anyAtomicType*
         // // ) as map(*)
         // ArgumentSpecification mremMap =
         // new ArgumentSpecification("map", true,
@@ -2105,18 +2069,18 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // );
 
         // // map:size(
-        // // $map as map(*)
+        // //  as map(*)
         // // ) as xs:integer
         // ArgumentSpecification msizeMap =
         // new ArgumentSpecification("map", true,
         // typeFactory.one(typeFactory.itemAnyMap()));
         // register("map", "size",
         // List.of(msizeMap),
-        // typeFactory.one(typeFactory.itemNumber())
+        // typeFactory.number())
         // );
 
         // // fn:element-to-map-plan(
-        // // $input as (document-node() | element(*))*
+        // //  as (document-node() | element(*))*
         // // ) as map(xs:string, record(*))
         // ArgumentSpecification etmpInput =
         // new ArgumentSpecification("input", true,
@@ -2130,8 +2094,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // );
 
         // // fn:element-to-map(
-        // // $element as element()?,
-        // // $options as map(*)? := {}
+        // //  as element()?,
+        // //  as map(*)? := {}
         // // ) as map(xs:string, item()?)?
         // ArgumentSpecification etmElement =
         // new ArgumentSpecification("element", false,
@@ -2144,8 +2108,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // typeFactory.zeroOrOne(typeFactory.itemAnyMap())
         // );
         // // array:append(
-        // // $array as array(*),
-        // // $member as item()*
+        // //  as array(*),
+        // //  as item()*
         // // ) as array(*)
         // ArgumentSpecification appendArr =
         // new ArgumentSpecification("array", true,
@@ -2159,8 +2123,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // );
 
         // // array:build(
-        // // $input as item()*,
-        // // $action as fn(item(), xs:integer) as item()* := fn:identity#1
+        // //  as item()*,
+        // //  as fn(item(), xs:integer) as item()* := fn:identity#1
         // // ) as array(*)
         // ArgumentSpecification buildInput =
         // new ArgumentSpecification("input", true,
@@ -2173,7 +2137,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // typeFactory.one(typeFactory.itemAnyArray())
         // );
 
-        // // array:empty($array as array(*)) as xs:boolean
+        // // array:empty( as array(*)) as xs:boolean
         // ArgumentSpecification emptyArr =
         // new ArgumentSpecification("array", true,
         // typeFactory.one(typeFactory.itemAnyArray()));
@@ -2183,8 +2147,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // );
 
         // // array:filter(
-        // // $array as array(*),
-        // // $predicate as fn(item(), xs:integer) as xs:boolean?
+        // //  as array(*),
+        // //  as fn(item(), xs:integer) as xs:boolean?
         // // ) as array(*)
         // ArgumentSpecification filterArr =
         // new ArgumentSpecification("array", true,
@@ -2197,7 +2161,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // typeFactory.one(typeFactory.itemAnyArray())
         // );
 
-        // // array:flatten($input as item()) as item()*
+        // // array:flatten( as item()) as item()*
         // ArgumentSpecification flattenInput =
         // new ArgumentSpecification("input", true,
         // typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
@@ -2207,9 +2171,9 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // );
 
         // // array:fold-left(
-        // // $array as array(*),
-        // // $init as item()*,
-        // // $action as fn(item(), item()*) as item()*
+        // //  as array(*),
+        // //  as item()*,
+        // //  as fn(item(), item()*) as item()*
         // // ) as item()*
         // ArgumentSpecification foldLArr =
         // new ArgumentSpecification("array", true,
@@ -2226,9 +2190,9 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // );
 
         // // array:fold-right(
-        // // $array as array(*),
-        // // $init as item()*,
-        // // $action as fn(item(), item()*) as item()*
+        // //  as array(*),
+        // //  as item()*,
+        // //  as fn(item(), item()*) as item()*
         // // ) as item()*
         // ArgumentSpecification foldRArr =
         // new ArgumentSpecification("array", true,
@@ -2244,7 +2208,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // typeFactory.zeroOrMore(typeFactory.itemAnyItem())
         // );
 
-        // // array:foot($array as array(*)) as item()*
+        // // array:foot( as array(*)) as item()*
         // ArgumentSpecification footArr =
         // new ArgumentSpecification("array", true,
         // typeFactory.one(typeFactory.itemAnyArray()));
@@ -2254,8 +2218,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // );
 
         // // array:for-each(
-        // // $array as array(*),
-        // // $action as fn(item(), xs:integer) as item()*
+        // //  as array(*),
+        // //  as fn(item(), xs:integer) as item()*
         // // ) as array(*)
         // ArgumentSpecification feArr =
         // new ArgumentSpecification("array", true,
@@ -2269,9 +2233,9 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // );
 
         // // array:for-each-pair(
-        // // $array1 as array(*),
-        // // $array2 as array(*),
-        // // $action as fn(item(), item(), xs:integer) as item()*
+        // //  as array(*),
+        // //  as array(*),
+        // //  as fn(item(), item(), xs:integer) as item()*
         // // ) as array(*)
         // ArgumentSpecification fepArr1 =
         // new ArgumentSpecification("array1", true,
@@ -2287,31 +2251,31 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // typeFactory.one(typeFactory.itemAnyArray())
         // );
 
-        // // array:get($array as array(*), $position as xs:integer) as item()*
+        // // array:get( as array(*),  as xs:integer) as item()*
         // final ArgumentSpecification getArr = new ArgumentSpecification("array", true,
         //         typeFactory.one(typeFactory.itemAnyArray()));
         // final ArgumentSpecification getPos = new ArgumentSpecification("position", true,
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
         // register("array", "get",
         //         List.of(getArr, getPos),
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
         // // array:get(
-        // // $array as array(*),
-        // // $position as xs:integer,
-        // // $default as item()*
+        // //  as array(*),
+        // //  as xs:integer,
+        // //  as item()*
         // // ) as item()*
         // final ArgumentSpecification getArrDef = new ArgumentSpecification("array", true,
         //         typeFactory.one(typeFactory.itemAnyArray()));
         // final ArgumentSpecification getPosDef = new ArgumentSpecification("position", true,
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
         // final ArgumentSpecification getDefault = new ArgumentSpecification("default", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // register("array", "get",
         //         List.of(getArrDef, getPosDef, getDefault),
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
-        // // array:head($array as array(*)) as item()*
+        // // array:head( as array(*)) as item()*
         // final ArgumentSpecification headArr = new ArgumentSpecification("array", true,
         //         typeFactory.one(typeFactory.itemAnyArray()));
         // register("array", "head",
@@ -2319,23 +2283,23 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
         // // array:index-of(
-        // // $array as array(*),
-        // // $target as item()*,
-        // // $collation as xs:string? := fn:default-collation()
+        // //  as array(*),
+        // //  as item()*,
+        // //  as xs:string? := fn:default-collation()
         // // ) as xs:integer*
         // final ArgumentSpecification aioArray = new ArgumentSpecification("array", true,
         //         typeFactory.one(typeFactory.itemAnyArray()));
         // final ArgumentSpecification aioTarget = new ArgumentSpecification("target", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // final ArgumentSpecification aioCollation = new ArgumentSpecification("collation", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
         // register("array", "index-of",
         //         List.of(aioArray, aioTarget, aioCollation),
         //         typeFactory.zeroOrMore(typeFactory.itemNumber()));
 
         // // array:index-where(
-        // // $array as array(*),
-        // // $predicate as fn(item(), xs:integer) as xs:boolean?
+        // //  as array(*),
+        // //  as fn(item(), xs:integer) as xs:boolean?
         // // ) as xs:integer*
         // final ArgumentSpecification aiwArray = new ArgumentSpecification("array", true,
         //         typeFactory.one(typeFactory.itemAnyArray()));
@@ -2346,14 +2310,14 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrMore(typeFactory.itemNumber()));
 
         // // array:insert-before(
-        // // $array as array(*),
-        // // $position as xs:integer,
-        // // $member as item()*
+        // //  as array(*),
+        // //  as xs:integer,
+        // //  as item()*
         // // ) as array(*)
         // final ArgumentSpecification aibArray = new ArgumentSpecification("array", true,
         //         typeFactory.one(typeFactory.itemAnyArray()));
         // final ArgumentSpecification aibPosition = new ArgumentSpecification("position", true,
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
         // final ArgumentSpecification aibMember = new ArgumentSpecification("member", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // register("array", "insert-before",
@@ -2361,7 +2325,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.one(typeFactory.itemAnyArray()));
 
         // // array:items(
-        // // $array as array(*)
+        // //  as array(*)
         // // ) as item()*
         // final ArgumentSpecification aitArray = new ArgumentSpecification("array", true,
         //         typeFactory.one(typeFactory.itemAnyArray()));
@@ -2370,8 +2334,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
         // // array:join(
-        // // $arrays as array(*)*,
-        // // $separator as array(*)? := ()
+        // //  as array(*)*,
+        // //  as array(*)? := ()
         // // ) as array(*)
         // final ArgumentSpecification ajgArrays = new ArgumentSpecification("arrays", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyArray()));
@@ -2382,7 +2346,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.one(typeFactory.itemAnyArray()));
 
         // // // array:members(
-        // // // $array as array(*)
+        // // //  as array(*)
         // // // ) as record(value as item())*
         // // ArgumentSpecification amMembers =
         // // new ArgumentSpecification("array", true,
@@ -2398,7 +2362,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // // );
 
         // // // array:of-members(
-        // // // $input as record(value as item())*
+        // // //  as record(value as item())*
         // // // ) as array(*)
         // // ArgumentSpecification aomInput =
         // // new ArgumentSpecification("input", true,
@@ -2411,14 +2375,14 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // // );
 
         // // array:put(
-        // // $array as array(*),
-        // // $position as xs:integer,
-        // // $member as item()*
+        // //  as array(*),
+        // //  as xs:integer,
+        // //  as item()*
         // // ) as array(*)
         // final ArgumentSpecification apArray = new ArgumentSpecification("array", true,
         //         typeFactory.one(typeFactory.itemAnyArray()));
         // final ArgumentSpecification apPosition = new ArgumentSpecification("position", true,
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
         // final ArgumentSpecification apMember = new ArgumentSpecification("member", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // register("array", "put",
@@ -2426,8 +2390,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.one(typeFactory.itemAnyArray()));
 
         // // array:remove(
-        // // $array as array(*),
-        // // $positions as xs:integer*
+        // //  as array(*),
+        // //  as xs:integer*
         // // ) as array(*)
         // final ArgumentSpecification arArray = new ArgumentSpecification("array", true,
         //         typeFactory.one(typeFactory.itemAnyArray()));
@@ -2438,7 +2402,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.one(typeFactory.itemAnyArray()));
 
         // // array:reverse(
-        // // $array as array(*)
+        // //  as array(*)
         // // ) as array(*)
         // final ArgumentSpecification arRevArray = new ArgumentSpecification("array", true,
         //         typeFactory.one(typeFactory.itemAnyArray()));
@@ -2447,19 +2411,19 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.one(typeFactory.itemAnyArray()));
 
         // // array:size(
-        // // $array as array(*)
+        // //  as array(*)
         // // ) as xs:integer
         // final ArgumentSpecification aszArray = new ArgumentSpecification("array", true,
         //         typeFactory.one(typeFactory.itemAnyArray()));
         // register("array", "size",
         //         List.of(aszArray),
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
 
         // // array:slice(
-        // // $array as array(*),
-        // // $start as xs:integer? := (),
-        // // $end as xs:integer? := (),
-        // // $step as xs:integer? := ()
+        // //  as array(*),
+        // //  as xs:integer? := (),
+        // //  as xs:integer? := (),
+        // //  as xs:integer? := ()
         // // ) as array(*)
         // final ArgumentSpecification aslArray = new ArgumentSpecification("array", true,
         //         typeFactory.one(typeFactory.itemAnyArray()));
@@ -2474,16 +2438,16 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.one(typeFactory.itemAnyArray()));
 
         // // // array:sort(
-        // // // $array as array(*),
-        // // // $collation as xs:string? := fn:default-collation(),
-        // // // $key as fn(item()*) as xs:anyAtomicType* := fn:data#1
+        // // //  as array(*),
+        // // //  as xs:string? := fn:default-collation(),
+        // // //  as fn(item()*) as xs:anyAtomicType* := fn:data#1
         // // // ) as array(*)
         // // ArgumentSpecification asrArray =
         // // new ArgumentSpecification("array", true,
         // // typeFactory.one(typeFactory.itemAnyArray()));
         // // ArgumentSpecification asrColl =
         // // new ArgumentSpecification("collation", false,
-        // // typeFactory.zeroOrOne(typeFactory.itemString()));
+        // // optionalString));
         // // ArgumentSpecification asrKey =
         // // new ArgumentSpecification("key", false,
         // // typeFactory.zeroOrOne(typeFactory.itemFunction()));
@@ -2493,8 +2457,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // // );
 
         // // // array:sort-by(
-        // // // $array as array(*),
-        // // // $keys as record(
+        // // //  as array(*),
+        // // //  as record(
         // // // key? as fn(item()*) as xs:anyAtomicType*,
         // // // collation? as xs:string?,
         // // // order? as enum('ascending','descending')?
@@ -2511,59 +2475,67 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // // typeFactory.zeroOrMore(typeFactory.itemAnyItem())
         // // );
 
-        // // array:split($array as array(*)) as array(*)*
+        // // array:split( as array(*)) as array(*)*
         // final ArgumentSpecification splitArray = new ArgumentSpecification("array", true,
         //         typeFactory.one(typeFactory.itemAnyArray()));
         // register("array", "split",
         //         List.of(splitArray),
         //         typeFactory.zeroOrMore(typeFactory.itemAnyArray()));
 
-        // // array:subarray($array as array(*), $start as xs:integer, $length as
+        // // array:subarray( as array(*),  as xs:integer,  as
         // // xs:integer? := ()) as array(*)
         // final ArgumentSpecification subarrayArr = new ArgumentSpecification("array", true,
         //         typeFactory.one(typeFactory.itemAnyArray()));
         // final ArgumentSpecification subarrayStart = new ArgumentSpecification("start", true,
-        //         typeFactory.one(typeFactory.itemNumber()));
+        //         typeFactory.number()));
         // final ArgumentSpecification subarrayLength = new ArgumentSpecification("length", false,
         //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
         // register("array", "subarray",
         //         List.of(subarrayArr, subarrayStart, subarrayLength),
         //         typeFactory.one(typeFactory.itemAnyArray()));
 
-        // // array:tail($array as array(*)) as array(*)
+        // // array:tail( as array(*)) as array(*)
         // final ArgumentSpecification arrayTail = new ArgumentSpecification("array", true,
         //         typeFactory.one(typeFactory.itemAnyArray()));
         // register("array", "tail",
         //         List.of(arrayTail),
         //         typeFactory.one(typeFactory.itemAnyArray()));
 
-        // // array:trunk($array as array(*)) as array(*)
+        // // array:trunk( as array(*)) as array(*)
         // final ArgumentSpecification arrayTrunk = new ArgumentSpecification("array", true,
         //         typeFactory.one(typeFactory.itemAnyArray()));
         // register("array", "trunk",
         //         List.of(arrayTrunk),
         //         typeFactory.one(typeFactory.itemAnyArray()));
 
-        // // fn:type-of($value as item()*) as xs:string
+        // // fn:type-of( as item()*) as xs:string
         // final ArgumentSpecification typeOfValue = new ArgumentSpecification("value", true,
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         // register("fn", "type-of",
         //         List.of(typeOfValue),
         //         typeFactory.string());
-        // // xs:unsignedInt($arg as xs:anyAtomicType? := .) as xs:unsignedInt?
+        // // xs:unsignedInt( as xs:anyAtomicType? := .) as xs:unsignedInt?
         // final ArgumentSpecification unsignedIntArg = new ArgumentSpecification("arg", false,
         //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
         // register("xs", "unsignedInt",
         //         List.of(unsignedIntArg),
         //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
 
-        // // xs:string($value as xs:anyAtomicType? := .) as xs:string?
+        // // xs:string( as xs:anyAtomicType? := .) as xs:string?
         // final ArgumentSpecification castStringValue = new ArgumentSpecification("value", false,
         //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
         // register("xs", "string",
         //         List.of(castStringValue),
-        //         typeFactory.zeroOrOne(typeFactory.itemString()));
+        //         optionalString));
 
+    }
+
+    private static ParseTree getTree(final String xquery, Function<AntlrXqueryParser, ParseTree> initialRule) {
+        final CodePointCharStream charStream = CharStreams.fromString(xquery);
+        final AntlrXqueryLexer lexer = new AntlrXqueryLexer(charStream);
+        final CommonTokenStream stream = new CommonTokenStream(lexer);
+        final AntlrXqueryParser parser = new AntlrXqueryParser(stream);
+        return initialRule.apply(parser);
     }
 
     record FunctionSpecification(
@@ -2577,6 +2549,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
     }
 
     final Map<String, Map<String, List<FunctionSpecification>>> namespaces;
+    private static final ParseTree stringAtContextValue = XQuerySemanticFunctionManager.getTree("fn:string(.)", (parser) -> parser.functionCall());
+    private static final ParseTree emptyString = XQuerySemanticFunctionManager.getTree("\"\"", (parser)->parser.literal());
 
     private CallAnalysisResult handleUnknownNamespace(final String namespace, final String errorMessageSupplier,
             final XQuerySequenceType fallbackType) {

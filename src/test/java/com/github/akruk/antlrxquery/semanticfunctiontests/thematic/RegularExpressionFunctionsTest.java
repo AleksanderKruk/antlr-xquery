@@ -49,19 +49,19 @@ public class RegularExpressionFunctionsTest extends FunctionsSemanticTest {
     @Test public void replace_basic() {
         assertType(
             "fn:replace('abracadabra','a','A')",
-            typeFactory.one(typeFactory.itemString())
+            typeFactory.string()
         );
     }
     @Test public void replace_emptyReplacement() {
         assertType(
             "fn:replace('abc','b', '')",
-            typeFactory.one(typeFactory.itemString())
+            typeFactory.string()
         );
     }
     @Test public void replace_withFlags() {
         assertType(
             "fn:replace('abc','a','X','g')",
-            typeFactory.one(typeFactory.itemString())
+            typeFactory.string()
         );
     }
     @Test public void replace_missingArgs() {

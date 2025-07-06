@@ -84,15 +84,15 @@ public class SubstringMatchingFunctionsTest extends FunctionsSemanticTest {
     // fn:substring-before($value as xs:string?, $substring as xs:string?, $collation as xs:string? := default) as xs:string
     @Test public void substringBefore_positional() {
         assertType("fn:substring-before('abcXYZ','XYZ')",
-            typeFactory.one(typeFactory.itemString()));
+            typeFactory.string());
     }
     @Test public void substringBefore_namedArgs() {
         assertType("fn:substring-before(substring := 'lo', value := 'hello')",
-            typeFactory.one(typeFactory.itemString()));
+            typeFactory.string());
     }
     @Test public void substringBefore_withCollation() {
         assertType("fn:substring-before('FoO','o','uci')",
-            typeFactory.one(typeFactory.itemString()));
+            typeFactory.string());
     }
     @Test public void substringBefore_arityErrors() {
         assertErrors("fn:substring-before('x')");
@@ -108,15 +108,15 @@ public class SubstringMatchingFunctionsTest extends FunctionsSemanticTest {
     // fn:substring-after($value as xs:string?, $substring as xs:string?, $collation as xs:string? := default) as xs:string
     @Test public void substringAfter_positional() {
         assertType("fn:substring-after('abcXYZ','abc')",
-            typeFactory.one(typeFactory.itemString()));
+            typeFactory.string());
     }
     @Test public void substringAfter_namedArgs() {
         assertType("fn:substring-after(value := 'abracadabra', substring := 'cad')",
-            typeFactory.one(typeFactory.itemString()));
+            typeFactory.string());
     }
     @Test public void substringAfter_withCollation() {
         assertType("fn:substring-after('ABC','b','uci')",
-            typeFactory.one(typeFactory.itemString()));
+            typeFactory.string());
     }
     @Test public void substringAfter_arityErrors() {
         assertErrors("fn:substring-after('x')");

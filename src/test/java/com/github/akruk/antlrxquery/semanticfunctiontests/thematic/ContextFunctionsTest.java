@@ -10,7 +10,7 @@ public class ContextFunctionsTest extends FunctionsSemanticTest {
     @Test public void position_noArgs() {
         assertType(
             "fn:position()",
-            typeFactory.one(typeFactory.itemNumber())
+            typeFactory.number()
         );
     }
     @Test public void position_withArg_error() {
@@ -21,7 +21,7 @@ public class ContextFunctionsTest extends FunctionsSemanticTest {
     @Test public void last_noArgs() {
         assertType(
             "fn:last()",
-            typeFactory.one(typeFactory.itemNumber())
+            typeFactory.number()
         );
     }
     @Test public void last_withArg_error() {
@@ -78,7 +78,7 @@ public class ContextFunctionsTest extends FunctionsSemanticTest {
     @Test public void defaultCollation_noArgs() {
         assertType(
             "fn:default-collation()",
-            typeFactory.one(typeFactory.itemString())
+            typeFactory.string()
         );
     }
     @Test public void defaultCollation_withArg_error() {
@@ -89,7 +89,7 @@ public class ContextFunctionsTest extends FunctionsSemanticTest {
     @Test public void defaultLanguage_noArgs() {
         assertType(
             "fn:default-language()",
-            typeFactory.one(typeFactory.itemString())
+            typeFactory.string()
         );
     }
     @Test public void defaultLanguage_withArg_error() {

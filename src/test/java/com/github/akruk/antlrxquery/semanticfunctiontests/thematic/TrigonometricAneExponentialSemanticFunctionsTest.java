@@ -10,7 +10,7 @@ import com.github.akruk.antlrxquery.semanticfunctiontests.FunctionsSemanticTest;
 public class TrigonometricAneExponentialSemanticFunctionsTest extends FunctionsSemanticTest {
     @Test
     void pi_correctArity() {
-        assertType("math:pi()", typeFactory.one(typeFactory.itemNumber()));
+        assertType("math:pi()", typeFactory.number());
     }
 
     @Test
@@ -21,7 +21,7 @@ public class TrigonometricAneExponentialSemanticFunctionsTest extends FunctionsS
 
     @Test
     void e_correctArity() {
-        assertType("math:e()", typeFactory.one(typeFactory.itemNumber()));
+        assertType("math:e()", typeFactory.number());
     }
 
     @Test
@@ -153,19 +153,19 @@ public class TrigonometricAneExponentialSemanticFunctionsTest extends FunctionsS
     @Test
     void atan2_positional() {
         assertType("math:atan2(1.0, 1.0)",
-                typeFactory.one(typeFactory.itemNumber()));
+                typeFactory.number());
     }
 
     @Test
     void atan2_named() {
         assertType("math:atan2(y := 1.0, x := 2.0)",
-                typeFactory.one(typeFactory.itemNumber()));
+                typeFactory.number());
     }
 
     @Test
     void atan2_mixed() {
         assertType("math:atan2(3.0, x := 4.0)",
-                typeFactory.one(typeFactory.itemNumber()));
+                typeFactory.number());
     }
 
     @Test

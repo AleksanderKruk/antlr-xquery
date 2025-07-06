@@ -283,7 +283,7 @@ public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
     @Test public void sizeArray_valid() {
         assertType(
             "array:size(array{1,2,3})",
-            typeFactory.one(typeFactory.itemNumber())
+            typeFactory.number()
         );
     }
     @Test public void sizeArray_errors() {

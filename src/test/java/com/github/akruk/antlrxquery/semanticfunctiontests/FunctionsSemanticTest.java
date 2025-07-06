@@ -64,19 +64,4 @@ public class FunctionsSemanticTest {
         assertNoErrors(r);
         assertEquals(expected, r.type);
     }
-
-
-    // fn:abs($value as xs:numeric?) as xs:numeric?
-    private void assertBoolean(String xq) {
-        var r = analyze(xq);
-        assertNoErrors(r);
-        assertEquals(typeFactory.one(typeFactory.itemBoolean()), r.type);
-    }
-
-    private void assertString(String xq) {
-        var r = analyze(xq);
-        assertNoErrors(r);
-        assertEquals(typeFactory.one(typeFactory.itemString()), r.type);
-    }
-
 }

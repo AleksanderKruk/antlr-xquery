@@ -24,7 +24,7 @@ public class XQuerySemanticAnalyzerTest {
     record AnalysisResult(XQuerySemanticAnalyzer analyzer, XQuerySequenceType expressionType) {
     };
 
-    AnalysisResult analyze(final String text) {
+    protected AnalysisResult analyze(final String text) {
         final CharStream characters = CharStreams.fromString(text);
         final Lexer xqueryLexer = new AntlrXqueryLexer(characters);
         final CommonTokenStream xqueryTokens = new CommonTokenStream(xqueryLexer);
@@ -41,25 +41,25 @@ public class XQuerySemanticAnalyzerTest {
         return new AnalysisResult(analyzer, lastVisitedType);
     }
 
-    void assertNoErrors(final AnalysisResult analyzer) {
+    protected void assertNoErrors(final AnalysisResult analyzer) {
         assertTrue(analyzer.analyzer.getErrors().size() == 0);
     }
 
-    void assertThereAreErrors(final String xquery) {
+    protected void assertThereAreErrors(final String xquery) {
         final var analysisResult = analyze(xquery);
         assertThereAreErrors(analysisResult);
     }
 
-    void assertThereAreErrors(final AnalysisResult analyzer) {
+    protected void assertThereAreErrors(final AnalysisResult analyzer) {
         assertTrue(analyzer.analyzer.getErrors().size() != 0);
     }
 
-    void assertType(final AnalysisResult result, final XQuerySequenceType expectedType) {
+    protected void assertType(final AnalysisResult result, final XQuerySequenceType expectedType) {
         assertNoErrors(result);
         assertTrue(result.expressionType.equals(expectedType));
     }
 
-    void assertType(final String xquery, final XQuerySequenceType expectedType) {
+    protected void assertType(final String xquery, final XQuerySequenceType expectedType) {
         final var analysisResult = analyze(xquery);
         assertNoErrors(analysisResult);
         assertTrue(analysisResult.expressionType.equals(expectedType));
@@ -406,6 +406,5 @@ public class XQuerySemanticAnalyzerTest {
     public void stringConstructor() {
         assertType("``[]``", typeFactory.string());
     }
-
 
 }

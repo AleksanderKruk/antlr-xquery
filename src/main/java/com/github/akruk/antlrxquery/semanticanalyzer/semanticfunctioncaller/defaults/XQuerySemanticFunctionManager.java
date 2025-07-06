@@ -566,164 +566,146 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         List.of(fmtNumValue, fmtNumPicture, fmtNumOptions),
         //         typeFactory.string());
 
-        // // math:pi() as xs:double
-        // register("math", "pi",
-        //         List.of(),
-        //         typeFactory.one(typeFactory.itemNumber()));
+        // math:pi() as xs:double
+        register("math", "pi",
+                List.of(),
+                typeFactory.one(typeFactory.itemNumber()));
 
-        // // math:e() as xs:double
-        // register("math", "e",
-        //         List.of(),
-        //         typeFactory.one(typeFactory.itemNumber()));
+        // math:e() as xs:double
+        register("math", "e",
+                List.of(),
+                typeFactory.one(typeFactory.itemNumber()));
 
-        // // math:exp(
-        // // $value as xs:double?
-        // // ) as xs:double?
-        // final ArgumentSpecification expValue = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        // register("math", "exp",
-        //         List.of(expValue),
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
+        // math:exp(
+        // $value as xs:double?
+        // ) as xs:double?
+        final ArgumentSpecification expValue = new ArgumentSpecification("value", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
+        register("math", "exp",
+                List.of(expValue),
+                typeFactory.zeroOrOne(typeFactory.itemNumber()));
 
-        // // math:exp10(
-        // // $value as xs:double?
-        // // ) as xs:double?
-        // final ArgumentSpecification exp10Value = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        // register("math", "exp10",
-        //         List.of(exp10Value),
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
+        // math:exp10(
+        // $value as xs:double?
+        // ) as xs:double?
+        final ArgumentSpecification exp10Value = new ArgumentSpecification("value", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
+        register("math", "exp10",
+                List.of(exp10Value),
+                typeFactory.zeroOrOne(typeFactory.itemNumber()));
 
-        // // math:log(
-        // // $value as xs:double?
-        // // ) as xs:double?
-        // final ArgumentSpecification logValue = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        // register("math", "log",
-        //         List.of(logValue),
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
+        // math:log(
+        // $value as xs:double?
+        // ) as xs:double?
+        final ArgumentSpecification logValue = new ArgumentSpecification("value", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
+        register("math", "log",
+                List.of(logValue),
+                typeFactory.zeroOrOne(typeFactory.itemNumber()));
 
-        // // math:log10(
-        // // $value as xs:double?
-        // // ) as xs:double?
-        // final ArgumentSpecification log10Value = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        // register("math", "log10",
-        //         List.of(log10Value),
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
+        // math:log10(
+        // $value as xs:double?
+        // ) as xs:double?
+        final ArgumentSpecification log10Value = new ArgumentSpecification("value", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
+        register("math", "log10",
+                List.of(log10Value),
+                typeFactory.zeroOrOne(typeFactory.itemNumber()));
 
-        // // math:pow(
-        // // $x as xs:double?,
-        // // $y as xs:numeric
-        // // ) as xs:double?
-        // final ArgumentSpecification powX = new ArgumentSpecification("x", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        // final ArgumentSpecification powY = new ArgumentSpecification("y", true,
-        //         typeFactory.one(typeFactory.itemNumber()));
-        // register("math", "pow",
-        //         List.of(powX, powY),
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
+        // math:pow(
+        // $x as xs:double?,
+        // $y as xs:numeric
+        // ) as xs:double?
+        final ArgumentSpecification powX = new ArgumentSpecification("x", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
+        final ArgumentSpecification powY = new ArgumentSpecification("y", typeFactory.one(typeFactory.itemNumber()), null);
+        register("math", "pow",
+                List.of(powX, powY),
+                typeFactory.zeroOrOne(typeFactory.itemNumber()));
 
-        // // math:sqrt(
-        // // $value as xs:double?
-        // // ) as xs:double?
-        // final ArgumentSpecification sqrtValue = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        // register("math", "sqrt",
-        //         List.of(sqrtValue),
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
+        // math:sqrt(
+        // $value as xs:double?
+        // ) as xs:double?
+        final ArgumentSpecification sqrtValue = new ArgumentSpecification("value", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
+        register("math", "sqrt",
+                List.of(sqrtValue),
+                typeFactory.zeroOrOne(typeFactory.itemNumber()));
 
-        // // math:sin(
-        // // $radians as xs:double?
-        // // ) as xs:double?
-        // final ArgumentSpecification sinValue = new ArgumentSpecification("radians", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        // register("math", "sin",
-        //         List.of(sinValue),
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
+        // math:sin(
+        // $radians as xs:double?
+        // ) as xs:double?
+        final ArgumentSpecification sinValue = new ArgumentSpecification("radians", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
+        register("math", "sin",
+                List.of(sinValue),
+                typeFactory.zeroOrOne(typeFactory.itemNumber()));
 
-        // // math:cos(
-        // // $radians as xs:double?
-        // // ) as xs:double?
-        // final ArgumentSpecification cosValue = new ArgumentSpecification("radians", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        // register("math", "cos",
-        //         List.of(cosValue),
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
+        // math:cos(
+        // $radians as xs:double?
+        // ) as xs:double?
+        final ArgumentSpecification cosValue = new ArgumentSpecification("radians", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
+        register("math", "cos",
+                List.of(cosValue),
+                typeFactory.zeroOrOne(typeFactory.itemNumber()));
 
-        // // math:tan(
-        // // $radians as xs:double?
-        // // ) as xs:double?
-        // final ArgumentSpecification tanValue = new ArgumentSpecification("radians", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        // register("math", "tan",
-        //         List.of(tanValue),
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
+        // math:tan(
+        // $radians as xs:double?
+        // ) as xs:double?
+        final ArgumentSpecification tanValue = new ArgumentSpecification("radians", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
+        register("math", "tan",
+                List.of(tanValue),
+                typeFactory.zeroOrOne(typeFactory.itemNumber()));
 
-        // // math:asin(
-        // // $value as xs:double?
-        // // ) as xs:double?
-        // final ArgumentSpecification asinValue = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        // register("math", "asin",
-        //         List.of(asinValue),
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
+        // math:asin(
+        // $value as xs:double?
+        // ) as xs:double?
+        final ArgumentSpecification asinValue = new ArgumentSpecification("value", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
+        register("math", "asin",
+                List.of(asinValue),
+                typeFactory.zeroOrOne(typeFactory.itemNumber()));
 
-        // // math:acos(
-        // // $value as xs:double?
-        // // ) as xs:double?
-        // final ArgumentSpecification acosValue = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        // register("math", "acos",
-        //         List.of(acosValue),
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        // // math:atan(
-        // // $value as xs:double?
-        // // ) as xs:double?
-        // final ArgumentSpecification atanVal = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        // register("math", "atan",
-        //         List.of(atanVal),
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
+        // math:acos(
+        // $value as xs:double?
+        // ) as xs:double?
+        final ArgumentSpecification acosValue = new ArgumentSpecification("value", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
+        register("math", "acos",
+                List.of(acosValue),
+                typeFactory.zeroOrOne(typeFactory.itemNumber()));
+        // math:atan(
+        // $value as xs:double?
+        // ) as xs:double?
+        final ArgumentSpecification atanVal = new ArgumentSpecification("value", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
+        register("math", "atan",
+                List.of(atanVal),
+                typeFactory.zeroOrOne(typeFactory.itemNumber()));
 
-        // // math:atan2(
-        // // $y as xs:double,
-        // // $x as xs:double
-        // // ) as xs:double
-        // final ArgumentSpecification atan2Y = new ArgumentSpecification("y", true,
-        //         typeFactory.one(typeFactory.itemNumber()));
-        // final ArgumentSpecification atan2X = new ArgumentSpecification("x", true,
-        //         typeFactory.one(typeFactory.itemNumber()));
-        // register("math", "atan2",
-        //         List.of(atan2Y, atan2X),
-        //         typeFactory.one(typeFactory.itemNumber()));
+        // math:atan2(
+        // $y as xs:double,
+        // $x as xs:double
+        // ) as xs:double
+        final ArgumentSpecification atan2Y = new ArgumentSpecification("y", typeFactory.one(typeFactory.itemNumber()), null);
+        final ArgumentSpecification atan2X = new ArgumentSpecification("x", typeFactory.one(typeFactory.itemNumber()), null);
+        register("math", "atan2",
+                List.of(atan2Y, atan2X),
+                typeFactory.one(typeFactory.itemNumber()));
 
-        // // math:sinh(
-        // // $value as xs:double?
-        // // ) as xs:double?
-        // final ArgumentSpecification sinhVal = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        // register("math", "sinh",
-        //         List.of(sinhVal),
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
+        // math:sinh(
+        // $value as xs:double?
+        // ) as xs:double?
+        final ArgumentSpecification sinhVal = new ArgumentSpecification("value", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
+        register("math", "sinh",
+                List.of(sinhVal),
+                typeFactory.zeroOrOne(typeFactory.itemNumber()));
 
-        // // math:cosh(
-        // // $value as xs:double?
-        // // ) as xs:double?
-        // final ArgumentSpecification coshVal = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        // register("math", "cosh",
-        //         List.of(coshVal),
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
+        // math:cosh(
+        // $value as xs:double?
+        // ) as xs:double?
+        final ArgumentSpecification coshVal = new ArgumentSpecification("value", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
+        register("math", "cosh",
+                List.of(coshVal),
+                typeFactory.zeroOrOne(typeFactory.itemNumber()));
 
-        // // math:tanh(
-        // // $value as xs:double?
-        // // ) as xs:double?
-        // final ArgumentSpecification tanhVal = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        // register("math", "tanh",
-        //         List.of(tanhVal),
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
+        // math:tanh(
+        // $value as xs:double?
+        // ) as xs:double?
+        final ArgumentSpecification tanhVal = new ArgumentSpecification("value", typeFactory.zeroOrOne(typeFactory.itemNumber()), null);
+        register("math", "tanh",
+                List.of(tanhVal),
+                typeFactory.zeroOrOne(typeFactory.itemNumber()));
 
         // // fn:codepoints-to-string(
         // // $values as xs:integer*

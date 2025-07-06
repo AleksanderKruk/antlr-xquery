@@ -3,13 +3,19 @@ package com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller;
 import java.util.List;
 import java.util.Map;
 
+import org.antlr.v4.runtime.tree.ParseTree;
+
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQueryVisitingSemanticContext;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 
 public interface IXQuerySemanticFunctionManager {
-    public static record CallAnalysisResult(XQuerySequenceType result, List<String> errors) {}
-    public static record ArgumentSpecification(String name, boolean isRequired, XQuerySequenceType type) {}
+    // public static record ArgumentSpecification() {}
+    public static record CallAnalysisResult(XQuerySequenceType result,
+                                            List<ArgumentSpecification> requiredDefaultArguments,
+                                            List<String> errors)
+                                            {}
+    public static record ArgumentSpecification(String name, XQuerySequenceType type, ParseTree defaultArgument) {}
     public CallAnalysisResult call(String namespace,
                                    String functionName,
                                    List<XQuerySequenceType> positionalargs,

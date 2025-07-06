@@ -18,7 +18,10 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 import com.github.akruk.antlrxquery.AntlrXqueryParser.*;
 import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.XQuerySemanticContextManager;
+import com.github.akruk.antlrxquery.namespaceresolver.INamespaceResolver;
+import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager.ArgumentSpecification;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager.CallAnalysisResult;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper;
@@ -446,13 +449,16 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         return result.unescaped();
     }
 
+
+    private final INamespaceResolver namespaceResolver = new NamespaceResolver("fn");
+
+
     @Override
     public XQuerySequenceType visitFunctionCall(final FunctionCallContext ctx) {
         final String fullName = ctx.functionName().getText();
-        final String namespaces[] = fullName.split(":", 2);
-        final boolean hasNamespace = namespaces.length == 2;
-        final String namespace = (hasNamespace)? namespaces[0] : defaultNamespace;
-        final String functionName = (hasNamespace)? namespaces[1] : namespaces[0];
+        final var resolution = namespaceResolver.resolve(fullName);
+        final String namespace = resolution.namespace();
+        final String functionName = resolution.name();
 
         final var savedArgs = saveVisitedArguments();
         final var savedKwargs = saveVisitedKeywordArguments();
@@ -462,7 +468,18 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         final CallAnalysisResult callAnalysisResult = functionManager.call(
             namespace, functionName, visitedPositionalArguments, visitedKeywordArguments, context);
         errors.addAll(callAnalysisResult.errors());
-
+        for (ArgumentSpecification defaultArg : callAnalysisResult.requiredDefaultArguments()) {
+            final var expectedType = defaultArg.type();
+            final var receivedType = defaultArg.defaultArgument().accept(this);
+            if (!receivedType.isSubtypeOf(expectedType)) {
+                addError(ctx, String.format(
+                    "Type mismatch for default argument '%s': expected '%s', but got '%s'.",
+                    defaultArg.name(),
+                    expectedType,
+                    receivedType
+                ));
+            }
+        }
         visitedPositionalArguments = savedArgs;
         visitedKeywordArguments = savedKwargs;
         return callAnalysisResult.result();
@@ -680,7 +697,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     }
 
     private final Predicate<String> canBeTokenName = Pattern.compile("^[\\p{IsUppercase}].*").asPredicate();
-    private final String defaultNamespace = "fn";
 
     @Override
     public XQuerySequenceType visitNameTest(final NameTestContext ctx) {

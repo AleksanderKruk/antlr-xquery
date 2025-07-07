@@ -194,22 +194,49 @@ public class FunctionsOnStringValues {
         return valueFactory.string(result);
     }
 
-    public Pattern whitespace = Pattern.compile("\\s+");
-    public UnaryOperator<String> normalize = (final String s) -> {
-        final var trimmed = s.trim();
-        return whitespace.matcher(trimmed).replaceAll(" ");
-    };
+    private static final Pattern WHITESPACE_RE = Pattern.compile("\\s+");
 
-    public XQueryValue normalizeSpace(final XQueryVisitingContext context, final List<XQueryValue> args,
-            final Map<String, XQueryValue> kwargs) {
-        if (args.size() == 0) {
-            final String s = context.getItem().stringValue();
-            return valueFactory.string(normalize.apply(s));
-        } else if (args.size() == 1) {
-            return valueFactory.string(normalize.apply(args.get(0).stringValue()));
-        } else {
+    /**
+     * fn:normalize-space(
+     *   $value as xs:string? := fn:string(.)
+     * ) as xs:string
+     */
+    public XQueryValue normalizeSpace(
+            XQueryVisitingContext context,
+            List<XQueryValue> args,
+            Map<String, XQueryValue> kwargs)
+    {
+
+        if (args.size() > 1) {
             return XQueryError.WrongNumberOfArguments;
         }
+
+        String input;
+        if (args.isEmpty()) {
+            XQueryValue ctxItem = context.getItem();
+            if (ctxItem == null) {
+                return XQueryError.MissingDynamicContextComponent;
+            }
+            List<XQueryValue> atoms = ctxItem.atomize();
+            if (atoms.size() != 1) {
+                return XQueryError.InvalidArgumentType;
+            }
+            input = atoms.get(0).stringValue();
+        } else {
+            XQueryValue arg = args.get(0);
+            if (arg.isEmptySequence()) {
+                return valueFactory.string("");
+            }
+            input = arg.stringValue();
+        }
+
+        // replace any run of whitespace (\s) with a single space, then trim ends
+        String normalized = WHITESPACE_RE
+            .matcher(input)
+            .replaceAll(" ")
+            .trim();
+
+        return valueFactory.string(normalized);
     }
 
     public XQueryValue uppercase(final XQueryVisitingContext context, final List<XQueryValue> args,

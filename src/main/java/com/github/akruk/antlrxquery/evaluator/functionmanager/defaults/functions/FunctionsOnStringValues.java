@@ -2,6 +2,8 @@ package com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.function
 
 import java.math.BigDecimal;
 import java.text.BreakIterator;
+import java.text.Normalizer;
+import java.text.Normalizer.Form;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -415,9 +417,93 @@ public class FunctionsOnStringValues {
         }
         return valueFactory.sequence(clusters);
     }
-    public XQueryValue normalizeUnicode(final XQueryVisitingContext context, final List<XQueryValue> args,
-            final Map<String, XQueryValue> kwargs) {
-        return null;
+
+    /**
+     * fn:normalize-unicode(
+     *   $value as xs:string?,
+     *   $form  as xs:string? := "NFC"
+     * ) as xs:string
+     */
+    public XQueryValue normalizeUnicode(
+            XQueryVisitingContext context,
+            List<XQueryValue> args,
+            Map<String, XQueryValue> kwargs) {
+
+        // arity check
+        if (args.size() > 2) {
+            return XQueryError.WrongNumberOfArguments;
+        }
+
+        // determine input string (arg0 or context item)
+        String input;
+        if (args.isEmpty()) {
+            XQueryValue ctxItem = context.getItem();
+            if (ctxItem == null) {
+                return XQueryError.MissingDynamicContextComponent;
+            }
+            input = ctxItem.stringValue();
+        } else {
+            XQueryValue arg0 = args.get(0);
+            if (arg0.sequence().isEmpty()) {
+                // empty-sequence => zero-length string
+                input = "";
+            } else {
+                input = arg0.stringValue();
+            }
+        }
+
+        // determine effective form
+        String rawForm = "NFC";
+        if (args.size() == 2) {
+            XQueryValue formArg = args.get(1);
+            if (!formArg.sequence().isEmpty()) {
+                // normalize-space on raw form, then upper-case
+                String tmp = WHITESPACE_RE
+                    .matcher(formArg.stringValue())
+                    .replaceAll(" ")
+                    .trim();
+                rawForm = tmp.toUpperCase(Locale.ROOT);
+            }
+        }
+
+        // no normalization if form is empty
+        if (rawForm.isEmpty()) {
+            return valueFactory.string(input);
+        }
+
+        // apply selected normalization
+        String result;
+        switch (rawForm) {
+            case "NFC":
+                result = Normalizer.normalize(input, Form.NFC);
+                break;
+            case "NFD":
+                result = Normalizer.normalize(input, Form.NFD);
+                break;
+            case "NFKC":
+                result = Normalizer.normalize(input, Form.NFKC);
+                break;
+            case "NFKD":
+                result = Normalizer.normalize(input, Form.NFKD);
+                break;
+            case "FULLY-NORMALIZED":
+                // prepend space if first codepoint is a combining mark
+                if (!input.isEmpty()) {
+                    int cp = input.codePointAt(0);
+                    int type = Character.getType(cp);
+                    if (type == Character.NON_SPACING_MARK
+                        || type == Character.COMBINING_SPACING_MARK
+                        || type == Character.ENCLOSING_MARK) {
+                        input = " " + input;
+                    }
+                }
+                result = Normalizer.normalize(input, Form.NFC);
+                break;
+            default:
+                return XQueryError.UnsupportedNormalizationForm;
+        }
+
+        return valueFactory.string(result);
     }
 
     public XQueryValue translate(final XQueryVisitingContext context, final List<XQueryValue> args,

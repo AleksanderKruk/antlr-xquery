@@ -25,6 +25,9 @@ import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.XQueryDynam
 import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.baseimplementation.XQueryBaseDynamicContextManager;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.IXQueryEvaluatingFunctionManager;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.EvaluatingFunctionManager;
+import com.github.akruk.antlrxquery.namespaceresolver.INamespaceResolver;
+import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
+import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.ResolvedName;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.values.factories.defaults.XQueryMemoizedValueFactory;
@@ -862,12 +865,14 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return contextArgument;
     }
 
+    final INamespaceResolver namespaceResolver = new NamespaceResolver("fn");
+
     @Override
     public XQueryValue visitArrowFunctionSpecifier(final ArrowFunctionSpecifierContext ctx) {
         if (ctx.ID() != null) {
-            final String[] parts = resolveNamespace(ctx.ID().getText());
-            final String namespace = parts.length == 2 ? parts[0] : "fn";
-            final String localName = parts.length == 2 ? parts[1] : parts[0];
+            final ResolvedName parts = namespaceResolver.resolve(ctx.ID().getText());
+            final String namespace = parts.namespace();
+            final String localName = parts.name();
             return functionManager.getFunctionReference(namespace, localName, visitedArgumentList.size());
         }
         if (ctx.varRef() != null)

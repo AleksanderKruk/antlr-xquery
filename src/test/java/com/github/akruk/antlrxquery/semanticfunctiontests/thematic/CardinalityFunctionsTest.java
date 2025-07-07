@@ -66,7 +66,7 @@ public class CardinalityFunctionsTest extends FunctionsSemanticTest {
     @Test
     public void exactlyOne_sequenceOfTwo() {
         assertType(
-            "fn:exactly-one((<a/>, <b/>))",
+            "fn:exactly-one((1, 2))",
             typeFactory.one(typeFactory.itemAnyItem())
         );
     }

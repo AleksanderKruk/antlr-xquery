@@ -199,32 +199,27 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
                 List.of(stringValue),
                 typeFactory.string());
 
-        // // fn:zero-or-one(
-        // //  as item()*
-        // // ) as item()?
-        // final ArgumentSpecification z1Input = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("fn", "zero-or-one",
-        //         List.of(z1Input),
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
+        // fn:zero-or-one(
+        //  as item()*
+        // ) as item()?
+        final ArgumentSpecification anyItemsRequiredInput = new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null);
+        register("fn", "zero-or-one",
+                List.of(anyItemsRequiredInput),
+                typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
 
-        // // fn:one-or-more(
-        // //  as item()*
-        // // ) as item()+
-        // final ArgumentSpecification o1Input = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("fn", "one-or-more",
-        //         List.of(o1Input),
-        //         typeFactory.oneOrMore(typeFactory.itemAnyItem()));
+        // fn:one-or-more(
+        //  as item()*
+        // ) as item()+
+        register("fn", "one-or-more",
+                List.of(anyItemsRequiredInput),
+                typeFactory.oneOrMore(typeFactory.itemAnyItem()));
 
-        // // fn:exactly-one(
-        // //  as item()*
-        // // ) as item()
-        // final ArgumentSpecification e1Input = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("fn", "exactly-one",
-        //         List.of(e1Input),
-        //         typeFactory.one(typeFactory.itemAnyItem()));
+        // fn:exactly-one(
+        //  as item()*
+        // ) as item()
+        register("fn", "exactly-one",
+                List.of(anyItemsRequiredInput),
+                typeFactory.one(typeFactory.itemAnyItem()));
 
         // // fn:data(
         // //  as item()* := .

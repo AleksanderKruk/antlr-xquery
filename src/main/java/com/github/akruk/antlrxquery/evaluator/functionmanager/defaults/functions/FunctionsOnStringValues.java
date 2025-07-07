@@ -243,16 +243,16 @@ public class FunctionsOnStringValues {
 
     public XQueryValue uppercase(final XQueryVisitingContext context, final List<XQueryValue> args,
             final Map<String, XQueryValue> kwargs) {
-        if (args.size() != 1)
-            return XQueryError.WrongNumberOfArguments;
-        return args.get(0).uppercase();
+        XQueryValue argValue = args.get(0);
+        if (argValue.isEmptySequence()) return valueFactory.string("");
+        return argValue.uppercase();
     }
 
     public XQueryValue lowercase(final XQueryVisitingContext context, final List<XQueryValue> args,
             final Map<String, XQueryValue> kwargs) {
-        if (args.size() != 1)
-            return XQueryError.WrongNumberOfArguments;
-        return args.get(0).lowercase();
+        XQueryValue argValue = args.get(0);
+        if (argValue.isEmptySequence()) return valueFactory.string("");
+        return argValue.lowercase();
     }
 
     // private static final Map<String,String> HTML5_ENTITIES = Map.ofEntries(

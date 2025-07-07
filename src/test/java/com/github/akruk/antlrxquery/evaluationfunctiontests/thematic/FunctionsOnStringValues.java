@@ -380,11 +380,13 @@ public class FunctionsOnStringValues extends FunctionsEvaluationTests {
     @Test
     public void lowercase() {
         assertResult("lower-case('AbCdE')", new XQueryString("abcde", baseFactory));
+        assertResult("lower-case(())", new XQueryString("", baseFactory));
     }
 
     @Test
     public void uppercase() {
         assertResult("upper-case('AbCdE')", new XQueryString("ABCDE", baseFactory));
+        assertResult("upper-case(())", new XQueryString("", baseFactory));
     }
 
 

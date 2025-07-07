@@ -1,7 +1,10 @@
 package com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions;
 
 import java.math.BigDecimal;
+import java.text.BreakIterator;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
@@ -9,6 +12,7 @@ import java.util.stream.Collectors;
 
 import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
 import com.github.akruk.antlrxquery.values.XQueryError;
+import com.github.akruk.antlrxquery.values.XQueryString;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.htmlentities.HTMLEntities;
@@ -20,6 +24,7 @@ public class FunctionsOnStringValues {
         this.valueFactory = valueFactory;
     }
 
+    // TODO: Reevaluate later
     public XQueryValue concat(final XQueryVisitingContext context, final List<XQueryValue> args, final Map<String, XQueryValue> kwargs) {
         if (args.size() >= 2)
             return XQueryError.WrongNumberOfArguments;
@@ -29,21 +34,54 @@ public class FunctionsOnStringValues {
         return valueFactory.string(joined);
     }
 
-    public XQueryValue stringJoin(final XQueryVisitingContext context, final List<XQueryValue> args,
-            final Map<String, XQueryValue> kwargs) {
-        if (args.size() == 1) {
-            final var sequence = args.get(0).sequence();
-            final String joined = sequence.stream().map(XQueryValue::stringValue).collect(Collectors.joining());
-            return valueFactory.string(joined);
-        } else if (args.size() == 2) {
-            final var sequence = args.get(0).sequence();
-            final var delimiter = args.get(1).stringValue();
-            final String joined = sequence.stream().map(XQueryValue::stringValue).collect(Collectors.joining(delimiter));
-            return valueFactory.string(joined);
+ /**
+     * fn:string-join(
+     *   $values    as xs:anyAtomicType*,
+     *   $separator as xs:string? := ""
+     * ) as xs:string
+     */
+    public XQueryValue stringJoin(
+            XQueryVisitingContext context,
+            List<XQueryValue> args,
+            Map<String, XQueryValue> kwargs) {
+
+        // determine the sequence of values to join
+        List<XQueryValue> rawItems;
+        if (args.isEmpty()) {
+            // no args: use context item
+            XQueryValue ctx = context.getItem();
+            rawItems = ctx.sequence();
         } else {
-            return XQueryError.WrongNumberOfArguments;
+            rawItems = args.get(0).sequence();
         }
+
+        // atomize each item in the sequence
+        List<XQueryValue> atomized = new ArrayList<>();
+        for (XQueryValue item : rawItems) {
+            var atoms = item.atomize();
+            atomized.addAll(atoms);
+        }
+
+        // if empty, return zero-length string
+        if (atomized.isEmpty()) {
+            return valueFactory.string("");
+        }
+
+        // determine the separator string
+        String sep = "";
+        if (args.size() == 2) {
+            XQueryValue sepArg = args.get(1);
+            sep = sepArg.stringValue();
+        }
+
+        // join all atomized strings
+        String result = atomized.stream()
+            .map(XQueryValue::stringValue)
+            .collect(Collectors.joining(sep));
+
+        return valueFactory.string(result);
     }
+
 
     public XQueryValue substring(final XQueryVisitingContext ctx, final List<XQueryValue> args, final Map<String, XQueryValue> kwargs) {
         if (args.size() == 2 || args.size() == 3) {
@@ -224,11 +262,51 @@ public class FunctionsOnStringValues {
         return valueFactory.sequence(parts);
     }
 
-    public XQueryValue graphemes(final XQueryVisitingContext context, final List<XQueryValue> args,
-            final Map<String, XQueryValue> kwargs) {
-        return null;
-    }
+    /**
+     * fn:graphemes($value as xs:string?) as xs:string*
+     * Splits into extended grapheme clusters per UAX #29.
+     */
+    public XQueryValue graphemes(
+            XQueryVisitingContext context,
+            List<XQueryValue> args,
+            Map<String, XQueryValue> kwargs) {
 
+        // wrong arity?
+        if (args.size() > 1) {
+            return XQueryError.WrongNumberOfArguments;
+        }
+
+        // obtain the input string (argument or context item)
+        final XQueryValue inputValue;
+        if (args.isEmpty()) {
+            inputValue = context.getItem();
+        } else {
+            inputValue = args.get(0);
+        }
+        final var empty = inputValue.empty();
+        if (empty == null) {
+            return XQueryError.InvalidArgumentType;
+        }
+        if (inputValue.empty().booleanValue())
+            return valueFactory.emptySequence();
+
+        if (!(inputValue instanceof XQueryString)) {
+            return XQueryError.InvalidArgumentType;
+        }
+        final String input = inputValue.stringValue();
+
+        // BreakIterator for extended grapheme clusters
+        BreakIterator iter = BreakIterator.getCharacterInstance(Locale.ROOT);
+        iter.setText(input);
+
+        List<XQueryValue> clusters = new ArrayList<>();
+        int start = iter.first();
+        for (int end = iter.next(); end != BreakIterator.DONE; start = end, end = iter.next()) {
+            String cluster = input.substring(start, end);
+            clusters.add(valueFactory.string(cluster));
+        }
+        return valueFactory.sequence(clusters);
+    }
     public XQueryValue normalizeUnicode(final XQueryVisitingContext context, final List<XQueryValue> args,
             final Map<String, XQueryValue> kwargs) {
         return null;

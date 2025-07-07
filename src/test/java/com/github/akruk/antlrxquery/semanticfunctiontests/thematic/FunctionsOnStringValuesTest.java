@@ -65,6 +65,16 @@ public class FunctionsOnStringValuesTest extends FunctionsSemanticTest {
         assertErrors("fn:graphemes(true())");
     }
 
+
+
+
+
+
+
+
+
+
+
     // fn:concat($values as xs:anyAtomicType* := ()) as xs:string
     @Test
     public void concat_noArgs() {

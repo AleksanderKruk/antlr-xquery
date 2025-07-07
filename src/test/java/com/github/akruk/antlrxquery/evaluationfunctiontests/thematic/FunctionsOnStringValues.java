@@ -10,8 +10,8 @@ import com.github.akruk.antlrxquery.values.*;
 public class FunctionsOnStringValues extends FunctionsEvaluationTests {
     @Test
     public void charFromInteger() {
-        assertResult("fn:char(65)", new XQueryString("A", valueFactory));
-        assertResult("fn:char(0x1F600)", new XQueryString("\uD83D\uDE00", valueFactory)); // grinning face
+        assertResult("fn:char(65)", new XQueryString("A", baseFactory));
+        assertResult("fn:char(0x1F600)", new XQueryString("\uD83D\uDE00", baseFactory)); // grinning face
     }
 
     @Test
@@ -26,9 +26,9 @@ public class FunctionsOnStringValues extends FunctionsEvaluationTests {
 
     @Test
     public void charFromNamedEntity() {
-        assertResult("fn:char('amp')", new XQueryString("&", valueFactory));
-        assertResult("fn:char('quot')", new XQueryString("\"", valueFactory));
-        assertResult("fn:char('NotEqualTilde')", new XQueryString("\u2242\u0338", valueFactory));
+        assertResult("fn:char('amp')", new XQueryString("&", baseFactory));
+        assertResult("fn:char('quot')", new XQueryString("\"", baseFactory));
+        assertResult("fn:char('NotEqualTilde')", new XQueryString("\u2242\u0338", baseFactory));
     }
 
     @Test
@@ -38,9 +38,9 @@ public class FunctionsOnStringValues extends FunctionsEvaluationTests {
 
     @Test
     public void charFromEscape() {
-        assertResult("fn:char('\\n')", new XQueryString("\n", valueFactory));
-        assertResult("fn:char('\\t')", new XQueryString("\t", valueFactory));
-        assertResult("fn:char('\\r')", new XQueryString("\r", valueFactory));
+        assertResult("fn:char('\\n')", new XQueryString("\n", baseFactory));
+        assertResult("fn:char('\\t')", new XQueryString("\t", baseFactory));
+        assertResult("fn:char('\\r')", new XQueryString("\r", baseFactory));
     }
 
     @Test
@@ -62,13 +62,13 @@ public class FunctionsOnStringValues extends FunctionsEvaluationTests {
     @Test
     public void charactersFromString() {
         List<XQueryValue> expected = List.of(
-            valueFactory.string("T"),
-            valueFactory.string("h"),
-            valueFactory.string("é"),
-            valueFactory.string("r"),
-            valueFactory.string("è"),
-            valueFactory.string("s"),
-            valueFactory.string("e")
+            baseFactory.string("T"),
+            baseFactory.string("h"),
+            baseFactory.string("é"),
+            baseFactory.string("r"),
+            baseFactory.string("è"),
+            baseFactory.string("s"),
+            baseFactory.string("e")
         );
         assertResult("characters('Thérèse')",
             expected
@@ -89,9 +89,9 @@ public class FunctionsOnStringValues extends FunctionsEvaluationTests {
     @Test
     public void charactersWithContextItem() {
         List<XQueryValue> expected = List.of(
-            valueFactory.string("d"),
-            valueFactory.string("e"),
-            valueFactory.string("f")
+            baseFactory.string("d"),
+            baseFactory.string("e"),
+            baseFactory.string("f")
         );
         assertResult("('abc', 'def')[2] => characters()", expected);
     }
@@ -100,9 +100,9 @@ public class FunctionsOnStringValues extends FunctionsEvaluationTests {
     public void charactersSurrogatePair() {
         // "A𝄞B" where 𝄞 is U+1D11E
         List<XQueryValue> expected = List.of(
-            valueFactory.string("A"),
-            valueFactory.string("\uD834\uDD1E"),
-            valueFactory.string("B")
+            baseFactory.string("A"),
+            baseFactory.string("\uD834\uDD1E"),
+            baseFactory.string("B")
         );
         assertResult("characters('A\uD834\uDD1E' || 'B')", expected
         );
@@ -110,7 +110,7 @@ public class FunctionsOnStringValues extends FunctionsEvaluationTests {
 
     @Test
     public void charactersAutoConversion() {
-        assertResult("characters(123)", List.of(valueFactory.string("1"), valueFactory.string("2"), valueFactory.string("3")));
+        assertResult("characters(123)", List.of(baseFactory.string("1"), baseFactory.string("2"), baseFactory.string("3")));
     }
 
     @Test
@@ -119,41 +119,108 @@ public class FunctionsOnStringValues extends FunctionsEvaluationTests {
     }
 
     @Test
+    public void graphemes_combiningMarkFormsCluster() {
+        List<XQueryValue> expected = List.of(
+            baseFactory.string("a\u0308"),
+            baseFactory.string("b")
+        );
+        assertResult("graphemes('a' || fn:char(0x308) || 'b')", expected);
+    }
+
+    @Test
+    public void graphemes_emptyStringYieldsEmptySequence() {
+        assertResult("graphemes('')", List.of());
+    }
+
+    @Test
+    public void graphemes_emptySequenceYieldsEmptySequence() {
+        assertResult("graphemes(())", List.of());
+    }
+
+    @Test
+    public void graphemes_crLfIsSingleGrapheme() {
+        List<XQueryValue> expected = List.of(
+            baseFactory.string("\r\n")
+        );
+        assertResult("graphemes(fn:char(0xD) || fn:char(0xA))", expected);
+    }
+
+    @Test
+    public void graphemes_emojiZwjSequenceIsSingleGrapheme() {
+        // 👶 (U+1F476), ZWJ, 🛑 (U+1F6D1)
+        String cluster = "\uD83D\uDC76\u200D\uD83D\uDED1";
+        assertResult("graphemes(fn:char(0x1F476) || fn:char(0x200D) || fn:char(0x1F6D1))",
+            List.of(baseFactory.string(cluster))
+        );
+    }
+
+    @Test
+    public void graphemes_simpleDevanagari() {
+        List<XQueryValue> expected = List.of(
+            baseFactory.string("क"),
+            baseFactory.string("त")
+        );
+        assertResult("graphemes('कत')", expected);
+    }
+
+    @Test
+    public void graphemes_complexDevanagariCluster() {
+        // क (U+0915), ◌़ (U+093C), ZWJ, ◌् (U+094D), त (U+0924)
+        String cluster = "क\u093C\u200D\u094Dत";
+        assertResult("graphemes('क' || fn:char(0x93C) || fn:char(0x200D) "
+                   + "|| fn:char(0x94D) || 'त')",
+            List.of(baseFactory.string(cluster))
+        );
+    }
+
+    @Test
+    public void graphemes_invalidArgumentType() {
+        assertError("graphemes(123)", XQueryError.InvalidArgumentType);
+    }
+
+    @Test
+    public void graphemes_wrongArity() {
+        assertError("graphemes('a', 'b')", XQueryError.WrongNumberOfArguments);
+    }
+
+
+
+    @Test
     public void concat() {
-        assertResult("concat(('a', 'b', 'c'))", new XQueryString("abc", valueFactory));
+        assertResult("concat(('a', 'b', 'c'))", new XQueryString("abc", baseFactory));
     }
 
     @Test
     public void stringJoin() {
-        assertResult("string-join(('a', 'b', 'c'))", new XQueryString("abc", valueFactory));
-        assertResult("string-join(('a', 'b', 'c'), '-')", new XQueryString("a-b-c", valueFactory));
+        assertResult("string-join(('a', 'b', 'c'))", new XQueryString("abc", baseFactory));
+        assertResult("string-join(('a', 'b', 'c'), '-')", new XQueryString("a-b-c", baseFactory));
     }
 
     @Test
     public void substring() {
-        assertResult("substring('abcde', 4)", new XQueryString("de", valueFactory));
-        assertResult("substring('abcde', 3, 2)", new XQueryString("cd", valueFactory));
+        assertResult("substring('abcde', 4)", new XQueryString("de", baseFactory));
+        assertResult("substring('abcde', 3, 2)", new XQueryString("cd", baseFactory));
     }
 
     @Test
     public void stringLength() {
-        assertResult("string-length('abcde')", new XQueryNumber(5, valueFactory));
-        assertResult("string-length('')", new XQueryNumber(0, valueFactory));
+        assertResult("string-length('abcde')", new XQueryNumber(5, baseFactory));
+        assertResult("string-length('')", new XQueryNumber(0, baseFactory));
     }
 
     @Test
     public void normalization() {
-        assertResult("normalize-space(' \t\n\r a    b \t \t c   \t')", new XQueryString("a b c", valueFactory));
+        assertResult("normalize-space(' \t\n\r a    b \t \t c   \t')", new XQueryString("a b c", baseFactory));
     }
 
     @Test
     public void lowercase() {
-        assertResult("lower-case('AbCdE')", new XQueryString("abcde", valueFactory));
+        assertResult("lower-case('AbCdE')", new XQueryString("abcde", baseFactory));
     }
 
     @Test
     public void uppercase() {
-        assertResult("upper-case('AbCdE')", new XQueryString("ABCDE", valueFactory));
+        assertResult("upper-case('AbCdE')", new XQueryString("ABCDE", baseFactory));
     }
 
 

@@ -444,7 +444,7 @@ public class FunctionsOnStringValues {
             input = ctxItem.stringValue();
         } else {
             XQueryValue arg0 = args.get(0);
-            if (arg0.sequence().isEmpty()) {
+            if (arg0.isEmptySequence()) {
                 // empty-sequence => zero-length string
                 input = "";
             } else {
@@ -456,7 +456,7 @@ public class FunctionsOnStringValues {
         String rawForm = "NFC";
         if (args.size() == 2) {
             XQueryValue formArg = args.get(1);
-            if (!formArg.sequence().isEmpty()) {
+            if (!formArg.isEmptySequence()) {
                 // normalize-space on raw form, then upper-case
                 String tmp = WHITESPACE_RE
                     .matcher(formArg.stringValue())

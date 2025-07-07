@@ -22,6 +22,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryLexer;
 import com.github.akruk.antlrxquery.AntlrXqueryParser;
 import com.github.akruk.antlrxquery.evaluator.XQueryEvaluatorVisitor;
 import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
+import com.github.akruk.antlrxquery.evaluator.collations.Collations;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.IXQueryEvaluatingFunctionManager;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.FunctionsBasedOnSubstringMatching;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.FunctionsOnStringValues;
@@ -79,6 +80,7 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         registerFunction("fn", "data", this::data, 0, 0, Map.of());
         registerFunction("fn", "string", this::string, 0, 0, Map.of());
 
+        registerFunction("fn", "default-collation", this::defaultCollation, 0, 0, Map.of());
 
         final ParseTree DEFAULT_COLLATION = getTree("fn:default-collation()", parser->parser.functionCall());
         final Map<String, ParseTree> DEFAULT_COLLATION_MAP = Map.of("collation", DEFAULT_COLLATION);
@@ -138,6 +140,22 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         registerFunction("op", "numeric-mod", this::numericMod, 0, 0, Map.of());
         registerFunction("op", "numeric-unary-plus", this::numericUnaryPlus, 0, 0, Map.of());
         registerFunction("op", "numeric-unary-minus", this::numericUnaryMinus, 0, 0, Map.of());
+    }
+
+    /**
+     * fn:default-collation() as xs:string
+     * Returns the URI of the default collation from the dynamic context.
+     */
+    public XQueryValue defaultCollation(
+            XQueryVisitingContext context,
+            List<XQueryValue> args,
+            Map<String,XQueryValue> kwargs) {
+
+        if (!args.isEmpty()) {
+            return XQueryError.WrongNumberOfArguments;
+        }
+        // zawsze mamy jakąś wartość domyślną
+        return valueFactory.string(Collations.CODEPOINT_URI);
     }
 
     public XQueryValue not(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {

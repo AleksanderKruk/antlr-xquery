@@ -16,27 +16,22 @@ public class FunctionsBasedOnSubstringMatching {
     }
 
     public XQueryValue contains(XQueryVisitingContext ctx, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
         return args.get(0).contains(args.get(1));
     }
 
     public XQueryValue startsWith(XQueryVisitingContext ctx, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
         return args.get(0).startsWith(args.get(1));
     }
 
     public XQueryValue endsWith(XQueryVisitingContext ctx, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
         return args.get(0).endsWith(args.get(1));
     }
 
     public XQueryValue substringAfter(XQueryVisitingContext ctx, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
         return args.get(0).substringAfter(args.get(1));
     }
 
     public XQueryValue substringBefore(XQueryVisitingContext ctx, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
         return args.get(0).substringBefore(args.get(1));
     }
 }

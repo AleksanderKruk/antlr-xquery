@@ -37,7 +37,7 @@ public class FunctionsBasedOnSubstringMatching extends FunctionsEvaluationTests 
     public void substringAfter() {
         assertResult("substring-after('tattoo', 'tat')", baseFactory.string("too"));
         assertResult("substring-after('tattoo', 'tattoo')", baseFactory.string(""));
-        assertResult("substring-after('abcde', 'f')", baseFactory.string("", baseFactory));
+        assertResult("substring-after('abcde', 'f')", baseFactory.string(""));
     }
 
 

@@ -11,6 +11,7 @@ public class FunctionsBasedOnSubstringMatching extends FunctionsEvaluationTests 
         assertResult("contains('abc', 'bc')", baseFactory.bool(true));
         assertResult("contains('', 'bc')", baseFactory.bool(false));
         assertResult("contains('abc', '')", baseFactory.bool(true));
+        assertResult("contains('', ())", baseFactory.bool(true));
     }
 
     @Test

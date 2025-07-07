@@ -35,49 +35,6 @@ public class FunctionsOnStringValues {
         return valueFactory.string(joined);
     }
 
- /**
-     * fn:string-join(
-     *   $values    as xs:anyAtomicType*,
-     *   $separator as xs:string? := ""
-     * ) as xs:string
-     */
-    public XQueryValue stringJoin(
-            XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs) {
-
-        // determine the sequence of values to join
-        // atomize each item in the sequence
-        List<XQueryValue> atomized;
-        if (args.isEmpty()) {
-            // no args: use context item
-            XQueryValue ctx = context.getItem();
-            atomized = ctx.atomize();
-        } else {
-            atomized = args.get(0).atomize();
-        }
-
-
-        // if empty, return zero-length string
-        if (atomized.isEmpty()) {
-            return valueFactory.string("");
-        }
-
-        // determine the separator string
-        String sep = "";
-        if (args.size() == 2) {
-            XQueryValue sepArg = args.get(1);
-            sep = sepArg.stringValue();
-        }
-
-        // join all atomized strings
-        String result = atomized.stream()
-            .map(XQueryValue::stringValue)
-            .collect(Collectors.joining(sep));
-
-        return valueFactory.string(result);
-    }
-
 
 
     /**
@@ -193,16 +150,53 @@ public class FunctionsOnStringValues {
         return valueFactory.string(sb.toString());
     }
 
-    public XQueryValue stringLength(final XQueryVisitingContext context, final List<XQueryValue> args,
-            final Map<String, XQueryValue> kwargs) {
-        if (args.size() == 0) {
-            final var str = context.getItem().stringValue();
-            return valueFactory.number(str.length());
-        } else if (args.size() == 1) {
-            return valueFactory.number(args.get(0).stringValue().length());
-        } else {
+    /**
+     * fn:string-join(
+     *   $values    as xs:anyAtomicType*,
+     *   $separator as xs:string? := ""
+     * ) as xs:string
+     */
+    public XQueryValue stringJoin(
+            XQueryVisitingContext context,
+            List<XQueryValue> args,
+            Map<String, XQueryValue> kwargs)
+    {
+
+        // Accept up to two arguments
+        if (args.size() > 2) {
             return XQueryError.WrongNumberOfArguments;
         }
+
+        // Determine the sequence of values to join
+        List<XQueryValue> atomized;
+        if (args.isEmpty()) {
+            // No explicit $values: use context item sequence
+            atomized = context.getItem().atomize();
+        } else {
+            atomized = args.get(0).atomize();
+        }
+
+        // If the sequence is empty, return the zero‐length string
+        if (atomized.isEmpty()) {
+            return valueFactory.string("");
+        }
+
+        // Determine the separator
+        String sep = "";
+        if (args.size() == 2) {
+            XQueryValue sepArg = args.get(1);
+            // Empty sequence or omitted => zero‐length string
+            if (!sepArg.sequence().isEmpty()) {
+                sep = sepArg.stringValue();
+            }
+        }
+
+        // Concatenate the atomized strings with the separator
+        String result = atomized.stream()
+            .map(XQueryValue::stringValue)
+            .collect(Collectors.joining(sep));
+
+        return valueFactory.string(result);
     }
 
     public Pattern whitespace = Pattern.compile("\\s+");

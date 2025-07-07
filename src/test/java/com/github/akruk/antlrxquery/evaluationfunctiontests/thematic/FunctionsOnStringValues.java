@@ -339,6 +339,39 @@ public class FunctionsOnStringValues extends FunctionsEvaluationTests {
     }
 
     @Test
+    public void basicStringLength() {
+        assertResult(
+            "string-length(\"Harp not on that string, madam; that is past.\")",
+            baseFactory.number(45)
+        );
+    }
+
+    @Test
+    public void contextStringLengthSingleGrapheme() {
+        assertResult(
+            "\"ᾧ\" => string-length()",
+            baseFactory.number(1)
+        );
+    }
+
+    @Test
+    public void combiningCharactersIncreaseLength() {
+        assertResult(
+            "\"ᾧ\" => normalize-unicode(\"NFD\") => string-length()",
+            baseFactory.number(4)
+        );
+    }
+
+    @Test
+    public void stringLengthEmptySequence() {
+        assertResult(
+            "string-length(())",
+            baseFactory.number(0)
+        );
+    }
+
+
+    @Test
     public void normalization() {
         assertResult("normalize-space(' \t\n\r a    b \t \t c   \t')", new XQueryString("a b c", baseFactory));
     }

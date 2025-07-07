@@ -5,10 +5,10 @@ import java.text.BreakIterator;
 import java.text.Normalizer;
 import java.text.Normalizer.Form;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -255,17 +255,6 @@ public class FunctionsOnStringValues {
         return argValue.lowercase();
     }
 
-    // private static final Map<String,String> HTML5_ENTITIES = Map.ofEntries(
-    // Map.entry("nbsp", "\u00A0"),
-    // Map.entry("lt", "\u003C"),
-    // Map.entry("gt", "\u003E"),
-    // Map.entry("amp", "\u0026"),
-    // Map.entry("quot", "\""),
-    // Map.entry("apos", "\u0027"),
-    // Map.entry("pi", "\u03C0"),
-    // Map.entry("NotEqualTilde", "\u2242\u0338")
-    // );
-
     private Map<String, String> HTML5_ENTITIES;
 
     Map<String, String> getEntities() {
@@ -506,9 +495,60 @@ public class FunctionsOnStringValues {
         return valueFactory.string(result);
     }
 
-    public XQueryValue translate(final XQueryVisitingContext context, final List<XQueryValue> args,
-            final Map<String, XQueryValue> kwargs) {
-        return null;
+    /**
+     * fn:translate(
+     *   $value   as xs:string?,
+     *   $replace as xs:string,
+     *   $with    as xs:string
+     * ) as xs:string
+     */
+    public XQueryValue translate(
+            XQueryVisitingContext context,
+            List<XQueryValue> args,
+            Map<String, XQueryValue> kwargs) {
+
+        XQueryValue valArg = args.get(0);
+
+        // If $value is the empty sequence, the function returns the zero-length string.
+        if (valArg.isEmptySequence())
+            return valueFactory.string("");
+
+        // Otherwise, the function returns a result string constructed by processing each character in $value, in order, according to the following rules:
+        String input = valArg.stringValue();
+
+        // obtain replace and with strings
+        XQueryValue repArg = args.get(1);
+        XQueryValue withArg = args.get(2);
+
+        String replace = repArg.stringValue();
+        String with = withArg.stringValue();
+
+        // build codepoint arrays
+        int[] inCps = input.codePoints().toArray();
+        int[] repCps = replace.codePoints().toArray();
+        int[] withCps = with.codePoints().toArray();
+
+        // map each codepoint in replace to its first index
+        Map<Integer, Integer> indexMap = new HashMap<>();
+        for (int i = 0; i < repCps.length; i++) {
+            indexMap.putIfAbsent(repCps[i], i);
+        }
+
+        // translate each character
+        StringBuilder sb = new StringBuilder();
+        for (int cp : inCps) {
+            Integer idx = indexMap.get(cp);
+            if (idx == null) {
+                // not in replace => unchanged
+                sb.appendCodePoint(cp);
+            } else if (idx < withCps.length) {
+                // replace with corresponding codepoint
+                sb.appendCodePoint(withCps[idx]);
+            }
+            // else: idx >= withCps.length => omit
+        }
+
+        return valueFactory.string(sb.toString());
     }
 
 

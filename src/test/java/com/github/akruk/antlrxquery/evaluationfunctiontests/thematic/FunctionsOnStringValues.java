@@ -389,5 +389,29 @@ public class FunctionsOnStringValues extends FunctionsEvaluationTests {
         assertResult("upper-case(())", new XQueryString("", baseFactory));
     }
 
+        @Test
+    public void translateBarAbc() {
+        assertResult(
+            "translate(\"bar\", \"abc\", \"ABC\")",
+            baseFactory.string("BAr")
+        );
+    }
+
+    @Test
+    public void translateStripDashes() {
+        assertResult(
+            "translate(\"--aaa--\", \"abc-\", \"ABC\")",
+            baseFactory.string("AAA")
+        );
+    }
+
+    @Test
+    public void translateAbcdabc() {
+        assertResult(
+            "translate(\"abcdabc\", \"abc\", \"AB\")",
+            baseFactory.string("ABdAB")
+        );
+    }
+
 
 }

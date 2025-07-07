@@ -6,26 +6,22 @@ import com.github.akruk.antlrxquery.evaluationfunctiontests.FunctionsEvaluationT
 import com.github.akruk.antlrxquery.values.*;
 
 public class FunctionsOnStringValues extends FunctionsEvaluationTests {
-    // valid Unicode codepoint
     @Test
     public void charFromInteger() {
         assertResult("fn:char(65)", new XQueryString("A", baseFactory));
         assertResult("fn:char(0x1F600)", new XQueryString("\uD83D\uDE00", baseFactory)); // grinning face
     }
 
-    // invalid codepoint (above Unicode max)
     @Test
     public void charFromIntegerOutOfRange() {
         assertError("fn:char(0x110000)", XQueryError.UnrecognizedOrInvalidCharacterName);
     }
 
-    // invalid codepoint (surrogate range)
     @Test
     public void charFromIntegerSurrogate() {
         assertError("fn:char(0xD800)", XQueryError.UnrecognizedOrInvalidCharacterName);
     }
 
-    // HTML5 named references
     @Test
     public void charFromNamedEntity() {
         assertResult("fn:char('amp')", new XQueryString("&", baseFactory));
@@ -33,13 +29,11 @@ public class FunctionsOnStringValues extends FunctionsEvaluationTests {
         assertResult("fn:char('NotEqualTilde')", new XQueryString("\u2242\u0338", baseFactory));
     }
 
-    // unrecognized named reference
     @Test
     public void charFromUnknownEntity() {
         assertError("fn:char('unknown')", XQueryError.UnrecognizedOrInvalidCharacterName);
     }
 
-    // escape sequences
     @Test
     public void charFromEscape() {
         assertResult("fn:char('\\n')", new XQueryString("\n", baseFactory));
@@ -47,20 +41,17 @@ public class FunctionsOnStringValues extends FunctionsEvaluationTests {
         assertResult("fn:char('\\r')", new XQueryString("\r", baseFactory));
     }
 
-    // invalid escape
     @Test
     public void charFromInvalidEscape() {
         assertError("fn:char('\\x')", XQueryError.UnrecognizedOrInvalidCharacterName);
     }
 
-    // wrong arity
     @Test
     public void charWrongArity() {
         assertError("fn:char()", XQueryError.WrongNumberOfArguments);
         assertError("fn:char(65, 'A')", XQueryError.WrongNumberOfArguments);
     }
 
-    // invalid argument type
     @Test
     public void charInvalidType() {
         assertError("fn:char(true())", XQueryError.UnrecognizedOrInvalidCharacterName);

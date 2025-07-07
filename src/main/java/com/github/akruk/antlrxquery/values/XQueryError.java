@@ -551,4 +551,9 @@ public class XQueryError implements XQueryValue {
         return true;
     }
 
+    @Override
+    public boolean isEmptySequence() {
+        return false;
+    }
+
 }

@@ -162,11 +162,6 @@ public class FunctionsOnStringValues {
             Map<String, XQueryValue> kwargs)
     {
 
-        // Accept up to two arguments
-        if (args.size() > 2) {
-            return XQueryError.WrongNumberOfArguments;
-        }
-
         // Determine the sequence of values to join
         List<XQueryValue> atomized;
         if (args.isEmpty()) {
@@ -186,7 +181,7 @@ public class FunctionsOnStringValues {
         if (args.size() == 2) {
             XQueryValue sepArg = args.get(1);
             // Empty sequence or omitted => zero‐length string
-            if (!sepArg.sequence().isEmpty()) {
+            if (!sepArg.isEmptySequence()) {
                 sep = sepArg.stringValue();
             }
         }
@@ -402,5 +397,46 @@ public class FunctionsOnStringValues {
             final Map<String, XQueryValue> kwargs) {
         return null;
     }
+
+
+    /**
+     * fn:string-length(
+     *   $value as xs:string? := fn:string(.)
+     * ) as xs:integer
+     */
+    public XQueryValue stringLength(
+            XQueryVisitingContext context,
+            List<XQueryValue> args,
+            Map<String, XQueryValue> kwargs) {
+
+        String input;
+
+        if (args.isEmpty()) {
+            // zero‐arg form: use context item
+            XQueryValue ctxItem = context.getItem();
+            if (ctxItem == null) {
+                return XQueryError.MissingDynamicContextComponent;
+            }
+            // atomize
+            List<XQueryValue> atoms = ctxItem.atomize();
+            if (atoms.size() != 1) {
+                return XQueryError.InvalidArgumentType;
+            }
+            input = atoms.get(0).stringValue();
+        } else {
+            // one‐arg form
+            XQueryValue arg = args.get(0);
+            // empty‐sequence => length 0
+            if (arg.isEmptySequence()) {
+                return valueFactory.number(0);
+            }
+            input = arg.stringValue();
+        }
+
+        // count codepoints (each surrogate pair counts as one)
+        long length = input.codePoints().count();
+        return valueFactory.number(BigDecimal.valueOf(length));
+    }
+
 
 }

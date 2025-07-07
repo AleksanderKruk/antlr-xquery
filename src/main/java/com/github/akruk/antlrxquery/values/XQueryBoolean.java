@@ -71,4 +71,9 @@ public class XQueryBoolean extends XQueryValueBase<Boolean> {
     public XQueryValue empty() {
         return valueFactory.bool(false);
     }
+
+    @Override
+    public boolean isEmptySequence() {
+        return false;
+    }
 }

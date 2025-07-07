@@ -9,13 +9,14 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
     public List<XQueryValue> sequence() {
         return value;
     }
-
+    final boolean isEmptySequence;
     public XQuerySequence(List<XQueryValue> list, XQueryValueFactory valueFactory) {
         super(list, valueFactory);
+        isEmptySequence = value.size() == 0;
     }
 
     public XQuerySequence(XQueryValueFactory valueFactory) {
-        super(List.of(), valueFactory);
+        this(List.of(), valueFactory);
     }
 
     @Override
@@ -248,4 +249,10 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
         builder.append(other.stringValue());
         return valueFactory.string(builder.toString());
     }
+
+    @Override
+    public boolean isEmptySequence() {
+        return isEmptySequence;
+    }
+
 }

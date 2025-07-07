@@ -49,4 +49,9 @@ public class XQueryFunctionReference extends XQueryValueBase<XQueryFunction> {
     public XQueryValue empty() {
         return valueFactory.bool(false);
     }
+
+    @Override
+    public boolean isEmptySequence() {
+        return false;
+    }
 }

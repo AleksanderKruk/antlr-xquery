@@ -71,4 +71,5 @@ public interface XQueryValue {
     public XQueryValue substring(int startingLoc, int length);
     public XQueryValue substringBefore(XQueryValue splitstring);
     public XQueryValue substringAfter(XQueryValue splitstring);
+    public boolean isEmptySequence();
 }

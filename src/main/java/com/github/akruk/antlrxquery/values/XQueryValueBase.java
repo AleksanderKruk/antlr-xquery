@@ -403,5 +403,9 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
     }
 
 
+    @Override
+    public boolean isEmptySequence() {
+        return false;
+    }
 
 }

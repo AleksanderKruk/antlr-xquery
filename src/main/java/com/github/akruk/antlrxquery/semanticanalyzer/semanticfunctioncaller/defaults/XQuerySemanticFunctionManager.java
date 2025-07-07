@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -45,29 +46,61 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         register("fn", "position", List.of(), typeFactory.number());
         register("fn", "last", List.of(), typeFactory.number());
 
+
+        final ParseTree defaultRoundingMode = getTree("'half-to-ceiling'", parser->parser.literal());
+        final ParseTree zeroLiteral = getTree("0", parser->parser.literal());
+
         final XQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         final ArgumentSpecification argItems = new ArgumentSpecification("input", zeroOrMoreItems, null);
         register("fn", "not", List.of(argItems), typeFactory.boolean_());
 
-        // final XQuerySequenceType optionalNumber = typeFactory.zeroOrOne(typeFactory.itemNumber());
-        // final ArgumentSpecification valueNum = new ArgumentSpecification("value", optionalNumber, null);
-        // // final ArgumentSpecification precision = new ArgumentSpecification("precision", false,
-        // //         typeFactory.enum_(Set.of("floor",
-        // //                 "ceiling",
-        // //                 "toward-zero",
-        // //                 "away-from-zero",
-        // //                 "half-to-floor",
-        // //                 "half-to-ceiling",
-        // //                 "half-toward-zero",
-        // //                 "half-away-from-zero",
-        // //                 "half-to-even")));
-        // final ArgumentSpecification roundingMode = new ArgumentSpecification("mode", typeFactory.number()), null);
+        final XQuerySequenceType optionalNumber = typeFactory.zeroOrOne(typeFactory.itemNumber());
+        final ArgumentSpecification valueNum = new ArgumentSpecification("value", optionalNumber, null);
+        final ArgumentSpecification roundingMode = new ArgumentSpecification("mode",
+                typeFactory.zeroOrOne(typeFactory.itemEnum(Set.of("floor",
+                                        "ceiling",
+                                        "toward-zero",
+                                        "away-from-zero",
+                                        "half-to-floor",
+                                        "half-to-ceiling",
+                                        "half-toward-zero",
+                                        "half-away-from-zero",
+                                        "half-to-even"))),
+                                        defaultRoundingMode);
+        final ArgumentSpecification precision = new ArgumentSpecification("precision", optionalNumber, zeroLiteral);
 
-        // register("fn", "abs", List.of(valueNum), optionalNumber);
-        // register("fn", "ceiling", List.of(valueNum), optionalNumber);
-        // register("fn", "floor", List.of(valueNum), optionalNumber);
-        // register("fn", "round",
-        //         List.of(valueNum, precision, roundingMode), optionalNumber);
+        // fn:abs(
+        // $value	as xs:numeric?
+        // ) as xs:numeric?
+        register("fn", "abs", List.of(valueNum), optionalNumber);
+
+        // fn:ceiling(
+        // $value	as xs:numeric?
+        // ) as xs:numeric?
+        register("fn", "ceiling", List.of(valueNum), optionalNumber);
+
+
+        // fn:floor(
+        // $value	as xs:numeric?
+        // ) as xs:numeric?
+        register("fn", "floor", List.of(valueNum), optionalNumber);
+
+
+        // fn:round(
+        // $value	as xs:numeric?,
+        // $precision	as xs:integer?	:= 0,
+        // $mode	as enum('floor',
+        //                     'ceiling',
+        //                     'toward-zero',
+        //                     'away-from-zero',
+        //                     'half-to-floor',
+        //                     'half-to-ceiling',
+        //                     'half-toward-zero',
+        //                     'half-away-from-zero',
+        //                     'half-to-even')?	:= 'half-to-ceiling'
+        // ) as xs:numeric?
+        register("fn", "round",
+                List.of(valueNum, precision, roundingMode), optionalNumber);
 
         // final ArgumentSpecification sequence = new ArgumentSpecification("input", zeroOrMoreItems, null);
         // final ArgumentSpecification position = new ArgumentSpecification("position", typeFactory.number()), null);
@@ -558,7 +591,6 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
                 List.of(),
                 typeFactory.number());
 
-        final XQuerySequenceType optionalNumber = typeFactory.zeroOrOne(typeFactory.itemNumber());
 
         // math:exp(  as xs:double?  ) as xs:double?
         final ArgumentSpecification expValue = new ArgumentSpecification("value", optionalNumber, null);

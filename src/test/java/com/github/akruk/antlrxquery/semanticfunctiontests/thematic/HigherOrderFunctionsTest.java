@@ -101,7 +101,7 @@ public class HigherOrderFunctionsTest extends FunctionsSemanticTest {
     // fn:every($input as item()*, $predicate as fn(item(),xs:integer) as xs:boolean? := fn:boolean#1) as xs:boolean
     @Test public void every_defaultsAndCustom() {
         assertType("fn:every((1,2))",
-            typeFactory.one(typeFactory.itemBoolean()));
+            typeFactory.boolean_());
         assertType(
             "fn:every((1,2), function($v,$i){ $v > 0 })",
             typeFactory.one(typeFactory.itemBoolean())
@@ -265,8 +265,7 @@ public class HigherOrderFunctionsTest extends FunctionsSemanticTest {
 
     // fn:some($input as item()*, $predicate as fn(item(),xs:integer) as xs:boolean? := fn:boolean#1) as xs:boolean
     @Test public void some_defaultsAndCustom() {
-        assertType("fn:some((0,1))",
-            typeFactory.one(typeFactory.itemBoolean()));
+        assertType("fn:some((0,1))", typeFactory.boolean_());
         assertType(
             "fn:some((1,2), function($v,$i){ $v > 1 })",
             typeFactory.one(typeFactory.itemBoolean())

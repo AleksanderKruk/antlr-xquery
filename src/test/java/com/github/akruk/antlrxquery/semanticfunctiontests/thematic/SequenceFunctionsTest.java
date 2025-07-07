@@ -8,18 +8,16 @@ public class SequenceFunctionsTest extends FunctionsSemanticTest {
 
     // fn:empty($input as item()*) as xs:boolean
     @Test public void empty_defaultAndVarious() {
-        assertType("fn:empty()",
-            typeFactory.one(typeFactory.itemBoolean()));
-        assertType("fn:empty(1, 'x', <a/>)",
-            typeFactory.one(typeFactory.itemBoolean()));
+        assertType("fn:empty()", typeFactory.boolean_());
+        assertType("fn:empty(1, 'x', <a/>)", typeFactory.boolean_());
     }
 
     // fn:exists($input as item()*) as xs:boolean
     @Test public void exists_defaultAndVarious() {
         assertType("fn:exists()",
-            typeFactory.one(typeFactory.itemBoolean()));
+            typeFactory.boolean_());
         assertType("fn:exists((),1)",
-            typeFactory.one(typeFactory.itemBoolean()));
+            typeFactory.boolean_());
     }
 
     // fn:foot($input as item()*) as item()?

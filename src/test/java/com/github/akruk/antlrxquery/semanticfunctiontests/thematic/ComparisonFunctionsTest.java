@@ -9,7 +9,7 @@ public class ComparisonFunctionsTest extends FunctionsSemanticTest {
     // fn:atomic-equal($v1 as xs:anyAtomicType, $v2 as xs:anyAtomicType) as xs:boolean
     @Test public void atomicEqual_valid() {
         assertType("fn:atomic-equal(1, 'a')",
-            typeFactory.one(typeFactory.itemBoolean()));
+            typeFactory.boolean_());
     }
     @Test public void atomicEqual_wrongTypes() {
         assertErrors("fn:atomic-equal(<a/>, 1)");
@@ -24,15 +24,15 @@ public class ComparisonFunctionsTest extends FunctionsSemanticTest {
     // fn:deep-equal($in1 as item()*, $in2 as item()*, $options as (xs:string|map(*))? := {}) as xs:boolean
     @Test public void deepEqual_minimal() {
         assertType("fn:deep-equal((1,'x'),(1,'x'))",
-            typeFactory.one(typeFactory.itemBoolean()));
+            typeFactory.boolean_());
     }
     @Test public void deepEqual_withStringOptions() {
         assertType("fn:deep-equal((1),(1),'collation=uc')",
-            typeFactory.one(typeFactory.itemBoolean()));
+            typeFactory.boolean_());
     }
     @Test public void deepEqual_withMapOptions() {
         assertType("fn:deep-equal((<a/>),(<a/>), map{})",
-            typeFactory.one(typeFactory.itemBoolean()));
+            typeFactory.boolean_());
     }
     @Test public void deepEqual_missingOrExtra() {
         assertErrors("fn:deep-equal((1))");
@@ -118,11 +118,11 @@ public class ComparisonFunctionsTest extends FunctionsSemanticTest {
     // fn:starts-with-subsequence($in as item()*, $sub as item()*, $cmp as fn(item(),item())? := fn:deep-equal#2) as xs:boolean
     @Test public void startsWithSub_minimal() {
         assertType("fn:starts-with-subsequence((1,2,3),(1,2))",
-            typeFactory.one(typeFactory.itemBoolean()));
+            typeFactory.boolean_());
     }
     @Test public void startsWithSub_namedCompare() {
         assertType("fn:starts-with-subsequence((1),(1), compare)",
-            typeFactory.one(typeFactory.itemBoolean()));
+            typeFactory.boolean_());
     }
     @Test public void startsWithSub_missingOrWrong() {
         assertErrors("fn:starts-with-subsequence((1))");
@@ -133,11 +133,11 @@ public class ComparisonFunctionsTest extends FunctionsSemanticTest {
     // fn:ends-with-subsequence(...) as xs:boolean
     @Test public void endsWithSub_minimal() {
         assertType("fn:ends-with-subsequence((a,b),(b))",
-            typeFactory.one(typeFactory.itemBoolean()));
+            typeFactory.boolean_());
     }
     @Test public void endsWithSub_namedArgs() {
         assertType("fn:ends-with-subsequence(input := (1,2), subsequence := (2))",
-            typeFactory.one(typeFactory.itemBoolean()));
+            typeFactory.boolean_());
     }
     @Test public void endsWithSub_errors() {
         assertErrors("fn:ends-with-subsequence((1))");
@@ -147,11 +147,11 @@ public class ComparisonFunctionsTest extends FunctionsSemanticTest {
     // fn:contains-subsequence(...) as xs:boolean
     @Test public void containsSub_minimal() {
         assertType("fn:contains-subsequence((1,2,3),(2,3))",
-            typeFactory.one(typeFactory.itemBoolean()));
+            typeFactory.boolean_());
     }
     @Test public void containsSub_namedCompare() {
         assertType("fn:contains-subsequence((1,2),(1), compare)",
-            typeFactory.one(typeFactory.itemBoolean()));
+            typeFactory.boolean_());
     }
     @Test public void containsSub_errors() {
         assertErrors("fn:contains-subsequence((1))");

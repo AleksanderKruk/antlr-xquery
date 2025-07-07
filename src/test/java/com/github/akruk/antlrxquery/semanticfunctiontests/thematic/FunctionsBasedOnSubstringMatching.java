@@ -11,25 +11,22 @@ public class FunctionsBasedOnSubstringMatching extends FunctionsSemanticTest {
     @Test
     public void contains_positional() {
         assertType("fn:contains('abracadabra','cad')",
-                typeFactory.one(typeFactory.itemBoolean()));
+                typeFactory.boolean_());
     }
 
     @Test
     public void contains_namedArgs() {
-        assertType("fn:contains(substring := 'bra', value := 'abracadabra')",
-                typeFactory.one(typeFactory.itemBoolean()));
+        assertType("fn:contains(substring := 'bra', value := 'abracadabra')", typeFactory.boolean_());
     }
 
     @Test
     public void contains_withCollation() {
-        assertType("fn:contains('a','A','uci')",
-                typeFactory.one(typeFactory.itemBoolean()));
+        assertType("fn:contains('a','A','uci')", typeFactory.boolean_());
     }
 
     @Test
     public void contains_defaultCollation() {
-        assertType("fn:contains('','')",
-                typeFactory.one(typeFactory.itemBoolean()));
+        assertType("fn:contains('','')", typeFactory.boolean_());
     }
 
     @Test
@@ -55,19 +52,19 @@ public class FunctionsBasedOnSubstringMatching extends FunctionsSemanticTest {
     @Test
     public void startsWith_positional() {
         assertType("fn:starts-with('hello','he')",
-                typeFactory.one(typeFactory.itemBoolean()));
+                typeFactory.boolean_());
     }
 
     @Test
     public void startsWith_namedArgs() {
         assertType("fn:starts-with(substring := 'lo', value := 'hello')",
-                typeFactory.one(typeFactory.itemBoolean()));
+                typeFactory.boolean_());
     }
 
     @Test
     public void startsWith_withCollation() {
         assertType("fn:starts-with('X','x','uci')",
-                typeFactory.one(typeFactory.itemBoolean()));
+                typeFactory.boolean_());
     }
 
     @Test
@@ -87,20 +84,18 @@ public class FunctionsBasedOnSubstringMatching extends FunctionsSemanticTest {
     // xs:string? := default) as xs:boolean
     @Test
     public void endsWith_positional() {
-        assertType("fn:ends-with('testing','ing')",
-                typeFactory.one(typeFactory.itemBoolean()));
+        assertType("fn:ends-with('testing','ing')", typeFactory.boolean_());
     }
 
     @Test
     public void endsWith_namedArgs() {
-        assertType("fn:ends-with(value := 'abc', substring := 'bc')",
-                typeFactory.one(typeFactory.itemBoolean()));
+        assertType("fn:ends-with(value := 'abc', substring := 'bc')", typeFactory.boolean_());
     }
 
     @Test
     public void endsWith_withCollation() {
         assertType("fn:ends-with('A','a','uci')",
-                typeFactory.one(typeFactory.itemBoolean()));
+                typeFactory.boolean_());
     }
 
     @Test

@@ -53,8 +53,7 @@ public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
 
     // array:empty($array as array(*)) as xs:boolean
     @Test public void arrayEmpty_valid() {
-        assertType("array:empty(array{})",
-            typeFactory.one(typeFactory.itemBoolean()));
+        assertType("array:empty(array{})", typeFactory.boolean_());
     }
     @Test public void arrayEmpty_errors() {
         assertErrors("array:empty()");

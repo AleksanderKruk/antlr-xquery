@@ -1031,18 +1031,18 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
 
         // // op:boolean-equal( as xs:boolean,  as xs:boolean) as xs:boolean
         // final ArgumentSpecification boolEq1 = new ArgumentSpecification("value1", true,
-        //         typeFactory.one(typeFactory.itemBoolean()));
+        //         typeFactory.boolean_();
         // final ArgumentSpecification boolEq2 = new ArgumentSpecification("value2", true,
-        //         typeFactory.one(typeFactory.itemBoolean()));
+        //         typeFactory.boolean_();
         // register("op", "boolean-equal",
         //         List.of(boolEq1, boolEq2),
         //         typeFactory.boolean_());
 
         // // op:boolean-less-than( as xs:boolean,  as xs:boolean) as xs:boolean
         // final ArgumentSpecification boolLt1 = new ArgumentSpecification("arg1", true,
-        //         typeFactory.one(typeFactory.itemBoolean()));
+        //         typeFactory.boolean_();
         // final ArgumentSpecification boolLt2 = new ArgumentSpecification("arg2", true,
-        //         typeFactory.one(typeFactory.itemBoolean()));
+        //         typeFactory.boolean_();
         // register("op", "boolean-less-than",
         //         List.of(boolLt1, boolLt2),
         //         typeFactory.boolean_());

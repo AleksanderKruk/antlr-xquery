@@ -53,7 +53,7 @@ public class OtherFunctionsOnNodesTest extends FunctionsSemanticTest{
 
     @Test
     public void lang_positional() {
-        assertType("fn:lang('en')",typeFactory.one(typeFactory.itemBoolean()));
+        assertType("fn:lang('en')",typeFactory.boolean_());
     }
 
     // @Test
@@ -105,7 +105,7 @@ public class OtherFunctionsOnNodesTest extends FunctionsSemanticTest{
 
     @Test
     public void hasChildren_default() {
-        assertType("fn:has-children()",typeFactory.one(typeFactory.itemBoolean()));
+        assertType("fn:has-children()",typeFactory.boolean_());
     }
 
     // @Test

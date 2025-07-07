@@ -91,12 +91,9 @@ public class AggregateFunctionsTest extends FunctionsSemanticTest {
     // fn:all-equal($values as xs:anyAtomicType*, $collation as xs:string? := default) as xs:boolean
     @Test
     public void allEqual_defaultsAndWithValues() {
-        assertType("fn:all-equal()",
-            typeFactory.one(typeFactory.itemBoolean()));
-        assertType("fn:all-equal(1,1,1)",
-            typeFactory.one(typeFactory.itemBoolean()));
-        assertType("fn:all-equal('a','A', collation := 'uci')",
-            typeFactory.one(typeFactory.itemBoolean()));
+        assertType("fn:all-equal()", typeFactory.boolean_());
+        assertType("fn:all-equal(1,1,1)", typeFactory.boolean_());
+        assertType("fn:all-equal('a','A', collation := 'uci')", typeFactory.boolean_());
     }
 
     @Test
@@ -109,11 +106,11 @@ public class AggregateFunctionsTest extends FunctionsSemanticTest {
     @Test
     public void allDifferent_defaultsAndWithValues() {
         assertType("fn:all-different()",
-            typeFactory.one(typeFactory.itemBoolean()));
+            typeFactory.boolean_());
         assertType("fn:all-different(1,2,3)",
-            typeFactory.one(typeFactory.itemBoolean()));
+            typeFactory.boolean_());
         assertType("fn:all-different('x','y', collation := 'uci')",
-            typeFactory.one(typeFactory.itemBoolean()));
+            typeFactory.boolean_());
     }
 
     @Test

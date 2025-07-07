@@ -22,7 +22,7 @@ import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.values.factories.defaults.XQueryMemoizedValueFactory;
 
 public class FunctionsEvaluationTests {
-    public XQueryValueFactory baseFactory = new XQueryMemoizedValueFactory();
+    public XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory();
     public void assertResult(String xquery, String result) {
         var value = XQuery.evaluate(null, xquery, null);
         assertNotNull(value);

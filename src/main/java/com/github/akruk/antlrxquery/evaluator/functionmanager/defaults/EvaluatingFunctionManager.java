@@ -476,7 +476,7 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         if (function.isError()) {
             return XQueryError.UnknownFunctionName;
         }
-        // return function.entry().function;
-        return null;
+        return valueFactory.functionReference(function.entry().function);
+        // return null;
     }
 }

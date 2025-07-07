@@ -83,7 +83,7 @@ public class XQueryError implements XQueryValue {
             "Unsupported normalization form.");
     public static final XQueryError CollationUnitsNotSupported = new XQueryError("FOCH0004",
             "Collation does not support collation units.");
-    public static final XQueryError InvalidCharacterName = new XQueryError("FOCH0005",
+    public static final XQueryError UnrecognizedOrInvalidCharacterName = new XQueryError("FOCH0005",
             "Unrecognized or invalid character name.");
     public static final XQueryError CsvFieldQuotingError = new XQueryError("FOCV0001", "CSV field quoting error.");
     public static final XQueryError InvalidCsvDelimiter = new XQueryError("FOCV0002", "Invalid CSV delimiter.");

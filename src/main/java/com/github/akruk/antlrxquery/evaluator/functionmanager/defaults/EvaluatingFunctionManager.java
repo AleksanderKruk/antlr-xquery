@@ -149,12 +149,8 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
     public XQueryValue defaultCollation(
             XQueryVisitingContext context,
             List<XQueryValue> args,
-            Map<String,XQueryValue> kwargs) {
-
-        if (!args.isEmpty()) {
-            return XQueryError.WrongNumberOfArguments;
-        }
-        // zawsze mamy jakąś wartość domyślną
+            Map<String,XQueryValue> kwargs)
+    {
         return valueFactory.string(Collations.CODEPOINT_URI);
     }
 

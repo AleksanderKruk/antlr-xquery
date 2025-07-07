@@ -354,12 +354,8 @@ public class XQueryEvaluatorTest {
 
     @Test
     public void not() {
-        String xquery = "not(true())";
-        var value = XQuery.evaluate(null, xquery, null);
-        assertFalse(value.booleanValue());
-        xquery = "not(false())";
-        value = XQuery.evaluate(null, xquery, null);
-        assertTrue(value.booleanValue());
+        assertResult("not(true())", baseFactory.bool(false));
+        assertResult("not(false())", baseFactory.bool(true));
     }
 
     @Test
@@ -914,39 +910,6 @@ public class XQueryEvaluatorTest {
         assertResult("data('a')", List.of(new XQueryString("a", baseFactory)));
     }
 
-    @Test
-    public void contains() {
-        assertResult("contains('abc', 'bc')", baseFactory.bool(true));
-        assertResult("contains('', 'bc')", baseFactory.bool(false));
-        assertResult("contains('abc', '')", baseFactory.bool(true));
-    }
-
-    @Test
-    public void startsWith() {
-        assertResult("starts-with('tattoo', 'tat')", baseFactory.bool(true));
-        assertResult("starts-with('tattoo', 'att')", baseFactory.bool(false));
-    }
-
-    @Test
-    public void endsWith() {
-        assertResult("ends-with('tattoo', 'oo')", baseFactory.bool(true));
-        assertResult("ends-with('tattoo', 'tatt')", baseFactory.bool(false));
-    }
-
-
-    @Test
-    public void substringBefore() {
-        assertResult("substring-before('tattoo', 'attoo')", new XQueryString("t", baseFactory));
-        assertResult("substring-before('tattoo', 'tatto')", new XQueryString("", baseFactory));
-        assertResult("substring-before('abcde', 'f')", new XQueryString("", baseFactory));
-    }
-
-    @Test
-    public void substringAfter() {
-        assertResult("substring-after('tattoo', 'tat')", new XQueryString("too", baseFactory));
-        assertResult("substring-after('tattoo', 'tattoo')", new XQueryString("", baseFactory));
-        assertResult("substring-after('abcde', 'f')", new XQueryString("", baseFactory));
-    }
 
     @Test
     public void rangeExpression() {

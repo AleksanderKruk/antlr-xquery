@@ -195,6 +195,52 @@ public class FunctionsOnStringValues extends FunctionsEvaluationTests {
         assertResult("string-join(('a', 'b', 'c'))", new XQueryString("abc", baseFactory));
         assertResult("string-join(('a', 'b', 'c'), '-')", new XQueryString("a-b-c", baseFactory));
     }
+   @Test
+    public void joinDigitsRange() {
+        // string-join(1 to 9) => "123456789"
+        assertResult(
+            "string-join(1 to 9)",
+            baseFactory.string("123456789")
+        );
+    }
+
+    @Test
+    public void joinWordsWithSpace() {
+        // string-join(('Now', 'is', 'the', 'time', '...'), ' ') => "Now is the time ..."
+        assertResult(
+            "string-join(('Now', 'is', 'the', 'time', '...'), ' ')",
+            baseFactory.string("Now is the time ...")
+        );
+    }
+
+    @Test
+    public void joinBlowWindNoSeparator() {
+        // string-join(('Blow, ', 'blow, ', 'thou ', 'winter ', 'wind!'), '')
+        // => "Blow, blow, thou winter wind!"
+        assertResult(
+            "string-join(('Blow, ', 'blow, ', 'thou ', 'winter ', 'wind!'), '')",
+            baseFactory.string("Blow, blow, thou winter wind!")
+        );
+    }
+
+    @Test
+    public void joinEmptySequence() {
+        // string-join((), 'separator') => ""
+        assertResult(
+            "string-join((), 'separator')",
+            baseFactory.string("")
+        );
+    }
+
+    @Test
+    public void joinRangeWithCommaSpace() {
+        // string-join(1 to 5, ', ') => "1, 2, 3, 4, 5"
+        assertResult(
+            "string-join(1 to 5, ', ')",
+            baseFactory.string("1, 2, 3, 4, 5")
+        );
+    }
+
 
     @Test
     public void substring() {

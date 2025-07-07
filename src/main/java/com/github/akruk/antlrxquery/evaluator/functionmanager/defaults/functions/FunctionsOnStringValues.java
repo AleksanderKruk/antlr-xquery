@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
 import com.github.akruk.antlrxquery.values.XQueryError;
+import com.github.akruk.antlrxquery.values.XQuerySequence;
 import com.github.akruk.antlrxquery.values.XQueryString;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
@@ -46,21 +47,16 @@ public class FunctionsOnStringValues {
             Map<String, XQueryValue> kwargs) {
 
         // determine the sequence of values to join
-        List<XQueryValue> rawItems;
+        // atomize each item in the sequence
+        List<XQueryValue> atomized;
         if (args.isEmpty()) {
             // no args: use context item
             XQueryValue ctx = context.getItem();
-            rawItems = ctx.sequence();
+            atomized = ctx.atomize();
         } else {
-            rawItems = args.get(0).sequence();
+            atomized = args.get(0).atomize();
         }
 
-        // atomize each item in the sequence
-        List<XQueryValue> atomized = new ArrayList<>();
-        for (XQueryValue item : rawItems) {
-            var atoms = item.atomize();
-            atomized.addAll(atoms);
-        }
 
         // if empty, return zero-length string
         if (atomized.isEmpty()) {
@@ -83,22 +79,118 @@ public class FunctionsOnStringValues {
     }
 
 
-    public XQueryValue substring(final XQueryVisitingContext ctx, final List<XQueryValue> args, final Map<String, XQueryValue> kwargs) {
-        if (args.size() == 2 || args.size() == 3) {
-            final var target = args.get(0);
-            if (!args.get(1).isNumericValue())
-                return XQueryError.InvalidArgumentType;
-            final int position = args.get(1).numericValue().intValue();
-            if (args.size() == 2) {
-                return target.substring(position);
-            } else {
-                if (!args.get(2).isNumericValue())
-                    return XQueryError.InvalidArgumentType;
-                final int length = args.get(2).numericValue().intValue();
-                return target.substring(position, length);
-            }
+
+    /**
+     * fn:substring(
+     *   $value as xs:string?,
+     *   $start as xs:double,
+     *   $length as xs:double? := ()
+     * ) as xs:string
+     */
+    public XQueryValue substring(
+            XQueryVisitingContext ctx,
+            List<XQueryValue> args,
+            Map<String, XQueryValue> kwargs) {
+
+        // must have 2 or 3 args
+        if (args.size() != 2 && args.size() != 3) {
+            return XQueryError.WrongNumberOfArguments;
         }
-        return XQueryError.WrongNumberOfArguments;
+
+        // get input string (empty‐sequence → "")
+        XQueryValue targetString = args.get(0);
+        String input = isEmptySequence(targetString)
+            ? ""
+            : targetString.stringValue();
+
+        // parse and round start
+        XQueryValue startArg = args.get(1);
+        if (!startArg.isNumericValue()) {
+            return XQueryError.InvalidArgumentType;
+        }
+        double startD = startArg.numericValue().doubleValue();
+        long startPos = roundXQ(startD);
+
+        // two‐arg or length omitted/empty
+        boolean omitLength = args.size() == 2
+            || isEmptySequence(args.get(2));
+        if (omitLength) {
+            return substring_(input, startPos, /* length=∞ */ Long.MAX_VALUE);
+        }
+
+        // parse and round length
+        XQueryValue lenArg = args.get(2);
+        if (!lenArg.isNumericValue()) {
+            return XQueryError.InvalidArgumentType;
+        }
+        double lenD = lenArg.numericValue().doubleValue();
+        long length = roundXQ(lenD);
+        return substring_(input, startPos, length);
+    }
+
+    private boolean isEmptySequence(XQueryValue targetString) {
+        return targetString instanceof XQuerySequence && targetString.empty().booleanValue();
+    }
+
+    /** Round per XQuery fn:round: ties away from zero. */
+    private long roundXQ(double d) {
+        if (Double.isNaN(d)) {
+            return Long.MIN_VALUE;     // so no positions satisfy p >= NaN
+        }
+        if (Double.isInfinite(d)) {
+            return d > 0 ? Long.MAX_VALUE : Long.MIN_VALUE;
+        }
+        if (d >= 0) {
+            return (long) Math.floor(d + 0.5);
+        } else {
+            return (long) -Math.floor(-d + 0.5);
+        }
+    }
+
+    /**
+     * Helper performing substring per XQuery rules, counting
+     * surrogate pairs as single characters.
+     *
+     * @param input full string
+     * @param startRounded rounded start position
+     * @param lengthRounded rounded length (Long.MAX_VALUE → to end)
+     */
+    private XQueryValue substring_(String input, long startRounded, long lengthRounded) {
+        // empty input always ""
+        if (input.isEmpty()) {
+            return valueFactory.string("");
+        }
+
+        // build list of code‐point chars
+        int[] cps = input.codePoints().toArray();
+        int n = cps.length;
+
+        // determine start index (1‐based!)
+        int startIndex = (int) startRounded;
+        if (startIndex <= 0) {
+            startIndex = 1;
+        }
+        if (startIndex > n) {
+            return valueFactory.string("");
+        }
+
+        // determine end position p < start + length
+        long endExclusivePos = startRounded + lengthRounded;
+        // if lengthRounded infinite, endExclusivePos large, we'll cap by n+1
+        int endIndex = (lengthRounded >= Long.MAX_VALUE || endExclusivePos > n + 1)
+            ? n
+            : (int) Math.min(n, endExclusivePos - 1);
+
+        if (endIndex < startIndex) {
+            return valueFactory.string("");
+        }
+
+        // build substring from cps[startIndex-1 .. endIndex-1]
+        StringBuilder sb = new StringBuilder();
+        for (int i = startIndex - 1; i < endIndex; i++) {
+            sb.appendCodePoint(cps[i]);
+        }
+        return valueFactory.string(sb.toString());
     }
 
     public XQueryValue stringLength(final XQueryVisitingContext context, final List<XQueryValue> args,

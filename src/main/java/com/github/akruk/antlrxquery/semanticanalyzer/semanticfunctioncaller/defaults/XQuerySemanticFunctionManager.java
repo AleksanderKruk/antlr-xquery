@@ -48,7 +48,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
 
 
         final ParseTree defaultRoundingMode = getTree("'half-to-ceiling'", parser->parser.literal());
-        final ParseTree zeroLiteral = getTree("0", parser->parser.literal());
+        final ParseTree ZERO_LITERAL = getTree("0", parser->parser.literal());
 
         final XQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         final ArgumentSpecification argItems = new ArgumentSpecification("input", zeroOrMoreItems, null);
@@ -67,7 +67,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
                                         "half-away-from-zero",
                                         "half-to-even"))),
                                         defaultRoundingMode);
-        final ArgumentSpecification precision = new ArgumentSpecification("precision", optionalNumber, zeroLiteral);
+        final ArgumentSpecification precision = new ArgumentSpecification("precision", optionalNumber, ZERO_LITERAL);
 
         // fn:abs(
         // $value	as xs:numeric?
@@ -1276,100 +1276,50 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         List.of(cssInput, cssSubseq, cssCompare),
         //         typeFactory.boolean_());
 
-        // // fn:zero-or-one( as item()*) as item()?
-        // final ArgumentSpecification z1Input2 = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("fn", "zero-or-one",
-        //         List.of(z1Input2),
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
+        // fn:count( as item()*) as xs:integer
+        register("fn", "count", List.of(anyItemsRequiredInput), typeFactory.number());
 
-        // // fn:one-or-more( as item()*) as item()+
-        // final ArgumentSpecification o1Input2 = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("fn", "one-or-more",
-        //         List.of(o1Input2),
-        //         typeFactory.oneOrMore(typeFactory.itemAnyItem()));
+        // fn:avg( as xs:anyAtomicType*) as xs:anyAtomicType?
+        final ArgumentSpecification anyItemValues = new ArgumentSpecification("values", zeroOrMoreItems, null);
+        register("fn", "avg", List.of(anyItemValues), optionalItem);
 
-        // // fn:exactly-one( as item()*) as item()
-        // final ArgumentSpecification e1Input2 = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("fn", "exactly-one",
-        //         List.of(e1Input2),
-        //         typeFactory.one(typeFactory.itemAnyItem()));
+        // fn:max(
+        //  as xs:anyAtomicType*,
+        //  as xs:string? := fn:default-collation()
+        // ) as xs:anyAtomicType?
+        final ArgumentSpecification optionalCollation = new ArgumentSpecification("collation", optionalString, DEFAULT_COLLATION);
+        register("fn", "max",
+                List.of(anyItemValues, optionalCollation),
+                typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
 
-        // // fn:count( as item()*) as xs:integer
-        // final ArgumentSpecification countInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("fn", "count",
-        //         List.of(countInput),
-        //         typeFactory.number()));
+        // fn:min(
+        //  as xs:anyAtomicType*,
+        //  as xs:string? := fn:default-collation()
+        // ) as xs:anyAtomicType?
+        register("fn", "min", List.of(anyItemValues, optionalCollation), optionalItem);
 
-        // // fn:avg( as xs:anyAtomicType*) as xs:anyAtomicType?
-        // final ArgumentSpecification avgValues = new ArgumentSpecification("values", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("fn", "avg",
-        //         List.of(avgValues),
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
+        // fn:sum(
+        //  as xs:anyAtomicType*,
+        //  as xs:anyAtomicType? := 0
+        // ) as xs:anyAtomicType?
+        final ArgumentSpecification sumZero = new ArgumentSpecification("zero", optionalItem, ZERO_LITERAL);
+        register("fn", "sum", List.of(anyItemValues, sumZero), optionalItem);
 
-        // // fn:max(
-        // //  as xs:anyAtomicType*,
-        // //  as xs:string? := fn:default-collation()
-        // // ) as xs:anyAtomicType?
-        // final ArgumentSpecification maxValues = new ArgumentSpecification("values", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification maxColl = new ArgumentSpecification("collation", false,
-        //         optionalString));
-        // register("fn", "max",
-        //         List.of(maxValues, maxColl),
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
+        // fn:all-equal(
+        //  as xs:anyAtomicType*,
+        //  as xs:string? := fn:default-collation()
+        // ) as xs:boolean
+        register("fn", "all-equal",
+                List.of(anyItemValues, optionalCollation),
+                typeFactory.boolean_());
 
-        // // fn:min(
-        // //  as xs:anyAtomicType*,
-        // //  as xs:string? := fn:default-collation()
-        // // ) as xs:anyAtomicType?
-        // final ArgumentSpecification minValues = new ArgumentSpecification("values", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification minColl = new ArgumentSpecification("collation", false,
-        //         optionalString));
-        // register("fn", "min",
-        //         List.of(minValues, minColl),
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
-
-        // // fn:sum(
-        // //  as xs:anyAtomicType*,
-        // //  as xs:anyAtomicType? := 0
-        // // ) as xs:anyAtomicType?
-        // final ArgumentSpecification sumValues = new ArgumentSpecification("values", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification sumZero = new ArgumentSpecification("zero", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
-        // register("fn", "sum",
-        //         List.of(sumValues, sumZero),
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
-
-        // // fn:all-equal(
-        // //  as xs:anyAtomicType*,
-        // //  as xs:string? := fn:default-collation()
-        // // ) as xs:boolean
-        // final ArgumentSpecification allEqualValues = new ArgumentSpecification("values", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification allEqualCollation = new ArgumentSpecification("collation", false,
-        //         optionalString));
-        // register("fn", "all-equal",
-        //         List.of(allEqualValues, allEqualCollation),
-        //         typeFactory.boolean_());
-
-        // // // fn:all-different(
-        // // //  as xs:anyAtomicType*,
-        // // //  as xs:string? := fn:default-collation()
-        // // // ) as xs:boolean
-        // // final ArgumentSpecification allDiffValues = new ArgumentSpecification("values", true,
-        // //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // // final ArgumentSpecification allDiffCollation = new ArgumentSpecification("collation", false,
-        // //         optionalString));
-        // // register("fn", "all-different",
-        // //         List.of(allDiffValues, allDiffCollation),
-        // //         typeFactory.boolean_());
+        // fn:all-different(
+        //  as xs:anyAtomicType*,
+        //  as xs:string? := fn:default-collation()
+        // ) as xs:boolean
+        register("fn", "all-different",
+                List.of(anyItemValues, optionalCollation),
+                typeFactory.boolean_());
 
         // // // fn:collection(
         // // //  as xs:string? := ()

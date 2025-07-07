@@ -25,6 +25,7 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionManager {
 
     private static final ParseTree CONTEXT_VALUE = getTree(".", parser -> parser.contextItemExpr());
+    private static final ParseTree DEFAULT_COLLATION = getTree("fn:default-collation()", parser->parser.functionCall());
 
     public interface XQuerySemanticFunction {
         public CallAnalysisResult call(final XQueryTypeFactory typeFactory,
@@ -859,9 +860,9 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
                 typeFactory.string());
 
         // // fn:hash(
-        // //  $value as (xs:string | xs:hexBinary | xs:base64Binary)?,
-        // //  $algorithm as xs:string? := "MD5",
-        // //  $options as map(*)? := {}
+        // //   as (xs:string | xs:hexBinary | xs:base64Binary)?,
+        // //   as xs:string? := "MD5",
+        // //   as map(*)? := {}
         // // ) as xs:hexBinary?
         // ArgumentSpecification hashValue = new ArgumentSpecification("value", optionalString, null);
         // ArgumentSpecification hashAlg = new ArgumentSpecification("algorithm", optionalString, getTree("\"MD5\"", p->p.literal()));
@@ -871,79 +872,57 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // typeFactory.zeroOrOne(typeFactory.itemHexBinary())
         // );
 
-        // // fn:contains(
-        // //  as xs:string?,
-        // //  as xs:string?,
-        // //  as xs:string? := fn:default-collation()
-        // // ) as xs:boolean
-        // final ArgumentSpecification cValue = new ArgumentSpecification("value", true,
-        //         optionalString));
-        // final ArgumentSpecification cSubstr = new ArgumentSpecification("substring", true,
-        //         optionalString));
-        // final ArgumentSpecification cColl = new ArgumentSpecification("collation", false,
-        //         optionalString));
-        // register("fn", "contains",
-        //         List.of(cValue, cSubstr, cColl),
-        //         typeFactory.boolean_());
-        // // fn:starts-with(
-        // //  as xs:string?,
-        // //  as xs:string?,
-        // //  as xs:string? := fn:default-collation()
-        // // ) as xs:boolean
-        // final ArgumentSpecification swValue = new ArgumentSpecification("value", true,
-        //         optionalString));
-        // final ArgumentSpecification swSubstring = new ArgumentSpecification("substring", true,
-        //         optionalString));
-        // final ArgumentSpecification swCollation = new ArgumentSpecification("collation", false,
-        //         optionalString));
-        // register("fn", "starts-with",
-        //         List.of(swValue, swSubstring, swCollation),
-        //         typeFactory.boolean_());
+        // fn:contains(
+        //  as xs:string?,
+        //  as xs:string?,
+        //  as xs:string? := fn:default-collation()
+        // ) as xs:boolean
+        final ArgumentSpecification cValue = new ArgumentSpecification("value", optionalString, null);
+        final ArgumentSpecification cSubstr = new ArgumentSpecification("substring", optionalString, null);
+        final ArgumentSpecification cColl = new ArgumentSpecification("collation", optionalString, DEFAULT_COLLATION);
+        register("fn", "contains", List.of(cValue, cSubstr, cColl), typeFactory.boolean_());
 
-        // // fn:ends-with(
-        // //  as xs:string?,
-        // //  as xs:string?,
-        // //  as xs:string? := fn:default-collation()
-        // // ) as xs:boolean
-        // final ArgumentSpecification ewValue = new ArgumentSpecification("value", true,
-        //         optionalString));
-        // final ArgumentSpecification ewSubstring = new ArgumentSpecification("substring", true,
-        //         optionalString));
-        // final ArgumentSpecification ewCollation = new ArgumentSpecification("collation", false,
-        //         optionalString));
-        // register("fn", "ends-with",
-        //         List.of(ewValue, ewSubstring, ewCollation),
-        //         typeFactory.boolean_());
+        // fn:starts-with(
+        //  as xs:string?,
+        //  as xs:string?,
+        //  as xs:string? := fn:default-collation()
+        // ) as xs:boolean
+        final ArgumentSpecification swValue = new ArgumentSpecification("value", optionalString, null);
+        final ArgumentSpecification swSubstring = new ArgumentSpecification("substring", optionalString, null);
+        final ArgumentSpecification swCollation = new ArgumentSpecification("collation", optionalString, DEFAULT_COLLATION);
+        register("fn", "starts-with", List.of(swValue, swSubstring, swCollation), typeFactory.boolean_());
 
-        // // fn:substring-before(
-        // //  as xs:string?,
-        // //  as xs:string?,
-        // //  as xs:string? := fn:default-collation()
-        // // ) as xs:string
-        // final ArgumentSpecification sbValue = new ArgumentSpecification("value", true,
-        //         optionalString));
-        // final ArgumentSpecification sbSubstring = new ArgumentSpecification("substring", true,
-        //         optionalString));
-        // final ArgumentSpecification sbCollation = new ArgumentSpecification("collation", false,
-        //         optionalString));
-        // register("fn", "substring-before",
-        //         List.of(sbValue, sbSubstring, sbCollation),
-        //         typeFactory.string());
+        // fn:ends-with(
+        //  as xs:string?,
+        //  as xs:string?,
+        //  as xs:string? := fn:default-collation()
+        // ) as xs:boolean
+        final ArgumentSpecification ewValue = new ArgumentSpecification("value", optionalString, null);
+        final ArgumentSpecification ewSubstring = new ArgumentSpecification("substring", optionalString, null);
+        final ArgumentSpecification ewCollation = new ArgumentSpecification("collation", optionalString, DEFAULT_COLLATION);
+        register("fn", "ends-with", List.of(ewValue, ewSubstring, ewCollation), typeFactory.boolean_());
 
-        // // fn:substring-after(
-        // //  as xs:string?,
-        // //  as xs:string?,
-        // //  as xs:string? := fn:default-collation()
-        // // ) as xs:string
-        // final ArgumentSpecification saValue = new ArgumentSpecification("value", true,
-        //         optionalString));
-        // final ArgumentSpecification saSubstring = new ArgumentSpecification("substring", true,
-        //         optionalString));
-        // final ArgumentSpecification saCollation = new ArgumentSpecification("collation", false,
-        //         optionalString));
-        // register("fn", "substring-after",
-        //         List.of(saValue, saSubstring, saCollation),
-        //         typeFactory.string());
+        // fn:substring-before(
+        //  as xs:string?,
+        //  as xs:string?,
+        //  as xs:string? := fn:default-collation()
+        // ) as xs:string
+        final ArgumentSpecification sbValue = new ArgumentSpecification("value", optionalString, null);
+        final ArgumentSpecification sbSubstring = new ArgumentSpecification("substring", optionalString, null);
+        final ArgumentSpecification sbCollation = new ArgumentSpecification("collation", optionalString, DEFAULT_COLLATION);
+        register("fn", "substring-before", List.of(sbValue, sbSubstring, sbCollation), typeFactory.string());
+
+        // fn:substring-after(
+        //  as xs:string?,
+        //  as xs:string?,
+        //  as xs:string? := fn:default-collation()
+        // ) as xs:string
+        final ArgumentSpecification saValue = new ArgumentSpecification("value", optionalString, null);
+        final ArgumentSpecification saSubstring = new ArgumentSpecification("substring", optionalString, null);
+        final ArgumentSpecification saCollation = new ArgumentSpecification("collation", optionalString, DEFAULT_COLLATION);
+        register("fn", "substring-after",
+                List.of(saValue, saSubstring, saCollation),
+                typeFactory.string());
 
         // // fn:matches(
         // //  as xs:string?,
@@ -2527,6 +2506,14 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // register("xs", "string",
         //         List.of(castStringValue),
         //         optionalString));
+
+
+
+        // fn:default-collation() as xs:string
+        register("fn", "default-collation", List.of(), typeFactory.string());
+
+
+
 
     }
 

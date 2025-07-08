@@ -196,16 +196,8 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         if (enumItemType2 == null) {
             return sequenceGetter.apply(enumItemType1);
         }
-        final boolean itemType1MoreGeneral = enumItemType2.itemtypeIsSubtypeOf(enumItemType1);
-        if (itemType1MoreGeneral) {
-            return sequenceGetter.apply(enumItemType1);
-        }
-        final boolean itemType2MoreGeneral = enumItemType1.itemtypeIsSubtypeOf(enumItemType2);
-        if (itemType2MoreGeneral) {
-            return sequenceGetter.apply(enumItemType2);
-        }
-
-        return sequenceGetter.apply(typeFactory.itemChoice(List.of(enumItemType1, enumItemType2)));
+        final XQueryItemType mergedItemType = enumItemType1.sequenceMerge(enumItemType2);
+        return sequenceGetter.apply(mergedItemType);
 
     }
 

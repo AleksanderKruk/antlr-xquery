@@ -13,6 +13,7 @@ import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.baseimplem
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQuerySemanticFunctionManager;
+import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryEnumTypeFactory;
@@ -251,29 +252,30 @@ public class XQuerySemanticAnalyzerTest {
 
     @Test
     public void itemGetting() {
-        final var optionalString = typeFactory.zeroOrOne(typeFactory.itemString());
-        final var zeroOrMoreString = typeFactory.zeroOrMore(typeFactory.itemString());
         assertType("""
                     ("a", "b", "c")[()]
                 """, typeFactory.emptySequence());
+        final XQueryItemType abcEnum = typeFactory.itemEnum(Set.of("a", "b", "c"));
+        final XQuerySequenceType zeroOrOneABC = typeFactory.zeroOrOne(abcEnum);
+        final XQuerySequenceType zeroOrMoreABC = typeFactory.zeroOrMore(abcEnum);
         assertType("""
                     ("a", "b", "c")[1]
-                """, optionalString);
+                """, zeroOrOneABC);
         assertType("""
                     ("a", "b", "c")[1, 2]
-                """, zeroOrMoreString);
+                """, zeroOrMoreABC);
         assertType("""
                     let $x as number? := 1
                     return ("a", "b", "c")[$x]
-                """, optionalString);
+                """, zeroOrOneABC);
         assertType("""
                     let $x as number* := (1, 2)
                     return ("a", "b", "c")[$x]
-                """, zeroOrMoreString);
+                """, zeroOrMoreABC);
         assertType("""
                     let $x as number+ := (1, 2)
                     return ("a", "b", "c")[$x]
-                """, zeroOrMoreString);
+                """, zeroOrMoreABC);
     }
 
     @Test

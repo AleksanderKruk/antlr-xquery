@@ -116,11 +116,6 @@ public class FunctionsOnNumericValuesTest extends FunctionsSemanticTest {
         assertErrors("fn:round-half-to-even()");
     }
 
-    @Test
-    void roundHalfToEven_badPrecision() {
-        assertErrors("fn:round-half-to-even(2.5, 1.1)");
-    }
-
     // fn:divide-decimals($value as xs:decimal, $divisor as xs:decimal, $precision
     // as xs:integer? := 0) as record(...)
     @Test

@@ -372,7 +372,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             final String rawText = ctx.getText();
             final String content = unescapeString(ctx, rawText.substring(1, rawText.length() - 1));
             valueFactory.string(content);
-            return typeFactory.string();
+            return typeFactory.enum_(Set.of(content));
         }
 
         final var numeric = ctx.numericLiteral();

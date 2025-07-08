@@ -20,6 +20,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQueryVisitingSemanticContext;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager;
+import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
@@ -101,6 +102,39 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // ) as xs:numeric?
         register("fn", "round",
                 List.of(valueNum, precision, roundingMode), optionalNumber);
+
+
+        // fn:round-half-to-even(
+        // $value	as xs:numeric?,
+        // $precision	as xs:integer?	:= 0
+        // ) as xs:numeric?
+        register("fn", "round-half-to-even",
+                List.of(valueNum, precision), optionalNumber);
+
+
+        // fn:divide-decimals(
+        // $value	as xs:decimal,
+        // $divisor	as xs:decimal,
+        // $precision	as xs:integer?	:= 0
+        // ) as record(quotient as xs:decimal, remainder as xs:decimal)
+        final var arg_value_number = new ArgumentSpecification("value", typeFactory.number(), null);
+        final var arg_divisor_number = new ArgumentSpecification("value", typeFactory.number(), null);
+        final XQueryRecordField numericField = new XQueryRecordField(typeFactory.number(), true);
+        final var divisionResult = typeFactory.record(
+            Map.of("quotient", numericField,
+                   "remainder", numericField));
+        register("fn", "divide-decimals",
+                List.of(arg_value_number, arg_divisor_number, precision), divisionResult);
+
+
+        // fn:is-NaN(
+        // $value	as xs:anyAtomicType
+        // ) as xs:boolean
+        register("fn", "is-NaN",
+                List.of(new ArgumentSpecification("value", typeFactory.anyItem(), null)),
+                typeFactory.boolean_());
+
+
 
         // final ArgumentSpecification sequence = new ArgumentSpecification("input", zeroOrMoreItems, null);
         // final ArgumentSpecification position = new ArgumentSpecification("position", typeFactory.number()), null);

@@ -23,6 +23,7 @@ import com.github.akruk.antlrxquery.evaluator.XQueryEvaluatorVisitor;
 import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
 import com.github.akruk.antlrxquery.evaluator.collations.Collations;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.IXQueryEvaluatingFunctionManager;
+import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.CardinalityFunctions;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.FunctionsBasedOnSubstringMatching;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.FunctionsOnNumericValues;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.FunctionsOnStringValues;
@@ -57,6 +58,7 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
     private final XQueryEvaluatorVisitor evaluator;
     private final FunctionsBasedOnSubstringMatching functionsBasedOnSubstringMatching;
     private final FunctionsOnNumericValues functionsOnNumericValues;
+    private final CardinalityFunctions cardinalityFunctions;
 
     public EvaluatingFunctionManager(final XQueryEvaluatorVisitor evaluator, final XQueryValueFactory valueFactory) {
         this.valueFactory = valueFactory;
@@ -66,6 +68,7 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         this.functionsOnStringValues = new FunctionsOnStringValues(valueFactory);
         this.functionsOnNumericValues = new FunctionsOnNumericValues(valueFactory);
         this.functionsBasedOnSubstringMatching = new FunctionsBasedOnSubstringMatching(valueFactory);
+        this.cardinalityFunctions = new CardinalityFunctions(valueFactory);
 
         registerFunction("fn", "true", this::true_, 0, 0, Map.of());
         registerFunction("fn", "false", this::false_, 0, 0, Map.of());
@@ -90,9 +93,11 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         registerFunction("fn", "reverse", this::reverse, 0, 0, Map.of());
         registerFunction("fn", "subsequence", this::subsequence, 0, 0, Map.of());
         registerFunction("fn", "distinct-values", this::distinctValues, 0, 0, Map.of());
-        registerFunction("fn", "zero-or-one", this::zeroOrOne, 0, 0, Map.of());
-        registerFunction("fn", "one-or-more", this::oneOrMore, 0, 0, Map.of());
-        registerFunction("fn", "exactly-one", this::exactlyOne, 0, 0, Map.of());
+
+        registerFunction("fn", "zero-or-one", cardinalityFunctions::zeroOrOne, 1, 1, Map.of());
+        registerFunction("fn", "one-or-more", cardinalityFunctions::oneOrMore, 1, 1, Map.of());
+        registerFunction("fn", "exactly-one", cardinalityFunctions::exactlyOne, 1, 1, Map.of());
+
         registerFunction("fn", "data", this::data, 0, 0, Map.of());
         registerFunction("fn", "string", this::string, 0, 0, Map.of());
 
@@ -300,24 +305,6 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
     public XQueryValue distinctValues(XQueryVisitingContext ctx, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
         if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         return args.get(0).distinctValues();
-    }
-
-    public XQueryValue zeroOrOne(XQueryVisitingContext ctx, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
-        var target = args.get(0);
-        return target.isSequence() ? target.zeroOrOne() : target;
-    }
-
-    public XQueryValue oneOrMore(XQueryVisitingContext ctx, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
-        var target = args.get(0);
-        return target.isSequence() ? target.oneOrMore() : target;
-    }
-
-    public XQueryValue exactlyOne(XQueryVisitingContext ctx, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
-        var target = args.get(0);
-        return target.isSequence() ? target.exactlyOne() : target;
     }
 
     public XQueryValue data(XQueryVisitingContext ctx, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {

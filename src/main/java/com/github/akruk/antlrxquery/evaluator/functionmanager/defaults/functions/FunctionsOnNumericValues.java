@@ -2,6 +2,7 @@ package com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.function
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -163,19 +164,117 @@ public class FunctionsOnNumericValues {
         }
     }
 
-    public XQueryValue divideDecimals(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        return null;
+    /**
+     * fn:round-half-to-even(
+     *   $value     as xs:numeric?,
+     *   $precision as xs:integer? := 0
+     * ) as xs:numeric?
+     */
+    public XQueryValue roundHalfToEven(
+            XQueryVisitingContext context,
+            List<XQueryValue> args,
+            Map<String,XQueryValue> kwargs) {
+
+        // arity check
+        if (args.size() < 1 || args.size() > 2) {
+            return XQueryError.WrongNumberOfArguments;
+        }
+
+        XQueryValue v = args.get(0);
+        // empty-sequence → empty-sequence
+        if (v.isEmptySequence()) {
+            return valueFactory.emptySequence();
+        }
+        if (!v.isNumericValue()) {
+            return XQueryError.InvalidArgumentType;
+        }
+
+        // precision (default 0)
+        int precision = 0;
+        if (args.size() == 2) {
+            XQueryValue p = args.get(1);
+            if (p.isEmptySequence()) {
+                precision = 0;
+            } else if (!p.isNumericValue()) {
+                return XQueryError.InvalidArgumentType;
+            } else {
+                precision = p.numericValue().intValue();
+            }
+        }
+
+        // perform half-even rounding via BigDecimal
+        BigDecimal bd = v.numericValue();
+        try {
+            BigDecimal rd = bd.setScale(precision, RoundingMode.HALF_EVEN);
+            return valueFactory.number(rd);
+        } catch (ArithmeticException ex) {
+            return XQueryError.NumericOverflowUnderflow;
+        }
     }
 
-    public XQueryValue roundHalfToEven(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        return null;
-    }
+    /**
+     * fn:divide-decimals(
+     *   $value     as xs:decimal,
+     *   $divisor   as xs:decimal,
+     *   $precision as xs:integer? := 0
+     * ) as record(quotient as xs:decimal, remainder as xs:decimal)
+     */
+    // public XQueryValue divideDecimals(
+    //         XQueryVisitingContext context,
+    //         List<XQueryValue> args,
+    //         Map<String,XQueryValue> kwargs) {
 
-    public XQueryValue isNaN(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        return null;
-    }
+    //     // arity check
+    //     if (args.size() < 2 || args.size() > 3) {
+    //         return XQueryError.WrongNumberOfArguments;
+    //     }
 
+    //     XQueryValue v1 = args.get(0), v2 = args.get(1);
+    //     // must be decimals
+    //     if (v1.isEmptySequence() || v2.isEmptySequence()
+    //             || !v1.isNumericValue() || !v2.isNumericValue()) {
+    //         return XQueryError.InvalidArgumentType;
+    //     }
 
+    //     BigDecimal dividend = v1.numericValue();
+    //     BigDecimal divisor  = v2.numericValue();
 
+    //     // division by zero
+    //     if (BigDecimal.ZERO.compareTo(divisor) == 0) {
+    //         return XQueryError.DivisionByZero;
+    //     }
+
+    //     // precision (default 0)
+    //     int precision = 0;
+    //     if (args.size() == 3) {
+    //         XQueryValue p = args.get(2);
+    //         if (p.isEmptySequence()) {
+    //             precision = 0;
+    //         } else if (!p.isNumericValue()) {
+    //             return XQueryError.InvalidArgumentType;
+    //         } else {
+    //             precision = p.numericValue().intValue();
+    //         }
+    //     }
+
+    //     // compute quotient: |q| = |dividend/divisor| rounded DOWN at given scale
+    //     BigDecimal absQuotient = dividend
+    //         .abs()
+    //         .divide(divisor.abs(), precision, RoundingMode.DOWN);
+    //     // restore sign of q
+    //     BigDecimal quotient = absQuotient
+    //         .multiply(
+    //             BigDecimal.valueOf(dividend.signum() * divisor.signum())
+    //         );
+
+    //     // compute exact remainder
+    //     BigDecimal remainder = dividend.subtract(quotient.multiply(divisor));
+
+    //     // build record { "quotient":…, "remainder":… }
+    //     Map<String,XQueryValue> fields = new LinkedHashMap<>();
+    //     fields.put("quotient", valueFactory.number(quotient));
+    //     fields.put("remainder", valueFactory.number(remainder));
+    //     return valueFactory.record(fields);
+    // }
 
 }

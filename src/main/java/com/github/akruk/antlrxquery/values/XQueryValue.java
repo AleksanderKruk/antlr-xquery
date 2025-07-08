@@ -58,9 +58,6 @@ public interface XQueryValue {
     public XQueryValue subsequence(int startingLoc);
     public XQueryValue subsequence(int startingLoc, int length);
     public XQueryValue distinctValues();
-    public XQueryValue zeroOrOne();
-    public XQueryValue oneOrMore();
-    public XQueryValue exactlyOne();
     public XQueryValue data();
     public XQueryValue contains(XQueryValue other);
     public XQueryValue startsWith(XQueryValue other);

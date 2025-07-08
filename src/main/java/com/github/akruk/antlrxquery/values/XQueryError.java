@@ -482,21 +482,6 @@ public class XQueryError implements XQueryValue {
     }
 
     @Override
-    public XQueryValue zeroOrOne() {
-        return null;
-    }
-
-    @Override
-    public XQueryValue oneOrMore() {
-        return null;
-    }
-
-    @Override
-    public XQueryValue exactlyOne() {
-        return null;
-    }
-
-    @Override
     public XQueryValue data() {
         return null;
     }

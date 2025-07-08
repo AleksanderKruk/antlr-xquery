@@ -217,24 +217,6 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
     }
 
     @Override
-    public XQueryValue zeroOrOne() {
-        return switch (value.size()) {
-            case 0, 1 -> this;
-            default -> XQueryError.ZeroOrOneWrongArity;
-        };
-    }
-
-    @Override
-    public XQueryValue oneOrMore() {
-        return value.isEmpty() ? XQueryError.OneOrMoreEmpty : this;
-    }
-
-    @Override
-    public XQueryValue exactlyOne() {
-        return value.size() == 1 ? this : XQueryError.ExactlyOneWrongArity;
-    }
-
-    @Override
     public XQueryValue data() {
         var atomized = atomize();
         return valueFactory.sequence(atomized);

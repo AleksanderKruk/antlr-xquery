@@ -447,7 +447,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         if (visitedLeft.isAtomic()) {
             nodeLeft = visitedLeft.node();
         } else {
-            final List<XQueryValue> sequenceLeft = visitedLeft.exactlyOne().sequence();
+            final List<XQueryValue> sequenceLeft = visitedLeft.atomize();
             nodeLeft = sequenceLeft.get(0).node();
         }
         return nodeLeft;

@@ -113,6 +113,14 @@ argumentPlaceholder: QUESTION_MARK;
 // (PositionalArguments ("," KeywordArguments)?) | KeywordArguments
 
 
+mapConstructor	:	'map'? '{' (mapConstructorEntry (',' mapConstructorEntry)*)? '}';
+mapConstructorEntry	:	mapKeyExpr ':' mapValueExpr;
+mapKeyExpr	:	exprSingle;
+mapValueExpr	:	exprSingle;
+
+
+
+
 predicateList: predicate*;
 predicate: LBRACKET expr RBRACKET;
 arrowFunctionSpecifier: ID | varRef | parenthesizedExpr;
@@ -123,6 +131,7 @@ primaryExpr: literal
         | functionCall
         // | stringInterpolation
         | stringConstructor
+        | mapConstructor
         | functionItemExpr;
 
 functionItemExpr    :	namedFunctionRef

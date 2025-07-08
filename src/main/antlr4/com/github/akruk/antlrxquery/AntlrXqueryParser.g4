@@ -122,7 +122,14 @@ primaryExpr: literal
         | contextItemExpr
         | functionCall
         // | stringInterpolation
-        | stringConstructor;
+        | stringConstructor
+        | functionItemExpr;
+
+functionItemExpr    :	namedFunctionRef
+    // | inlineFunctionExpr
+    ;
+namedFunctionRef	:	qname HASH IntegerLiteral;
+
 literal:
   numericLiteral
   | STRING;

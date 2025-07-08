@@ -759,6 +759,23 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         return result;
     }
 
+    @Override
+    public XQuerySequenceType visitMapConstructor(MapConstructorContext ctx)
+    {
+        var entries = ctx.mapConstructorEntry();
+        if (entries.isEmpty())
+            return typeFactory.anyArray();
+        List<XQueryItemType> keyType = entries.stream()
+            .map(e -> e.mapKeyExpr().accept(this).getItemType())
+            .toList();
+        XQueryItemType choiceKeyType = typeFactory.itemChoice(keyType);
+        // TODO: refine
+        XQuerySequenceType valueType = entries.stream()
+            .map(e -> e.mapValueExpr().accept(this))
+            .reduce((t1, t2) -> t1.alternativeMerge(t2)).get();
+        return typeFactory.map(choiceKeyType, valueType);
+    }
+
 
     @Override
     public XQuerySequenceType visitArrowFunctionSpecifier(final ArrowFunctionSpecifierContext ctx) {

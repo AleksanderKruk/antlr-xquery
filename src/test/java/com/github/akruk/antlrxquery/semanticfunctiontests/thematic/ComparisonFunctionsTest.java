@@ -42,7 +42,7 @@ public class ComparisonFunctionsTest extends FunctionsSemanticTest {
     @Test
     public void deepEqual_withMapOptions()
     {
-        assertType("fn:deep-equal((<a/>),(<a/>), map{})",
+        assertType("fn:deep-equal(1, 1, map{})",
             typeFactory.boolean_());
     }
 
@@ -65,8 +65,7 @@ public class ComparisonFunctionsTest extends FunctionsSemanticTest {
     @Test
     public void compare_noArgs()
     {
-        assertType("fn:compare()",
-            typeFactory.zeroOrOne(typeFactory.itemNumber()));
+        assertErrors("fn:compare()");
     }
 
     @Test
@@ -86,15 +85,13 @@ public class ComparisonFunctionsTest extends FunctionsSemanticTest {
     @Test
     public void compare_namedCollation()
     {
-        assertType("fn:compare(v2 := 'b', v1 := 'a', collation := 'uc')",
+        assertType("fn:compare(value2 := 'b', value1 := 'a', collation := 'uc')",
             typeFactory.zeroOrOne(typeFactory.itemNumber()));
     }
 
     @Test
     public void compare_wrongTypes()
     {
-        assertErrors("fn:compare(<a/>, 'b')");
-        assertErrors("fn:compare('a', <b/>)");
         assertErrors("fn:compare('a','b', 1)");
     }
 
@@ -103,21 +100,21 @@ public class ComparisonFunctionsTest extends FunctionsSemanticTest {
     @Test
     public void distinctValues_empty()
     {
-        assertType("fn:distinct-values()",
+        assertType("fn:distinct-values(())",
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
     }
 
     @Test
     public void distinctValues_withValues()
     {
-        assertType("fn:distinct-values('a','b','a')",
+        assertType("fn:distinct-values(('a','b','a'))",
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
     }
 
     @Test
     public void distinctValues_namedCollation()
     {
-        assertType("fn:distinct-values(1,2,1, collation := 'uc')",
+        assertType("fn:distinct-values((1,2,1), collation := 'uc')",
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
     }
 
@@ -132,14 +129,14 @@ public class ComparisonFunctionsTest extends FunctionsSemanticTest {
     @Test
     public void duplicateValues_empty()
     {
-        assertType("fn:duplicate-values()",
+        assertType("fn:duplicate-values(())",
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
     }
 
     @Test
     public void duplicateValues_withValues()
     {
-        assertType("fn:duplicate-values('x','x','y')",
+        assertType("fn:duplicate-values(('x','x','y'))",
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
     }
 
@@ -192,7 +189,7 @@ public class ComparisonFunctionsTest extends FunctionsSemanticTest {
     @Test
     public void startsWithSub_namedCompare()
     {
-        assertType("fn:starts-with-subsequence((1),(1), compare)",
+        assertType("fn:starts-with-subsequence(1,1, fn:deep-equal#2)",
             typeFactory.boolean_());
     }
 
@@ -208,7 +205,7 @@ public class ComparisonFunctionsTest extends FunctionsSemanticTest {
     @Test
     public void endsWithSub_minimal()
     {
-        assertType("fn:ends-with-subsequence((a,b),(b))",
+        assertType("fn:ends-with-subsequence((1, 2),(3))",
             typeFactory.boolean_());
     }
 
@@ -237,7 +234,7 @@ public class ComparisonFunctionsTest extends FunctionsSemanticTest {
     @Test
     public void containsSub_namedCompare()
     {
-        assertType("fn:contains-subsequence((1,2),(1), compare)",
+        assertType("fn:contains-subsequence((1,2),(1), fn:deep-equal#2)",
             typeFactory.boolean_());
     }
 

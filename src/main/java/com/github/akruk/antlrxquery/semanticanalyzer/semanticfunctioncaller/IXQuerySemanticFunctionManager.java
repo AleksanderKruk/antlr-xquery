@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.apache.commons.compress.harmony.pack200.NewAttributeBands.Call;
 
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQueryVisitingSemanticContext;
@@ -11,12 +12,12 @@ import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 
 public interface IXQuerySemanticFunctionManager {
     // public static record ArgumentSpecification() {}
-    public static record CallAnalysisResult(XQuerySequenceType result,
+    public static record AnalysisResult(XQuerySequenceType result,
                                             List<ArgumentSpecification> requiredDefaultArguments,
                                             List<String> errors)
                                             {}
     public static record ArgumentSpecification(String name, XQuerySequenceType type, ParseTree defaultArgument) {}
-    public CallAnalysisResult call(String namespace,
+    public AnalysisResult call(String namespace,
                                    String functionName,
                                    List<XQuerySequenceType> positionalargs,
                                    Map<String, XQuerySequenceType> keywordArgs,
@@ -29,5 +30,5 @@ public interface IXQuerySemanticFunctionManager {
             final XQuerySequenceType requiredContextValueType,
             final boolean requiresPosition,
             final boolean requiresLength);
-    public CallAnalysisResult getFunctionReference(String namespace, String functionName, int arity);
+    public AnalysisResult getFunctionReference(String namespace, String functionName, int arity);
 }

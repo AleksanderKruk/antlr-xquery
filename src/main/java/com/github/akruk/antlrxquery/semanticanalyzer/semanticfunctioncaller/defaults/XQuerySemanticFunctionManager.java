@@ -31,7 +31,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
     private static final ParseTree EMPTY_MAP = getTree("map {}", parser -> parser.mapConstructor());
 
     public interface XQuerySemanticFunction {
-        public CallAnalysisResult call(final XQueryTypeFactory typeFactory,
+        public AnalysisResult call(final XQueryTypeFactory typeFactory,
                 final XQueryVisitingSemanticContext context,
                 final List<XQuerySequenceType> types);
     }
@@ -2454,22 +2454,22 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
     private static final ParseTree STRING_AT_CONTEXT_VALUE = XQuerySemanticFunctionManager.getTree("fn:string(.)", (parser) -> parser.functionCall());
     private static final ParseTree EMPTY_STRING = XQuerySemanticFunctionManager.getTree("\"\"", (parser)->parser.literal());
 
-    private CallAnalysisResult handleUnknownNamespace(final String namespace, final String errorMessageSupplier,
+    private AnalysisResult handleUnknownNamespace(final String namespace, final String errorMessageSupplier,
             final XQuerySequenceType fallbackType) {
         final List<String> errors = List.of(errorMessageSupplier);
-        return new CallAnalysisResult(fallbackType, List.of(), errors);
+        return new AnalysisResult(fallbackType, List.of(), errors);
     }
 
-    private CallAnalysisResult handleUnknownFunction(final String namespace, final String name,
+    private AnalysisResult handleUnknownFunction(final String namespace, final String name,
             final String errorMessageSupplier, final XQuerySequenceType fallbackType) {
         final List<String> errors = List.of(errorMessageSupplier);
-        return new CallAnalysisResult(fallbackType, List.of(), errors);
+        return new AnalysisResult(fallbackType, List.of(), errors);
     }
 
-    private CallAnalysisResult handleNoMatchingFunction(final String errorMessageSupplier,
+    private AnalysisResult handleNoMatchingFunction(final String errorMessageSupplier,
             final XQuerySequenceType fallbackType) {
         final List<String> errors = List.of(errorMessageSupplier);
-        return new CallAnalysisResult(fallbackType, List.of(), errors);
+        return new AnalysisResult(fallbackType, List.of(), errors);
     }
 
     record SpecAndErrors(FunctionSpecification spec, List<String> errors) {
@@ -2496,7 +2496,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
     }
 
     @Override
-    public CallAnalysisResult call(
+    public AnalysisResult call(
             final String namespace,
             final String name,
             final List<XQuerySequenceType> positionalargs,
@@ -2520,7 +2520,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
 
         final SpecAndErrors specAndErrors = getFunctionSpecification(namespace, name, namedFunctions, requiredArity);
         if (specAndErrors.spec == null) {
-            return new CallAnalysisResult(anyItems, List.of(), specAndErrors.errors);
+            return new AnalysisResult(anyItems, List.of(), specAndErrors.errors);
         }
         final var spec = specAndErrors.spec;
         // used positional arguments need to have matching types
@@ -2561,7 +2561,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
             mismatchReasons.add("Function " + name + ": " + String.join("; ", reasons));
         }
         if (mismatchReasons.isEmpty()) {
-            return new CallAnalysisResult(spec.returnedType, defaultArgs.toList(), List.of());
+            return new AnalysisResult(spec.returnedType, defaultArgs.toList(), List.of());
         }
         final String message = getNoMatchingFunctionMessage(namespace, name, requiredArity, mismatchReasons);
         return handleNoMatchingFunction(message, spec.returnedType);
@@ -2672,7 +2672,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
     }
 
     @Override
-    public CallAnalysisResult getFunctionReference(final String namespace, final String functionName, final int arity) {
+    public AnalysisResult getFunctionReference(final String namespace, final String functionName, final int arity) {
         // TODO: Verify logic
         final var fallback = typeFactory.anyFunction();
         if (!namespaces.containsKey(namespace)) {
@@ -2694,9 +2694,12 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
             stringBuilder.append(functionName);
             stringBuilder.append("#");
             stringBuilder.append(arity);
-            return new CallAnalysisResult(fallback, List.of(), List.of(stringBuilder.toString()));
+            return new AnalysisResult(fallback, List.of(), List.of(stringBuilder.toString()));
         }
-        return new CallAnalysisResult(specAndErrors.spec.returnedType, List.of(), specAndErrors.errors);
+        XQuerySequenceType returnedType = specAndErrors.spec.returnedType;
+        List<XQuerySequenceType> argTypes = specAndErrors.spec.args.stream().map(arg->arg.type()).toList().subList(0, arity);
+        var functionItem = typeFactory.function(returnedType, argTypes);
+        return new AnalysisResult(functionItem, List.of(), specAndErrors.errors);
 
     }
 
@@ -2704,13 +2707,13 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         return "Wrong number of arguments for function" + functionName + " : expected " + expected + ", got " + actual;
     }
 
-    public CallAnalysisResult not(final XQueryTypeFactory typeFactory, final XQueryVisitingSemanticContext context,
+    public AnalysisResult not(final XQueryTypeFactory typeFactory, final XQueryVisitingSemanticContext context,
             final List<XQuerySequenceType> args) {
         if (args.size() != 1) {
             final String message = wrongNumberOfArguments("fn:not()", 1, args.size());
-            return new CallAnalysisResult(typeFactory.boolean_(), List.of(), List.of(message));
+            return new AnalysisResult(typeFactory.boolean_(), List.of(), List.of(message));
         }
-        return new CallAnalysisResult(typeFactory.boolean_(), List.of(), List.of());
+        return new AnalysisResult(typeFactory.boolean_(), List.of(), List.of());
     }
 
     public XQuerySemanticError register(

@@ -41,8 +41,6 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
 
         final XQuerySequenceType optionalString = typeFactory.zeroOrOne(typeFactory.itemString());
 
-        register("fn", "true", List.of(), typeFactory.boolean_());
-        register("fn", "false", List.of(), typeFactory.boolean_());
         register("fn", "position", List.of(), typeFactory.number());
         register("fn", "last", List.of(), typeFactory.number());
 
@@ -1001,40 +999,48 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         List.of(aValue, aPattern, aFlags),
         //         typeFactory.one(typeFactory.itemElement(Set.of("fn:analyze-string-result"))));
 
-        // // fn:true() as xs:boolean
-        // register("fn", "true",
-        //         List.of(),
-        //         typeFactory.boolean_());
+        // fn:true() as xs:boolean
+        register("fn", "true", List.of(), typeFactory.boolean_());
 
-        // // fn:false() as xs:boolean
-        // register("fn", "false",
-        //         List.of(),
-        //         typeFactory.boolean_());
+        // fn:false() as xs:boolean
+        register("fn", "false", List.of(), typeFactory.boolean_());
 
-        // // op:boolean-equal( as xs:boolean,  as xs:boolean) as xs:boolean
-        // final ArgumentSpecification boolEq1 = new ArgumentSpecification("value1", true,
-        //         typeFactory.boolean_();
-        // final ArgumentSpecification boolEq2 = new ArgumentSpecification("value2", true,
-        //         typeFactory.boolean_();
-        // register("op", "boolean-equal",
-        //         List.of(boolEq1, boolEq2),
-        //         typeFactory.boolean_());
+        // op:boolean-equal( as xs:boolean,  as xs:boolean) as xs:boolean
+        final ArgumentSpecification bool1ValueRequired = new ArgumentSpecification("value1", typeFactory.boolean_(), null);
+        final ArgumentSpecification bool2ValueRequired = new ArgumentSpecification("value2", typeFactory.boolean_(), null);
+        register("op", "boolean-equal",
+                List.of(bool1ValueRequired, bool2ValueRequired),
+                typeFactory.boolean_());
 
-        // // op:boolean-less-than( as xs:boolean,  as xs:boolean) as xs:boolean
-        // final ArgumentSpecification boolLt1 = new ArgumentSpecification("arg1", true,
-        //         typeFactory.boolean_();
-        // final ArgumentSpecification boolLt2 = new ArgumentSpecification("arg2", true,
-        //         typeFactory.boolean_();
-        // register("op", "boolean-less-than",
-        //         List.of(boolLt1, boolLt2),
-        //         typeFactory.boolean_());
+        // op:boolean-less-than( as xs:boolean,  as xs:boolean) as xs:boolean
+        register("op", "boolean-less-than",
+                List.of(bool1ValueRequired, bool2ValueRequired),
+                typeFactory.boolean_());
+        // op:boolean-greater-than( as xs:boolean,  as xs:boolean) as xs:boolean
+        register("op", "boolean-greater-than",
+                List.of(bool1ValueRequired, bool2ValueRequired),
+                typeFactory.boolean_());
 
-        // // fn:boolean( as item()*) as xs:boolean
-        // final ArgumentSpecification booleanInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("fn", "boolean",
-        //         List.of(booleanInput),
-        //         typeFactory.boolean_());
+        // op:boolean-not-equal( as xs:boolean,  as xs:boolean) as xs:boolean
+        register("op", "boolean-not-equal",
+                List.of(bool1ValueRequired, bool2ValueRequired),
+                typeFactory.boolean_());
+
+        // op:boolean-less-than-or-equal( as xs:boolean,  as xs:boolean) as xs:boolean
+        register("op", "boolean-less-than-or-equal",
+                List.of(bool1ValueRequired, bool2ValueRequired),
+                typeFactory.boolean_());
+
+        // op:boolean-greater-than-or-equal( as xs:boolean,  as xs:boolean) as xs:boolean
+        register("op", "boolean-greater-than-or-equal",
+                List.of(bool1ValueRequired, bool2ValueRequired),
+                typeFactory.boolean_());
+
+
+        // fn:boolean( as item()*) as xs:boolean
+        register("fn", "boolean",
+                List.of(anyItemsRequiredInput),
+                typeFactory.boolean_());
 
         // // fn:not( as item()*) as xs:boolean
         // final ArgumentSpecification notInput = new ArgumentSpecification("input", true,

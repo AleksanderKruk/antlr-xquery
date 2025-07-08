@@ -51,7 +51,6 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
 
         final XQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         final ArgumentSpecification argItems = new ArgumentSpecification("input", zeroOrMoreItems, null);
-        register("fn", "not", List.of(argItems), typeFactory.boolean_());
 
         final XQuerySequenceType optionalNumber = typeFactory.zeroOrOne(typeFactory.itemNumber());
         final ArgumentSpecification valueNum = new ArgumentSpecification("value", optionalNumber, null);
@@ -1026,12 +1025,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
                 typeFactory.boolean_());
 
         // // fn:not( as item()*) as xs:boolean
-        // final ArgumentSpecification notInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("fn", "not",
-        //         List.of(notInput),
-        //         typeFactory.boolean_());
-
+        register("fn", "not", List.of(argItems), typeFactory.boolean_());
 
         // fn:empty( as item()*) as xs:boolean
         register("fn", "empty", List.of(anyItemsRequiredInput), typeFactory.boolean_());

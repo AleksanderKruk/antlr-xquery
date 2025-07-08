@@ -20,6 +20,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQueryVisitingSemanticContext;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager;
+import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
@@ -936,68 +937,50 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
                 List.of(saValue, saSubstring, saCollation),
                 typeFactory.string());
 
-        // // fn:matches(
-        // //  as xs:string?,
-        // //  as xs:string,
-        // //  as xs:string? := ""
-        // // ) as xs:boolean
-        // final ArgumentSpecification mValue = new ArgumentSpecification("value", true,
-        //         optionalString));
-        // final ArgumentSpecification mPattern = new ArgumentSpecification("pattern", true,
-        //         typeFactory.string());
-        // final ArgumentSpecification mFlags = new ArgumentSpecification("flags", false,
-        //         optionalString));
-        // register("fn", "matches",
-        //         List.of(mValue, mPattern, mFlags),
-        //         typeFactory.boolean_());
+        // fn:matches(
+        //  as xs:string?,
+        //  as xs:string,
+        //  as xs:string? := ""
+        // ) as xs:boolean
+        final ArgumentSpecification optionalStringRequiredValue = new ArgumentSpecification("value", optionalString, null);
+        final ArgumentSpecification pattern = new ArgumentSpecification("pattern", typeFactory.string(), null);
+        final ArgumentSpecification flags = new ArgumentSpecification("flags", optionalString, EMPTY_STRING);
+        register("fn", "matches",
+                List.of(optionalStringRequiredValue, pattern, flags),
+                typeFactory.boolean_());
 
-        // // fn:replace(
-        // //  as xs:string?,
-        // //  as xs:string,
-        // //  as (xs:string | fn(...))? := (),
-        // //  as xs:string? := ''
-        // // ) as xs:string
-        // final ArgumentSpecification rValue = new ArgumentSpecification("value", true,
-        //         optionalString));
-        // final ArgumentSpecification rPattern = new ArgumentSpecification("pattern", true,
-        //         typeFactory.string());
-        // final ArgumentSpecification rReplacement = new ArgumentSpecification("replacement", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification rFlags = new ArgumentSpecification("flags", false,
-        //         optionalString));
-        // register("fn", "replace",
-        //         List.of(rValue, rPattern, rReplacement, rFlags),
-        //         typeFactory.string());
 
-        // // fn:tokenize(
-        // //  as xs:string?,
-        // //  as xs:string? := (),
-        // //  as xs:string? := ""
-        // // ) as xs:string*
-        // final ArgumentSpecification tValue = new ArgumentSpecification("value", true,
-        //         optionalString));
-        // final ArgumentSpecification tPattern = new ArgumentSpecification("pattern", false,
-        //         optionalString));
-        // final ArgumentSpecification tFlags2 = new ArgumentSpecification("flags", false,
-        //         optionalString));
-        // register("fn", "tokenize",
-        //         List.of(tValue, tPattern, tFlags2),
-        //         typeFactory.zeroOrMore(typeFactory.itemString()));
+        // fn:replace(
+        // $value	as xs:string?,
+        // $pattern	as xs:string,
+        // $replacement	as (xs:string | fn(xs:untypedAtomic, xs:untypedAtomic*) as item()?)?	:= (),
+        // $flags	as xs:string?	:= ''
+        // ) as xs:string
+        final XQueryItemType dynamicReplacement = typeFactory.itemFunction(optionalItem, List.of(typeFactory.anyItem(), zeroOrMoreItems));
+        final var replacementType = typeFactory.choice(List.of(typeFactory.itemString(), dynamicReplacement));
+        final ArgumentSpecification replacement = new ArgumentSpecification("replacement", replacementType, EMPTY_SEQUENCE);
+        register("fn", "replace",
+                List.of(optionalStringRequiredValue, pattern, replacement, flags),
+                typeFactory.string());
 
-        // // fn:analyze-string(
-        // //  as xs:string?,
-        // //  as xs:string,
-        // //  as xs:string? := ""
-        // // ) as element(fn:analyze-string-result)
-        // final ArgumentSpecification aValue = new ArgumentSpecification("value", true,
-        //         optionalString));
-        // final ArgumentSpecification aPattern = new ArgumentSpecification("pattern", true,
-        //         typeFactory.string());
-        // final ArgumentSpecification aFlags = new ArgumentSpecification("flags", false,
-        //         optionalString));
-        // register("fn", "analyze-string",
-        //         List.of(aValue, aPattern, aFlags),
-        //         typeFactory.one(typeFactory.itemElement(Set.of("fn:analyze-string-result"))));
+        // fn:tokenize(
+        //  as xs:string?,
+        //  as xs:string? := (),
+        //  as xs:string? := ""
+        // ) as xs:string*
+        final ArgumentSpecification optionalPattern = new ArgumentSpecification("pattern", optionalString, EMPTY_SEQUENCE);
+        register("fn", "tokenize",
+                List.of(optionalStringRequiredValue, optionalPattern, flags),
+                typeFactory.zeroOrMore(typeFactory.itemString()));
+
+        // fn:analyze-string(
+        //  as xs:string?,
+        //  as xs:string,
+        //  as xs:string? := ""
+        // ) as element(fn:analyze-string-result)
+        register("fn", "analyze-string",
+                List.of(optionalStringRequiredValue, pattern, flags),
+                typeFactory.one(typeFactory.itemElement(Set.of("fn:analyze-string-result"))));
 
         // fn:true() as xs:boolean
         register("fn", "true", List.of(), typeFactory.boolean_());

@@ -1,6 +1,5 @@
 package com.github.akruk.antlrxquery.evaluator.functionmanager.defaults;
 
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +24,7 @@ import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
 import com.github.akruk.antlrxquery.evaluator.collations.Collations;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.IXQueryEvaluatingFunctionManager;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.FunctionsBasedOnSubstringMatching;
+import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.FunctionsOnNumericValues;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.FunctionsOnStringValues;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.MathFunctions;
 import com.github.akruk.antlrxquery.values.XQueryError;
@@ -33,6 +33,15 @@ import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
 public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManager {
+    private static final ParseTree CONTEXT_VALUE = getTree(".", parser -> parser.contextItemExpr());
+    private static final ParseTree DEFAULT_COLLATION = getTree("fn:default-collation()", parser->parser.functionCall());
+    private static final ParseTree EMPTY_LIST = getTree("()", p->p.parenthesizedExpr());
+    private static final ParseTree DEFAULT_ROUNDING_MODE = getTree("'half-to-ceiling'", parser->parser.literal());
+    private static final ParseTree ZERO_LITERAL = getTree("0", parser->parser.literal());
+    private static final ParseTree NFC = getTree("\"NFC\"", parser -> parser.literal());
+    private static final ParseTree STRING_AT_CONTEXT_VALUE = getTree("fn:string(.)", (parser) -> parser.functionCall());
+    private static final ParseTree EMPTY_STRING = getTree("\"\"", (parser)->parser.literal());
+
 
     record FunctionEntry(
             XQueryFunction function,
@@ -47,6 +56,7 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
     private final FunctionsOnStringValues functionsOnStringValues;
     private final XQueryEvaluatorVisitor evaluator;
     private final FunctionsBasedOnSubstringMatching functionsBasedOnSubstringMatching;
+    private final FunctionsOnNumericValues functionsOnNumericValues;
 
     public EvaluatingFunctionManager(final XQueryEvaluatorVisitor evaluator, final XQueryValueFactory valueFactory) {
         this.valueFactory = valueFactory;
@@ -54,6 +64,7 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         this.namespaces = new HashMap<>(10);
         this.mathFunctions = new MathFunctions(valueFactory);
         this.functionsOnStringValues = new FunctionsOnStringValues(valueFactory);
+        this.functionsOnNumericValues = new FunctionsOnNumericValues(valueFactory);
         this.functionsBasedOnSubstringMatching = new FunctionsBasedOnSubstringMatching(valueFactory);
 
         registerFunction("fn", "true", this::true_, 0, 0, Map.of());
@@ -61,10 +72,14 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
 
         registerFunction("fn", "not", this::not, 1, 1, Map.of());
 
-        registerFunction("fn", "abs", this::abs, 0, 0, Map.of());
-        registerFunction("fn", "ceiling", this::ceiling, 0, 0, Map.of());
-        registerFunction("fn", "floor", this::floor, 0, 0, Map.of());
-        registerFunction("fn", "round", this::round, 0, 0, Map.of());
+        registerFunction("fn", "abs", functionsOnNumericValues::abs, 1, 1, Map.of());
+        registerFunction("fn", "ceiling", functionsOnNumericValues::ceiling, 1, 1, Map.of());
+        registerFunction("fn", "floor", functionsOnNumericValues::floor, 1, 1, Map.of());
+        registerFunction("fn", "round", functionsOnNumericValues::round, 1, 3, Map.of("precision", ZERO_LITERAL, "mode", DEFAULT_ROUNDING_MODE));
+        registerFunction("fn", "round-half-to-even", functionsOnNumericValues::roundHalfToEven, 1, 2, Map.of("precision", ZERO_LITERAL));
+        registerFunction("fn", "divide-decimals", functionsOnNumericValues::divideDecimals, 2, 3, Map.of("precision", ZERO_LITERAL));
+        registerFunction("fn", "is-NaN", functionsOnNumericValues::isNaN, 1, 1, Map.of());
+
         registerFunction("fn", "empty", this::empty, 0, 0, Map.of());
         registerFunction("fn", "exists", this::exists, 0, 0, Map.of());
         registerFunction("fn", "head", this::head, 0, 0, Map.of());
@@ -159,49 +174,6 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         return args.get(0).not();
     }
 
-
-    public XQueryValue abs(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
-        var arg = args.get(0);
-        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
-        return valueFactory.number(arg.numericValue().abs());
-    }
-
-    public XQueryValue ceiling(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
-        var arg = args.get(0);
-        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
-        return valueFactory.number(arg.numericValue().setScale(0, RoundingMode.CEILING));
-    }
-
-    public XQueryValue floor(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
-        var arg = args.get(0);
-        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
-        return valueFactory.number(arg.numericValue().setScale(0, RoundingMode.FLOOR));
-    }
-
-    public XQueryValue round(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() < 1 || args.size() > 2) return XQueryError.WrongNumberOfArguments;
-        var arg = args.get(0);
-        if (!arg.isNumericValue()) return XQueryError.InvalidArgumentType;
-        var number = arg.numericValue();
-        boolean isNegative = number.signum() < 0;
-
-        int scale = 0;
-        if (args.size() == 2) {
-            var scaleArg = args.get(1);
-            if (!scaleArg.isNumericValue()) return XQueryError.InvalidArgumentType;
-            scale = scaleArg.numericValue().intValue();
-        }
-
-        RoundingMode mode = isNegative ? RoundingMode.HALF_DOWN : RoundingMode.HALF_UP;
-        try {
-            return valueFactory.number(number.setScale(scale, mode));
-        } catch (ArithmeticException e) {
-            return XQueryError.NumericOverflowUnderflow;
-        }
-    }
 
     public XQueryValue numericAdd(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
         if (args.size() != 2) return XQueryError.WrongNumberOfArguments;

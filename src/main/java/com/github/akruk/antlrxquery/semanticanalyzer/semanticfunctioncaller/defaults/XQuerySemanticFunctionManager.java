@@ -28,6 +28,12 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
 
     private static final ParseTree CONTEXT_VALUE = getTree(".", parser -> parser.contextItemExpr());
     private static final ParseTree DEFAULT_COLLATION = getTree("fn:default-collation()", parser->parser.functionCall());
+    private static final ParseTree EMPTY_LIST = getTree("()", p->p.parenthesizedExpr());
+    private static final ParseTree DEFAULT_ROUNDING_MODE = getTree("'half-to-ceiling'", parser->parser.literal());
+    private static final ParseTree ZERO_LITERAL = getTree("0", parser->parser.literal());
+    private static final ParseTree NFC = XQuerySemanticFunctionManager.getTree("\"NFC\"", parser -> parser.literal());
+    private static final ParseTree STRING_AT_CONTEXT_VALUE = XQuerySemanticFunctionManager.getTree("fn:string(.)", (parser) -> parser.functionCall());
+    private static final ParseTree EMPTY_STRING = XQuerySemanticFunctionManager.getTree("\"\"", (parser)->parser.literal());
 
     public interface XQuerySemanticFunction {
         public CallAnalysisResult call(final XQueryTypeFactory typeFactory,
@@ -48,8 +54,6 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         register("fn", "last", List.of(), typeFactory.number());
 
 
-        final ParseTree defaultRoundingMode = getTree("'half-to-ceiling'", parser->parser.literal());
-        final ParseTree zeroLiteral = getTree("0", parser->parser.literal());
 
         final XQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         final ArgumentSpecification argItems = new ArgumentSpecification("input", zeroOrMoreItems, null);
@@ -67,8 +71,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
                                         "half-toward-zero",
                                         "half-away-from-zero",
                                         "half-to-even"))),
-                                        defaultRoundingMode);
-        final ArgumentSpecification precision = new ArgumentSpecification("precision", optionalNumber, zeroLiteral);
+                                        DEFAULT_ROUNDING_MODE);
+        final ArgumentSpecification precision = new ArgumentSpecification("precision", optionalNumber, ZERO_LITERAL);
 
         // fn:abs(
         // $value	as xs:numeric?
@@ -841,7 +845,6 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
                 List.of(sjValues, sjSeparator),
                 typeFactory.string());
 
-        final ParseTree EMPTY_LIST = getTree("()", p->p.parenthesizedExpr());
 
         // fn:concat(
         //  as xs:anyAtomicType* := ()
@@ -894,9 +897,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //  as xs:string?,
         //  as xs:string? := "NFC"
         // ) as xs:string
-        final ParseTree nfc = XQuerySemanticFunctionManager.getTree("\"NFC\"", parser -> parser.literal());
         final ArgumentSpecification nuValue = new ArgumentSpecification("value", optionalString, null);
-        final ArgumentSpecification nuForm = new ArgumentSpecification("form", optionalString, nfc);
+        final ArgumentSpecification nuForm = new ArgumentSpecification("form", optionalString, NFC);
         register("fn", "normalize-unicode",
                 List.of(nuValue, nuForm),
                 typeFactory.string());
@@ -2602,8 +2604,6 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
     }
 
     final Map<String, Map<String, List<FunctionSpecification>>> namespaces;
-    private static final ParseTree STRING_AT_CONTEXT_VALUE = XQuerySemanticFunctionManager.getTree("fn:string(.)", (parser) -> parser.functionCall());
-    private static final ParseTree EMPTY_STRING = XQuerySemanticFunctionManager.getTree("\"\"", (parser)->parser.literal());
 
     private CallAnalysisResult handleUnknownNamespace(final String namespace, final String errorMessageSupplier,
             final XQuerySequenceType fallbackType) {

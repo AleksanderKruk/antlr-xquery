@@ -21,6 +21,7 @@ import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQueryVisitingSemanticContext;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
+import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
@@ -28,15 +29,16 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
 
     private static final ParseTree CONTEXT_VALUE = getTree(".", parser -> parser.contextItemExpr());
     private static final ParseTree DEFAULT_COLLATION = getTree("fn:default-collation()", parser->parser.functionCall());
-    private static final ParseTree EMPTY_LIST = getTree("()", p->p.parenthesizedExpr());
+    private static final ParseTree EMPTY_SEQUENCE = getTree("()", p->p.parenthesizedExpr());
     private static final ParseTree DEFAULT_ROUNDING_MODE = getTree("'half-to-ceiling'", parser->parser.literal());
     private static final ParseTree ZERO_LITERAL = getTree("0", parser->parser.literal());
     private static final ParseTree NFC = XQuerySemanticFunctionManager.getTree("\"NFC\"", parser -> parser.literal());
     private static final ParseTree STRING_AT_CONTEXT_VALUE = XQuerySemanticFunctionManager.getTree("fn:string(.)", (parser) -> parser.functionCall());
     private static final ParseTree EMPTY_STRING = XQuerySemanticFunctionManager.getTree("\"\"", (parser)->parser.literal());
+    private static final ParseTree EMPTY_MAP = getTree("map {}", parser -> parser.mapConstructor());
 
     public interface XQuerySemanticFunction {
-        public CallAnalysisResult call(final XQueryTypeFactory typeFactory,
+        public AnalysisResult call(final XQueryTypeFactory typeFactory,
                 final XQueryVisitingSemanticContext context,
                 final List<XQuerySequenceType> types);
     }
@@ -48,8 +50,6 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
 
         final XQuerySequenceType optionalString = typeFactory.zeroOrOne(typeFactory.itemString());
 
-        register("fn", "true", List.of(), typeFactory.boolean_());
-        register("fn", "false", List.of(), typeFactory.boolean_());
         register("fn", "position", List.of(), typeFactory.number());
         register("fn", "last", List.of(), typeFactory.number());
 
@@ -57,7 +57,6 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
 
         final XQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         final ArgumentSpecification argItems = new ArgumentSpecification("input", zeroOrMoreItems, null);
-        register("fn", "not", List.of(argItems), typeFactory.boolean_());
 
         final XQuerySequenceType optionalNumber = typeFactory.zeroOrOne(typeFactory.itemNumber());
         final ArgumentSpecification valueNum = new ArgumentSpecification("value", optionalNumber, null);
@@ -74,27 +73,30 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
                                         DEFAULT_ROUNDING_MODE);
         final ArgumentSpecification precision = new ArgumentSpecification("precision", optionalNumber, ZERO_LITERAL);
 
+        final ArgumentSpecification optionalCollation = new ArgumentSpecification(
+                "collation", optionalString, DEFAULT_COLLATION);
+
         // fn:abs(
-        // $value	as xs:numeric?
+        // 	as xs:numeric?
         // ) as xs:numeric?
         register("fn", "abs", List.of(valueNum), optionalNumber);
 
         // fn:ceiling(
-        // $value	as xs:numeric?
+        // 	as xs:numeric?
         // ) as xs:numeric?
         register("fn", "ceiling", List.of(valueNum), optionalNumber);
 
 
         // fn:floor(
-        // $value	as xs:numeric?
+        // 	as xs:numeric?
         // ) as xs:numeric?
         register("fn", "floor", List.of(valueNum), optionalNumber);
 
 
         // fn:round(
-        // $value	as xs:numeric?,
-        // $precision	as xs:integer?	:= 0,
-        // $mode	as enum('floor',
+        // 	as xs:numeric?,
+        // 	as xs:integer?	:= 0,
+        // 	as enum('floor',
         //                     'ceiling',
         //                     'toward-zero',
         //                     'away-from-zero',
@@ -150,21 +152,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // register("fn", "head", List.of(sequence), optionalItem);
         // register("fn", "tail", List.of(sequence), zeroOrMoreItems);
 
-        // final ArgumentSpecification insert = new ArgumentSpecification("insert", zeroOrMoreItems, null);
-
-        // register("fn", "insert-before",
-        //         List.of(sequence, position, insert),
-        //         zeroOrMoreItems);
-
         // final var zeroOrMoreNumbers = typeFactory.zeroOrMore(typeFactory.itemNumber());
-
-        // final ArgumentSpecification positions = new ArgumentSpecification("positions", zeroOrMoreNumbers, null);
-
-        // register("fn", "remove",
-        //         List.of(sequence, positions), zeroOrMoreItems);
-
-        // register("fn", "reverse",
-        //         List.of(sequence), zeroOrMoreItems);
 
         // final var start = new ArgumentSpecification("start", typeFactory.number(), null);
         // final var optionalLength = new ArgumentSpecification("length", false, optionalNumber);
@@ -232,37 +220,33 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // fn:string(
         //  as item()? := .
         // ) as xs:string
-        final ArgumentSpecification stringValue = new ArgumentSpecification("value", typeFactory.zeroOrOne(typeFactory.itemAnyItem()), CONTEXT_VALUE);
+        final XQuerySequenceType optionalItem = typeFactory.zeroOrOne(typeFactory.itemAnyItem());
+        final ArgumentSpecification stringValue = new ArgumentSpecification("value", optionalItem, CONTEXT_VALUE);
         register("fn", "string",
                 List.of(stringValue),
                 typeFactory.string());
 
-        // // fn:zero-or-one(
-        // //  as item()*
-        // // ) as item()?
-        // final ArgumentSpecification z1Input = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("fn", "zero-or-one",
-        //         List.of(z1Input),
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
+        // fn:zero-or-one(
+        //  as item()*
+        // ) as item()?
+        final ArgumentSpecification anyItemsRequiredInput = new ArgumentSpecification("input", zeroOrMoreItems, null);
+        register("fn", "zero-or-one",
+                List.of(anyItemsRequiredInput),
+                optionalItem);
 
-        // // fn:one-or-more(
-        // //  as item()*
-        // // ) as item()+
-        // final ArgumentSpecification o1Input = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("fn", "one-or-more",
-        //         List.of(o1Input),
-        //         typeFactory.oneOrMore(typeFactory.itemAnyItem()));
+        // fn:one-or-more(
+        //  as item()*
+        // ) as item()+
+        register("fn", "one-or-more",
+                List.of(anyItemsRequiredInput),
+                typeFactory.oneOrMore(typeFactory.itemAnyItem()));
 
-        // // fn:exactly-one(
-        // //  as item()*
-        // // ) as item()
-        // final ArgumentSpecification e1Input = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("fn", "exactly-one",
-        //         List.of(e1Input),
-        //         typeFactory.one(typeFactory.itemAnyItem()));
+        // fn:exactly-one(
+        //  as item()*
+        // ) as item()
+        register("fn", "exactly-one",
+                List.of(anyItemsRequiredInput),
+                typeFactory.one(typeFactory.itemAnyItem()));
 
         // // fn:data(
         // //  as item()* := .
@@ -839,7 +823,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
                 List.of(graphemesValue),
                 typeFactory.zeroOrMore(typeFactory.itemString()));
 
-        final ArgumentSpecification sjValues = new ArgumentSpecification("values", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null);
+        final ArgumentSpecification sjValues = new ArgumentSpecification("values", zeroOrMoreItems, null);
         final ArgumentSpecification sjSeparator = new ArgumentSpecification("separator", optionalString, EMPTY_STRING);
         register("fn", "string-join",
                 List.of(sjValues, sjSeparator),
@@ -849,7 +833,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // fn:concat(
         //  as xs:anyAtomicType* := ()
         // ) as xs:string
-        final ArgumentSpecification concatValues = new ArgumentSpecification("values", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), EMPTY_LIST);
+        final ArgumentSpecification concatValues = new ArgumentSpecification("values", zeroOrMoreItems, EMPTY_SEQUENCE);
         register("fn", "concat",
                 List.of(concatValues),
                 typeFactory.string());
@@ -858,7 +842,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //  as xs:anyAtomicType* := (),
         //  as xs:string? := ""
         // ) as xs:string
-        final ArgumentSpecification joinValues = new ArgumentSpecification("values", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), EMPTY_LIST);
+        final ArgumentSpecification joinValues = new ArgumentSpecification("values", zeroOrMoreItems, EMPTY_SEQUENCE);
         final ArgumentSpecification separator = new ArgumentSpecification("separator", optionalString, EMPTY_STRING);
         register("fn", "string-join",
                 List.of(joinValues, separator),
@@ -947,7 +931,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // ) as xs:boolean
         final ArgumentSpecification cValue = new ArgumentSpecification("value", optionalString, null);
         final ArgumentSpecification cSubstr = new ArgumentSpecification("substring", optionalString, null);
-        final ArgumentSpecification cColl = new ArgumentSpecification("collation", optionalString, DEFAULT_COLLATION);
+        final ArgumentSpecification cColl = optionalCollation;
         register("fn", "contains", List.of(cValue, cSubstr, cColl), typeFactory.boolean_());
 
         // fn:starts-with(
@@ -957,7 +941,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // ) as xs:boolean
         final ArgumentSpecification swValue = new ArgumentSpecification("value", optionalString, null);
         final ArgumentSpecification swSubstring = new ArgumentSpecification("substring", optionalString, null);
-        final ArgumentSpecification swCollation = new ArgumentSpecification("collation", optionalString, DEFAULT_COLLATION);
+        final ArgumentSpecification swCollation = optionalCollation;
         register("fn", "starts-with", List.of(swValue, swSubstring, swCollation), typeFactory.boolean_());
 
         // fn:ends-with(
@@ -967,7 +951,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // ) as xs:boolean
         final ArgumentSpecification ewValue = new ArgumentSpecification("value", optionalString, null);
         final ArgumentSpecification ewSubstring = new ArgumentSpecification("substring", optionalString, null);
-        final ArgumentSpecification ewCollation = new ArgumentSpecification("collation", optionalString, DEFAULT_COLLATION);
+        final ArgumentSpecification ewCollation = optionalCollation;
         register("fn", "ends-with", List.of(ewValue, ewSubstring, ewCollation), typeFactory.boolean_());
 
         // fn:substring-before(
@@ -977,7 +961,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // ) as xs:string
         final ArgumentSpecification sbValue = new ArgumentSpecification("value", optionalString, null);
         final ArgumentSpecification sbSubstring = new ArgumentSpecification("substring", optionalString, null);
-        final ArgumentSpecification sbCollation = new ArgumentSpecification("collation", optionalString, DEFAULT_COLLATION);
+        final ArgumentSpecification sbCollation = optionalCollation;
         register("fn", "substring-before", List.of(sbValue, sbSubstring, sbCollation), typeFactory.string());
 
         // fn:substring-after(
@@ -987,438 +971,343 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // ) as xs:string
         final ArgumentSpecification saValue = new ArgumentSpecification("value", optionalString, null);
         final ArgumentSpecification saSubstring = new ArgumentSpecification("substring", optionalString, null);
-        final ArgumentSpecification saCollation = new ArgumentSpecification("collation", optionalString, DEFAULT_COLLATION);
+        final ArgumentSpecification saCollation = optionalCollation;
         register("fn", "substring-after",
                 List.of(saValue, saSubstring, saCollation),
                 typeFactory.string());
 
-        // // fn:matches(
-        // //  as xs:string?,
-        // //  as xs:string,
-        // //  as xs:string? := ""
-        // // ) as xs:boolean
-        // final ArgumentSpecification mValue = new ArgumentSpecification("value", true,
-        //         optionalString));
-        // final ArgumentSpecification mPattern = new ArgumentSpecification("pattern", true,
-        //         typeFactory.string());
-        // final ArgumentSpecification mFlags = new ArgumentSpecification("flags", false,
-        //         optionalString));
-        // register("fn", "matches",
-        //         List.of(mValue, mPattern, mFlags),
-        //         typeFactory.boolean_());
+        // fn:matches(
+        //  as xs:string?,
+        //  as xs:string,
+        //  as xs:string? := ""
+        // ) as xs:boolean
+        final ArgumentSpecification optionalStringRequiredValue = new ArgumentSpecification("value", optionalString, null);
+        final ArgumentSpecification pattern = new ArgumentSpecification("pattern", typeFactory.string(), null);
+        final ArgumentSpecification flags = new ArgumentSpecification("flags", optionalString, EMPTY_STRING);
+        register("fn", "matches",
+                List.of(optionalStringRequiredValue, pattern, flags),
+                typeFactory.boolean_());
 
-        // // fn:replace(
-        // //  as xs:string?,
-        // //  as xs:string,
-        // //  as (xs:string | fn(...))? := (),
-        // //  as xs:string? := ''
-        // // ) as xs:string
-        // final ArgumentSpecification rValue = new ArgumentSpecification("value", true,
-        //         optionalString));
-        // final ArgumentSpecification rPattern = new ArgumentSpecification("pattern", true,
-        //         typeFactory.string());
-        // final ArgumentSpecification rReplacement = new ArgumentSpecification("replacement", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification rFlags = new ArgumentSpecification("flags", false,
-        //         optionalString));
-        // register("fn", "replace",
-        //         List.of(rValue, rPattern, rReplacement, rFlags),
-        //         typeFactory.string());
 
-        // // fn:tokenize(
-        // //  as xs:string?,
-        // //  as xs:string? := (),
-        // //  as xs:string? := ""
-        // // ) as xs:string*
-        // final ArgumentSpecification tValue = new ArgumentSpecification("value", true,
-        //         optionalString));
-        // final ArgumentSpecification tPattern = new ArgumentSpecification("pattern", false,
-        //         optionalString));
-        // final ArgumentSpecification tFlags2 = new ArgumentSpecification("flags", false,
-        //         optionalString));
-        // register("fn", "tokenize",
-        //         List.of(tValue, tPattern, tFlags2),
-        //         typeFactory.zeroOrMore(typeFactory.itemString()));
+        // fn:replace(
+        // 	as xs:string?,
+        // 	as xs:string,
+        // 	as (xs:string | fn(xs:untypedAtomic, xs:untypedAtomic*) as item()?)?	:= (),
+        // 	as xs:string?	:= ''
+        // ) as xs:string
+        final XQueryItemType dynamicReplacement = typeFactory.itemFunction(optionalItem, List.of(typeFactory.anyItem(), zeroOrMoreItems));
+        final var replacementType = typeFactory.choice(List.of(typeFactory.itemString(), dynamicReplacement));
+        final ArgumentSpecification replacement = new ArgumentSpecification("replacement", replacementType, EMPTY_SEQUENCE);
+        register("fn", "replace",
+                List.of(optionalStringRequiredValue, pattern, replacement, flags),
+                typeFactory.string());
 
-        // // fn:analyze-string(
-        // //  as xs:string?,
-        // //  as xs:string,
-        // //  as xs:string? := ""
-        // // ) as element(fn:analyze-string-result)
-        // final ArgumentSpecification aValue = new ArgumentSpecification("value", true,
-        //         optionalString));
-        // final ArgumentSpecification aPattern = new ArgumentSpecification("pattern", true,
-        //         typeFactory.string());
-        // final ArgumentSpecification aFlags = new ArgumentSpecification("flags", false,
-        //         optionalString));
-        // register("fn", "analyze-string",
-        //         List.of(aValue, aPattern, aFlags),
-        //         typeFactory.one(typeFactory.itemElement(Set.of("fn:analyze-string-result"))));
+        // fn:tokenize(
+        //  as xs:string?,
+        //  as xs:string? := (),
+        //  as xs:string? := ""
+        // ) as xs:string*
+        final ArgumentSpecification optionalPattern = new ArgumentSpecification("pattern", optionalString, EMPTY_SEQUENCE);
+        register("fn", "tokenize",
+                List.of(optionalStringRequiredValue, optionalPattern, flags),
+                typeFactory.zeroOrMore(typeFactory.itemString()));
 
-        // // fn:true() as xs:boolean
-        // register("fn", "true",
-        //         List.of(),
-        //         typeFactory.boolean_());
+        // fn:analyze-string(
+        //  as xs:string?,
+        //  as xs:string,
+        //  as xs:string? := ""
+        // ) as element(fn:analyze-string-result)
+        register("fn", "analyze-string",
+                List.of(optionalStringRequiredValue, pattern, flags),
+                typeFactory.one(typeFactory.itemElement(Set.of("fn:analyze-string-result"))));
 
-        // // fn:false() as xs:boolean
-        // register("fn", "false",
-        //         List.of(),
-        //         typeFactory.boolean_());
+        // fn:true() as xs:boolean
+        register("fn", "true", List.of(), typeFactory.boolean_());
 
-        // // op:boolean-equal( as xs:boolean,  as xs:boolean) as xs:boolean
-        // final ArgumentSpecification boolEq1 = new ArgumentSpecification("value1", true,
-        //         typeFactory.boolean_();
-        // final ArgumentSpecification boolEq2 = new ArgumentSpecification("value2", true,
-        //         typeFactory.boolean_();
-        // register("op", "boolean-equal",
-        //         List.of(boolEq1, boolEq2),
-        //         typeFactory.boolean_());
+        // fn:false() as xs:boolean
+        register("fn", "false", List.of(), typeFactory.boolean_());
 
-        // // op:boolean-less-than( as xs:boolean,  as xs:boolean) as xs:boolean
-        // final ArgumentSpecification boolLt1 = new ArgumentSpecification("arg1", true,
-        //         typeFactory.boolean_();
-        // final ArgumentSpecification boolLt2 = new ArgumentSpecification("arg2", true,
-        //         typeFactory.boolean_();
-        // register("op", "boolean-less-than",
-        //         List.of(boolLt1, boolLt2),
-        //         typeFactory.boolean_());
+        // op:boolean-equal( as xs:boolean,  as xs:boolean) as xs:boolean
+        final ArgumentSpecification bool1ValueRequired = new ArgumentSpecification("value1", typeFactory.boolean_(), null);
+        final ArgumentSpecification bool2ValueRequired = new ArgumentSpecification("value2", typeFactory.boolean_(), null);
+        register("op", "boolean-equal",
+                List.of(bool1ValueRequired, bool2ValueRequired),
+                typeFactory.boolean_());
 
-        // // fn:boolean( as item()*) as xs:boolean
-        // final ArgumentSpecification booleanInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("fn", "boolean",
-        //         List.of(booleanInput),
-        //         typeFactory.boolean_());
+        // op:boolean-less-than( as xs:boolean,  as xs:boolean) as xs:boolean
+        register("op", "boolean-less-than",
+                List.of(bool1ValueRequired, bool2ValueRequired),
+                typeFactory.boolean_());
+        // op:boolean-greater-than( as xs:boolean,  as xs:boolean) as xs:boolean
+        register("op", "boolean-greater-than",
+                List.of(bool1ValueRequired, bool2ValueRequired),
+                typeFactory.boolean_());
+
+        // op:boolean-not-equal( as xs:boolean,  as xs:boolean) as xs:boolean
+        register("op", "boolean-not-equal",
+                List.of(bool1ValueRequired, bool2ValueRequired),
+                typeFactory.boolean_());
+
+        // op:boolean-less-than-or-equal( as xs:boolean,  as xs:boolean) as xs:boolean
+        register("op", "boolean-less-than-or-equal",
+                List.of(bool1ValueRequired, bool2ValueRequired),
+                typeFactory.boolean_());
+
+        // op:boolean-greater-than-or-equal( as xs:boolean,  as xs:boolean) as xs:boolean
+        register("op", "boolean-greater-than-or-equal",
+                List.of(bool1ValueRequired, bool2ValueRequired),
+                typeFactory.boolean_());
+
+
+        // fn:boolean( as item()*) as xs:boolean
+        register("fn", "boolean",
+                List.of(anyItemsRequiredInput),
+                typeFactory.boolean_());
 
         // // fn:not( as item()*) as xs:boolean
-        // final ArgumentSpecification notInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("fn", "not",
-        //         List.of(notInput),
-        //         typeFactory.boolean_());
+        register("fn", "not", List.of(argItems), typeFactory.boolean_());
 
-        // // common input spec
-        // final ArgumentSpecification input = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+        // fn:empty( as item()*) as xs:boolean
+        register("fn", "empty", List.of(anyItemsRequiredInput), typeFactory.boolean_());
 
-        // // fn:empty( as item()*) as xs:boolean
-        // register("fn", "empty",
-        //         List.of(input),
-        //         typeFactory.boolean_());
+        // fn:exists( as item()*) as xs:boolean
+        register("fn", "exists", List.of(anyItemsRequiredInput), typeFactory.boolean_());
 
-        // // fn:exists( as item()*) as xs:boolean
-        // register("fn", "exists",
-        //         List.of(input),
-        //         typeFactory.boolean_());
+        // fn:foot( as item()*) as item()?
+        register("fn", "foot", List.of(anyItemsRequiredInput), optionalItem);
 
-        // // fn:foot( as item()*) as item()?
-        // register("fn", "foot",
-        //         List.of(input),
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
+        // fn:head( as item()*) as item()?
+        register("fn", "head", List.of(anyItemsRequiredInput), optionalItem);
 
-        // // fn:head( as item()*) as item()?
-        // register("fn", "head",
-        //         List.of(input),
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
+        // fn:identity( as item()*) as item()*
+        register("fn", "identity", List.of(anyItemsRequiredInput), zeroOrMoreItems);
 
-        // // fn:identity( as item()*) as item()*
-        // register("fn", "identity",
-        //         List.of(input),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+        // register("fn", "tail", List.of(sequence), zeroOrMoreItems);
+        final var zeroOrMoreNumbers = typeFactory.zeroOrMore(typeFactory.itemNumber());
 
-        // // fn:items-at( as item()*,  as xs:integer*) as item()*
-        // final ArgumentSpecification at = new ArgumentSpecification("at", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemNumber()));
-        // register("fn", "items-at",
-        //         List.of(input, at),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+        // fn:insert-before(
+        // 	as item()*,
+        // 	as xs:integer,
+        // 	as item()*
+        // ) as item()*
+        final ArgumentSpecification position = new ArgumentSpecification("position", typeFactory.number(), null);
+        final ArgumentSpecification insert = new ArgumentSpecification("insert", zeroOrMoreItems, null);
+        register("fn", "insert-before",
+                List.of(anyItemsRequiredInput, position, insert),
+                zeroOrMoreItems);
 
-        // // fn:replicate( as item()*,  as xs:nonNegativeInteger) as item()*
-        // final ArgumentSpecification count = new ArgumentSpecification("count", true,
-        //         typeFactory.number()));
-        // register("fn", "replicate",
-        //         List.of(input, count),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
-        // // fn:reverse( as item()*) as item()*
-        // register("fn", "reverse",
-        //         List.of(input),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+        // fn:items-at( as item()*,  as xs:integer*) as item()*
+        final ArgumentSpecification at = new ArgumentSpecification("at",
+                zeroOrMoreNumbers, null);
+        register("fn", "items-at",
+                List.of(anyItemsRequiredInput, at),
+                zeroOrMoreItems);
 
-        // // fn:sequence-join( as item()*,  as item()*) as item()*
-        // final ArgumentSpecification seqJoinInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification seqJoinSeparator = new ArgumentSpecification("separator", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("fn", "sequence-join",
-        //         List.of(seqJoinInput, seqJoinSeparator),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+        // fn:replicate( as item()*,  as xs:nonNegativeInteger) as item()*
+        final ArgumentSpecification count = new ArgumentSpecification("count", typeFactory.number(), null);
+        register("fn", "replicate",
+                List.of(anyItemsRequiredInput, count),
+                zeroOrMoreItems);
 
-        // // fn:slice( as item()*,  as xs:integer? := (),  as xs:integer?
-        // // := (),  as xs:integer? := ()) as item()*
-        // final ArgumentSpecification sliceInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification sliceStart = new ArgumentSpecification("start", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        // final ArgumentSpecification sliceEnd = new ArgumentSpecification("end", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        // final ArgumentSpecification sliceStep = new ArgumentSpecification("step", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        // register("fn", "slice",
-        //         List.of(sliceInput, sliceStart, sliceEnd, sliceStep),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
-        // // fn:subsequence( as item()*,  as xs:double,  as xs:double?
-        // // := ()) as item()*
-        // final ArgumentSpecification subInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification subStart = new ArgumentSpecification("start", true,
-        //         typeFactory.number()));
-        // final ArgumentSpecification subLength = new ArgumentSpecification("length", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        // register("fn", "subsequence",
-        //         List.of(subInput, subStart, subLength),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+        final ArgumentSpecification positions = new ArgumentSpecification("positions", zeroOrMoreNumbers, null);
 
-        // // fn:tail( as item()*) as item()*
-        // final ArgumentSpecification tailInput2 = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("fn", "tail",
-        //         List.of(tailInput2),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
-        // // fn:trunk( as item()*) as item()*
-        // final ArgumentSpecification trunkInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("fn", "trunk",
-        //         List.of(trunkInput),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+        // fn:remove(
+        // 	as item()*,
+        // 	as xs:integer*
+        // ) as item()*
+        register("fn", "remove",
+                List.of(anyItemsRequiredInput, positions), zeroOrMoreItems);
 
-        // // fn:unordered( as item()*) as item()*
-        // final ArgumentSpecification unorderedInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("fn", "unordered",
-        //         List.of(unorderedInput),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
-        // // fn:void( as item()* := ()) as empty-sequence()
-        // final ArgumentSpecification voidInput = new ArgumentSpecification("input", false,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("fn", "void",
-        //         List.of(voidInput),
-        //         typeFactory.emptySequence());
+        // fn:reverse(
+        // 	as item()*
+        // ) as item()*
+        register("fn", "reverse",
+                List.of(anyItemsRequiredInput),
+                zeroOrMoreItems);
 
-        // // fn:atomic-equal( as xs:anyAtomicType,  as xs:anyAtomicType) as
-        // // xs:boolean
-        // final ArgumentSpecification atomicEq1 = new ArgumentSpecification("value1", true,
-        //         typeFactory.one(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification atomicEq2 = new ArgumentSpecification("value2", true,
-        //         typeFactory.one(typeFactory.itemAnyItem()));
-        // register("fn", "atomic-equal",
-        //         List.of(atomicEq1, atomicEq2),
-        //         typeFactory.boolean_());
+        // fn:sequence-join( as item()*,  as item()*) as item()*
+        final ArgumentSpecification seqJoinSeparator = new ArgumentSpecification("separator", zeroOrMoreItems, null);
+        register("fn", "sequence-join",
+                List.of(anyItemsRequiredInput, seqJoinSeparator),
+                zeroOrMoreItems);
 
-        // // fn:deep-equal( as item()*,  as item()*,  as
-        // // (xs:string|map(*))? := {}) as xs:boolean
-        // final ArgumentSpecification deepInput1 = new ArgumentSpecification("input1", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification deepInput2 = new ArgumentSpecification("input2", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification deepOptions = new ArgumentSpecification("options", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
-        // register("fn", "deep-equal",
-        //         List.of(deepInput1, deepInput2, deepOptions),
-        //         typeFactory.boolean_());
+        // fn:slice(
+        //  as item()*,
+        //  as xs:integer? := (),
+        //  as xs:integer?  := (),
+        //  as xs:integer? := ()
+        // ) as item()*
+        final ArgumentSpecification sliceStart = new ArgumentSpecification("start",
+                optionalNumber, EMPTY_SEQUENCE);
+        final ArgumentSpecification sliceEnd = new ArgumentSpecification("end",
+                optionalNumber, EMPTY_SEQUENCE);
+        final ArgumentSpecification sliceStep = new ArgumentSpecification("step",
+                optionalNumber, EMPTY_SEQUENCE);
+        register("fn", "slice",
+                List.of(anyItemsRequiredInput, sliceStart, sliceEnd, sliceStep),
+                zeroOrMoreItems);
 
-        // // fn:compare( as xs:anyAtomicType?,  as xs:anyAtomicType?,
-        // //  as xs:string? := fn:default-collation()) as xs:integer?
-        // final ArgumentSpecification compareValue1 = new ArgumentSpecification("value1", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification compareValue2 = new ArgumentSpecification("value2", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification compareCollation = new ArgumentSpecification("collation", false,
-        //         optionalString));
-        // register("fn", "compare",
-        //         List.of(compareValue1, compareValue2, compareCollation),
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
-        // // fn:distinct-values(
-        // //  as xs:anyAtomicType*,
-        // //  as xs:string? := fn:default-collation()
-        // // ) as xs:anyAtomicType*
-        // final ArgumentSpecification distinctVals = new ArgumentSpecification("values", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification distinctColl = new ArgumentSpecification("collation", false,
-        //         optionalString));
-        // register("fn", "distinct-values",
-        //         List.of(distinctVals, distinctColl),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+        // fn:subsequence( as item()*,  as xs:double,  as xs:double?
+        // := ()) as item()*
+        final ArgumentSpecification subStart = new ArgumentSpecification("start",
+                typeFactory.number(), null);
+        final ArgumentSpecification subLength = new ArgumentSpecification("length",
+                optionalNumber, EMPTY_SEQUENCE);
+        register("fn", "subsequence",
+                List.of(anyItemsRequiredInput, subStart, subLength),
+                zeroOrMoreItems);
 
-        // // fn:duplicate-values(
-        // //  as xs:anyAtomicType*,
-        // //  as xs:string? := fn:default-collation()
-        // // ) as xs:anyAtomicType*
-        // final ArgumentSpecification duplicateVals = new ArgumentSpecification("values", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification duplicateColl = new ArgumentSpecification("collation", false,
-        //         optionalString));
-        // register("fn", "duplicate-values",
-        //         List.of(duplicateVals, duplicateColl),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+        // fn:tail( as item()*) as item()*
+        register("fn", "tail",
+                List.of(anyItemsRequiredInput),
+                zeroOrMoreItems);
 
-        // // fn:index-of(
-        // //  as xs:anyAtomicType*,
-        // //  as xs:anyAtomicType,
-        // //  as xs:string? := fn:default-collation()
-        // // ) as xs:integer*
-        // final ArgumentSpecification indexInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification indexTarget = new ArgumentSpecification("target", true,
-        //         typeFactory.one(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification indexColl = new ArgumentSpecification("collation", false,
-        //         optionalString));
-        // register("fn", "index-of",
-        //         List.of(indexInput, indexTarget, indexColl),
-        //         typeFactory.zeroOrMore(typeFactory.itemNumber()));
+        // fn:trunk( as item()*) as item()*
+        register("fn", "trunk",
+                List.of(anyItemsRequiredInput),
+                zeroOrMoreItems);
 
-        // // fn:starts-with-subsequence(
-        // //  as item()*,
-        // //  as item()*,
-        // //  as (fn(item(),item()) as xs:boolean?)? := fn:deep-equal#2
-        // // ) as xs:boolean
-        // final ArgumentSpecification swsInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification swsSubseq = new ArgumentSpecification("subsequence", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification swsCompare = new ArgumentSpecification("compare", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
-        // register("fn", "starts-with-subsequence",
-        //         List.of(swsInput, swsSubseq, swsCompare),
-        //         typeFactory.boolean_());
+        // fn:unordered( as item()*) as item()*
+        register("fn", "unordered",
+                List.of(anyItemsRequiredInput),
+                zeroOrMoreItems);
 
-        // // fn:ends-with-subsequence(
-        // //  as item()*,
-        // //  as item()*,
-        // //  as (fn(item(),item()) as xs:boolean?)? := fn:deep-equal#2
-        // // ) as xs:boolean
-        // final ArgumentSpecification ewsInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification ewsSubseq = new ArgumentSpecification("subsequence", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification ewsCompare = new ArgumentSpecification("compare", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
-        // register("fn", "ends-with-subsequence",
-        //         List.of(ewsInput, ewsSubseq, ewsCompare),
-        //         typeFactory.boolean_());
+        // fn:void( as item()* := ()) as empty-sequence()
+        final ArgumentSpecification voidInput = new ArgumentSpecification("input", zeroOrMoreItems, EMPTY_SEQUENCE);
+        register("fn", "void",
+                List.of(voidInput),
+                typeFactory.emptySequence());
 
-        // // fn:contains-subsequence(
-        // //  as item()*,
-        // //  as item()*,
-        // //  as (fn(item(),item()) as xs:boolean?)? := fn:deep-equal#2
-        // // ) as xs:boolean
-        // final ArgumentSpecification cssInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification cssSubseq = new ArgumentSpecification("subsequence", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification cssCompare = new ArgumentSpecification("compare", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
-        // register("fn", "contains-subsequence",
-        //         List.of(cssInput, cssSubseq, cssCompare),
-        //         typeFactory.boolean_());
+        // fn:atomic-equal( as xs:anyAtomicType,  as xs:anyAtomicType) as
+        // xs:boolean
+        final ArgumentSpecification arg_value1_anyItem = new ArgumentSpecification("value1", typeFactory.anyItem(), null);
+        final ArgumentSpecification arg_value2_anyItem  = new ArgumentSpecification("value2", typeFactory.anyItem(), null);
+        register("fn", "atomic-equal",
+                List.of(arg_value1_anyItem, arg_value2_anyItem),
+                typeFactory.boolean_());
 
-        // // fn:zero-or-one( as item()*) as item()?
-        // final ArgumentSpecification z1Input2 = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("fn", "zero-or-one",
-        //         List.of(z1Input2),
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
+        // fn:deep-equal( as item()*,  as item()*,  as
+        // (xs:string|map(*))? := {}) as xs:boolean
+        final ArgumentSpecification arg_value1_anyItems = new ArgumentSpecification("value1", zeroOrMoreItems, null);
+        final ArgumentSpecification arg_value2_anyItems  = new ArgumentSpecification("value2", zeroOrMoreItems, null);
+        final var stringOrMap = typeFactory.zeroOrOne(typeFactory.itemChoice(Set.of(typeFactory.itemString(), typeFactory.itemAnyMap())));
+        final ArgumentSpecification optionalOptions = new ArgumentSpecification("options", stringOrMap, EMPTY_MAP);
+        register("fn", "deep-equal",
+                List.of(arg_value1_anyItems, arg_value2_anyItems, optionalOptions),
+                typeFactory.boolean_());
 
-        // // fn:one-or-more( as item()*) as item()+
-        // final ArgumentSpecification o1Input2 = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("fn", "one-or-more",
-        //         List.of(o1Input2),
-        //         typeFactory.oneOrMore(typeFactory.itemAnyItem()));
+        // fn:compare( as xs:anyAtomicType?,  as xs:anyAtomicType?,
+        //  as xs:string? := fn:default-collation()) as xs:integer?
+        register("fn", "compare",
+                List.of(arg_value1_anyItem, arg_value2_anyItem, optionalCollation),
+                typeFactory.zeroOrOne(typeFactory.itemNumber()));
 
-        // // fn:exactly-one( as item()*) as item()
-        // final ArgumentSpecification e1Input2 = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("fn", "exactly-one",
-        //         List.of(e1Input2),
-        //         typeFactory.one(typeFactory.itemAnyItem()));
+        // fn:distinct-values(
+        //  as xs:anyAtomicType*,
+        //  as xs:string? := fn:default-collation()
+        // ) as xs:anyAtomicType*
+        final ArgumentSpecification required_arg_values_anyItems = new ArgumentSpecification("values", zeroOrMoreItems, null);
+        register("fn", "distinct-values",
+                List.of(required_arg_values_anyItems, optionalCollation),
+                typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
-        // // fn:count( as item()*) as xs:integer
-        // final ArgumentSpecification countInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("fn", "count",
-        //         List.of(countInput),
-        //         typeFactory.number()));
+        // fn:duplicate-values(
+        //  as xs:anyAtomicType*,
+        //  as xs:string? := fn:default-collation()
+        // ) as xs:anyAtomicType*
+        register("fn", "duplicate-values",
+                List.of(required_arg_values_anyItems, optionalCollation),
+                typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
-        // // fn:avg( as xs:anyAtomicType*) as xs:anyAtomicType?
-        // final ArgumentSpecification avgValues = new ArgumentSpecification("values", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("fn", "avg",
-        //         List.of(avgValues),
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
+        // fn:index-of(
+        //  as xs:anyAtomicType*,
+        //  as xs:anyAtomicType,
+        //  as xs:string? := fn:default-collation()
+        // ) as xs:integer*
+        final ArgumentSpecification required_arg_target_anyItem = new ArgumentSpecification("target", typeFactory.one(typeFactory.itemAnyItem()), null);
+        register("fn", "index-of",
+                List.of(anyItemsRequiredInput, required_arg_target_anyItem, optionalCollation),
+                typeFactory.zeroOrMore(typeFactory.itemNumber()));
 
-        // // fn:max(
-        // //  as xs:anyAtomicType*,
-        // //  as xs:string? := fn:default-collation()
-        // // ) as xs:anyAtomicType?
-        // final ArgumentSpecification maxValues = new ArgumentSpecification("values", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification maxColl = new ArgumentSpecification("collation", false,
-        //         optionalString));
-        // register("fn", "max",
-        //         List.of(maxValues, maxColl),
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
+        // fn:starts-with-subsequence(
+        //  as item()*,
+        //  as item()*,
+        //  as (fn(item(),item()) as xs:boolean?)? := fn:deep-equal#2
+        // ) as xs:boolean
+        final ArgumentSpecification required_arg_subsequence_anyItems = new ArgumentSpecification("subsequence", zeroOrMoreItems, null);
+        final var comparator = typeFactory.zeroOrOne(typeFactory.itemFunction(typeFactory.boolean_(),
+                List.of(typeFactory.anyItem(), typeFactory.anyItem())));
+        final var DEFAULT_COMPARATOR = getTree("fn:deep-equal#2", parser -> parser.namedFunctionRef());
+        final ArgumentSpecification optional_arg_compare_comparator = new ArgumentSpecification("compare", comparator, DEFAULT_COMPARATOR);
+        register("fn", "starts-with-subsequence",
+                List.of(anyItemsRequiredInput, required_arg_subsequence_anyItems, optional_arg_compare_comparator),
+                typeFactory.boolean_());
 
-        // // fn:min(
-        // //  as xs:anyAtomicType*,
-        // //  as xs:string? := fn:default-collation()
-        // // ) as xs:anyAtomicType?
-        // final ArgumentSpecification minValues = new ArgumentSpecification("values", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification minColl = new ArgumentSpecification("collation", false,
-        //         optionalString));
-        // register("fn", "min",
-        //         List.of(minValues, minColl),
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
+        // fn:ends-with-subsequence(
+        //  as item()*,
+        //  as item()*,
+        //  as (fn(item(),item()) as xs:boolean?)? := fn:deep-equal#2
+        // ) as xs:boolean
+        register("fn", "ends-with-subsequence",
+                List.of(anyItemsRequiredInput, required_arg_subsequence_anyItems, optional_arg_compare_comparator),
+                typeFactory.boolean_());
 
-        // // fn:sum(
-        // //  as xs:anyAtomicType*,
-        // //  as xs:anyAtomicType? := 0
-        // // ) as xs:anyAtomicType?
-        // final ArgumentSpecification sumValues = new ArgumentSpecification("values", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification sumZero = new ArgumentSpecification("zero", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
-        // register("fn", "sum",
-        //         List.of(sumValues, sumZero),
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
+        // fn:contains-subsequence(
+        //  as item()*,
+        //  as item()*,
+        //  as (fn(item(),item()) as xs:boolean?)? := fn:deep-equal#2
+        // ) as xs:boolean
+        register("fn", "contains-subsequence",
+                List.of(anyItemsRequiredInput, required_arg_subsequence_anyItems, optional_arg_compare_comparator),
+                typeFactory.boolean_());
 
-        // // fn:all-equal(
-        // //  as xs:anyAtomicType*,
-        // //  as xs:string? := fn:default-collation()
-        // // ) as xs:boolean
-        // final ArgumentSpecification allEqualValues = new ArgumentSpecification("values", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification allEqualCollation = new ArgumentSpecification("collation", false,
-        //         optionalString));
-        // register("fn", "all-equal",
-        //         List.of(allEqualValues, allEqualCollation),
-        //         typeFactory.boolean_());
+        // fn:count( as item()*) as xs:integer
+        register("fn", "count", List.of(anyItemsRequiredInput), typeFactory.number());
 
-        // // // fn:all-different(
-        // // //  as xs:anyAtomicType*,
-        // // //  as xs:string? := fn:default-collation()
-        // // // ) as xs:boolean
-        // // final ArgumentSpecification allDiffValues = new ArgumentSpecification("values", true,
-        // //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // // final ArgumentSpecification allDiffCollation = new ArgumentSpecification("collation", false,
-        // //         optionalString));
-        // // register("fn", "all-different",
-        // //         List.of(allDiffValues, allDiffCollation),
-        // //         typeFactory.boolean_());
+        // fn:avg( as xs:anyAtomicType*) as xs:anyAtomicType?
+        final ArgumentSpecification anyItemValues = new ArgumentSpecification("values", zeroOrMoreItems, null);
+        register("fn", "avg", List.of(anyItemValues), optionalItem);
+
+        // fn:max(
+        //  as xs:anyAtomicType*,
+        //  as xs:string? := fn:default-collation()
+        // ) as xs:anyAtomicType?
+        register("fn", "max",
+                List.of(anyItemValues, optionalCollation),
+                typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
+
+        // fn:min(
+        //  as xs:anyAtomicType*,
+        //  as xs:string? := fn:default-collation()
+        // ) as xs:anyAtomicType?
+        register("fn", "min", List.of(anyItemValues, optionalCollation), optionalItem);
+
+        // fn:sum(
+        //  as xs:anyAtomicType*,
+        //  as xs:anyAtomicType? := 0
+        // ) as xs:anyAtomicType?
+        final ArgumentSpecification sumZero = new ArgumentSpecification("zero", optionalItem, ZERO_LITERAL);
+        register("fn", "sum", List.of(anyItemValues, sumZero), optionalItem);
+
+        // fn:all-equal(
+        //  as xs:anyAtomicType*,
+        //  as xs:string? := fn:default-collation()
+        // ) as xs:boolean
+        register("fn", "all-equal",
+                List.of(anyItemValues, optionalCollation),
+                typeFactory.boolean_());
+
+        // fn:all-different(
+        //  as xs:anyAtomicType*,
+        //  as xs:string? := fn:default-collation()
+        // ) as xs:boolean
+        register("fn", "all-different",
+                List.of(anyItemValues, optionalCollation),
+                typeFactory.boolean_());
 
         // // // fn:collection(
         // // //  as xs:string? := ()
@@ -2575,14 +2464,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         List.of(castStringValue),
         //         optionalString));
 
-
-
         // fn:default-collation() as xs:string
         register("fn", "default-collation", List.of(), typeFactory.string());
-
-
-
-
     }
 
     private static ParseTree getTree(final String xquery, Function<AntlrXqueryParser, ParseTree> initialRule) {
@@ -2605,22 +2488,22 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
 
     final Map<String, Map<String, List<FunctionSpecification>>> namespaces;
 
-    private CallAnalysisResult handleUnknownNamespace(final String namespace, final String errorMessageSupplier,
+    private AnalysisResult handleUnknownNamespace(final String namespace, final String errorMessageSupplier,
             final XQuerySequenceType fallbackType) {
         final List<String> errors = List.of(errorMessageSupplier);
-        return new CallAnalysisResult(fallbackType, List.of(), errors);
+        return new AnalysisResult(fallbackType, List.of(), errors);
     }
 
-    private CallAnalysisResult handleUnknownFunction(final String namespace, final String name,
+    private AnalysisResult handleUnknownFunction(final String namespace, final String name,
             final String errorMessageSupplier, final XQuerySequenceType fallbackType) {
         final List<String> errors = List.of(errorMessageSupplier);
-        return new CallAnalysisResult(fallbackType, List.of(), errors);
+        return new AnalysisResult(fallbackType, List.of(), errors);
     }
 
-    private CallAnalysisResult handleNoMatchingFunction(final String errorMessageSupplier,
+    private AnalysisResult handleNoMatchingFunction(final String errorMessageSupplier,
             final XQuerySequenceType fallbackType) {
         final List<String> errors = List.of(errorMessageSupplier);
-        return new CallAnalysisResult(fallbackType, List.of(), errors);
+        return new AnalysisResult(fallbackType, List.of(), errors);
     }
 
     record SpecAndErrors(FunctionSpecification spec, List<String> errors) {
@@ -2647,7 +2530,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
     }
 
     @Override
-    public CallAnalysisResult call(
+    public AnalysisResult call(
             final String namespace,
             final String name,
             final List<XQuerySequenceType> positionalargs,
@@ -2671,7 +2554,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
 
         final SpecAndErrors specAndErrors = getFunctionSpecification(namespace, name, namedFunctions, requiredArity);
         if (specAndErrors.spec == null) {
-            return new CallAnalysisResult(anyItems, List.of(), specAndErrors.errors);
+            return new AnalysisResult(anyItems, List.of(), specAndErrors.errors);
         }
         final var spec = specAndErrors.spec;
         // used positional arguments need to have matching types
@@ -2712,7 +2595,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
             mismatchReasons.add("Function " + name + ": " + String.join("; ", reasons));
         }
         if (mismatchReasons.isEmpty()) {
-            return new CallAnalysisResult(spec.returnedType, defaultArgs.toList(), List.of());
+            return new AnalysisResult(spec.returnedType, defaultArgs.toList(), List.of());
         }
         final String message = getNoMatchingFunctionMessage(namespace, name, requiredArity, mismatchReasons);
         return handleNoMatchingFunction(message, spec.returnedType);
@@ -2823,7 +2706,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
     }
 
     @Override
-    public CallAnalysisResult getFunctionReference(final String namespace, final String functionName, final int arity) {
+    public AnalysisResult getFunctionReference(final String namespace, final String functionName, final int arity) {
         // TODO: Verify logic
         final var fallback = typeFactory.anyFunction();
         if (!namespaces.containsKey(namespace)) {
@@ -2845,9 +2728,12 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
             stringBuilder.append(functionName);
             stringBuilder.append("#");
             stringBuilder.append(arity);
-            return new CallAnalysisResult(fallback, List.of(), List.of(stringBuilder.toString()));
+            return new AnalysisResult(fallback, List.of(), List.of(stringBuilder.toString()));
         }
-        return new CallAnalysisResult(specAndErrors.spec.returnedType, List.of(), specAndErrors.errors);
+        XQuerySequenceType returnedType = specAndErrors.spec.returnedType;
+        List<XQuerySequenceType> argTypes = specAndErrors.spec.args.stream().map(arg->arg.type()).toList().subList(0, arity);
+        var functionItem = typeFactory.function(returnedType, argTypes);
+        return new AnalysisResult(functionItem, List.of(), specAndErrors.errors);
 
     }
 
@@ -2855,13 +2741,13 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         return "Wrong number of arguments for function" + functionName + " : expected " + expected + ", got " + actual;
     }
 
-    public CallAnalysisResult not(final XQueryTypeFactory typeFactory, final XQueryVisitingSemanticContext context,
+    public AnalysisResult not(final XQueryTypeFactory typeFactory, final XQueryVisitingSemanticContext context,
             final List<XQuerySequenceType> args) {
         if (args.size() != 1) {
             final String message = wrongNumberOfArguments("fn:not()", 1, args.size());
-            return new CallAnalysisResult(typeFactory.boolean_(), List.of(), List.of(message));
+            return new AnalysisResult(typeFactory.boolean_(), List.of(), List.of(message));
         }
-        return new CallAnalysisResult(typeFactory.boolean_(), List.of(), List.of());
+        return new AnalysisResult(typeFactory.boolean_(), List.of(), List.of());
     }
 
     public XQuerySemanticError register(

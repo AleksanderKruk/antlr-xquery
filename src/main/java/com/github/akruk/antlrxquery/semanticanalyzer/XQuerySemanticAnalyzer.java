@@ -20,9 +20,10 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.*;
 import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.XQuerySemanticContextManager;
 import com.github.akruk.antlrxquery.namespaceresolver.INamespaceResolver;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
+import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.ResolvedName;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager.ArgumentSpecification;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager.CallAnalysisResult;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager.AnalysisResult;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper.XQuerySemanticCharEscaperResult;
@@ -465,7 +466,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
         ctx.argumentList().accept(this);
 
-        final CallAnalysisResult callAnalysisResult = functionManager.call(
+        final AnalysisResult callAnalysisResult = functionManager.call(
             namespace, functionName, visitedPositionalArguments, visitedKeywordArguments, context);
         errors.addAll(callAnalysisResult.errors());
         for (ArgumentSpecification defaultArg : callAnalysisResult.requiredDefaultArguments()) {
@@ -708,7 +709,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
                 default -> throw new AssertionError("Not implemented wildcard");
             };
         }
-        final String name = ctx.qname().toString();
+        final String name = ctx.qname().getText();
         if (canBeTokenName.test(name)) {
             // test for token type
             final int tokenType = parser.getTokenType(name);
@@ -720,7 +721,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         } else { // test for rule
             final int ruleIndex = parser.getRuleIndex(name);
             if (ruleIndex == -1) {
-                final String msg = String.format("Rule name: %s is not recognized by parser %s", name, parser.toString());
+                final String msg = String.format("Rule name: %s is not recognized by parser %s", name, parser.getClass().toString());
                 addError(ctx.qname(), msg);
             }
             return typeFactory.zeroOrMore(typeFactory.itemElement(Set.of(name)));
@@ -743,7 +744,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     }
 
     @Override
-    public XQuerySequenceType visitSimpleMapExpr(final SimpleMapExprContext ctx) {
+    public XQuerySequenceType visitSimpleMapExpr(final SimpleMapExprContext ctx)
+    {
         if (ctx.EXCLAMATION_MARK().isEmpty())
             return ctx.pathExpr(0).accept(this);
         final XQuerySequenceType firstExpressionType = ctx.pathExpr(0).accept(this);
@@ -751,12 +753,40 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         context.setType(iterator);
         XQuerySequenceType result = firstExpressionType;
         final var theRest = ctx.pathExpr().subList(1, ctx.pathExpr().size());
-        for (final var mappedExpression: theRest) {
+        for (final var mappedExpression : theRest) {
             final XQuerySequenceType type = mappedExpression.accept(this);
             result = result.mapping(type);
             context.setType(result.iteratedItem());
         }
         return result;
+    }
+
+
+    @Override
+    public XQuerySequenceType visitNamedFunctionRef(NamedFunctionRefContext ctx)
+    {
+        int arity = Integer.parseInt(ctx.IntegerLiteral().getText());
+        ResolvedName resolvedName = namespaceResolver.resolve(ctx.qname().getText());
+        var analysis = functionManager.getFunctionReference(resolvedName.namespace(), resolvedName.name(), arity);
+        errors.addAll(analysis.errors());
+        return analysis.result();
+    }
+
+    @Override
+    public XQuerySequenceType visitMapConstructor(MapConstructorContext ctx)
+    {
+        var entries = ctx.mapConstructorEntry();
+        if (entries.isEmpty())
+            return typeFactory.anyArray();
+        List<XQueryItemType> keyType = entries.stream()
+            .map(e -> e.mapKeyExpr().accept(this).getItemType())
+            .toList();
+        XQueryItemType choiceKeyType = typeFactory.itemChoice(keyType);
+        // TODO: refine
+        XQuerySequenceType valueType = entries.stream()
+            .map(e -> e.mapValueExpr().accept(this))
+            .reduce((t1, t2) -> t1.alternativeMerge(t2)).get();
+        return typeFactory.map(choiceKeyType, valueType);
     }
 
 

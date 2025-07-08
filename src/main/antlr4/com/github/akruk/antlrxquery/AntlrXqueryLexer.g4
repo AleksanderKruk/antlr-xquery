@@ -11,6 +11,8 @@ fragment UNDER          : '_';
 fragment HEX_PREFIX     : '0x';
 fragment BIN_PREFIX     : '0b';
 
+HASH: '#';
+
 IntegerLiteral
     : DigitSeq
     ;

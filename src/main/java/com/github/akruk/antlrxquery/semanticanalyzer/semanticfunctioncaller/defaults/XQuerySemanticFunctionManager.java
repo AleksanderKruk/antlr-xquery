@@ -2502,6 +2502,23 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
 
         // fn:default-collation() as xs:string
         register("fn", "default-collation", List.of(), typeFactory.string());
+
+        // fn:random-number-generator(
+        //   $seed as xs:anyAtomicType? := ()
+        // ) as random-number-generator-record
+
+        ArgumentSpecification rngSeed = new ArgumentSpecification(
+            "seed",
+            typeFactory.zeroOrOne(typeFactory.itemAnyItem()),
+            EMPTY_SEQUENCE
+        );
+
+        register(
+            "fn", "random-number-generator",
+            List.of(rngSeed),
+            typeFactory.namedType("random-number-generator-record")
+        );
+
     }
 
     private static ParseTree getTree(final String xquery, Function<AntlrXqueryParser, ParseTree> initialRule) {

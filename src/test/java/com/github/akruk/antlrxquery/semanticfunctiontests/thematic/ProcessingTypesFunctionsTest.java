@@ -22,10 +22,7 @@ public class ProcessingTypesFunctionsTest extends FunctionsSemanticTest {
 
     // fn:type-of($value as item()*) as xs:string
     @Test public void typeOf_noArgs() {
-        assertType(
-            "fn:type-of()",
-            typeFactory.string()
-        );
+        assertType( "fn:type-of(())", typeFactory.string());
     }
     @Test public void typeOf_withValues() {
         assertType(

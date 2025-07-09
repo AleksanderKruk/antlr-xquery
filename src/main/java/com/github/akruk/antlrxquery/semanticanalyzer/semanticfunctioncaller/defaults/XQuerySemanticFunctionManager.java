@@ -541,48 +541,62 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         List.of(umArg),
         //         typeFactory.number()));
 
-        // // fn:parse-integer(
-        // //  as xs:string?,
-        // //  as xs:integer? := 10
-        // // ) as xs:integer?
-        // final ArgumentSpecification parseIntValue = new ArgumentSpecification("value", false,
-        //         optionalString));
-        // final ArgumentSpecification parseIntRadix = new ArgumentSpecification("radix", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        // register("fn", "parse-integer",
-        //         List.of(parseIntValue, parseIntRadix),
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
+        // fn:parse-integer($value as xs:string?, $radix as xs:integer? := 10) as xs:integer?
+        ArgumentSpecification parseIntValue = new ArgumentSpecification(
+            "value",
+            typeFactory.zeroOrOne(typeFactory.itemString()),
+            null
+        );
+        ArgumentSpecification parseIntRadix = new ArgumentSpecification(
+            "radix",
+            typeFactory.zeroOrOne(typeFactory.itemNumber()),
+            getTree("10", AntlrXqueryParser::primaryExpr)
+        );
+        register(
+            "fn", "parse-integer",
+            List.of(parseIntValue, parseIntRadix),
+            typeFactory.zeroOrOne(typeFactory.itemNumber())
+        );
 
-        // // fn:format-integer(
-        // //  as xs:integer?,
-        // //  as xs:string,
-        // //  as xs:string? := ()
-        // // ) as xs:string
-        // final ArgumentSpecification fmtIntValue = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        // final ArgumentSpecification fmtIntPicture = new ArgumentSpecification("picture", true,
-        //         typeFactory.string());
-        // final ArgumentSpecification fmtIntLanguage = new ArgumentSpecification("language", false,
-        //         optionalString));
-        // register("fn", "format-integer",
-        //         List.of(fmtIntValue, fmtIntPicture, fmtIntLanguage),
-        //         typeFactory.string());
+        // fn:format-integer($value as xs:integer?, $picture as xs:string, $language as xs:string? := ()) as xs:string
+        ArgumentSpecification fmtIntValue = new ArgumentSpecification(
+            "value",
+            typeFactory.zeroOrOne(typeFactory.itemNumber()),
+            null
+        );
+        ArgumentSpecification pictureString = new ArgumentSpecification(
+            "picture",
+            typeFactory.string(),
+            null
+        );
+        ArgumentSpecification optionalLangugae = new ArgumentSpecification(
+            "language",
+            typeFactory.zeroOrOne(typeFactory.itemString()),
+            EMPTY_SEQUENCE
+        );
+        register(
+            "fn", "format-integer",
+            List.of(fmtIntValue, pictureString, optionalLangugae),
+            typeFactory.string()
+        );
 
-        // // fn:format-number(
-        // //  as xs:numeric?,
-        // //  as xs:string,
-        // //  as (xs:string | map(*))? := ()
-        // // ) as xs:string
-        // final ArgumentSpecification fmtNumValue = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        // final ArgumentSpecification fmtNumPicture = new ArgumentSpecification("picture", true,
-        //         typeFactory.string());
-        // final ArgumentSpecification fmtNumOptions = new ArgumentSpecification("options", false,
-        //         // approximate union of string or map(*) with any-item
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
-        // register("fn", "format-number",
-        //         List.of(fmtNumValue, fmtNumPicture, fmtNumOptions),
-        //         typeFactory.string());
+        // fn:format-number($value as xs:numeric?, $picture as xs:string, $options as (xs:string | map(*))? := ()) as xs:string
+        ArgumentSpecification fmtNumValue = new ArgumentSpecification(
+            "value",
+            typeFactory.zeroOrOne(typeFactory.itemNumber()),
+            null
+        );
+        ArgumentSpecification fmtNumOptions = new ArgumentSpecification(
+            "options",
+            typeFactory.zeroOrOne(typeFactory.itemChoice(Set.of(typeFactory.itemString(), typeFactory.itemAnyMap()))),
+            EMPTY_SEQUENCE
+        );
+        register(
+            "fn", "format-number",
+            List.of(fmtNumValue, pictureString, fmtNumOptions),
+            typeFactory.string()
+        );
+
 
         // math:pi() as xs:double
         register("math", "pi",
@@ -833,9 +847,9 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
                 List.of(substrValue, substrStart, substrLength),
                 typeFactory.string());
 
-        // // fn:string-length(
-        // //  as xs:string? := fn:string(.)
-        // // ) as xs:integer
+        // fn:string-length(
+        //  as xs:string? := fn:string(.)
+        // ) as xs:integer
         final ArgumentSpecification lengthValue = new ArgumentSpecification("value", optionalString, STRING_AT_CONTEXT_VALUE);
         register("fn", "string-length",
                 List.of(lengthValue),

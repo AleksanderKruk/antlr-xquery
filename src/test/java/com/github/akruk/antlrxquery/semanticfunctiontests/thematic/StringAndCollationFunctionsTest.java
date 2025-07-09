@@ -18,7 +18,7 @@ public class StringAndCollationFunctionsTest extends FunctionsSemanticTest {
     @Test
     public void codepointsToString_withInts() {
         assertType(
-            "fn:codepoints-to-string(65, 66, 67)",
+            "fn:codepoints-to-string((65, 66, 67))",
             typeFactory.string()
         );
     }
@@ -115,7 +115,7 @@ public class StringAndCollationFunctionsTest extends FunctionsSemanticTest {
     @Test
     public void collationAvailable_withUsage() {
         assertType(
-            "fn:collation-available('en','compare','key')",
+            "fn:collation-available('en',('compare','key'))",
             typeFactory.one(typeFactory.itemBoolean())
         );
     }

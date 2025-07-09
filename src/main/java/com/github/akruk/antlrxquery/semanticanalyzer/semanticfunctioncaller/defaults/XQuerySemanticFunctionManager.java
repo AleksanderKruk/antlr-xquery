@@ -152,7 +152,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // register("fn", "head", List.of(sequence), optionalItem);
         // register("fn", "tail", List.of(sequence), zeroOrMoreItems);
 
-        // final var zeroOrMoreNumbers = typeFactory.zeroOrMore(typeFactory.itemNumber());
+        final var zeroOrMoreNumbers = typeFactory.zeroOrMore(typeFactory.itemNumber());
 
         // final var start = new ArgumentSpecification("start", typeFactory.number(), null);
         // final var optionalLength = new ArgumentSpecification("length", false, optionalNumber);
@@ -737,70 +737,61 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
                 List.of(tanhVal),
                 optionalNumber);
 
-        // // fn:codepoints-to-string(
-        // //  as xs:integer*
-        // // ) as xs:string
-        // final ArgumentSpecification cpsValues = new ArgumentSpecification("values", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemNumber()));
-        // register("fn", "codepoints-to-string",
-        //         List.of(cpsValues),
-        //         typeFactory.string());
+        // fn:codepoints-to-string(
+        //  as xs:integer*
+        // ) as xs:string
+        final ArgumentSpecification cpsValues = new ArgumentSpecification("values", zeroOrMoreNumbers, null);
+        register("fn", "codepoints-to-string",
+                List.of(cpsValues),
+                typeFactory.string());
 
-        // // fn:string-to-codepoints(
-        // //  as xs:string?
-        // // ) as xs:integer*
-        // final ArgumentSpecification stcpValue = new ArgumentSpecification("value", true,
-        //         optionalString));
-        // register("fn", "string-to-codepoints",
-        //         List.of(stcpValue),
-        //         typeFactory.zeroOrMore(typeFactory.itemNumber()));
+        // fn:string-to-codepoints(
+        //  as xs:string?
+        // ) as xs:integer*
+        final ArgumentSpecification stcpValue = new ArgumentSpecification("value", optionalString, null);
+        register("fn", "string-to-codepoints",
+                List.of(stcpValue),
+                typeFactory.zeroOrMore(typeFactory.itemNumber()));
 
-        // // fn:codepoint-equal(
-        // //  as xs:string?,
-        // //  as xs:string?
-        // // ) as xs:boolean?
-        // final ArgumentSpecification cpEq1 = new ArgumentSpecification("value1", true,
-        //         optionalString));
-        // final ArgumentSpecification cpEq2 = new ArgumentSpecification("value2", true,
-        //         optionalString));
-        // register("fn", "codepoint-equal",
-        //         List.of(cpEq1, cpEq2),
-        //         typeFactory.zeroOrOne(typeFactory.itemBoolean()));
+        // fn:codepoint-equal(
+        //  as xs:string?,
+        //  as xs:string?
+        // ) as xs:boolean?
+        final ArgumentSpecification cpEq1 = new ArgumentSpecification("value1", optionalString, null);
+        final ArgumentSpecification cpEq2 = new ArgumentSpecification("value2", optionalString, null);
+        register("fn", "codepoint-equal",
+                List.of(cpEq1, cpEq2),
+                typeFactory.zeroOrOne(typeFactory.itemBoolean()));
 
-        // // fn:collation(
-        // //  as map(*)
-        // // ) as xs:string
-        // final ArgumentSpecification collationOpts = new ArgumentSpecification("options", true,
-        //         typeFactory.one(typeFactory.itemAnyMap()));
-        // register("fn", "collation",
-        //         List.of(collationOpts),
-        //         typeFactory.string());
+        // fn:collation(
+        //  as map(*)
+        // ) as xs:string
+        final ArgumentSpecification collationOpts = new ArgumentSpecification("options", typeFactory.one(typeFactory.itemAnyMap()), null);
+        register("fn", "collation",
+                List.of(collationOpts),
+                typeFactory.string());
 
-        // // fn:collation-available(
-        // //  as xs:string,
-        // //  as enum('compare','key','substring')* := ()
-        // // ) as xs:boolean
-        // final ArgumentSpecification colAvailColl = new ArgumentSpecification("collation", true,
-        //         typeFactory.string());
-        // final ArgumentSpecification colAvailUsage = new ArgumentSpecification("usage", false,
-        //         typeFactory.zeroOrMore(typeFactory.itemEnum(Set.of("compare", "key", "substring"))));
-        // register("fn", "collation-available",
-        //         List.of(colAvailColl, colAvailUsage),
-        //         typeFactory.boolean_());
-        // // fn:contains-token(
-        // //  as xs:string*,
-        // //  as xs:string,
-        // //  as xs:string? := fn:default-collation()
-        // // ) as xs:boolean
-        // final ArgumentSpecification ctValue = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemString()));
-        // final ArgumentSpecification ctToken = new ArgumentSpecification("token", true,
-        //         typeFactory.string());
-        // final ArgumentSpecification ctColl = new ArgumentSpecification("collation", false,
-        //         optionalString));
-        // register("fn", "contains-token",
-        //         List.of(ctValue, ctToken, ctColl),
-        //         typeFactory.boolean_());
+        // fn:collation-available(
+        //  as xs:string,
+        //  as enum('compare','key','substring')* := ()
+        // ) as xs:boolean
+        final ArgumentSpecification colAvailColl = new ArgumentSpecification("collation", typeFactory.string(), null);
+        final ArgumentSpecification colAvailUsage = new ArgumentSpecification("usage",
+            typeFactory.zeroOrMore(typeFactory.itemEnum(Set.of("compare", "key", "substring"))),
+            EMPTY_SEQUENCE);
+        register("fn", "collation-available",
+                List.of(colAvailColl, colAvailUsage),
+                typeFactory.boolean_());
+        // fn:contains-token(
+        //  as xs:string*,
+        //  as xs:string,
+        //  as xs:string? := fn:default-collation()
+        // ) as xs:boolean
+        final ArgumentSpecification ctValue = new ArgumentSpecification("value", typeFactory.zeroOrMore(typeFactory.itemString()), null);
+        final ArgumentSpecification ctToken = new ArgumentSpecification("token", typeFactory.string(), null);
+        register("fn", "contains-token",
+                List.of(ctValue, ctToken, optionalCollation),
+                typeFactory.boolean_());
 
         // fn:char(
         //  as (xs:string | xs:positiveInteger)
@@ -1083,7 +1074,6 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         register("fn", "identity", List.of(anyItemsRequiredInput), zeroOrMoreItems);
 
         // register("fn", "tail", List.of(sequence), zeroOrMoreItems);
-        final var zeroOrMoreNumbers = typeFactory.zeroOrMore(typeFactory.itemNumber());
 
         // fn:insert-before(
         // 	as item()*,

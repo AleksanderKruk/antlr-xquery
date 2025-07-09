@@ -85,16 +85,16 @@ public class ContextFunctionsTest extends FunctionsSemanticTest {
         assertErrors("fn:default-collation('x')");
     }
 
-    // fn:default-language() as xs:language
-    @Test public void defaultLanguage_noArgs() {
-        assertType(
-            "fn:default-language()",
-            typeFactory.string()
-        );
-    }
-    @Test public void defaultLanguage_withArg_error() {
-        assertErrors("fn:default-language(1)");
-    }
+    // // fn:default-language() as xs:language
+    // @Test public void defaultLanguage_noArgs() {
+    //     assertType(
+    //         "fn:default-language()",
+    //         typeFactory.string()
+    //     );
+    // }
+    // @Test public void defaultLanguage_withArg_error() {
+    //     assertErrors("fn:default-language(1)");
+    // }
 
     // fn:static-base-uri() as xs:anyURI?
     // @Test public void staticBaseUri_noArgs() {

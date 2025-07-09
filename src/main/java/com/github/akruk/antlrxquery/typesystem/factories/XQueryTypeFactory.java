@@ -28,6 +28,7 @@ public interface XQueryTypeFactory {
     public XQueryItemType itemExtensibleRecord(Map<String, XQueryRecordField> fields);
     public XQueryItemType itemChoice(Collection<XQueryItemType> items);
     public XQueryItemType itemNamedType(String name);
+    // public XQueryItemType itemNamedTypeRef(String string);
 
     public XQuerySequenceType error();
     public XQuerySequenceType string();

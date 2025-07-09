@@ -45,6 +45,12 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
     private final XQuerySequenceType BOOLEAN_TYPE = one(BOOLEAN_ITEM_TYPE);
     private final XQuerySequenceType EMPTY_SEQUENCE = new XQueryEnumEmptySequenceType(this);
 
+
+    public XQueryEnumTypeFactory() {
+        namedTypes = Map.of();
+    }
+
+
     public XQueryEnumTypeFactory(final Map<String, XQueryItemType> predefinedNamedTypes) {
         namedTypes = predefinedNamedTypes;
     }
@@ -167,7 +173,6 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
                 .collect(Collectors.toList());
         return new XQueryEnumItemTypeFunction(returnType, argumentTypesEnum, this);
     }
-
     @Override
     public XQueryItemType itemMap(final XQueryItemType keyType, final XQuerySequenceType valueType) {
         return new XQueryEnumItemTypeMap((XQueryEnumItemType) keyType, (XQueryEnumSequenceType) valueType, this);
@@ -247,7 +252,7 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
 
     @Override
     public XQueryItemType itemChoice(final Collection<XQueryItemType> items) {
-        return new XQueryChoiceItemType(items, this);
+        return new XQueryEnumChoiceItemType(items, this);
     }
 
     @Override

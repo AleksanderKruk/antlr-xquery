@@ -112,14 +112,14 @@ public class XQueryEnumItemType implements XQueryItemType {
         BinaryOperator<XQueryItemType> anyNode = (_, _) -> typeFactory.itemAnyNode();
         BinaryOperator<XQueryItemType> simpleChoice = (x, y) -> typeFactory.itemChoice(Set.of(x, y));
         BinaryOperator<XQueryItemType> leftMergeChoice = (x, y) -> {
-            var leftItems = ((XQueryChoiceItemType) x).getItemTypes();
+            var leftItems = ((XQueryEnumChoiceItemType) x).getItemTypes();
             Set<XQueryItemType> sum = new HashSet<>(leftItems.size()+1);
             sum.addAll(leftItems);
             sum.add(y);
             return typeFactory.itemChoice(sum);
         };
         BinaryOperator<XQueryItemType> rightMergeChoice = (x, y) -> {
-            var rightItems = ((XQueryChoiceItemType) y).getItemTypes();
+            var rightItems = ((XQueryEnumChoiceItemType) y).getItemTypes();
             Set<XQueryItemType> sum = new HashSet<>(rightItems.size()+1);
             sum.addAll(rightItems);
             sum.add(x);
@@ -127,8 +127,8 @@ public class XQueryEnumItemType implements XQueryItemType {
         };
 
         BinaryOperator<XQueryItemType> choiceMerging = (x, y) -> {
-            var leftItems = ((XQueryChoiceItemType) x).getItemTypes();
-            var rightItems = ((XQueryChoiceItemType) y).getItemTypes();
+            var leftItems = ((XQueryEnumChoiceItemType) x).getItemTypes();
+            var rightItems = ((XQueryEnumChoiceItemType) y).getItemTypes();
             Set<XQueryItemType> sum = new HashSet<>(rightItems.size()+leftItems.size());
             sum.addAll(leftItems);
             sum.addAll(rightItems);

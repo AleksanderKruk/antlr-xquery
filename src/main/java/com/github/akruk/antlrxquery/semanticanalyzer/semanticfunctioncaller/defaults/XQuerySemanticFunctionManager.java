@@ -36,6 +36,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
     private static final ParseTree STRING_AT_CONTEXT_VALUE = XQuerySemanticFunctionManager.getTree("fn:string(.)", (parser) -> parser.functionCall());
     private static final ParseTree EMPTY_STRING = XQuerySemanticFunctionManager.getTree("\"\"", (parser)->parser.literal());
     private static final ParseTree EMPTY_MAP = getTree("map {}", parser -> parser.mapConstructor());
+    private static final ParseTree IDENTITY$1 = XQuerySemanticFunctionManager.getTree("fn:identity#1", p->p.namedFunctionRef());
 
     public interface XQuerySemanticFunction {
         public AnalysisResult call(final XQueryTypeFactory typeFactory,
@@ -782,6 +783,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         register("fn", "collation-available",
                 List.of(colAvailColl, colAvailUsage),
                 typeFactory.boolean_());
+
         // fn:contains-token(
         //  as xs:string*,
         //  as xs:string,
@@ -1750,260 +1752,304 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         List.of(opOperator),
         //         typeFactory.one(leftActionItem));
 
-        // // map:build(
-        // //  as item()*,
-        // //  as (fn( as item(),  as xs:integer) as
-        // xs:anyAtomicType*)? := fn:identity#1,
-        // //  as (fn( as item(),  as xs:integer) as item()*)? :=
-        // fn:identity#1,
-        // //  as map(*)? := {}
-        // // ) as map(*)
-        // ArgumentSpecification mbInput =
-        // new ArgumentSpecification("input", true,
-        // typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // ArgumentSpecification mbKey =
-        // new ArgumentSpecification("key", false,
-        // typeFactory.zeroOrOne(typeFactory.itemFunction()));
-        // ArgumentSpecification mbValue =
-        // new ArgumentSpecification("value", false,
-        // typeFactory.zeroOrOne(typeFactory.itemFunction()));
-        // ArgumentSpecification mbOptions =
-        // new ArgumentSpecification("options", false,
-        // typeFactory.zeroOrOne(typeFactory.itemAnyMap()));
-        // register("map", "build",
-        // List.of(mbInput, mbKey, mbValue, mbOptions),
-        // typeFactory.one(typeFactory.itemAnyMap())
-        // );
+        // map:build(
+        //   $input   as item()*,
+        //   $key     as (fn($item as item(), $position as xs:integer) as xs:anyAtomicType*)? := fn:identity#1,
+        //   $value   as (fn($item as item(), $position as xs:integer) as item()*)?           := fn:identity#1,
+        //   $options as map(*)? := {}
+        // ) as map(*)
+        ArgumentSpecification mbInput = new ArgumentSpecification(
+            "input",
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            null
+        );
+        XQueryItemType mapTransformer = typeFactory.itemFunction(zeroOrMoreItems, List.of(typeFactory.anyItem(), typeFactory.number()));
+        ArgumentSpecification mbKey = new ArgumentSpecification( "key", typeFactory.zeroOrOne(mapTransformer), IDENTITY$1);
+        ArgumentSpecification mbValue = new ArgumentSpecification( "value", typeFactory.zeroOrOne(mapTransformer), IDENTITY$1);
+        ArgumentSpecification mbOptions = new ArgumentSpecification(
+            "options",
+            typeFactory.zeroOrOne(typeFactory.itemAnyMap()),
+            EMPTY_MAP
+        );
+        register(
+            "map", "build",
+            List.of(mbInput, mbKey, mbValue, mbOptions),
+            typeFactory.one(typeFactory.itemAnyMap())
+        );
 
-        // // map:contains( as map(*),  as xs:anyAtomicType) as xs:boolean
-        // ArgumentSpecification mcMap =
-        // new ArgumentSpecification("map", true,
-        // typeFactory.one(typeFactory.itemAnyMap()));
-        // ArgumentSpecification mcKey =
-        // new ArgumentSpecification("key", true,
-        // typeFactory.one(typeFactory.itemAnyItem()));
-        // register("map", "contains",
-        // List.of(mcMap, mcKey),
-        // typeFactory.boolean_()
-        // );
+        // map:contains($map as map(*), $key as xs:anyAtomicType) as xs:boolean
+        ArgumentSpecification mcMap = new ArgumentSpecification(
+            "map",
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null
+        );
+        ArgumentSpecification mcKey = new ArgumentSpecification(
+            "key",
+            typeFactory.one(typeFactory.itemAnyItem()),
+            null
+        );
+        register(
+            "map", "contains",
+            List.of(mcMap, mcKey),
+            typeFactory.boolean_()
+        );
 
-        // // map:empty( as map(*)) as xs:boolean
-        // ArgumentSpecification meMap =
-        // new ArgumentSpecification("map", true,
-        // typeFactory.one(typeFactory.itemAnyMap()));
-        // register("map", "empty",
-        // List.of(meMap),
-        // typeFactory.boolean_()
-        // );
+        // map:empty($map as map(*)) as xs:boolean
+        ArgumentSpecification meMap = new ArgumentSpecification(
+            "map",
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null
+        );
+        register(
+            "map", "empty",
+            List.of(meMap),
+            typeFactory.boolean_()
+        );
 
-        // // map:entries( as map(*)) as map(*)*
-        // ArgumentSpecification mentMap =
-        // new ArgumentSpecification("map", true,
-        // typeFactory.one(typeFactory.itemAnyMap()));
-        // register("map", "entries",
-        // List.of(mentMap),
-        // typeFactory.zeroOrMore(typeFactory.itemAnyMap())
-        // );
+        // map:entries($map as map(*)) as map(*)*
+        ArgumentSpecification mentMap = new ArgumentSpecification(
+            "map",
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null
+        );
+        register(
+            "map", "entries",
+            List.of(mentMap),
+            typeFactory.zeroOrMore(typeFactory.itemAnyMap())
+        );
 
-        // // map:entry( as xs:anyAtomicType,  as item()*) as map(*)
-        // ArgumentSpecification mentKey =
-        // new ArgumentSpecification("key", true,
-        // typeFactory.one(typeFactory.itemAnyItem()));
-        // ArgumentSpecification mentValue =
-        // new ArgumentSpecification("value", true,
-        // typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("map", "entry",
-        // List.of(mentKey, mentValue),
-        // typeFactory.one(typeFactory.itemAnyMap())
-        // );
+        // map:entry($key as xs:anyAtomicType, $value as item()*) as map(*)
+        ArgumentSpecification mentKey = new ArgumentSpecification(
+            "key",
+            typeFactory.one(typeFactory.itemAnyItem()),
+            null
+        );
+        ArgumentSpecification mentValue = new ArgumentSpecification(
+            "value",
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            null
+        );
+        register(
+            "map", "entry",
+            List.of(mentKey, mentValue),
+            typeFactory.one(typeFactory.itemAnyMap())
+        );
 
-        // // map:filter( as map(*),  as fn( as xs:anyAtomicType,
-        //  as item()*) as xs:boolean?) as map(*)
-        // ArgumentSpecification mfMap =
-        // new ArgumentSpecification("map", true,
-        // typeFactory.one(typeFactory.itemAnyMap()));
-        // ArgumentSpecification mfPred =
-        // new ArgumentSpecification("predicate", true,
-        // typeFactory.one(typeFactory.itemFunction()));
-        // register("map", "filter",
-        // List.of(mfMap, mfPred),
-        // typeFactory.one(typeFactory.itemAnyMap())
-        // );
+        // map:filter($map as map(*), $predicate as fn(xs:anyAtomicType, item()*) as xs:boolean?) as map(*)
+        ArgumentSpecification mfMap = new ArgumentSpecification(
+            "map",
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null
+        );
+        var optionalBoolean = typeFactory.zeroOrOne(typeFactory.itemBoolean());
+        XQueryItemType predicate = typeFactory.itemFunction(optionalBoolean, List.of(typeFactory.anyItem(), zeroOrMoreItems));
+        ArgumentSpecification predicateArg = new ArgumentSpecification( "predicate", typeFactory.one(predicate), null);
+        register(
+            "map", "filter",
+            List.of(mfMap, predicateArg),
+            typeFactory.one(typeFactory.itemAnyMap())
+        );
 
-        // // map:find( as item()*,  as xs:anyAtomicType) as array(*)
-        // ArgumentSpecification mfindInput =
-        // new ArgumentSpecification("input", true,
-        // typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // ArgumentSpecification mfindKey =
-        // new ArgumentSpecification("key", true,
-        // typeFactory.one(typeFactory.itemAnyItem()));
-        // register("map", "find",
-        // List.of(mfindInput, mfindKey),
-        // typeFactory.one(typeFactory.itemAnyArray())
-        // );
+        // map:find($input as item()*, $key as xs:anyAtomicType) as array(*)
+        ArgumentSpecification mfindInput = new ArgumentSpecification(
+            "input",
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            null
+        );
+        ArgumentSpecification mfindKey = new ArgumentSpecification(
+            "key",
+            typeFactory.one(typeFactory.itemAnyItem()),
+            null
+        );
+        register(
+            "map", "find",
+            List.of(mfindInput, mfindKey),
+            typeFactory.one(typeFactory.itemAnyArray())
+        );
 
-        // // map:for-each( as map(*),  as fn( as xs:anyAtomicType,
-        //  as item()*) as item()*) as item()*
-        // ArgumentSpecification mfeMap =
-        // new ArgumentSpecification("map", true,
-        // typeFactory.one(typeFactory.itemAnyMap()));
-        // ArgumentSpecification mfeAction =
-        // new ArgumentSpecification("action", true,
-        // typeFactory.one(typeFactory.itemFunction()));
-        // register("map", "for-each",
-        // List.of(mfeMap, mfeAction),
-        // typeFactory.zeroOrMore(typeFactory.itemAnyItem())
-        // );
+        // map:for-each($map as map(*), $action as fn(xs:anyAtomicType, item()*) as item()*) as item()*
+        ArgumentSpecification mfeMap = new ArgumentSpecification(
+            "map",
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null
+        );
+        XQuerySequenceType action = typeFactory.function(zeroOrMoreItems, List.of(typeFactory.anyItem(), zeroOrMoreItems));
+        ArgumentSpecification mfeAction = new ArgumentSpecification( "action", action, null);
+        register(
+            "map", "for-each",
+            List.of(mfeMap, mfeAction),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+        );
 
-        // // map:get( as map(*),  as xs:anyAtomicType,  as item()* :=
-        // ()) as item()*
-        // ArgumentSpecification mgMap =
-        // new ArgumentSpecification("map", true,
-        // typeFactory.one(typeFactory.itemAnyMap()));
-        // ArgumentSpecification mgKey =
-        // new ArgumentSpecification("key", true,
-        // typeFactory.one(typeFactory.itemAnyItem()));
-        // ArgumentSpecification mgDefault =
-        // new ArgumentSpecification("default", false,
-        // typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("map", "get",
-        // List.of(mgMap, mgKey, mgDefault),
-        // typeFactory.zeroOrMore(typeFactory.itemAnyItem())
-        // );
+        // map:get($map as map(*), $key as xs:anyAtomicType, $default as item()* := ()) as item()*
+        ArgumentSpecification mgMap = new ArgumentSpecification(
+            "map",
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null
+        );
+        ArgumentSpecification mgKey = new ArgumentSpecification(
+            "key",
+            typeFactory.one(typeFactory.itemAnyItem()),
+            null
+        );
+        ArgumentSpecification mgDefault = new ArgumentSpecification(
+            "default",
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            EMPTY_SEQUENCE
+        );
+        register(
+            "map", "get",
+            List.of(mgMap, mgKey, mgDefault),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+        );
 
-        // // map:items( as map(*)) as item()*
-        // ArgumentSpecification mitemsMap =
-        // new ArgumentSpecification("map", true,
-        // typeFactory.one(typeFactory.itemAnyMap()));
-        // register("map", "items",
-        // List.of(mitemsMap),
-        // typeFactory.zeroOrMore(typeFactory.itemAnyItem())
-        // );
+        // map:items($map as map(*)) as item()*
+        ArgumentSpecification mitemsMap = new ArgumentSpecification(
+            "map",
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null
+        );
+        register(
+            "map", "items",
+            List.of(mitemsMap),
+            zeroOrMoreItems
+        );
 
-        // // map:keys( as map(*)) as xs:anyAtomicType*
-        // ArgumentSpecification mkeysMap =
-        // new ArgumentSpecification("map", true,
-        // typeFactory.one(typeFactory.itemAnyMap()));
-        // register("map", "keys",
-        // List.of(mkeysMap),
-        // typeFactory.zeroOrMore(typeFactory.itemAnyItem())
-        // );
-        // // map:keys-where(
-        // //  as map(*),
-        // //  as fn( as xs:anyAtomicType,  as item()*) as
-        // xs:boolean?
-        // // ) as xs:anyAtomicType*
-        // ArgumentSpecification kwMap =
-        // new ArgumentSpecification("map", true,
-        // typeFactory.one(typeFactory.itemAnyMap()));
-        // ArgumentSpecification kwPred =
-        // new ArgumentSpecification("predicate", true,
-        // typeFactory.one(typeFactory.itemFunction()));
-        // register("map", "keys-where",
-        // List.of(kwMap, kwPred),
-        // typeFactory.zeroOrMore(typeFactory.itemAnyItem())
-        // );
+        // map:keys($map as map(*)) as xs:anyAtomicType*
+        ArgumentSpecification mkeysMap = new ArgumentSpecification(
+            "map",
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null
+        );
+        register(
+            "map", "keys",
+            List.of(mkeysMap),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+        );
 
-        // // map:merge(
-        // //  as map(*)*,
-        // //  as map(*)? := {}
-        // // ) as map(*)
-        // ArgumentSpecification mmMaps =
-        // new ArgumentSpecification("maps", true,
-        // typeFactory.zeroOrMore(typeFactory.itemAnyMap()));
-        // ArgumentSpecification mmOptions =
-        // new ArgumentSpecification("options", false,
-        // typeFactory.zeroOrOne(typeFactory.itemAnyMap()));
-        // register("map", "merge",
-        // List.of(mmMaps, mmOptions),
-        // typeFactory.one(typeFactory.itemAnyMap())
-        // );
+        // map:keys-where($map as map(*), $predicate as fn(xs:anyAtomicType, item()*) as xs:boolean?) as xs:anyAtomicType*
+        ArgumentSpecification kwMap = new ArgumentSpecification(
+            "map",
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null
+        );
+        register(
+            "map", "keys-where",
+            List.of(kwMap, predicateArg),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+        );
 
-        // // map:of-pairs(
-        // //  as key-value-pair*,
-        // //  as map(*)? := {}
-        // // ) as map(*)
-        // ArgumentSpecification opInput =
-        // new ArgumentSpecification("input", true,
-        // typeFactory.zeroOrMore(typeFactory.item("key-value-pair")));
-        // ArgumentSpecification opOptions =
-        // new ArgumentSpecification("options", false,
-        // typeFactory.zeroOrOne(typeFactory.itemAnyMap()));
-        // register("map", "of-pairs",
-        // List.of(opInput, opOptions),
-        // typeFactory.one(typeFactory.itemAnyMap())
-        // );
+        // map:merge($maps as map(*)*, $options as map(*)? := {}) as map(*)
+        ArgumentSpecification mmMaps = new ArgumentSpecification(
+            "maps",
+            typeFactory.zeroOrMore(typeFactory.itemAnyMap()),
+            null
+        );
+        ArgumentSpecification mmOptions = new ArgumentSpecification(
+            "options",
+            typeFactory.zeroOrOne(typeFactory.itemAnyMap()),
+            EMPTY_MAP
+        );
+        register(
+            "map", "merge",
+            List.of(mmMaps, mmOptions),
+            typeFactory.one(typeFactory.itemAnyMap())
+        );
 
-        // // map:pair(
-        // //  as xs:anyAtomicType,
-        // //  as item()*
-        // // ) as key-value-pair
-        // ArgumentSpecification mpKey =
-        // new ArgumentSpecification("key", true,
-        // typeFactory.one(typeFactory.itemAnyItem()));
-        // ArgumentSpecification mpValue =
-        // new ArgumentSpecification("value", true,
-        // typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("map", "pair",
-        // List.of(mpKey, mpValue),
-        // typeFactory.one(typeFactory.item("key-value-pair"))
-        // );
+        // map:of-pairs($input as key-value-pair*, $options as map(*)? := {}) as map(*)
+        ArgumentSpecification opInput = new ArgumentSpecification(
+            "input",
+            typeFactory.zeroOrMore(typeFactory.itemNamedType("key-value-pair")),
+            null
+        );
+        ArgumentSpecification opOptions = new ArgumentSpecification(
+            "options",
+            typeFactory.zeroOrOne(typeFactory.itemAnyMap()),
+            null
+        );
+        register(
+            "map", "of-pairs",
+            List.of(opInput, opOptions),
+            typeFactory.one(typeFactory.itemAnyMap())
+        );
 
-        // // map:pairs(
-        // //  as map(*)
-        // // ) as key-value-pair*
-        // ArgumentSpecification mpsMap =
-        // new ArgumentSpecification("map", true,
-        // typeFactory.one(typeFactory.itemAnyMap()));
-        // register("map", "pairs",
-        // List.of(mpsMap),
-        // typeFactory.zeroOrMore(typeFactory.item("key-value-pair"))
-        // );
+        // map:pair($key as xs:anyAtomicType, $value as item()*) as key-value-pair
+        ArgumentSpecification mpKey = new ArgumentSpecification(
+            "key",
+            typeFactory.one(typeFactory.itemAnyItem()),
+            null
+        );
+        ArgumentSpecification mpValue = new ArgumentSpecification(
+            "value",
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            null
+        );
+        register(
+            "map", "pair",
+            List.of(mpKey, mpValue),
+            typeFactory.namedType("key-value-pair")
+        );
 
-        // // map:put(
-        // //  as map(*),
-        // //  as xs:anyAtomicType,
-        // //  as item()*
-        // // ) as map(*)
-        // ArgumentSpecification mputMap =
-        // new ArgumentSpecification("map", true,
-        // typeFactory.one(typeFactory.itemAnyMap()));
-        // ArgumentSpecification mputKey =
-        // new ArgumentSpecification("key", true,
-        // typeFactory.one(typeFactory.itemAnyItem()));
-        // ArgumentSpecification mputValue =
-        // new ArgumentSpecification("value", true,
-        // typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("map", "put",
-        // List.of(mputMap, mputKey, mputValue),
-        // typeFactory.one(typeFactory.itemAnyMap())
-        // );
+        // map:put(
+        //   $map   as map(*),
+        //   $key   as xs:anyAtomicType,
+        //   $value as item()*
+        // ) as map(*)
+        ArgumentSpecification mputMap = new ArgumentSpecification(
+            "map",
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null
+        );
+        ArgumentSpecification mputKey = new ArgumentSpecification(
+            "key",
+            typeFactory.one(typeFactory.itemAnyItem()),
+            null
+        );
+        ArgumentSpecification mputValue = new ArgumentSpecification(
+            "value",
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            null
+        );
+        register(
+            "map", "put",
+            List.of(mputMap, mputKey, mputValue),
+            typeFactory.one(typeFactory.itemAnyMap())
+        );
 
-        // // map:remove(
-        // //  as map(*),
-        // //  as xs:anyAtomicType*
-        // // ) as map(*)
-        // ArgumentSpecification mremMap =
-        // new ArgumentSpecification("map", true,
-        // typeFactory.one(typeFactory.itemAnyMap()));
-        // ArgumentSpecification mremKeys =
-        // new ArgumentSpecification("keys", true,
-        // typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("map", "remove",
-        // List.of(mremMap, mremKeys),
-        // typeFactory.one(typeFactory.itemAnyMap())
-        // );
+        // map:remove(
+        //   $map  as map(*),
+        //   $keys as xs:anyAtomicType*
+        // ) as map(*)
+        ArgumentSpecification mremMap = new ArgumentSpecification(
+            "map",
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null
+        );
+        ArgumentSpecification mremKeys = new ArgumentSpecification(
+            "keys",
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            null
+        );
+        register(
+            "map", "remove",
+            List.of(mremMap, mremKeys),
+            typeFactory.one(typeFactory.itemAnyMap())
+        );
 
-        // // map:size(
-        // //  as map(*)
-        // // ) as xs:integer
-        // ArgumentSpecification msizeMap =
-        // new ArgumentSpecification("map", true,
-        // typeFactory.one(typeFactory.itemAnyMap()));
-        // register("map", "size",
-        // List.of(msizeMap),
-        // typeFactory.number())
-        // );
+        // map:size(
+        //   $map as map(*)
+        // ) as xs:integer
+        ArgumentSpecification msizeMap = new ArgumentSpecification(
+            "map",
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null
+        );
+        register(
+            "map", "size",
+            List.of(msizeMap),
+            typeFactory.number() // or typeFactory.integer() if you prefer strict type
+        );
+
 
         // // fn:element-to-map-plan(
         // //  as (document-node() | element(*))*

@@ -1,12 +1,13 @@
 package com.github.akruk.antlrxquery.typesystem.factories.defaults;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeReference;
 
 public final class XQueryNamedTypeSets {
     private Map<String, XQueryItemType> DEFAULT_ALL;
@@ -20,7 +21,7 @@ public final class XQueryNamedTypeSets {
             "key", new XQueryRecordField(typeFactory.anyItem(), true),
             "value", new XQueryRecordField(anyItems, true)
         ));
-        DEFAULT_ALL.put("key-value-pair", keyValuePair);
+        DEFAULT_ALL.put("fn:key-value-pair", keyValuePair);
 
         final XQuerySequenceType stringToAnyItems = typeFactory.map(typeFactory.itemString(), anyItems);
         final XQuerySequenceType integerToAnyFunction = typeFactory.map(typeFactory.itemNumber(), typeFactory.anyFunction());
@@ -29,13 +30,28 @@ public final class XQueryNamedTypeSets {
             "variables", new XQueryRecordField(stringToAnyItems, true),
             "functions", new XQueryRecordField(stringToIntegerToAnyFunction, true)
         ));
-        DEFAULT_ALL.put("load-xquery-module-record", loadXQueryModuleRecord);
+        DEFAULT_ALL.put("fn:load-xquery-module-record", loadXQueryModuleRecord);
 
-        DEFAULT_ALL.put("parsed-csv-structure-record", null);
+        // final XQueryItemType parsedCSVStructureRecord = typeFactory.itemRecord(Map.of(
+        //     "columns", new XQueryRecordField(stringToAnyItems, true),
+        //     "column-index", new XQueryRecordField(stringToIntegerToAnyFunction, true),
+        //     "rows", new XQueryRecordField(stringToIntegerToAnyFunction, true),
+        //     "get", new XQueryRecordField(stringToIntegerToAnyFunction, true),
+        // ));
+        // DEFAULT_ALL.put("fn:parsed-csv-structure-record", null);
 
-        DEFAULT_ALL.put("random-number-generator-record", null);
-        DEFAULT_ALL.put("schema-type-record", null);
-        DEFAULT_ALL.put("uri-structure-record", null);
+
+        final XQueryItemType randomRef = new XQueryEnumItemTypeReference(()->typeFactory.itemNamedType("fn:random-number-generator-record"));
+        final var oneRandomRef = typeFactory.one(randomRef);
+        final XQueryItemType randomNumberGeneratorRecord = typeFactory.itemExtensibleRecord(Map.of(
+            "number", new XQueryRecordField(typeFactory.number(), true),
+            "next", new XQueryRecordField(typeFactory.function(oneRandomRef, List.of()), true),
+            "permute", new XQueryRecordField(typeFactory.function(anyItems, List.of(anyItems)), true)
+        ));
+        DEFAULT_ALL.put("fn:random-number-generator-record", randomNumberGeneratorRecord);
+
+        // DEFAULT_ALL.put("fn:schema-type-record", null);
+        // DEFAULT_ALL.put("fn:uri-structure-record", null);
         return DEFAULT_ALL;
     }
 }

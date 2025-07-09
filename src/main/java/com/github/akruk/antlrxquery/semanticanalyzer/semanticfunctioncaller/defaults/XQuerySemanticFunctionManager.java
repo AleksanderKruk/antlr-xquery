@@ -451,95 +451,108 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         List.of(messageInput, messageLabel),
         //         typeFactory.emptySequence());
 
-        // // op:numeric-add(
-        // //  as xs:numeric,
-        // //  as xs:numeric
-        // // ) as xs:numeric
-        // final ArgumentSpecification addArg1 = new ArgumentSpecification("arg1", true,
-        //         typeFactory.number()));
-        // final ArgumentSpecification addArg2 = new ArgumentSpecification("arg2", true,
-        //         typeFactory.number()));
-        // register("op", "numeric-add",
-        //         List.of(addArg1, addArg2),
-        //         typeFactory.number()));
+        // op:numeric-add($arg1 as xs:numeric, $arg2 as xs:numeric) as xs:numeric
+        ArgumentSpecification numericArg1 = new ArgumentSpecification(
+            "arg1",
+            typeFactory.number(),
+            null
+        );
+        ArgumentSpecification numericArg2 = new ArgumentSpecification(
+            "arg2",
+            typeFactory.number(),
+            null
+        );
+        register(
+            "op", "numeric-add",
+            List.of(numericArg1, numericArg2),
+            typeFactory.number()
+        );
 
-        // // op:numeric-subtract(
-        // //  as xs:numeric,
-        // //  as xs:numeric
-        // // ) as xs:numeric
-        // final ArgumentSpecification subArg1 = new ArgumentSpecification("arg1", true,
-        //         typeFactory.number()));
-        // final ArgumentSpecification subArg2 = new ArgumentSpecification("arg2", true,
-        //         typeFactory.number()));
-        // register("op", "numeric-subtract",
-        //         List.of(subArg1, subArg2),
-        //         typeFactory.number()));
+        // op:numeric-subtract($arg1 as xs:numeric, $arg2 as xs:numeric) as xs:numeric
+        register(
+            "op", "numeric-subtract",
+            List.of(numericArg1, numericArg2),
+            typeFactory.number()
+        );
 
-        // // op:numeric-multiply(
-        // //  as xs:numeric,
-        // //  as xs:numeric
-        // // ) as xs:numeric
-        // final ArgumentSpecification mulArg1 = new ArgumentSpecification("arg1", true,
-        //         typeFactory.number()));
-        // final ArgumentSpecification mulArg2 = new ArgumentSpecification("arg2", true,
-        //         typeFactory.number()));
-        // register("op", "numeric-multiply",
-        //         List.of(mulArg1, mulArg2),
-        //         typeFactory.number()));
+        // op:numeric-multiply($arg1 as xs:numeric, $arg2 as xs:numeric) as xs:numeric
+        register(
+            "op", "numeric-multiply",
+            List.of(numericArg1, numericArg2),
+            typeFactory.number()
+        );
 
-        // // op:numeric-divide(
-        // //  as xs:numeric,
-        // //  as xs:numeric
-        // // ) as xs:numeric
-        // final ArgumentSpecification divArg1 = new ArgumentSpecification("arg1", true,
-        //         typeFactory.number()));
-        // final ArgumentSpecification divArg2 = new ArgumentSpecification("arg2", true,
-        //         typeFactory.number()));
-        // register("op", "numeric-divide",
-        //         List.of(divArg1, divArg2),
-        //         typeFactory.number()));
+        // op:numeric-divide($arg1 as xs:numeric, $arg2 as xs:numeric) as xs:numeric
+        register(
+            "op", "numeric-divide",
+            List.of(numericArg1, numericArg2),
+            typeFactory.number()
+        );
 
-        // // op:numeric-integer-divide(
-        // //  as xs:numeric,
-        // //  as xs:numeric
-        // // ) as xs:integer
-        // final ArgumentSpecification idivArg1 = new ArgumentSpecification("arg1", true,
-        //         typeFactory.number()));
-        // final ArgumentSpecification idivArg2 = new ArgumentSpecification("arg2", true,
-        //         typeFactory.number()));
-        // register("op", "numeric-integer-divide",
-        //         List.of(idivArg1, idivArg2),
-        //         typeFactory.number());
+        // op:numeric-integer-divide($arg1 as xs:numeric, $arg2 as xs:numeric) as xs:integer
+        register(
+            "op", "numeric-integer-divide",
+            List.of(numericArg1, numericArg2),
+            typeFactory.number()
+        );
 
-        // // op:numeric-mod(
-        // //  as xs:numeric,
-        // //  as xs:numeric
-        // // ) as xs:numeric
-        // final ArgumentSpecification modArg1 = new ArgumentSpecification("arg1", true,
-        //         typeFactory.number()));
-        // final ArgumentSpecification modArg2 = new ArgumentSpecification("arg2", true,
-        //         typeFactory.number()));
-        // register("op", "numeric-mod",
-        //         List.of(modArg1, modArg2),
-        //         typeFactory.number()));
+        // op:numeric-mod($arg1 as xs:numeric, $arg2 as xs:numeric) as xs:numeric
+        register(
+            "op", "numeric-mod",
+            List.of(numericArg1, numericArg2),
+            typeFactory.number()
+        );
 
-        // // op:numeric-unary-plus(
-        // //  as xs:numeric
-        // // ) as xs:numeric
-        // final ArgumentSpecification upArg = new ArgumentSpecification("arg", true,
-        //         typeFactory.number()));
-        // register("op", "numeric-unary-plus",
-        //         List.of(upArg),
-        //         typeFactory.number()));
+        // op:numeric-unary-plus($arg as xs:numeric) as xs:numeric
+        ArgumentSpecification numericArg = new ArgumentSpecification(
+            "arg",
+            typeFactory.number(),
+            null
+        );
+        register(
+            "op", "numeric-unary-plus",
+            List.of(numericArg),
+            typeFactory.number()
+        );
 
-        // // op:numeric-unary-minus(
-        // //  as xs:numeric
-        // // ) as xs:numeric
-        // final ArgumentSpecification umArg = new ArgumentSpecification("arg", true,
-        //         typeFactory.number()));
-        // register("op", "numeric-unary-minus",
-        //         List.of(umArg),
-        //         typeFactory.number()));
+        // op:numeric-unary-minus($arg as xs:numeric) as xs:numeric
+        register(
+            "op", "numeric-unary-minus",
+            List.of(numericArg),
+            typeFactory.number()
+        );
+
+        // op:numeric-equal($arg1 as xs:numeric, $arg2 as xs:numeric) as xs:boolean
+        register("op", "numeric-equal",
+            List.of(numericArg1, numericArg2),
+            typeFactory.boolean_()
+        );
+
+        // op:numeric-less-than($arg1 as xs:numeric, $arg2 as xs:numeric) as xs:boolean
+        register("op", "numeric-less-than",
+            List.of(numericArg1, numericArg2),
+            typeFactory.boolean_()
+        );
+
+        // op:numeric-greater-than($arg1 as xs:numeric, $arg2 as xs:numeric) as xs:boolean
+        register("op", "numeric-greater-than",
+            List.of(numericArg1, numericArg2),
+            typeFactory.boolean_()
+        );
+
+        // op:numeric-less-than-or-equal($arg1 as xs:numeric, $arg2 as xs:numeric) as xs:boolean
+        register("op", "numeric-less-than-or-equal",
+            List.of(numericArg1, numericArg2),
+            typeFactory.boolean_()
+        );
+
+        // op:numeric-greater-than-or-equal($arg1 as xs:numeric, $arg2 as xs:numeric) as xs:boolean
+        register("op", "numeric-greater-than-or-equal",
+            List.of(numericArg1, numericArg2),
+            typeFactory.boolean_()
+        );
+
+
 
         // fn:parse-integer($value as xs:string?, $radix as xs:integer? := 10) as xs:integer?
         ArgumentSpecification parseIntValue = new ArgumentSpecification(

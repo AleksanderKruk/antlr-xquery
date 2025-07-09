@@ -2,6 +2,8 @@ package com.github.akruk.antlrxquery;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Map;
+
 import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
@@ -15,13 +17,12 @@ public class antlrtest {
 
     @Test
     public void myTest() {
-        XQueryEnumTypeFactory typeFactory = new XQueryEnumTypeFactory();
-        var sem = new XQuerySemanticAnalyzer(null, new XQueryBaseSemanticContextManager(), typeFactory, new XQueryMemoizedValueFactory(), new XQuerySemanticFunctionManager(typeFactory));
+        XQueryEnumTypeFactory typeFactory = new XQueryEnumTypeFactory(Map.of());
+        var sem = new XQuerySemanticAnalyzer(null, new XQueryBaseSemanticContextManager(), typeFactory,
+                new XQueryMemoizedValueFactory(), new XQuerySemanticFunctionManager(typeFactory));
         var tree = new ParenthesizedExprContext(null, 0);
         var result = sem.visit(tree);
         assertEquals(typeFactory.emptySequence(), result);
-
-
 
     }
 }

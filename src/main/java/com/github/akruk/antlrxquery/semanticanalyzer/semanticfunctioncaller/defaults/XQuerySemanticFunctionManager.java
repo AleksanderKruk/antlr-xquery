@@ -27,7 +27,7 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionManager {
 
-    private static final ParseTree CONTEXT_VALUE = getTree(".", parser -> parser.contextItemExpr());
+    private static final ParseTree CONTEXT_ITEM = getTree(".", parser -> parser.contextItemExpr());
     private static final ParseTree DEFAULT_COLLATION = getTree("fn:default-collation()", parser->parser.functionCall());
     private static final ParseTree EMPTY_SEQUENCE = getTree("()", p->p.parenthesizedExpr());
     private static final ParseTree DEFAULT_ROUNDING_MODE = getTree("'half-to-ceiling'", parser->parser.literal());
@@ -50,6 +50,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         this.namespaces = new HashMap<>(6);
 
         final XQuerySequenceType optionalString = typeFactory.zeroOrOne(typeFactory.itemString());
+        final XQuerySequenceType zeroOrMoreNumbers = typeFactory.zeroOrMore(typeFactory.itemNumber());
+        final XQuerySequenceType optionalItem = typeFactory.zeroOrOne(typeFactory.itemAnyItem());
 
         register("fn", "position", List.of(), typeFactory.number());
         register("fn", "last", List.of(), typeFactory.number());
@@ -153,7 +155,6 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // register("fn", "head", List.of(sequence), optionalItem);
         // register("fn", "tail", List.of(sequence), zeroOrMoreItems);
 
-        final var zeroOrMoreNumbers = typeFactory.zeroOrMore(typeFactory.itemNumber());
 
         // final var start = new ArgumentSpecification("start", typeFactory.number(), null);
         // final var optionalLength = new ArgumentSpecification("length", false, optionalNumber);
@@ -166,39 +167,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         typeFactory.string());
 
         // final ArgumentSpecification optionalSubstring = new ArgumentSpecification("substring", optionalString), null);
-
-        // // TODO: collation
-        // register("fn", "contains",
-        //         List.of(optionalStringValue, optionalSubstring),
-        //         typeFactory.boolean_());
-
-        // // TODO: collation
-        // register("fn", "starts-with",
-        //         List.of(optionalStringValue, optionalSubstring),
-        //         typeFactory.boolean_());
-
-        // // TODO: collation
-        // register("fn", "ends-with",
-        //         List.of(optionalStringValue, optionalSubstring),
-        //         typeFactory.boolean_());
-
-        // // TODO: collation
-        // register("fn", "substring-before",
-        //         List.of(optionalStringValue, optionalSubstring),
-        //         typeFactory.string());
-
-        // // TODO: collation
-        // register("fn", "substring-after",
-        //         List.of(optionalStringValue, optionalSubstring),
-        //         typeFactory.string());
-
         // final var normalizedValue = new ArgumentSpecification("value", false, typeFactory.string());
-
-        // register("fn", "normalize-space",
-        //         List.of(normalizedValue), typeFactory.string());
-
-        // register("fn", "upper-case", List.of(optionalStringValue), typeFactory.string());
-        // register("fn", "lower-case", List.of(optionalStringValue), typeFactory.string());
 
         // // fn:replace(
         // //  as xs:string? := (),
@@ -217,15 +186,6 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // register("fn", "replace",
         //         List.of(replaceValue, replacePattern, replacement, replaceFlags),
         //         typeFactory.string());
-
-        // fn:string(
-        //  as item()? := .
-        // ) as xs:string
-        final XQuerySequenceType optionalItem = typeFactory.zeroOrOne(typeFactory.itemAnyItem());
-        final ArgumentSpecification stringValue = new ArgumentSpecification("value", optionalItem, CONTEXT_VALUE);
-        register("fn", "string",
-                List.of(stringValue),
-                typeFactory.string());
 
         // fn:zero-or-one(
         //  as item()*
@@ -248,15 +208,6 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         register("fn", "exactly-one",
                 List.of(anyItemsRequiredInput),
                 typeFactory.one(typeFactory.itemAnyItem()));
-
-        // // fn:data(
-        // //  as item()* := .
-        // // ) as xs:anyAtomicType*
-        // final ArgumentSpecification dataInput = new ArgumentSpecification("input", false,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("fn", "data",
-        //         List.of(dataInput),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
         // // fn:distinct-values(
         // //  as xs:anyAtomicType*,
@@ -291,41 +242,70 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         List.of(medianArg),
         //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
 
-        // // 3) fn:node-name(
-        // //  as node()? := .
-        // // ) as xs:QName?
-        // final ArgumentSpecification nodeNameNode = new ArgumentSpecification("node", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
-        // register("fn", "node-name",
-        //         List.of(nodeNameNode),
-        //         optionalString));
+        // fn:node-name($node as node()? := .) as xs:QName?
+        ArgumentSpecification nodeNameNode = new ArgumentSpecification(
+            "node",
+            typeFactory.zeroOrOne(typeFactory.itemAnyNode()),
+            CONTEXT_ITEM
+        );
+        register(
+            "fn", "node-name",
+            List.of(nodeNameNode),
+            typeFactory.zeroOrOne(typeFactory.itemString())
+        );
 
-        // // 4) fn:nilled(
-        // //  as node()? := .
-        // // ) as xs:boolean?
-        // final ArgumentSpecification nilledNode = new ArgumentSpecification("node", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
-        // register("fn", "nilled",
-        //         List.of(nilledNode),
-        //         typeFactory.zeroOrOne(typeFactory.itemBoolean()));
+        // fn:nilled($node as node()? := .) as xs:boolean?
+        ArgumentSpecification nilledNode = new ArgumentSpecification(
+            "node",
+            typeFactory.zeroOrOne(typeFactory.itemAnyNode()),
+            CONTEXT_ITEM
+        );
+        register(
+            "fn", "nilled",
+            List.of(nilledNode),
+            typeFactory.zeroOrOne(typeFactory.itemBoolean())
+        );
 
-        // // 5) fn:base-uri(
-        // //  as node()? := .
-        // // ) as xs:anyURI?
-        // final ArgumentSpecification baseUriNode = new ArgumentSpecification("node", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
-        // register("fn", "base-uri",
-        //         List.of(baseUriNode),
-        //         optionalString));
+        // fn:string(
+        //  as item()? := .
+        // ) as xs:string
+        final ArgumentSpecification stringValue = new ArgumentSpecification("value", optionalItem, CONTEXT_ITEM);
+        register("fn", "string",
+                List.of(stringValue),
+                typeFactory.string());
 
-        // // 6) fn:document-uri(
-        // //  as node()? := .
-        // // ) as xs:anyURI?
-        // final ArgumentSpecification docUriNode = new ArgumentSpecification("node", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
-        // register("fn", "document-uri",
-        //         List.of(docUriNode),
-        //         optionalString));
+        // fn:data(
+        //  as item()* := .
+        // ) as xs:anyAtomicType*
+        final ArgumentSpecification dataInput = new ArgumentSpecification(
+            "input", zeroOrMoreItems, CONTEXT_ITEM);
+        register("fn", "data",
+                List.of(dataInput), zeroOrMoreItems);
+
+
+        // fn:base-uri($node as node()? := .) as xs:anyURI?
+        ArgumentSpecification baseUriNode = new ArgumentSpecification(
+            "node",
+            typeFactory.zeroOrOne(typeFactory.itemAnyNode()),
+            CONTEXT_ITEM
+        );
+        register(
+            "fn", "base-uri",
+            List.of(baseUriNode),
+            typeFactory.zeroOrOne(typeFactory.itemString())
+        );
+
+        // fn:document-uri($node as node()? := .) as xs:anyURI?
+        ArgumentSpecification docUriNode = new ArgumentSpecification(
+            "node",
+            typeFactory.zeroOrOne(typeFactory.itemAnyNode()),
+            CONTEXT_ITEM
+        );
+        register(
+            "fn", "document-uri",
+            List.of(docUriNode),
+            typeFactory.zeroOrOne(typeFactory.itemString())
+        );
 
         // // 7) fn:name(
         // //  as node()? := .

@@ -27,6 +27,7 @@ public interface XQueryTypeFactory {
     public XQueryItemType itemRecord(Map<String, XQueryRecordField> fields);
     public XQueryItemType itemExtensibleRecord(Map<String, XQueryRecordField> fields);
     public XQueryItemType itemChoice(Collection<XQueryItemType> items);
+    public XQueryItemType itemNamedType(String name);
 
     public XQuerySequenceType error();
     public XQuerySequenceType string();
@@ -46,6 +47,7 @@ public interface XQueryTypeFactory {
     public XQuerySequenceType anyItem();
     public XQuerySequenceType boolean_();
     public XQuerySequenceType emptySequence();
+    public XQuerySequenceType namedType(String name);
 
     public XQuerySequenceType one(XQueryItemType itemType);
     public XQuerySequenceType zeroOrOne(XQueryItemType itemType);

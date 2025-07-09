@@ -45,13 +45,17 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
     private final XQuerySequenceType BOOLEAN_TYPE = one(BOOLEAN_ITEM_TYPE);
     private final XQuerySequenceType EMPTY_SEQUENCE = new XQueryEnumEmptySequenceType(this);
 
+    public XQueryEnumTypeFactory(final Map<String, XQueryItemType> predefinedNamedTypes) {
+        namedTypes = predefinedNamedTypes;
+    }
+
     @Override
-    public XQueryItemType itemRecord(Map<String, XQueryRecordField> fields) {
+    public XQueryItemType itemRecord(final Map<String, XQueryRecordField> fields) {
         return new XQueryEnumItemTypeRecord(fields, this);
     }
 
     @Override
-    public XQueryItemType itemExtensibleRecord(Map<String, XQueryRecordField> fields) {
+    public XQueryItemType itemExtensibleRecord(final Map<String, XQueryRecordField> fields) {
         return new XQueryEnumItemTypeExtensibleRecord(fields, this);
     }
 
@@ -87,7 +91,7 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
 
 
     @Override
-    public XQueryItemType itemElement(Set<String> elementName) {
+    public XQueryItemType itemElement(final Set<String> elementName) {
         return elementTypes.computeIfAbsent(elementName, k -> new XQueryEnumItemTypeElement(k, this));
     }
 
@@ -117,12 +121,12 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
     }
 
     @Override
-    public XQueryItemType itemEnum(Set<String> memberNames) {
+    public XQueryItemType itemEnum(final Set<String> memberNames) {
         return enums.computeIfAbsent(memberNames, k -> new XQueryEnumItemTypeEnum(k, this));
     }
 
     @Override
-    public XQuerySequenceType enum_(Set<String> memberNames) {
+    public XQuerySequenceType enum_(final Set<String> memberNames) {
         return one(itemEnum(memberNames));
     }
 
@@ -147,51 +151,51 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
     }
 
     @Override
-    public XQuerySequenceType element(Set<String> elementName) {
+    public XQuerySequenceType element(final Set<String> elementName) {
         return one(itemElement(elementName));
     }
 
     @Override
-    public XQueryItemType itemArray(XQuerySequenceType itemType) {
+    public XQueryItemType itemArray(final XQuerySequenceType itemType) {
         return new XQueryEnumItemTypeArray((XQueryEnumSequenceType) itemType, this);
     }
 
     @Override
-    public XQueryItemType itemFunction(XQuerySequenceType returnType, List<XQuerySequenceType> argumentTypes) {
-        List<XQuerySequenceType> argumentTypesEnum = argumentTypes.stream()
+    public XQueryItemType itemFunction(final XQuerySequenceType returnType, final List<XQuerySequenceType> argumentTypes) {
+        final List<XQuerySequenceType> argumentTypesEnum = argumentTypes.stream()
                 .map(t -> (XQueryEnumSequenceType) t)
                 .collect(Collectors.toList());
         return new XQueryEnumItemTypeFunction(returnType, argumentTypesEnum, this);
     }
 
     @Override
-    public XQueryItemType itemMap(XQueryItemType keyType, XQuerySequenceType valueType) {
+    public XQueryItemType itemMap(final XQueryItemType keyType, final XQuerySequenceType valueType) {
         return new XQueryEnumItemTypeMap((XQueryEnumItemType) keyType, (XQueryEnumSequenceType) valueType, this);
     }
 
     @Override
-    public XQuerySequenceType record(Map<String, XQueryRecordField> fields) {
+    public XQuerySequenceType record(final Map<String, XQueryRecordField> fields) {
         return one(itemRecord(fields));
     }
 
     @Override
-    public XQuerySequenceType extensibleRecord(Map<String, XQueryRecordField> fields) {
+    public XQuerySequenceType extensibleRecord(final Map<String, XQueryRecordField> fields) {
         return one(itemExtensibleRecord(fields));
     }
 
     @Override
-    public XQuerySequenceType array(XQuerySequenceType containedItemType) {
+    public XQuerySequenceType array(final XQuerySequenceType containedItemType) {
         return arrays.computeIfAbsent(containedItemType, _ -> one(itemArray(containedItemType)));
     }
 
     @Override
-    public XQuerySequenceType map(XQueryItemType mapKeyType, XQuerySequenceType mapValueType) {
-        var keyMap = maps.computeIfAbsent(mapKeyType, _-> new HashMap<>());
+    public XQuerySequenceType map(final XQueryItemType mapKeyType, final XQuerySequenceType mapValueType) {
+        final var keyMap = maps.computeIfAbsent(mapKeyType, _-> new HashMap<>());
         return keyMap.computeIfAbsent(mapValueType, _ -> one(itemMap(mapKeyType, mapValueType)));
     }
 
     @Override
-    public XQuerySequenceType function(XQuerySequenceType returnType, List<XQuerySequenceType> argumentTypes) {
+    public XQuerySequenceType function(final XQuerySequenceType returnType, final List<XQuerySequenceType> argumentTypes) {
         return functions.computeIfAbsent(returnType, _ -> {
             return one(itemFunction(returnType, argumentTypes));
         });
@@ -218,39 +222,57 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
     }
 
     @Override
-    public XQuerySequenceType one(XQueryItemType itemType) {
+    public XQuerySequenceType one(final XQueryItemType itemType) {
         return oneTypes.computeIfAbsent(itemType,
                 _ -> new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ONE));
     }
 
     @Override
-    public XQuerySequenceType zeroOrOne(XQueryItemType itemType) {
+    public XQuerySequenceType zeroOrOne(final XQueryItemType itemType) {
         return zeroOrOneTypes.computeIfAbsent(itemType,
                 _ -> new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ZERO_OR_ONE));
     }
 
     @Override
-    public XQuerySequenceType zeroOrMore(XQueryItemType itemType) {
+    public XQuerySequenceType zeroOrMore(final XQueryItemType itemType) {
         return zeroOrMoreTypes.computeIfAbsent(itemType,
                 _ -> new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ZERO_OR_MORE));
     }
 
     @Override
-    public XQuerySequenceType oneOrMore(XQueryItemType itemType) {
+    public XQuerySequenceType oneOrMore(final XQueryItemType itemType) {
         return oneOrMoreTypes.computeIfAbsent(itemType,
                 _ -> new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ONE_OR_MORE));
     }
 
     @Override
-    public XQueryItemType itemChoice(Collection<XQueryItemType> items) {
+    public XQueryItemType itemChoice(final Collection<XQueryItemType> items) {
         return new XQueryChoiceItemType(items, this);
     }
 
     @Override
-    public XQuerySequenceType choice(Collection<XQueryItemType> items) {
+    public XQuerySequenceType choice(final Collection<XQueryItemType> items) {
         if (items.size() == 1) {
             return one(items.stream().findFirst().get());
         }
         return one(itemChoice(items));
+    }
+
+
+    private final Map<String, XQueryItemType> namedTypes;
+
+    public XQueryItemType registerNamedType(final String name, final XQueryItemType aliasedType) {
+        return namedTypes.put(name, aliasedType);
+    }
+
+
+    @Override
+    public XQueryItemType itemNamedType(final String name) {
+        return namedTypes.get(name);
+    }
+
+    @Override
+    public XQuerySequenceType namedType(final String name) {
+        return one(itemNamedType(name));
     }
 }

@@ -222,18 +222,6 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         List.of(distinctValues, collation),
         //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
-        // // op:numeric-multiply(
-        // //  as xs:numeric,
-        // //  as xs:numeric
-        // // ) as xs:numeric
-        // final ArgumentSpecification nmArg1 = new ArgumentSpecification("arg1", true,
-        //         typeFactory.number()));
-        // final ArgumentSpecification nmArg2 = new ArgumentSpecification("arg2", true,
-        //         typeFactory.number()));
-        // register("op", "numeric-multiply",
-        //         List.of(nmArg1, nmArg2),
-        //         typeFactory.number()));
-
         // // 2) fn:median(
         // //  as xs:double*
         // // ) as xs:double?
@@ -299,11 +287,6 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         );
 
         // fn:document-uri($node as node()? := .) as xs:anyURI?
-        ArgumentSpecification docUriNode = new ArgumentSpecification(
-            "node",
-            typeFactory.zeroOrOne(typeFactory.itemAnyNode()),
-            CONTEXT_ITEM
-        );
         register(
             "fn", "document-uri",
             List.of(nodeArg),
@@ -317,15 +300,16 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
             typeFactory.zeroOrOne(typeFactory.itemAnyNode())
         );
 
-        // fn:path($node as node()? := ., $options as map(*)? := {}) as xs:string?
-        ArgumentSpecification pathOptions = new ArgumentSpecification(
+        final ArgumentSpecification mapOptionsArg = new ArgumentSpecification(
             "options",
             typeFactory.zeroOrOne(typeFactory.itemAnyMap()),
-            EMPTY_SEQUENCE
+            EMPTY_MAP
         );
+
+        // fn:path($node as node()? := ., $options as map(*)? := {}) as xs:string?
         register(
             "fn", "path",
-            List.of(nodeArg, pathOptions),
+            List.of(nodeArg, mapOptionsArg),
             typeFactory.zeroOrOne(typeFactory.itemString())
         );
 
@@ -1282,64 +1266,106 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
                 List.of(anyItemValues, optionalCollation),
                 typeFactory.boolean_());
 
-        // // // fn:collection(
-        // // //  as xs:string? := ()
-        // // // ) as item()*
-        // // final ArgumentSpecification colSource = new ArgumentSpecification("source", false,
-        // //         optionalString));
-        // // register("fn", "collection",
-        // //         List.of(colSource),
-        // //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+        // fn:doc($source as xs:string?, $options as map(*)? := {}) as document-node()?
+        final ArgumentSpecification sourceArgNonDefault = new ArgumentSpecification(
+            "source",
+            typeFactory.zeroOrOne(typeFactory.itemString()),
+            null
+        );
+        final ArgumentSpecification docOptions = new ArgumentSpecification(
+            "options",
+            typeFactory.zeroOrOne(typeFactory.itemAnyMap()),
+            EMPTY_MAP
+        );
+        register(
+            "fn", "doc",
+            List.of(sourceArgNonDefault, docOptions),
+            typeFactory.zeroOrOne(typeFactory.itemAnyNode())
+        );
 
-        // // fn:unparsed-text(
-        // //  as xs:string?,
-        // //  as (xs:string|map(*))? := ()
-        // // ) as xs:string?
-        // final ArgumentSpecification utSource = new ArgumentSpecification("source", false,
-        //         optionalString));
-        // final ArgumentSpecification utOptions = new ArgumentSpecification("options", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
-        // register("fn", "unparsed-text",
-        //         List.of(utSource, utOptions),
-        //         optionalString));
+        // fn:doc-available($source as xs:string?, $options as map(*)? := {}) as xs:boolean
+        ArgumentSpecification docAvailOptions = new ArgumentSpecification(
+            "options",
+            typeFactory.zeroOrOne(typeFactory.itemAnyMap()),
+            EMPTY_MAP
+        );
+        register(
+            "fn", "doc-available",
+            List.of(sourceArgNonDefault, docAvailOptions),
+            typeFactory.boolean_()
+        );
 
-        // // fn:unparsed-text-lines(
-        // //  as xs:string?,
-        // //  as (xs:string|map(*))? := ()
-        // // ) as xs:string*
-        // final ArgumentSpecification utlSource = new ArgumentSpecification("source", false,
-        //         optionalString));
-        // final ArgumentSpecification utlOptions = new ArgumentSpecification("options", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
-        // register("fn", "unparsed-text-lines",
-        //         List.of(utlSource, utlOptions),
-        //         typeFactory.zeroOrMore(typeFactory.itemString()));
 
-        // // fn:unparsed-text-available(
-        // //  as xs:string?,
-        // //  as (xs:string|map(*))? := ()
-        // // ) as xs:boolean
-        // final ArgumentSpecification utaSource = new ArgumentSpecification("source", false,
-        //         optionalString));
-        // final ArgumentSpecification utaOptions = new ArgumentSpecification("options", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
-        // register("fn", "unparsed-text-available",
-        //         List.of(utaSource, utaOptions),
-        //         typeFactory.boolean_());
+        // fn:collection($source as xs:string? := ()) as item()*
+        ArgumentSpecification colSource = new ArgumentSpecification(
+            "source",
+            typeFactory.zeroOrOne(typeFactory.itemString()),
+            EMPTY_SEQUENCE
+        );
+        register(
+            "fn", "collection",
+            List.of(colSource),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+        );
 
-        // // fn:environment-variable(
-        // //  as xs:string
-        // // ) as xs:string?
-        // final ArgumentSpecification envName = new ArgumentSpecification("name", true,
-        //         typeFactory.string());
-        // register("fn", "environment-variable",
-        //         List.of(envName),
-        //         optionalString));
+        // fn:unparsed-text($source as xs:string?, $options as (xs:string|map(*))? := {}) as xs:string?
+        ArgumentSpecification utOptions = new ArgumentSpecification(
+            "options",
+            typeFactory.zeroOrOne(typeFactory.itemString()),
+            EMPTY_MAP
+        );
+        register(
+            "fn", "unparsed-text",
+            List.of(sourceArgNonDefault, utOptions),
+            typeFactory.zeroOrOne(typeFactory.itemString())
+        );
 
-        // // fn:available-environment-variables() as xs:string*
-        // register("fn", "available-environment-variables",
-        //         List.of(),
-        //         typeFactory.zeroOrMore(typeFactory.itemString()));
+        // fn:unparsed-text-lines($source as xs:string?, $options as (xs:string|map(*))? := {}) as xs:string*
+        ArgumentSpecification utlOptions = new ArgumentSpecification(
+            "options",
+            typeFactory.zeroOrOne(typeFactory.itemAnyItem()),
+            EMPTY_MAP
+        );
+        register(
+            "fn", "unparsed-text-lines",
+            List.of(sourceArgNonDefault, utlOptions),
+            typeFactory.zeroOrMore(typeFactory.itemString())
+        );
+
+        // fn:unparsed-text-available($source as xs:string?, $options as (xs:string|map(*))? := {}) as xs:boolean
+        ArgumentSpecification utaOptions = new ArgumentSpecification(
+            "options",
+            typeFactory.zeroOrOne(typeFactory.itemAnyItem()),
+            EMPTY_MAP
+        );
+        register(
+            "fn", "unparsed-text-available",
+            List.of(sourceArgNonDefault, utaOptions),
+            typeFactory.boolean_()
+        );
+
+        // fn:environment-variable($name as xs:string) as xs:string?
+        ArgumentSpecification envName = new ArgumentSpecification(
+            "name",
+            typeFactory.string(),
+            null
+        );
+        register(
+            "fn", "environment-variable",
+            List.of(envName),
+            typeFactory.zeroOrOne(typeFactory.itemString())
+        );
+
+        // fn:available-environment-variables() as xs:string*
+        register(
+            "fn", "available-environment-variables",
+            List.of(),
+            typeFactory.zeroOrMore(typeFactory.itemString())
+        );
+
+
+
+
 
         // // fn:position() as xs:integer
         // register("fn", "position",
@@ -1747,14 +1773,9 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         XQueryItemType mapTransformer = typeFactory.itemFunction(zeroOrMoreItems, List.of(typeFactory.anyItem(), typeFactory.number()));
         ArgumentSpecification mbKey = new ArgumentSpecification( "key", typeFactory.zeroOrOne(mapTransformer), IDENTITY$1);
         ArgumentSpecification mbValue = new ArgumentSpecification( "value", typeFactory.zeroOrOne(mapTransformer), IDENTITY$1);
-        ArgumentSpecification mbOptions = new ArgumentSpecification(
-            "options",
-            typeFactory.zeroOrOne(typeFactory.itemAnyMap()),
-            EMPTY_MAP
-        );
         register(
             "map", "build",
-            List.of(mbInput, mbKey, mbValue, mbOptions),
+            List.of(mbInput, mbKey, mbValue, mapOptionsArg),
             typeFactory.one(typeFactory.itemAnyMap())
         );
 
@@ -1822,8 +1843,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
             typeFactory.one(typeFactory.itemAnyMap()),
             null
         );
-        var optionalBoolean = typeFactory.zeroOrOne(typeFactory.itemBoolean());
-        XQueryItemType predicate = typeFactory.itemFunction(optionalBoolean, List.of(typeFactory.anyItem(), zeroOrMoreItems));
+        final var optionalBoolean = typeFactory.zeroOrOne(typeFactory.itemBoolean());
+        final XQueryItemType predicate = typeFactory.itemFunction(optionalBoolean, List.of(typeFactory.anyItem(), zeroOrMoreItems));
         ArgumentSpecification predicateArg = new ArgumentSpecification( "predicate", typeFactory.one(predicate), null);
         register(
             "map", "filter",
@@ -1926,14 +1947,9 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
             typeFactory.zeroOrMore(typeFactory.itemAnyMap()),
             null
         );
-        ArgumentSpecification mmOptions = new ArgumentSpecification(
-            "options",
-            typeFactory.zeroOrOne(typeFactory.itemAnyMap()),
-            EMPTY_MAP
-        );
         register(
             "map", "merge",
-            List.of(mmMaps, mmOptions),
+            List.of(mmMaps, mapOptionsArg),
             typeFactory.one(typeFactory.itemAnyMap())
         );
 
@@ -1943,14 +1959,9 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
             typeFactory.zeroOrMore(typeFactory.itemNamedType("key-value-pair")),
             null
         );
-        ArgumentSpecification opOptions = new ArgumentSpecification(
-            "options",
-            typeFactory.zeroOrOne(typeFactory.itemAnyMap()),
-            null
-        );
         register(
             "map", "of-pairs",
-            List.of(opInput, opOptions),
+            List.of(opInput, mapOptionsArg),
             typeFactory.one(typeFactory.itemAnyMap())
         );
 

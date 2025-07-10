@@ -283,15 +283,17 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
                 List.of(dataInput), zeroOrMoreItems);
 
 
-        // fn:base-uri($node as node()? := .) as xs:anyURI?
-        ArgumentSpecification baseUriNode = new ArgumentSpecification(
+
+        final ArgumentSpecification nodeArg = new ArgumentSpecification(
             "node",
             typeFactory.zeroOrOne(typeFactory.itemAnyNode()),
             CONTEXT_ITEM
         );
+
+        // fn:base-uri($node as node()? := .) as xs:anyURI?
         register(
             "fn", "base-uri",
-            List.of(baseUriNode),
+            List.of(nodeArg),
             typeFactory.zeroOrOne(typeFactory.itemString())
         );
 
@@ -303,87 +305,43 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         );
         register(
             "fn", "document-uri",
-            List.of(docUriNode),
+            List.of(nodeArg),
             typeFactory.zeroOrOne(typeFactory.itemString())
         );
 
-        // // 7) fn:name(
-        // //  as node()? := .
-        // // ) as xs:string
-        // final ArgumentSpecification nameNode = new ArgumentSpecification("node", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
-        // register("fn", "name",
-        //         List.of(nameNode),
-        //         typeFactory.string());
+        // fn:root($node as node()? := .) as node()?
+        register(
+            "fn", "root",
+            List.of(nodeArg),
+            typeFactory.zeroOrOne(typeFactory.itemAnyNode())
+        );
 
-        // // 8) fn:local-name(
-        // //  as node()? := .
-        // // ) as xs:string
-        // final ArgumentSpecification localNameNode = new ArgumentSpecification("node", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
-        // register("fn", "local-name",
-        //         List.of(localNameNode),
-        //         typeFactory.string());
+        // fn:path($node as node()? := ., $options as map(*)? := {}) as xs:string?
+        ArgumentSpecification pathOptions = new ArgumentSpecification(
+            "options",
+            typeFactory.zeroOrOne(typeFactory.itemAnyMap()),
+            EMPTY_SEQUENCE
+        );
+        register(
+            "fn", "path",
+            List.of(nodeArg, pathOptions),
+            typeFactory.zeroOrOne(typeFactory.itemString())
+        );
 
-        // // 9) fn:namespace-uri(
-        // //  as node()? := .
-        // // ) as xs:anyURI
-        // final ArgumentSpecification nsUriNode = new ArgumentSpecification("node", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
-        // register("fn", "namespace-uri",
-        //         List.of(nsUriNode),
-        //         typeFactory.string());
+        // fn:has-children($node as node()? := .) as xs:boolean
+        register(
+            "fn", "has-children",
+            List.of(nodeArg),
+            typeFactory.boolean_()
+        );
 
-        // // 10) fn:lang(
-        // //  as xs:string?,
-        // //  as node() := .
-        // // ) as xs:boolean
-        // final ArgumentSpecification langValue = new ArgumentSpecification("language", false,
-        //         optionalString));
-        // final ArgumentSpecification langNode = new ArgumentSpecification("node", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
-        // register("fn", "lang",
-        //         List.of(langValue, langNode),
-        //         typeFactory.boolean_());
+        // fn:siblings( $node as node()? := .) as node()*
+        register(
+            "fn", "siblings",
+            List.of(nodeArg),
+            typeFactory.zeroOrMore(typeFactory.itemAnyNode())
+        );
 
-        // // 11) fn:root(
-        // //  as node()? := .
-        // // ) as node()?
-        // final ArgumentSpecification rootNode = new ArgumentSpecification("node", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
-        // register("fn", "root",
-        //         List.of(rootNode),
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
-
-        // // 12) fn:path(
-        // //  as node()? := .
-        // //  as map(*)? := {}
-        // // ) as xs:string?
-        // final ArgumentSpecification pathNode = new ArgumentSpecification("node", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
-        // final ArgumentSpecification pathOptions = new ArgumentSpecification("options", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyMap()));
-        // register("fn", "path",
-        //         List.of(pathNode, pathOptions),
-        //         optionalString));
-
-        // // fn:has-children(
-        // //  as node()? := .
-        // // ) as xs:boolean
-        // final ArgumentSpecification hasChildrenNode = new ArgumentSpecification("node", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
-        // register("fn", "has-children",
-        //         List.of(hasChildrenNode),
-        //         typeFactory.boolean_());
-
-        // // fn:siblings(
-        // //  as node()? := .
-        // // ) as node()*
-        // final ArgumentSpecification siblingsNode = new ArgumentSpecification("node", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
-        // register("fn", "siblings",
-        //         List.of(siblingsNode),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyNode()));
 
         // // fn:distinct-ordered-nodes(
         // //  as node()*

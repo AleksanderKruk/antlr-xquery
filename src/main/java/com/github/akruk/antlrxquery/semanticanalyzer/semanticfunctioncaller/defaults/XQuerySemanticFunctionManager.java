@@ -52,6 +52,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         final XQuerySequenceType optionalString = typeFactory.zeroOrOne(typeFactory.itemString());
         final XQuerySequenceType zeroOrMoreNumbers = typeFactory.zeroOrMore(typeFactory.itemNumber());
         final XQuerySequenceType optionalItem = typeFactory.zeroOrOne(typeFactory.itemAnyItem());
+        final XQuerySequenceType zeroOrMoreNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
 
         register("fn", "position", List.of(), typeFactory.number());
         register("fn", "last", List.of(), typeFactory.number());
@@ -339,36 +340,34 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         register(
             "fn", "siblings",
             List.of(nodeArg),
-            typeFactory.zeroOrMore(typeFactory.itemAnyNode())
+            zeroOrMoreNodes
         );
 
+        // fn:distinct-ordered-nodes($nodes as node()*) as node()*
+        final ArgumentSpecification nodesArg = new ArgumentSpecification(
+            "nodes",
+            zeroOrMoreNodes,
+            null
+        );
+        register(
+            "fn", "distinct-ordered-nodes",
+            List.of(nodesArg),
+            zeroOrMoreNodes
+        );
 
-        // // fn:distinct-ordered-nodes(
-        // //  as node()*
-        // // ) as node()*
-        // final ArgumentSpecification distinctOrderedInput = new ArgumentSpecification("nodes", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyNode()));
-        // register("fn", "distinct-ordered-nodes",
-        //         List.of(distinctOrderedInput),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyNode()));
+        // fn:innermost($nodes as node()*) as node()*
+        register(
+            "fn", "innermost",
+            List.of(nodesArg),
+            zeroOrMoreNodes
+        );
 
-        // // fn:innermost(
-        // //  as node()*
-        // // ) as node()*
-        // final ArgumentSpecification innermostInput = new ArgumentSpecification("nodes", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyNode()));
-        // register("fn", "innermost",
-        //         List.of(innermostInput),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyNode()));
-
-        // // fn:outermost(
-        // //  as node()*
-        // // ) as node()*
-        // final ArgumentSpecification outermostInput = new ArgumentSpecification("nodes", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyNode()));
-        // register("fn", "outermost",
-        //         List.of(outermostInput),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyNode()));
+        // fn:outermost($nodes as node()*) as node()*
+        register(
+            "fn", "outermost",
+            List.of(nodesArg),
+            zeroOrMoreNodes
+        );
 
         // // fn:error(
         // //  as xs:QName? := (),

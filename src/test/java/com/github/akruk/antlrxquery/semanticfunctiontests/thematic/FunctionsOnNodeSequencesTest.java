@@ -7,12 +7,12 @@ import com.github.akruk.antlrxquery.semanticfunctiontests.FunctionsSemanticTest;
 public class FunctionsOnNodeSequencesTest extends FunctionsSemanticTest {
     @Test
     public void distinctOrderedNodes_noArgs() {
-        assertType("fn:distinct-ordered-nodes()", typeFactory.zeroOrMore(typeFactory.itemAnyNode()));
+        assertType("fn:distinct-ordered-nodes(())", typeFactory.zeroOrMore(typeFactory.itemAnyNode()));
     }
 
     @Test
     public void distinctOrderedNodes_withNodes() {
-        assertType("fn:distinct-ordered-nodes(<a/>, <b/>)", typeFactory.zeroOrMore(typeFactory.itemAnyNode()));
+        assertType("let $x as node()? := () return fn:distinct-ordered-nodes($x)", typeFactory.zeroOrMore(typeFactory.itemAnyNode()));
     }
 
     @Test
@@ -24,12 +24,12 @@ public class FunctionsOnNodeSequencesTest extends FunctionsSemanticTest {
 
     @Test
     public void innermost_defaults() {
-        assertType("fn:innermost()",typeFactory.zeroOrMore(typeFactory.itemAnyNode()));
+        assertType("fn:innermost(())",typeFactory.zeroOrMore(typeFactory.itemAnyNode()));
     }
 
     @Test
     public void innermost_withNodes() {
-        assertNoErrors(analyze("fn:innermost(<a/><a><b/></a>)"));
+        assertType("let $x as node()? := () return fn:innermost($x)", typeFactory.zeroOrMore(typeFactory.itemAnyNode()));
     }
 
     @Test
@@ -41,12 +41,12 @@ public class FunctionsOnNodeSequencesTest extends FunctionsSemanticTest {
 
     @Test
     public void outermost_defaults() {
-        assertType("fn:outermost()",typeFactory.zeroOrMore(typeFactory.itemAnyNode()));
+        assertType("fn:outermost(())",typeFactory.zeroOrMore(typeFactory.itemAnyNode()));
     }
 
     @Test
     public void outermost_withNodes() {
-        assertNoErrors(analyze("fn:outermost(<a/><a><b/></a>)"));
+        assertType("let $x as node()? := () return fn:outermost($x)", typeFactory.zeroOrMore(typeFactory.itemAnyNode()));
     }
 
     @Test

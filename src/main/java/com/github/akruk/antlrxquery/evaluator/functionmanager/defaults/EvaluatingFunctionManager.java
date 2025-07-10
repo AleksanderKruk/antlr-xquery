@@ -28,6 +28,7 @@ import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.FunctionsOnNumericValues;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.FunctionsOnStringValues;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.MathFunctions;
+import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.NumericOperators;
 import com.github.akruk.antlrxquery.values.XQueryError;
 import com.github.akruk.antlrxquery.values.XQueryFunction;
 import com.github.akruk.antlrxquery.values.XQueryValue;
@@ -59,6 +60,7 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
     private final FunctionsBasedOnSubstringMatching functionsBasedOnSubstringMatching;
     private final FunctionsOnNumericValues functionsOnNumericValues;
     private final CardinalityFunctions cardinalityFunctions;
+    private final NumericOperators numericOperators;
 
     public EvaluatingFunctionManager(final XQueryEvaluatorVisitor evaluator, final XQueryValueFactory valueFactory) {
         this.valueFactory = valueFactory;
@@ -69,6 +71,7 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         this.functionsOnNumericValues = new FunctionsOnNumericValues(valueFactory);
         this.functionsBasedOnSubstringMatching = new FunctionsBasedOnSubstringMatching(valueFactory);
         this.cardinalityFunctions = new CardinalityFunctions(valueFactory);
+        this.numericOperators = new NumericOperators(valueFactory);
 
         registerFunction("fn", "true", this::true_, 0, 0, Map.of());
         registerFunction("fn", "false", this::false_, 0, 0, Map.of());
@@ -153,14 +156,19 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         registerFunction("math", "cosh", mathFunctions::cosh, 1, 1, Map.of());
         registerFunction("math", "tanh", mathFunctions::tanh, 1, 1, Map.of());
 
-        registerFunction("op", "numeric-add", this::numericAdd, 0, 0, Map.of());
-        registerFunction("op", "numeric-subtract", this::numericSubtract, 0, 0, Map.of());
-        registerFunction("op", "numeric-multiply", this::numericMultiply, 0, 0, Map.of());
-        registerFunction("op", "numeric-divide", this::numericDivide, 0, 0, Map.of());
-        registerFunction("op", "numeric-integer-divide", this::numericIntegerDivide, 0, 0, Map.of());
-        registerFunction("op", "numeric-mod", this::numericMod, 0, 0, Map.of());
-        registerFunction("op", "numeric-unary-plus", this::numericUnaryPlus, 0, 0, Map.of());
-        registerFunction("op", "numeric-unary-minus", this::numericUnaryMinus, 0, 0, Map.of());
+        registerFunction("op", "numeric-add", numericOperators::numericAdd, 2, 2, Map.of());
+        registerFunction("op", "numeric-subtract", numericOperators::numericSubtract, 2, 2, Map.of());
+        registerFunction("op", "numeric-multiply", numericOperators::numericMultiply, 2, 2, Map.of());
+        registerFunction("op", "numeric-divide", numericOperators::numericDivide, 2, 2, Map.of());
+        registerFunction("op", "numeric-integer-divide", numericOperators::numericIntegerDivide, 2, 2, Map.of());
+        registerFunction("op", "numeric-mod", numericOperators::numericMod, 2, 2, Map.of());
+        registerFunction("op", "numeric-unary-plus", numericOperators::numericUnaryPlus, 1, 1, Map.of());
+        registerFunction("op", "numeric-unary-minus", numericOperators::numericUnaryMinus, 1, 1, Map.of());
+        registerFunction("op", "numeric-equal", numericOperators::numericEqual, 2, 2, Map.of());
+        registerFunction("op", "numeric-less-than", numericOperators::numericLessThan, 2, 2, Map.of());
+        registerFunction("op", "numeric-less-than-or-equal", numericOperators::numericLessThanOrEqual, 2, 2, Map.of());
+        registerFunction("op", "numeric-greater-than", numericOperators::numericGreaterThan, 2, 2, Map.of());
+        registerFunction("op", "numeric-greater-than-or-equal", numericOperators::numericGreaterThanOrEqual, 2, 2, Map.of());
     }
 
     /**
@@ -180,62 +188,6 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         return args.get(0).not();
     }
 
-
-    public XQueryValue numericAdd(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
-        var a = args.get(0); var b = args.get(1);
-        if (!a.isNumericValue() || !b.isNumericValue()) return XQueryError.InvalidArgumentType;
-        return a.add(b);
-    }
-
-    public XQueryValue numericSubtract(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
-        var a = args.get(0); var b = args.get(1);
-        if (!a.isNumericValue() || !b.isNumericValue()) return XQueryError.InvalidArgumentType;
-        return a.subtract(b);
-    }
-
-    public XQueryValue numericMultiply(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
-        var a = args.get(0); var b = args.get(1);
-        if (!a.isNumericValue() || !b.isNumericValue()) return XQueryError.InvalidArgumentType;
-        return a.multiply(b);
-    }
-
-    public XQueryValue numericDivide(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
-        var a = args.get(0); var b = args.get(1);
-        if (!a.isNumericValue() || !b.isNumericValue()) return XQueryError.InvalidArgumentType;
-        return a.divide(b);
-    }
-
-    public XQueryValue numericIntegerDivide(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
-        var a = args.get(0); var b = args.get(1);
-        if (!a.isNumericValue() || !b.isNumericValue()) return XQueryError.InvalidArgumentType;
-        return a.integerDivide(b);
-    }
-
-    public XQueryValue numericMod(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
-        var a = args.get(0); var b = args.get(1);
-        if (!a.isNumericValue() || !b.isNumericValue()) return XQueryError.InvalidArgumentType;
-        return a.modulus(b);
-    }
-
-    public XQueryValue numericUnaryPlus(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
-        var a = args.get(0);
-        if (!a.isNumericValue()) return XQueryError.InvalidArgumentType;
-        return a;
-    }
-
-    public XQueryValue numericUnaryMinus(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
-        var a = args.get(0);
-        if (!a.isNumericValue()) return XQueryError.InvalidArgumentType;
-        return valueFactory.number(a.numericValue().negate());
-    }
 
     public XQueryValue true_(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
         if (!args.isEmpty()) return XQueryError.WrongNumberOfArguments;

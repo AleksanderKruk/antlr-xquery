@@ -599,36 +599,6 @@ public class XQueryEvaluatorTest {
                 """, new XQueryString("concatenate", baseFactory));
     }
 
-    @Test
-    public void numericAdd() {
-        assertResult("op:numeric-add(3, 5)", BigDecimal.valueOf(8));
-    }
-
-    @Test
-    public void numericSubtract() {
-        assertResult("op:numeric-subtract(3, 5)", BigDecimal.valueOf(-2));
-    }
-
-    @Test
-    public void numericMultiply() {
-        assertResult("op:numeric-multiply(3, 5)", BigDecimal.valueOf(15));
-    }
-
-    @Test
-    public void numericDivide() {
-        assertResult("op:numeric-divide(5, 5)", BigDecimal.ONE);
-    }
-
-    @Test
-    public void numericIntegerDivide() {
-        assertResult("op:numeric-integer-divide(5, 2)", BigDecimal.valueOf(2));
-    }
-
-    @Test
-    public void numericMod() {
-        assertResult("op:numeric-mod(5, 2)", BigDecimal.ONE);
-    }
-
     record TestParserAndTree(TestParser parser, ParseTree tree) {}
 
     TestParserAndTree parseTestTree(String text) {

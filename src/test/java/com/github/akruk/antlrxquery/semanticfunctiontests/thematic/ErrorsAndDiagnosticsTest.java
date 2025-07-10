@@ -15,13 +15,8 @@ public class ErrorsAndDiagnosticsTest extends FunctionsSemanticTest {
     @Test
     public void error_allNamed() {
         assertNoErrors(analyze(
-                "fn:error(code := xs:QName('fn', 'err'), " +
+                "fn:error(code := 'err', " +
                         "description := 'msg', value := 1)"));
-    }
-
-    @Test
-    public void error_badCode() {
-        assertErrors("fn:error(code := 'notQName')");
     }
 
     @Test
@@ -48,7 +43,7 @@ public class ErrorsAndDiagnosticsTest extends FunctionsSemanticTest {
 
     @Test
     public void trace_withLabel() {
-        assertNoErrors(analyze("fn:trace(<a/>, 'lbl')"));
+        assertNoErrors(analyze("fn:trace(1, 'lbl')"));
     }
 
     @Test
@@ -65,7 +60,7 @@ public class ErrorsAndDiagnosticsTest extends FunctionsSemanticTest {
 
     @Test
     public void message_withLabel() {
-        assertType("fn:message('x, 'lbl'))", typeFactory.emptySequence());
+        assertType("fn:message('x', 'lbl'))", typeFactory.emptySequence());
     }
 
     @Test

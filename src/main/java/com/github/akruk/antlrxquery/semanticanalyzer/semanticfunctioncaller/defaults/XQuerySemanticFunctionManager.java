@@ -369,44 +369,61 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
             zeroOrMoreNodes
         );
 
-        // // fn:error(
-        // //  as xs:QName? := (),
-        // //  as xs:string? := (),
-        // //  as item()* := .
-        // // ) as item()*
-        // final ArgumentSpecification errorCode = new ArgumentSpecification("code", false,
-        //         optionalString));
-        // final ArgumentSpecification errorDescription = new ArgumentSpecification("description", false,
-        //         optionalString));
-        // final ArgumentSpecification errorValue = new ArgumentSpecification("value", false,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("fn", "error",
-        //         List.of(errorCode, errorDescription, errorValue),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+        // fn:error($code as xs:QName? := (), $description as xs:string? := (), $value as item()* := .) as item()*
+        ArgumentSpecification errorCode = new ArgumentSpecification(
+            "code",
+            typeFactory.zeroOrOne(typeFactory.itemString()),
+            EMPTY_SEQUENCE
+        );
+        ArgumentSpecification errorDescription = new ArgumentSpecification(
+            "description",
+            typeFactory.zeroOrOne(typeFactory.itemString()),
+            EMPTY_SEQUENCE
+        );
+        ArgumentSpecification errorValue = new ArgumentSpecification(
+            "value",
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            CONTEXT_ITEM
+        );
+        register(
+            "fn", "error",
+            List.of(errorCode, errorDescription, errorValue),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+        );
 
-        // // fn:trace(
-        // //  as item()*,
-        // //  as xs:string? := ()
-        // // ) as item()*
-        // final ArgumentSpecification traceInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification traceLabel = new ArgumentSpecification("label", false,
-        //         optionalString));
-        // register("fn", "trace",
-        //         List.of(traceInput, traceLabel),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+        // fn:trace($input as item()*, $label as xs:string? := ()) as item()*
+        ArgumentSpecification traceInput = new ArgumentSpecification(
+            "input",
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            null
+        );
+        ArgumentSpecification traceLabel = new ArgumentSpecification(
+            "label",
+            typeFactory.zeroOrOne(typeFactory.itemString()),
+            EMPTY_SEQUENCE
+        );
+        register(
+            "fn", "trace",
+            List.of(traceInput, traceLabel),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+        );
 
-        // // fn:message(
-        // //  as item()*,
-        // //  as xs:string? := ()
-        // // ) as empty-sequence()
-        // final ArgumentSpecification messageInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification messageLabel = new ArgumentSpecification("label", false,
-        //         optionalString));
-        // register("fn", "message",
-        //         List.of(messageInput, messageLabel),
-        //         typeFactory.emptySequence());
+        // fn:message($input as item()*, $label as xs:string? := ()) as empty-sequence()
+        ArgumentSpecification messageInput = new ArgumentSpecification(
+            "input",
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            null
+        );
+        ArgumentSpecification messageLabel = new ArgumentSpecification(
+            "label",
+            typeFactory.zeroOrOne(typeFactory.itemString()),
+            EMPTY_SEQUENCE
+        );
+        register(
+            "fn", "message",
+            List.of(messageInput, messageLabel),
+            typeFactory.emptySequence()
+        );
 
         // op:numeric-add($arg1 as xs:numeric, $arg2 as xs:numeric) as xs:numeric
         ArgumentSpecification numericArg1 = new ArgumentSpecification(

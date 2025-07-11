@@ -295,8 +295,11 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     @Override
     public XQuerySequenceType visitVarRef(final VarRefContext ctx) {
         final String variableName = ctx.varName().getText();
-        final XQuerySequenceType variableValue = contextManager.getVariable(variableName);
-        return variableValue;
+        final XQuerySequenceType variableType = contextManager.getVariable(variableName);
+        if (variableType == null) {
+            visitedPlaceholder = variableName;
+        }
+        return variableType;
     }
 
     private static final int[][] OCCURRENCE_MERGE_AUTOMATA = {
@@ -857,6 +860,23 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         }
         return boolean_;
     }
+
+    private String visitedPlaceholder = null;
+    public void requireSubtypeOrRestraint(
+            final XQuerySequenceType type,
+            final XQuerySequenceType requiredType,
+            final String message,
+            final ParserRuleContext ctx)
+    {
+        if (!type.isSubtypeOf(requiredType)) {
+            if (visitedPlaceholder != null)
+                contextManager.restrainVariable(visitedPlaceholder, requiredType);
+            else
+                addError(ctx, message);
+        }
+
+    }
+
 
     @Override
     public XQuerySequenceType visitAdditiveExpr(final AdditiveExprContext ctx) {

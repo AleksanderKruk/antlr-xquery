@@ -310,8 +310,6 @@ anyName: ID
         | WHERE
         | WHILE
         | WINDOW
-        | FUNCTION
-        | FN
         ;
 
 stringConstructor:

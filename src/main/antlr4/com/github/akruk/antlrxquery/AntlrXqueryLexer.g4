@@ -178,6 +178,7 @@ SWITCH: 'switch';
 DEFAULT: 'default';
 CASE: 'case';
 INSTANCE: 'instance';
+FN: 'fn';
 OF: 'of';
 TREAT: 'treat';
 CAST: 'cast';
@@ -196,8 +197,11 @@ fragment DASH: '-';
 STRING_CONSTRUCTOR_START : '``[' -> pushMode(INSIDE_STRING_CONSTRUCTOR);
 CONSTRUCTION_END: '}`' -> popMode;
 
-LCURLY: '{';
-RCURLY: '}';
+LCURLY: '{{';
+RCURLY: '}}';
+
+CLOSE_SHORT_CONSTRUCTOR: '/>';
+CLOSE_LONG_CONSTRUCTOR: '</';
 
 
 
@@ -225,3 +229,4 @@ CONSTRUCTOR_CHARS        :
 BACKTICK: '`';
 BRACKET: ']';
 
+// mode XML;

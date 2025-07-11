@@ -311,6 +311,8 @@ anyName: ID
         | WHERE
         | WHILE
         | WINDOW
+        | FUNCTION
+        | FN
         ;
 
 stringConstructor:
@@ -394,3 +396,21 @@ nextVar
     : NEXT varRef
     ;
 
+
+
+inlineFunctionExpr
+    : annotation* (FUNCTION | FN) functionSignature? functionBody
+    ;
+
+functionSignature
+    : '(' paramList ')' typeDeclaration?
+    ;
+
+paramList
+    : (varNameAndType (',' varNameAndType)*)?
+    ;
+
+// Function body
+functionBody
+    : enclosedExpr
+    ;

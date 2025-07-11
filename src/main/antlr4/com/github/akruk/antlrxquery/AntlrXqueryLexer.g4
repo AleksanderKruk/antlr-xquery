@@ -196,8 +196,13 @@ fragment DASH: '-';
 STRING_CONSTRUCTOR_START : '``[' -> pushMode(INSIDE_STRING_CONSTRUCTOR);
 CONSTRUCTION_END: '}`' -> popMode;
 
+DOUBLE_LCURLY: '{{';
+DOUBLE_RCURLY: '}}';
 LCURLY: '{';
 RCURLY: '}';
+
+CLOSE_SHORT_CONSTRUCTOR: '/>';
+CLOSE_LONG_CONSTRUCTOR: '</';
 
 
 
@@ -225,3 +230,4 @@ CONSTRUCTOR_CHARS        :
 BACKTICK: '`';
 BRACKET: ']';
 
+// mode XML;

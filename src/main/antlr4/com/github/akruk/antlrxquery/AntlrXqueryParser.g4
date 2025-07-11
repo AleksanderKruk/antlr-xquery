@@ -394,3 +394,52 @@ nextVar
     : NEXT varRef
     ;
 
+
+
+
+nodeConstructor
+    : directConstructor
+    ;
+
+directConstructor
+    : dirElemConstructor
+    ;
+
+dirElemConstructor
+    : LT_OP qname dirAttributeList CLOSE_SHORT_CONSTRUCTOR
+    | LT_OP qname dirAttributeList GT_OP dirElemContent* CLOSE_LONG_CONSTRUCTOR qname? GT_OP
+    ;
+
+dirAttributeList
+    : (s (qname s? '=' s? dirAttributeValue)?)*
+    ;
+
+dirAttributeValue
+    : ('"' (escapeQuot | quotAttrValueContent)* '"')
+    | ('\'' (escapeApos | aposAttrValueContent)* '\'')
+    ;
+
+quotAttrValueContent
+    : quotAttrContentChar
+    | commonContent
+    ;
+
+aposAttrValueContent
+    : aposAttrContentChar
+    | commonContent
+    ;
+
+dirElemContent
+    : directConstructor
+    | commonContent
+    ;
+
+commonContent
+    | DOUBLE_LCURLY
+    | DOUBLE_RCURLY
+    | enclosedExpr
+    ;
+
+charExceptDash
+    : ~'-' // Any character except dash
+    ;

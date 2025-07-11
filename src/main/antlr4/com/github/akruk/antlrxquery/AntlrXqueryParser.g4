@@ -147,7 +147,7 @@ primaryExpr: literal
         | functionItemExpr;
 
 functionItemExpr    :	namedFunctionRef
-    // | inlineFunctionExpr
+    | inlineFunctionExpr
     ;
 namedFunctionRef	:	qname HASH IntegerLiteral;
 
@@ -247,7 +247,6 @@ anyName: ID
         | CHILD
         | COLLATION
         | COUNT
-        //
         | DEFAULT
         | DESCENDANT
         | DESCENDANT_OR_SELF
@@ -410,7 +409,6 @@ paramList
     : (varNameAndType (',' varNameAndType)*)?
     ;
 
-// Function body
 functionBody
     : enclosedExpr
     ;

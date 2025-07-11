@@ -4,10 +4,9 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.XQuerySemanticAnalyzerTest;
-// import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticError;
+import com.github.akruk.antlrxquery.SemanticTests;
 
-public class InlineFunctionsTest extends XQuerySemanticAnalyzerTest {
+public class InlineFunctionsTest extends SemanticTests {
 
     @Test
     public void typedParametersAndTypedResult() {

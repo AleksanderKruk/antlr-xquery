@@ -4,9 +4,9 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.XQuerySemanticAnalyzerTest;
+import com.github.akruk.antlrxquery.SemanticTests;
 
-public class ArraysTest extends XQuerySemanticAnalyzerTest {
+public class ArraysTest extends SemanticTests {
 
     @Test
     public void emptyArrays() {

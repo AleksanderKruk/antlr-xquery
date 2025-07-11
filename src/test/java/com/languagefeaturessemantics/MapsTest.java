@@ -2,9 +2,9 @@ package com.languagefeaturessemantics;
 
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.XQuerySemanticAnalyzerTest;
+import com.github.akruk.antlrxquery.SemanticTests;
 
-public class MapsTest extends XQuerySemanticAnalyzerTest {
+public class MapsTest extends SemanticTests {
     @Test
     public void oneTypeNonEmptyMaps() {
         final var numToNum = typeFactory.map(typeFactory.itemNumber(), typeFactory.number());

@@ -1,70 +1,14 @@
 package com.github.akruk.antlrxquery;
 
-import static org.junit.Assert.assertTrue;
-
 import java.util.List;
 import java.util.Set;
 
-import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.Test;
 
-import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.baseimplementation.XQueryBaseSemanticContextManager;
-import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQuerySemanticFunctionManager;
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
-import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryEnumTypeFactory;
-import com.github.akruk.antlrxquery.values.factories.defaults.XQueryMemoizedValueFactory;
 
-public class XQuerySemanticAnalyzerTest {
-    final protected XQueryTypeFactory typeFactory = new XQueryEnumTypeFactory();
-
-    record AnalysisResult(XQuerySemanticAnalyzer analyzer, XQuerySequenceType expressionType) {
-    };
-
-    protected AnalysisResult analyze(final String text) {
-        final CharStream characters = CharStreams.fromString(text);
-        final Lexer xqueryLexer = new AntlrXqueryLexer(characters);
-        final CommonTokenStream xqueryTokens = new CommonTokenStream(xqueryLexer);
-        final AntlrXqueryParser xqueryParser = new AntlrXqueryParser(xqueryTokens);
-        final ParseTree xqueryTree = xqueryParser.xquery();
-        final IXQuerySemanticFunctionManager caller = new XQuerySemanticFunctionManager(typeFactory);
-        final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
-                xqueryParser,
-                new XQueryBaseSemanticContextManager(),
-                new XQueryEnumTypeFactory(),
-                new XQueryMemoizedValueFactory(),
-                caller);
-        final var lastVisitedType = analyzer.visit(xqueryTree);
-        return new AnalysisResult(analyzer, lastVisitedType);
-    }
-
-    protected void assertNoErrors(final AnalysisResult analyzer) {
-        assertTrue(analyzer.analyzer.getErrors().size() == 0);
-    }
-
-    protected void assertThereAreErrors(final String xquery) {
-        final var analysisResult = analyze(xquery);
-        assertThereAreErrors(analysisResult);
-    }
-
-    protected void assertThereAreErrors(final AnalysisResult analyzer) {
-        assertTrue(analyzer.analyzer.getErrors().size() != 0);
-    }
-
-    protected void assertType(final AnalysisResult result, final XQuerySequenceType expectedType) {
-        assertNoErrors(result);
-        assertTrue(result.expressionType.equals(expectedType));
-    }
-
-    protected void assertType(final String xquery, final XQuerySequenceType expectedType) {
-        final var analysisResult = analyze(xquery);
-        assertNoErrors(analysisResult);
-        assertTrue(analysisResult.expressionType.equals(expectedType));
-    }
+public class XQuerySemanticAnalyzerTest extends SemanticTests {
 
     @Test
     public void numericLiteralTypes() {

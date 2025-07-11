@@ -800,20 +800,50 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     }
 
     @Override
+    public XQuerySequenceType visitSquareArrayConstructor(SquareArrayConstructorContext ctx) {
+        if (ctx.exprSingle().isEmpty()) {
+            return typeFactory.anyArray();
+        }
+        XQuerySequenceType arrayType = ctx.exprSingle().stream()
+            .map(expr->expr.accept(this))
+            .reduce((t1, t2) -> t1.alternativeMerge(t2))
+            .get();
+        return typeFactory.array(arrayType);
+    }
+
+
+    @Override
+    public XQuerySequenceType visitCurlyArrayConstructor(CurlyArrayConstructorContext ctx) {
+        var expressions = ctx.enclosedExpr().expr();
+        if (expressions == null) {
+            return typeFactory.anyArray();
+        }
+
+        XQuerySequenceType arrayType = expressions.exprSingle().stream()
+            .map(expr->expr.accept(this))
+            .reduce((t1, t2) -> t1.alternativeMerge(t2))
+            .get();
+        return typeFactory.array(arrayType);
+
+    }
+
+
+
+    @Override
     public XQuerySequenceType visitMapConstructor(MapConstructorContext ctx)
     {
         var entries = ctx.mapConstructorEntry();
         if (entries.isEmpty())
             return typeFactory.anyArray();
-        List<XQueryItemType> keyType = entries.stream()
+        XQueryItemType keyType = entries.stream()
             .map(e -> e.mapKeyExpr().accept(this).getItemType())
-            .toList();
-        XQueryItemType choiceKeyType = typeFactory.itemChoice(keyType);
+            .reduce((t1, t2) -> t1.sequenceMerge(t2))
+            .get();
         // TODO: refine
         XQuerySequenceType valueType = entries.stream()
             .map(e -> e.mapValueExpr().accept(this))
             .reduce((t1, t2) -> t1.alternativeMerge(t2)).get();
-        return typeFactory.map(choiceKeyType, valueType);
+        return typeFactory.map(keyType, valueType);
     }
 
 

@@ -183,6 +183,7 @@ TREAT: 'treat';
 CAST: 'cast';
 PERCENTAGE: '%';
 MULTIPLICATION: 'x';
+FN: 'fn';
 
 
 ID: NAME_START (DASH NAME_MIDDLE)*
@@ -196,8 +197,8 @@ fragment DASH: '-';
 STRING_CONSTRUCTOR_START : '``[' -> pushMode(INSIDE_STRING_CONSTRUCTOR);
 CONSTRUCTION_END: '}`' -> popMode;
 
-LCURLY: '{{';
-RCURLY: '}}';
+LCURLY: '{';
+RCURLY: '}';
 
 CLOSE_SHORT_CONSTRUCTOR: '/>';
 CLOSE_LONG_CONSTRUCTOR: '</';

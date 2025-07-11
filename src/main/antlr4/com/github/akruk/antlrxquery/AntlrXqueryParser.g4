@@ -265,6 +265,7 @@ anyName: ID
         | FOLLOWING_SIBLING
         | FOLLOWING_SIBLING_OR_SELF
         | FOR
+        | FN
         | FUNCTION
         | GE
         | GREATEST
@@ -396,7 +397,7 @@ nextVar
 
 
 inlineFunctionExpr
-    : annotation* FUNCTION functionSignature? functionBody
+    : annotation* (FUNCTION | FN) functionSignature? functionBody
     ;
 
 functionSignature

@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrxquery.XQuerySemanticAnalyzerTest;
 
-public class ArraysTest extends XQuerySemanticAnalyzerTest {
+public class ArraysTests extends XQuerySemanticAnalyzerTest {
 
     @Test
     public void emptyArrays() {

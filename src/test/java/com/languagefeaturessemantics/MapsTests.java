@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrxquery.XQuerySemanticAnalyzerTest;
 
-public class MapsTest extends XQuerySemanticAnalyzerTest {
+public class MapsTests extends XQuerySemanticAnalyzerTest {
     @Test
     public void oneTypeNonEmptyMaps() {
         final var numToNum = typeFactory.map(typeFactory.itemNumber(), typeFactory.number());

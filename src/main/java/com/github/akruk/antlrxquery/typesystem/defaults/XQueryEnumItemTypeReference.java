@@ -38,10 +38,10 @@ public class XQueryEnumItemTypeReference implements XQueryItemType {
         return referencedType.castableAs(other);
     }
 
-    public XQueryItemType sequenceMerge(XQueryItemType other) {
+    public XQueryItemType alternativeMerge(XQueryItemType other) {
         if (referencedType == null)
             referencedType = referenceSupplier.get();
-        return referencedType.sequenceMerge(other);
+        return referencedType.alternativeMerge(other);
     }
 
     public XQueryItemType unionMerge(XQueryItemType other) {

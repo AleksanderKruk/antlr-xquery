@@ -623,22 +623,22 @@ public class XQueryTypesTest {
         final var numberZeroOrOne = typeFactory.zeroOrOne(typeFactory.itemNumber());
         final var numberZeroOrMore = typeFactory.zeroOrMore(typeFactory.itemNumber());
         final var numberOneOrMore = typeFactory.oneOrMore(typeFactory.itemNumber());
-        final var $00 = empty.typeAlternative(empty);
-        final var $01 = empty.typeAlternative(number);
-        final var $0_zeroOrOne = empty.typeAlternative(numberZeroOrOne);
-        final var $0_zeroOrMore = empty.typeAlternative(numberZeroOrMore);
-        final var $0_oneOrMore = empty.typeAlternative(numberOneOrMore);
+        final var $00 = empty.alternativeMerge(empty);
+        final var $01 = empty.alternativeMerge(number);
+        final var $0_zeroOrOne = empty.alternativeMerge(numberZeroOrOne);
+        final var $0_zeroOrMore = empty.alternativeMerge(numberZeroOrMore);
+        final var $0_oneOrMore = empty.alternativeMerge(numberOneOrMore);
         assertEquals($00, empty);
         assertEquals($01, numberZeroOrOne);
         assertEquals($0_zeroOrOne, numberZeroOrOne);
         assertEquals($0_zeroOrMore, numberZeroOrMore);
         assertEquals($0_oneOrMore, numberZeroOrMore);
 
-        final var $10 = number.typeAlternative(empty);
-        final var $11 = number.typeAlternative(number);
-        final var $1_zeroOrOne = number.typeAlternative(numberZeroOrOne);
-        final var $1_zeroOrMore = number.typeAlternative(numberZeroOrMore);
-        final var $1_oneOrMore = number.typeAlternative(numberOneOrMore);
+        final var $10 = number.alternativeMerge(empty);
+        final var $11 = number.alternativeMerge(number);
+        final var $1_zeroOrOne = number.alternativeMerge(numberZeroOrOne);
+        final var $1_zeroOrMore = number.alternativeMerge(numberZeroOrMore);
+        final var $1_oneOrMore = number.alternativeMerge(numberOneOrMore);
 
         assertEquals($10, numberZeroOrOne);
         assertEquals($11, number);
@@ -646,11 +646,11 @@ public class XQueryTypesTest {
         assertEquals($1_zeroOrMore, numberZeroOrMore);
         assertEquals($1_oneOrMore, numberOneOrMore);
 
-        final var $zeroOrOne_0 = numberZeroOrOne.typeAlternative(empty);
-        final var $zeroOrOne_1 = numberZeroOrOne.typeAlternative(number);
-        final var $zeroOrOne_zeroOrOne = numberZeroOrOne.typeAlternative(numberZeroOrOne);
-        final var $zeroOrOne_zeroOrMore = numberZeroOrOne.typeAlternative(numberZeroOrMore);
-        final var $zeroOrOne_oneOrMore = numberZeroOrOne.typeAlternative(numberOneOrMore);
+        final var $zeroOrOne_0 = numberZeroOrOne.alternativeMerge(empty);
+        final var $zeroOrOne_1 = numberZeroOrOne.alternativeMerge(number);
+        final var $zeroOrOne_zeroOrOne = numberZeroOrOne.alternativeMerge(numberZeroOrOne);
+        final var $zeroOrOne_zeroOrMore = numberZeroOrOne.alternativeMerge(numberZeroOrMore);
+        final var $zeroOrOne_oneOrMore = numberZeroOrOne.alternativeMerge(numberOneOrMore);
 
         assertEquals($zeroOrOne_0, numberZeroOrOne);
         assertEquals($zeroOrOne_1, numberZeroOrOne);
@@ -658,11 +658,11 @@ public class XQueryTypesTest {
         assertEquals($zeroOrOne_zeroOrMore, numberZeroOrMore);
         assertEquals($zeroOrOne_oneOrMore, numberZeroOrMore);
 
-        final var $zeroOrMore_0 = numberZeroOrMore.typeAlternative(empty);
-        final var $zeroOrMore_1 = numberZeroOrMore.typeAlternative(number);
-        final var $zeroOrMore_zeroOrOne = numberZeroOrMore.typeAlternative(numberZeroOrOne);
-        final var $zeroOrMore_zeroOrMore = numberZeroOrMore.typeAlternative(numberZeroOrMore);
-        final var $zeroOrMore_oneOrMore = numberZeroOrMore.typeAlternative(numberOneOrMore);
+        final var $zeroOrMore_0 = numberZeroOrMore.alternativeMerge(empty);
+        final var $zeroOrMore_1 = numberZeroOrMore.alternativeMerge(number);
+        final var $zeroOrMore_zeroOrOne = numberZeroOrMore.alternativeMerge(numberZeroOrOne);
+        final var $zeroOrMore_zeroOrMore = numberZeroOrMore.alternativeMerge(numberZeroOrMore);
+        final var $zeroOrMore_oneOrMore = numberZeroOrMore.alternativeMerge(numberOneOrMore);
 
         assertEquals($zeroOrMore_0, numberZeroOrMore);
         assertEquals($zeroOrMore_1, numberZeroOrMore);
@@ -670,11 +670,11 @@ public class XQueryTypesTest {
         assertEquals($zeroOrMore_zeroOrMore, numberZeroOrMore);
         assertEquals($zeroOrMore_oneOrMore, numberZeroOrMore);
 
-        final var $oneOrMore_0 = numberOneOrMore.typeAlternative(empty);
-        final var $oneOrMore_1 = numberOneOrMore.typeAlternative(number);
-        final var $oneOrMore_zeroOrOne = numberOneOrMore.typeAlternative(numberZeroOrOne);
-        final var $oneOrMore_zeroOrMore = numberOneOrMore.typeAlternative(numberZeroOrMore);
-        final var $oneOrMore_oneOrMore = numberOneOrMore.typeAlternative(numberOneOrMore);
+        final var $oneOrMore_0 = numberOneOrMore.alternativeMerge(empty);
+        final var $oneOrMore_1 = numberOneOrMore.alternativeMerge(number);
+        final var $oneOrMore_zeroOrOne = numberOneOrMore.alternativeMerge(numberZeroOrOne);
+        final var $oneOrMore_zeroOrMore = numberOneOrMore.alternativeMerge(numberZeroOrMore);
+        final var $oneOrMore_oneOrMore = numberOneOrMore.alternativeMerge(numberOneOrMore);
 
         assertEquals($oneOrMore_0, numberZeroOrMore);
         assertEquals($oneOrMore_1, numberOneOrMore);

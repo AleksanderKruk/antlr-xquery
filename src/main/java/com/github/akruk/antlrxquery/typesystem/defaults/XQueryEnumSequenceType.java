@@ -196,7 +196,7 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         if (enumItemType2 == null) {
             return sequenceGetter.apply(enumItemType1);
         }
-        final XQueryItemType mergedItemType = enumItemType1.sequenceMerge(enumItemType2);
+        final XQueryItemType mergedItemType = enumItemType1.alternativeMerge(enumItemType2);
         return sequenceGetter.apply(mergedItemType);
 
     }
@@ -379,63 +379,51 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
 
     private static XQueryOccurence[][] typeAlternativeOccurence = new XQueryOccurence[XQueryOccurence.values().length][XQueryOccurence.values().length];
     static {
-        final int zeroOrdinal = ZERO;
-        final int oneOrdinal = ONE;
-        final int zeroOrOneOrdinal = ZERO_OR_ONE;
-        final int zeroOrMoreOrdinal = ZERO_OR_MORE;
-        final int oneOrMoreOrdinal = ONE_OR_MORE;
-        typeAlternativeOccurence[zeroOrdinal][zeroOrdinal] = XQueryOccurence.ZERO;
-        typeAlternativeOccurence[zeroOrdinal][oneOrdinal] = XQueryOccurence.ZERO_OR_ONE;
-        typeAlternativeOccurence[zeroOrdinal][zeroOrOneOrdinal] = XQueryOccurence.ZERO_OR_ONE;
-        typeAlternativeOccurence[zeroOrdinal][zeroOrMoreOrdinal] = XQueryOccurence.ZERO_OR_MORE;
-        typeAlternativeOccurence[zeroOrdinal][oneOrMoreOrdinal] = XQueryOccurence.ZERO_OR_MORE;
+        typeAlternativeOccurence[ZERO][ZERO] = XQueryOccurence.ZERO;
+        typeAlternativeOccurence[ZERO][ONE] = XQueryOccurence.ZERO_OR_ONE;
+        typeAlternativeOccurence[ZERO][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_ONE;
+        typeAlternativeOccurence[ZERO][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
+        typeAlternativeOccurence[ZERO][ONE_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
 
-        typeAlternativeOccurence[oneOrdinal][zeroOrdinal] = XQueryOccurence.ZERO_OR_ONE;
-        typeAlternativeOccurence[oneOrdinal][oneOrdinal] = XQueryOccurence.ONE;
-        typeAlternativeOccurence[oneOrdinal][zeroOrOneOrdinal] = XQueryOccurence.ZERO_OR_ONE;
-        typeAlternativeOccurence[oneOrdinal][zeroOrMoreOrdinal] = XQueryOccurence.ZERO_OR_MORE;
-        typeAlternativeOccurence[oneOrdinal][oneOrMoreOrdinal] = XQueryOccurence.ONE_OR_MORE;
+        typeAlternativeOccurence[ONE][ZERO] = XQueryOccurence.ZERO_OR_ONE;
+        typeAlternativeOccurence[ONE][ONE] = XQueryOccurence.ONE;
+        typeAlternativeOccurence[ONE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_ONE;
+        typeAlternativeOccurence[ONE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
+        typeAlternativeOccurence[ONE][ONE_OR_MORE] = XQueryOccurence.ONE_OR_MORE;
 
-        typeAlternativeOccurence[zeroOrOneOrdinal][zeroOrdinal] = XQueryOccurence.ZERO_OR_ONE;
-        typeAlternativeOccurence[zeroOrOneOrdinal][oneOrdinal] = XQueryOccurence.ZERO_OR_ONE;
-        typeAlternativeOccurence[zeroOrOneOrdinal][zeroOrOneOrdinal] = XQueryOccurence.ZERO_OR_ONE;
-        typeAlternativeOccurence[zeroOrOneOrdinal][zeroOrMoreOrdinal] = XQueryOccurence.ZERO_OR_MORE;
-        typeAlternativeOccurence[zeroOrOneOrdinal][oneOrMoreOrdinal] = XQueryOccurence.ZERO_OR_MORE;
+        typeAlternativeOccurence[ZERO_OR_ONE][ZERO] = XQueryOccurence.ZERO_OR_ONE;
+        typeAlternativeOccurence[ZERO_OR_ONE][ONE] = XQueryOccurence.ZERO_OR_ONE;
+        typeAlternativeOccurence[ZERO_OR_ONE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_ONE;
+        typeAlternativeOccurence[ZERO_OR_ONE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
+        typeAlternativeOccurence[ZERO_OR_ONE][ONE_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
 
-        typeAlternativeOccurence[zeroOrMoreOrdinal][zeroOrdinal] = XQueryOccurence.ZERO_OR_MORE;
-        typeAlternativeOccurence[zeroOrMoreOrdinal][oneOrdinal] = XQueryOccurence.ZERO_OR_MORE;
-        typeAlternativeOccurence[zeroOrMoreOrdinal][zeroOrOneOrdinal] = XQueryOccurence.ZERO_OR_MORE;
-        typeAlternativeOccurence[zeroOrMoreOrdinal][zeroOrMoreOrdinal] = XQueryOccurence.ZERO_OR_MORE;
-        typeAlternativeOccurence[zeroOrMoreOrdinal][oneOrMoreOrdinal] = XQueryOccurence.ZERO_OR_MORE;
+        typeAlternativeOccurence[ZERO_OR_MORE][ZERO] = XQueryOccurence.ZERO_OR_MORE;
+        typeAlternativeOccurence[ZERO_OR_MORE][ONE] = XQueryOccurence.ZERO_OR_MORE;
+        typeAlternativeOccurence[ZERO_OR_MORE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_MORE;
+        typeAlternativeOccurence[ZERO_OR_MORE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
+        typeAlternativeOccurence[ZERO_OR_MORE][ONE_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
 
-        typeAlternativeOccurence[oneOrMoreOrdinal][zeroOrdinal] = XQueryOccurence.ZERO_OR_MORE;
-        typeAlternativeOccurence[oneOrMoreOrdinal][oneOrdinal] = XQueryOccurence.ONE_OR_MORE;
-        typeAlternativeOccurence[oneOrMoreOrdinal][zeroOrOneOrdinal] = XQueryOccurence.ZERO_OR_MORE;
-        typeAlternativeOccurence[oneOrMoreOrdinal][zeroOrMoreOrdinal] = XQueryOccurence.ZERO_OR_MORE;
-        typeAlternativeOccurence[oneOrMoreOrdinal][oneOrMoreOrdinal] = XQueryOccurence.ONE_OR_MORE;
+        typeAlternativeOccurence[ONE_OR_MORE][ZERO] = XQueryOccurence.ZERO_OR_MORE;
+        typeAlternativeOccurence[ONE_OR_MORE][ONE] = XQueryOccurence.ONE_OR_MORE;
+        typeAlternativeOccurence[ONE_OR_MORE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_MORE;
+        typeAlternativeOccurence[ONE_OR_MORE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
+        typeAlternativeOccurence[ONE_OR_MORE][ONE_OR_MORE] = XQueryOccurence.ONE_OR_MORE;
     }
 
 	final Function[] factoryByOccurence;
 
     @Override
-    public XQuerySequenceType typeAlternative(final XQuerySequenceType other) {
+    public XQuerySequenceType alternativeMerge(final XQuerySequenceType other) {
         final var other_ = (XQueryEnumSequenceType) other;
         final var occurence_ = typeAlternativeOccurence[occurence.ordinal()][other_.getOccurence().ordinal()];
 		final Function sequenceTypeFactory = factoryByOccurence[occurence_.ordinal()];
+        XQueryItemType otherItemType = other.getItemType();
         if (this.itemType == null)
-            if (other.getItemType() == null)
-                return (XQuerySequenceType)sequenceTypeFactory.apply(typeFactory.itemAnyItem());
-            else
-                return (XQuerySequenceType)sequenceTypeFactory.apply(other.getItemType());
-        else
-            if (other.getItemType() == null)
-                return (XQuerySequenceType)sequenceTypeFactory.apply(this.itemType);
-            else
-                if (this.itemType.equals(other.getItemType()))
-                    return (XQuerySequenceType)sequenceTypeFactory.apply(this.itemType);
-                else
-                    return (XQuerySequenceType)sequenceTypeFactory.apply(typeFactory.itemAnyItem());
-
+            return (XQuerySequenceType)sequenceTypeFactory.apply(otherItemType);
+        if (otherItemType == null)
+            return (XQuerySequenceType)sequenceTypeFactory.apply(itemType);
+        final XQueryItemType mergedItemType = itemType.alternativeMerge(otherItemType);
+        return (XQuerySequenceType) sequenceTypeFactory.apply(mergedItemType);
     }
 
     @Override
@@ -451,7 +439,7 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
 
 	@Override
     public XQuerySequenceType addOptionality() {
-        return typeAlternative(typeFactory.emptySequence());
+        return alternativeMerge(typeFactory.emptySequence());
     }
 
 
@@ -496,12 +484,6 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
     @Override
     public XQuerySequenceType mapping(final XQuerySequenceType mappingExpressionType) {
         return (XQuerySequenceType) factoryByOccurence[occurence.ordinal()].apply(mappingExpressionType.getItemType());
-    }
-
-    @Override
-    public XQuerySequenceType alternativeMerge(XQuerySequenceType t2)
-    {
-        return null;
     }
 
 

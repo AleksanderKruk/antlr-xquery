@@ -1,0 +1,24 @@
+package com.languagefeaturessemantics;
+
+import java.util.Set;
+
+import org.junit.jupiter.api.Test;
+
+import com.github.akruk.antlrxquery.XQuerySemanticAnalyzerTest;
+
+public class ArraysTest extends XQuerySemanticAnalyzerTest {
+
+    @Test
+    public void emptyArrays() {
+        assertType("[]", typeFactory.anyArray());
+        assertType("array {}", typeFactory.anyArray());
+    }
+
+    @Test
+    public void oneTypeNonEmptyArrays() {
+        final var numToNum = typeFactory.array(typeFactory.number());
+        final var strToNum = typeFactory.array(typeFactory.enum_(Set.of("a", "b", "c")));
+        assertType("array { 1, 2, 3}", numToNum);
+        assertType("array { 'a', 'b', 'c' }", strToNum);
+    }
+}

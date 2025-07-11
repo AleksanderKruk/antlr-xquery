@@ -210,7 +210,7 @@ public class XQueryEnumItemType implements XQueryItemType {
             final var yKey = y_.getMapKeyType();
             final var xValue = x_.getMapValueType();
             final var yValue = y_.getMapValueType();
-            final var mergedKeyType = xKey.sequenceMerge(yKey);
+            final var mergedKeyType = xKey.alternativeMerge(yKey);
             final var mergedValueType = xValue.sequenceMerge(yValue);
             return typeFactory.itemMap(mergedKeyType, mergedValueType);
         };
@@ -983,7 +983,7 @@ public class XQueryEnumItemType implements XQueryItemType {
     }
 
     @Override
-    public XQueryItemType sequenceMerge(XQueryItemType other) {
+    public XQueryItemType alternativeMerge(XQueryItemType other) {
         var otherType = ((XQueryEnumItemType)other).getType().ordinal();
         return (XQueryItemType) sequenceItemMerger[typeOrdinal][otherType].apply(this, other);
     }

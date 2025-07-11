@@ -837,7 +837,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             return typeFactory.anyArray();
         XQueryItemType keyType = entries.stream()
             .map(e -> e.mapKeyExpr().accept(this).getItemType())
-            .reduce((t1, t2) -> t1.sequenceMerge(t2))
+            .reduce((t1, t2) -> t1.alternativeMerge(t2))
             .get();
         // TODO: refine
         XQuerySequenceType valueType = entries.stream()
@@ -983,7 +983,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         for (int i = 1; i < length; i++) {
             final var expr = ctx.stringConcatExpr(i);
             final XQuerySequenceType exprType = expr.accept(this);
-            merged = exprType.typeAlternative(merged);
+            merged = exprType.alternativeMerge(merged);
         }
         return merged;
     }
@@ -1167,7 +1167,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             falseType = ctx.unbracedActions().exprSingle(1).accept(this);
         }
         // TODO: Add union types
-        return trueType.typeAlternative(falseType);
+        return trueType.alternativeMerge(falseType);
     }
 
     @Override

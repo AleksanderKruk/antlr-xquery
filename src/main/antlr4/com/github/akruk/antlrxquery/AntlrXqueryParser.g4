@@ -396,7 +396,7 @@ nextVar
 
 
 inlineFunctionExpr
-    : annotation* (FUNCTION | FN) functionSignature? functionBody
+    : annotation* FUNCTION functionSignature? functionBody
     ;
 
 functionSignature

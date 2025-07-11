@@ -110,15 +110,12 @@ argument: exprSingle | argumentPlaceholder;
 argumentPlaceholder: QUESTION_MARK;
 
 
-// (PositionalArguments ("," KeywordArguments)?) | KeywordArguments
-
 
 mapConstructor	: MAP? LCURLY (mapConstructorEntry (COMMA mapConstructorEntry)*)? RCURLY;
 mapConstructorEntry	:	mapKeyExpr COLON mapValueExpr;
 mapKeyExpr	:	exprSingle;
 mapValueExpr	:	exprSingle;
 
-// Array constructors
 arrayConstructor
     : squareArrayConstructor
     | curlyArrayConstructor

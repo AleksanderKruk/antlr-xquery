@@ -38,7 +38,13 @@ public class XQueryBaseSemanticContext implements XQuerySemanticContext {
 
     @Override
     public XQuerySequenceType getVariable(String variableName) {
-        return currentScope().getVariable(variableName);
+        for (var scope : scopes.reversed()) {
+            var variable = scope.getVariable(variableName);
+            if (variable != null) {
+                return variable;
+            }
+        }
+        return null;
     }
     @Override
     public boolean entypeVariable(String variableName, XQuerySequenceType assignedType) {

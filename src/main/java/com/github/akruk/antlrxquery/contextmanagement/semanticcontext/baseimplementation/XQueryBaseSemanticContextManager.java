@@ -63,4 +63,16 @@ public class XQueryBaseSemanticContextManager implements XQuerySemanticContextMa
         return currentContext().getVariable(variableName);
     }
 
+    @Override
+    public boolean placeholderVariable(String variableName) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'placeholderVariable'");
+    }
+
+    @Override
+    public boolean restrainVariable(String variableName, XQuerySequenceType type) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'restrainVariable'");
+    }
+
 }

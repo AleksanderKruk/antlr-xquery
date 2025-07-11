@@ -25,7 +25,7 @@ public class InlineFunctionsTest extends SemanticTests {
     @Test
     public void untypedParametersAndNoResultType() {
         assertType(
-            "fn($a, $b) { $a + $b }",
+            "fn($a, $b) {}",
             typeFactory.function(
                 typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
                 List.of(

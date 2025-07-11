@@ -1195,6 +1195,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         final XQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         final var returnedType = (returnTypeDeclaration != null) ? returnTypeDeclaration.accept(this)
                 : zeroOrMoreItems;
+        contextManager.enterScope();
         for (final var parameter : functionSignature.paramList().varNameAndType()) {
             final String parameterName = parameter.qname().getText();
             final TypeDeclarationContext typeDeclaration = parameter.typeDeclaration();
@@ -1204,8 +1205,27 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
                 addError(parameter, "Duplicate parameter name: " + parameterName);
             argumentNames.add(parameterName);
             args.add(parameterType);
+            contextManager.entypeVariable(parameterName, parameterType);
         }
+        final var inlineType = ctx.functionBody().enclosedExpr().accept(this);
+        if (!inlineType.isSubtypeOf(returnedType)) {
+            final String msg = String.format(
+                    "Function body type %s is not a subtype of the declared return type %s",
+                    inlineType.toString(), returnedType.toString());
+            addError(ctx.functionBody(), msg);
+        }
+
+        contextManager.leaveScope();
         return typeFactory.function(returnedType, args);
+    }
+
+
+    @Override
+    public XQuerySequenceType visitEnclosedExpr(EnclosedExprContext ctx) {
+        if (ctx.expr() != null) {
+            return ctx.expr().accept(this);
+        }
+        return typeFactory.emptySequence();
     }
 
 }

@@ -3,6 +3,7 @@ package com.github.akruk.antlrxquery.semanticanalyzer;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -1173,6 +1174,33 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     @Override
     public XQuerySequenceType visitStringConstructor(final StringConstructorContext ctx) {
         return typeFactory.string();
+    }
+
+    @Override
+    public XQuerySequenceType visitInlineFunctionExpr(InlineFunctionExprContext ctx) {
+        // Is a focus function?
+        if (ctx.functionSignature() == null) {
+            // TODO: implement focus function
+            return typeFactory.anyFunction();
+        }
+        final Set<String> argumentNames = new HashSet<>();
+        final List<XQuerySequenceType> args = new ArrayList<>();
+        final var functionSignature = ctx.functionSignature();
+        final var returnTypeDeclaration = functionSignature.typeDeclaration();
+        final XQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
+        final var returnedType = (returnTypeDeclaration != null)? returnTypeDeclaration.accept(this) : zeroOrMoreItems;
+        for (final var parameter : functionSignature.paramList().varNameAndType()) {
+            final String parameterName = parameter.qname().getText();
+            final TypeDeclarationContext typeDeclaration = parameter.typeDeclaration();
+            final XQuerySequenceType parameterType = typeDeclaration != null?
+                                                        typeDeclaration.accept(this)
+                                                        : zeroOrMoreItems;
+            if (argumentNames.contains(parameterName))
+                addError(parameter, "Duplicate parameter name: " + parameterName);
+            argumentNames.add(parameterName);
+            args.add(parameterType);
+        }
+        return typeFactory.function(returnedType, args);
     }
 
 

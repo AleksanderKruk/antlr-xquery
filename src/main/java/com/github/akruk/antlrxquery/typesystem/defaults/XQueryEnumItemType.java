@@ -507,9 +507,13 @@ public class XQueryEnumItemType implements XQueryItemType {
         if (this.argumentTypes != null) {
             if (this.argumentTypes.size() != otherArgumentTypes.size())
                 return false;
-            if (IntStream.range(0, this.argumentTypes.size())
-                    .allMatch(i -> this.argumentTypes.get(i).equals(otherArgumentTypes.get(i))))
-                return false;
+            for (int i = 0; i < this.argumentTypes.size(); i++) {
+                final XQuerySequenceType thisArg = this.argumentTypes.get(i);
+                final XQuerySequenceType otherArg = otherArgumentTypes.get(i);
+                if (!thisArg.equals(otherArg)) {
+                    return false;
+                }
+            }
         }
         final XQuerySequenceType otherReturnedType = other.getReturnedType();
         return isNullableEquals(this.returnedType, otherReturnedType);

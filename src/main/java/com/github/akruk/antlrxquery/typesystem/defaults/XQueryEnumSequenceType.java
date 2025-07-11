@@ -1,6 +1,5 @@
 package com.github.akruk.antlrxquery.typesystem.defaults;
 
-import java.util.List;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 

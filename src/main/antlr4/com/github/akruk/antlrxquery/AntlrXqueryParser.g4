@@ -113,10 +113,24 @@ argumentPlaceholder: QUESTION_MARK;
 // (PositionalArguments ("," KeywordArguments)?) | KeywordArguments
 
 
-mapConstructor	:	'map'? '{' (mapConstructorEntry (',' mapConstructorEntry)*)? '}';
-mapConstructorEntry	:	mapKeyExpr ':' mapValueExpr;
+mapConstructor	: MAP? LCURLY (mapConstructorEntry (COMMA mapConstructorEntry)*)? RCURLY;
+mapConstructorEntry	:	mapKeyExpr COLON mapValueExpr;
 mapKeyExpr	:	exprSingle;
 mapValueExpr	:	exprSingle;
+
+// Array constructors
+arrayConstructor
+    : squareArrayConstructor
+    | curlyArrayConstructor
+    ;
+
+squareArrayConstructor
+    : LBRACKET (exprSingle (COMMA exprSingle)*)? RBRACKET
+    ;
+
+curlyArrayConstructor
+    : ARRAY enclosedExpr
+    ;
 
 
 
@@ -132,6 +146,7 @@ primaryExpr: literal
         // | stringInterpolation
         | stringConstructor
         | mapConstructor
+        | arrayConstructor
         | functionItemExpr;
 
 functionItemExpr    :	namedFunctionRef

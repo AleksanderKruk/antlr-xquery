@@ -54,11 +54,6 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         final XQuerySequenceType optionalItem = typeFactory.zeroOrOne(typeFactory.itemAnyItem());
         final XQuerySequenceType zeroOrMoreNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
 
-        register("fn", "position", List.of(), typeFactory.number());
-        register("fn", "last", List.of(), typeFactory.number());
-
-
-
         final XQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         final ArgumentSpecification argItems = new ArgumentSpecification("input", zeroOrMoreItems, null);
 
@@ -1367,15 +1362,60 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
 
 
 
-        // // fn:position() as xs:integer
-        // register("fn", "position",
-        //         List.of(),
-        //         typeFactory.number()));
+        // fn:position() as xs:integer
+        register("fn", "position",
+            List.of(), typeFactory.number(),
+            null,
+            true,
+            false);
 
-        // // fn:last() as xs:integer
-        // register("fn", "last",
-        //         List.of(),
-        //         typeFactory.number()));
+        // fn:last() as xs:integer
+        register("fn", "last", List.of(), typeFactory.number(), null, false, true);
+
+        // fn:current-dateTime() as xs:dateTimeStamp
+        register(
+            "fn", "current-dateTime",
+            List.of(),
+            typeFactory.string()
+        );
+
+        // fn:current-date() as xs:date
+        register(
+            "fn", "current-date",
+            List.of(),
+            typeFactory.string()
+        );
+
+        // fn:current-time() as xs:time
+        register(
+            "fn", "current-time",
+            List.of(),
+            typeFactory.string()
+        );
+
+        // fn:implicit-timezone() as xs:dayTimeDuration
+        register(
+            "fn", "implicit-timezone",
+            List.of(),
+            typeFactory.string()
+        );
+
+        // fn:default-collation() as xs:string
+        register(
+            "fn", "default-collation",
+            List.of(),
+            typeFactory.string()
+        );
+
+        // fn:default-language() as xs:language
+        register(
+            "fn", "default-language",
+            List.of(),
+            typeFactory.string()
+        );
+
+
+
 
         // // fn:function-lookup(
         // //  as xs:QName,
@@ -2680,7 +2720,13 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         stringBuilder.append(name);
         stringBuilder.append(" for arity ");
         stringBuilder.append(requiredArity);
-        stringBuilder.append((mismatchReasons.isEmpty() ? "" : ". Reasons:\n" + String.join("\n", mismatchReasons)));
+        if (!mismatchReasons.isEmpty()) {
+            for (final String reason : mismatchReasons) {
+                stringBuilder.append(System.lineSeparator());
+                stringBuilder.append("\t");
+                stringBuilder.append(reason);
+            }
+        }
         return stringBuilder.toString();
     }
 

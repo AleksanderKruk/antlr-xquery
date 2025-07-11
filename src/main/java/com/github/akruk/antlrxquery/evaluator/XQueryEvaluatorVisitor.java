@@ -35,18 +35,18 @@ import com.github.akruk.nodegetter.INodeGetter;
 import com.github.akruk.nodegetter.NodeGetter;
 
 public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
-    final XQueryValue root;
-    final Parser parser;
-    final XQueryDynamicContextManager contextManager;
-    final XQueryValueFactory valueFactory;
-    final IXQueryEvaluatingFunctionManager functionManager;
+    final private XQueryValue root;
+    final private Parser parser;
+    final private XQueryDynamicContextManager contextManager;
+    final private XQueryValueFactory valueFactory;
+    final private IXQueryEvaluatingFunctionManager functionManager;
 
-    XQueryValue matchedNodes;
-    Stream<List<TupleElement>> visitedTupleStream;
-    XQueryAxis currentAxis;
-    List<XQueryValue> visitedArgumentList;
-    XQueryVisitingContext context;
-    INodeGetter nodeGetter = new NodeGetter();
+    private XQueryValue matchedNodes;
+    private Stream<List<TupleElement>> visitedTupleStream;
+    private XQueryAxis currentAxis;
+    private List<XQueryValue> visitedArgumentList;
+    private XQueryVisitingContext context;
+    private INodeGetter nodeGetter = new NodeGetter();
     private Map<String, XQueryValue> visitedKeywordArguments;
 
     private record TupleElement(String name, XQueryValue value, String positionalName, XQueryValue index) {

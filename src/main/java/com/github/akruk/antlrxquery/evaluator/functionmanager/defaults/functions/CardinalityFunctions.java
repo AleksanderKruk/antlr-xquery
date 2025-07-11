@@ -1,7 +1,6 @@
 
 package com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -11,9 +10,7 @@ import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
 public class CardinalityFunctions {
-    private final XQueryValueFactory valueFactory;
     public CardinalityFunctions(final XQueryValueFactory valueFactory) {
-        this.valueFactory = valueFactory;
     }
 
     /**

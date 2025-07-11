@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.apache.commons.compress.harmony.pack200.NewAttributeBands.Call;
 
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQueryVisitingSemanticContext;

@@ -1,7 +1,5 @@
 package com.github.akruk.antlrxquery.evaluationfunctiontests.thematic;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import java.util.List;
 
 import org.junit.jupiter.api.Test;

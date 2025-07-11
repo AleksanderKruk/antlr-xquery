@@ -178,7 +178,6 @@ SWITCH: 'switch';
 DEFAULT: 'default';
 CASE: 'case';
 INSTANCE: 'instance';
-FN: 'fn';
 OF: 'of';
 TREAT: 'treat';
 CAST: 'cast';

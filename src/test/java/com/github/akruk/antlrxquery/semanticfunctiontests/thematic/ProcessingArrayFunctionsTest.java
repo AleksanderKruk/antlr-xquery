@@ -272,7 +272,7 @@ public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
     @Test
     public void ofMembersArray_valid() {
         assertType(
-                "array:of-members(array:members(map {'value': 1 }))",
+                "array:of-members(map {'value': 1 })",
                 typeFactory.anyArray());
     }
 
@@ -366,7 +366,7 @@ public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
     @Test
     public void sortByArray_valid() {
         assertType(
-                "array:sort-by(array{1,2}, record{ 'key':function($v){}})",
+                "array:sort-by(array{1,2}, map{ 'key':function($v){}})",
                 typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
     }
 

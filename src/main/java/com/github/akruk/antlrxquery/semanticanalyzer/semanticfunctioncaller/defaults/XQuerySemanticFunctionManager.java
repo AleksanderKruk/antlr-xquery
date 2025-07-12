@@ -2407,17 +2407,14 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
                     typeFactory.zeroOrMore(
                         typeFactory.itemRecord(
                             Map.of(
-                                "value", new XQueryRecordField(
-                                    typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-                                    true
-                                )
+                                "value", new XQueryRecordField( zeroOrMoreItems, true)
                             )
                         )
                     ),
                     null
                 )
             ),
-            typeFactory.one(typeFactory.itemAnyArray())
+            typeFactory.anyArray()
         );
 
 

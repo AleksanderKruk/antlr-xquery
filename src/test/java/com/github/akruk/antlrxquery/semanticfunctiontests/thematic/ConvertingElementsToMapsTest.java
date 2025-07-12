@@ -8,18 +8,18 @@ public class ConvertingElementsToMapsTest extends FunctionsSemanticTest {
 
     // fn:element-to-map-plan($input as (document-node()|element(*))*) as map(xs:string, record(*))
     @Test
-    public void elementToMapPlan_noArgs() {
+    public void elementToMapPlan_noElements() {
         assertType(
-            "fn:element-to-map-plan()",
-            typeFactory.one(typeFactory.itemAnyMap())
+            "fn:element-to-map-plan(())",
+            typeFactory.map(typeFactory.itemString(), typeFactory.anyMap())
         );
     }
 
     @Test
     public void elementToMapPlan_withElements() {
         assertType(
-            "fn:element-to-map-plan(<a/>, <b/>)",
-            typeFactory.one(typeFactory.itemAnyMap())
+            "let $x as element(a)* := () return fn:element-to-map-plan($x)",
+            typeFactory.map(typeFactory.itemString(), typeFactory.anyMap())
         );
     }
 
@@ -36,34 +36,34 @@ public class ConvertingElementsToMapsTest extends FunctionsSemanticTest {
 
     // fn:element-to-map($element as element()?, $options as map(*)? := {}) as map(xs:string, item()?)?
     @Test
-    public void elementToMap_noArgs() {
+    public void elementToMap_noElements() {
         assertType(
-            "fn:element-to-map()",
-            typeFactory.zeroOrOne(typeFactory.itemAnyMap())
+            "fn:element-to-map(())",
+            typeFactory.zeroOrOne(typeFactory.itemMap(typeFactory.itemString(), typeFactory.zeroOrOne(typeFactory.itemAnyItem())))
         );
     }
 
     @Test
     public void elementToMap_withElement() {
         assertType(
-            "fn:element-to-map(<x/>)",
-            typeFactory.zeroOrOne(typeFactory.itemAnyMap())
+            "let $x as element(x)? := () return fn:element-to-map($x)",
+            typeFactory.zeroOrOne(typeFactory.itemMap(typeFactory.itemString(), typeFactory.zeroOrOne(typeFactory.itemAnyItem())))
         );
     }
 
     @Test
     public void elementToMap_withElementAndOptions() {
         assertType(
-            "fn:element-to-map(<x/>, map{'a':1})",
-            typeFactory.zeroOrOne(typeFactory.itemAnyMap())
+            "fn:element-to-map((), map{'a':1})",
+            typeFactory.zeroOrOne(typeFactory.itemMap(typeFactory.itemString(), typeFactory.zeroOrOne(typeFactory.itemAnyItem())))
         );
     }
 
     @Test
     public void elementToMap_namedArgs() {
         assertType(
-            "fn:element-to-map(element := <x/>, options := map{})",
-            typeFactory.zeroOrOne(typeFactory.itemAnyMap())
+            "fn:element-to-map(element := (), options := map{})",
+            typeFactory.zeroOrOne(typeFactory.itemMap(typeFactory.itemString(), typeFactory.zeroOrOne(typeFactory.itemAnyItem())))
         );
     }
 

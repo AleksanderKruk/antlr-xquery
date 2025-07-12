@@ -2096,34 +2096,26 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         );
 
 
-        // // fn:element-to-map-plan(
-        // //  as (document-node() | element(*))*
-        // // ) as map(xs:string, record(*))
-        // ArgumentSpecification etmpInput =
-        // new ArgumentSpecification("input", true,
-        // typeFactory.zeroOrMore(typeFactory.union(
-        // typeFactory.itemDocumentNode(),
-        // typeFactory.itemElement()
-        // )));
-        // register("fn", "element-to-map-plan",
-        // List.of(etmpInput),
-        // typeFactory.one(typeFactory.itemAnyMap())
-        // );
+        // fn:element-to-map-plan(
+        //  as (document-node() | element(*))*
+        // ) as map(xs:string, record(*))
+        ArgumentSpecification etmpInput = new ArgumentSpecification("input",
+                                                                    typeFactory.zeroOrMore(typeFactory.itemAnyNode()),
+                                                                    null);
+        register("fn", "element-to-map-plan",
+            List.of(etmpInput), typeFactory.map(typeFactory.itemString(), typeFactory.anyMap())
+        );
 
-        // // fn:element-to-map(
-        // //  as element()?,
-        // //  as map(*)? := {}
-        // // ) as map(xs:string, item()?)?
-        // ArgumentSpecification etmElement =
-        // new ArgumentSpecification("element", false,
-        // typeFactory.zeroOrOne(typeFactory.itemElement()));
-        // ArgumentSpecification etmOptions =
-        // new ArgumentSpecification("options", false,
-        // typeFactory.zeroOrOne(typeFactory.itemAnyMap()));
-        // register("fn", "element-to-map",
-        // List.of(etmElement, etmOptions),
-        // typeFactory.zeroOrOne(typeFactory.itemAnyMap())
-        // );
+        // fn:element-to-map(
+        //  as element()?,
+        //  as map(*)? := {}
+        // ) as map(xs:string, item()?)?
+        ArgumentSpecification etmElement = new ArgumentSpecification("element", typeFactory.zeroOrOne(typeFactory.itemAnyNode()), null);
+        ArgumentSpecification etmOptions = new ArgumentSpecification("options", typeFactory.zeroOrOne(typeFactory.itemAnyMap()), EMPTY_MAP);
+        register("fn", "element-to-map",
+            List.of(etmElement, etmOptions),
+            typeFactory.zeroOrOne(typeFactory.itemMap(typeFactory.itemString(), typeFactory.zeroOrOne(typeFactory.itemAnyItem())))
+        );
 
         // array:append($array as array(*), $member as item()*) as array(*)
         register(

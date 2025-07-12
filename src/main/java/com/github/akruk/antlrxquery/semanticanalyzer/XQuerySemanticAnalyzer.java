@@ -1193,8 +1193,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         final var functionSignature = ctx.functionSignature();
         final var returnTypeDeclaration = functionSignature.typeDeclaration();
         final XQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
-        final var returnedType = (returnTypeDeclaration != null) ? returnTypeDeclaration.accept(this)
-                : zeroOrMoreItems;
         contextManager.enterScope();
         for (final var parameter : functionSignature.paramList().varNameAndType()) {
             final String parameterName = parameter.qname().getText();
@@ -1208,13 +1206,20 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             contextManager.entypeVariable(parameterName, parameterType);
         }
         final var inlineType = ctx.functionBody().enclosedExpr().accept(this);
-        if (!inlineType.isSubtypeOf(returnedType)) {
-            final String msg = String.format(
-                    "Function body type %s is not a subtype of the declared return type %s",
-                    inlineType.toString(), returnedType.toString());
-            addError(ctx.functionBody(), msg);
+        var returnedType = (returnTypeDeclaration != null) ? returnTypeDeclaration.accept(this)
+                : inlineType;
+        if (returnTypeDeclaration != null) {
+            returnedType = returnTypeDeclaration.accept(this);
+            if (!inlineType.isSubtypeOf(returnedType)) {
+                final String msg = String.format(
+                        "Function body type %s is not a subtype of the declared return type %s",
+                        inlineType.toString(), returnedType.toString());
+                addError(ctx.functionBody(), msg);
+            }
+        } else {
+            returnedType = inlineType;
         }
-
+        
         contextManager.leaveScope();
         return typeFactory.function(returnedType, args);
     }

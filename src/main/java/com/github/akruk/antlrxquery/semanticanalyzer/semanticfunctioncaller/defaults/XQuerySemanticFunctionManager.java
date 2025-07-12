@@ -37,6 +37,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
     private static final ParseTree EMPTY_STRING = XQuerySemanticFunctionManager.getTree("\"\"", (parser)->parser.literal());
     private static final ParseTree EMPTY_MAP = getTree("map {}", parser -> parser.mapConstructor());
     private static final ParseTree IDENTITY$1 = XQuerySemanticFunctionManager.getTree("fn:identity#1", p->p.namedFunctionRef());
+    private static final ParseTree DATA$1 = XQuerySemanticFunctionManager.getTree("fn:data#1", p->p.namedFunctionRef());
 
     public interface XQuerySemanticFunction {
         public AnalysisResult call(final XQueryTypeFactory typeFactory,
@@ -2111,406 +2112,409 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // List.of(etmElement, etmOptions),
         // typeFactory.zeroOrOne(typeFactory.itemAnyMap())
         // );
-        // // array:append(
-        // //  as array(*),
-        // //  as item()*
-        // // ) as array(*)
-        // ArgumentSpecification appendArr =
-        // new ArgumentSpecification("array", true,
-        // typeFactory.one(typeFactory.itemAnyArray()));
-        // ArgumentSpecification appendMember =
-        // new ArgumentSpecification("member", true,
-        // typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("array", "append",
-        // List.of(appendArr, appendMember),
-        // typeFactory.one(typeFactory.itemAnyArray())
-        // );
 
-        // // array:build(
-        // //  as item()*,
-        // //  as fn(item(), xs:integer) as item()* := fn:identity#1
-        // // ) as array(*)
-        // ArgumentSpecification buildInput =
-        // new ArgumentSpecification("input", true,
-        // typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // ArgumentSpecification buildAction =
-        // new ArgumentSpecification("action", false,
-        // typeFactory.zeroOrOne(typeFactory.itemFunction()));
-        // register("array", "build",
-        // List.of(buildInput, buildAction),
-        // typeFactory.one(typeFactory.itemAnyArray())
-        // );
+        // array:append($array as array(*), $member as item()*) as array(*)
+        register(
+            "array", "append",
+            List.of(
+                new ArgumentSpecification(
+                    "array",
+                    typeFactory.one(typeFactory.itemAnyArray()),
+                    null
+                ),
+                new ArgumentSpecification(
+                    "member",
+                    typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                    null
+                )
+            ),
+            typeFactory.one(typeFactory.itemAnyArray())
+        );
 
-        // // array:empty( as array(*)) as xs:boolean
-        // ArgumentSpecification emptyArr =
-        // new ArgumentSpecification("array", true,
-        // typeFactory.one(typeFactory.itemAnyArray()));
-        // register("array", "empty",
-        // List.of(emptyArr),
-        // typeFactory.boolean_()
-        // );
+        // array:build($input as item()*, $action as function(item(), xs:integer) as item()* := fn:identity#1) as array(*)
+        register(
+            "array", "build",
+            List.of(
+                new ArgumentSpecification(
+                    "input",
+                    typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                    null
+                ),
+                new ArgumentSpecification(
+                    "action",
+                    typeFactory.zeroOrOne(typeFactory.itemFunction(zeroOrMoreItems, List.of(typeFactory.anyItem(), typeFactory.number()))),
+                    IDENTITY$1
+                )
+            ),
+            typeFactory.one(typeFactory.itemAnyArray())
+        );
 
-        // // array:filter(
-        // //  as array(*),
-        // //  as fn(item(), xs:integer) as xs:boolean?
-        // // ) as array(*)
-        // ArgumentSpecification filterArr =
-        // new ArgumentSpecification("array", true,
-        // typeFactory.one(typeFactory.itemAnyArray()));
-        // ArgumentSpecification filterPred =
-        // new ArgumentSpecification("predicate", true,
-        // typeFactory.one(typeFactory.itemFunction()));
-        // register("array", "filter",
-        // List.of(filterArr, filterPred),
-        // typeFactory.one(typeFactory.itemAnyArray())
-        // );
+        // array:empty($array as array(*)) as xs:boolean
+        register(
+            "array", "empty",
+            List.of(
+                new ArgumentSpecification(
+                    "array",
+                    typeFactory.one(typeFactory.itemAnyArray()),
+                    null
+                )
+            ),
+            typeFactory.boolean_()
+        );
 
-        // // array:flatten( as item()) as item()*
-        // ArgumentSpecification flattenInput =
-        // new ArgumentSpecification("input", true,
-        // typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("array", "flatten",
-        // List.of(flattenInput),
-        // typeFactory.zeroOrMore(typeFactory.itemAnyItem())
-        // );
+        // array:filter($array as array(*), $predicate as function(item(), xs:integer) as xs:boolean?) as array(*)
+        final XQueryItemType itemIntegerActionFunction = typeFactory.itemFunction(optionalBoolean, List.of(typeFactory.anyItem(), typeFactory.number()));
+        register(
+            "array", "filter",
+            List.of(
+                new ArgumentSpecification(
+                    "array",
+                    typeFactory.one(typeFactory.itemAnyArray()),
+                    null
+                ),
+                new ArgumentSpecification(
+                    "predicate",
+                    typeFactory.one(itemIntegerActionFunction),
+                    null
+                )
+            ),
+            typeFactory.one(typeFactory.itemAnyArray())
+        );
 
-        // // array:fold-left(
-        // //  as array(*),
-        // //  as item()*,
-        // //  as fn(item(), item()*) as item()*
-        // // ) as item()*
-        // ArgumentSpecification foldLArr =
-        // new ArgumentSpecification("array", true,
-        // typeFactory.one(typeFactory.itemAnyArray()));
-        // ArgumentSpecification foldLInit =
-        // new ArgumentSpecification("init", true,
-        // typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // ArgumentSpecification foldLAction =
-        // new ArgumentSpecification("action", true,
-        // typeFactory.one(typeFactory.itemFunction()));
-        // register("array", "fold-left",
-        // List.of(foldLArr, foldLInit, foldLAction),
-        // typeFactory.zeroOrMore(typeFactory.itemAnyItem())
-        // );
+        // array:flatten($input as item()) as item()*
+        register(
+            "array", "flatten",
+            List.of(
+                new ArgumentSpecification(
+                    "input",
+                    typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                    null
+                )
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+        );
 
-        // // array:fold-right(
-        // //  as array(*),
-        // //  as item()*,
-        // //  as fn(item(), item()*) as item()*
-        // // ) as item()*
-        // ArgumentSpecification foldRArr =
-        // new ArgumentSpecification("array", true,
-        // typeFactory.one(typeFactory.itemAnyArray()));
-        // ArgumentSpecification foldRInit =
-        // new ArgumentSpecification("init", true,
-        // typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // ArgumentSpecification foldRAction =
-        // new ArgumentSpecification("action", true,
-        // typeFactory.one(typeFactory.itemFunction()));
-        // register("array", "fold-right",
-        // List.of(foldRArr, foldRInit, foldRAction),
-        // typeFactory.zeroOrMore(typeFactory.itemAnyItem())
-        // );
+        // array:fold-left($array as array(*), $init as item()*, $action as function(item(), item()*) as item()*) as item()*
+        final XQueryItemType function_anyItem_zeroOrMoreItems$zeroOrMoreItems = typeFactory.itemFunction(zeroOrMoreItems, List.of(typeFactory.anyItem(), zeroOrMoreItems));
+        register(
+            "array", "fold-left",
+            List.of(
+                new ArgumentSpecification(
+                    "array",
+                    typeFactory.one(typeFactory.itemAnyArray()),
+                    null
+                ),
+                new ArgumentSpecification(
+                    "init",
+                    typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                    null
+                ),
+                new ArgumentSpecification(
+                    "action",
+                    typeFactory.one(function_anyItem_zeroOrMoreItems$zeroOrMoreItems),
+                    null
+                )
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+        );
 
-        // // array:foot( as array(*)) as item()*
-        // ArgumentSpecification footArr =
-        // new ArgumentSpecification("array", true,
-        // typeFactory.one(typeFactory.itemAnyArray()));
-        // register("array", "foot",
-        // List.of(footArr),
-        // typeFactory.zeroOrMore(typeFactory.itemAnyItem())
-        // );
+        // array:fold-right($array as array(*), $init as item()*, $action as function(item(), item()*) as item()*) as item()*
+        register(
+            "array", "fold-right",
+            List.of(
+                new ArgumentSpecification(
+                    "array",
+                    typeFactory.one(typeFactory.itemAnyArray()),
+                    null
+                ),
+                new ArgumentSpecification(
+                    "init",
+                    typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                    null
+                ),
+                new ArgumentSpecification(
+                    "action",
+                    typeFactory.one(function_anyItem_zeroOrMoreItems$zeroOrMoreItems),
+                    null
+                )
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+        );
 
-        // // array:for-each(
-        // //  as array(*),
-        // //  as fn(item(), xs:integer) as item()*
-        // // ) as array(*)
-        // ArgumentSpecification feArr =
-        // new ArgumentSpecification("array", true,
-        // typeFactory.one(typeFactory.itemAnyArray()));
-        // ArgumentSpecification feAction =
-        // new ArgumentSpecification("action", true,
-        // typeFactory.one(typeFactory.itemFunction()));
-        // register("array", "for-each",
-        // List.of(feArr, feAction),
-        // typeFactory.one(typeFactory.itemAnyArray())
-        // );
+        // array:foot($array as array(*)) as item()*
+        register(
+            "array", "foot",
+            List.of(
+                new ArgumentSpecification(
+                    "array",
+                    typeFactory.one(typeFactory.itemAnyArray()),
+                    null
+                )
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+        );
 
-        // // array:for-each-pair(
-        // //  as array(*),
-        // //  as array(*),
-        // //  as fn(item(), item(), xs:integer) as item()*
-        // // ) as array(*)
-        // ArgumentSpecification fepArr1 =
-        // new ArgumentSpecification("array1", true,
-        // typeFactory.one(typeFactory.itemAnyArray()));
-        // ArgumentSpecification fepArr2 =
-        // new ArgumentSpecification("array2", true,
-        // typeFactory.one(typeFactory.itemAnyArray()));
-        // ArgumentSpecification fepAction =
-        // new ArgumentSpecification("action", true,
-        // typeFactory.one(typeFactory.itemFunction()));
-        // register("array", "for-each-pair",
-        // List.of(fepArr1, fepArr2, fepAction),
-        // typeFactory.one(typeFactory.itemAnyArray())
-        // );
+        // array:for-each($array as array(*),
+        //                $action as function(item()*, xs:integer) as item()*
+        // ) as array(*)
+        final XQueryItemType function_zeroOrMoreItems_number$zeroOrMoreItems = typeFactory.itemFunction(zeroOrMoreItems, List.of(zeroOrMoreItems, typeFactory.number()));
+        register(
+            "array", "for-each",
+            List.of(
+                new ArgumentSpecification(
+                    "array",
+                    typeFactory.one(typeFactory.itemAnyArray()),
+                    null
+                ),
+                new ArgumentSpecification(
+                    "action",
+                    typeFactory.one(function_zeroOrMoreItems_number$zeroOrMoreItems),
+                    null
+                )
+            ),
+            typeFactory.one(typeFactory.itemAnyArray())
+        );
 
-        // // array:get( as array(*),  as xs:integer) as item()*
-        // final ArgumentSpecification getArr = new ArgumentSpecification("array", true,
-        //         typeFactory.one(typeFactory.itemAnyArray()));
-        // final ArgumentSpecification getPos = new ArgumentSpecification("position", true,
-        //         typeFactory.number()));
-        // register("array", "get",
-        //         List.of(getArr, getPos),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+        // array:for-each-pair($array1 as array(*), $array2 as array(*), $action as function(item(), item(), xs:integer) as item()*) as array(*)
+        register(
+            "array", "for-each-pair",
+            List.of(
+                new ArgumentSpecification(
+                    "array1",
+                    typeFactory.one(typeFactory.itemAnyArray()),
+                    null
+                ),
+                new ArgumentSpecification(
+                    "array2",
+                    typeFactory.one(typeFactory.itemAnyArray()),
+                    null
+                ),
+                new ArgumentSpecification(
+                    "action",
+                    typeFactory.one(typeFactory.itemFunction(zeroOrMoreItems, List.of(typeFactory.anyItem(), typeFactory.anyItem(), typeFactory.number()))),
+                    null
+                )
+            ),
+            typeFactory.one(typeFactory.itemAnyArray())
+        );
 
-        // // array:get(
-        // //  as array(*),
-        // //  as xs:integer,
-        // //  as item()*
-        // // ) as item()*
-        // final ArgumentSpecification getArrDef = new ArgumentSpecification("array", true,
-        //         typeFactory.one(typeFactory.itemAnyArray()));
-        // final ArgumentSpecification getPosDef = new ArgumentSpecification("position", true,
-        //         typeFactory.number()));
-        // final ArgumentSpecification getDefault = new ArgumentSpecification("default", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("array", "get",
-        //         List.of(getArrDef, getPosDef, getDefault),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+        // array:get($array as array(*), $position as xs:integer) as item()*
+        register(
+            "array", "get",
+            List.of(
+                new ArgumentSpecification(
+                    "array",
+                    typeFactory.one(typeFactory.itemAnyArray()),
+                    null
+                ),
+                new ArgumentSpecification(
+                    "position",
+                    typeFactory.one(typeFactory.itemNumber()),
+                    null
+                )
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+        );
 
-        // // array:head( as array(*)) as item()*
-        // final ArgumentSpecification headArr = new ArgumentSpecification("array", true,
-        //         typeFactory.one(typeFactory.itemAnyArray()));
-        // register("array", "head",
-        //         List.of(headArr),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+        // array:get($array as array(*), $position as xs:integer, $default as item()*) as item()*
+        register(
+            "array", "get",
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
+                new ArgumentSpecification("position", typeFactory.one(typeFactory.itemNumber()), null),
+                new ArgumentSpecification("default", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null)
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+        );
 
-        // // array:index-of(
-        // //  as array(*),
-        // //  as item()*,
-        // //  as xs:string? := fn:default-collation()
-        // // ) as xs:integer*
-        // final ArgumentSpecification aioArray = new ArgumentSpecification("array", true,
-        //         typeFactory.one(typeFactory.itemAnyArray()));
-        // final ArgumentSpecification aioTarget = new ArgumentSpecification("target", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification aioCollation = new ArgumentSpecification("collation", false,
-        //         optionalString));
-        // register("array", "index-of",
-        //         List.of(aioArray, aioTarget, aioCollation),
-        //         typeFactory.zeroOrMore(typeFactory.itemNumber()));
+        // array:head($array as array(*)) as item()*
+        register(
+            "array", "head",
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+        );
 
-        // // array:index-where(
-        // //  as array(*),
-        // //  as fn(item(), xs:integer) as xs:boolean?
-        // // ) as xs:integer*
-        // final ArgumentSpecification aiwArray = new ArgumentSpecification("array", true,
-        //         typeFactory.one(typeFactory.itemAnyArray()));
-        // final ArgumentSpecification aiwPred = new ArgumentSpecification("predicate", true,
-        //         typeFactory.one(predicateItem));
-        // register("array", "index-where",
-        //         List.of(aiwArray, aiwPred),
-        //         typeFactory.zeroOrMore(typeFactory.itemNumber()));
+        // array:index-of($array as array(*), $target as item()*, $collation as xs:string? := fn:default-collation()) as xs:integer*
+        register(
+            "array", "index-of",
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
+                new ArgumentSpecification("target", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+                new ArgumentSpecification("collation", typeFactory.zeroOrOne(typeFactory.itemString()), DEFAULT_COLLATION)
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemNumber())
+        );
 
-        // // array:insert-before(
-        // //  as array(*),
-        // //  as xs:integer,
-        // //  as item()*
-        // // ) as array(*)
-        // final ArgumentSpecification aibArray = new ArgumentSpecification("array", true,
-        //         typeFactory.one(typeFactory.itemAnyArray()));
-        // final ArgumentSpecification aibPosition = new ArgumentSpecification("position", true,
-        //         typeFactory.number()));
-        // final ArgumentSpecification aibMember = new ArgumentSpecification("member", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("array", "insert-before",
-        //         List.of(aibArray, aibPosition, aibMember),
-        //         typeFactory.one(typeFactory.itemAnyArray()));
+        final XQueryItemType integerPredicate = typeFactory.itemFunction(optionalBoolean, List.of(typeFactory.anyItem(), typeFactory.number()));
+        // array:index-where($array as array(*), $predicate as function(item(), xs:integer) as xs:boolean?) as xs:integer*
+        register(
+            "array", "index-where",
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
+                new ArgumentSpecification("predicate", typeFactory.one(integerPredicate), null)
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemNumber())
+        );
 
-        // // array:items(
-        // //  as array(*)
-        // // ) as item()*
-        // final ArgumentSpecification aitArray = new ArgumentSpecification("array", true,
-        //         typeFactory.one(typeFactory.itemAnyArray()));
-        // register("array", "items",
-        //         List.of(aitArray),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+        // array:insert-before($array as array(*), $position as xs:integer, $member as item()*) as array(*)
+        register(
+            "array", "insert-before",
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
+                new ArgumentSpecification("position", typeFactory.one(typeFactory.itemNumber()), null),
+                new ArgumentSpecification("member", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null)
+            ),
+            typeFactory.one(typeFactory.itemAnyArray())
+        );
 
-        // // array:join(
-        // //  as array(*)*,
-        // //  as array(*)? := ()
-        // // ) as array(*)
-        // final ArgumentSpecification ajgArrays = new ArgumentSpecification("arrays", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyArray()));
-        // final ArgumentSpecification ajgSep = new ArgumentSpecification("separator", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyArray()));
-        // register("array", "join",
-        //         List.of(ajgArrays, ajgSep),
-        //         typeFactory.one(typeFactory.itemAnyArray()));
+        // array:items($array as array(*)) as item()*
+        register(
+            "array", "items",
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+        );
 
-        // // // array:members(
-        // // //  as array(*)
-        // // // ) as record(value as item())*
-        // // ArgumentSpecification amMembers =
-        // // new ArgumentSpecification("array", true,
-        // // typeFactory.one(typeFactory.itemAnyArray()));
-        // // register("array", "members",
-        // // List.of(amMembers),
-        // // typeFactory.zeroOrMore(
-        // // typeFactory.mapOf(
-        // // typeFactory.itemString(),
-        // // typeFactory.zeroOrMore(typeFactory.itemAnyItem())
-        // // )
-        // // )
-        // // );
+        // array:join($arrays as array(*)*, $separator as array(*)? := ()) as array(*)
+        register(
+            "array", "join",
+            List.of(
+                new ArgumentSpecification("arrays", typeFactory.zeroOrMore(typeFactory.itemAnyArray()), null),
+                new ArgumentSpecification("separator", typeFactory.zeroOrOne(typeFactory.itemAnyArray()), EMPTY_SEQUENCE)
+            ),
+            typeFactory.one(typeFactory.itemAnyArray())
+        );
 
-        // // // array:of-members(
-        // // //  as record(value as item())*
-        // // // ) as array(*)
-        // // ArgumentSpecification aomInput =
-        // // new ArgumentSpecification("input", true,
-        // // typeFactory.zeroOrMore(
-        // // typeFactory.itemRecord()
-        // // ));
-        // // register("array", "of-members",
-        // // List.of(aomInput),
-        // // typeFactory.one(typeFactory.itemAnyArray())
-        // // );
+        // array:put($array as array(*), $position as xs:integer, $member as item()*) as array(*)
+        register(
+            "array", "put",
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
+                new ArgumentSpecification("position", typeFactory.one(typeFactory.itemNumber()), null),
+                new ArgumentSpecification("member", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null)
+            ),
+            typeFactory.one(typeFactory.itemAnyArray())
+        );
 
-        // // array:put(
-        // //  as array(*),
-        // //  as xs:integer,
-        // //  as item()*
-        // // ) as array(*)
-        // final ArgumentSpecification apArray = new ArgumentSpecification("array", true,
-        //         typeFactory.one(typeFactory.itemAnyArray()));
-        // final ArgumentSpecification apPosition = new ArgumentSpecification("position", true,
-        //         typeFactory.number()));
-        // final ArgumentSpecification apMember = new ArgumentSpecification("member", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("array", "put",
-        //         List.of(apArray, apPosition, apMember),
-        //         typeFactory.one(typeFactory.itemAnyArray()));
+        // array:remove($array as array(*), $positions as xs:integer*) as array(*)
+        register(
+            "array", "remove",
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
+                new ArgumentSpecification("positions", typeFactory.zeroOrMore(typeFactory.itemNumber()), null)
+            ),
+            typeFactory.one(typeFactory.itemAnyArray())
+        );
 
-        // // array:remove(
-        // //  as array(*),
-        // //  as xs:integer*
-        // // ) as array(*)
-        // final ArgumentSpecification arArray = new ArgumentSpecification("array", true,
-        //         typeFactory.one(typeFactory.itemAnyArray()));
-        // final ArgumentSpecification arPositions = new ArgumentSpecification("positions", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemNumber()));
-        // register("array", "remove",
-        //         List.of(arArray, arPositions),
-        //         typeFactory.one(typeFactory.itemAnyArray()));
+        // array:reverse($array as array(*)) as array(*)
+        register(
+            "array", "reverse",
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
+            ),
+            typeFactory.one(typeFactory.itemAnyArray())
+        );
 
-        // // array:reverse(
-        // //  as array(*)
-        // // ) as array(*)
-        // final ArgumentSpecification arRevArray = new ArgumentSpecification("array", true,
-        //         typeFactory.one(typeFactory.itemAnyArray()));
-        // register("array", "reverse",
-        //         List.of(arRevArray),
-        //         typeFactory.one(typeFactory.itemAnyArray()));
+        // array:size($array as array(*)) as xs:integer
+        register(
+            "array", "size",
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
+            ),
+            typeFactory.one(typeFactory.itemNumber())
+        );
 
-        // // array:size(
-        // //  as array(*)
-        // // ) as xs:integer
-        // final ArgumentSpecification aszArray = new ArgumentSpecification("array", true,
-        //         typeFactory.one(typeFactory.itemAnyArray()));
-        // register("array", "size",
-        //         List.of(aszArray),
-        //         typeFactory.number()));
+        // array:slice($array as array(*), $start as xs:integer? := (), $end as xs:integer? := (), $step as xs:integer? := ()) as array(*)
+        register(
+            "array", "slice",
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
+                new ArgumentSpecification("start", typeFactory.zeroOrOne(typeFactory.itemNumber()), EMPTY_SEQUENCE),
+                new ArgumentSpecification("end", typeFactory.zeroOrOne(typeFactory.itemNumber()), EMPTY_SEQUENCE),
+                new ArgumentSpecification("step", typeFactory.zeroOrOne(typeFactory.itemNumber()), EMPTY_SEQUENCE)
+            ),
+            typeFactory.one(typeFactory.itemAnyArray())
+        );
 
-        // // array:slice(
-        // //  as array(*),
-        // //  as xs:integer? := (),
-        // //  as xs:integer? := (),
-        // //  as xs:integer? := ()
-        // // ) as array(*)
-        // final ArgumentSpecification aslArray = new ArgumentSpecification("array", true,
-        //         typeFactory.one(typeFactory.itemAnyArray()));
-        // final ArgumentSpecification aslStart = new ArgumentSpecification("start", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        // final ArgumentSpecification aslEnd = new ArgumentSpecification("end", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        // final ArgumentSpecification aslStep = new ArgumentSpecification("step", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        // register("array", "slice",
-        //         List.of(aslArray, aslStart, aslEnd, aslStep),
-        //         typeFactory.one(typeFactory.itemAnyArray()));
+        // array:sort($array as array(*), $collation as xs:string? := fn:default-collation(), $key as function(item()*) as xs:anyAtomicType* := fn:data#1) as array(*)
+        register(
+            "array", "sort",
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
+                new ArgumentSpecification("collation", typeFactory.zeroOrOne(typeFactory.itemString()), DEFAULT_COLLATION),
+                new ArgumentSpecification("key",
+                    typeFactory.zeroOrOne(typeFactory.itemFunction(zeroOrMoreItems, List.of(zeroOrMoreItems))),
+                    DATA$1)
+            ),
+            typeFactory.one(typeFactory.itemAnyArray())
+        );
 
-        // // // array:sort(
-        // // //  as array(*),
-        // // //  as xs:string? := fn:default-collation(),
-        // // //  as fn(item()*) as xs:anyAtomicType* := fn:data#1
-        // // // ) as array(*)
-        // // ArgumentSpecification asrArray =
-        // // new ArgumentSpecification("array", true,
-        // // typeFactory.one(typeFactory.itemAnyArray()));
-        // // ArgumentSpecification asrColl =
-        // // new ArgumentSpecification("collation", false,
-        // // optionalString));
-        // // ArgumentSpecification asrKey =
-        // // new ArgumentSpecification("key", false,
-        // // typeFactory.zeroOrOne(typeFactory.itemFunction()));
-        // // register("array", "sort",
-        // // List.of(asrArray, asrColl, asrKey),
-        // // typeFactory.one(typeFactory.itemAnyArray())
-        // // );
 
-        // // // array:sort-by(
-        // // //  as array(*),
-        // // //  as record(
-        // // // key? as fn(item()*) as xs:anyAtomicType*,
-        // // // collation? as xs:string?,
-        // // // order? as enum('ascending','descending')?
-        // // // )*
-        // // // ) as item()*
-        // // ArgumentSpecification asbArray =
-        // // new ArgumentSpecification("array", true,
-        // // typeFactory.one(typeFactory.itemAnyArray()));
-        // // ArgumentSpecification asbKeys =
-        // // new ArgumentSpecification("keys", true,
-        // // typeFactory.zeroOrMore(typeFactory.itemRecord()));
-        // // register("array", "sort-by",
-        // // List.of(asbArray, asbKeys),
-        // // typeFactory.zeroOrMore(typeFactory.itemAnyItem())
-        // // );
+        // array:sort-by(
+        // $array	as item()*,
+        // $keys	as record(key? as (fn(item()*) as xs:anyAtomicType*)?,
+        //                    collation? as xs:string?,
+        //                    order? as enum('ascending', 'descending')?)*
+        // ) as item()*
 
-        // // array:split( as array(*)) as array(*)*
-        // final ArgumentSpecification splitArray = new ArgumentSpecification("array", true,
-        //         typeFactory.one(typeFactory.itemAnyArray()));
-        // register("array", "split",
-        //         List.of(splitArray),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyArray()));
+        final var keyType = typeFactory.zeroOrOne(typeFactory.itemFunction(zeroOrMoreItems, List.of(zeroOrMoreItems)));
+        final var orderType = typeFactory.zeroOrOne(typeFactory.itemEnum(Set.of("ascending", "descending")));
+        final var keysItemType = typeFactory.itemRecord(
+                    Map.of(
+                        "key", new XQueryRecordField(keyType, true),
+                        "collation", new XQueryRecordField(optionalString, true),
+                        "order", new XQueryRecordField(orderType, true)
+                    ));
 
-        // // array:subarray( as array(*),  as xs:integer,  as
-        // // xs:integer? := ()) as array(*)
-        // final ArgumentSpecification subarrayArr = new ArgumentSpecification("array", true,
-        //         typeFactory.one(typeFactory.itemAnyArray()));
-        // final ArgumentSpecification subarrayStart = new ArgumentSpecification("start", true,
-        //         typeFactory.number()));
-        // final ArgumentSpecification subarrayLength = new ArgumentSpecification("length", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        // register("array", "subarray",
-        //         List.of(subarrayArr, subarrayStart, subarrayLength),
-        //         typeFactory.one(typeFactory.itemAnyArray()));
+        final var keysType = typeFactory.zeroOrMore(keysItemType);
 
-        // // array:tail( as array(*)) as array(*)
-        // final ArgumentSpecification arrayTail = new ArgumentSpecification("array", true,
-        //         typeFactory.one(typeFactory.itemAnyArray()));
-        // register("array", "tail",
-        //         List.of(arrayTail),
-        //         typeFactory.one(typeFactory.itemAnyArray()));
+        List<ArgumentSpecification> sortByArgs = List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
+                new ArgumentSpecification("keys", keysType, null));
 
-        // // array:trunk( as array(*)) as array(*)
-        // final ArgumentSpecification arrayTrunk = new ArgumentSpecification("array", true,
-        //         typeFactory.one(typeFactory.itemAnyArray()));
-        // register("array", "trunk",
-        //         List.of(arrayTrunk),
-        //         typeFactory.one(typeFactory.itemAnyArray()));
+
+        register("array", "sort-by", sortByArgs, zeroOrMoreItems);
+
+        // array:split($array as array(*)) as array(*)*
+        register(
+            "array", "split",
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyArray())
+        );
+
+        // array:subarray($array as array(*), $start as xs:integer, $length as xs:integer? := ()) as array(*)
+        register(
+            "array", "subarray",
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
+                new ArgumentSpecification("start", typeFactory.one(typeFactory.itemNumber()), null),
+                new ArgumentSpecification("length", typeFactory.zeroOrOne(typeFactory.itemNumber()), EMPTY_SEQUENCE)
+            ),
+            typeFactory.one(typeFactory.itemAnyArray())
+        );
+
+        // array:tail($array as array(*)) as array(*)
+        register(
+            "array", "tail",
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
+            ),
+            typeFactory.one(typeFactory.itemAnyArray())
+        );
+
+        // array:trunk($array as array(*)) as array(*)
+        register(
+            "array", "trunk",
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
+            ),
+            typeFactory.one(typeFactory.itemAnyArray())
+        );
 
         // // fn:type-of( as item()*) as xs:string
         // final ArgumentSpecification typeOfValue = new ArgumentSpecification("value", true,

@@ -26,7 +26,6 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
 
     private final Map<XQuerySequenceType, XQuerySequenceType> arrays = new HashMap<>();
     private final Map<XQueryItemType, Map<XQuerySequenceType, XQuerySequenceType>> maps=new HashMap<>();
-    private final Map<XQuerySequenceType, XQuerySequenceType> functions = new HashMap<>();
     private final Map<Set<String>, XQueryItemType> enums = new HashMap<>();
     private final Map<Set<String>, XQueryEnumItemType> elementTypes = new HashMap<>();
     private final Map<XQueryItemType, XQuerySequenceType> oneTypes = new HashMap<>();
@@ -201,9 +200,7 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
 
     @Override
     public XQuerySequenceType function(final XQuerySequenceType returnType, final List<XQuerySequenceType> argumentTypes) {
-        return functions.computeIfAbsent(returnType, _ -> {
-            return one(itemFunction(returnType, argumentTypes));
-        });
+        return one(itemFunction(returnType, argumentTypes));
     }
 
     @Override

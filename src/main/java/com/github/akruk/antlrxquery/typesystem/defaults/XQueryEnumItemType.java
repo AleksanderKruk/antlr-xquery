@@ -148,7 +148,6 @@ public class XQueryEnumItemType implements XQueryItemType {
         }
 
 
-
         BinaryOperator<XQueryItemType> elementSequenceMerger = (x, y) -> {
             var els1 = ((XQueryEnumItemTypeElement) x).getElementNames();
             var els2 = ((XQueryEnumItemTypeElement) y).getElementNames();
@@ -243,8 +242,8 @@ public class XQueryEnumItemType implements XQueryItemType {
             if (i == ANY_MAP) continue;
             if (i == MAP) continue;
             if (i == ANY_ARRAY) continue;
-            sequenceItemMerger[ANY_ARRAY][i] = simpleChoice;
-            sequenceItemMerger[i][ANY_ARRAY] = simpleChoice;
+            sequenceItemMerger[ARRAY][i] = simpleChoice;
+            sequenceItemMerger[i][ARRAY] = simpleChoice;
         }
         final BinaryOperator<XQueryItemType> arrayMerging = (x, y) -> {
             final var x_ = (XQueryEnumItemTypeArray) x;

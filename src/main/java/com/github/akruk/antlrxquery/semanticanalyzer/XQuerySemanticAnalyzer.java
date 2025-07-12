@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -31,6 +32,7 @@ import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper.XQuery
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeEnum;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
@@ -824,6 +826,18 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
                 .map(e -> e.mapKeyExpr().accept(this).getItemType())
                 .reduce((t1, t2) -> t1.alternativeMerge(t2))
                 .get();
+        if (keyType instanceof XQueryEnumItemTypeEnum) {
+            final var enum_ = (XQueryEnumItemTypeEnum) keyType;
+            final var enumMembers = enum_.getEnumMembers();
+            final List<Entry<String, XQueryRecordField>> recordEntries = new ArrayList<>(enumMembers.size());
+            int i = 0;
+            for (final var enumMember : enumMembers) {
+                var valueType = entries.get(i).mapValueExpr().accept(this);
+                recordEntries.add(Map.entry(enumMember, new XQueryRecordField(valueType, true)));
+                i++;
+            }
+            return typeFactory.record(Map.ofEntries(recordEntries.toArray(Entry[]::new)));
+        }
         // TODO: refine
         XQuerySequenceType valueType = entries.stream()
                 .map(e -> e.mapValueExpr().accept(this))
@@ -1219,7 +1233,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         } else {
             returnedType = inlineType;
         }
-        
+
         contextManager.leaveScope();
         return typeFactory.function(returnedType, args);
     }

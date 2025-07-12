@@ -2547,18 +2547,11 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
             typeFactory.one(typeFactory.itemAnyArray())
         );
 
-        // // fn:type-of( as item()*) as xs:string
-        // final ArgumentSpecification typeOfValue = new ArgumentSpecification("value", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // register("fn", "type-of",
-        //         List.of(typeOfValue),
-        //         typeFactory.string());
-        // // xs:unsignedInt( as xs:anyAtomicType? := .) as xs:unsignedInt?
-        // final ArgumentSpecification unsignedIntArg = new ArgumentSpecification("arg", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
-        // register("xs", "unsignedInt",
-        //         List.of(unsignedIntArg),
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
+        // fn:type-of( as item()*) as xs:string
+        final ArgumentSpecification typeOfValue = new ArgumentSpecification("value", zeroOrMoreItems, null);
+        register("fn", "type-of",
+                List.of(typeOfValue),
+                typeFactory.string());
 
         // // xs:string( as xs:anyAtomicType? := .) as xs:string?
         // final ArgumentSpecification castStringValue = new ArgumentSpecification("value", false,

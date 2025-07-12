@@ -27,7 +27,7 @@ public class InlineFunctionsTest extends SemanticTests {
         assertType(
             "fn($a, $b) {}",
             typeFactory.function(
-                typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                typeFactory.emptySequence(),
                 List.of(
                     typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
                     typeFactory.zeroOrMore(typeFactory.itemAnyItem())

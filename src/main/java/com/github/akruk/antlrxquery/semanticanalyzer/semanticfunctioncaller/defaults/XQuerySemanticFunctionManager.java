@@ -38,7 +38,10 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
     private static final ParseTree EMPTY_MAP = getTree("map {}", parser -> parser.mapConstructor());
     private static final ParseTree IDENTITY$1 = XQuerySemanticFunctionManager.getTree("fn:identity#1", p->p.namedFunctionRef());
     private static final ParseTree IDENTITY$2 = XQuerySemanticFunctionManager.getTree("fn:identity#2", p->p.namedFunctionRef());
+    private static final ParseTree BOOLEAN$1 = XQuerySemanticFunctionManager.getTree("fn:boolean#1", p->p.namedFunctionRef());
     private static final ParseTree DATA$1 = XQuerySemanticFunctionManager.getTree("fn:data#1", p->p.namedFunctionRef());
+    private static final ParseTree TRUE$0 = XQuerySemanticFunctionManager.getTree("fn:true#0", p->p.namedFunctionRef());
+    private static final ParseTree FALSE$0 = XQuerySemanticFunctionManager.getTree("fn:false#0", p->p.namedFunctionRef());
 
     public interface XQuerySemanticFunction {
         public AnalysisResult call(final XQueryTypeFactory typeFactory,
@@ -1417,369 +1420,540 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
 
 
 
-        // // fn:function-lookup(
-        // //  as xs:QName,
-        // //  as xs:integer
-        // // ) as fn(*)?
-        // final ArgumentSpecification lookupName = new ArgumentSpecification("name", true, typeFactory.string());
-        // final ArgumentSpecification lookupArity = new ArgumentSpecification("arity", true, typeFactory.number());
-        // register("fn", "function-lookup",
-        //         List.of(lookupName, lookupArity), typeFactory.zeroOrOne(typeFactory.itemAnyFunction()));
+        // fn:function-lookup($name as xs:QName, $arity as xs:integer) as function(*)?
+        register(
+            "fn", "function-lookup",
+            List.of(
+                new ArgumentSpecification("name", typeFactory.one(typeFactory.itemString()), null),
+                new ArgumentSpecification("arity", typeFactory.one(typeFactory.itemNumber()), null)
+            ),
+            typeFactory.zeroOrOne(typeFactory.itemAnyFunction())
+        );
 
-        // // fn:function-name(
-        // //  as fn(*)
-        // // ) as xs:QName?
-        // final ArgumentSpecification fnNameArg = new ArgumentSpecification("function", true, typeFactory.anyFunction());
-        // register("fn", "function-name",
-        //         List.of(fnNameArg),
-        //         optionalString));
+        // fn:function-name($function as function(*)) as xs:QName?
+        register(
+            "fn", "function-name",
+            List.of(
+                new ArgumentSpecification("function", typeFactory.one(typeFactory.itemAnyFunction()), null)
+            ),
+            typeFactory.zeroOrOne(typeFactory.itemString())
+        );
 
-        // // fn:function-arity(
-        // //  as fn(*)
-        // // ) as xs:integer
-        // final ArgumentSpecification fnArityArg = new ArgumentSpecification("function", true, typeFactory.anyFunction());
-        // register("fn", "function-arity",
-        //         List.of(fnArityArg), typeFactory.number());
-        // // fn:function-identity(
-        // //  as fn(*)
-        // // ) as xs:string
-        // final ArgumentSpecification functionIdentityFn = new ArgumentSpecification("function", true,
-        //         typeFactory.anyFunction());
-        // register("fn", "function-identity",
-        //         List.of(functionIdentityFn), typeFactory.string());
+        // fn:function-arity($function as function(*)) as xs:integer
+        register(
+            "fn", "function-arity",
+            List.of(
+                new ArgumentSpecification("function", typeFactory.one(typeFactory.itemAnyFunction()), null)
+            ),
+            typeFactory.one(typeFactory.itemNumber())
+        );
 
-        // // fn:apply(
-        // //  as fn(*),
-        // //  as array(*)
-        // // ) as item()*
-        // final ArgumentSpecification applyFn = new ArgumentSpecification("function", true, typeFactory.anyFunction());
-        // final ArgumentSpecification applyArgs = new ArgumentSpecification("arguments", true, typeFactory.anyArray());
-        // register("fn", "apply",
-        //         List.of(applyFn, applyArgs),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+        // fn:function-identity($function as function(*)) as xs:string
+        register(
+            "fn", "function-identity",
+            List.of(
+                new ArgumentSpecification("function", typeFactory.one(typeFactory.itemAnyFunction()), null)
+            ),
+            typeFactory.string()
+        );
 
-        // // fn:do-until(
-        // //  as item()*,
-        // //  as fn(item()*, xs:integer) as item()*,
-        // //  as fn(item()*, xs:integer) as xs:boolean?
-        // // ) as item()*
-        // final var predicateItem = typeFactory.itemFunction(typeFactory.zeroOrOne(typeFactory.itemBoolean()),
-        //         List.of(zeroOrMoreItems, typeFactory.number()));
+        // fn:function-annotations( $function as fn(*) ) as map(xs:QName, xs:anyAtomicType*)*
+        register(
+            "fn", "function-annotations",
+            List.of(
+                new ArgumentSpecification(
+                    "function",
+                    typeFactory.one(typeFactory.itemAnyFunction()),
+                    null
+                )
+            ),
+            typeFactory.zeroOrMore(
+                typeFactory.itemMap(
+                    typeFactory.itemString(), // xs:QName treated as atomic string
+                    typeFactory.zeroOrMore(typeFactory.itemAnyItem()) // xs:anyAtomicType*
+                )
+            )
+        );
 
-        // final ArgumentSpecification doUntilInput = new ArgumentSpecification("input", true, zeroOrMoreItems);
-        // final ArgumentSpecification doUntilAction = new ArgumentSpecification("action", true,
-        //         typeFactory.one(typeFactory.itemFunction(zeroOrMoreItems,
-        //                 List.of(zeroOrMoreItems, typeFactory.number()))));
-        // final ArgumentSpecification doUntilPredicate = new ArgumentSpecification("predicate", true,
-        //         typeFactory.one(predicateItem));
-        // register("fn", "do-until",
-        //         List.of(doUntilInput, doUntilAction, doUntilPredicate),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
-        // // fn:every(
-        // //  as item()*,
-        // //  as fn(item(), xs:integer) as xs:boolean? := fn:boolean#1
-        // // ) as xs:boolean
-        // final ArgumentSpecification everyInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification everyPredicate = new ArgumentSpecification("predicate", false,
-        //         typeFactory.zeroOrOne(predicateItem));
-        // register("fn", "every",
-        //         List.of(everyInput, everyPredicate),
-        //         typeFactory.boolean_());
+        // fn:apply($function as function(*), $arguments as array(*)) as item()*
+        register(
+            "fn", "apply",
+            List.of(
+                new ArgumentSpecification("function", typeFactory.one(typeFactory.itemAnyFunction()), null),
+                new ArgumentSpecification("arguments", typeFactory.one(typeFactory.itemAnyArray()), null)
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+        );
 
-        // // fn:filter(
-        // //  as item()*,
-        // //  as fn(item(), xs:integer) as xs:boolean?
-        // // ) as item()*
-        // final ArgumentSpecification filterInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification filterPredicate = new ArgumentSpecification("predicate", true,
-        //         typeFactory.one(predicateItem));
-        // register("fn", "filter",
-        //         List.of(filterInput, filterPredicate),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final var leftActionItem = typeFactory.itemFunction(zeroOrMoreItems,
-        //         List.of(zeroOrMoreItems, typeFactory.anyItem()));
+        // fn:do-until($input as item()*, $action as function(item()*, xs:integer) as item()*, $predicate as function(item()*, xs:integer) as xs:boolean?) as item()*
+        register(
+            "fn", "do-until",
+            List.of(
+                new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+                new ArgumentSpecification(
+                    "action",
+                    typeFactory.one(typeFactory.itemFunction(
+                        typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                        List.of(
+                            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                            typeFactory.one(typeFactory.itemNumber())
+                        )
+                    )),
+                    null
+                ),
+                new ArgumentSpecification(
+                    "predicate",
+                    typeFactory.one(typeFactory.itemFunction(
+                        typeFactory.zeroOrOne(typeFactory.itemBoolean()),
+                        List.of(
+                            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                            typeFactory.one(typeFactory.itemNumber())
+                        )
+                    )),
+                    null
+                )
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+        );
 
-        // // fn:fold-left(
-        // //  as item()*,
-        // //  as item()*,
-        // //  as fn(item()*, item()) as item()*
-        // // ) as item()*
-        // final ArgumentSpecification foldLeftInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification foldLeftInit = new ArgumentSpecification("init", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification foldLeftAction = new ArgumentSpecification("action", true,
-        //         typeFactory.one(leftActionItem));
-        // register("fn", "fold-left",
-        //         List.of(foldLeftInput, foldLeftInit, foldLeftAction),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // // fn:fold-right(
-        // //  as item()*,
-        // //  as item()*,
-        // //  as fn(item(), item()*) as item()*
-        // // ) as item()*
-        // final ArgumentSpecification frInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification frInit = new ArgumentSpecification("init", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification frAction = new ArgumentSpecification("action", true,
-        //         typeFactory.one(predicateItem));
-        // register("fn", "fold-right",
-        //         List.of(frInput, frInit, frAction),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+        // fn:every($input as item()*, $predicate as function(item(), xs:integer) as xs:boolean? := fn:boolean#1) as xs:boolean
+        register(
+            "fn", "every",
+            List.of(
+                new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+                new ArgumentSpecification(
+                    "predicate",
+                    typeFactory.zeroOrOne(typeFactory.itemFunction(
+                        typeFactory.zeroOrOne(typeFactory.itemBoolean()),
+                        List.of(
+                            typeFactory.one(typeFactory.itemAnyItem()),
+                            typeFactory.one(typeFactory.itemNumber())
+                        )
+                    )),
+                    BOOLEAN$1
+                )
+            ),
+            typeFactory.boolean_()
+        );
 
-        // final var rightActionItem = typeFactory.itemFunction(zeroOrMoreItems,
-        //         List.of(typeFactory.anyItem(), zeroOrMoreItems));
-        // // fn:for-each(
-        // //  as item()*,
-        // //  as fn(item(), xs:integer) as item()*
-        // // ) as item()*
-        // final ArgumentSpecification feInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification feAction = new ArgumentSpecification("action", true,
-        //         typeFactory.one(rightActionItem));
-        // register("fn", "for-each",
-        //         List.of(feInput, feAction),
-        //         zeroOrMoreItems);
+        // fn:filter($input as item()*, $predicate as function(item(), xs:integer) as xs:boolean?) as item()*
+        register(
+            "fn", "filter",
+            List.of(
+                new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+                new ArgumentSpecification(
+                    "predicate",
+                    typeFactory.one(typeFactory.itemFunction(
+                        typeFactory.zeroOrOne(typeFactory.itemBoolean()),
+                        List.of(
+                            typeFactory.one(typeFactory.itemAnyItem()),
+                            typeFactory.one(typeFactory.itemNumber())
+                        )
+                    )),
+                    null
+                )
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+        );
 
-        // // fn:for-each-pair(
-        // //  as item()*,
-        // //  as item()*,
-        // //  as fn(item(), item(), xs:integer) as item()*
-        // // ) as item()*
-        // final ArgumentSpecification fepInput1 = new ArgumentSpecification("input1", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification fepInput2 = new ArgumentSpecification("input2", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification fepAction = new ArgumentSpecification("action", true,
-        //         typeFactory.one(predicateItem));
-        // register("fn", "for-each-pair",
-        //         List.of(fepInput1, fepInput2, fepAction),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+        // fn:fold-left($input as item()*, $init as item()*, $action as function(item()*, item()) as item()*) as item()*
+        register(
+            "fn", "fold-left",
+            List.of(
+                new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+                new ArgumentSpecification("init", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+                new ArgumentSpecification(
+                    "action",
+                    typeFactory.one(typeFactory.itemFunction(
+                        typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                        List.of(
+                            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                            typeFactory.one(typeFactory.itemAnyItem())
+                        )
+                    )),
+                    null
+                )
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+        );
 
-        // // fn:highest(
-        // //  as item()*,
-        // //  as xs:string? := fn:default-collation(),
-        // //  as (fn(item()) as xs:anyAtomicType*)? := fn:data#1
-        // // ) as item()*
-        // final ArgumentSpecification hiInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification hiColl = new ArgumentSpecification("collation", false,
-        //         optionalString));
-        // final ArgumentSpecification hiKey = new ArgumentSpecification("key", false,
-        //         typeFactory.zeroOrOne(predicateItem));
-        // register("fn", "highest",
-        //         List.of(hiInput, hiColl, hiKey),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+        // fn:fold-right($input as item()*, $init as item()*, $action as function(item(), item()*) as item()*) as item()*
+        register(
+            "fn", "fold-right",
+            List.of(
+                new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+                new ArgumentSpecification("init", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+                new ArgumentSpecification(
+                    "action",
+                    typeFactory.one(typeFactory.itemFunction(
+                        typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                        List.of(
+                            typeFactory.one(typeFactory.itemAnyItem()),
+                            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+                        )
+                    )),
+                    null
+                )
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+        );
 
-        // // fn:index-where(
-        // //  as item()*,
-        // //  as fn(item(), xs:integer) as xs:boolean?
-        // // ) as xs:integer*
-        // final ArgumentSpecification iwInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification iwPred = new ArgumentSpecification("predicate", true,
-        //         typeFactory.one(predicateItem));
-        // register("fn", "index-where",
-        //         List.of(iwInput, iwPred),
-        //         typeFactory.zeroOrMore(typeFactory.itemNumber()));
+        // fn:for-each($input as item()*, $action as function(item(), item()*) as item()*) as item()*
+        register(
+            "fn", "for-each",
+            List.of(
+                new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+                new ArgumentSpecification(
+                    "action",
+                    typeFactory.one(typeFactory.itemFunction(
+                        typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                        List.of(
+                            typeFactory.one(typeFactory.itemAnyItem()),
+                            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+                        )
+                    )),
+                    null
+                )
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+        );
 
-        // // fn:lowest(
-        // //  as item()*,
-        // //  as xs:string? := fn:default-collation(),
-        // //  as (fn(item()) as xs:anyAtomicType*)? := fn:data#1
-        // // ) as item()*
-        // final ArgumentSpecification loInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification loColl = new ArgumentSpecification("collation", false,
-        //         optionalString));
-        // final ArgumentSpecification loKey = new ArgumentSpecification("key", false,
-        //         typeFactory.zeroOrOne(typeFactory.itemFunction(typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-        //                 List.of(typeFactory.anyItem()))));
-        // register("fn", "lowest",
-        //         List.of(loInput, loColl, loKey),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
-        // // fn:partial-apply(
-        // //  as fn(*),
-        // //  as map(xs:positiveInteger, item()*)
-        // // ) as fn(*)
-        // final ArgumentSpecification paFn = new ArgumentSpecification("function", true,
-        //         typeFactory.one(typeFactory.itemAnyFunction()));
-        // final ArgumentSpecification paArgs = new ArgumentSpecification("arguments", true,
-        //         typeFactory.one(typeFactory.itemMap(typeFactory.itemNumber(), zeroOrMoreItems)));
-        // register("fn", "partial-apply",
-        //         List.of(paFn, paArgs),
-        //         typeFactory.one(typeFactory.itemAnyFunction()));
+        // fn:for-each-pair($input1 as item()*, $input2 as item()*, $action as function(item(), item(), xs:integer) as item()*) as item()*
+        register(
+            "fn", "for-each-pair",
+            List.of(
+                new ArgumentSpecification("input1", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+                new ArgumentSpecification("input2", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+                new ArgumentSpecification("action", typeFactory.one(typeFactory.itemFunction(
+                    typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                    List.of(
+                        typeFactory.one(typeFactory.itemAnyItem()),
+                        typeFactory.one(typeFactory.itemAnyItem()),
+                        typeFactory.one(typeFactory.itemNumber())
+                    )
+                )), null)
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+        );
 
-        // // fn:partition(
-        // //  as item()*,
-        // // -when as fn(item()*, item(), xs:integer) as xs:boolean?
-        // // ) as array(item())*
-        // final ArgumentSpecification pInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification pSplitWhen = new ArgumentSpecification("split-when", true,
-        //         typeFactory.one(typeFactory.itemFunction(typeFactory.zeroOrOne(typeFactory.itemBoolean()),
-        //                 List.of(zeroOrMoreItems, typeFactory.anyItem(), typeFactory.number()))));
-        // register("fn", "partition",
-        //         List.of(pInput, pSplitWhen),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyArray()));
+        // fn:highest($input as item()*, $collation as xs:string? := fn:default-collation(), $key as function(item()) as xs:anyAtomicType*)? := fn:data#1) as item()*
+        register(
+            "fn", "highest",
+            List.of(
+                new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+                new ArgumentSpecification("collation", typeFactory.zeroOrOne(typeFactory.itemString()), DEFAULT_COLLATION),
+                new ArgumentSpecification("key", typeFactory.zeroOrOne(typeFactory.itemFunction(
+                    typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                    List.of(typeFactory.one(typeFactory.itemAnyItem()))
+                )), DATA$1)
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+        );
 
-        // // fn:scan-left(
-        // //  as item()*,
-        // //  as item()*,
-        // //  as fn(item()*, item()) as item()*
-        // // ) as array()*
-        // final ArgumentSpecification slInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification slInit = new ArgumentSpecification("init", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification slAction = new ArgumentSpecification("action", true,
-        //         typeFactory.one(leftActionItem));
-        // register("fn", "scan-left",
-        //         List.of(slInput, slInit, slAction),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyArray()));
+        // fn:index-where($input as item()*, $predicate as function(item(), xs:integer) as xs:boolean?) as xs:integer*
+        register(
+            "fn", "index-where",
+            List.of(
+                new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+                new ArgumentSpecification("predicate", typeFactory.one(typeFactory.itemFunction(
+                    typeFactory.zeroOrOne(typeFactory.itemBoolean()),
+                    List.of(
+                        typeFactory.one(typeFactory.itemAnyItem()),
+                        typeFactory.one(typeFactory.itemNumber())
+                    )
+                )), null)
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemNumber())
+        );
 
-        // // fn:scan-right(
-        // //  as item()*,
-        // //  as item()*,
-        // //  as fn(item(), item()*) as item()*
-        // // ) as array()*
-        // final ArgumentSpecification srInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification srInit = new ArgumentSpecification("init", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification srAction = new ArgumentSpecification("action", true,
-        //         typeFactory.one(rightActionItem));
-        // register("fn", "scan-right",
-        //         List.of(srInput, srInit, srAction),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyArray()));
+        // fn:lowest($input as item()*, $collation as xs:string? := fn:default-collation(), $key as function(item()) as xs:anyAtomicType*)? := fn:data#1) as item()*
+        register(
+            "fn", "lowest",
+            List.of(
+                new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+                new ArgumentSpecification("collation", typeFactory.zeroOrOne(typeFactory.itemString()), DEFAULT_COLLATION),
+                new ArgumentSpecification("key", typeFactory.zeroOrOne(typeFactory.itemFunction(
+                    typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                    List.of(typeFactory.one(typeFactory.itemAnyItem()))
+                )), DATA$1)
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+        );
 
-        // // fn:some(
-        // //  as item()*,
-        // //  as fn(item(), xs:integer) as xs:boolean? := fn:boolean#1
-        // // ) as xs:boolean
-        // final ArgumentSpecification someInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification somePred = new ArgumentSpecification("predicate", false,
-        //         typeFactory.zeroOrOne(predicateItem));
-        // register("fn", "some",
-        //         List.of(someInput, somePred),
-        //         typeFactory.boolean_());
+        // fn:partial-apply($function as function(*), $arguments as map(xs:positiveInteger, item()*)) as function(*)
+        register(
+            "fn", "partial-apply",
+            List.of(
+                new ArgumentSpecification("function", typeFactory.one(typeFactory.itemAnyFunction()), null),
+                new ArgumentSpecification("arguments", typeFactory.one(
+                    typeFactory.itemMap(typeFactory.itemNumber(), typeFactory.zeroOrMore(typeFactory.itemAnyItem()))
+                ), null)
+            ),
+            typeFactory.one(typeFactory.itemAnyFunction())
+        );
 
-        // // // fn:sort(
-        // // //  as item()*,
-        // // //  as xs:string? := fn:default-collation(),
-        // // //  as fn(item()) as xs:anyAtomicType* := fn:data#1
-        // // // ) as item()*
-        // // ArgumentSpecification sortInput =
-        // // new ArgumentSpecification("input", true,
-        // // typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // // ArgumentSpecification sortColl =
-        // // new ArgumentSpecification("collation", false,
-        // // optionalString));
-        // // ArgumentSpecification sortKey =
-        // // new ArgumentSpecification("key", false,
-        // // typeFactory.one(typeFactory.itemFunction(typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-        // // List.of(typeFactory.anyItem()))));
-        // // register("fn", "sort",
-        // // List.of(sortInput, sortColl, sortKey),
-        // // typeFactory.zeroOrMore(typeFactory.itemAnyItem())
-        // // );
-        // // // fn:sort-by(
-        // // //  as item()*,
-        // // //  as record(key? as (fn(item()) as xs:anyAtomicType*)?,
-        // // // collation? as xs:string?,
-        // // // order? as enum('ascending','descending')?)*
-        // // // ) as item()*
-        // // ArgumentSpecification sortByInput =
-        // // new ArgumentSpecification("input", true,
-        // // typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // // ArgumentSpecification sortByKeys =
-        // // new ArgumentSpecification("keys", true,
-        // // typeFactory.zeroOrMore(typeFactory.itemRecord()));
-        // // register("fn", "sort-by",
-        // // List.of(sortByInput, sortByKeys),
-        // // typeFactory.zeroOrMore(typeFactory.itemAnyItem())
-        // // );
+        // fn:partition($input as item()*, $split-when as function(item()*, item(), xs:integer) as xs:boolean?) as array(item())*
+        register(
+            "fn", "partition",
+            List.of(
+                new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+                new ArgumentSpecification("split-when", typeFactory.one(typeFactory.itemFunction(
+                    typeFactory.zeroOrOne(typeFactory.itemBoolean()),
+                    List.of(
+                        typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                        typeFactory.one(typeFactory.itemAnyItem()),
+                        typeFactory.one(typeFactory.itemNumber())
+                    )
+                )), null)
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyArray())
+        );
 
-        // final var comparator = typeFactory.itemFunction(typeFactory.number(),
-        //         List.of(typeFactory.anyItem(), typeFactory.anyItem()));
+        // fn:scan-left(...) and fn:scan-right(...) mirror fold-left and fold-right
+        register(
+            "fn", "scan-left",
+            List.of(
+                new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+                new ArgumentSpecification("init", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+                new ArgumentSpecification("action", typeFactory.one(typeFactory.itemFunction(
+                    typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                    List.of(
+                        typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                        typeFactory.one(typeFactory.itemAnyItem())
+                    )
+                )), null)
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyArray())
+        );
 
-        // // fn:sort-with(
-        // //  as item()*,
-        // //  as (fn(item(),item()) as xs:integer)*
-        // // ) as item()*
-        // final ArgumentSpecification sortWithInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification sortWithComparators = new ArgumentSpecification("comparators", true,
-        //         typeFactory.zeroOrMore(comparator));
-        // register("fn", "sort-with",
-        //         List.of(sortWithInput, sortWithComparators),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+        register(
+            "fn", "scan-right",
+            List.of(
+                new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+                new ArgumentSpecification("init", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+                new ArgumentSpecification("action", typeFactory.one(typeFactory.itemFunction(
+                    typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                    List.of(
+                        typeFactory.one(typeFactory.itemAnyItem()),
+                        typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+                    )
+                )), null)
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyArray())
+        );
 
-        // // fn:subsequence-where(
-        // //  as item()*,
-        // //  as fn(item(),xs:integer) as xs:boolean? := true#0,
-        // //  as fn(item(),xs:integer) as xs:boolean? := false#0
-        // // ) as item()*
-        // final ArgumentSpecification subseqWhereInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification subseqWhereFrom = new ArgumentSpecification("from", false,
-        //         typeFactory.zeroOrOne(predicateItem));
-        // final ArgumentSpecification subseqWhereTo = new ArgumentSpecification("to", false,
-        //         typeFactory.zeroOrOne(predicateItem));
-        // register("fn", "subsequence-where",
-        //         List.of(subseqWhereInput, subseqWhereFrom, subseqWhereTo),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+        // fn:some($input as item()*, $predicate as function(item(), xs:integer) as xs:boolean?) := fn:boolean#1) as xs:boolean
+        register(
+            "fn", "some",
+            List.of(
+                new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+                new ArgumentSpecification("predicate", typeFactory.zeroOrOne(typeFactory.itemFunction(
+                    typeFactory.zeroOrOne(typeFactory.itemBoolean()),
+                    List.of(
+                        typeFactory.one(typeFactory.itemAnyItem()),
+                        typeFactory.one(typeFactory.itemNumber())
+                    )
+                )), BOOLEAN$1)
+            ),
+            typeFactory.boolean_()
+        );
 
-        // // fn:take-while(
-        // //  as item()*,
-        // //  as fn(item(),xs:integer) as xs:boolean?
-        // // ) as item()*
-        // final ArgumentSpecification takeWhileInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification takeWhilePredicate = new ArgumentSpecification("predicate", true,
-        //         typeFactory.one(predicateItem));
-        // register("fn", "take-while",
-        //         List.of(takeWhileInput, takeWhilePredicate),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+        // fn:sort( $input as item()*,
+        // $collation as xs:string? := fn:default-collation(),
+        // $key as fn(item()) as xs:anyAtomicType* := fn:data#1
+        // ) as item()*
+        register(
+            "fn", "sort",
+            List.of(
+                new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+                new ArgumentSpecification(
+                    "collation",
+                    typeFactory.zeroOrOne(typeFactory.itemString()),
+                    DEFAULT_COLLATION
+                ),
+                new ArgumentSpecification(
+                    "key",
+                    typeFactory.one(typeFactory.itemFunction(
+                        typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                        List.of(typeFactory.one(typeFactory.itemAnyItem()))
+                    )),
+                    DATA$1
+                )
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+        );
 
-        // // // fn:transitive-closure(
-        // // //  as node()?,
-        // // //  as fn(node()) as node()*
-        // // // ) as node()*
-        // // ArgumentSpecification tcNode =
-        // // new ArgumentSpecification("node", false,
-        // // typeFactory.zeroOrOne(typeFactory.itemNode()));
-        // // ArgumentSpecification tcStep =
-        // // new ArgumentSpecification("step", true,
-        // // typeFactory.one(typeFactory.itemFunction()));
-        // // register("fn", "transitive-closure",
-        // // List.of(tcNode, tcStep),
-        // // typeFactory.zeroOrMore(typeFactory.itemNode())
-        // // );
 
-        // final var numberActionItem = typeFactory.itemFunction(zeroOrMoreItems,
-        //         List.of(zeroOrMoreItems, typeFactory.number()));
+        // fn:sort-by(
+        // $input as item()*,
+        // $keys as record(key? as (fn(item()) as xs:anyAtomicType*)?,
+        //                 collation? as xs:string?,
+        //                 order? as enum('ascending', 'descending')?
+        //                 )*
+        // ) as item()*
 
-        // // fn:while-do(
-        // //  as item()*,
-        // //  as fn(item()*,xs:integer) as xs:boolean?,
-        // //  as fn(item()*,xs:integer) as item()*
-        // // ) as item()*
-        // final ArgumentSpecification whileDoInput = new ArgumentSpecification("input", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification whileDoPredicate = new ArgumentSpecification("predicate", true,
-        //         typeFactory.one(predicateItem));
-        // final ArgumentSpecification whileDoAction = new ArgumentSpecification("action", true,
-        //         typeFactory.one(numberActionItem));
-        // register("fn", "while-do",
-        //         List.of(whileDoInput, whileDoPredicate, whileDoAction),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+        register(
+            "fn", "sort-by",
+            List.of(
+                new ArgumentSpecification(
+                    "input",
+                    typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                    null
+                ),
+                new ArgumentSpecification(
+                    "keys",
+                    typeFactory.zeroOrMore(
+                        typeFactory.itemRecord(
+                            Map.of(
+                                "key", new XQueryRecordField(
+                                    typeFactory.zeroOrOne(
+                                        typeFactory.itemFunction(
+                                            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                                            List.of(typeFactory.one(typeFactory.itemAnyItem()))
+                                        )
+                                    ),
+                                    false
+                                ),
+                                "collation", new XQueryRecordField(
+                                    typeFactory.zeroOrOne(typeFactory.itemString()),
+                                    false
+                                ),
+                                "order", new XQueryRecordField(
+                                    typeFactory.zeroOrOne(
+                                        typeFactory.itemEnum(Set.of("ascending", "descending"))
+                                    ),
+                                    false
+                                )
+                            )
+                        )
+                    ),
+                    null
+                )
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+    );
+
+
+
+        // fn:sort-with($input as item()*, $comparators as function(item(), item()) as xs:integer*) as item()*
+        register(
+            "fn", "sort-with",
+            List.of(
+                new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+                new ArgumentSpecification("comparators", typeFactory.zeroOrMore(typeFactory.itemFunction(
+                    typeFactory.one(typeFactory.itemNumber()),
+                    List.of(
+                        typeFactory.one(typeFactory.itemAnyItem()),
+                        typeFactory.one(typeFactory.itemAnyItem())
+                    )
+                )), null)
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+        );
+
+        // fn:subsequence-where($input as item()*,
+        //                      $from as fn(item(), xs:integer) as xs:boolean? := true#0,
+        //                      $to as fn(item(), xs:integer) as xs:boolean? := false#0
+        // ) as item()*
+        register(
+            "fn", "subsequence-where",
+            List.of(
+                new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+                new ArgumentSpecification(
+                    "from",
+                    typeFactory.zeroOrOne(typeFactory.itemFunction(
+                        typeFactory.zeroOrOne(typeFactory.itemBoolean()),
+                        List.of(
+                            typeFactory.one(typeFactory.itemAnyItem()),
+                            typeFactory.one(typeFactory.itemNumber())
+                        )
+                    )),
+                    TRUE$0
+                ),
+                new ArgumentSpecification(
+                    "to",
+                    typeFactory.zeroOrOne(typeFactory.itemFunction(
+                        typeFactory.zeroOrOne(typeFactory.itemBoolean()),
+                        List.of(
+                            typeFactory.one(typeFactory.itemAnyItem()),
+                            typeFactory.one(typeFactory.itemNumber())
+                        )
+                    )),
+                    FALSE$0
+                )
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+        );
+
+        // fn:take-while($input as item()*, $predicate as fn(item(), xs:integer) as xs:boolean?) as item()*
+        register(
+            "fn", "take-while",
+            List.of(
+                new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+                new ArgumentSpecification(
+                    "predicate",
+                    typeFactory.one(typeFactory.itemFunction(
+                        typeFactory.zeroOrOne(typeFactory.itemBoolean()),
+                        List.of(
+                            typeFactory.one(typeFactory.itemAnyItem()),
+                            typeFactory.one(typeFactory.itemNumber())
+                        )
+                    )),
+                    null
+                )
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+        );
+
+        // fn:transitive-closure($node as node()?, $step as fn(node()) as node()*) as node()*
+        register(
+            "fn", "transitive-closure",
+            List.of(
+                new ArgumentSpecification("node", typeFactory.zeroOrOne(typeFactory.itemAnyNode()), null),
+                new ArgumentSpecification(
+                    "step",
+                    typeFactory.one(typeFactory.itemFunction(
+                        typeFactory.zeroOrMore(typeFactory.itemAnyNode()),
+                        List.of(typeFactory.one(typeFactory.itemAnyNode()))
+                    )),
+                    null
+                )
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyNode())
+        );
+
+        // fn:while-do($input as item()*, $predicate as fn(item()*, xs:integer) as xs:boolean?, $action as fn(item()*, xs:integer) as item()*) as item()*
+        register(
+            "fn", "while-do",
+            List.of(
+                new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+                new ArgumentSpecification(
+                    "predicate",
+                    typeFactory.one(typeFactory.itemFunction(
+                        typeFactory.zeroOrOne(typeFactory.itemBoolean()),
+                        List.of(
+                            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                            typeFactory.one(typeFactory.itemNumber())
+                        )
+                    )),
+                    null
+                ),
+                new ArgumentSpecification(
+                    "action",
+                    typeFactory.one(typeFactory.itemFunction(
+                        typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                        List.of(
+                            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                            typeFactory.one(typeFactory.itemNumber())
+                        )
+                    )),
+                    null
+                )
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+        );
 
         // // fn:transform(
         // //  as map(*)

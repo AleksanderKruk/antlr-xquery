@@ -12,6 +12,7 @@ import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQuerySemanticFunctionManager;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryEnumTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTypeSets;
 import com.github.akruk.antlrxquery.values.factories.defaults.XQueryMemoizedValueFactory;
 
 public class FunctionsSemanticTest {
@@ -23,7 +24,7 @@ public class FunctionsSemanticTest {
 
     @BeforeEach
     protected void init() {
-        typeFactory = new XQueryEnumTypeFactory();
+        typeFactory = new XQueryEnumTypeFactory(new XQueryNamedTypeSets().all());
         fnManager   = new XQuerySemanticFunctionManager(typeFactory);
     }
 

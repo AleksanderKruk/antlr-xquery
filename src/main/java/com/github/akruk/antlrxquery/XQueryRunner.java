@@ -98,7 +98,7 @@ public class XQueryRunner {
 
             final String targetFile = Files.readString(Path.of(targetFiles.get(0)));
             final ParserAndTree parserAndTree = parseTargetFile(targetFile, lexerClass, parserClass, startingRule);
-            final XQueryTypeFactory typeFactory = new XQueryEnumTypeFactory(new XQueryNamedTypeSets().getDefaultAll());
+            final XQueryTypeFactory typeFactory = new XQueryEnumTypeFactory(new XQueryNamedTypeSets().all());
             final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
                     parserAndTree.parser,
                     new XQueryBaseSemanticContextManager(),

@@ -1996,7 +1996,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // map:of-pairs($input as key-value-pair*, $options as map(*)? := {}) as map(*)
         ArgumentSpecification opInput = new ArgumentSpecification(
             "input",
-            typeFactory.zeroOrMore(typeFactory.itemNamedType("key-value-pair")),
+            typeFactory.zeroOrMore(typeFactory.itemNamedType("fn:key-value-pair")),
             null
         );
         register(
@@ -2019,8 +2019,21 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         register(
             "map", "pair",
             List.of(mpKey, mpValue),
-            typeFactory.namedType("key-value-pair")
+            typeFactory.namedType("fn:key-value-pair")
         );
+
+        register(
+            "map", "pairs",
+            List.of(
+                new ArgumentSpecification(
+                    "map",
+                    typeFactory.one(typeFactory.itemAnyMap()),
+                    null
+                )
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemNamedType("fn:key-value-pair"))
+        );
+
 
         // map:put(
         //   $map   as map(*),

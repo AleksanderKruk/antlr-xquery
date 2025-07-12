@@ -243,7 +243,7 @@ public class ProcessingMapFunctionsTest extends FunctionsSemanticTest {
     public void pairs_valid() {
         assertType(
                 "map:pairs(map{'a':1})",
-                typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+                typeFactory.zeroOrMore(typeFactory.itemNamedType("fn:key-value-pair")));
     }
 
     @Test
@@ -269,14 +269,14 @@ public class ProcessingMapFunctionsTest extends FunctionsSemanticTest {
     @Test
     public void removeMap_valid() {
         assertType(
-                "map:remove(map{'a':1}, 'a','b')",
+                "map:remove(map{'a':1}, ('a','b'))",
                 typeFactory.one(typeFactory.itemAnyMap()));
     }
 
     @Test
     public void removeMap_errors() {
         assertErrors("map:remove()");
-        assertErrors("map:remove(map{}, map{})");
+        assertErrors("map:remove(map{}, map{}, map{})");
     }
 
     // map:size($map as map(*)) as xs:integer

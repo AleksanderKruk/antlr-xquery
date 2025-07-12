@@ -13,6 +13,7 @@ import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.values.XQuerySequence;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class XQueryEnumItemType implements IXQueryEnumItemType {
@@ -670,12 +671,6 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
         };
 
         itemtypeIsSubtypeOf[function][anyFunction] = alwaysTrue;
-        itemtypeIsSubtypeOf[function][function] = (x, y) -> {
-            final XQueryEnumItemType i1 = (XQueryEnumItemType) x;
-            final XQueryEnumItemType i2 = (XQueryEnumItemType) y;
-            return i1.isFunction(i2.getReturnedType(), i2.getArgumentTypes());
-        };
-
         final var canBeKey = booleanEnumArray(XQueryTypes.NUMBER, XQueryTypes.BOOLEAN, XQueryTypes.STRING, XQueryTypes.ENUM);
         itemtypeIsSubtypeOf[function][anyMap] = (x, _) -> {
             final XQueryEnumItemTypeFunction x_ = (XQueryEnumItemTypeFunction) x;
@@ -730,11 +725,15 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
         itemtypeIsSubtypeOf[function][function] = (x, y) -> {
             final XQueryEnumItemTypeFunction a = (XQueryEnumItemTypeFunction) x;
             final XQueryEnumItemTypeFunction b = (XQueryEnumItemTypeFunction) y;
-            if (a.getArgumentTypes().size() != b.getArgumentTypes().size())
+            final List<XQuerySequenceType> aArgs = a.getArgumentTypes();
+            final List<XQuerySequenceType> bArgs = b.getArgumentTypes();
+            final int aArgCount = aArgs.size();
+            // TODO: verify arity constraint
+            if (aArgCount > bArgs.size())
                 return false;
-            for (int i = 0; i < a.getArgumentTypes().size(); i++) {
-                final var aArgType = a.getArgumentTypes().get(i);
-                final var bArgType = b.getArgumentTypes().get(i);
+            for (int i = 0; i < aArgCount; i++) {
+                final var aArgType = aArgs.get(i);
+                final var bArgType = bArgs.get(i);
                 if (!bArgType.isSubtypeOf(aArgType))
                     return false;
             }
@@ -755,6 +754,13 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
             }
 
             return x_.getArrayType().isSubtypeOf(y_.getReturnedType());
+        };
+
+        final XQueryEnumSequenceType anyItems_ = new XQueryEnumSequenceType(null, new XQueryEnumItemTypeAnyItem(null), XQueryOccurence.ZERO_OR_MORE) ;
+        final XQueryItemType anyArray_ = new XQueryEnumItemTypeArray(anyItems_, null);
+        itemtypeIsSubtypeOf[anyArray][array] = (_, y) -> {
+            final XQueryEnumItemType y_ = (XQueryEnumItemType) y;
+            return anyArray_.itemtypeIsSubtypeOf(y_);
         };
 
         itemtypeIsSubtypeOf[array][anyArray] = alwaysTrue;

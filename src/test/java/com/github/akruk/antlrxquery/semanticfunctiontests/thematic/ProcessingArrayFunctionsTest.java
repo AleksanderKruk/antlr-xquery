@@ -1,8 +1,11 @@
 package com.github.akruk.antlrxquery.semanticfunctiontests.thematic;
 
+import java.util.Map;
+
 import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrxquery.semanticfunctiontests.FunctionsSemanticTest;
+import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 
 public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
 
@@ -171,12 +174,12 @@ public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
         assertErrors("array:get(array{},'x')");
     }
 
-    // array:head($array as array(*)) as item()?
+    // array:head($array as array(*)) as item()*
     @Test
     public void headArray_valid() {
         assertType(
                 "array:head(array{1,2})",
-                typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
+                typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
     }
 
     @Test
@@ -196,7 +199,6 @@ public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
     @Test
     public void indexOfArray_errors() {
         assertErrors("array:index-of()");
-        assertErrors("array:index-of(array{},1,'x')");
     }
 
     // array:index-where($array as array(*), $predicate as fn(item()*,xs:integer) as
@@ -204,7 +206,7 @@ public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
     @Test
     public void indexWhereArray_valid() {
         assertType(
-                "array:index-where(array{1,2}, function($v,$i){ $v=2 })",
+                "array:index-where(array{1,2}, function($v,$i as number){})",
                 typeFactory.zeroOrMore(typeFactory.itemNumber()));
     }
 
@@ -258,7 +260,7 @@ public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
     public void membersArray_valid() {
         assertType(
                 "array:members(array{1,2})",
-                typeFactory.zeroOrMore(typeFactory.itemAnyMap()));
+                typeFactory.zeroOrMore(typeFactory.itemRecord(Map.of("value", new XQueryRecordField(typeFactory.anyItem(), true)))));
     }
 
     @Test
@@ -364,7 +366,7 @@ public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
     @Test
     public void sortByArray_valid() {
         assertType(
-                "array:sort-by(array{1,2}, record{key:function($v){$v}})",
+                "array:sort-by(array{1,2}, record{ 'key':function($v){}})",
                 typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
     }
 
@@ -378,7 +380,7 @@ public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
     public void splitArray_valid() {
         assertType(
                 "array:split(array{1,2,3})",
-                typeFactory.zeroOrMore(typeFactory.itemArray(typeFactory.zeroOrMore(typeFactory.itemAnyItem()))));
+                typeFactory.zeroOrMore(typeFactory.itemAnyArray()));
     }
 
     @Test

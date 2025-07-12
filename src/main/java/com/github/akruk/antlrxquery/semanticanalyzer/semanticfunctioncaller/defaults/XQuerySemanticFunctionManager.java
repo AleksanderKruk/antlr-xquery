@@ -777,13 +777,6 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
                 List.of(graphemesValue),
                 typeFactory.zeroOrMore(typeFactory.itemString()));
 
-        final ArgumentSpecification sjValues = new ArgumentSpecification("values", zeroOrMoreItems, null);
-        final ArgumentSpecification sjSeparator = new ArgumentSpecification("separator", optionalString, EMPTY_STRING);
-        register("fn", "string-join",
-                List.of(sjValues, sjSeparator),
-                typeFactory.string());
-
-
         // fn:concat(
         //  as xs:anyAtomicType* := ()
         // ) as xs:string
@@ -2347,8 +2340,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
             typeFactory.zeroOrMore(typeFactory.itemNumber())
         );
 
-        final XQueryItemType integerPredicate = typeFactory.itemFunction(optionalBoolean, List.of(typeFactory.anyItem(), typeFactory.number()));
-        // array:index-where($array as array(*), $predicate as function(item(), xs:integer) as xs:boolean?) as xs:integer*
+        final XQueryItemType integerPredicate = typeFactory.itemFunction(optionalBoolean, List.of(zeroOrMoreItems, typeFactory.number()));
+        // array:index-where($array as array(*), $predicate as function(item()*, xs:integer) as xs:boolean?) as xs:integer*
         register(
             "array", "index-where",
             List.of(
@@ -2387,6 +2380,46 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
             ),
             typeFactory.one(typeFactory.itemAnyArray())
         );
+
+        register(
+            "array", "members",
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
+            ),
+            typeFactory.zeroOrMore(
+                typeFactory.itemRecord(
+                    Map.of(
+                        "value", new XQueryRecordField(
+                            typeFactory.anyItem(),
+                            true // field is required
+                        )
+                    )
+                )
+            )
+        );
+
+        register(
+            "array", "of-members",
+            List.of(
+                new ArgumentSpecification(
+                    "input",
+                    typeFactory.zeroOrMore(
+                        typeFactory.itemRecord(
+                            Map.of(
+                                "value", new XQueryRecordField(
+                                    typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                                    true
+                                )
+                            )
+                        )
+                    ),
+                    null
+                )
+            ),
+            typeFactory.one(typeFactory.itemAnyArray())
+        );
+
+
 
         // array:put($array as array(*), $position as xs:integer, $member as item()*) as array(*)
         register(
@@ -2536,8 +2569,6 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         //         List.of(castStringValue),
         //         optionalString));
 
-        // fn:default-collation() as xs:string
-        register("fn", "default-collation", List.of(), typeFactory.string());
 
         // fn:random-number-generator(
         //   $seed as xs:anyAtomicType? := ()
@@ -2883,12 +2914,15 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
             return null;
         }
         final List<FunctionSpecification> alreadyRegistered = namespaceMapping.get(functionName);
-        final var overlapping = alreadyRegistered.stream().filter(f -> {
-            return f.minArity <= maxArity;
-        }).toList();
-        if (!overlapping.isEmpty()) {
+        final var noOverlapping = alreadyRegistered.stream().noneMatch(f ->
+            minArity <= f.maxArity && f.minArity <= maxArity
+        );
+
+        if (!noOverlapping) {
             return XQuerySemanticError.FunctionNameArityConflict;
         }
+        alreadyRegistered.add(new FunctionSpecification(minArity, maxArity, args, returnedType, requiredContextValueType,
+                requiresPosition, requiresLength));
         return null;
     }
 }

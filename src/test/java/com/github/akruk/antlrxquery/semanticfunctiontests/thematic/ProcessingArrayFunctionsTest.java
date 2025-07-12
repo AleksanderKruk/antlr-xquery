@@ -3,22 +3,15 @@ package com.github.akruk.antlrxquery.semanticfunctiontests.thematic;
 import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrxquery.semanticfunctiontests.FunctionsSemanticTest;
-import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 
 public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
-
-    private XQuerySequenceType arrayOfItems() {
-        return typeFactory.one(
-                typeFactory.itemArray(
-                        typeFactory.zeroOrMore(typeFactory.itemAnyItem())));
-    }
 
     // array:append($array as array(*), $member as item()*) as array(*)
     @Test
     public void append_valid() {
         assertType(
                 "array:append(array{1,2}, 3)",
-                arrayOfItems());
+                typeFactory.anyArray());
     }
 
     @Test
@@ -33,14 +26,14 @@ public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
     public void buildArray_minimal() {
         assertType(
                 "array:build((1,2,3))",
-                arrayOfItems());
+                typeFactory.anyArray());
     }
 
     @Test
     public void buildArray_withAction() {
         assertType(
                 "array:build((1,2), function($v,$i){ $v })",
-                arrayOfItems());
+                typeFactory.anyArray());
     }
 
     @Test
@@ -65,8 +58,8 @@ public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
     @Test
     public void filterArray_valid() {
         assertType(
-                "array:filter(array{1,2}, function($v,$i){ $v > 1 })",
-                arrayOfItems());
+                "array:filter(array{1,2}, function($v as item(), $i as number) as boolean { true() })",
+                typeFactory.anyArray());
     }
 
     @Test
@@ -85,7 +78,7 @@ public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
 
     @Test
     public void flattenArray_errors() {
-        assertErrors("array:flatten(1)");
+        assertErrors("array:flatten(1, 2)");
     }
 
     // array:fold-left($array as array(*), $init as item()*, $action as
@@ -121,7 +114,7 @@ public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
     public void footArray_valid() {
         assertType(
                 "array:foot(array{1,2,3})",
-                typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
+                typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
     }
 
     @Test
@@ -129,13 +122,13 @@ public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
         assertErrors("array:foot()");
     }
 
-    // array:for-each($array as array(*), $action as fn(item()*,xs:integer) as
-    // item()*) as array(*)
+    // array:for-each($array as array(*), $action as fn(item()*,xs:integer) as item()*
+    // ) as array(*)
     @Test
     public void forEachArray_valid() {
         assertType(
-                "array:for-each(array{1,2}, function($v,$i){ $v })",
-                arrayOfItems());
+                "array:for-each(array{1,2}, function($v as item()*,$i as number) as item()* { $v })",
+                typeFactory.anyArray());
     }
 
     @Test
@@ -148,8 +141,8 @@ public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
     @Test
     public void forEachPairArray_valid() {
         assertType(
-                "array:for-each-pair(array{1}, array{2}, function($a,$b,$i){ $a+$b })",
-                arrayOfItems());
+                "array:for-each-pair(array{1}, array{2}, function($a as item()*,$b as item()*,$i as number) as item()*{})",
+                typeFactory.anyArray());
     }
 
     @Test
@@ -226,7 +219,7 @@ public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
     public void insertBeforeArray_valid() {
         assertType(
                 "array:insert-before(array{1,2}, 2, 99)",
-                arrayOfItems());
+                typeFactory.anyArray());
     }
 
     @Test
@@ -252,7 +245,7 @@ public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
     public void joinArray_valid() {
         assertType(
                 "array:join((array{1},array{2}), array{})",
-                arrayOfItems());
+                typeFactory.anyArray());
     }
 
     @Test
@@ -277,8 +270,8 @@ public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
     @Test
     public void ofMembersArray_valid() {
         assertType(
-                "array:of-members(array:members(array{1}))",
-                arrayOfItems());
+                "array:of-members(array:members(map {'value': 1 }))",
+                typeFactory.anyArray());
     }
 
     @Test
@@ -292,7 +285,7 @@ public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
     public void putArray_valid() {
         assertType(
                 "array:put(array{1,2}, 1, 0)",
-                arrayOfItems());
+                typeFactory.anyArray());
     }
 
     @Test
@@ -304,8 +297,8 @@ public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
     @Test
     public void removeArray_valid() {
         assertType(
-                "array:remove(array{1,2,3}, 2,3)",
-                arrayOfItems());
+                "array:remove(array{1,2,3}, (2,3))",
+                typeFactory.anyArray());
     }
 
     @Test
@@ -318,7 +311,7 @@ public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
     public void reverseArray_valid() {
         assertType(
                 "array:reverse(array{1,2})",
-                arrayOfItems());
+                typeFactory.anyArray());
     }
 
     @Test
@@ -345,7 +338,7 @@ public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
     public void sliceArray_valid() {
         assertType(
                 "array:slice(array{1,2,3}, 2)",
-                arrayOfItems());
+                typeFactory.anyArray());
     }
 
     @Test
@@ -359,7 +352,7 @@ public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
     public void sortArray_valid() {
         assertType(
                 "array:sort(array{'b','a'})",
-                arrayOfItems());
+                typeFactory.anyArray());
     }
 
     @Test
@@ -399,7 +392,7 @@ public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
     public void subarray_valid() {
         assertType(
                 "array:subarray(array{1,2,3}, 2)",
-                arrayOfItems());
+                typeFactory.anyArray());
     }
 
     @Test
@@ -412,7 +405,7 @@ public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
     public void tailArray_valid() {
         assertType(
                 "array:tail(array{1,2,3})",
-                arrayOfItems());
+                typeFactory.anyArray());
     }
 
     @Test
@@ -425,7 +418,7 @@ public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
     public void trunkArray_valid() {
         assertType(
                 "array:trunk(array{1,2,3})",
-                arrayOfItems());
+                typeFactory.anyArray());
     }
 
     @Test

@@ -1302,11 +1302,12 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
             typeFactory.zeroOrMore(typeFactory.itemAnyItem())
         );
 
-        // fn:unparsed-text($source as xs:string?, $options as (xs:string|map(*))? := {}) as xs:string?
+        // fn:unparsed-text($source as xs:string?, $options as (xs:string|map(*))? := ()) as xs:string?
         ArgumentSpecification utOptions = new ArgumentSpecification(
             "options",
-            typeFactory.zeroOrOne(typeFactory.itemString()),
-            EMPTY_MAP
+            typeFactory.zeroOrOne(typeFactory.itemChoice(Set.of(typeFactory.itemString(),
+                                                                typeFactory.itemAnyMap()))),
+            EMPTY_SEQUENCE
         );
         register(
             "fn", "unparsed-text",
@@ -1314,11 +1315,11 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
             typeFactory.zeroOrOne(typeFactory.itemString())
         );
 
-        // fn:unparsed-text-lines($source as xs:string?, $options as (xs:string|map(*))? := {}) as xs:string*
+        // fn:unparsed-text-lines($source as xs:string?, $options as (xs:string|map(*))? := ()) as xs:string*
         ArgumentSpecification utlOptions = new ArgumentSpecification(
             "options",
             typeFactory.zeroOrOne(typeFactory.itemAnyItem()),
-            EMPTY_MAP
+            EMPTY_SEQUENCE
         );
         register(
             "fn", "unparsed-text-lines",
@@ -1326,11 +1327,11 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
             typeFactory.zeroOrMore(typeFactory.itemString())
         );
 
-        // fn:unparsed-text-available($source as xs:string?, $options as (xs:string|map(*))? := {}) as xs:boolean
+        // fn:unparsed-text-available($source as xs:string?, $options as (xs:string|map(*))? := ()) as xs:boolean
         ArgumentSpecification utaOptions = new ArgumentSpecification(
             "options",
             typeFactory.zeroOrOne(typeFactory.itemAnyItem()),
-            EMPTY_MAP
+            EMPTY_SEQUENCE
         );
         register(
             "fn", "unparsed-text-available",

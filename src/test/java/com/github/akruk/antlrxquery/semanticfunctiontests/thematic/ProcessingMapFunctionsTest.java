@@ -206,12 +206,16 @@ public class ProcessingMapFunctionsTest extends FunctionsSemanticTest {
         assertErrors("map:merge('x')");
     }
 
-    // map:of-pairs($input as key-value-pair*, $options as map(*)? := {}) as map(*)
+
+    // map:of-pairs(
+    // $input	as key-value-pair*,
+    // $options	as map(*)?	:= {}
+    // ) as map(*)
     @Test
     public void ofPairs_valid() {
         assertType(
-                "map:of-pairs(map:pair('k',1), map:pair('x',2))",
-                typeFactory.one(typeFactory.itemAnyMap()));
+                "map:of-pairs((map:pair('k',1), map:pair('x',2)))",
+                typeFactory.anyMap());
     }
 
     @Test
@@ -225,7 +229,7 @@ public class ProcessingMapFunctionsTest extends FunctionsSemanticTest {
     public void pair_valid() {
         assertType(
                 "map:pair('k', 1)",
-                typeFactory.one(typeFactory.itemAnyItem()));
+                typeFactory.namedType("fn:key-value-pair"));
     }
 
     @Test

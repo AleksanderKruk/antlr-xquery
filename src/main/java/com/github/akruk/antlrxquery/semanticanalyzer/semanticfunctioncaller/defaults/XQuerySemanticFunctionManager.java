@@ -37,6 +37,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
     private static final ParseTree EMPTY_STRING = XQuerySemanticFunctionManager.getTree("\"\"", (parser)->parser.literal());
     private static final ParseTree EMPTY_MAP = getTree("map {}", parser -> parser.mapConstructor());
     private static final ParseTree IDENTITY$1 = XQuerySemanticFunctionManager.getTree("fn:identity#1", p->p.namedFunctionRef());
+    private static final ParseTree IDENTITY$2 = XQuerySemanticFunctionManager.getTree("fn:identity#2", p->p.namedFunctionRef());
     private static final ParseTree DATA$1 = XQuerySemanticFunctionManager.getTree("fn:data#1", p->p.namedFunctionRef());
 
     public interface XQuerySemanticFunction {
@@ -1029,6 +1030,10 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // fn:identity( as item()*) as item()*
         register("fn", "identity", List.of(anyItemsRequiredInput), zeroOrMoreItems);
 
+        // TODO: remove when solved problem of function subtyping
+        // fn:identity( as item()*) as item()*
+        register("fn", "identity", List.of(anyItemsRequiredInput, new ArgumentSpecification("position", zeroOrMoreItems, null)), zeroOrMoreItems);
+
         // register("fn", "tail", List.of(sequence), zeroOrMoreItems);
 
         // fn:insert-before(
@@ -1805,8 +1810,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
             null
         );
         XQueryItemType mapTransformer = typeFactory.itemFunction(zeroOrMoreItems, List.of(typeFactory.anyItem(), typeFactory.number()));
-        ArgumentSpecification mbKey = new ArgumentSpecification( "key", typeFactory.zeroOrOne(mapTransformer), IDENTITY$1);
-        ArgumentSpecification mbValue = new ArgumentSpecification( "value", typeFactory.zeroOrOne(mapTransformer), IDENTITY$1);
+        ArgumentSpecification mbKey = new ArgumentSpecification( "key", typeFactory.zeroOrOne(mapTransformer), IDENTITY$2);
+        ArgumentSpecification mbValue = new ArgumentSpecification( "value", typeFactory.zeroOrOne(mapTransformer), IDENTITY$2);
         register(
             "map", "build",
             List.of(mbInput, mbKey, mbValue, mapOptionsArg),
@@ -2128,18 +2133,14 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         register(
             "array", "build",
             List.of(
-                new ArgumentSpecification(
-                    "input",
-                    typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-                    null
-                ),
+                new ArgumentSpecification( "input", zeroOrMoreItems, null),
                 new ArgumentSpecification(
                     "action",
                     typeFactory.zeroOrOne(typeFactory.itemFunction(zeroOrMoreItems, List.of(typeFactory.anyItem(), typeFactory.number()))),
-                    IDENTITY$1
+                    IDENTITY$2
                 )
             ),
-            typeFactory.one(typeFactory.itemAnyArray())
+            typeFactory.anyArray()
         );
 
         // array:empty($array as array(*)) as xs:boolean

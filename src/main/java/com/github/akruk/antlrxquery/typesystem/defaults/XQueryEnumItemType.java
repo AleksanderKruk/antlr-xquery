@@ -1,6 +1,7 @@
 package com.github.akruk.antlrxquery.typesystem.defaults;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -346,28 +347,78 @@ public class XQueryEnumItemType implements XQueryItemType {
             sequenceItemMerger[RECORD][i] = simpleChoice;
             sequenceItemMerger[i][RECORD] = simpleChoice;
         }
+
         final BinaryOperator<XQueryItemType> recordMerging = (x, y) -> {
-            final var x_ = (XQueryEnumItemTypeEnum) x;
-            final var y_ = (XQueryEnumItemTypeEnum) y;
-            final var xMembers = x_.getEnumMembers();
-            final var yMembers = y_.getEnumMembers();
-            final var merged = new HashSet<String>(xMembers.size() + yMembers.size());
-            merged.addAll(xMembers);
-            merged.addAll(yMembers);
-            return typeFactory.itemEnum(merged);
+            final var x_ = (XQueryEnumItemTypeRecord) x;
+            final var y_ = (XQueryEnumItemTypeRecord) y;
+            final var xFields = x_.getRecordFields();
+            final var yFields = y_.getRecordFields();
+
+            Set<String> commonKeys = new HashSet<>(xFields.keySet());
+            commonKeys.retainAll(yFields.keySet());
+            if (commonKeys.isEmpty()) {
+                return typeFactory.itemChoice(Set.of(x, y));
+            }
+
+            Set<String> allKeys = new HashSet<>(xFields.keySet());
+            allKeys.addAll(yFields.keySet());
+            final Map<String, XQueryRecordField> newFields = allKeys.stream()
+            .collect(java.util.stream.Collectors.collectingAndThen(
+                java.util.stream.Collectors.toMap(
+                key_ -> key_,
+                key_ -> {
+                    final XQueryRecordField xField = xFields.get(key_);
+                    final XQueryRecordField yField = yFields.get(key_);
+                    if (xField != null && yField != null) {
+                    final XQuerySequenceType mergedType = xField.type().alternativeMerge(yField.type());
+                    final boolean required = xField.isRequired() && yField.isRequired();
+                    return new XQueryRecordField(mergedType, required);
+                    } else if (xField != null) {
+                    return new XQueryRecordField(xField.type(), false);
+                    } else {
+                    return new XQueryRecordField(yField.type(), false);
+                    }
+                }
+                ),
+                java.util.Collections::unmodifiableMap
+            ));
+            return typeFactory.itemRecord(newFields);
         };
+
         final BinaryOperator<XQueryItemType> extensibleRecordMerging = (x, y) -> {
-            final var x_ = (XQueryEnumItemTypeEnum) x;
-            final var y_ = (XQueryEnumItemTypeEnum) y;
-            final var xMembers = x_.getEnumMembers();
-            final var yMembers = y_.getEnumMembers();
-            final var merged = new HashSet<String>(xMembers.size() + yMembers.size());
-            merged.addAll(xMembers);
-            merged.addAll(yMembers);
-            return typeFactory.itemEnum(merged);
+            final var x_ = (XQueryEnumItemTypeRecord) x;
+            final var y_ = (XQueryEnumItemTypeRecord) y;
+            final var xRecordFields = x_.getRecordFields();
+            final var yRecordFields = y_.getRecordFields();
+            Set<String> allKeys = new HashSet<>(xRecordFields.keySet());
+            allKeys.addAll(yRecordFields.keySet());
+            final Map<String, XQueryRecordField> newFields = allKeys.stream()
+            .collect(java.util.stream.Collectors.collectingAndThen(
+                java.util.stream.Collectors.toMap(
+                key_ -> key_,
+                key_ -> {
+                    final XQueryRecordField xField = xRecordFields.get(key_);
+                    final XQueryRecordField yField = yRecordFields.get(key_);
+                    if (xField != null && yField != null) {
+                    final XQuerySequenceType xFieldType = xField.type();
+                    final XQuerySequenceType yFieldType = yField.type();
+                    boolean required = xField.isRequired() && yField.isRequired();
+                    return new XQueryRecordField(xFieldType.alternativeMerge(yFieldType), required);
+                    } else if (xField != null) {
+                    return new XQueryRecordField(xField.type(), false);
+                    } else {
+                    return new XQueryRecordField(yField.type(), false);
+                    }
+                }
+                ),
+                java.util.Collections::unmodifiableMap
+            ));
+            return typeFactory.itemExtensibleRecord(newFields);
         };
         sequenceItemMerger[RECORD][RECORD] = recordMerging;
+        // TODO:
         sequenceItemMerger[EXTENSIBLE_RECORD][RECORD] = recordMerging;
+        // TODO:
         sequenceItemMerger[RECORD][EXTENSIBLE_RECORD] = recordMerging;
         sequenceItemMerger[RECORD][CHOICE] = rightMergeChoice;
         sequenceItemMerger[CHOICE][RECORD] = leftMergeChoice;

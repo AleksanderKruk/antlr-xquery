@@ -37,7 +37,6 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
     private static final ParseTree EMPTY_STRING = XQuerySemanticFunctionManager.getTree("\"\"", (parser)->parser.literal());
     private static final ParseTree EMPTY_MAP = getTree("map {}", parser -> parser.mapConstructor());
     private static final ParseTree IDENTITY$1 = XQuerySemanticFunctionManager.getTree("fn:identity#1", p->p.namedFunctionRef());
-    private static final ParseTree IDENTITY$2 = XQuerySemanticFunctionManager.getTree("fn:identity#2", p->p.namedFunctionRef());
     private static final ParseTree BOOLEAN$1 = XQuerySemanticFunctionManager.getTree("fn:boolean#1", p->p.namedFunctionRef());
     private static final ParseTree DATA$1 = XQuerySemanticFunctionManager.getTree("fn:data#1", p->p.namedFunctionRef());
     private static final ParseTree TRUE$0 = XQuerySemanticFunctionManager.getTree("fn:true#0", p->p.namedFunctionRef());
@@ -145,49 +144,6 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
                 typeFactory.boolean_());
 
 
-
-        // final ArgumentSpecification sequence = new ArgumentSpecification("input", zeroOrMoreItems, null);
-        // final ArgumentSpecification position = new ArgumentSpecification("position", typeFactory.number()), null);
-
-        // final var optionalItem = typeFactory.zeroOrOne(typeFactory.itemAnyItem());
-
-        // register("fn", "empty", List.of(sequence), typeFactory.boolean_());
-        // register("fn", "exists", List.of(sequence), typeFactory.boolean_());
-        // register("fn", "head", List.of(sequence), optionalItem);
-        // register("fn", "tail", List.of(sequence), zeroOrMoreItems);
-
-
-        // final var start = new ArgumentSpecification("start", typeFactory.number(), null);
-        // final var optionalLength = new ArgumentSpecification("length", false, optionalNumber);
-        // register("fn", "subsequence",
-        //         List.of(sequence, start, optionalLength), zeroOrMoreItems);
-
-        // final ArgumentSpecification optionalStringValue = new ArgumentSpecification("value", optionalString), null);
-        // register("fn", "substring",
-        //         List.of(optionalStringValue, start, optionalLength),
-        //         typeFactory.string());
-
-        // final ArgumentSpecification optionalSubstring = new ArgumentSpecification("substring", optionalString), null);
-        // final var normalizedValue = new ArgumentSpecification("value", false, typeFactory.string());
-
-        // // fn:replace(
-        // //  as xs:string? := (),
-        // //  as xs:string,
-        // //  as (xs:string | fn(xs:untypedAtomic, xs:untypedAtomic*) as
-        // // item()?)? := (),
-        // //  as xs:string? := ''
-        // // ) as xs:string
-        // final ArgumentSpecification replaceValue = new ArgumentSpecification("value", false, optionalString));
-        // final ArgumentSpecification replacePattern = new ArgumentSpecification("pattern", typeFactory.string(), null);
-        // final ArgumentSpecification replacement = new ArgumentSpecification("replacement", false,
-        //         // string or function – approximate as any item?
-        //         typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification replaceFlags = new ArgumentSpecification("flags", false,
-        //         optionalString));
-        // register("fn", "replace",
-        //         List.of(replaceValue, replacePattern, replacement, replaceFlags),
-        //         typeFactory.string());
-
         // fn:zero-or-one(
         //  as item()*
         // ) as item()?
@@ -209,27 +165,6 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         register("fn", "exactly-one",
                 List.of(anyItemsRequiredInput),
                 typeFactory.one(typeFactory.itemAnyItem()));
-
-        // // fn:distinct-values(
-        // //  as xs:anyAtomicType*,
-        // //  as xs:string? := fn:default-collation()
-        // // ) as xs:anyAtomicType*
-        // final ArgumentSpecification distinctValues = new ArgumentSpecification("values", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        // final ArgumentSpecification collation = new ArgumentSpecification("collation", false,
-        //         optionalString));
-        // register("fn", "distinct-values",
-        //         List.of(distinctValues, collation),
-        //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-
-        // // 2) fn:median(
-        // //  as xs:double*
-        // // ) as xs:double?
-        // final ArgumentSpecification medianArg = new ArgumentSpecification("arg", true,
-        //         typeFactory.zeroOrMore(typeFactory.itemNumber()));
-        // register("fn", "median",
-        //         List.of(medianArg),
-        //         typeFactory.zeroOrOne(typeFactory.itemNumber()));
 
         // fn:node-name($node as node()? := .) as xs:QName?
         ArgumentSpecification nodeNameNode = new ArgumentSpecification(
@@ -1033,12 +968,6 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // fn:identity( as item()*) as item()*
         register("fn", "identity", List.of(anyItemsRequiredInput), zeroOrMoreItems);
 
-        // TODO: remove when solved problem of function subtyping
-        // fn:identity( as item()*) as item()*
-        register("fn", "identity", List.of(anyItemsRequiredInput, new ArgumentSpecification("position", zeroOrMoreItems, null)), zeroOrMoreItems);
-
-        // register("fn", "tail", List.of(sequence), zeroOrMoreItems);
-
         // fn:insert-before(
         // 	as item()*,
         // 	as xs:integer,
@@ -1785,7 +1714,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
             typeFactory.zeroOrMore(typeFactory.itemAnyItem())
         );
 
-
+        // TODO: refine parser name tokenization
         // fn:sort-by(
         // $input as item()*,
         // $keys as record(key? as (fn(item()) as xs:anyAtomicType*)?,
@@ -1978,8 +1907,8 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
             null
         );
         XQueryItemType mapTransformer = typeFactory.itemFunction(zeroOrMoreItems, List.of(typeFactory.anyItem(), typeFactory.number()));
-        ArgumentSpecification mbKey = new ArgumentSpecification( "key", typeFactory.zeroOrOne(mapTransformer), IDENTITY$2);
-        ArgumentSpecification mbValue = new ArgumentSpecification( "value", typeFactory.zeroOrOne(mapTransformer), IDENTITY$2);
+        ArgumentSpecification mbKey = new ArgumentSpecification( "key", typeFactory.zeroOrOne(mapTransformer), IDENTITY$1);
+        ArgumentSpecification mbValue = new ArgumentSpecification( "value", typeFactory.zeroOrOne(mapTransformer), IDENTITY$1);
         register(
             "map", "build",
             List.of(mbInput, mbKey, mbValue, mapOptionsArg),
@@ -2310,7 +2239,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
                 new ArgumentSpecification(
                     "action",
                     typeFactory.zeroOrOne(typeFactory.itemFunction(zeroOrMoreItems, List.of(typeFactory.anyItem(), typeFactory.number()))),
-                    IDENTITY$2
+                    IDENTITY$1
                 )
             ),
             typeFactory.anyArray()

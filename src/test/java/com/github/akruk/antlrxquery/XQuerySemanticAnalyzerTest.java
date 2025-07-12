@@ -185,7 +185,7 @@ public class XQuerySemanticAnalyzerTest extends SemanticTests {
                 """, number);
         assertType("""
                     "napis" otherwise 2
-                """, typeFactory.anyItem());
+                """, typeFactory.choice(Set.of(typeFactory.itemEnum(Set.of("napis")), typeFactory.itemNumber())));
         assertType("""
                     (1, 2, 3) otherwise () otherwise (1, 2, 3)
                 """, typeFactory.zeroOrMore(typeFactory.itemNumber()));

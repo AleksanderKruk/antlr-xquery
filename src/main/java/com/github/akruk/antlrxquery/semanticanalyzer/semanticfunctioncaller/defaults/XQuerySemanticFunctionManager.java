@@ -1955,23 +1955,16 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
             typeFactory.zeroOrMore(typeFactory.itemAnyItem())
         );
 
-        // // fn:transform(
-        // //  as map(*)
-        // // ) as map(*)
-        // final ArgumentSpecification transformOptions = new ArgumentSpecification("options", true,
-        //         typeFactory.one(typeFactory.itemAnyMap()));
-        // register("fn", "transform",
-        //         List.of(transformOptions),
-        //         typeFactory.one(typeFactory.itemAnyMap()));
-
-        // // fn:op(
-        // //  as xs:string
-        // // ) as fn(item()*,item()) as item()*
-        // final ArgumentSpecification opOperator = new ArgumentSpecification("operator", true,
-        //         typeFactory.string());
-        // register("fn", "op",
-        //         List.of(opOperator),
-        //         typeFactory.one(leftActionItem));
+        // fn:op(
+        //  as xs:string
+        // ) as fn(item()*,item()) as item()*
+        final ArgumentSpecification opOperator = new ArgumentSpecification("operator", typeFactory.string(), null);
+        register("fn", "op",
+                List.of(opOperator),
+                typeFactory.one(typeFactory.itemFunction(zeroOrMoreItems, List.of(
+                    zeroOrMoreItems,
+                    zeroOrMoreItems
+                ))));
 
         // map:build(
         //   $input   as item()*,

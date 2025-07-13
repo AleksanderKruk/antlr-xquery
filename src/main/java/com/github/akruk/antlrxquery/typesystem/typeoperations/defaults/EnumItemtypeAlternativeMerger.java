@@ -47,186 +47,404 @@ public class EnumItemtypeAlternativeMerger
 
     public EnumItemtypeAlternativeMerger(final int typeOrdinal, final XQueryTypeFactory typeFactory)
     {
-        @SuppressWarnings("unchecked")
-        final BinaryOperator<XQueryItemType>[][] alternativeItemMerger = new BinaryOperator[typesCount][typesCount];
+        this.alternativeItemMerger = new BinaryOperator[typesCount];
         final BinaryOperator<XQueryItemType> error = (_, _) -> typeFactory.itemError();
         final BinaryOperator<XQueryItemType> anyItem = (_, _) -> typeFactory.itemAnyItem();
         final BinaryOperator<XQueryItemType> anyNode = (_, _) -> typeFactory.itemAnyNode();
-        final BinaryOperator<XQueryItemType> simpleChoice = (x, y) -> typeFactory.itemChoice(Set.of(x, y));
-        final BinaryOperator<XQueryItemType> leftMergeChoice = (x, y) -> {
-            final var leftItems = ((XQueryEnumChoiceItemType) x).getItemTypes();
-            final Set<XQueryItemType> sum = new HashSet<>(leftItems.size()+1);
-            sum.addAll(leftItems);
-            sum.add(y);
-            return typeFactory.itemChoice(sum);
-        };
-        final BinaryOperator<XQueryItemType> rightMergeChoice = (x, y) -> {
-            final var rightItems = ((XQueryEnumChoiceItemType) y).getItemTypes();
-            final Set<XQueryItemType> sum = new HashSet<>(rightItems.size()+1);
-            sum.addAll(rightItems);
-            sum.add(x);
-            return typeFactory.itemChoice(sum);
-        };
-
-        final BinaryOperator<XQueryItemType> choiceMerging = (x, y) -> {
-            final var leftItems = ((XQueryEnumChoiceItemType) x).getItemTypes();
-            final var rightItems = ((XQueryEnumChoiceItemType) y).getItemTypes();
-            final Set<XQueryItemType> sum = new HashSet<>(rightItems.size()+leftItems.size());
-            sum.addAll(leftItems);
-            sum.addAll(rightItems);
-            return typeFactory.itemChoice(sum);
-        };
-
-        for (int i = 0; i < typesCount; i++) {
-            alternativeItemMerger[ERROR][i] = error;
-            alternativeItemMerger[i][ERROR] = error;
-        }
-
-        for (int i = 0; i < typesCount; i++) {
-            if (i == ERROR) continue;
-            alternativeItemMerger[ANY_ITEM][i] = anyItem;
-            alternativeItemMerger[i][ANY_ITEM] = anyItem;
-        }
-
-
-        final BinaryOperator<XQueryItemType> elementSequenceMerger = (x, y) -> {
-            final var els1 = ((XQueryEnumItemTypeElement) x).getElementNames();
-            final var els2 = ((XQueryEnumItemTypeElement) y).getElementNames();
-            final Set<String> merged = new HashSet<>(els1.size() + els2.size());
-            merged.addAll(els1);
-            merged.addAll(els2);
-            return typeFactory.itemElement(merged);
-        };
-
-        for (int i = 0; i < typesCount; i++) {
-            if (i == ERROR) continue;
-            if (i == ANY_NODE) continue;
-            alternativeItemMerger[ANY_NODE][i] = simpleChoice;
-            alternativeItemMerger[i][ANY_NODE] = simpleChoice;
-        }
-        alternativeItemMerger[ANY_NODE][ANY_NODE] = anyNode;
-        alternativeItemMerger[ANY_NODE][ELEMENT] = anyNode;
-        alternativeItemMerger[ELEMENT][ANY_NODE] = anyNode;
-        alternativeItemMerger[ANY_NODE][CHOICE] = rightMergeChoice;
-        alternativeItemMerger[CHOICE][ANY_NODE] = leftMergeChoice;
-
-        for (int i = 0; i < typesCount; i++) {
-            if (i == ERROR) continue;
-            if (i == ANY_NODE) continue;
-            alternativeItemMerger[ELEMENT][i] = simpleChoice;
-            alternativeItemMerger[i][ELEMENT] = simpleChoice;
-        }
-        alternativeItemMerger[ELEMENT][ELEMENT] = elementSequenceMerger;
-        alternativeItemMerger[ELEMENT][CHOICE] = rightMergeChoice;
-        alternativeItemMerger[CHOICE][ELEMENT] = leftMergeChoice;
-
-        for (int i = 0; i < typesCount; i++) {
-            if (i == ERROR) continue;
-            if (i == ANY_NODE) continue;
-            if (i == ELEMENT) continue;
-            alternativeItemMerger[ANY_MAP][i] = simpleChoice;
-            alternativeItemMerger[i][ANY_MAP] = simpleChoice;
-        }
         final BinaryOperator<XQueryItemType> anyMap = (_, _) -> typeFactory.itemAnyMap();
-        alternativeItemMerger[ANY_MAP][ANY_MAP] = anyMap;
-        alternativeItemMerger[ANY_MAP][MAP] = anyMap;
-        alternativeItemMerger[MAP][ANY_MAP] = anyMap;
-        alternativeItemMerger[ANY_MAP][CHOICE] = rightMergeChoice;
-        alternativeItemMerger[CHOICE][ANY_MAP] = leftMergeChoice;
-
-        for (int i = 0; i < typesCount; i++) {
-            if (i == ERROR) continue;
-            if (i == ANY_NODE) continue;
-            if (i == ELEMENT) continue;
-            if (i == ANY_MAP) continue;
-            alternativeItemMerger[MAP][i] = simpleChoice;
-            alternativeItemMerger[i][MAP] = simpleChoice;
-        }
-
-        final BinaryOperator<XQueryItemType> mapMerging = (x, y) -> {
-            final var x_ = (XQueryEnumItemTypeMap) x;
-            final var y_ = (XQueryEnumItemTypeMap) y;
-            final var xKey = x_.getMapKeyType();
-            final var yKey = y_.getMapKeyType();
-            final var xValue = x_.getMapValueType();
-            final var yValue = y_.getMapValueType();
-            final var mergedKeyType = xKey.alternativeMerge(yKey);
-            final var mergedValueType = xValue.sequenceMerge(yValue);
-            return typeFactory.itemMap(mergedKeyType, mergedValueType);
-        };
-
-        alternativeItemMerger[MAP][MAP] = mapMerging;
-        alternativeItemMerger[ANY_MAP][CHOICE] = rightMergeChoice;
-        alternativeItemMerger[CHOICE][ANY_MAP] = leftMergeChoice;
-
-        for (int i = 0; i < typesCount; i++) {
-            if (i == ERROR) continue;
-            if (i == ANY_NODE) continue;
-            if (i == ELEMENT) continue;
-            if (i == ANY_MAP) continue;
-            if (i == MAP) continue;
-            alternativeItemMerger[ANY_ARRAY][i] = simpleChoice;
-            alternativeItemMerger[i][ANY_ARRAY] = simpleChoice;
-        }
         final BinaryOperator<XQueryItemType> anyArray = (_, _) -> typeFactory.itemAnyArray();
-        alternativeItemMerger[ANY_ARRAY][ANY_ARRAY] = anyArray;
-        alternativeItemMerger[ARRAY][ANY_ARRAY] = anyArray;
-        alternativeItemMerger[ANY_ARRAY][ARRAY] = anyArray;
-        alternativeItemMerger[ANY_ARRAY][CHOICE] = rightMergeChoice;
-        alternativeItemMerger[CHOICE][ANY_ARRAY] = leftMergeChoice;
+        final BinaryOperator<XQueryItemType> itemString = (_, _) -> typeFactory.itemString();
+        final BinaryOperator<XQueryItemType> simpleChoice = (x, y) -> typeFactory.itemChoice(Set.of(x, y));
+        final BinaryOperator<XQueryItemType> leftMergeChoice = (x, y) -> leftChoiceMerge(typeFactory, x, y);
+        final BinaryOperator<XQueryItemType> rightMergeChoice = (x, y) -> rightChoiceMerge(typeFactory, x, y);
+        final BinaryOperator<XQueryItemType> choiceMerging = (x, y) -> mergeChoices(typeFactory, x, y);
+        final BinaryOperator<XQueryItemType> mapMerging = (x, y) -> mergeMaps(typeFactory, x, y);
+        final BinaryOperator<XQueryItemType> elementSequenceMerger = (x, y) -> mergeElements(typeFactory, x, y);
+        final BinaryOperator<XQueryItemType> functionMerging = functionMerger();
+        final BinaryOperator<XQueryItemType> enumMerging = enumMerger(typeFactory);
+        // Fully expanded automaton for alternativeItemMerger initialization
 
 
-        for (int i = 0; i < typesCount; i++) {
-            if (i == ERROR) continue;
-            if (i == ANY_NODE) continue;
-            if (i == ELEMENT) continue;
-            if (i == ANY_MAP) continue;
-            if (i == MAP) continue;
-            if (i == ANY_ARRAY) continue;
-            alternativeItemMerger[ARRAY][i] = simpleChoice;
-            alternativeItemMerger[i][ARRAY] = simpleChoice;
+
+        final BinaryOperator<XQueryItemType> arrayMerging = (x, y) -> mergeArrays(typeFactory, x, y);
+        final BinaryOperator<XQueryItemType> recordMerging = recordMerger(typeFactory);
+        switch (XQueryTypes.values()[typeOrdinal]) {
+            case ANY_NODE:
+            alternativeItemMerger[ERROR] = error;
+            alternativeItemMerger[ANY_ITEM] = anyItem;
+            alternativeItemMerger[ANY_NODE] = anyNode;
+            alternativeItemMerger[ELEMENT] = anyNode;
+            alternativeItemMerger[ENUM] = simpleChoice;
+            alternativeItemMerger[BOOLEAN] = simpleChoice;
+            alternativeItemMerger[NUMBER] = simpleChoice;
+            alternativeItemMerger[STRING] = simpleChoice;
+            alternativeItemMerger[ANY_MAP] = simpleChoice;
+            alternativeItemMerger[MAP] = simpleChoice;
+            alternativeItemMerger[CHOICE] = rightMergeChoice;
+            alternativeItemMerger[ANY_ARRAY] = simpleChoice;
+            alternativeItemMerger[ARRAY] = simpleChoice;
+            alternativeItemMerger[ANY_FUNCTION] = simpleChoice;
+            alternativeItemMerger[FUNCTION] = simpleChoice;
+            alternativeItemMerger[RECORD] = simpleChoice;
+            alternativeItemMerger[EXTENSIBLE_RECORD] = simpleChoice;
+            break;
+
+            case ELEMENT:
+            alternativeItemMerger[ERROR] = error;
+            alternativeItemMerger[ANY_ITEM] = anyItem;
+            alternativeItemMerger[ANY_NODE] = anyNode;
+            alternativeItemMerger[ELEMENT] = elementSequenceMerger;
+            alternativeItemMerger[ENUM] = simpleChoice;
+            alternativeItemMerger[BOOLEAN] = simpleChoice;
+            alternativeItemMerger[NUMBER] = simpleChoice;
+            alternativeItemMerger[STRING] = simpleChoice;
+            alternativeItemMerger[ANY_MAP] = simpleChoice;
+            alternativeItemMerger[MAP] = simpleChoice;
+            alternativeItemMerger[CHOICE] = rightMergeChoice;
+            alternativeItemMerger[ANY_ARRAY] = simpleChoice;
+            alternativeItemMerger[ARRAY] = simpleChoice;
+            alternativeItemMerger[ANY_FUNCTION] = simpleChoice;
+            alternativeItemMerger[FUNCTION] = simpleChoice;
+            alternativeItemMerger[RECORD] = simpleChoice;
+            alternativeItemMerger[EXTENSIBLE_RECORD] = simpleChoice;
+            break;
+
+            case ANY_MAP:
+            alternativeItemMerger[ERROR] = error;
+            alternativeItemMerger[ANY_ITEM] = anyItem;
+            alternativeItemMerger[ANY_NODE] = simpleChoice;
+            alternativeItemMerger[ELEMENT] = simpleChoice;
+            alternativeItemMerger[ENUM] = simpleChoice;
+            alternativeItemMerger[BOOLEAN] = simpleChoice;
+            alternativeItemMerger[NUMBER] = simpleChoice;
+            alternativeItemMerger[STRING] = simpleChoice;
+            alternativeItemMerger[ANY_MAP] = anyMap;
+            alternativeItemMerger[MAP] = anyMap;
+            alternativeItemMerger[CHOICE] = rightMergeChoice;
+            alternativeItemMerger[ANY_ARRAY] = simpleChoice;
+            alternativeItemMerger[ARRAY] = simpleChoice;
+            alternativeItemMerger[ANY_FUNCTION] = simpleChoice;
+            alternativeItemMerger[FUNCTION] = simpleChoice;
+            alternativeItemMerger[RECORD] = simpleChoice;
+            alternativeItemMerger[EXTENSIBLE_RECORD] = simpleChoice;
+            break;
+
+            case MAP:
+            alternativeItemMerger[ERROR] = error;
+            alternativeItemMerger[ANY_ITEM] = anyItem;
+            alternativeItemMerger[ANY_NODE] = simpleChoice;
+            alternativeItemMerger[ELEMENT] = simpleChoice;
+            alternativeItemMerger[ENUM] = simpleChoice;
+            alternativeItemMerger[BOOLEAN] = simpleChoice;
+            alternativeItemMerger[NUMBER] = simpleChoice;
+            alternativeItemMerger[STRING] = simpleChoice;
+            alternativeItemMerger[ANY_MAP] = anyMap;
+            alternativeItemMerger[MAP] = mapMerging;
+            alternativeItemMerger[CHOICE] = rightMergeChoice;
+            alternativeItemMerger[ANY_ARRAY] = simpleChoice;
+            alternativeItemMerger[ARRAY] = simpleChoice;
+            alternativeItemMerger[ANY_FUNCTION] = simpleChoice;
+            alternativeItemMerger[FUNCTION] = simpleChoice;
+            alternativeItemMerger[RECORD] = simpleChoice;
+            alternativeItemMerger[EXTENSIBLE_RECORD] = simpleChoice;
+            break;
+
+            case ANY_ARRAY:
+            alternativeItemMerger[ERROR] = error;
+            alternativeItemMerger[ANY_ITEM] = anyItem;
+            alternativeItemMerger[ANY_NODE] = simpleChoice;
+            alternativeItemMerger[ELEMENT] = simpleChoice;
+            alternativeItemMerger[ENUM] = simpleChoice;
+            alternativeItemMerger[BOOLEAN] = simpleChoice;
+            alternativeItemMerger[NUMBER] = simpleChoice;
+            alternativeItemMerger[STRING] = simpleChoice;
+            alternativeItemMerger[ANY_MAP] = simpleChoice;
+            alternativeItemMerger[MAP] = simpleChoice;
+            alternativeItemMerger[CHOICE] = rightMergeChoice;
+            alternativeItemMerger[ANY_ARRAY] = anyArray;
+            alternativeItemMerger[ARRAY] = anyArray;
+            alternativeItemMerger[ANY_FUNCTION] = simpleChoice;
+            alternativeItemMerger[FUNCTION] = simpleChoice;
+            alternativeItemMerger[RECORD] = simpleChoice;
+            alternativeItemMerger[EXTENSIBLE_RECORD] = simpleChoice;
+            break;
+
+            case ARRAY:
+            alternativeItemMerger[ERROR] = error;
+            alternativeItemMerger[ANY_ITEM] = anyItem;
+            alternativeItemMerger[ANY_NODE] = simpleChoice;
+            alternativeItemMerger[ELEMENT] = simpleChoice;
+            alternativeItemMerger[ENUM] = simpleChoice;
+            alternativeItemMerger[BOOLEAN] = simpleChoice;
+            alternativeItemMerger[NUMBER] = simpleChoice;
+            alternativeItemMerger[STRING] = simpleChoice;
+            alternativeItemMerger[ANY_MAP] = simpleChoice;
+            alternativeItemMerger[MAP] = simpleChoice;
+            alternativeItemMerger[CHOICE] = rightMergeChoice;
+            alternativeItemMerger[ANY_ARRAY] = anyArray;
+            alternativeItemMerger[ARRAY] = arrayMerging;
+            alternativeItemMerger[ANY_FUNCTION] = simpleChoice;
+            alternativeItemMerger[FUNCTION] = simpleChoice;
+            alternativeItemMerger[RECORD] = simpleChoice;
+            alternativeItemMerger[EXTENSIBLE_RECORD] = simpleChoice;
+            break;
+
+            case ANY_FUNCTION:
+            alternativeItemMerger[ERROR] = error;
+            alternativeItemMerger[ANY_ITEM] = anyItem;
+            alternativeItemMerger[ANY_NODE] = simpleChoice;
+            alternativeItemMerger[ELEMENT] = simpleChoice;
+            alternativeItemMerger[ENUM] = simpleChoice;
+            alternativeItemMerger[BOOLEAN] = simpleChoice;
+            alternativeItemMerger[NUMBER] = simpleChoice;
+            alternativeItemMerger[STRING] = simpleChoice;
+            alternativeItemMerger[ANY_MAP] = simpleChoice;
+            alternativeItemMerger[MAP] = simpleChoice;
+            alternativeItemMerger[CHOICE] = rightMergeChoice;
+            alternativeItemMerger[ANY_ARRAY] = simpleChoice;
+            alternativeItemMerger[ARRAY] = simpleChoice;
+            alternativeItemMerger[ANY_FUNCTION] = (_, _) -> typeFactory.itemAnyFunction();
+            alternativeItemMerger[FUNCTION] = simpleChoice;
+            alternativeItemMerger[RECORD] = simpleChoice;
+            alternativeItemMerger[EXTENSIBLE_RECORD] = simpleChoice;
+            break;
+
+            case FUNCTION:
+            alternativeItemMerger[ERROR] = error;
+            alternativeItemMerger[ANY_ITEM] = anyItem;
+            alternativeItemMerger[ANY_NODE] = simpleChoice;
+            alternativeItemMerger[ELEMENT] = simpleChoice;
+            alternativeItemMerger[ENUM] = simpleChoice;
+            alternativeItemMerger[BOOLEAN] = simpleChoice;
+            alternativeItemMerger[NUMBER] = simpleChoice;
+            alternativeItemMerger[STRING] = simpleChoice;
+            alternativeItemMerger[ANY_MAP] = simpleChoice;
+            alternativeItemMerger[MAP] = simpleChoice;
+            alternativeItemMerger[CHOICE] = rightMergeChoice;
+            alternativeItemMerger[ANY_ARRAY] = simpleChoice;
+            alternativeItemMerger[ARRAY] = simpleChoice;
+            alternativeItemMerger[ANY_FUNCTION] = simpleChoice;
+            alternativeItemMerger[FUNCTION] = functionMerging;
+            alternativeItemMerger[RECORD] = functionMerging;
+            alternativeItemMerger[EXTENSIBLE_RECORD] = functionMerging;
+            break;
+
+            case ENUM:
+            alternativeItemMerger[ERROR] = error;
+            alternativeItemMerger[ANY_ITEM] = anyItem;
+            alternativeItemMerger[ANY_NODE] = simpleChoice;
+            alternativeItemMerger[ELEMENT] = simpleChoice;
+            alternativeItemMerger[ENUM] = enumMerging;
+            alternativeItemMerger[BOOLEAN] = simpleChoice;
+            alternativeItemMerger[NUMBER] = simpleChoice;
+            alternativeItemMerger[STRING] = itemString;
+            alternativeItemMerger[ANY_MAP] = simpleChoice;
+            alternativeItemMerger[MAP] = simpleChoice;
+            alternativeItemMerger[CHOICE] = rightMergeChoice;
+            alternativeItemMerger[ANY_ARRAY] = simpleChoice;
+            alternativeItemMerger[ARRAY] = simpleChoice;
+            alternativeItemMerger[ANY_FUNCTION] = simpleChoice;
+            alternativeItemMerger[FUNCTION] = simpleChoice;
+            alternativeItemMerger[RECORD] = simpleChoice;
+            alternativeItemMerger[EXTENSIBLE_RECORD] = simpleChoice;
+            break;
+
+            case RECORD:
+            alternativeItemMerger[ERROR] = error;
+            alternativeItemMerger[ANY_ITEM] = anyItem;
+            alternativeItemMerger[ANY_NODE] = simpleChoice;
+            alternativeItemMerger[ELEMENT] = simpleChoice;
+            alternativeItemMerger[ENUM] = simpleChoice;
+            alternativeItemMerger[BOOLEAN] = simpleChoice;
+            alternativeItemMerger[NUMBER] = simpleChoice;
+            alternativeItemMerger[STRING] = simpleChoice;
+            alternativeItemMerger[ANY_MAP] = simpleChoice;
+            alternativeItemMerger[MAP] = simpleChoice;
+            alternativeItemMerger[CHOICE] = rightMergeChoice;
+            alternativeItemMerger[ANY_ARRAY] = simpleChoice;
+            alternativeItemMerger[ARRAY] = simpleChoice;
+            alternativeItemMerger[ANY_FUNCTION] = simpleChoice;
+            alternativeItemMerger[FUNCTION] = simpleChoice;
+            alternativeItemMerger[RECORD] = recordMerging;
+            alternativeItemMerger[EXTENSIBLE_RECORD] = recordMerging;
+            break;
+
+            case EXTENSIBLE_RECORD:
+            alternativeItemMerger[ERROR] = error;
+            alternativeItemMerger[ANY_ITEM] = anyItem;
+            alternativeItemMerger[ANY_NODE] = simpleChoice;
+            alternativeItemMerger[ELEMENT] = simpleChoice;
+            alternativeItemMerger[ENUM] = simpleChoice;
+            alternativeItemMerger[BOOLEAN] = simpleChoice;
+            alternativeItemMerger[NUMBER] = simpleChoice;
+            alternativeItemMerger[STRING] = simpleChoice;
+            alternativeItemMerger[ANY_MAP] = simpleChoice;
+            alternativeItemMerger[MAP] = simpleChoice;
+            alternativeItemMerger[CHOICE] = rightMergeChoice;
+            alternativeItemMerger[ANY_ARRAY] = simpleChoice;
+            alternativeItemMerger[ARRAY] = simpleChoice;
+            alternativeItemMerger[ANY_FUNCTION] = simpleChoice;
+            alternativeItemMerger[FUNCTION] = simpleChoice;
+            alternativeItemMerger[RECORD] = recordMerging;
+            alternativeItemMerger[EXTENSIBLE_RECORD] = recordMerging;
+            break;
+
+            case BOOLEAN:
+            alternativeItemMerger[ERROR] = error;
+            alternativeItemMerger[ANY_ITEM] = anyItem;
+            alternativeItemMerger[ANY_NODE] = simpleChoice;
+            alternativeItemMerger[ELEMENT] = simpleChoice;
+            alternativeItemMerger[ENUM] = simpleChoice;
+            alternativeItemMerger[BOOLEAN] = (_, _) -> typeFactory.itemBoolean();
+            alternativeItemMerger[NUMBER] = simpleChoice;
+            alternativeItemMerger[STRING] = simpleChoice;
+            alternativeItemMerger[ANY_MAP] = simpleChoice;
+            alternativeItemMerger[MAP] = simpleChoice;
+            alternativeItemMerger[CHOICE] = rightMergeChoice;
+            alternativeItemMerger[ANY_ARRAY] = simpleChoice;
+            alternativeItemMerger[ARRAY] = simpleChoice;
+            alternativeItemMerger[ANY_FUNCTION] = simpleChoice;
+            alternativeItemMerger[FUNCTION] = simpleChoice;
+            alternativeItemMerger[RECORD] = simpleChoice;
+            alternativeItemMerger[EXTENSIBLE_RECORD] = simpleChoice;
+            break;
+
+            case STRING:
+            alternativeItemMerger[ERROR] = error;
+            alternativeItemMerger[ANY_ITEM] = anyItem;
+            alternativeItemMerger[ANY_NODE] = simpleChoice;
+            alternativeItemMerger[ELEMENT] = simpleChoice;
+            alternativeItemMerger[ENUM] = itemString;
+            alternativeItemMerger[BOOLEAN] = simpleChoice;
+            alternativeItemMerger[NUMBER] = simpleChoice;
+            alternativeItemMerger[STRING] = (_, _) -> typeFactory.itemString();
+            alternativeItemMerger[ANY_MAP] = simpleChoice;
+            alternativeItemMerger[MAP] = simpleChoice;
+            alternativeItemMerger[CHOICE] = rightMergeChoice;
+            alternativeItemMerger[ANY_ARRAY] = simpleChoice;
+            alternativeItemMerger[ARRAY] = simpleChoice;
+            alternativeItemMerger[ANY_FUNCTION] = simpleChoice;
+            alternativeItemMerger[FUNCTION] = simpleChoice;
+            alternativeItemMerger[RECORD] = simpleChoice;
+            alternativeItemMerger[EXTENSIBLE_RECORD] = simpleChoice;
+            break;
+
+            case NUMBER:
+            alternativeItemMerger[ERROR] = error;
+            alternativeItemMerger[ANY_ITEM] = anyItem;
+            alternativeItemMerger[ANY_NODE] = simpleChoice;
+            alternativeItemMerger[ELEMENT] = simpleChoice;
+            alternativeItemMerger[ENUM] = simpleChoice;
+            alternativeItemMerger[BOOLEAN] = simpleChoice;
+            alternativeItemMerger[NUMBER] = (_, _) -> typeFactory.itemNumber();
+            alternativeItemMerger[STRING] = simpleChoice;
+            alternativeItemMerger[ANY_MAP] = simpleChoice;
+            alternativeItemMerger[MAP] = simpleChoice;
+            alternativeItemMerger[CHOICE] = rightMergeChoice;
+            alternativeItemMerger[ANY_ARRAY] = simpleChoice;
+            alternativeItemMerger[ARRAY] = simpleChoice;
+            alternativeItemMerger[ANY_FUNCTION] = simpleChoice;
+            alternativeItemMerger[FUNCTION] = simpleChoice;
+            alternativeItemMerger[RECORD] = simpleChoice;
+            alternativeItemMerger[EXTENSIBLE_RECORD] = simpleChoice;
+            break;
+
+            case CHOICE:
+            alternativeItemMerger[ERROR] = error;
+            alternativeItemMerger[ANY_ITEM] = anyItem;
+            alternativeItemMerger[ANY_NODE] = leftMergeChoice;
+            alternativeItemMerger[ELEMENT] = leftMergeChoice;
+            alternativeItemMerger[ENUM] = leftMergeChoice;
+            alternativeItemMerger[BOOLEAN] = leftMergeChoice;
+            alternativeItemMerger[NUMBER] = leftMergeChoice;
+            alternativeItemMerger[STRING] = leftMergeChoice;
+            alternativeItemMerger[ANY_MAP] = leftMergeChoice;
+            alternativeItemMerger[MAP] = leftMergeChoice;
+            alternativeItemMerger[CHOICE] = choiceMerging;
+            alternativeItemMerger[ANY_ARRAY] = leftMergeChoice;
+            alternativeItemMerger[ARRAY] = leftMergeChoice;
+            alternativeItemMerger[ANY_FUNCTION] = leftMergeChoice;
+            alternativeItemMerger[FUNCTION] = leftMergeChoice;
+            alternativeItemMerger[RECORD] = leftMergeChoice;
+            alternativeItemMerger[EXTENSIBLE_RECORD] = leftMergeChoice;
+            break;
+
+            default:
+                throw new AssertionError("Unexpected type ordinal: " + typeOrdinal + ":" + XQueryTypes.values()[typeOrdinal]);
         }
-        final BinaryOperator<XQueryItemType> arrayMerging = (x, y) -> {
-            final var x_ = (XQueryEnumItemTypeArray) x;
-            final var y_ = (XQueryEnumItemTypeArray) y;
-            final var xArrayType = x_.getArrayType();
-            final var yArrayType = y_.getArrayType();
-            final var merged = xArrayType.sequenceMerge(yArrayType);
-            return typeFactory.itemArray(merged);
-        };
-        alternativeItemMerger[ARRAY][ARRAY] = arrayMerging;
-        alternativeItemMerger[ARRAY][CHOICE] = rightMergeChoice;
-        alternativeItemMerger[CHOICE][ARRAY] = leftMergeChoice;
 
-        for (int i = 0; i < typesCount; i++) {
-            if (i == ERROR) continue;
-            if (i == ANY_NODE) continue;
-            if (i == ELEMENT) continue;
-            if (i == ANY_MAP) continue;
-            if (i == MAP) continue;
-            if (i == ANY_ARRAY) continue;
-            if (i == ARRAY) continue;
-            alternativeItemMerger[ANY_FUNCTION][i] = simpleChoice;
-            alternativeItemMerger[i][ANY_FUNCTION] = simpleChoice;
-        }
-        alternativeItemMerger[ANY_FUNCTION][ANY_FUNCTION] = arrayMerging;
-        alternativeItemMerger[ANY_FUNCTION][CHOICE] = rightMergeChoice;
-        alternativeItemMerger[CHOICE][ANY_FUNCTION] = leftMergeChoice;
+    }
 
 
-        for (int i = 0; i < typesCount; i++) {
-            if (i == ERROR) continue;
-            if (i == ANY_NODE) continue;
-            if (i == ELEMENT) continue;
-            if (i == ANY_MAP) continue;
-            if (i == MAP) continue;
-            if (i == ANY_ARRAY) continue;
-            if (i == ARRAY) continue;
-            if (i == ANY_FUNCTION) continue;
-            alternativeItemMerger[FUNCTION][i] = simpleChoice;
-            alternativeItemMerger[i][FUNCTION] = simpleChoice;
-        }
-        final BinaryOperator<XQueryItemType> functionMerging = (x, y) -> {
+    private XQueryItemType mergeArrays(final XQueryTypeFactory typeFactory, XQueryItemType x, XQueryItemType y)
+    {
+        final var x_ = (XQueryEnumItemTypeArray) x;
+        final var y_ = (XQueryEnumItemTypeArray) y;
+        final var xArrayType = x_.getArrayType();
+        final var yArrayType = y_.getArrayType();
+        final var merged = xArrayType.sequenceMerge(yArrayType);
+        return typeFactory.itemArray(merged);
+    }
+
+
+    private XQueryItemType mergeMaps(final XQueryTypeFactory typeFactory, XQueryItemType x, XQueryItemType y)
+    {
+        final var x_ = (XQueryEnumItemTypeMap) x;
+        final var y_ = (XQueryEnumItemTypeMap) y;
+        final var xKey = x_.getMapKeyType();
+        final var yKey = y_.getMapKeyType();
+        final var xValue = x_.getMapValueType();
+        final var yValue = y_.getMapValueType();
+        final var mergedKeyType = xKey.alternativeMerge(yKey);
+        final var mergedValueType = xValue.sequenceMerge(yValue);
+        return typeFactory.itemMap(mergedKeyType, mergedValueType);
+    }
+
+
+    private XQueryItemType rightChoiceMerge(final XQueryTypeFactory typeFactory, XQueryItemType x, XQueryItemType y)
+    {
+        final var rightItems = ((XQueryEnumChoiceItemType) y).getItemTypes();
+        final Set<XQueryItemType> sum = new HashSet<>(rightItems.size()+1);
+        sum.addAll(rightItems);
+        sum.add(x);
+        return typeFactory.itemChoice(sum);
+    }
+
+    private XQueryItemType leftChoiceMerge(final XQueryTypeFactory typeFactory, XQueryItemType x, XQueryItemType y)
+    {
+        final var leftItems = ((XQueryEnumChoiceItemType) x).getItemTypes();
+        final Set<XQueryItemType> sum = new HashSet<>(leftItems.size()+1);
+        sum.addAll(leftItems);
+        sum.add(y);
+        return typeFactory.itemChoice(sum);
+    }
+
+
+    private XQueryItemType mergeElements(final XQueryTypeFactory typeFactory, XQueryItemType x, XQueryItemType y)
+    {
+        final var els1 = ((XQueryEnumItemTypeElement) x).getElementNames();
+        final var els2 = ((XQueryEnumItemTypeElement) y).getElementNames();
+        final Set<String> merged = new HashSet<>(els1.size() + els2.size());
+        merged.addAll(els1);
+        merged.addAll(els2);
+        return typeFactory.itemElement(merged);
+    }
+
+
+    private XQueryItemType mergeChoices(final XQueryTypeFactory typeFactory, XQueryItemType x, XQueryItemType y)
+    {
+        final var leftItems = ((XQueryEnumChoiceItemType) x).getItemTypes();
+        final var rightItems = ((XQueryEnumChoiceItemType) y).getItemTypes();
+        final Set<XQueryItemType> sum = new HashSet<>(rightItems.size()+leftItems.size());
+        sum.addAll(leftItems);
+        sum.addAll(rightItems);
+        return typeFactory.itemChoice(sum);
+    }
+
+
+    private BinaryOperator<XQueryItemType> functionMerger()
+    {
+        return (x, y) -> {
             final var x_ = (XQueryEnumItemTypeFunction) x;
             final var y_ = (XQueryEnumItemTypeFunction) y;
             final var xReturnedType = x_.getReturnedType();
@@ -237,58 +455,12 @@ public class EnumItemtypeAlternativeMerger
             // return typeFactory.itemArray(merged);
             return null;
         };
-        alternativeItemMerger[FUNCTION][FUNCTION] = functionMerging;
-        alternativeItemMerger[FUNCTION][CHOICE] = rightMergeChoice;
-        alternativeItemMerger[CHOICE][FUNCTION] = leftMergeChoice;
+    }
 
 
-        for (int i = 0; i < typesCount; i++) {
-            if (i == ERROR) continue;
-            if (i == ANY_NODE) continue;
-            if (i == ELEMENT) continue;
-            if (i == ANY_MAP) continue;
-            if (i == MAP) continue;
-            if (i == ANY_ARRAY) continue;
-            if (i == ARRAY) continue;
-            if (i == ANY_FUNCTION) continue;
-            if (i == FUNCTION) continue;
-            alternativeItemMerger[ENUM][i] = simpleChoice;
-            alternativeItemMerger[i][ENUM] = simpleChoice;
-        }
-        final BinaryOperator<XQueryItemType> enumMerging = (x, y) -> {
-            final var x_ = (XQueryEnumItemTypeEnum) x;
-            final var y_ = (XQueryEnumItemTypeEnum) y;
-            final var xMembers = x_.getEnumMembers();
-            final var yMembers = y_.getEnumMembers();
-            final var merged = new HashSet<String>(xMembers.size() + yMembers.size());
-            merged.addAll(xMembers);
-            merged.addAll(yMembers);
-            return typeFactory.itemEnum(merged);
-        };
-        final BinaryOperator<XQueryItemType> itemString = (_, _) -> typeFactory.itemString();
-        alternativeItemMerger[ENUM][ENUM] = enumMerging;
-        alternativeItemMerger[ENUM][STRING] = itemString;
-        alternativeItemMerger[STRING][ENUM] = itemString;
-        alternativeItemMerger[ENUM][CHOICE] = rightMergeChoice;
-        alternativeItemMerger[CHOICE][ENUM] = leftMergeChoice;
-
-
-        for (int i = 0; i < typesCount; i++) {
-            if (i == ERROR) continue;
-            if (i == ANY_NODE) continue;
-            if (i == ELEMENT) continue;
-            if (i == ANY_MAP) continue;
-            if (i == MAP) continue;
-            if (i == ANY_ARRAY) continue;
-            if (i == ARRAY) continue;
-            if (i == ANY_FUNCTION) continue;
-            if (i == FUNCTION) continue;
-            if (i == ENUM) continue;
-            alternativeItemMerger[RECORD][i] = simpleChoice;
-            alternativeItemMerger[i][RECORD] = simpleChoice;
-        }
-
-        final BinaryOperator<XQueryItemType> recordMerging = (x, y) -> {
+    private BinaryOperator<XQueryItemType> recordMerger(final XQueryTypeFactory typeFactory)
+    {
+        return (x, y) -> {
             final var x_ = (XQueryEnumItemTypeRecord) x;
             final var y_ = (XQueryEnumItemTypeRecord) y;
             final var xFields = x_.getRecordFields();
@@ -324,8 +496,12 @@ public class EnumItemtypeAlternativeMerger
             ));
             return typeFactory.itemRecord(newFields);
         };
+    }
 
-        final BinaryOperator<XQueryItemType> extensibleRecordMerging = (x, y) -> {
+
+    private BinaryOperator<XQueryItemType> extensibleRecordMerger(final XQueryTypeFactory typeFactory)
+    {
+        return (x, y) -> {
             final var x_ = (XQueryEnumItemTypeRecord) x;
             final var y_ = (XQueryEnumItemTypeRecord) y;
             final var xRecordFields = x_.getRecordFields();
@@ -355,86 +531,21 @@ public class EnumItemtypeAlternativeMerger
             ));
             return typeFactory.itemExtensibleRecord(newFields);
         };
-        alternativeItemMerger[RECORD][RECORD] = recordMerging;
-        // TODO:
-        alternativeItemMerger[EXTENSIBLE_RECORD][RECORD] = recordMerging;
-        // TODO:
-        alternativeItemMerger[RECORD][EXTENSIBLE_RECORD] = recordMerging;
-        alternativeItemMerger[RECORD][CHOICE] = rightMergeChoice;
-        alternativeItemMerger[CHOICE][RECORD] = leftMergeChoice;
-
-        for (int i = 0; i < typesCount; i++) {
-            if (i == ERROR) continue;
-            if (i == ANY_NODE) continue;
-            if (i == ELEMENT) continue;
-            if (i == ANY_MAP) continue;
-            if (i == MAP) continue;
-            if (i == ANY_ARRAY) continue;
-            if (i == ARRAY) continue;
-            if (i == ANY_FUNCTION) continue;
-            if (i == FUNCTION) continue;
-            if (i == ENUM) continue;
-            if (i == RECORD) continue;
-            alternativeItemMerger[EXTENSIBLE_RECORD][i] = simpleChoice;
-            alternativeItemMerger[i][EXTENSIBLE_RECORD] = simpleChoice;
-        }
-        alternativeItemMerger[EXTENSIBLE_RECORD][EXTENSIBLE_RECORD] = recordMerging;
-        alternativeItemMerger[EXTENSIBLE_RECORD][CHOICE] = rightMergeChoice;
-        alternativeItemMerger[CHOICE][EXTENSIBLE_RECORD] = leftMergeChoice;
+    }
 
 
-        for (int i = 0; i < typesCount; i++) {
-            if (i == ERROR) continue;
-            if (i == ANY_NODE) continue;
-            if (i == ELEMENT) continue;
-            if (i == ANY_MAP) continue;
-            if (i == MAP) continue;
-            if (i == ANY_ARRAY) continue;
-            if (i == ARRAY) continue;
-            if (i == ANY_FUNCTION) continue;
-            if (i == FUNCTION) continue;
-            if (i == ENUM) continue;
-            if (i == RECORD) continue;
-            if (i == EXTENSIBLE_RECORD) continue;
-            alternativeItemMerger[BOOLEAN][i] = simpleChoice;
-            alternativeItemMerger[i][BOOLEAN] = simpleChoice;
-        }
-        alternativeItemMerger[BOOLEAN][BOOLEAN] = (_, _) -> typeFactory.itemBoolean();
-        alternativeItemMerger[EXTENSIBLE_RECORD][CHOICE] = rightMergeChoice;
-        alternativeItemMerger[CHOICE][EXTENSIBLE_RECORD] = leftMergeChoice;
-
-
-        for (int i = 0; i < typesCount; i++) {
-            if (i == ERROR) continue;
-            if (i == ANY_NODE) continue;
-            if (i == ELEMENT) continue;
-            if (i == ANY_MAP) continue;
-            if (i == MAP) continue;
-            if (i == ANY_ARRAY) continue;
-            if (i == ARRAY) continue;
-            if (i == ANY_FUNCTION) continue;
-            if (i == FUNCTION) continue;
-            if (i == ENUM) continue;
-            if (i == RECORD) continue;
-            if (i == EXTENSIBLE_RECORD) continue;
-            if (i == BOOLEAN) continue;
-            alternativeItemMerger[STRING][i] = simpleChoice;
-            alternativeItemMerger[i][STRING] = simpleChoice;
-        }
-        alternativeItemMerger[STRING][STRING] = (_, _) -> typeFactory.itemString();
-        alternativeItemMerger[EXTENSIBLE_RECORD][CHOICE] = rightMergeChoice;
-        alternativeItemMerger[CHOICE][EXTENSIBLE_RECORD] = leftMergeChoice;
-
-
-        alternativeItemMerger[NUMBER][NUMBER] = (_, _) -> typeFactory.itemNumber();
-        alternativeItemMerger[NUMBER][CHOICE] = rightMergeChoice;
-        alternativeItemMerger[CHOICE][NUMBER] = leftMergeChoice;
-
-        alternativeItemMerger[CHOICE][CHOICE] = choiceMerging;
-
-
-        // we save only the relevant merger for the typeOrdinal
-        this.alternativeItemMerger = alternativeItemMerger[typeOrdinal];
+    private BinaryOperator<XQueryItemType> enumMerger(final XQueryTypeFactory typeFactory)
+    {
+        return (x, y) -> {
+            final var x_ = (XQueryEnumItemTypeEnum) x;
+            final var y_ = (XQueryEnumItemTypeEnum) y;
+            final var xMembers = x_.getEnumMembers();
+            final var yMembers = y_.getEnumMembers();
+            final var merged = new HashSet<String>(xMembers.size() + yMembers.size());
+            merged.addAll(xMembers);
+            merged.addAll(yMembers);
+            return typeFactory.itemEnum(merged);
+        };
     }
 
 

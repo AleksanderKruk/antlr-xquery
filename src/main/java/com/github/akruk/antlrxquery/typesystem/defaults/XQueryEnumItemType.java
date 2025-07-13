@@ -15,6 +15,8 @@ import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.TypeSequenceMerger;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.defaults.EnumItemtypeAlternativeMerger;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.defaults.EnumItemtypeUnionMerger;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.defaults.IItemtypeUnionMerger;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class XQueryEnumItemType implements IXQueryEnumItemType {
@@ -38,10 +40,10 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
 
 
     private final EnumItemtypeAlternativeMerger alternativeMerger;
-    private final BinaryOperator[][] unionItemMerger;
     private final BinaryOperator[][] intersectionItemMerger;
     private final XQueryTypeFactory typeFactory;
     private final Collection<XQueryItemType> itemTypes;
+    private final IItemtypeUnionMerger unionMerger;
 
     @Override
     public Collection<XQueryItemType> getItemTypes() {
@@ -68,30 +70,11 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
         this.typeFactory = factory;
         this.itemTypes = itemTypes;
         this.alternativeMerger = new EnumItemtypeAlternativeMerger(typeOrdinal, factory);
+        this.unionMerger = new EnumItemtypeUnionMerger(typeOrdinal, factory);
 
         // Union merging preparation
         final int ELEMENT = XQueryTypes.ELEMENT.ordinal();
         final int ANY_NODE = XQueryTypes.ANY_NODE.ordinal();
-
-        unionItemMerger = new BinaryOperator[typesCount][typesCount];
-        unionItemMerger[ELEMENT][ELEMENT] = (i1, i2) -> {
-            final var i1_ = (XQueryEnumItemType) i1;
-            final var i2_ = (XQueryEnumItemType) i2;
-            final var i1Elements = i1_.getElementNames();
-            final var i2ELements = i2_.getElementNames();
-            final Set<String> mergedElements = new HashSet<>(i1Elements.size() + i2ELements.size());
-            mergedElements.addAll(i1Elements);
-            mergedElements.addAll(i2ELements);
-            return typeFactory.itemElement(mergedElements);
-        };
-        final BinaryOperator<XQueryItemType> anyNodeReturn = (_, _) -> {
-            return typeFactory.itemAnyNode();
-        };
-        unionItemMerger[ELEMENT][ANY_NODE] = anyNodeReturn;
-        unionItemMerger[ANY_NODE][ELEMENT] = anyNodeReturn;
-        unionItemMerger[ANY_NODE][ANY_NODE] = anyNodeReturn;
-
-
 
         intersectionItemMerger = new BinaryOperator[typesCount][typesCount];
         intersectionItemMerger[ELEMENT][ELEMENT] = (i1, i2) -> {
@@ -104,13 +87,9 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
             mergedElements.retainAll(i2ELements);
             return typeFactory.itemElement(mergedElements);
         };
-        intersectionItemMerger[ELEMENT][ANY_NODE] = (i1, _) -> {
-            return i1;
-        };
-        intersectionItemMerger[ANY_NODE][ELEMENT] = (_, i2) -> {
-            return i2;
-        };
-        intersectionItemMerger[ANY_NODE][ANY_NODE] = anyNodeReturn;
+        intersectionItemMerger[ELEMENT][ANY_NODE] = (i1, _) -> i1;
+        intersectionItemMerger[ANY_NODE][ELEMENT] = (_, i2) -> i2;
+        intersectionItemMerger[ANY_NODE][ANY_NODE] = (_, _) -> typeFactory.itemAnyNode();
 
     }
 
@@ -635,8 +614,7 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
 
     @Override
     public XQueryItemType unionMerge(final XQueryItemType other) {
-        final IXQueryEnumItemType other_ = (IXQueryEnumItemType) other;
-        return (XQueryItemType)unionItemMerger[typeOrdinal][other_.getType().ordinal()].apply(this, other);
+        return unionMerger.unionMerge(this, other);
     }
 
     @Override

@@ -1,10 +1,12 @@
 
 package com.github.akruk.antlrxquery.typesystem.typeoperations.defaults;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BinaryOperator;
+import java.util.stream.Collectors;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
@@ -14,7 +16,6 @@ import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeArray;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeElement;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeEnum;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeFunction;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeMap;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeRecord;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
@@ -45,6 +46,7 @@ public class EnumItemtypeAlternativeMerger
 
     private final BinaryOperator<XQueryItemType>[] alternativeItemMerger;
 
+    @SuppressWarnings("unchecked")
     public EnumItemtypeAlternativeMerger(final int typeOrdinal, final XQueryTypeFactory typeFactory)
     {
         this.alternativeItemMerger = new BinaryOperator[typesCount];
@@ -60,15 +62,53 @@ public class EnumItemtypeAlternativeMerger
         final BinaryOperator<XQueryItemType> choiceMerging = (x, y) -> mergeChoices(typeFactory, x, y);
         final BinaryOperator<XQueryItemType> mapMerging = (x, y) -> mergeMaps(typeFactory, x, y);
         final BinaryOperator<XQueryItemType> elementSequenceMerger = (x, y) -> mergeElements(typeFactory, x, y);
-        final BinaryOperator<XQueryItemType> functionMerging = functionMerger();
         final BinaryOperator<XQueryItemType> enumMerging = enumMerger(typeFactory);
+        final BinaryOperator<XQueryItemType> extensibleRecordMerger = extensibleRecordMerger(typeFactory);
+
         // Fully expanded automaton for alternativeItemMerger initialization
-
-
-
         final BinaryOperator<XQueryItemType> arrayMerging = (x, y) -> mergeArrays(typeFactory, x, y);
         final BinaryOperator<XQueryItemType> recordMerging = recordMerger(typeFactory);
         switch (XQueryTypes.values()[typeOrdinal]) {
+            case ERROR:
+            alternativeItemMerger[ERROR] = error;
+            alternativeItemMerger[ANY_ITEM] = error;
+            alternativeItemMerger[ANY_NODE] = error;
+            alternativeItemMerger[ELEMENT] = error;
+            alternativeItemMerger[ENUM] = error;
+            alternativeItemMerger[BOOLEAN] = error;
+            alternativeItemMerger[NUMBER] = error;
+            alternativeItemMerger[STRING] = error;
+            alternativeItemMerger[ANY_MAP] = error;
+            alternativeItemMerger[MAP] = error;
+            alternativeItemMerger[CHOICE] = error;
+            alternativeItemMerger[ANY_ARRAY] = error;
+            alternativeItemMerger[ARRAY] = error;
+            alternativeItemMerger[ANY_FUNCTION] = error;
+            alternativeItemMerger[FUNCTION] = error;
+            alternativeItemMerger[RECORD] = error;
+            alternativeItemMerger[EXTENSIBLE_RECORD] = error;
+            break;
+
+            case ANY_ITEM:
+            alternativeItemMerger[ERROR] = error;
+            alternativeItemMerger[ANY_ITEM] = anyItem;
+            alternativeItemMerger[ANY_NODE] = anyItem;
+            alternativeItemMerger[ELEMENT] = anyItem;
+            alternativeItemMerger[ENUM] = anyItem;
+            alternativeItemMerger[BOOLEAN] = anyItem;
+            alternativeItemMerger[NUMBER] = anyItem;
+            alternativeItemMerger[STRING] = anyItem;
+            alternativeItemMerger[ANY_MAP] = anyItem;
+            alternativeItemMerger[MAP] = anyItem;
+            alternativeItemMerger[CHOICE] = anyItem;
+            alternativeItemMerger[ANY_ARRAY] = anyItem;
+            alternativeItemMerger[ARRAY] = anyItem;
+            alternativeItemMerger[ANY_FUNCTION] = anyItem;
+            alternativeItemMerger[FUNCTION] = anyItem;
+            alternativeItemMerger[RECORD] = anyItem;
+            alternativeItemMerger[EXTENSIBLE_RECORD] = anyItem;
+            break;
+
             case ANY_NODE:
             alternativeItemMerger[ERROR] = error;
             alternativeItemMerger[ANY_ITEM] = anyItem;
@@ -224,9 +264,9 @@ public class EnumItemtypeAlternativeMerger
             alternativeItemMerger[ANY_ARRAY] = simpleChoice;
             alternativeItemMerger[ARRAY] = simpleChoice;
             alternativeItemMerger[ANY_FUNCTION] = simpleChoice;
-            alternativeItemMerger[FUNCTION] = functionMerging;
-            alternativeItemMerger[RECORD] = functionMerging;
-            alternativeItemMerger[EXTENSIBLE_RECORD] = functionMerging;
+            alternativeItemMerger[FUNCTION] = simpleChoice;
+            alternativeItemMerger[RECORD] = simpleChoice;
+            alternativeItemMerger[EXTENSIBLE_RECORD] = simpleChoice;
             break;
 
             case ENUM:
@@ -266,7 +306,7 @@ public class EnumItemtypeAlternativeMerger
             alternativeItemMerger[ANY_FUNCTION] = simpleChoice;
             alternativeItemMerger[FUNCTION] = simpleChoice;
             alternativeItemMerger[RECORD] = recordMerging;
-            alternativeItemMerger[EXTENSIBLE_RECORD] = recordMerging;
+            alternativeItemMerger[EXTENSIBLE_RECORD] = extensibleRecordMerger;
             break;
 
             case EXTENSIBLE_RECORD:
@@ -285,8 +325,8 @@ public class EnumItemtypeAlternativeMerger
             alternativeItemMerger[ARRAY] = simpleChoice;
             alternativeItemMerger[ANY_FUNCTION] = simpleChoice;
             alternativeItemMerger[FUNCTION] = simpleChoice;
-            alternativeItemMerger[RECORD] = recordMerging;
-            alternativeItemMerger[EXTENSIBLE_RECORD] = recordMerging;
+            alternativeItemMerger[RECORD] = extensibleRecordMerger;
+            alternativeItemMerger[EXTENSIBLE_RECORD] = extensibleRecordMerger;
             break;
 
             case BOOLEAN:
@@ -442,21 +482,6 @@ public class EnumItemtypeAlternativeMerger
     }
 
 
-    private BinaryOperator<XQueryItemType> functionMerger()
-    {
-        return (x, y) -> {
-            final var x_ = (XQueryEnumItemTypeFunction) x;
-            final var y_ = (XQueryEnumItemTypeFunction) y;
-            final var xReturnedType = x_.getReturnedType();
-            final var yReturnedType = y_.getReturnedType();
-            final var xArgs = x_.getArgumentTypes();
-            final var yArgs = y_.getArgumentTypes();
-            // final var merged = xArrayType.sequenceMerge(yArrayType);
-            // return typeFactory.itemArray(merged);
-            return null;
-        };
-    }
-
 
     private BinaryOperator<XQueryItemType> recordMerger(final XQueryTypeFactory typeFactory)
     {
@@ -509,25 +534,25 @@ public class EnumItemtypeAlternativeMerger
             final Set<String> allKeys = new HashSet<>(xRecordFields.keySet());
             allKeys.addAll(yRecordFields.keySet());
             final Map<String, XQueryRecordField> newFields = allKeys.stream()
-            .collect(java.util.stream.Collectors.collectingAndThen(
-                java.util.stream.Collectors.toMap(
+            .collect(Collectors.collectingAndThen(
+                Collectors.toMap(
                 key_ -> key_,
                 key_ -> {
                     final XQueryRecordField xField = xRecordFields.get(key_);
                     final XQueryRecordField yField = yRecordFields.get(key_);
                     if (xField != null && yField != null) {
-                    final XQuerySequenceType xFieldType = xField.type();
-                    final XQuerySequenceType yFieldType = yField.type();
-                    final boolean required = xField.isRequired() && yField.isRequired();
-                    return new XQueryRecordField(xFieldType.alternativeMerge(yFieldType), required);
+                        final XQuerySequenceType xFieldType = xField.type();
+                        final XQuerySequenceType yFieldType = yField.type();
+                        final boolean required = xField.isRequired() && yField.isRequired();
+                        return new XQueryRecordField(xFieldType.alternativeMerge(yFieldType), required);
                     } else if (xField != null) {
-                    return new XQueryRecordField(xField.type(), false);
+                        return new XQueryRecordField(xField.type(), false);
                     } else {
-                    return new XQueryRecordField(yField.type(), false);
+                        return new XQueryRecordField(yField.type(), false);
                     }
                 }
                 ),
-                java.util.Collections::unmodifiableMap
+                Collections::unmodifiableMap
             ));
             return typeFactory.itemExtensibleRecord(newFields);
         };

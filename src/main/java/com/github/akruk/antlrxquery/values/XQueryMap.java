@@ -10,7 +10,7 @@ import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
 public record XQueryMap<KeyType>(Map<KeyType, XQueryValue> value, XQueryValueFactory valueFactory)
         implements XQueryValue
-        {
+{
 
     @Override
     public XQueryValue valueEqual(XQueryValue other) {
@@ -29,322 +29,265 @@ public record XQueryMap<KeyType>(Map<KeyType, XQueryValue> value, XQueryValueFac
 
     @Override
     public ParseTree node() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'node'");
+        return null;
     }
 
     @Override
     public BigDecimal numericValue() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'numericValue'");
+        return null;
     }
 
     @Override
     public String stringValue() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'stringValue'");
+        StringBuilder sb = new StringBuilder();
+        sb.append("{");
+        boolean first = true;
+        for (Map.Entry<KeyType, XQueryValue> entry : value.entrySet()) {
+            if (!first) {
+                sb.append(", ");
+            }
+            first = false;
+            sb.append(String.valueOf(entry.getKey()))
+              .append(": ")
+              .append(entry.getValue() != null ? entry.getValue().stringValue() : "null");
+        }
+        sb.append("}");
+        return sb.toString();
     }
 
     @Override
     public Boolean booleanValue() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'booleanValue'");
+        // TODO: verify
+        return true;
     }
 
     @Override
     public XQueryFunction functionValue() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'functionValue'");
+        return null;
     }
 
     @Override
     public Boolean effectiveBooleanValue() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'effectiveBooleanValue'");
+        // TODO: verify
+        return true;
     }
 
     @Override
     public List<XQueryValue> sequence() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'sequence'");
+        return null;
     }
 
     @Override
     public boolean isNumericValue() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'isNumericValue'");
+        return false;
     }
 
     @Override
     public boolean isStringValue() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'isStringValue'");
+        return false;
     }
 
     @Override
     public boolean isBooleanValue() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'isBooleanValue'");
+        return false;
     }
 
     @Override
     public boolean isSequence() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'isSequence'");
+        return false;
     }
 
     @Override
     public boolean isAtomic() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'isAtomic'");
+        return false;
     }
-
     @Override
     public boolean isNode() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'isNode'");
+        return false;
     }
 
     @Override
     public boolean isFunction() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'isFunction'");
+        return false;
     }
 
     @Override
     public boolean isError() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'isError'");
+        return false;
     }
 
     @Override
     public List<XQueryValue> atomize() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'atomize'");
+        return List.of(this);
     }
 
     @Override
     public XQueryValue not() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'not'");
+        return valueFactory.bool(!this.booleanValue());
     }
 
     @Override
     public XQueryValue and(XQueryValue other) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'and'");
+        return valueFactory.bool(this.booleanValue() && other.booleanValue());
     }
 
     @Override
     public XQueryValue or(XQueryValue other) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'or'");
+        return valueFactory.bool(this.booleanValue() || other.booleanValue());
     }
 
     @Override
     public XQueryValue add(XQueryValue other) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'add'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public XQueryValue subtract(XQueryValue other) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'subtract'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public XQueryValue multiply(XQueryValue other) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'multiply'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public XQueryValue divide(XQueryValue other) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'divide'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public XQueryValue integerDivide(XQueryValue other) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'integerDivide'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public XQueryValue modulus(XQueryValue other) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'modulus'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public XQueryValue concatenate(XQueryValue other) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'concatenate'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public XQueryValue valueUnequal(XQueryValue other) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'valueUnequal'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public XQueryValue valueLessEqual(XQueryValue other) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'valueLessEqual'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public XQueryValue valueGreaterThan(XQueryValue other) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'valueGreaterThan'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public XQueryValue valueGreaterEqual(XQueryValue other) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'valueGreaterEqual'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public XQueryValue generalEqual(XQueryValue other) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'generalEqual'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public XQueryValue generalUnequal(XQueryValue other) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'generalUnequal'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public XQueryValue generalLessThan(XQueryValue other) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'generalLessThan'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public XQueryValue generalLessEqual(XQueryValue other) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'generalLessEqual'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public XQueryValue generalGreaterThan(XQueryValue other) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'generalGreaterThan'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public XQueryValue generalGreaterEqual(XQueryValue other) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'generalGreaterEqual'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public XQueryValue union(XQueryValue otherSequence) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'union'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public XQueryValue intersect(XQueryValue otherSequence) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'intersect'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public XQueryValue except(XQueryValue other) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'except'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public XQueryValue head() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'head'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public XQueryValue tail() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'tail'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public XQueryValue insertBefore(XQueryValue position, XQueryValue inserted) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'insertBefore'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public XQueryValue insertAfter(XQueryValue position, XQueryValue inserted) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'insertAfter'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public XQueryValue remove(XQueryValue position) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'remove'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public XQueryValue reverse() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'reverse'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public XQueryValue subsequence(int startingLoc) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'subsequence'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public XQueryValue subsequence(int startingLoc, int length) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'subsequence'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public XQueryValue distinctValues() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'distinctValues'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public XQueryValue data() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'data'");
+        return XQueryError.InvalidArgumentType;
     }
 
     @Override
     public boolean isEmptySequence() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'isEmptySequence'");
+        return false;
     }
 }
-
-// public class XQueryMap<KeyType> extends XQueryValueBase<Map<KeyType, XQueryValue>> {
-//     public XQueryMap(Map<KeyType, XQueryValue> value, XQueryValueFactory valueFactory) {
-//         super(value, valueFactory);
-//     }
-
-//     @Override
-//     public XQueryValue valueEqual(XQueryValue other) {
-//         return XQueryError.InvalidArgumentType;
-//     }
-
-//     @Override
-//     public XQueryValue valueLessThan(XQueryValue other) {
-//         return XQueryError.InvalidArgumentType;
-//     }
-
-//     @Override
-//     public XQueryValue empty() {
-//         return valueFactory.bool(false);
-//     }
-// }

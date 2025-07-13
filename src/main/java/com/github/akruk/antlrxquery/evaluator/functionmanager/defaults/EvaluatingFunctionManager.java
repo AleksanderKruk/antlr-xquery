@@ -85,8 +85,6 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         registerFunction("fn", "round-half-to-even", functionsOnNumericValues::roundHalfToEven, 1, 2, Map.of("precision", ZERO_LITERAL));
         registerFunction("fn", "divide-decimals", functionsOnNumericValues::divideDecimals, 2, 3, Map.of("precision", ZERO_LITERAL));
 
-        // registerFunction("fn", "is-NaN", functionsOnNumericValues::isNaN, 1, 1, Map.of());
-
         registerFunction("fn", "empty", this::empty, 0, 0, Map.of());
         registerFunction("fn", "exists", this::exists, 0, 0, Map.of());
         registerFunction("fn", "head", this::head, 0, 0, Map.of());

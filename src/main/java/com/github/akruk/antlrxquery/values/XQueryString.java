@@ -8,15 +8,27 @@ public class XQueryString extends XQueryValueBase<String> {
     }
 
     @Override
+    public int hashCode() {
+        return value.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null || !(obj instanceof XQueryString)) {
+            return false;
+        }
+        var str = (XQueryString) obj;
+        return value.equals(str.value);
+    }
+
+    @Override
     public String stringValue() {
         return value;
     }
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder("<");
-        sb.append(super.toString());
-        sb.append(":");
+        StringBuilder sb = new StringBuilder("<XQueryString:");
         sb.append(value);
         sb.append("/>");
         return sb.toString();
@@ -72,11 +84,6 @@ public class XQueryString extends XQueryValueBase<String> {
     }
 
     @Override
-    public XQueryValue copy() {
-        return valueFactory.string(value);
-    }
-
-    @Override
     public XQueryValue empty() {
         return valueFactory.bool(false);
     }
@@ -99,81 +106,5 @@ public class XQueryString extends XQueryValueBase<String> {
     public XQueryValue data() {
         var atomized = atomize();
         return valueFactory.sequence(atomized);
-    }
-
-    @Override
-    public XQueryValue contains(XQueryValue other) {
-        if (!other.isStringValue()) return XQueryError.InvalidArgumentType;
-        var otherVal = other.stringValue();
-        if (otherVal.isEmpty()) return valueFactory.bool(true);
-        return valueFactory.bool(value.contains(otherVal));
-    }
-
-    @Override
-    public XQueryValue startsWith(XQueryValue other) {
-        if (value.isEmpty())
-            return valueFactory.bool(false);
-        if (other.stringValue().isEmpty())
-            return valueFactory.bool(true);
-        return valueFactory.bool(value.startsWith(other.stringValue()));
-    }
-
-
-    @Override
-    public XQueryValue endsWith(XQueryValue other) {
-        if (value.isEmpty())
-            return valueFactory.bool(false);
-        if (other.stringValue().isEmpty())
-            return valueFactory.bool(true);
-        return valueFactory.bool(value.endsWith(other.stringValue()));
-    }
-
-    @Override
-    public XQueryValue substring(int startingLoc) {
-        return substring(startingLoc, value.length()-startingLoc+1);
-    }
-
-    @Override
-    public XQueryValue substring(int startingLoc, int length) {
-        int currentLength = value.length();
-        if (startingLoc <= 0 || length < 0) return XQueryError.ArrayIndexOutOfBounds;
-
-        int start = startingLoc - 1;
-        int end = Math.min(start + length, currentLength);
-        if (start >= currentLength) return valueFactory.emptyString();
-
-        try {
-            return valueFactory.string(value.substring(start, end));
-        } catch (IndexOutOfBoundsException e) {
-            return XQueryError.ArrayIndexOutOfBounds;
-        }
-    }
-
-    @Override
-    public XQueryValue substringBefore(XQueryValue splitstring) {
-        if (!splitstring.isStringValue()) return XQueryError.InvalidArgumentType;
-        var needle = splitstring.stringValue();
-        int index = value.indexOf(needle);
-        if (index == -1) return valueFactory.emptyString();
-        return valueFactory.string(value.substring(0, index));
-    }
-
-    @Override
-    public XQueryValue substringAfter(XQueryValue splitstring) {
-        if (!splitstring.isStringValue()) return XQueryError.InvalidArgumentType;
-        var needle = splitstring.stringValue();
-        int index = value.indexOf(needle);
-        if (index == -1) return valueFactory.emptyString();
-        return valueFactory.string(value.substring(index + needle.length()));
-    }
-
-    @Override
-    public XQueryValue uppercase() {
-        return valueFactory.string(value.toUpperCase());
-    }
-
-    @Override
-    public XQueryValue lowercase() {
-        return valueFactory.string(value.toLowerCase());
     }
 }

@@ -17,6 +17,7 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
     private final XQueryEnumItemType itemType;
     private final XQueryOccurence occurence;
     private final XQueryTypeFactory typeFactory;
+    private String occurenceSuffix;
 
     public XQueryEnumItemType getItemType() {
         return itemType;
@@ -32,6 +33,15 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         this.factoryByOccurence[ZERO_OR_ONE] = i -> typeFactory.zeroOrOne((XQueryItemType)i);
         this.factoryByOccurence[ZERO_OR_MORE] = i -> typeFactory.zeroOrMore((XQueryItemType)i);
         this.factoryByOccurence[ONE_OR_MORE] = i -> typeFactory.oneOrMore((XQueryItemType)i);
+
+        this.occurenceSuffix = switch (occurence) {
+            case ZERO -> "";
+            case ONE -> "";
+            case ZERO_OR_ONE -> "?";
+            case ZERO_OR_MORE -> "*";
+            case ONE_OR_MORE -> "+";
+        };
+        requiresParentheses = requiresParentheses();
     }
 
     private static boolean isNullableEquals(final Object one, final Object other) {
@@ -483,6 +493,33 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
     @Override
     public XQuerySequenceType mapping(final XQuerySequenceType mappingExpressionType) {
         return (XQuerySequenceType) factoryByOccurence[occurence.ordinal()].apply(mappingExpressionType.getItemType());
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        if (occurence == XQueryOccurence.ZERO) {
+            sb.append("empty-sequence()");
+            return sb.toString();
+        }
+
+        if (requiresParentheses)
+        {
+            sb.append("(");
+            sb.append(itemType);
+            sb.append(")");
+        }
+        else {
+            sb.append(itemType);
+        }
+        sb.append(occurenceSuffix);
+        return sb.toString();
+    }
+
+    private final boolean requiresParentheses;
+    private boolean requiresParentheses() {
+        return occurenceSuffix != "" &&( itemType instanceof XQueryEnumItemTypeFunction
+                                        || itemType instanceof XQueryEnumChoiceItemType);
     }
 
 

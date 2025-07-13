@@ -8,4 +8,9 @@ public class XQueryEnumItemTypeAnyNode extends XQueryEnumItemType {
     super(XQueryTypes.ANY_NODE, null, null, null, null, null, null, factory, null);
   }
 
+  @Override
+  public String toString() {
+      return "node()";
+  }
+
 }

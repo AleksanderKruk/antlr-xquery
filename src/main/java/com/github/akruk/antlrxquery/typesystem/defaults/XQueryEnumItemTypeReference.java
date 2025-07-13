@@ -111,4 +111,5 @@ public class XQueryEnumItemTypeReference extends XQueryEnumItemType {
         return getReferencedType().isValueComparableWith(other);
     }
 
+
 }

@@ -15,4 +15,12 @@ public class XQueryEnumItemTypeEnum extends XQueryEnumItemType {
     this.enumMembers = enumMembers;
   }
 
+@Override
+public String toString() {
+        return "enum(" + enumMembers.stream()
+                .map(s -> "'" + s + "'")
+                .reduce((a, b) -> a + ", " + b)
+                .orElse("") + ")";
+}
+
 }

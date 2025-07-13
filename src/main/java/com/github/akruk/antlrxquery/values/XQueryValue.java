@@ -22,7 +22,6 @@ public interface XQueryValue {
     public boolean isFunction();
     public boolean isError();
     public List<XQueryValue> atomize();
-    public XQueryValue copy();
     public XQueryValue empty();
     public XQueryValue not();
     public XQueryValue and(XQueryValue other);
@@ -59,14 +58,5 @@ public interface XQueryValue {
     public XQueryValue subsequence(int startingLoc, int length);
     public XQueryValue distinctValues();
     public XQueryValue data();
-    public XQueryValue contains(XQueryValue other);
-    public XQueryValue startsWith(XQueryValue other);
-    public XQueryValue endsWith(XQueryValue other);
-    public XQueryValue uppercase();
-    public XQueryValue lowercase();
-    public XQueryValue substring(int startingLoc);
-    public XQueryValue substring(int startingLoc, int length);
-    public XQueryValue substringBefore(XQueryValue splitstring);
-    public XQueryValue substringAfter(XQueryValue splitstring);
     public boolean isEmptySequence();
 }

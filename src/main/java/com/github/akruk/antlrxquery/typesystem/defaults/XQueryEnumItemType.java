@@ -13,7 +13,6 @@ import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
-import com.github.akruk.antlrxquery.values.XQuerySequence;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class XQueryEnumItemType implements IXQueryEnumItemType {

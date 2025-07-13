@@ -7,4 +7,9 @@ public class XQueryEnumEmptySequenceType extends XQueryEnumSequenceType {
         super(typeFactory, null, XQueryOccurence.ZERO);
     }
 
+    @Override
+    public String toString() {
+        return "empty-sequence()";
+    }
+
 }

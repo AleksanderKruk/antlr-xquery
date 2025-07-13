@@ -2,6 +2,7 @@ package com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.function
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -201,62 +202,58 @@ public class FunctionsOnNumericValues {
      *   $precision as xs:integer? := 0
      * ) as record(quotient as xs:decimal, remainder as xs:decimal)
      */
-    // public XQueryValue divideDecimals(
-    //         XQueryVisitingContext context,
-    //         List<XQueryValue> args,
-    //         Map<String,XQueryValue> kwargs) {
+    public XQueryValue divideDecimals(
+            XQueryVisitingContext context,
+            List<XQueryValue> args,
+            Map<String,XQueryValue> kwargs)
+    {
 
-    //     // arity check
-    //     if (args.size() < 2 || args.size() > 3) {
-    //         return XQueryError.WrongNumberOfArguments;
-    //     }
+        XQueryValue v1 = args.get(0), v2 = args.get(1);
+        // must be decimals
+        if (v1.isEmptySequence() || v2.isEmptySequence()
+                || !v1.isNumericValue() || !v2.isNumericValue()) {
+            return XQueryError.InvalidArgumentType;
+        }
 
-    //     XQueryValue v1 = args.get(0), v2 = args.get(1);
-    //     // must be decimals
-    //     if (v1.isEmptySequence() || v2.isEmptySequence()
-    //             || !v1.isNumericValue() || !v2.isNumericValue()) {
-    //         return XQueryError.InvalidArgumentType;
-    //     }
+        BigDecimal dividend = v1.numericValue();
+        BigDecimal divisor  = v2.numericValue();
 
-    //     BigDecimal dividend = v1.numericValue();
-    //     BigDecimal divisor  = v2.numericValue();
+        // division by zero
+        if (BigDecimal.ZERO.compareTo(divisor) == 0) {
+            return XQueryError.DivisionByZero;
+        }
 
-    //     // division by zero
-    //     if (BigDecimal.ZERO.compareTo(divisor) == 0) {
-    //         return XQueryError.DivisionByZero;
-    //     }
+        // precision (default 0)
+        int precision = 0;
+        if (args.size() == 3) {
+            XQueryValue p = args.get(2);
+            if (p.isEmptySequence()) {
+                precision = 0;
+            } else if (!p.isNumericValue()) {
+                return XQueryError.InvalidArgumentType;
+            } else {
+                precision = p.numericValue().intValue();
+            }
+        }
 
-    //     // precision (default 0)
-    //     int precision = 0;
-    //     if (args.size() == 3) {
-    //         XQueryValue p = args.get(2);
-    //         if (p.isEmptySequence()) {
-    //             precision = 0;
-    //         } else if (!p.isNumericValue()) {
-    //             return XQueryError.InvalidArgumentType;
-    //         } else {
-    //             precision = p.numericValue().intValue();
-    //         }
-    //     }
+        // compute quotient: |q| = |dividend/divisor| rounded DOWN at given scale
+        BigDecimal absQuotient = dividend
+            .abs()
+            .divide(divisor.abs(), precision, RoundingMode.DOWN);
+        // restore sign of q
+        BigDecimal quotient = absQuotient
+            .multiply(
+                BigDecimal.valueOf(dividend.signum() * divisor.signum())
+            );
 
-    //     // compute quotient: |q| = |dividend/divisor| rounded DOWN at given scale
-    //     BigDecimal absQuotient = dividend
-    //         .abs()
-    //         .divide(divisor.abs(), precision, RoundingMode.DOWN);
-    //     // restore sign of q
-    //     BigDecimal quotient = absQuotient
-    //         .multiply(
-    //             BigDecimal.valueOf(dividend.signum() * divisor.signum())
-    //         );
+        // compute exact remainder
+        BigDecimal remainder = dividend.subtract(quotient.multiply(divisor));
 
-    //     // compute exact remainder
-    //     BigDecimal remainder = dividend.subtract(quotient.multiply(divisor));
-
-    //     // build record { "quotient":…, "remainder":… }
-    //     Map<String,XQueryValue> fields = new LinkedHashMap<>();
-    //     fields.put("quotient", valueFactory.number(quotient));
-    //     fields.put("remainder", valueFactory.number(remainder));
-    //     return valueFactory.record(fields);
-    // }
+        // build record { "quotient":…, "remainder":… }
+        Map<String,XQueryValue> fields = new HashMap<>();
+        fields.put("quotient", valueFactory.number(quotient));
+        fields.put("remainder", valueFactory.number(remainder));
+        return valueFactory.record(fields);
+    }
 
 }

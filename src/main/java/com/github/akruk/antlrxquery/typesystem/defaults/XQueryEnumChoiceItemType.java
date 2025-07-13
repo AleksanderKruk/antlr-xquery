@@ -10,5 +10,10 @@ public class XQueryEnumChoiceItemType extends XQueryEnumItemType {
         super(XQueryTypes.CHOICE, null, null, null, null, null, null, factory, itemTypes);
     }
 
+    @Override
+    public String toString() {
+        return String.join(" | ", getItemTypes().stream().map(Object::toString).toArray(String[]::new));
+    }
+
 
 }

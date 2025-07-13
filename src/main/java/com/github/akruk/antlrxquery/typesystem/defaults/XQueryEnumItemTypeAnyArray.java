@@ -8,4 +8,9 @@ public class XQueryEnumItemTypeAnyArray extends XQueryEnumItemType {
     super(XQueryTypes.ANY_ARRAY, null, null, null, null, null, null, factory, null);
   }
 
+  @Override
+  public String toString() {
+      return "array(*)";
+  }
+
 }

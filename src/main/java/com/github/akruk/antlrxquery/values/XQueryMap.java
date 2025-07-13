@@ -8,7 +8,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
-public record XQueryMap<KeyType>(Map<KeyType, XQueryValue> value, XQueryValueFactory valueFactory)
+public record XQueryMap(Map<XQueryValue, XQueryValue> value, XQueryValueFactory valueFactory)
         implements XQueryValue
 {
 
@@ -42,7 +42,7 @@ public record XQueryMap<KeyType>(Map<KeyType, XQueryValue> value, XQueryValueFac
         StringBuilder sb = new StringBuilder();
         sb.append("{");
         boolean first = true;
-        for (Map.Entry<KeyType, XQueryValue> entry : value.entrySet()) {
+        for (Map.Entry<XQueryValue, XQueryValue> entry : value.entrySet()) {
             if (!first) {
                 sb.append(", ");
             }

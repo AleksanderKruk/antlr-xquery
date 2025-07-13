@@ -17,6 +17,12 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
     }
 
     @Override
+    public int hashCode() {
+        return value.hashCode();
+    }
+
+
+    @Override
     public ParseTree node() {
         return null;
     }

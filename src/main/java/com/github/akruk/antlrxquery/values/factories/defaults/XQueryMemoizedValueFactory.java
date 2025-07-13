@@ -9,6 +9,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import com.github.akruk.antlrxquery.values.XQueryBoolean;
 import com.github.akruk.antlrxquery.values.XQueryFunction;
 import com.github.akruk.antlrxquery.values.XQueryFunctionReference;
+import com.github.akruk.antlrxquery.values.XQueryMap;
 import com.github.akruk.antlrxquery.values.XQueryNumber;
 import com.github.akruk.antlrxquery.values.XQuerySequence;
 import com.github.akruk.antlrxquery.values.XQueryString;
@@ -83,9 +84,16 @@ public class XQueryMemoizedValueFactory implements XQueryValueFactory{
 
     @Override
     public XQueryValue map(Map<XQueryValue, XQueryValue> value) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'map'");
+        return new XQueryMap(value, this);
     }
 
+    @Override
+    public XQueryValue record(Map<String, XQueryValue> value) {
+        Map<XQueryValue, XQueryValue> converted = new HashMap<>(value.size(), 1.0f);
+        for (Map.Entry<String, XQueryValue> entry : value.entrySet()) {
+            converted.put(string(entry.getKey()), entry.getValue());
+        }
+        return map(Map.copyOf(converted));
+    }
 
 }

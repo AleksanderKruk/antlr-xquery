@@ -20,4 +20,5 @@ public interface XQueryValueFactory {
     public XQueryValue functionReference(XQueryFunction f);
     public XQueryValue node(ParseTree v);
     public XQueryValue map(Map<XQueryValue, XQueryValue> value);
+    public XQueryValue record(Map<String, XQueryValue> value);
 }

@@ -84,20 +84,12 @@ public class FunctionsOnNumericValues {
         return valueFactory.number(r);
     }
 
-    /**
-     * fn:round(
-     *   $value     as xs:numeric?,
-     *   $precision as xs:integer?  := 0,
-     *   $mode      as xs:string?   := "half-to-ceiling"
-     * ) as xs:numeric?
-     */
     public XQueryValue round(
             XQueryVisitingContext context,
             List<XQueryValue> args,
             Map<String, XQueryValue> kwargs) {
 
         XQueryValue v = args.get(0);
-        // empty-sequence → empty-sequence
         if (v.isEmptySequence()) {
             return valueFactory.emptySequence();
         }
@@ -105,7 +97,6 @@ public class FunctionsOnNumericValues {
             return XQueryError.InvalidArgumentType;
         }
 
-        // Determine precision (default 0)
         int precision = 0;
         if (args.size() >= 2) {
             XQueryValue p = args.get(1);
@@ -118,7 +109,6 @@ public class FunctionsOnNumericValues {
             }
         }
 
-        // Determine rounding mode (default "half-to-ceiling")
         String mode = "half-to-ceiling";
         if (args.size() == 3) {
             XQueryValue m = args.get(2);
@@ -127,34 +117,27 @@ public class FunctionsOnNumericValues {
             }
         }
 
-
-
-        // Map mode string to java.math.RoundingMode
-        final RoundingMode rm;
-        switch (mode) {
-            case "floor":              rm = RoundingMode.FLOOR;           break;
-            case "ceiling":            rm = RoundingMode.CEILING;         break;
-            case "toward-zero":        rm = RoundingMode.DOWN;            break;
-            case "away-from-zero":     rm = RoundingMode.UP;              break;
-            case "half-to-floor":      rm = RoundingMode.HALF_DOWN;       break;
-            case "half-to-ceiling":    rm = RoundingMode.HALF_UP;         break;
-            case "half-toward-zero":   rm = RoundingMode.HALF_DOWN;       break;
-            case "half-away-from-zero":rm = RoundingMode.HALF_UP;         break;
-            case "half-to-even":       rm = RoundingMode.HALF_EVEN;       break;
-            default:
-                return XQueryError.InvalidArgumentType;
-        }
-
         BigDecimal bd = v.numericValue();
+        BigDecimal rounded;
         try {
-            BigDecimal rounded;
             if ("half-to-ceiling".equals(mode)) {
-            if (bd.signum() < 0) {
-                rounded = bd.setScale(precision, RoundingMode.HALF_DOWN);
+                RoundingMode rm = bd.signum() < 0 ? RoundingMode.HALF_DOWN : RoundingMode.HALF_UP;
+                rounded = bd.setScale(precision, rm);
+            } else if ("half-to-floor".equals(mode)) {
+                RoundingMode rm = bd.signum() < 0 ? RoundingMode.HALF_UP : RoundingMode.HALF_DOWN;
+                rounded = bd.setScale(precision, rm);
             } else {
-                rounded = bd.setScale(precision, RoundingMode.HALF_UP);
-            }
-            } else {
+                final RoundingMode rm;
+                switch (mode) {
+                    case "floor": rm = RoundingMode.FLOOR; break;
+                    case "ceiling": rm = RoundingMode.CEILING; break;
+                    case "toward-zero": rm = RoundingMode.DOWN; break;
+                    case "away-from-zero": rm = RoundingMode.UP; break;
+                    case "half-toward-zero": rm = RoundingMode.HALF_DOWN; break;
+                    case "half-away-from-zero": rm = RoundingMode.HALF_UP; break;
+                    case "half-to-even": rm = RoundingMode.HALF_EVEN; break;
+                    default: return XQueryError.InvalidArgumentType;
+                }
                 rounded = bd.setScale(precision, rm);
             }
             return valueFactory.number(rounded);

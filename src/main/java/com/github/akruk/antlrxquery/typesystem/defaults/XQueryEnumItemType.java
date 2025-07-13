@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiPredicate;
-import java.util.function.BinaryOperator;
 import java.util.stream.IntStream;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
@@ -14,7 +13,6 @@ import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.IItemtypeIntersectionMerger;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.TypeSequenceMerger;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.defaults.EnumItemtypeAlternativeMerger;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.defaults.EnumItemtypeIntersectionMerger;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.defaults.EnumItemtypeUnionMerger;
@@ -26,24 +24,13 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
     private static final int ENUM = XQueryTypes.ENUM.ordinal();
     private static final int BOOLEAN = XQueryTypes.BOOLEAN.ordinal();
     private static final int NUMBER = XQueryTypes.NUMBER.ordinal();
-    private static final int ERROR = XQueryTypes.ERROR.ordinal();
-    private static final int ANY_ITEM = XQueryTypes.ANY_ITEM.ordinal();
-    private static final int ANY_MAP = XQueryTypes.ANY_MAP.ordinal();
-    private static final int MAP = XQueryTypes.MAP.ordinal();
-    private static final int CHOICE = XQueryTypes.CHOICE.ordinal();
-    private static final int ANY_ARRAY = XQueryTypes.ANY_ARRAY.ordinal();
-    private static final int ARRAY = XQueryTypes.ARRAY.ordinal();
-    private static final int ANY_FUNCTION = XQueryTypes.ANY_FUNCTION.ordinal();
-    private static final int FUNCTION = XQueryTypes.FUNCTION.ordinal();
-    private static final int RECORD = XQueryTypes.RECORD.ordinal();
-    private static final int EXTENSIBLE_RECORD = XQueryTypes.EXTENSIBLE_RECORD.ordinal();
     private final XQueryTypes type;
     private final int typeOrdinal;
 
 
     private final EnumItemtypeAlternativeMerger alternativeMerger;
     private final IItemtypeIntersectionMerger intersectionMerger;
-    private final XQueryTypeFactory typeFactory;
+    // private final XQueryTypeFactory typeFactory;
     private final Collection<XQueryItemType> itemTypes;
     private final IItemtypeUnionMerger unionMerger;
 
@@ -69,12 +56,11 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
         this.mapKeyType = key;
         this.mapValueType = mapValueType;
         this.elementNames = elementNames;
-        this.typeFactory = factory;
+        // this.typeFactory = factory;
         this.itemTypes = itemTypes;
         this.alternativeMerger = new EnumItemtypeAlternativeMerger(typeOrdinal, factory);
         this.unionMerger = new EnumItemtypeUnionMerger(typeOrdinal, factory);
         this.intersectionMerger = new EnumItemtypeIntersectionMerger(typeOrdinal, factory);
-
     }
 
 

@@ -2,7 +2,6 @@ package com.github.akruk.antlrxquery.values;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 

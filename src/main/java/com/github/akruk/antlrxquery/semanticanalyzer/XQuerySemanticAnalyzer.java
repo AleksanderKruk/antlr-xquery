@@ -817,6 +817,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public XQuerySequenceType visitMapConstructor(MapConstructorContext ctx) {
         var entries = ctx.mapConstructorEntry();

@@ -35,14 +35,14 @@ import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
 public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManager {
-    private static final ParseTree CONTEXT_VALUE = getTree(".", parser -> parser.contextItemExpr());
-    private static final ParseTree DEFAULT_COLLATION = getTree("fn:default-collation()", parser->parser.functionCall());
-    private static final ParseTree EMPTY_LIST = getTree("()", p->p.parenthesizedExpr());
+    // private static final ParseTree CONTEXT_VALUE = getTree(".", parser -> parser.contextItemExpr());
+    // private static final ParseTree DEFAULT_COLLATION = getTree("fn:default-collation()", parser->parser.functionCall());
+    // private static final ParseTree EMPTY_LIST = getTree("()", p->p.parenthesizedExpr());
     private static final ParseTree DEFAULT_ROUNDING_MODE = getTree("'half-to-ceiling'", parser->parser.literal());
     private static final ParseTree ZERO_LITERAL = getTree("0", parser->parser.literal());
-    private static final ParseTree NFC = getTree("\"NFC\"", parser -> parser.literal());
-    private static final ParseTree STRING_AT_CONTEXT_VALUE = getTree("fn:string(.)", (parser) -> parser.functionCall());
-    private static final ParseTree EMPTY_STRING = getTree("\"\"", (parser)->parser.literal());
+    // private static final ParseTree NFC = getTree("\"NFC\"", parser -> parser.literal());
+    // private static final ParseTree STRING_AT_CONTEXT_VALUE = getTree("fn:string(.)", (parser) -> parser.functionCall());
+    // private static final ParseTree EMPTY_STRING = getTree("\"\"", (parser)->parser.literal());
 
 
     record FunctionEntry(

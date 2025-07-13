@@ -6,7 +6,6 @@ import java.util.Set;
 import java.util.function.BinaryOperator;
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeElement;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.IItemtypeIntersectionMerger;

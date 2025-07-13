@@ -11,11 +11,6 @@ public class XQueryTreeNode extends XQueryValueBase<ParseTree> {
     }
 
     @Override
-    public XQueryValue copy() {
-        return valueFactory.node(value);
-    }
-
-    @Override
     public ParseTree node() {
         return value;
     }

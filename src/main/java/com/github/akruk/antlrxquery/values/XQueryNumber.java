@@ -106,12 +106,6 @@ public class XQueryNumber extends XQueryValueBase<BigDecimal> {
         if (!other.isNumericValue()) return valueFactory.bool(false);
         return valueFactory.bool(value.compareTo(other.numericValue()) < 0);
     }
-
-    @Override
-    public XQueryValue copy() {
-        return valueFactory.number(value);
-    }
-
     @Override
     public XQueryValue data() {
         return valueFactory.sequence(List.of(this));

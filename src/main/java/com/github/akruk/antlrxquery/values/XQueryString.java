@@ -72,11 +72,6 @@ public class XQueryString extends XQueryValueBase<String> {
     }
 
     @Override
-    public XQueryValue copy() {
-        return valueFactory.string(value);
-    }
-
-    @Override
     public XQueryValue empty() {
         return valueFactory.bool(false);
     }

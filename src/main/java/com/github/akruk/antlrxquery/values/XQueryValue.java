@@ -22,7 +22,6 @@ public interface XQueryValue {
     public boolean isFunction();
     public boolean isError();
     public List<XQueryValue> atomize();
-    public XQueryValue copy();
     public XQueryValue empty();
     public XQueryValue not();
     public XQueryValue and(XQueryValue other);

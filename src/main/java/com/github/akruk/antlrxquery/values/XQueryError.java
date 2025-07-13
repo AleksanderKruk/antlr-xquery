@@ -302,11 +302,6 @@ public class XQueryError implements XQueryValue {
     }
 
     @Override
-    public XQueryValue copy() {
-        return null;
-    }
-
-    @Override
     public XQueryValue empty() {
         return null;
     }

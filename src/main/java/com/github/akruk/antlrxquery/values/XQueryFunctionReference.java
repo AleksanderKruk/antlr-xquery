@@ -41,11 +41,6 @@ public class XQueryFunctionReference extends XQueryValueBase<XQueryFunction> {
         return null;
     }
     @Override
-    public XQueryValue copy() {
-        return valueFactory.functionReference(value);
-    }
-
-    @Override
     public XQueryValue empty() {
         return valueFactory.bool(false);
     }

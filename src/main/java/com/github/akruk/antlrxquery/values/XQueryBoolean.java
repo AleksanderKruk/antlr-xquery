@@ -58,11 +58,6 @@ public class XQueryBoolean extends XQueryValueBase<Boolean> {
     }
 
     @Override
-    public XQueryValue copy() {
-        return this; // ponieważ jest niemutowalna
-    }
-
-    @Override
     public XQueryValue data() {
         return valueFactory.sequence(atomize());
     }

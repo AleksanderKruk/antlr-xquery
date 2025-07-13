@@ -68,7 +68,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         this.context.setSize(0);
         this.parser = parser;
         this.valueFactory = valueFactory;
-        this.functionManager = new EvaluatingFunctionManager(this, valueFactory);
+        this.functionManager = new EvaluatingFunctionManager(this, parser, valueFactory);
         this.contextManager = new XQueryBaseDynamicContextManager();
         contextManager.enterContext();
     }

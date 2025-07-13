@@ -672,7 +672,9 @@ public class XQueryEvaluatorTest {
         assertResult("empty(\"\")", baseFactory.bool(false));
         assertResult("empty(\"abcd\")", baseFactory.bool(false));
         // The expression fn:empty([]) returns false().
-        // The expression fn:empty(map{}) returns false().
+        assertResult("empty([])", baseFactory.bool(false));
+        // The expression fn:empty({}) returns false().
+        assertResult("empty({})", baseFactory.bool(false));
         // Assuming $in is an element with no children:
         // let $break := <br/>
         // return fn:empty($break)

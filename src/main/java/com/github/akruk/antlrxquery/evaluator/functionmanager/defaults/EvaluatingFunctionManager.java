@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import com.github.akruk.antlrxquery.AntlrXqueryLexer;
@@ -23,6 +24,7 @@ import com.github.akruk.antlrxquery.evaluator.XQueryEvaluatorVisitor;
 import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
 import com.github.akruk.antlrxquery.evaluator.collations.Collations;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.IXQueryEvaluatingFunctionManager;
+import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.Accessors;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.CardinalityFunctions;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.FunctionsBasedOnSubstringMatching;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.FunctionsOnNumericValues;
@@ -61,17 +63,25 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
     private final FunctionsOnNumericValues functionsOnNumericValues;
     private final CardinalityFunctions cardinalityFunctions;
     private final NumericOperators numericOperators;
+    private final Accessors accessors;
 
-    public EvaluatingFunctionManager(final XQueryEvaluatorVisitor evaluator, final XQueryValueFactory valueFactory) {
+    public EvaluatingFunctionManager(final XQueryEvaluatorVisitor evaluator, final Parser parser, final XQueryValueFactory valueFactory) {
         this.valueFactory = valueFactory;
         this.evaluator = evaluator;
         this.namespaces = new HashMap<>(10);
         this.mathFunctions = new MathFunctions(valueFactory);
+        this.accessors = new Accessors(valueFactory, parser);
         this.functionsOnStringValues = new FunctionsOnStringValues(valueFactory);
         this.functionsOnNumericValues = new FunctionsOnNumericValues(valueFactory);
         this.functionsBasedOnSubstringMatching = new FunctionsBasedOnSubstringMatching(valueFactory);
         this.cardinalityFunctions = new CardinalityFunctions(valueFactory);
         this.numericOperators = new NumericOperators(valueFactory);
+
+        // Accessors
+        registerFunction("fn", "node-name", accessors::nodeName, 0, 0, Map.of());
+        registerFunction("fn", "string", accessors::string, 0, 1, Map.of());
+        registerFunction("fn", "data", accessors::data, 0, 1, Map.of());
+
 
         registerFunction("fn", "true", this::true_, 0, 0, Map.of());
         registerFunction("fn", "false", this::false_, 0, 0, Map.of());
@@ -99,12 +109,10 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         registerFunction("fn", "one-or-more", cardinalityFunctions::oneOrMore, 1, 1, Map.of());
         registerFunction("fn", "exactly-one", cardinalityFunctions::exactlyOne, 1, 1, Map.of());
 
-        registerFunction("fn", "data", this::data, 0, 1, Map.of());
-        registerFunction("fn", "string", this::string, 0, 1, Map.of());
 
         registerFunction("fn", "default-collation", this::defaultCollation, 0, 0, Map.of());
 
-        final ParseTree DEFAULT_COLLATION = getTree("fn:default-collation()", parser->parser.functionCall());
+        final ParseTree DEFAULT_COLLATION = getTree("fn:default-collation()", parser_->parser_.functionCall());
         final Map<String, ParseTree> DEFAULT_COLLATION_MAP = Map.of("collation", DEFAULT_COLLATION);
         registerFunction("fn", "contains",
             functionsBasedOnSubstringMatching::contains, 2, 3, DEFAULT_COLLATION_MAP);
@@ -257,16 +265,7 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         return args.get(0).distinctValues();
     }
 
-    public XQueryValue data(XQueryVisitingContext ctx, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
-        return args.get(0).data();
-    }
 
-    public XQueryValue string(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() > 1) return XQueryError.WrongNumberOfArguments;
-        var target = args.isEmpty() ? context.getItem() : args.get(0);
-        return valueFactory.string(target.stringValue());
-    }
 
     public XQueryValue position(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
         if (!args.isEmpty()) return XQueryError.WrongNumberOfArguments;

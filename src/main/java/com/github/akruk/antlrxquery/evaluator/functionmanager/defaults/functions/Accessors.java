@@ -29,7 +29,7 @@ public class Accessors {
         XQueryValue node = args.get(0);
 
         if (node.isEmptySequence()) {
-            return valueFactory.emptySequence();
+            return valueFactory.emptyString();
         }
 
         if (!node.isNode()) {

@@ -78,7 +78,12 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         this.numericOperators = new NumericOperators(valueFactory);
 
         // Accessors
-        registerFunction("fn", "node-name", accessors::nodeName, 0, 0, Map.of());
+        registerFunction("fn", "name", accessors::nodeName, 0, 1, Map.of(
+
+        ));
+        registerFunction("fn", "node-name", accessors::nodeName, 0, 1, Map.of(
+
+        ));
         registerFunction("fn", "string", accessors::string, 0, 1, Map.of());
         registerFunction("fn", "data", accessors::data, 0, 1, Map.of());
 

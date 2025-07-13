@@ -21,5 +21,20 @@ public class Accessors extends FunctionsEvaluationTests {
         assertDynamicGrammarQuery(grammarName, grammar, startRuleName, textualTree, xquery, expected);
     }
 
+    @Test
+    public void nodeName_emptySequence() throws Exception {
+        String grammarName = "Grammar";
+        String grammar = """
+            grammar Grammar;
+            x: 'x';
+
+                """;
+        String startRuleName = "x";
+        String textualTree = "x";
+        String xquery = "fn:node-name(())";
+        XQueryValue expected = baseFactory.string("");
+        assertDynamicGrammarQuery(grammarName, grammar, startRuleName, textualTree, xquery, expected);
+    }
+
 
 }

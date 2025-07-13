@@ -20,10 +20,10 @@ public class XQueryEnumItemTypeExtensibleRecord extends XQueryEnumItemTypeRecord
             }
             sb.append(entry.getKey())
               .append(" as ")
-              .append(entry.getValue()); // assuming getType() returns the type name
+              .append(entry.getValue().type()); // assuming getType() returns the type name
             first = false;
         }
-        sb.append(")");
+        sb.append(", *)");
         return sb.toString();
     }
 

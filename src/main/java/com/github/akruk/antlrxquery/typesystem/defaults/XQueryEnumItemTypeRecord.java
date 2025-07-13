@@ -34,7 +34,7 @@ public class XQueryEnumItemTypeRecord extends XQueryEnumItemType {
             if (!entry.getValue().isRequired()) {
                 sb.append("?");
             }
-            sb.append(": ").append(entry.getValue());
+            sb.append(" as ").append(entry.getValue().type());
             first = false;
             }
             sb.append(")");

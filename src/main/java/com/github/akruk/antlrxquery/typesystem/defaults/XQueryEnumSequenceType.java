@@ -41,7 +41,7 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
             case ZERO_OR_MORE -> "*";
             case ONE_OR_MORE -> "+";
         };
-
+        requiresParentheses = requiresParentheses();
     }
 
     private static boolean isNullableEquals(final Object one, final Object other) {
@@ -503,8 +503,8 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
             return sb.toString();
         }
 
-        if (itemType instanceof XQueryEnumItemTypeFunction
-            || itemType instanceof XQueryEnumChoiceItemType) {
+        if (requiresParentheses)
+        {
             sb.append("(");
             sb.append(itemType);
             sb.append(")");
@@ -514,6 +514,12 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         }
         sb.append(occurenceSuffix);
         return sb.toString();
+    }
+
+    private final boolean requiresParentheses;
+    private boolean requiresParentheses() {
+        return occurenceSuffix != "" &&( itemType instanceof XQueryEnumItemTypeFunction
+                                        || itemType instanceof XQueryEnumChoiceItemType);
     }
 
 

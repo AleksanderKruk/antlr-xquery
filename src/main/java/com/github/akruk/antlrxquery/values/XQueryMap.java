@@ -11,10 +11,21 @@ import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 public record XQueryMap(Map<XQueryValue, XQueryValue> value, XQueryValueFactory valueFactory)
         implements XQueryValue
 {
-
     @Override
     public XQueryValue valueEqual(XQueryValue other) {
-        return XQueryError.InvalidArgumentType;
+        if (!(other instanceof XQueryMap otherMap)) {
+            return XQueryError.InvalidArgumentType;
+        }
+        if (this.value.size() != otherMap.value.size()) {
+            return valueFactory.bool(false);
+        }
+        for (Map.Entry<XQueryValue, XQueryValue> entry : this.value.entrySet()) {
+            XQueryValue otherValue = otherMap.value.get(entry.getKey());
+            if (otherValue == null || !entry.getValue().valueEqual(otherValue).booleanValue()) {
+                return valueFactory.bool(false);
+            }
+        }
+        return valueFactory.bool(true);
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.function
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -250,7 +251,7 @@ public class FunctionsOnNumericValues {
         BigDecimal remainder = dividend.subtract(quotient.multiply(divisor));
 
         // build record { "quotient":…, "remainder":… }
-        Map<String,XQueryValue> fields = new LinkedHashMap<>();
+        Map<String,XQueryValue> fields = new HashMap<>();
         fields.put("quotient", valueFactory.number(quotient));
         fields.put("remainder", valueFactory.number(remainder));
         return valueFactory.record(fields);

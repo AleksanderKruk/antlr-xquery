@@ -1,10 +1,12 @@
 package com.github.akruk.antlrxquery.evaluationfunctiontests.thematic;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrxquery.evaluationfunctiontests.FunctionsEvaluationTests;
+import com.github.akruk.antlrxquery.values.XQueryError;
 
 public class FunctionsOnNumericValues extends FunctionsEvaluationTests {
     @Test
@@ -224,6 +226,100 @@ public class FunctionsOnNumericValues extends FunctionsEvaluationTests {
             baseFactory.number(new BigDecimal("-1.12"))
         );
     }
+
+    @Test
+    public void dividesExact() {
+        assertResult(
+            "divide-decimals(120.6, 60.3, 4)",
+            baseFactory.record(Map.of(
+                "quotient", baseFactory.number(2),
+                "remainder", baseFactory.number(0)
+            ))
+        );
+    }
+
+    @Test
+    public void dividesPositive() {
+        assertResult(
+            "divide-decimals(10, 3)",
+            baseFactory.record(Map.of(
+                "quotient", baseFactory.number(3),
+                "remainder", baseFactory.number(1)
+            ))
+        );
+    }
+
+    @Test
+    public void dividesPositiveNegativeDivisor() {
+        assertResult(
+            "divide-decimals(10, -3)",
+            baseFactory.record(Map.of(
+                "quotient", baseFactory.number(-3),
+                "remainder", baseFactory.number(1)
+            ))
+        );
+    }
+
+    @Test
+    public void dividesNegativePositiveDivisor() {
+        assertResult(
+            "divide-decimals(-10, 3)",
+            baseFactory.record(Map.of(
+                "quotient", baseFactory.number(-3),
+                "remainder", baseFactory.number(-1)
+            ))
+        );
+    }
+
+    @Test
+    public void dividesBothNegative() {
+        assertResult(
+            "divide-decimals(-10, -3)",
+            baseFactory.record(Map.of(
+                "quotient", baseFactory.number(3),
+                "remainder", baseFactory.number(-1)
+            ))
+        );
+    }
+
+    @Test
+    public void dividesWithPrecisionSix() {
+        assertResult(
+            "divide-decimals(10, 3, 6)",
+            baseFactory.record(Map.of(
+                "quotient", baseFactory.number(new BigDecimal("3.333333")),
+                "remainder", baseFactory.number(new BigDecimal("0.000001"))
+            ))
+        );
+    }
+
+    @Test
+    public void dividesHundredThirty() {
+        assertResult(
+            "divide-decimals(100, 30)",
+            baseFactory.record(Map.of(
+                "quotient", baseFactory.number(3),
+                "remainder", baseFactory.number(10)
+            ))
+        );
+    }
+
+    @Test
+    public void dividesWithNegativePrecision() {
+        assertResult(
+            "divide-decimals(150862, 7, -3)",
+            baseFactory.record(Map.of(
+                "quotient", baseFactory.number(21000),
+                "remainder", baseFactory.number(3862)
+            ))
+        );
+    }
+
+    @Test
+    public void divideByZeroRaisesError() {
+        assertError("divide-decimals(1, 0)", XQueryError.DivisionByZero);
+    }
+
 
 
 }

@@ -8,15 +8,27 @@ public class XQueryString extends XQueryValueBase<String> {
     }
 
     @Override
+    public int hashCode() {
+        return value.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null || !(obj instanceof XQueryString)) {
+            return false;
+        }
+        var str = (XQueryString) obj;
+        return value.equals(str.value);
+    }
+
+    @Override
     public String stringValue() {
         return value;
     }
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder("<");
-        sb.append(super.toString());
-        sb.append(":");
+        StringBuilder sb = new StringBuilder("<XQueryString:");
         sb.append(value);
         sb.append("/>");
         return sb.toString();

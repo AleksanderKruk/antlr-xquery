@@ -13,8 +13,10 @@ import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.IItemtypeIntersectionMerger;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.TypeSequenceMerger;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.defaults.EnumItemtypeAlternativeMerger;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.defaults.EnumItemtypeIntersectionMerger;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.defaults.EnumItemtypeUnionMerger;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.defaults.IItemtypeUnionMerger;
 
@@ -40,7 +42,7 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
 
 
     private final EnumItemtypeAlternativeMerger alternativeMerger;
-    private final BinaryOperator[][] intersectionItemMerger;
+    private final IItemtypeIntersectionMerger intersectionMerger;
     private final XQueryTypeFactory typeFactory;
     private final Collection<XQueryItemType> itemTypes;
     private final IItemtypeUnionMerger unionMerger;
@@ -71,25 +73,7 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
         this.itemTypes = itemTypes;
         this.alternativeMerger = new EnumItemtypeAlternativeMerger(typeOrdinal, factory);
         this.unionMerger = new EnumItemtypeUnionMerger(typeOrdinal, factory);
-
-        // Union merging preparation
-        final int ELEMENT = XQueryTypes.ELEMENT.ordinal();
-        final int ANY_NODE = XQueryTypes.ANY_NODE.ordinal();
-
-        intersectionItemMerger = new BinaryOperator[typesCount][typesCount];
-        intersectionItemMerger[ELEMENT][ELEMENT] = (i1, i2) -> {
-            final var i1_ = (XQueryEnumItemType) i1;
-            final var i2_ = (XQueryEnumItemType) i2;
-            final var i1Elements = i1_.getElementNames();
-            final var i2ELements = i2_.getElementNames();
-            final Set<String> mergedElements = new HashSet<>(i1Elements.size());
-            mergedElements.addAll(i1Elements);
-            mergedElements.retainAll(i2ELements);
-            return typeFactory.itemElement(mergedElements);
-        };
-        intersectionItemMerger[ELEMENT][ANY_NODE] = (i1, _) -> i1;
-        intersectionItemMerger[ANY_NODE][ELEMENT] = (_, i2) -> i2;
-        intersectionItemMerger[ANY_NODE][ANY_NODE] = (_, _) -> typeFactory.itemAnyNode();
+        this.intersectionMerger = new EnumItemtypeIntersectionMerger(typeOrdinal, factory);
 
     }
 
@@ -619,8 +603,7 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
 
     @Override
     public XQueryItemType intersectionMerge(final XQueryItemType other) {
-        final IXQueryEnumItemType other_ = (IXQueryEnumItemType) other;
-        return (XQueryItemType)intersectionItemMerger[typeOrdinal][other_.getType().ordinal()].apply(this, other);
+        return intersectionMerger.intersectionMerge(this, other);
     }
 
     @Override

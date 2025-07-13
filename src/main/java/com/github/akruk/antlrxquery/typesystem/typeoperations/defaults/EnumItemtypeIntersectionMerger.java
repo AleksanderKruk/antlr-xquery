@@ -1,0 +1,55 @@
+
+package com.github.akruk.antlrxquery.typesystem.typeoperations.defaults;
+
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.BinaryOperator;
+import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemType;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeElement;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
+import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.IItemtypeIntersectionMerger;
+
+public class EnumItemtypeIntersectionMerger implements IItemtypeIntersectionMerger
+{
+    private static final int ELEMENT = XQueryTypes.ELEMENT.ordinal();
+    private static final int ANY_NODE = XQueryTypes.ANY_NODE.ordinal();
+    private static final int typesCount = XQueryTypes.values().length;
+
+    private final BinaryOperator<XQueryItemType>[] intersectionItemMerger;
+    private final XQueryTypeFactory typeFactory;
+
+    @SuppressWarnings("unchecked")
+    public EnumItemtypeIntersectionMerger(final int typeOrdinal, final XQueryTypeFactory typeFactory)
+    {
+        this.typeFactory = typeFactory;
+        this.intersectionItemMerger = new BinaryOperator[typesCount];
+        intersectionItemMerger[ELEMENT] = this::mergeElements;
+        intersectionItemMerger[ANY_NODE] = (i1, _) -> i1;
+        intersectionItemMerger[ELEMENT] = (_, i2) -> i2;
+        intersectionItemMerger[ANY_NODE] = (_, _) -> typeFactory.itemAnyNode();
+    }
+
+    private XQueryItemType mergeElements(XQueryItemType x, XQueryItemType y)
+    {
+            final var i1_ = (XQueryEnumItemType) x;
+            final var i2_ = (XQueryEnumItemType) y;
+            final var i1Elements = i1_.getElementNames();
+            final var i2ELements = i2_.getElementNames();
+            final Set<String> mergedElements = new HashSet<>(i1Elements.size());
+            mergedElements.addAll(i1Elements);
+            mergedElements.retainAll(i2ELements);
+            return typeFactory.itemElement(mergedElements);
+    }
+
+    @Override
+    public XQueryItemType intersectionMerge(final XQueryItemType type1, final XQueryItemType type2)
+    {
+        final int otherOrdinal = ((XQueryEnumItemType) type2).getType().ordinal();
+        return this.intersectionItemMerger[otherOrdinal].apply(type1, type2);
+    }
+
+
+
+}

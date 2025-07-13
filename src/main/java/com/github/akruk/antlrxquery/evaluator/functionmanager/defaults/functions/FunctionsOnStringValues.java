@@ -241,18 +241,40 @@ public class FunctionsOnStringValues {
         return valueFactory.string(normalized);
     }
 
-    public XQueryValue uppercase(final XQueryVisitingContext context, final List<XQueryValue> args,
-            final Map<String, XQueryValue> kwargs) {
-        XQueryValue argValue = args.get(0);
-        if (argValue.isEmptySequence()) return valueFactory.string("");
-        return argValue.uppercase();
+    public XQueryValue upperCase(
+            XQueryVisitingContext context,
+            List<XQueryValue> args,
+            Map<String, XQueryValue> kwargs) {
+
+        final XQueryValue input = args.get(0);
+        if (input.isEmptySequence()) {
+            return valueFactory.emptyString();
+        }
+        if (!input.isStringValue()) {
+            return XQueryError.InvalidArgumentType;
+        }
+
+        String original = input.stringValue();
+        String transformed = original.toUpperCase(Locale.ROOT);
+        return valueFactory.string(transformed);
     }
 
-    public XQueryValue lowercase(final XQueryVisitingContext context, final List<XQueryValue> args,
-            final Map<String, XQueryValue> kwargs) {
-        XQueryValue argValue = args.get(0);
-        if (argValue.isEmptySequence()) return valueFactory.string("");
-        return argValue.lowercase();
+    public XQueryValue lowerCase(
+            XQueryVisitingContext context,
+            List<XQueryValue> args,
+            Map<String, XQueryValue> kwargs) {
+
+        final XQueryValue input = args.get(0);
+        if (input.isEmptySequence()) {
+            return valueFactory.emptyString();
+        }
+        if (!input.isStringValue()) {
+            return XQueryError.InvalidArgumentType;
+        }
+
+        String original = input.stringValue();
+        String transformed = original.toLowerCase(Locale.ROOT);
+        return valueFactory.string(transformed);
     }
 
     private Map<String, String> HTML5_ENTITIES;

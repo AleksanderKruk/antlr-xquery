@@ -129,8 +129,8 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         registerFunction("fn", "string-length", functionsOnStringValues::stringLength, 0, 1, Map.of());
         registerFunction("fn", "normalize-space", functionsOnStringValues::normalizeSpace, 0, 1, Map.of());
         registerFunction("fn", "normalize-unicode", functionsOnStringValues::normalizeUnicode, 1, 2, Map.of());
-        registerFunction("fn", "upper-case", functionsOnStringValues::uppercase, 1, 1, Map.of());
-        registerFunction("fn", "lower-case", functionsOnStringValues::lowercase, 1, 1, Map.of());
+        registerFunction("fn", "upper-case", functionsOnStringValues::upperCase, 1, 1, Map.of());
+        registerFunction("fn", "lower-case", functionsOnStringValues::lowerCase, 1, 1, Map.of());
         registerFunction("fn", "translate", functionsOnStringValues::translate, 3, 3, Map.of());
 
         registerFunction("fn", "replace", this::replace, 0, 0, Map.of());

@@ -81,5 +81,11 @@ public class XQueryMemoizedValueFactory implements XQueryValueFactory{
         return sequence(List.of());
     }
 
+    @Override
+    public XQueryValue map(Map<XQueryValue, XQueryValue> value) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'map'");
+    }
+
 
 }

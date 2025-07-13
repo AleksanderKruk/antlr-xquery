@@ -341,53 +341,6 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
 
 
     @Override
-    public XQueryValue substring(final int other) {
-        return null;
-    }
-
-    @Override
-    public XQueryValue substring(final int startingLoc, final int length) {
-        return null;
-    }
-
-    @Override
-    public XQueryValue contains(final XQueryValue other) {
-        return null;
-    }
-
-
-    @Override
-    public XQueryValue startsWith(final XQueryValue other) {
-        return null;
-    }
-
-    @Override
-    public XQueryValue endsWith(final XQueryValue other) {
-        return null;
-    }
-
-    @Override
-    public XQueryValue lowercase() {
-        return null;
-    }
-
-    @Override
-    public XQueryValue uppercase() {
-        return null;
-    }
-
-    @Override
-    public XQueryValue substringBefore(final XQueryValue splitstring) {
-        return null;
-    }
-
-    @Override
-    public XQueryValue substringAfter(final XQueryValue splitstring) {
-        return null;
-    }
-
-
-    @Override
     public boolean isEmptySequence() {
         return false;
     }

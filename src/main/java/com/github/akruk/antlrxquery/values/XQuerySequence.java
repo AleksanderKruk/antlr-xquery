@@ -106,13 +106,6 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
     }
 
 
-
-    @Override
-    public XQueryValue copy() {
-        return valueFactory.sequence(List.copyOf(value));
-    }
-
-
     @Override
     public XQueryValue empty() {
         return valueFactory.bool(value.isEmpty());

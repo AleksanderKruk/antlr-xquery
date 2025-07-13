@@ -755,7 +755,8 @@ public class XQueryTypesTest {
         final var elementFoo = typeFactory.element(Set.of("foo"));
         final var elementBar = typeFactory.element(Set.of("bar"));
         final var merged$elements = elementFoo.unionMerge(elementBar);
-        assertEquals(merged$elements, typeFactory.oneOrMore(typeFactory.itemElement(Set.of("foo", "bar"))));
+        assertEquals( typeFactory.oneOrMore(typeFactory.itemElement(Set.of("foo", "bar"))),
+                        merged$elements);
 
         final var merged$any = elementFoo.unionMerge(anyNode);
         assertEquals(merged$any, nodeOneOrMore);

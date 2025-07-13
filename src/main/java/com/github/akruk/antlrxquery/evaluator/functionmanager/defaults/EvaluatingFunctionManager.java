@@ -94,15 +94,15 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         registerFunction("fn", "insert-before", this::insertBefore, 0, 0, Map.of());
         registerFunction("fn", "remove", this::remove, 0, 0, Map.of());
         registerFunction("fn", "reverse", this::reverse, 0, 0, Map.of());
-        registerFunction("fn", "subsequence", this::subsequence, 0, 0, Map.of());
-        registerFunction("fn", "distinct-values", this::distinctValues, 0, 0, Map.of());
+        registerFunction("fn", "subsequence", this::subsequence, 2, 3, Map.of());
+        registerFunction("fn", "distinct-values", this::distinctValues, 1, 2, Map.of());
 
         registerFunction("fn", "zero-or-one", cardinalityFunctions::zeroOrOne, 1, 1, Map.of());
         registerFunction("fn", "one-or-more", cardinalityFunctions::oneOrMore, 1, 1, Map.of());
         registerFunction("fn", "exactly-one", cardinalityFunctions::exactlyOne, 1, 1, Map.of());
 
-        registerFunction("fn", "data", this::data, 0, 0, Map.of());
-        registerFunction("fn", "string", this::string, 0, 0, Map.of());
+        registerFunction("fn", "data", this::data, 0, 1, Map.of());
+        registerFunction("fn", "string", this::string, 0, 1, Map.of());
 
         registerFunction("fn", "default-collation", this::defaultCollation, 0, 0, Map.of());
 

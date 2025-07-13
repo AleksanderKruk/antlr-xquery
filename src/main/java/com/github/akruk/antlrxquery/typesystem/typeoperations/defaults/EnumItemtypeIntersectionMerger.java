@@ -14,6 +14,7 @@ public class EnumItemtypeIntersectionMerger implements IItemtypeIntersectionMerg
 {
     private static final int ELEMENT = XQueryTypes.ELEMENT.ordinal();
     private static final int ANY_NODE = XQueryTypes.ANY_NODE.ordinal();
+    private static final int ERROR = XQueryTypes.ERROR.ordinal();
     private static final int typesCount = XQueryTypes.values().length;
 
     private final BinaryOperator<XQueryItemType>[] intersectionItemMerger;
@@ -28,6 +29,24 @@ public class EnumItemtypeIntersectionMerger implements IItemtypeIntersectionMerg
         intersectionItemMerger[ANY_NODE] = (i1, _) -> i1;
         intersectionItemMerger[ELEMENT] = (_, i2) -> i2;
         intersectionItemMerger[ANY_NODE] = (_, _) -> typeFactory.itemAnyNode();
+        final BinaryOperator<XQueryItemType> error = (_, _) -> typeFactory.itemError();
+        final BinaryOperator<XQueryItemType> anyNode = (_, _) -> typeFactory.itemAnyNode();
+
+        switch (XQueryTypes.values()[typeOrdinal]) {
+            case ANY_NODE:
+                intersectionItemMerger[ERROR] = error;
+                intersectionItemMerger[ANY_NODE] = anyNode;
+                intersectionItemMerger[ELEMENT] = (_, i2) -> i2;
+                break;
+
+            case ELEMENT:
+                intersectionItemMerger[ERROR] = error;
+                intersectionItemMerger[ANY_NODE] = (i1, _) -> i1;
+                intersectionItemMerger[ELEMENT] = this::mergeElements;
+                break;
+            default:
+                ;
+        }
     }
 
     private XQueryItemType mergeElements(XQueryItemType x, XQueryItemType y)

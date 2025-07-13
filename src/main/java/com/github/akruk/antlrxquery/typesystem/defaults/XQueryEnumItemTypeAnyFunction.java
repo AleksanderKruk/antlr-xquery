@@ -8,4 +8,8 @@ public class XQueryEnumItemTypeAnyFunction extends XQueryEnumItemType {
     super(XQueryTypes.ANY_FUNCTION, null, null, null, null, null, null, factory, null);
   }
 
+  @Override
+  public String toString() {
+    return "function(*)";
+  }
 }

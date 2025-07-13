@@ -8,4 +8,8 @@ public class XQueryEnumItemTypeBoolean extends XQueryEnumItemType {
     super(XQueryTypes.BOOLEAN, null, null, null, null, null, null, factory, null);
   }
 
+  @Override
+  public String toString() {
+      return "boolean";
+  }
 }

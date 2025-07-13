@@ -6,4 +6,9 @@ public class XQueryEnumItemTypeString extends XQueryEnumItemType {
   public XQueryEnumItemTypeString(XQueryTypeFactory factory) {
     super(XQueryTypes.STRING, null, null, null, null, null, null, factory, null);
   }
+
+  @Override
+  public String toString() {
+      return "string";
+  }
 }

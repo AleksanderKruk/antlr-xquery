@@ -8,4 +8,9 @@ public class XQueryEnumItemTypeAnyItem extends XQueryEnumItemType {
     super(XQueryTypes.ANY_ITEM, null, null, null, null, null, null, factory, null);
   }
 
+  @Override
+  public String toString() {
+      return "item()";
+  }
+
 }

@@ -15,4 +15,9 @@ public class XQueryEnumItemTypeEnum extends XQueryEnumItemType {
     this.enumMembers = enumMembers;
   }
 
+  @Override
+  public String toString() {
+      return "enum(" + String.join(", ", enumMembers) + ")";
+  }
+
 }

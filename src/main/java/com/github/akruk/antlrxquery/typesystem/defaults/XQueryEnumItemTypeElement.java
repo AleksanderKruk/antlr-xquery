@@ -10,4 +10,9 @@ public class XQueryEnumItemTypeElement extends XQueryEnumItemType {
     super(XQueryTypes.ELEMENT, null, null, null, null, null, elementName, factory, null);
   }
 
+  @Override
+  public String toString() {
+    return "element(" + String.join(" | ", getElementNames()) + ")";
+  }
+
 }

@@ -21,4 +21,24 @@ public class XQueryEnumItemTypeRecord extends XQueryEnumItemType {
     this.recordFields = keyValuePairs;
   }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("record(");
+        boolean first = true;
+        for (Map.Entry<String, XQueryRecordField> entry : recordFields.entrySet()) {
+            if (!first) {
+                sb.append(", ");
+            }
+            sb.append(entry.getKey());
+            if (!entry.getValue().isRequired()) {
+                sb.append("?");
+            }
+            sb.append(": ").append(entry.getValue());
+            first = false;
+            }
+            sb.append(")");
+            return sb.toString();
+    }
+
 }

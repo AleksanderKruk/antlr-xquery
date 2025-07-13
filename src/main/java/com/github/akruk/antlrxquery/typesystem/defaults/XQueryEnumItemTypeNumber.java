@@ -8,4 +8,9 @@ public class XQueryEnumItemTypeNumber extends XQueryEnumItemType {
     super(XQueryTypes.NUMBER, null, null, null,null,null,null, factory, null);
   }
 
+  @Override
+  public String toString() {
+    return "number";
+  }
+
 }

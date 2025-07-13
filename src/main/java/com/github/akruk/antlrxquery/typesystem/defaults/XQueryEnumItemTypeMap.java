@@ -11,4 +11,10 @@ public class XQueryEnumItemTypeMap extends XQueryEnumItemType {
         super(XQueryTypes.MAP, null, null, null, key, value, null, factory, null);
     }
 
+    @Override
+    public String toString() {
+        return "map(" + getMapKeyType() + ", " + getMapValueType() + ")";
+    }
+
+
 }

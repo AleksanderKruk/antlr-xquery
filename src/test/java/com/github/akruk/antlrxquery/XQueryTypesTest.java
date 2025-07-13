@@ -537,7 +537,7 @@ public class XQueryTypesTest {
         assertFalse(string1_$string1.itemtypeIsSubtypeOf(typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.number()))));
         assertTrue(string1_$string1.itemtypeIsSubtypeOf(typeFactory.itemFunction(typeFactory.oneOrMore(itemString), List.of(typeFactory.string()))));
         assertFalse(string1_$string1.itemtypeIsSubtypeOf(typeFactory.itemFunction(typeFactory.number(), List.of(typeFactory.number()))));
-        assertFalse(string1_$string1.itemtypeIsSubtypeOf(typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.string(), typeFactory.string()))));
+        assertTrue(string1_$string1.itemtypeIsSubtypeOf(typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.string(), typeFactory.string()))));
 
         assertFalse(string1_$string1.itemtypeIsSubtypeOf(itemRecordAny));
         assertFalse(string1_$string1.itemtypeIsSubtypeOf(itemRecordString));

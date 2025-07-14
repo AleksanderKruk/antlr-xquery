@@ -8,6 +8,7 @@ exprSingle: fLWORExpr
         | quantifiedExpr
         | ifExpr
         | switchExpr
+        | tryCatchExpr
         | orExpr;
 fLWORExpr: initialClause intermediateClause* returnClause;
 initialClause: forClause

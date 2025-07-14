@@ -73,6 +73,9 @@ WHEN: 'when';
 PREVIOUS: 'previous';
 NEXT: 'next';
 
+TRY: 'try' ;
+CATCH: 'catch' ;
+FINALLY: 'finally' ;
 
 COMMENT: '(:' .*? ':)'-> channel(HIDDEN);
 WS: [\p{White_Space}]+ -> channel(HIDDEN);

@@ -44,6 +44,14 @@ switchExpr: SWITCH  LPAREN switchedExpr=expr RPAREN switchCaseClause+ DEFAULT RE
 switchCaseClause: (CASE switchCaseOperand)+ RETURN exprSingle;
 switchCaseOperand: exprSingle;
 
+tryCatchExpr : TRY ( (catchClause+ finallyClause?) | finallyClause ) ;
+tryClause : TRY enclosedExpr ;
+catchClause : CATCH nameTestUnion enclosedExpr ;
+finallyClause : FINALLY enclosedExpr ;
+
+
+
+
 orExpr: andExpr ( OR andExpr)*;
 andExpr: comparisonExpr ( AND comparisonExpr )*;
 comparisonExpr: otherwiseExpr ((valueComp | generalComp | nodeComp) otherwiseExpr)?;

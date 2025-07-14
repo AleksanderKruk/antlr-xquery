@@ -5,74 +5,11 @@ import java.util.Set;
 
 import org.junit.Test;
 
+import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 
-public class XQuerySemanticAnalyzerTest extends SemanticTests {
-
-    @Test
-    public void numericLiteralTypes() {
-        final var number = typeFactory.number();
-
-        // Integer literals
-        assertType("123", number);
-        assertType("1_000_000", number);
-
-        // Hexadecimal literals
-        assertType("0x1F", number);
-        assertType("0xDE_AD_BE_EF", number);
-        assertType("0x0", number);
-
-        // Binary literals
-        assertType("0b1010", number);
-        assertType("0b0001_0001", number);
-
-        // Decimal literals
-        assertType(".75", number);
-        assertType("42.", number);
-        assertType("3.14", number);
-        assertType("1_000.000_1", number);
-
-        // Double literals
-        assertType("1.23e3", number);
-        assertType(".5e+2", number);
-        assertType("4.56E-1", number);
-        assertType("7e4", number);
-        assertType("1_2.3_4e+1_0", number); // z podkreśleniami
-    }
-
-    @Test
-    public void parenthesizedExpression() {
-        assertType("()", typeFactory.emptySequence());
-        assertType("(1)", typeFactory.number());
-        assertType("(1, 'a')", typeFactory
-                .oneOrMore(typeFactory.itemChoice(List.of(typeFactory.itemNumber(), typeFactory.itemString()))));
-        assertType("(1, 2, 3)", typeFactory.oneOrMore(typeFactory.itemNumber()));
-        assertType("((), (), (1))", typeFactory.number());
-        assertType("((), (1), (1))", typeFactory.oneOrMore(typeFactory.itemNumber()));
-    }
-
-    @Test
-    public void orExpressions() {
-        assertType("true() or false() or true()", typeFactory.boolean_());
-        assertType("1 or false() or true()", typeFactory.boolean_());
-    }
-
-    @Test
-    public void andExpressions() {
-        assertType("true() and false() and true()", typeFactory.boolean_());
-        assertType("1 and false() and true()", typeFactory.boolean_());
-    }
-
-    @Test
-    public void notExpression() {
-        assertType("not(true())", typeFactory.boolean_());
-        assertType("not(4)", typeFactory.boolean_());
-        assertType("fn:not(true())", typeFactory.boolean_());
-        assertType("fn:not(4)", typeFactory.boolean_());
-        assertThereAreErrors("fn:not()");
-        assertThereAreErrors("fn:not(1, 2)");
-    }
+public class XQuerySemanticAnalyzerTest extends SemanticTestsBase {
 
     @Test
     public void concatenation() {
@@ -80,51 +17,6 @@ public class XQuerySemanticAnalyzerTest extends SemanticTests {
         assertType("'a' || ()", typeFactory.string());
         assertType(" () || ()", typeFactory.string());
         assertType("() || 'con' || ('cat', 'enate')", typeFactory.string());
-    }
-
-    @Test
-    public void variableBinding() {
-        assertType("let $x := 1 return $x", typeFactory.number());
-        assertType("let $x as item() := 1 return $x", typeFactory.anyItem());
-        // If casting should be done, then the type of $x should be number
-        // assertType("let $x as boolean := 1 return $x", typeFactory.boolean_());
-    }
-
-    @Test
-    public void forClauseBinding() {
-        assertType("for $x in (1, 2, 3) return $x", typeFactory.oneOrMore(typeFactory.itemNumber()));
-    }
-
-    @Test
-    public void indexVariableBinding() {
-        assertType("for $x at $i in (1, 2, 3) return $i", typeFactory.oneOrMore(typeFactory.itemNumber()));
-    }
-
-    @Test
-    public void countVariableClause() {
-        assertType("""
-                    for $x at $i in (1, 2, 3)
-                    count $count
-                    return $count
-                """, typeFactory.oneOrMore(typeFactory.itemNumber()));
-    }
-
-    @Test
-    public void whereClause() {
-        assertType("""
-                    for $x at $i in (1, 2, 3)
-                    where $x > 3
-                    return $x
-                """, typeFactory.zeroOrMore(typeFactory.itemNumber()));
-    }
-
-    @Test
-    public void whileClause() {
-        assertType("""
-                    for $x at $i in (1, 2, 3)
-                    while $x > 3
-                    return $x
-                """, typeFactory.zeroOrMore(typeFactory.itemNumber()));
     }
 
     @Test
@@ -146,27 +38,27 @@ public class XQuerySemanticAnalyzerTest extends SemanticTests {
                         $y as number? := 6
                     return ($x to $y)
                 """, numbers);
-        assertThereAreErrors("""
+        assertErrors("""
                     let $x as string? := "a",
                         $y as number? := 6
                     return ($x to $y)
                 """);
-        assertThereAreErrors("""
+        assertErrors("""
                     let $x as number? := 4,
                         $y as string? := "a"
                     return ($x to $y)
                 """);
-        assertThereAreErrors("""
+        assertErrors("""
                     let $x := (1, 2, 3, 4),
                         $y := (4, 5, 6, 7)
                     return ($x to $y)
                 """);
-        assertThereAreErrors("""
+        assertErrors("""
                     let $x as number+ := (1, 2, 3, 4),
                         $y as number+ := (4, 5, 6, 7)
                     return ($x to $y)
                 """);
-        assertThereAreErrors("""
+        assertErrors("""
                     let $x as item()+ := (1, 2, 3, 4),
                         $y as item()+ := (4, 5, 6, 7)
                     return ($x to $y)
@@ -232,10 +124,10 @@ public class XQuerySemanticAnalyzerTest extends SemanticTests {
         assertType("1 div 1", typeFactory.number());
         assertType("1 mod 1", typeFactory.number());
         assertType("1 idiv 1", typeFactory.number());
-        assertThereAreErrors("() + 1");
-        assertThereAreErrors("1 + ()");
-        assertThereAreErrors("() * 1");
-        assertThereAreErrors("1 * 'a'");
+        assertErrors("() + 1");
+        assertErrors("1 + ()");
+        assertErrors("() * 1");
+        assertErrors("1 * 'a'");
     }
 
     @Test
@@ -254,7 +146,7 @@ public class XQuerySemanticAnalyzerTest extends SemanticTests {
                     return $x | $y | $z
                 """, typeFactory.zeroOrMore(typeFactory.itemElement(Set.of("a", "b", "c"))));
 
-        assertThereAreErrors("""
+        assertErrors("""
                     let $x as number+ := (1, 2, 3)
                     return $x | $x
                 """);
@@ -268,11 +160,11 @@ public class XQuerySemanticAnalyzerTest extends SemanticTests {
                     return $x is $y
                 """, typeFactory.zeroOrOne(typeFactory.itemBoolean()));
 
-        assertThereAreErrors("""
+        assertErrors("""
                     let $x as number+ := (1, 2, 3)
                     return $x is $x
                 """);
-        assertThereAreErrors("""
+        assertErrors("""
                     let $x as string? := "abc"
                     return $x is $x
                 """);
@@ -313,21 +205,21 @@ public class XQuerySemanticAnalyzerTest extends SemanticTests {
         assertType("() le ()", optionalBool);
         assertType("() ge ()", optionalBool);
 
-        assertThereAreErrors("'1' eq 1");
-        assertThereAreErrors("'1' ne 1");
-        assertThereAreErrors("'1' lt 1");
-        assertThereAreErrors("'1' gt 1");
-        assertThereAreErrors("'1' le 1");
-        assertThereAreErrors("'1' ge 1");
+        assertErrors("'1' eq 1");
+        assertErrors("'1' ne 1");
+        assertErrors("'1' lt 1");
+        assertErrors("'1' gt 1");
+        assertErrors("'1' le 1");
+        assertErrors("'1' ge 1");
 
-        assertThereAreErrors("'1' eq true()");
-        assertThereAreErrors("'1' ne true()");
-        assertThereAreErrors("'1' lt true()");
-        assertThereAreErrors("'1' gt true()");
-        assertThereAreErrors("'1' le true()");
-        assertThereAreErrors("'1' ge true()");
+        assertErrors("'1' eq true()");
+        assertErrors("'1' ne true()");
+        assertErrors("'1' lt true()");
+        assertErrors("'1' gt true()");
+        assertErrors("'1' le true()");
+        assertErrors("'1' ge true()");
 
-        assertThereAreErrors("""
+        assertErrors("""
                     let $x as number+ := (1, 2, 3)
                     return $x eq $x
                 """);
@@ -346,11 +238,6 @@ public class XQuerySemanticAnalyzerTest extends SemanticTests {
                 return $x ! .
                 """, typeFactory.zeroOrMore(typeFactory.itemNumber()));
 
-    }
-
-    @Test
-    public void stringConstructor() {
-        assertType("``[]``", typeFactory.string());
     }
 
 }

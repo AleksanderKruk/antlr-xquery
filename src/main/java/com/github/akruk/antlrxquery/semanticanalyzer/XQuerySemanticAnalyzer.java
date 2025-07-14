@@ -843,7 +843,19 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
                 context.setType(choicedErrors);
                 context.setPositionType(null);
                 context.setSizeType(null);
+                contextManager.enterScope();
+                contextManager.entypeVariable("$err:code", typeFactory.string());
+                contextManager.entypeVariable("$err:description", typeFactory.zeroOrOne(typeFactory.itemString()));
+                contextManager.entypeVariable("$err:value", typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+                contextManager.entypeVariable("$err:module", typeFactory.zeroOrOne(typeFactory.itemString()));
+                contextManager.entypeVariable("$err:line-number", typeFactory.zeroOrOne(typeFactory.itemNumber()));
+                contextManager.entypeVariable("$err:column-number", typeFactory.zeroOrOne(typeFactory.itemNumber()));
+                contextManager.entypeVariable("$err:stack-trace", typeFactory.zeroOrOne(typeFactory.itemString()));
+                contextManager.entypeVariable("$err:additional", typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+                contextManager.entypeVariable("$err:map", typeFactory.anyMap());
+
                 var visited = c.enclosedExpr().accept(this);
+                contextManager.leaveScope();
                 return visited;
             });
 
@@ -857,7 +869,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             }
         }
         context = savedContext;
-            ;
         var mergedAlternativeCatches = alternativeCatches.reduce(XQuerySequenceType::alternativeMerge).get();
         return testedExprType.alternativeMerge(mergedAlternativeCatches);
     }

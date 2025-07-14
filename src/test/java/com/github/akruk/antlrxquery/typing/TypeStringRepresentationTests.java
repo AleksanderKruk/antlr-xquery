@@ -94,6 +94,13 @@ public class TypeStringRepresentationTests {
                 || "record(name? as string?, id as number)".equals(repr));
     }
 
+
+    @Test
+    public void testEmptyRecord() {
+        Map<String, XQueryRecordField> fields = Map.of();
+        String repr = typeFactory.record(fields).toString();
+        assertTrue("record()".equals(repr));
+    }
     @Test
     public void testExtensibleRecordType() {
         Map<String, XQueryRecordField> fields = Map.of(

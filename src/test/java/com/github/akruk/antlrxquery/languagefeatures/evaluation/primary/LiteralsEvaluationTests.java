@@ -190,5 +190,15 @@ public class LiteralsEvaluationTests extends EvaluationTestsBase {
     }
 
 
+    @Test
+    public void trueConstant() {
+        assertResult("true()", baseFactory.bool(true));
+    }
+
+    @Test
+    public void falseConstant() {
+        assertResult("false()", baseFactory.bool(false));
+    }
+
 
 }

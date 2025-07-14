@@ -133,42 +133,6 @@ public class XQueryEvaluatorTest {
     }
 
     @Test
-    public void trueConstant() {
-        assertResult("true()", baseFactory.bool(true));
-    }
-
-    @Test
-    public void falseConstant() {
-        assertResult("false()", baseFactory.bool(false));
-    }
-
-    @Test
-    public void or() {
-        String xquery = "false() or false() or true()";
-        var value = XQuery.evaluate(null, xquery, null);
-        assertTrue(value.booleanValue());
-        xquery = "false() or false() or false()";
-        value = XQuery.evaluate(null, xquery, null);
-        assertFalse(value.booleanValue());
-    }
-
-    @Test
-    public void and() {
-        String xquery = "true() and true() and false()";
-        var value = XQuery.evaluate(null, xquery, null);
-        assertFalse(value.booleanValue());
-        xquery = "true() and true() and true()";
-        value = XQuery.evaluate(null, xquery, null);
-        assertTrue(value.booleanValue());
-    }
-
-    @Test
-    public void not() {
-        assertResult("not(true())", baseFactory.bool(false));
-        assertResult("not(false())", baseFactory.bool(true));
-    }
-
-    @Test
     public void addition() {
         String xquery = """
                     5 + 3.10
@@ -294,117 +258,6 @@ public class XQueryEvaluatorTest {
         assertResult("(1, 2) > (2, 3)", baseFactory.bool(false));
         assertResult("(1, 2) >= (2, 3)", baseFactory.bool(true));
     }
-
-    @Test
-    public void emptyOperandValueComparison() {
-        assertResult("() eq ()", List.of());
-        assertResult("1  eq ()", List.of());
-        assertResult("() eq 1", List.of());
-        assertResult("() ne ()", List.of());
-        assertResult("1  ne ()", List.of());
-        assertResult("() ne 1", List.of());
-        assertResult("() lt ()", List.of());
-        assertResult("1  lt ()", List.of());
-        assertResult("() lt 1", List.of());
-        assertResult("() gt ()", List.of());
-        assertResult("1  gt ()", List.of());
-        assertResult("() gt 1", List.of());
-        assertResult("() le ()", List.of());
-        assertResult("1  le ()", List.of());
-        assertResult("() le 1", List.of());
-        assertResult("() ge ()", List.of());
-        assertResult("1  ge ()", List.of());
-        assertResult("() ge 1", List.of());
-    }
-
-    @Test
-    public void valueComparisonsEqual() {
-        // A eq B numeric numeric op:numeric-equal(A, B) xs:boolean
-        assertResult("1 eq 1", baseFactory.bool(true));
-        // A eq B xs:boolean xs:boolean op:boolean-equal(A, B) xs:boolean
-        assertResult("true() eq true()", baseFactory.bool(true));
-        // A eq B xs:string xs:string op:numeric-equal(fn:compare(A, B), 0) xs:boolean
-        assertResult("'abcd' eq 'abcd'", baseFactory.bool(true));
-        // A le B xs:boolean xs:boolean fn:not(op:boolean-greater-than(A, B)) xs:boolean
-    }
-
-    @Test
-    public void valueComparisonsNotEqual() {
-        // A ne B numeric numeric fn:not(op:numeric-equal(A, B)) xs:boolean
-        assertResult("1 ne 0", baseFactory.bool(true));
-        // A ne B xs:boolean xs:boolean fn:not(op:boolean-equal(A, B)) xs:boolean
-        assertResult("true() ne false()", baseFactory.bool(true));
-        // A ne B xs:string xs:string fn:not(op:numeric-equal(fn:compare(A, B), 0))
-        // xs:boolean
-        assertResult("'abc' ne 'abcd'", baseFactory.bool(true));
-    }
-
-    @Test
-    public void valueComparisonsGreaterThan() {
-        // A gt B numeric numeric op:numeric-greater-than(A, B) xs:boolean
-        assertResult("3 gt 1", baseFactory.bool(true));
-        // A gt B xs:boolean xs:boolean op:boolean-greater-than(A, B) xs:boolean
-        assertResult("true() gt false()", baseFactory.bool(true));
-        assertResult("false() gt true()", baseFactory.bool(false));
-        assertResult("true() gt true()", baseFactory.bool(false));
-        assertResult("false() gt false()", baseFactory.bool(false));
-        // A gt B xs:string xs:string op:numeric-greater-than(fn:compare(A, B), 0)
-        // xs:boolean
-        assertResult("'abed' gt 'abcd'", baseFactory.bool(true));
-    }
-
-    @Test
-    public void valueComparisonsGreaterOrEqual() {
-        // A ge B numeric numeric op:numeric-greater-than(A, B) or op:numeric-equal(A,
-        // B) xs:boolean
-        assertResult("3 ge 1", baseFactory.bool(true));
-        assertResult("1 ge 1", baseFactory.bool(true));
-        assertResult("0 ge 1", baseFactory.bool(false));
-        // A ge B xs:boolean xs:boolean xs:boolean
-        assertResult("true() ge false()", baseFactory.bool(true));
-        assertResult("false() ge true()", baseFactory.bool(false));
-        assertResult("true() ge true()", baseFactory.bool(true));
-        assertResult("false() ge false()", baseFactory.bool(true));
-        // A ge B xs:string xs:string xs:boolean
-        assertResult("'abcd' ge 'abcd'", baseFactory.bool(true));
-        assertResult("'abed' ge 'abcd'", baseFactory.bool(true));
-    }
-
-    @Test
-    public void valueComparisonsLessOrEqual() {
-        // A le B numeric numeric
-        assertResult("1 le 3", baseFactory.bool(true));
-        assertResult("1 le 1", baseFactory.bool(true));
-        assertResult("1 le 0", baseFactory.bool(false));
-        // A le B xs:boolean xs:boolean
-        assertResult("true() le false()", baseFactory.bool(false));
-        assertResult("false() le true()", baseFactory.bool(true));
-        assertResult("true() le true()", baseFactory.bool(true));
-        assertResult("false() le false()", baseFactory.bool(true));
-        // A le B xs:string xs:string
-        assertResult("'abed' le 'abcd'", baseFactory.bool(false));
-        assertResult("'abcd' le 'abed'", baseFactory.bool(true));
-        assertResult("'abcd' le 'abcd'", baseFactory.bool(true));
-    }
-
-    @Test
-    public void valueComparisonsLessThan() {
-        // A lt B numeric numeric op:numeric-less-than(A, B) xs:boolean
-        assertResult("1 lt 3", baseFactory.bool(true));
-        assertResult("1 lt 1", baseFactory.bool(false));
-        assertResult("1 lt 0", baseFactory.bool(false));
-        // A lt B xs:boolean xs:boolean op:boolean-less-than(A, B) xs:boolean
-        assertResult("true() lt false()", baseFactory.bool(false));
-        assertResult("false() lt true()", baseFactory.bool(true));
-        assertResult("true() lt true()", baseFactory.bool(false));
-        assertResult("false() lt false()", baseFactory.bool(false));
-        // A lt B xs:string xs:string op:numeric-less-than(fn:compare(A, B), 0)
-        // xs:boolean
-        assertResult("'abed' lt 'abcd'", baseFactory.bool(false));
-        assertResult("'abcd' lt 'abed'", baseFactory.bool(true));
-        assertResult("'abcd' lt 'abcd'", baseFactory.bool(false));
-    }
-
     @Test
     public void concatenationExpressions() {
         assertResult("'abc' || 'def' || 'ghi'", new XQueryString("abcdefghi", baseFactory));
@@ -813,18 +666,6 @@ public class XQueryEvaluatorTest {
     }
 
     @Test
-    public void ifExpression() {
-        assertResult("if ('non-empty-string') then 1 else 2", baseFactory.number(1));
-        assertResult("if ('') then 1 else 2", baseFactory.number(2));
-    }
-
-    @Test
-    public void shortIfExpression() {
-        assertResult("if ('non-empty-string') { 1 }", baseFactory.number(1));
-        assertResult("if ('') { 1 }", List.of());
-    }
-
-    @Test
     public void switchExpression() {
         assertResult("""
                     switch (4)
@@ -890,54 +731,6 @@ public class XQueryEvaluatorTest {
         assertResult("""
                     (1, 2, 3) otherwise (4, 5, 6) otherwise (7, 8, 9)
                 """, $123);
-    }
-
-    @Test
-    public void simpleMapSingleValue() {
-        // map on a single atomic value without let-binding
-        assertResult(
-                "1 ! (. + 1)",
-                List.of(baseFactory.number(2)));
-    }
-
-    @Test
-    public void simpleMapSingleValueNoOp() {
-        // map on a single atomic value without let-binding
-        assertResult(
-                "1 ! .",
-                List.of(baseFactory.number(1)));
-    }
-
-    @Test
-    public void simpleMapOverSequence() {
-        // add 1 to each item in a sequence directly
-        String xquery = "(1, 2, 3) ! (. + 1)";
-        List<XQueryValue> expected = List.of(
-                baseFactory.number(2),
-                baseFactory.number(3),
-                baseFactory.number(4));
-        assertResult(xquery, expected);
-    }
-
-    @Test
-    public void chainedSimpleMapExpressions() {
-        // multiply by 2 then add 1, chaining two map operators
-        String xquery = "(1, 2) ! (. * 2) ! (. + 1)";
-        List<XQueryValue> expected = List.of(
-                baseFactory.number(3), // (1*2)+1
-                baseFactory.number(5) // (2*2)+1
-        );
-        assertResult(xquery, expected);
-    }
-
-    @Test
-    public void simpleMapWithStringFunctions() {
-        // build strings, then measure their length via chained maps
-        String xquery = "('a', 'bc') ! concat(., '-') ! string-length(.)";
-        List<XQueryValue> expected = List.of(
-                baseFactory.number(2),
-                baseFactory.number(3));
-        assertResult(xquery, expected);
     }
 
     // Dodaj do klasy XQueryEvaluatorTest

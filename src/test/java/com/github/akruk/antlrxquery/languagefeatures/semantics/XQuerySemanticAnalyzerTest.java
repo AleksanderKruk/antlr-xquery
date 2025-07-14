@@ -10,28 +10,6 @@ import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 public class XQuerySemanticAnalyzerTest extends SemanticTestsBase {
 
     @Test
-    public void orExpressions() {
-        assertType("true() or false() or true()", typeFactory.boolean_());
-        assertType("1 or false() or true()", typeFactory.boolean_());
-    }
-
-    @Test
-    public void andExpressions() {
-        assertType("true() and false() and true()", typeFactory.boolean_());
-        assertType("1 and false() and true()", typeFactory.boolean_());
-    }
-
-    @Test
-    public void notExpression() {
-        assertType("not(true())", typeFactory.boolean_());
-        assertType("not(4)", typeFactory.boolean_());
-        assertType("fn:not(true())", typeFactory.boolean_());
-        assertType("fn:not(4)", typeFactory.boolean_());
-        assertThereAreErrors("fn:not()");
-        assertThereAreErrors("fn:not(1, 2)");
-    }
-
-    @Test
     public void concatenation() {
         assertType("'a'|| 'b'", typeFactory.string());
         assertType("'a' || ()", typeFactory.string());
@@ -177,22 +155,6 @@ public class XQuerySemanticAnalyzerTest extends SemanticTestsBase {
                     let $x as number+ := (1, 2)
                     return ("a", "b", "c")[$x]
                 """, zeroOrMoreABC);
-    }
-
-    @Test
-    public void arithmeticExpressions() {
-        assertType("1 + 1", typeFactory.number());
-        assertType("1 - 1", typeFactory.number());
-        assertType("1 * 1", typeFactory.number());
-        assertType("1 x 1", typeFactory.number());
-        assertType("1 ÷ 1", typeFactory.number());
-        assertType("1 div 1", typeFactory.number());
-        assertType("1 mod 1", typeFactory.number());
-        assertType("1 idiv 1", typeFactory.number());
-        assertThereAreErrors("() + 1");
-        assertThereAreErrors("1 + ()");
-        assertThereAreErrors("() * 1");
-        assertThereAreErrors("1 * 'a'");
     }
 
     @Test

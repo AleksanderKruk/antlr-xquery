@@ -852,7 +852,9 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             context = new XQueryVisitingSemanticContext();
             context.setType(typeFactory.anyNode());
             final XQuerySequenceType finallyType = finallyClause.enclosedExpr().accept(this);
-            return finallyType;
+            if (!finallyType.isSubtypeOf(typeFactory.emptySequence())) {
+                addError(finallyClause, "Finally clause needs to evaluate to empty sequence, currently:" + finallyType.toString());
+            }
         }
         context = savedContext;
             ;

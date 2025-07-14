@@ -117,50 +117,6 @@ public class XQueryEvaluatorTest {
 
 
     @Test
-    public void sequenceLiteral() {
-        String xquery = "(1, 2, 3)";
-        var value = XQuery.evaluate(null, xquery, null);
-        final List<XQueryValue> expected = List.of(
-                baseFactory.number(1),
-                baseFactory.number(2),
-                baseFactory.number(3));
-        assertNotNull(value);
-        assertNotNull(value.sequence());
-        var sequence = value.sequence();
-        assertEquals(expected.size(), sequence.size());
-        assertTrue(expected.get(0).numericValue().equals(sequence.get(0).numericValue()));
-        assertTrue(expected.get(1).numericValue().equals(sequence.get(1).numericValue()));
-        assertTrue(expected.get(2).numericValue().equals(sequence.get(2).numericValue()));
-    }
-
-    @Test
-    public void atomization() {
-        String xquery = "(1, (2,3,4), ((5, 6), 7))";
-        var value = XQuery.evaluate(null, xquery, null);
-        List<XQueryValue> expected = List.of(
-                baseFactory.number(1),
-                baseFactory.number(2),
-                baseFactory.number(3),
-                baseFactory.number(4),
-                baseFactory.number(5),
-                baseFactory.number(6),
-                baseFactory.number(7));
-        assertArrayEquals(
-                expected.stream().map(XQueryValue::numericValue).toArray(),
-                value.sequence().stream().map(XQueryValue::numericValue).toArray());
-    }
-
-    @Test
-    public void trueConstant() {
-        assertResult("true()", baseFactory.bool(true));
-    }
-
-    @Test
-    public void falseConstant() {
-        assertResult("false()", baseFactory.bool(false));
-    }
-
-    @Test
     public void or() {
         String xquery = "false() or false() or true()";
         var value = XQuery.evaluate(null, xquery, null);

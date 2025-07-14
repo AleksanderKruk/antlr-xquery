@@ -1,7 +1,6 @@
 package com.github.akruk.antlrxquery.languagefeatures.semantics;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyIterable;
 
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;

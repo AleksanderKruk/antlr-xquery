@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-public class InlineFunctionsTest extends SemanticTests {
+public class InlineFunctionsTest extends SemanticTestsBase {
 
     @Test
     public void typedParametersAndTypedResult() {

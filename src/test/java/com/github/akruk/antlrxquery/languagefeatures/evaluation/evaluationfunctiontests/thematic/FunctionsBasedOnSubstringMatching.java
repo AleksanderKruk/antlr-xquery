@@ -2,9 +2,9 @@ package com.github.akruk.antlrxquery.languagefeatures.evaluation.evaluationfunct
 
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.languagefeatures.evaluation.FunctionsEvaluationTests;
+import com.github.akruk.antlrxquery.languagefeatures.evaluation.EvaluationTestsBase;
 
-public class FunctionsBasedOnSubstringMatching extends FunctionsEvaluationTests {
+public class FunctionsBasedOnSubstringMatching extends EvaluationTestsBase {
 
     @Test
     public void contains() {

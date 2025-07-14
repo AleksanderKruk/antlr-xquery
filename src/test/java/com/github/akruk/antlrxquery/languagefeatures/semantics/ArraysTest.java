@@ -4,7 +4,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-public class ArraysTest extends SemanticTests {
+public class ArraysTest extends SemanticTestsBase {
 
     @Test
     public void emptyArrays() {

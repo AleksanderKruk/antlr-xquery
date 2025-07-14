@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 
-public class MapsTest extends SemanticTests {
+public class MapsTest extends SemanticTestsBase {
     @Test
     public void oneTypeNonEmptyMapsAndRecords() {
         final var numToNum = typeFactory.map(typeFactory.itemNumber(), typeFactory.number());

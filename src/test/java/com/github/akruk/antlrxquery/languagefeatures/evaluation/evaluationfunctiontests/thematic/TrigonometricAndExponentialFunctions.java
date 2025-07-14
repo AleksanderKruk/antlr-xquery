@@ -4,12 +4,12 @@ import java.math.BigDecimal;
 
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.languagefeatures.evaluation.FunctionsEvaluationTests;
+import com.github.akruk.antlrxquery.languagefeatures.evaluation.EvaluationTestsBase;
 import com.github.akruk.antlrxquery.values.XQueryError;
 
 import static java.lang.Math.*;
 
-public class TrigonometricAndExponentialFunctions extends FunctionsEvaluationTests  {
+public class TrigonometricAndExponentialFunctions extends EvaluationTestsBase  {
 
     @Test
     public void pi() {

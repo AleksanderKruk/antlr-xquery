@@ -4,10 +4,10 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.languagefeatures.evaluation.FunctionsEvaluationTests;
+import com.github.akruk.antlrxquery.languagefeatures.evaluation.EvaluationTestsBase;
 import com.github.akruk.antlrxquery.values.*;
 
-public class FunctionsOnStringValues extends FunctionsEvaluationTests {
+public class FunctionsOnStringValues extends EvaluationTestsBase {
     @Test
     public void charFromInteger() {
         assertResult("fn:char(65)", new XQueryString("A", baseFactory));

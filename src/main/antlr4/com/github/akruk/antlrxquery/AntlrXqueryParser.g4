@@ -47,8 +47,9 @@ switchCaseOperand: exprSingle;
 
 tryCatchExpr : tryClause ( (catchClause+ finallyClause?) | finallyClause ) ;
 tryClause : TRY enclosedExpr ;
-catchClause : CATCH nameTestUnion enclosedExpr ;
+catchClause : CATCH (pureNameTestUnion | wildcard) enclosedExpr ;
 finallyClause : FINALLY enclosedExpr ;
+pureNameTestUnion	:	nameTest ('|' nameTest)*;
 
 
 
@@ -199,6 +200,8 @@ kindTest:	elementTest
         | anyKindTest;
 
 elementTest	:	ELEMENT LPAREN nameTestUnion? RPAREN;
+
+
 nameTestUnion	:	nameTest ('|' nameTest)*;
 nameTest	:	qname | wildcard;
 

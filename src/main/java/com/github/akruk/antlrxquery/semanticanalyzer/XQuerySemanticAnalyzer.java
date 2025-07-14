@@ -826,20 +826,25 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         var testedExprType = ctx.tryClause().enclosedExpr().accept(this);
         var alternativeCatches = ctx.catchClause().stream()
             .map(c -> {
-                var foundErrors = new ArrayList<XQueryItemType>();
-                for (var error : c.nameTestUnion().nameTest()) {
-                    var typeRef = typeFactory.itemNamedType(error.getText());
-                    if (typeRef == null) {
-                        typeRef = errorType;
-                        addError(c, "Unknown error in try/catch: " + error.getText());
+                XQuerySequenceType choicedErrors;
+                if (c.pureNameTestUnion() != null) {
+                    var foundErrors = new ArrayList<XQueryItemType>();
+                    for (var error : c.pureNameTestUnion().nameTest()) {
+                        var typeRef = typeFactory.itemNamedType(error.getText());
+                        if (typeRef == null) {
+                            typeRef = errorType;
+                            addError(c, "Unknown error in try/catch: " + error.getText());
+                        }
+                        if (!typeRef.itemtypeIsSubtypeOf(errorType)) {
+                            typeRef = errorType;
+                            addError(c, "Type " + typeRef.toString() + " is not an error in try/catch: " + error.getText());
+                        }
+                        foundErrors.add(typeRef);
                     }
-                    if (!typeRef.itemtypeIsSubtypeOf(errorType)) {
-                        typeRef = errorType;
-                        addError(c, "Type " + typeRef.toString() + " is not an error in try/catch: " + error.getText());
-                    }
-                    foundErrors.add(typeRef);
+                    choicedErrors = typeFactory.choice(foundErrors);
+                } else {
+                    choicedErrors = typeFactory.error();
                 }
-                var choicedErrors = typeFactory.choice(foundErrors);
                 context.setType(choicedErrors);
                 context.setPositionType(null);
                 context.setSizeType(null);
@@ -858,6 +863,31 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
                 contextManager.leaveScope();
                 return visited;
             });
+
+
+        Set<String> errors = new HashSet<>();
+        // Marking duplicate error type names as errors
+        for (var catchClause : ctx.catchClause()) {
+            if (catchClause.pureNameTestUnion() != null) {
+                for (var qname : catchClause.pureNameTestUnion().nameTest()) {
+                    String name = qname.getText();
+                    if (errors.contains(name)) {
+                        addError(qname, "Error: " + name + "already used in catch clause");
+                    } else {
+                        errors.add(name);
+                    }
+
+                }
+            }
+        }
+
+        // Marking multiple catch * {} as errors
+        int wildcardCount = 0;
+        for (var catchClause : ctx.catchClause()) {
+            if (catchClause.wildcard() != null && wildcardCount++ > 1) {
+                addError(catchClause, "Unnecessary catch clause, wildcard already used");
+            }
+        }
 
         FinallyClauseContext finallyClause = ctx.finallyClause();
         if (finallyClause != null) {

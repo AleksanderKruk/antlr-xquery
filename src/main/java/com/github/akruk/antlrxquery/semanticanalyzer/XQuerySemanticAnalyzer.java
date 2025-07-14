@@ -824,7 +824,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         var savedContext = saveVisitedContext();
         XQueryItemType errorType = typeFactory.itemError();
         var testedExprType = ctx.tryClause().enclosedExpr().accept(this);
-        var mergedAlternativeCatches = ctx.catchClause().stream()
+        var alternativeCatches = ctx.catchClause().stream()
             .map(c -> {
                 var foundErrors = new ArrayList<XQueryItemType>();
                 for (var error : c.nameTestUnion().nameTest()) {
@@ -845,10 +845,18 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
                 context.setSizeType(null);
                 var visited = c.enclosedExpr().accept(this);
                 return visited;
-            })
-            .reduce(XQuerySequenceType::alternativeMerge)
-            .get();
+            });
+
+        FinallyClauseContext finallyClause = ctx.finallyClause();
+        if (finallyClause != null) {
+            context = new XQueryVisitingSemanticContext();
+            context.setType(typeFactory.anyNode());
+            final XQuerySequenceType finallyType = finallyClause.enclosedExpr().accept(this);
+            return finallyType;
+        }
         context = savedContext;
+            ;
+        var mergedAlternativeCatches = alternativeCatches.reduce(XQuerySequenceType::alternativeMerge).get();
         return testedExprType.alternativeMerge(mergedAlternativeCatches);
     }
 

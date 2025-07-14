@@ -4,9 +4,9 @@ import java.math.BigDecimal;
 
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.languagefeatures.evaluation.EvaluationBase;
+import com.github.akruk.antlrxquery.languagefeatures.evaluation.EvaluationTestsBase;
 
-public class NumericOperators extends EvaluationBase {
+public class NumericOperators extends EvaluationTestsBase {
     @Test
     public void numericAdd() {
         assertResult("op:numeric-add(3, 5)", BigDecimal.valueOf(8));

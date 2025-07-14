@@ -4,11 +4,11 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.languagefeatures.evaluation.EvaluationBase;
+import com.github.akruk.antlrxquery.languagefeatures.evaluation.EvaluationTestsBase;
 import com.github.akruk.antlrxquery.values.XQueryError;
 import com.github.akruk.antlrxquery.values.XQueryNumber;
 
-public class CardinalityFunctions extends EvaluationBase {
+public class CardinalityFunctions extends EvaluationTestsBase {
 
     @Test
     public void exactlyOne() {

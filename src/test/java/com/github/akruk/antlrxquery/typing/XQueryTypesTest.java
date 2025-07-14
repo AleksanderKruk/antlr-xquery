@@ -1,4 +1,4 @@
-package com.github.akruk.antlrxquery;
+package com.github.akruk.antlrxquery.typing;
 
 import org.junit.Test;
 

@@ -179,7 +179,7 @@ public class XQueryRunner {
         return map;
     }
 
-    static ValidationResult validateInput(final Map<String, List<String>> args) {
+    public static ValidationResult validateInput(final Map<String, List<String>> args) {
         if (!args.containsKey(GRAMMARS_ARG) || args.get(GRAMMARS_ARG).isEmpty()) {
             return new ValidationResult(InputStatus.NO_GRAMMARS, "No grammars given (--grammars)");
         }

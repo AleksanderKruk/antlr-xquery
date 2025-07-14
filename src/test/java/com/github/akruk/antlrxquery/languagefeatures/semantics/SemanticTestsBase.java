@@ -47,10 +47,10 @@ public class SemanticTestsBase {
 
     protected void assertErrors(final String xquery) {
         final var analysisResult = analyze(xquery);
-        assertThereAreErrors(analysisResult);
+        assertErrors(analysisResult);
     }
 
-    protected void assertThereAreErrors(final AnalysisResult analyzer) {
+    protected void assertErrors(final AnalysisResult analyzer) {
         assertTrue(analyzer.analyzer.getErrors().size() != 0);
     }
 

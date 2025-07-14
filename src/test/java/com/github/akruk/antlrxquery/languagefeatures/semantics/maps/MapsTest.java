@@ -1,13 +1,13 @@
-package com.languagefeaturessemantics;
+package com.github.akruk.antlrxquery.languagefeatures.semantics.maps;
 
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.SemanticTests;
+import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 
-public class MapsTest extends SemanticTests {
+public class MapsTest extends SemanticTestsBase {
     @Test
     public void oneTypeNonEmptyMapsAndRecords() {
         final var numToNum = typeFactory.map(typeFactory.itemNumber(), typeFactory.number());

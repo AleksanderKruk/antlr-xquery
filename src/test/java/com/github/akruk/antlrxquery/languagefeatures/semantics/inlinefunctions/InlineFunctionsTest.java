@@ -1,12 +1,12 @@
-package com.languagefeaturessemantics;
+package com.github.akruk.antlrxquery.languagefeatures.semantics.inlinefunctions;
 
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.SemanticTests;
+import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
 
-public class InlineFunctionsTest extends SemanticTests {
+public class InlineFunctionsTest extends SemanticTestsBase {
 
     @Test
     public void typedParametersAndTypedResult() {
@@ -79,7 +79,7 @@ public class InlineFunctionsTest extends SemanticTests {
 
     @Test
     public void duplicateParameterRaisesError() {
-        assertThereAreErrors(
+        assertErrors(
             "function($a, $a) { $a }"
         );
             // XQuerySemanticError.DuplicateFunctionParam

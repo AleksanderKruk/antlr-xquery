@@ -1,12 +1,12 @@
-package com.languagefeaturessemantics;
+package com.github.akruk.antlrxquery.languagefeatures.semantics.arrays;
 
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.SemanticTests;
+import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
 
-public class ArraysTest extends SemanticTests {
+public class ArraysTest extends SemanticTestsBase {
 
     @Test
     public void emptyArrays() {

@@ -12,7 +12,7 @@ public class RandomNumberGeneratorFunctionTest extends SemanticTestsBase {
      */
     private XQuerySequenceType expectedRngType() {
         // random-number-generator-record wrapped in a single-occurrence sequence
-        return typeFactory.namedType("random-number-generator-record");
+        return typeFactory.namedType("fn:random-number-generator-record");
     }
 
     @Test

@@ -275,6 +275,7 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
 
     @Override
     public XQuerySequenceType namedType(final String name) {
-        return one(itemNamedType(name));
+        var item = itemNamedType(name);
+        return (item != null)? one(itemNamedType(name)) : null;
     }
 }

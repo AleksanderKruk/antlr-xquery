@@ -821,7 +821,35 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     @Override
     public XQuerySequenceType visitTryCatchExpr(TryCatchExprContext ctx)
     {
-
+        var savedContext = saveVisitedContext();
+        XQueryItemType errorType = typeFactory.itemError();
+        var testedExprType = ctx.tryClause().enclosedExpr().accept(this);
+        var mergedAlternativeCatches = ctx.catchClause().stream()
+            .map(c -> {
+                var foundErrors = new ArrayList<XQueryItemType>();
+                for (var error : c.nameTestUnion().nameTest()) {
+                    var typeRef = typeFactory.itemNamedType(error.getText());
+                    if (typeRef == null) {
+                        typeRef = errorType;
+                        addError(c, "Unknown error in try/catch: " + error.getText());
+                    }
+                    if (!typeRef.itemtypeIsSubtypeOf(errorType)) {
+                        typeRef = errorType;
+                        addError(c, "Type " + typeRef.toString() + " is not an error in try/catch: " + error.getText());
+                    }
+                    foundErrors.add(typeRef);
+                }
+                var choicedErrors = typeFactory.choice(foundErrors);
+                context.setType(choicedErrors);
+                context.setPositionType(null);
+                context.setSizeType(null);
+                var visited = c.enclosedExpr().accept(this);
+                return visited;
+            })
+            .reduce(XQuerySequenceType::alternativeMerge)
+            .get();
+        context = savedContext;
+        return testedExprType.alternativeMerge(mergedAlternativeCatches);
     }
 
 

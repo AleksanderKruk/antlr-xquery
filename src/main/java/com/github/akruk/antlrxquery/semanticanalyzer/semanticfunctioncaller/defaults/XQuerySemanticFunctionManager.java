@@ -2676,7 +2676,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         register(
             "fn", "random-number-generator",
             List.of(rngSeed),
-            typeFactory.namedType("random-number-generator-record")
+            typeFactory.namedType("fn:random-number-generator-record")
         );
 
     }

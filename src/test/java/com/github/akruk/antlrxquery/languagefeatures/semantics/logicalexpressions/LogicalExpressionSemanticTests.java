@@ -1,7 +1,5 @@
 package com.github.akruk.antlrxquery.languagefeatures.semantics.logicalexpressions;
 
-import java.util.List;
-
 import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;

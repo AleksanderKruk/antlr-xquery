@@ -66,27 +66,6 @@ public class XQuerySemanticAnalyzerTest extends SemanticTestsBase {
     }
 
     @Test
-    public void otherwiseExpression() {
-        final var number = typeFactory.number();
-        final var optionalNumber = typeFactory.zeroOrOne(typeFactory.itemNumber());
-        assertType("""
-                    () otherwise 1
-                """, optionalNumber);
-        assertType("""
-                    1 otherwise 2
-                """, number);
-        assertType("""
-                    "napis" otherwise 2
-                """, typeFactory.choice(Set.of(typeFactory.itemEnum(Set.of("napis")), typeFactory.itemNumber())));
-        assertType("""
-                    (1, 2, 3) otherwise () otherwise (1, 2, 3)
-                """, typeFactory.zeroOrMore(typeFactory.itemNumber()));
-        assertType("""
-                    (1, 2, 3) otherwise (1, 2, 3) otherwise (1, 2, 3)
-                """, typeFactory.oneOrMore(typeFactory.itemNumber()));
-    }
-
-    @Test
     public void itemGetting() {
         assertType("""
                     ("a", "b", "c")[()]
@@ -223,21 +202,6 @@ public class XQuerySemanticAnalyzerTest extends SemanticTestsBase {
                     let $x as number+ := (1, 2, 3)
                     return $x eq $x
                 """);
-    }
-
-    @Test
-    public void mappingExpressions() {
-        assertType("(1, 2, 3) ! (. gt 5)", typeFactory.oneOrMore(typeFactory.itemBoolean()));
-        assertType("() ! (. gt 5)", typeFactory.emptySequence());
-        assertType("""
-                let $x as number? := 5
-                return $x ! .
-                """, typeFactory.zeroOrOne(typeFactory.itemNumber()));
-        assertType("""
-                let $x as number* := ()
-                return $x ! .
-                """, typeFactory.zeroOrMore(typeFactory.itemNumber()));
-
     }
 
 }

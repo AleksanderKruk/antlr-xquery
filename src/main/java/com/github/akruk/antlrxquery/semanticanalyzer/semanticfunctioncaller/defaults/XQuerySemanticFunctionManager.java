@@ -2772,11 +2772,9 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         final var spec = specAndErrors.spec;
         // used positional arguments need to have matching types
         final List<String> reasons = new ArrayList<>();
-        final boolean positionalTypeMismatch = tryToMatchPositionalArgs(positionalargs, positionalArgsCount, spec,
-                reasons);
-
-        if (positionalTypeMismatch) {
-            mismatchReasons.add("Function " + name + ": " + String.join("; ", reasons));
+        tryToMatchPositionalArgs(positionalargs, positionalArgsCount, spec, reasons);
+        if (reasons.size() != 0) {
+            mismatchReasons.add("Function " + namespace + ":" + name + " " + String.join("; ", reasons));
         }
 
         checkIfCorrectContext(spec, context, mismatchReasons);
@@ -2805,7 +2803,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // matching type
         final boolean keywordTypeMismatch = checkIfTypesMatchForKeywordArgs(keywordArgs, reasons, unusedArgs);
         if (keywordTypeMismatch) {
-            mismatchReasons.add("Function " + name + ": " + String.join("; ", reasons));
+            mismatchReasons.add("Function " + namespace + ":" + name + String.join("; ", reasons));
         }
         if (mismatchReasons.isEmpty()) {
             return new AnalysisResult(spec.returnedType, defaultArgs.toList(), List.of());
@@ -2909,19 +2907,16 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         }
     }
 
-    private boolean tryToMatchPositionalArgs(final List<XQuerySequenceType> positionalargs,
+    private void tryToMatchPositionalArgs(final List<XQuerySequenceType> positionalargs,
             final int positionalArgsCount, final FunctionSpecification spec, final List<String> reasons) {
-        boolean positionalTypeMismatch = false;
         for (int i = 0; i < positionalArgsCount; i++) {
             final var positionalArg = positionalargs.get(i);
             final var expectedArg = spec.args.get(i);
             if (!positionalArg.isSubtypeOf(expectedArg.type())) {
                 reasons.add("Positional argument " + (i + 1) + " type mismatch: expected " + expectedArg.type()
                         + ", got " + positionalArg);
-                positionalTypeMismatch = true;
             }
         }
-        return positionalTypeMismatch;
     }
 
     @Override

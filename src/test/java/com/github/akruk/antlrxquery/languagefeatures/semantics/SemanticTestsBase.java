@@ -1,6 +1,7 @@
 package com.github.akruk.antlrxquery.languagefeatures.semantics;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyIterable;
 
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -17,10 +18,11 @@ import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defa
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryEnumTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTypeSets;
 import com.github.akruk.antlrxquery.values.factories.defaults.XQueryMemoizedValueFactory;
 
 public class SemanticTestsBase {
-    final protected XQueryTypeFactory typeFactory = new XQueryEnumTypeFactory();
+    final protected XQueryTypeFactory typeFactory = new XQueryEnumTypeFactory(new XQueryNamedTypeSets().all());
 
     record AnalysisResult(XQuerySemanticAnalyzer analyzer, XQuerySequenceType expressionType) {
     };
@@ -35,7 +37,7 @@ public class SemanticTestsBase {
         final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
                 xqueryParser,
                 new XQueryBaseSemanticContextManager(),
-                new XQueryEnumTypeFactory(),
+                typeFactory,
                 new XQueryMemoizedValueFactory(),
                 caller);
         final var lastVisitedType = analyzer.visit(xqueryTree);
@@ -43,7 +45,7 @@ public class SemanticTestsBase {
     }
 
     protected void assertNoErrors(final AnalysisResult analyzer) {
-        assertTrue(analyzer.analyzer.getErrors().size() == 0);
+        assertTrue(analyzer.analyzer.getErrors().size() == 0, String.join(System.lineSeparator(), analyzer.analyzer.getErrors()));
     }
 
     protected void assertErrors(final String xquery) {

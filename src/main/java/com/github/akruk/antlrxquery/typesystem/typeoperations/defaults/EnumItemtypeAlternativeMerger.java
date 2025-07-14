@@ -436,7 +436,7 @@ public class EnumItemtypeAlternativeMerger
         final var xValue = x_.getMapValueType();
         final var yValue = y_.getMapValueType();
         final var mergedKeyType = xKey.alternativeMerge(yKey);
-        final var mergedValueType = xValue.sequenceMerge(yValue);
+        final var mergedValueType = xValue.alternativeMerge(yValue);
         return typeFactory.itemMap(mergedKeyType, mergedValueType);
     }
 

@@ -181,7 +181,7 @@ functionCall: functionName argumentList;
 typeDeclaration: AS sequenceType;
 // sequenceType: qname occurrenceIndicator?;
 occurrenceIndicator: QUESTION_MARK | STAR | PLUS;
-sequenceTypeUnion: sequenceType ('|' sequenceType)*;
+sequenceTypeUnion: sequenceType (UNION_OP sequenceType)*;
 
 sequenceType	:	EMPTY_SEQUENCE LPAREN RPAREN
               | itemType occurrenceIndicator?;
@@ -210,7 +210,7 @@ annotation	:	PERCENTAGE qname (LPAREN annotationValue (COMMA annotationValue)* R
 annotationValue:	STRING | ('-'? numericLiteral) | (qname LPAREN RPAREN);
 anyFunctionType	:	FUNCTION LPAREN STAR RPAREN;
 typedFunctionType	:	FUNCTION LPAREN (typedFunctionParam (COMMA typedFunctionParam)*)? RPAREN 'as' sequenceType;
-typedFunctionParam	:	('$' qname 'as')? sequenceType;
+typedFunctionParam	:	(DOLLAR qname AS)? sequenceType;
 
 mapType	:	anyMapType | typedMapType;
 anyMapType	:	MAP LPAREN STAR RPAREN;

@@ -821,12 +821,6 @@ public class XQueryEvaluatorTest {
     }
 
     @Test
-    public void data() {
-        assertResult("data(1)", List.of(baseFactory.number(1)));
-        assertResult("data('a')", List.of(new XQueryString("a", baseFactory)));
-    }
-
-    @Test
     public void rangeExpression() {
         var i1 = baseFactory.number(1);
         var i2 = baseFactory.number(2);

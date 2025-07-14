@@ -23,28 +23,62 @@ public class Accessors {
     }
 
 
-    public XQueryValue nodeName( XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs)
-    {
+    public XQueryValue nodeName(
+            XQueryVisitingContext context,
+            List<XQueryValue> args,
+            Map<String, XQueryValue> kwargs) {
 
-        XQueryValue node = args.get(0);
-
-        if (node.isEmptySequence()) {
-            return valueFactory.emptyString();
-        }
-
-        if (!node.isNode()) {
-            return XQueryError.InvalidArgumentType;
+        XQueryValue node;
+        if (args.isEmpty()) {
+            if (context.getItem() == null) {
+                return XQueryError.MissingDynamicContextComponent;
+            }
+            node = context.getItem();
+        } else {
+            node = args.get(0);
+            if (node.isEmptySequence()) {
+                return valueFactory.emptyString();
+            }
+            if (!node.isNode()) {
+                return XQueryError.InvalidArgumentType;
+            }
         }
 
         ParseTree nodeTree = node.node();
-        String ruleName = targetParser.getRuleNames()[((ParserRuleContext)nodeTree).getRuleIndex()];
-        return valueFactory.string(ruleName);
+        if (nodeTree == null || !(nodeTree instanceof ParserRuleContext ctx)) {
+            return valueFactory.emptyString();
+        }
+
+        String ruleName = targetParser.getRuleNames()[ctx.getRuleIndex()];
+        return valueFactory.string(ruleName != null ? ruleName : "");
     }
 
-    public XQueryValue string(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        var target = args.isEmpty() ? context.getItem() : args.get(0);
+
+    public XQueryValue string(
+            XQueryVisitingContext context,
+            List<XQueryValue> args,
+            Map<String, XQueryValue> kwargs) {
+
+        XQueryValue target;
+
+        if (args.isEmpty()) {
+            if (context.getItem() == null) {
+                return XQueryError.MissingDynamicContextComponent;
+            }
+            target = context.getItem();
+        } else {
+            target = args.get(0);
+            if (target.isEmptySequence()) {
+                return valueFactory.emptyString();
+            }
+        }
+        if (target.isEmptySequence()) {
+            return valueFactory.emptyString();
+        }
+
         return valueFactory.string(target.stringValue());
     }
+
 
     public XQueryValue data(XQueryVisitingContext ctx, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
         return args.get(0).data();

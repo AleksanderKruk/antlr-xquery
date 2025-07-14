@@ -37,7 +37,7 @@ import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
 public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManager {
-    // private static final ParseTree CONTEXT_VALUE = getTree(".", parser -> parser.contextItemExpr());
+    private static final ParseTree CONTEXT_VALUE = getTree(".", parser -> parser.contextItemExpr());
     // private static final ParseTree DEFAULT_COLLATION = getTree("fn:default-collation()", parser->parser.functionCall());
     // private static final ParseTree EMPTY_LIST = getTree("()", p->p.parenthesizedExpr());
     private static final ParseTree DEFAULT_ROUNDING_MODE = getTree("'half-to-ceiling'", parser->parser.literal());
@@ -79,14 +79,21 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
 
         // Accessors
         registerFunction("fn", "name", accessors::nodeName, 0, 1, Map.of(
-
+            "node", CONTEXT_VALUE
         ));
         registerFunction("fn", "node-name", accessors::nodeName, 0, 1, Map.of(
-
+            "node", CONTEXT_VALUE
         ));
-        registerFunction("fn", "string", accessors::string, 0, 1, Map.of());
-        registerFunction("fn", "data", accessors::data, 0, 1, Map.of());
+        registerFunction("fn", "string", accessors::string, 0, 1, Map.of(
+            "value", CONTEXT_VALUE
+        ));
+        registerFunction("fn", "data", accessors::data, 0, 1, Map.of(
+            "input", CONTEXT_VALUE
+        ));
 
+        // registerFunction("fn", "data", accessors::data, 0, 1, Map.of(
+        //     "input", CONTEXT_VALUE
+        // ));
 
         registerFunction("fn", "true", this::true_, 0, 0, Map.of());
         registerFunction("fn", "false", this::false_, 0, 0, Map.of());

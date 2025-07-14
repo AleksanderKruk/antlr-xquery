@@ -8,7 +8,7 @@ import com.github.akruk.antlrxquery.languagefeatures.evaluation.EvaluationTestsB
 import com.github.akruk.antlrxquery.values.XQueryError;
 import com.github.akruk.antlrxquery.values.XQueryNumber;
 
-public class CardinalityFunctions extends EvaluationTestsBase {
+class CardinalityFunctions extends EvaluationTestsBase {
 
     @Test
     public void exactlyOne() {

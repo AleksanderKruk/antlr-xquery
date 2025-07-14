@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import com.github.akruk.antlrxquery.languagefeatures.evaluation.EvaluationTestsBase;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 
-public class Accessors extends EvaluationTestsBase {
+class Accessors extends EvaluationTestsBase {
     @Test
     public void nodeName() throws Exception {
         String grammarName = "Grammar";

@@ -9,7 +9,7 @@ import com.github.akruk.antlrxquery.values.XQueryError;
 
 import static java.lang.Math.*;
 
-public class TrigonometricAndExponentialFunctions extends EvaluationTestsBase  {
+class TrigonometricAndExponentialFunctions extends EvaluationTestsBase  {
 
     @Test
     public void pi() {

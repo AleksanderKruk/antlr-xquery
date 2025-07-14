@@ -5,6 +5,7 @@ import java.util.Set;
 
 import org.junit.Test;
 
+import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTests;
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 

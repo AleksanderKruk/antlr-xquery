@@ -1,10 +1,12 @@
 package com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.thematic;
 
+
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.FunctionsSemanticTest;
+import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
 
-public class FunctionsOnNodeSequencesTest extends FunctionsSemanticTest {
+
+public class FunctionsOnNodeSequencesTest extends SemanticTestsBase {
     @Test
     public void distinctOrderedNodes_noArgs() {
         assertType("fn:distinct-ordered-nodes(())", typeFactory.zeroOrMore(typeFactory.itemAnyNode()));

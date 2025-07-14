@@ -1,10 +1,12 @@
 package com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.thematic;
 
+
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.FunctionsSemanticTest;
+import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
 
-public class ProcessingMapFunctionsTest extends FunctionsSemanticTest {
+
+public class ProcessingMapFunctionsTest extends SemanticTestsBase {
 
     // map:build($input as item()*,
     // $key as fn(item(),xs:integer) as anyAtomic* := identity#1,

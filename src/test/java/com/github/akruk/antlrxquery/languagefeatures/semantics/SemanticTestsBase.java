@@ -46,7 +46,7 @@ public class SemanticTestsBase {
         assertTrue(analyzer.analyzer.getErrors().size() == 0);
     }
 
-    protected void assertThereAreErrors(final String xquery) {
+    protected void assertErrors(final String xquery) {
         final var analysisResult = analyze(xquery);
         assertThereAreErrors(analysisResult);
     }
@@ -65,5 +65,12 @@ public class SemanticTestsBase {
         assertNoErrors(analysisResult);
         assertTrue(analysisResult.expressionType.equals(expectedType));
     }
+
+
+
+    protected void assertNoErrors(String query) {
+        assertNoErrors(analyze(query));
+    }
+
 
 }

@@ -1,10 +1,12 @@
 package com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.thematic;
 
+
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.FunctionsSemanticTest;
+import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
 
-public class ParseAndFormatFunctionsSemanticTest extends FunctionsSemanticTest {
+
+public class ParseAndFormatSemanticTest extends SemanticTestsBase {
     // ++++ fn:number
 
 

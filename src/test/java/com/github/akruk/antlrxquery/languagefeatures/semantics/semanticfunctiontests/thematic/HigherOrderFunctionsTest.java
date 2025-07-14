@@ -1,9 +1,11 @@
 package com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.thematic;
+
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.FunctionsSemanticTest;
+import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
 
-public class HigherOrderFunctionsTest extends FunctionsSemanticTest {
+
+public class HigherOrderFunctionsTest extends SemanticTestsBase {
 
     // fn:function-lookup($name as xs:QName, $arity as xs:integer) as fn(*)?
     @Test public void functionLookup_valid() {

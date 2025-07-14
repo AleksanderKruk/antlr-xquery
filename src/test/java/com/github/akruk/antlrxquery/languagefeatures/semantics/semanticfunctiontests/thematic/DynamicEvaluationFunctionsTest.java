@@ -1,12 +1,13 @@
 package com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.thematic;
 
+
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.FunctionsSemanticTest;
+import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
 
 import java.util.List;
 
-public class DynamicEvaluationFunctionsTest extends FunctionsSemanticTest {
+public class DynamicEvaluationFunctionsTest extends SemanticTestsBase {
 
     // fn:load-xquery-module($module-uri as xs:string, $options as map(*)? := {}) as load-xquery-module-record
     // @Test

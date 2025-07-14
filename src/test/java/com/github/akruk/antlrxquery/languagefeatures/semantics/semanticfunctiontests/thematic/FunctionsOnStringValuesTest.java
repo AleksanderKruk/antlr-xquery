@@ -1,10 +1,12 @@
 package com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.thematic;
 
+
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.FunctionsSemanticTest;
+import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
 
-public class FunctionsOnStringValuesTest extends FunctionsSemanticTest {
+
+public class FunctionsOnStringValuesTest extends SemanticTestsBase {
 
     // fn:char($value as xs:string|xs:positiveInteger) as xs:string
     @Test

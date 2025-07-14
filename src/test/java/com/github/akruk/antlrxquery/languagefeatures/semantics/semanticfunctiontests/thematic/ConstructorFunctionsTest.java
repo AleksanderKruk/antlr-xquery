@@ -1,9 +1,8 @@
 package com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.thematic;
 
+import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
 
-import com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.FunctionsSemanticTest;
-
-public class ConstructorFunctionsTest extends FunctionsSemanticTest {
+public class ConstructorFunctionsTest extends SemanticTestsBase {
 
     // eg:TYPE($value as xs:anyAtomicType? := .) as eg:TYPE?
     // @Test public void egType_defaultContextItem() {

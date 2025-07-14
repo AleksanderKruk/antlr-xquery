@@ -1,12 +1,13 @@
 package com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.thematic;
 
+
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.FunctionsSemanticTest;
+import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
 
 import java.util.Set;
 
-public class RegularExpressionFunctionsTest extends FunctionsSemanticTest {
+public class RegularExpressionFunctionsTest extends SemanticTestsBase {
 
     // fn:matches($value as xs:string?, $pattern as xs:string, $flags as xs:string? := "") as xs:boolean
 

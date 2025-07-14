@@ -81,27 +81,27 @@ public class XQuerySemanticAnalyzerTest extends SemanticTestsBase {
                         $y as number? := 6
                     return ($x to $y)
                 """, numbers);
-        assertThereAreErrors("""
+        assertErrors("""
                     let $x as string? := "a",
                         $y as number? := 6
                     return ($x to $y)
                 """);
-        assertThereAreErrors("""
+        assertErrors("""
                     let $x as number? := 4,
                         $y as string? := "a"
                     return ($x to $y)
                 """);
-        assertThereAreErrors("""
+        assertErrors("""
                     let $x := (1, 2, 3, 4),
                         $y := (4, 5, 6, 7)
                     return ($x to $y)
                 """);
-        assertThereAreErrors("""
+        assertErrors("""
                     let $x as number+ := (1, 2, 3, 4),
                         $y as number+ := (4, 5, 6, 7)
                     return ($x to $y)
                 """);
-        assertThereAreErrors("""
+        assertErrors("""
                     let $x as item()+ := (1, 2, 3, 4),
                         $y as item()+ := (4, 5, 6, 7)
                     return ($x to $y)
@@ -173,7 +173,7 @@ public class XQuerySemanticAnalyzerTest extends SemanticTestsBase {
                     return $x | $y | $z
                 """, typeFactory.zeroOrMore(typeFactory.itemElement(Set.of("a", "b", "c"))));
 
-        assertThereAreErrors("""
+        assertErrors("""
                     let $x as number+ := (1, 2, 3)
                     return $x | $x
                 """);
@@ -187,11 +187,11 @@ public class XQuerySemanticAnalyzerTest extends SemanticTestsBase {
                     return $x is $y
                 """, typeFactory.zeroOrOne(typeFactory.itemBoolean()));
 
-        assertThereAreErrors("""
+        assertErrors("""
                     let $x as number+ := (1, 2, 3)
                     return $x is $x
                 """);
-        assertThereAreErrors("""
+        assertErrors("""
                     let $x as string? := "abc"
                     return $x is $x
                 """);
@@ -232,21 +232,21 @@ public class XQuerySemanticAnalyzerTest extends SemanticTestsBase {
         assertType("() le ()", optionalBool);
         assertType("() ge ()", optionalBool);
 
-        assertThereAreErrors("'1' eq 1");
-        assertThereAreErrors("'1' ne 1");
-        assertThereAreErrors("'1' lt 1");
-        assertThereAreErrors("'1' gt 1");
-        assertThereAreErrors("'1' le 1");
-        assertThereAreErrors("'1' ge 1");
+        assertErrors("'1' eq 1");
+        assertErrors("'1' ne 1");
+        assertErrors("'1' lt 1");
+        assertErrors("'1' gt 1");
+        assertErrors("'1' le 1");
+        assertErrors("'1' ge 1");
 
-        assertThereAreErrors("'1' eq true()");
-        assertThereAreErrors("'1' ne true()");
-        assertThereAreErrors("'1' lt true()");
-        assertThereAreErrors("'1' gt true()");
-        assertThereAreErrors("'1' le true()");
-        assertThereAreErrors("'1' ge true()");
+        assertErrors("'1' eq true()");
+        assertErrors("'1' ne true()");
+        assertErrors("'1' lt true()");
+        assertErrors("'1' gt true()");
+        assertErrors("'1' le true()");
+        assertErrors("'1' ge true()");
 
-        assertThereAreErrors("""
+        assertErrors("""
                     let $x as number+ := (1, 2, 3)
                     return $x eq $x
                 """);

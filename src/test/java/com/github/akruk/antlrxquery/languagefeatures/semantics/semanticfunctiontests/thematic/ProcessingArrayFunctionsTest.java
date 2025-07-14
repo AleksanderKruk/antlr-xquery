@@ -1,13 +1,14 @@
 package com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.thematic;
 
+
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.FunctionsSemanticTest;
+import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 
-public class ProcessingArrayFunctionsTest extends FunctionsSemanticTest {
+public class ProcessingArrayFunctionsTest extends SemanticTestsBase {
 
     // array:append($array as array(*), $member as item()*) as array(*)
     @Test

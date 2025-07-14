@@ -1,11 +1,12 @@
 package com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.thematic;
 
-import com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.FunctionsSemanticTest;
+
+import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 
 import org.junit.jupiter.api.Test;
 
-public class RandomNumberGeneratorFunctionTest extends FunctionsSemanticTest {
+public class RandomNumberGeneratorFunctionTest extends SemanticTestsBase {
 
     /**
      * Helper to get the expected return type of fn:random-number-generator(...)

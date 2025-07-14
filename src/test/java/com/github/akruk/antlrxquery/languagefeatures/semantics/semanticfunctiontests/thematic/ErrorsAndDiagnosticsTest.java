@@ -2,9 +2,9 @@ package com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunction
 
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.FunctionsSemanticTest;
 
-public class ErrorsAndDiagnosticsTest extends FunctionsSemanticTest {
+import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
+public class ErrorsAndDiagnosticsTest extends SemanticTestsBase {
     // --- fn:error(QName? :=(), string? :=(), item()* :=.) as item()* ---
 
     @Test

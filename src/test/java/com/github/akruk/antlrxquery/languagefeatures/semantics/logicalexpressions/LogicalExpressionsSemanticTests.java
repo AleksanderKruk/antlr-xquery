@@ -23,8 +23,8 @@ public class LogicalExpressionsSemanticTests extends SemanticTestsBase {
         assertType("not(4)", typeFactory.boolean_());
         assertType("fn:not(true())", typeFactory.boolean_());
         assertType("fn:not(4)", typeFactory.boolean_());
-        assertThereAreErrors("fn:not()");
-        assertThereAreErrors("fn:not(1, 2)");
+        assertErrors("fn:not()");
+        assertErrors("fn:not(1, 2)");
     }
 
 }

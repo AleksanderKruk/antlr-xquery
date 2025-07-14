@@ -1,10 +1,12 @@
 package com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.thematic;
 
+
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.FunctionsSemanticTest;
+import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
 
-public class FunctionsBasedOnSubstringMatching extends FunctionsSemanticTest {
+
+public class FunctionsBasedOnSubstringMatching extends SemanticTestsBase {
 
     // fn:contains($value as xs:string?, $substring as xs:string?, $collation as
     // xs:string? := default) as xs:boolean

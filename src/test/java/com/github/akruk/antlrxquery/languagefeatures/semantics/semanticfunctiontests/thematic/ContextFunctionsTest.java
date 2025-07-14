@@ -1,10 +1,11 @@
 package com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.thematic;
 
+
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.FunctionsSemanticTest;
 
-public class ContextFunctionsTest extends FunctionsSemanticTest {
+import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
+public class ContextFunctionsTest extends SemanticTestsBase {
 
     // fn:position() as xs:integer
     @Test

@@ -2,9 +2,10 @@ package com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunction
 
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.FunctionsSemanticTest;
 
-public class ComparisonFunctionsTest extends FunctionsSemanticTest {
+import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
+
+public class ComparisonFunctionsTest extends SemanticTestsBase {
 
     // fn:atomic-equal($v1 as xs:anyAtomicType, $v2 as xs:anyAtomicType) as
     // xs:boolean

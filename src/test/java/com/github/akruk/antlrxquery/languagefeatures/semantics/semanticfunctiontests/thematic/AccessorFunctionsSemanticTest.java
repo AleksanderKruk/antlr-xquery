@@ -2,9 +2,11 @@ package com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunction
 
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.FunctionsSemanticTest;
+import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
 
-public class AccessorFunctionsSemanticTest extends FunctionsSemanticTest {
+// import com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.SemanticTestsBase;
+
+public class AccessorFunctionsSemanticTest extends SemanticTestsBase {
     @Test
     public void nodeName_defaultContext() {
         assertType("fn:node-name()", typeFactory.zeroOrOne(typeFactory.itemString()));

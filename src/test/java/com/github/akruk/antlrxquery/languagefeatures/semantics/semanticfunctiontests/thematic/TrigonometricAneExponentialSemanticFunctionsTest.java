@@ -1,13 +1,15 @@
-
 package com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.thematic;
+
+
 
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.FunctionsSemanticTest;
+import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
 
-public class TrigonometricAneExponentialSemanticFunctionsTest extends FunctionsSemanticTest {
+
+public class TrigonometricAneExponentialSemanticFunctionsTest extends SemanticTestsBase {
     @Test
     void pi_correctArity() {
         assertType("math:pi()", typeFactory.number());

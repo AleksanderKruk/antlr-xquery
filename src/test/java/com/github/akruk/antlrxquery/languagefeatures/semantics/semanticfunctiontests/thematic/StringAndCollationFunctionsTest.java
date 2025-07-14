@@ -1,10 +1,12 @@
 package com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.thematic;
 
+
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.FunctionsSemanticTest;
+import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
 
-public class StringAndCollationFunctionsTest extends FunctionsSemanticTest {
+
+public class StringAndCollationFunctionsTest extends SemanticTestsBase {
 
     // fn:codepoints-to-string($values as xs:integer*) as xs:string
     @Test

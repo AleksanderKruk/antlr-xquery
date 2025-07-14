@@ -1,10 +1,12 @@
 package com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.thematic;
 
+
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.FunctionsSemanticTest;
+import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
 
-public class ExternalInformationFunctionsTest extends FunctionsSemanticTest {
+
+public class ExternalInformationFunctionsTest extends SemanticTestsBase {
 
     // fn:doc($source as xs:string?, $options as map(*)? := {}) as document-node()?
     @Test

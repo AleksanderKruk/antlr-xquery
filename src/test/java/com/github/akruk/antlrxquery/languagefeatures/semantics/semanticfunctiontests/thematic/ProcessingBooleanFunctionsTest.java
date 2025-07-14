@@ -1,10 +1,12 @@
 package com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.thematic;
 
+
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.FunctionsSemanticTest;
+import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
 
-public class ProcessingBooleanFunctionsTest extends FunctionsSemanticTest {
+
+public class ProcessingBooleanFunctionsTest extends SemanticTestsBase {
 
     // fn:true() as xs:boolean
     @Test

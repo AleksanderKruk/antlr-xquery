@@ -77,7 +77,7 @@ public class InlineFunctionsTest extends SemanticTestsBase {
 
     @Test
     public void duplicateParameterRaisesError() {
-        assertThereAreErrors(
+        assertErrors(
             "function($a, $a) { $a }"
         );
             // XQuerySemanticError.DuplicateFunctionParam

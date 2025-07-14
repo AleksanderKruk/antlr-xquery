@@ -1,10 +1,12 @@
 package com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.thematic;
 
+
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.FunctionsSemanticTest;
+import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
 
-public class ProcessingTypesFunctionsTest extends FunctionsSemanticTest {
+
+public class ProcessingTypesFunctionsTest extends SemanticTestsBase {
     // fn:type-of($value as item()*) as xs:string
     @Test public void typeOf_noArgs() {
         assertType( "fn:type-of(())", typeFactory.string());

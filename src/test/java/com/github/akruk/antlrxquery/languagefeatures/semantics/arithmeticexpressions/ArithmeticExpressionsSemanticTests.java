@@ -14,10 +14,10 @@ public class ArithmeticExpressionsSemanticTests extends SemanticTestsBase {
         assertType("1 div 1", typeFactory.number());
         assertType("1 mod 1", typeFactory.number());
         assertType("1 idiv 1", typeFactory.number());
-        assertThereAreErrors("() + 1");
-        assertThereAreErrors("1 + ()");
-        assertThereAreErrors("() * 1");
-        assertThereAreErrors("1 * 'a'");
+        assertErrors("() + 1");
+        assertErrors("1 + ()");
+        assertErrors("() * 1");
+        assertErrors("1 * 'a'");
     }
 
 }

@@ -2,9 +2,10 @@ package com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunction
 
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.FunctionsSemanticTest;
+import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
 
-public class CardinalityFunctionsTest extends FunctionsSemanticTest {
+
+public class CardinalityFunctionsTest extends SemanticTestsBase {
 
     // fn:zero-or-one($input as item()*) as item()?
     @Test

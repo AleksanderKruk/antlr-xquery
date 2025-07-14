@@ -2,9 +2,9 @@ package com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunction
 
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.languagefeatures.semantics.semanticfunctiontests.FunctionsSemanticTest;
 
-public class ConvertingElementsToMapsTest extends FunctionsSemanticTest {
+import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
+public class ConvertingElementsToMapsTest extends SemanticTestsBase {
 
     // fn:element-to-map-plan($input as (document-node()|element(*))*) as map(xs:string, record(*))
     @Test

@@ -28,13 +28,18 @@ import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.CardinalityFunctions;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.FunctionsBasedOnSubstringMatching;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.FunctionsOnNumericValues;
+import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.FunctionsOnSequencesOfNodes;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.FunctionsOnStringValues;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.MathFunctions;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.NumericOperators;
+import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.OtherFunctionsOnNodes;
+import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.ParsingNumbers;
+import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.ProcessingStrings;
 import com.github.akruk.antlrxquery.values.XQueryError;
 import com.github.akruk.antlrxquery.values.XQueryFunction;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
+import com.github.akruk.nodegetter.INodeGetter;
 
 public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManager {
     private static final ParseTree CONTEXT_VALUE = getTree(".", parser -> parser.contextItemExpr());
@@ -53,7 +58,6 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
             long maxArity,
             Map<String, ParseTree> defaultArguments) {
     }
-
     private final Map<String, Map<String, List<FunctionEntry>>> namespaces;
     private final XQueryValueFactory valueFactory;
     private final MathFunctions mathFunctions;
@@ -65,7 +69,17 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
     private final NumericOperators numericOperators;
     private final Accessors accessors;
 
-    public EvaluatingFunctionManager(final XQueryEvaluatorVisitor evaluator, final Parser parser, final XQueryValueFactory valueFactory) {
+    // Added fields
+    private final OtherFunctionsOnNodes otherFuctionsOnNodes;
+    private final FunctionsOnSequencesOfNodes functionsOnSequencesOfNodes;
+    private final ParsingNumbers parsingNumbers;
+    private final ProcessingStrings processingStrings;
+
+    public EvaluatingFunctionManager(final XQueryEvaluatorVisitor evaluator,
+                                        final Parser parser,
+                                        final XQueryValueFactory valueFactory,
+                                        final INodeGetter nodeGetter)
+    {
         this.valueFactory = valueFactory;
         this.evaluator = evaluator;
         this.namespaces = new HashMap<>(10);
@@ -76,6 +90,10 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         this.functionsBasedOnSubstringMatching = new FunctionsBasedOnSubstringMatching(valueFactory);
         this.cardinalityFunctions = new CardinalityFunctions(valueFactory);
         this.numericOperators = new NumericOperators(valueFactory);
+        this.otherFuctionsOnNodes = new OtherFunctionsOnNodes(valueFactory, nodeGetter, parser);
+        this.functionsOnSequencesOfNodes = new FunctionsOnSequencesOfNodes(valueFactory, parser);
+        this.parsingNumbers = new ParsingNumbers(valueFactory, parser);
+        this.processingStrings = new ProcessingStrings(valueFactory, parser);
 
         // Accessors
         registerFunction("fn", "name", accessors::nodeName, 0, 1, Map.of(
@@ -91,9 +109,20 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
             "input", CONTEXT_VALUE
         ));
 
-        // registerFunction("fn", "data", accessors::data, 0, 1, Map.of(
-        //     "input", CONTEXT_VALUE
+        // Other functions on nodes
+        registerFunction("fn", "root", otherFuctionsOnNodes::root, 0, 1, Map.of(
+            "node", CONTEXT_VALUE
+        ));
+        // registerFunction("fn", "path", otherFuctionsOnNodes::path, 0, 2, Map.of(
+        //     "node", CONTEXT_VALUE
+        //     "options", EMPTY_MAP
         // ));
+        registerFunction("fn", "has-children", otherFuctionsOnNodes::hasChildren, 0, 1, Map.of(
+            "node", CONTEXT_VALUE
+        ));
+        registerFunction("fn", "siblings", otherFuctionsOnNodes::siblings, 0, 1, Map.of(
+            "node", CONTEXT_VALUE
+        ));
 
         registerFunction("fn", "true", this::true_, 0, 0, Map.of());
         registerFunction("fn", "false", this::false_, 0, 0, Map.of());

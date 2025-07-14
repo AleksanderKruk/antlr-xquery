@@ -78,8 +78,12 @@ public class OtherFunctionsOnNodes {
             List<XQueryValue> args,
             Map<String, XQueryValue> kwargs)
     {
-        return null;
-
+        XQueryValue node = getNode(context, args, kwargs);
+        if (!node.isNode()) {
+            return node;
+        }
+        ParseTree nodeTree = node.node();
+        return valueFactory.bool(nodeTree.getChildCount() != 0);
     }
 
     public XQueryValue siblings(

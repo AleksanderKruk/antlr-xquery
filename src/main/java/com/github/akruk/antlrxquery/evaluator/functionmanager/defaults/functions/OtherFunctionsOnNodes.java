@@ -1,5 +1,6 @@
 package com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -91,8 +92,25 @@ public class OtherFunctionsOnNodes {
             List<XQueryValue> args,
             Map<String, XQueryValue> kwargs)
     {
-        return null;
+        XQueryValue node = getNode(context, args, kwargs);
+        if (!node.isNode()) {
+            return node;
+        }
+        ParseTree nodeTree = node.node();
+        final var followingSiblings = nodeGetter.getFollowingSiblings(nodeTree);
+        final var precedingSiblings = nodeGetter.getPrecedingSiblings(nodeTree);
+        final var combined = new ArrayList<XQueryValue>(followingSiblings.size() + precedingSiblings.size());
 
+        for (ParseTree sibling : precedingSiblings) {
+            combined.add(valueFactory.node(sibling));
+        }
+
+        for (ParseTree sibling : followingSiblings) {
+            combined.add(valueFactory.node(sibling));
+        }
+
+
+        return valueFactory.sequence(combined);
     }
 
 

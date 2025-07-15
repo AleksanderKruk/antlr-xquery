@@ -34,7 +34,11 @@ orderSpecList: orderSpec (COMMA orderSpec)*;
 orderSpec: exprSingle orderModifier;
 orderModifier: (ASCENDING | DESCENDING)? (EMPTY (GREATEST | LEAST))?;
 returnClause: RETURN exprSingle;
-quantifiedExpr: (SOME | EVERY) DOLLAR varName typeDeclaration? IN exprSingle (COMMA DOLLAR varName typeDeclaration? IN exprSingle)* SATISFIES exprSingle;
+
+quantifiedExpr: (SOME | EVERY) quantifierBinding (COMMA quantifierBinding)* SATISFIES exprSingle;
+quantifierBinding	:	varNameAndType IN exprSingle;
+
+
 ifExpr	:	IF LPAREN expr RPAREN (unbracedActions | bracedAction);
 otherwiseExpr	:	stringConcatExpr (OTHERWISE stringConcatExpr)*;
 unbracedActions	:	THEN exprSingle ELSE exprSingle;

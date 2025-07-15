@@ -41,9 +41,13 @@ unbracedActions	:	THEN exprSingle ELSE exprSingle;
 bracedAction	:	enclosedExpr;
 enclosedExpr	:	LCURLY expr? RCURLY;
 
-switchExpr: SWITCH  LPAREN switchedExpr=expr RPAREN switchCaseClause+ DEFAULT RETURN defaultExpr=exprSingle;
+switchExpr	:	SWITCH switchComparand (switchCases | bracedSwitchCases);
+switchComparand	:	LPAREN switchedExpr=expr? RPAREN;
+switchCases	:	switchCaseClause+ DEFAULT RETURN defaultExpr=exprSingle;
 switchCaseClause: (CASE switchCaseOperand)+ RETURN exprSingle;
-switchCaseOperand: exprSingle;
+switchCaseOperand	:	expr;
+bracedSwitchCases	:	LCURLY switchCases RCURLY;
+
 
 tryCatchExpr : tryClause ( (catchClause+ finallyClause?) | finallyClause ) ;
 tryClause : TRY enclosedExpr ;

@@ -22,11 +22,10 @@ public class FunctionsOnNumericValues {
      * fn:abs($value as xs:numeric?) as xs:numeric?
      */
     public XQueryValue abs(
-            XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String,XQueryValue> kwargs) {
+            final XQueryVisitingContext context,
+            final List<XQueryValue> args) {
 
-        XQueryValue v = args.get(0);
+        final XQueryValue v = args.get(0);
         // empty‐sequence → empty‐sequence
         if (v.isEmptySequence()) {
             return valueFactory.emptySequence();
@@ -36,8 +35,8 @@ public class FunctionsOnNumericValues {
         }
 
         // decimal or integer
-        BigDecimal bd = v.numericValue();
-        BigDecimal abs = bd.abs();
+        final BigDecimal bd = v.numericValue();
+        final BigDecimal abs = bd.abs();
         return valueFactory.number(abs);
     }
 
@@ -45,11 +44,10 @@ public class FunctionsOnNumericValues {
      * fn:ceiling($value as xs:numeric?) as xs:numeric?
      */
     public XQueryValue ceiling(
-            XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String,XQueryValue> kwargs) {
+            final XQueryVisitingContext context,
+            final List<XQueryValue> args) {
 
-        XQueryValue v = args.get(0);
+        final XQueryValue v = args.get(0);
         if (v.isEmptySequence()) {
             return valueFactory.emptySequence();
         }
@@ -58,9 +56,9 @@ public class FunctionsOnNumericValues {
         }
 
         // decimal or integer
-        BigDecimal bd = v.numericValue();
+        final BigDecimal bd = v.numericValue();
         // scale to 0 fractional digits, rounding up
-        BigDecimal r = bd.setScale(0, RoundingMode.CEILING);
+        final BigDecimal r = bd.setScale(0, RoundingMode.CEILING);
         return valueFactory.number(r);
     }
 
@@ -68,11 +66,10 @@ public class FunctionsOnNumericValues {
      * fn:floor($value as xs:numeric?) as xs:numeric?
      */
     public XQueryValue floor(
-            XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String,XQueryValue> kwargs) {
+            final XQueryVisitingContext context,
+            final List<XQueryValue> args) {
 
-        XQueryValue v = args.get(0);
+        final XQueryValue v = args.get(0);
         if (v.isEmptySequence()) {
             return valueFactory.emptySequence();
         }
@@ -80,17 +77,16 @@ public class FunctionsOnNumericValues {
             return XQueryError.InvalidArgumentType;
         }
 
-        BigDecimal bd = v.numericValue();
-        BigDecimal r = bd.setScale(0, RoundingMode.FLOOR);
+        final BigDecimal bd = v.numericValue();
+        final BigDecimal r = bd.setScale(0, RoundingMode.FLOOR);
         return valueFactory.number(r);
     }
 
     public XQueryValue round(
-            XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs) {
+            final XQueryVisitingContext context,
+            final List<XQueryValue> args) {
 
-        XQueryValue v = args.get(0);
+        final XQueryValue v = args.get(0);
         if (v.isEmptySequence()) {
             return valueFactory.emptySequence();
         }
@@ -100,7 +96,7 @@ public class FunctionsOnNumericValues {
 
         int precision = 0;
         if (args.size() >= 2) {
-            XQueryValue p = args.get(1);
+            final XQueryValue p = args.get(1);
             if (p.isEmptySequence()) {
                 precision = 0;
             } else if (!p.isNumericValue()) {
@@ -112,20 +108,20 @@ public class FunctionsOnNumericValues {
 
         String mode = "half-to-ceiling";
         if (args.size() == 3) {
-            XQueryValue m = args.get(2);
+            final XQueryValue m = args.get(2);
             if (!m.isEmptySequence()) {
                 mode = m.stringValue();
             }
         }
 
-        BigDecimal bd = v.numericValue();
+        final BigDecimal bd = v.numericValue();
         BigDecimal rounded;
         try {
             if ("half-to-ceiling".equals(mode)) {
-                RoundingMode rm = bd.signum() < 0 ? RoundingMode.HALF_DOWN : RoundingMode.HALF_UP;
+                final RoundingMode rm = bd.signum() < 0 ? RoundingMode.HALF_DOWN : RoundingMode.HALF_UP;
                 rounded = bd.setScale(precision, rm);
             } else if ("half-to-floor".equals(mode)) {
-                RoundingMode rm = bd.signum() < 0 ? RoundingMode.HALF_UP : RoundingMode.HALF_DOWN;
+                final RoundingMode rm = bd.signum() < 0 ? RoundingMode.HALF_UP : RoundingMode.HALF_DOWN;
                 rounded = bd.setScale(precision, rm);
             } else {
                 final RoundingMode rm;
@@ -142,7 +138,7 @@ public class FunctionsOnNumericValues {
                 rounded = bd.setScale(precision, rm);
             }
             return valueFactory.number(rounded);
-        } catch (ArithmeticException ex) {
+        } catch (final ArithmeticException ex) {
             return XQueryError.NumericOverflowUnderflow;
         }
     }
@@ -154,16 +150,15 @@ public class FunctionsOnNumericValues {
      * ) as xs:numeric?
      */
     public XQueryValue roundHalfToEven(
-            XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String,XQueryValue> kwargs) {
+            final XQueryVisitingContext context,
+            final List<XQueryValue> args) {
 
         // arity check
         if (args.size() < 1 || args.size() > 2) {
             return XQueryError.WrongNumberOfArguments;
         }
 
-        XQueryValue v = args.get(0);
+        final XQueryValue v = args.get(0);
         // empty-sequence → empty-sequence
         if (v.isEmptySequence()) {
             return valueFactory.emptySequence();
@@ -175,7 +170,7 @@ public class FunctionsOnNumericValues {
         // precision (default 0)
         int precision = 0;
         if (args.size() == 2) {
-            XQueryValue p = args.get(1);
+            final XQueryValue p = args.get(1);
             if (p.isEmptySequence()) {
                 precision = 0;
             } else if (!p.isNumericValue()) {
@@ -186,11 +181,11 @@ public class FunctionsOnNumericValues {
         }
 
         // perform half-even rounding via BigDecimal
-        BigDecimal bd = v.numericValue();
+        final BigDecimal bd = v.numericValue();
         try {
-            BigDecimal rd = bd.setScale(precision, RoundingMode.HALF_EVEN);
+            final BigDecimal rd = bd.setScale(precision, RoundingMode.HALF_EVEN);
             return valueFactory.number(rd);
-        } catch (ArithmeticException ex) {
+        } catch (final ArithmeticException ex) {
             return XQueryError.NumericOverflowUnderflow;
         }
     }
@@ -203,20 +198,19 @@ public class FunctionsOnNumericValues {
      * ) as record(quotient as xs:decimal, remainder as xs:decimal)
      */
     public XQueryValue divideDecimals(
-            XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String,XQueryValue> kwargs)
+            final XQueryVisitingContext context,
+            final List<XQueryValue> args)
     {
 
-        XQueryValue v1 = args.get(0), v2 = args.get(1);
+        final XQueryValue v1 = args.get(0), v2 = args.get(1);
         // must be decimals
         if (v1.isEmptySequence() || v2.isEmptySequence()
                 || !v1.isNumericValue() || !v2.isNumericValue()) {
             return XQueryError.InvalidArgumentType;
         }
 
-        BigDecimal dividend = v1.numericValue();
-        BigDecimal divisor  = v2.numericValue();
+        final BigDecimal dividend = v1.numericValue();
+        final BigDecimal divisor  = v2.numericValue();
 
         // division by zero
         if (BigDecimal.ZERO.compareTo(divisor) == 0) {
@@ -226,7 +220,7 @@ public class FunctionsOnNumericValues {
         // precision (default 0)
         int precision = 0;
         if (args.size() == 3) {
-            XQueryValue p = args.get(2);
+            final XQueryValue p = args.get(2);
             if (p.isEmptySequence()) {
                 precision = 0;
             } else if (!p.isNumericValue()) {
@@ -237,20 +231,20 @@ public class FunctionsOnNumericValues {
         }
 
         // compute quotient: |q| = |dividend/divisor| rounded DOWN at given scale
-        BigDecimal absQuotient = dividend
+        final BigDecimal absQuotient = dividend
             .abs()
             .divide(divisor.abs(), precision, RoundingMode.DOWN);
         // restore sign of q
-        BigDecimal quotient = absQuotient
+        final BigDecimal quotient = absQuotient
             .multiply(
                 BigDecimal.valueOf(dividend.signum() * divisor.signum())
             );
 
         // compute exact remainder
-        BigDecimal remainder = dividend.subtract(quotient.multiply(divisor));
+        final BigDecimal remainder = dividend.subtract(quotient.multiply(divisor));
 
         // build record { "quotient":…, "remainder":… }
-        Map<String,XQueryValue> fields = new HashMap<>();
+        final Map<String,XQueryValue> fields = new HashMap<>();
         fields.put("quotient", valueFactory.number(quotient));
         fields.put("remainder", valueFactory.number(remainder));
         return valueFactory.record(fields);

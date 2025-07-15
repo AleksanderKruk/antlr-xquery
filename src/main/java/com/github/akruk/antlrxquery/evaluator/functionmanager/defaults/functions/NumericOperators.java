@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.List;
-import java.util.Map;
 
 import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
 import com.github.akruk.antlrxquery.values.XQueryError;
@@ -22,8 +21,7 @@ public class NumericOperators {
      */
     public XQueryValue numericAdd(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs) {
+            List<XQueryValue> args) {
 
         // Must have exactly 2 arguments
         if (args.size() != 2) {
@@ -46,8 +44,7 @@ public class NumericOperators {
      */
     public XQueryValue numericSubtract(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs) {
+            List<XQueryValue> args) {
 
         // Must have exactly 2 arguments
         if (args.size() != 2) {
@@ -72,8 +69,7 @@ public class NumericOperators {
      */
     public XQueryValue numericMultiply(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs) {
+            List<XQueryValue> args) {
 
         if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
         XQueryValue a = args.get(0), b = args.get(1);
@@ -90,8 +86,7 @@ public class NumericOperators {
      */
     public XQueryValue numericDivide(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs) {
+            List<XQueryValue> args) {
 
         if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
         XQueryValue a = args.get(0), b = args.get(1);
@@ -117,8 +112,7 @@ public class NumericOperators {
      */
     public XQueryValue numericIntegerDivide(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs) {
+            List<XQueryValue> args) {
 
         if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
         XQueryValue a = args.get(0), b = args.get(1);
@@ -148,8 +142,7 @@ public class NumericOperators {
      */
     public XQueryValue numericMod(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs) {
+            List<XQueryValue> args) {
 
         if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
         XQueryValue dividend = args.get(0), divisor = args.get(1);
@@ -179,8 +172,7 @@ public class NumericOperators {
      */
     public XQueryValue numericUnaryPlus(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs) {
+            List<XQueryValue> args) {
 
         if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         XQueryValue v = args.get(0);
@@ -197,8 +189,7 @@ public class NumericOperators {
      */
     public XQueryValue numericUnaryMinus(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs) {
+            List<XQueryValue> args) {
 
         if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         XQueryValue v = args.get(0);
@@ -217,8 +208,7 @@ public class NumericOperators {
      */
     public XQueryValue numericEqual(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs) {
+            List<XQueryValue> args) {
 
         if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
         XQueryValue a = args.get(0), b = args.get(1);
@@ -235,8 +225,7 @@ public class NumericOperators {
      */
     public XQueryValue numericLessThan(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs) {
+            List<XQueryValue> args) {
 
         if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
         XQueryValue a = args.get(0), b = args.get(1);
@@ -253,8 +242,7 @@ public class NumericOperators {
      */
     public XQueryValue numericLessThanOrEqual(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs) {
+            List<XQueryValue> args) {
 
         if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
         XQueryValue a = args.get(0), b = args.get(1);
@@ -271,8 +259,7 @@ public class NumericOperators {
      */
     public XQueryValue numericGreaterThan(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs) {
+            List<XQueryValue> args) {
 
         if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
         XQueryValue a = args.get(0), b = args.get(1);
@@ -289,8 +276,7 @@ public class NumericOperators {
      */
     public XQueryValue numericGreaterThanOrEqual(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs) {
+            List<XQueryValue> args) {
 
         if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
         XQueryValue a = args.get(0), b = args.get(1);

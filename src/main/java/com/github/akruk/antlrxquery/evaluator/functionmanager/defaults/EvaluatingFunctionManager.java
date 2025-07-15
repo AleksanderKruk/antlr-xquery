@@ -57,6 +57,7 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
             XQueryFunction function,
             long minArity,
             long maxArity,
+            List<String> argNames,
             Map<String, ParseTree> defaultArguments) {
     }
     private final Map<String, Map<String, List<FunctionEntry>>> namespaces;
@@ -97,8 +98,6 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         this.processingSequences = new ProcessingSequencesFunctions(valueFactory, parser);
         this.parsingNumbers = new ParsingNumbers(valueFactory, parser);
         this.processingStrings = new ProcessingStrings(valueFactory, parser);
-
-        final Map<String, ParseTree> optionalNodeArg = Map.of( "node", CONTEXT_VALUE);
 
         // Accessors
         final Map<String, ParseTree> defaultNodeArg = Map.of("node", CONTEXT_VALUE);
@@ -380,41 +379,39 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
      */
     public XQueryValue defaultCollation(
             final XQueryVisitingContext context,
-            final List<XQueryValue> args,
-            final Map<String,XQueryValue> kwargs)
+            final List<XQueryValue> args)
     {
         return valueFactory.string(Collations.CODEPOINT_URI);
     }
 
-    public XQueryValue not(final XQueryVisitingContext context, final List<XQueryValue> args, final Map<String, XQueryValue> kwargs) {
+    public XQueryValue not(final XQueryVisitingContext context, final List<XQueryValue> args) {
         if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         return args.get(0).not();
     }
 
 
-    public XQueryValue true_(final XQueryVisitingContext context, final List<XQueryValue> args, final Map<String, XQueryValue> kwargs) {
+    public XQueryValue true_(final XQueryVisitingContext context, final List<XQueryValue> args) {
         if (!args.isEmpty()) return XQueryError.WrongNumberOfArguments;
         return valueFactory.bool(true);
     }
 
-    public XQueryValue false_(final XQueryVisitingContext context, final List<XQueryValue> args, final Map<String, XQueryValue> kwargs) {
+    public XQueryValue false_(final XQueryVisitingContext context, final List<XQueryValue> args) {
         if (!args.isEmpty()) return XQueryError.WrongNumberOfArguments;
         return valueFactory.bool(false);
     }
 
-    public XQueryValue distinctValues(final XQueryVisitingContext ctx, final List<XQueryValue> args, final Map<String, XQueryValue> kwargs) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
+    public XQueryValue distinctValues(final XQueryVisitingContext ctx, final List<XQueryValue> args) {
         return args.get(0).distinctValues();
     }
 
 
 
-    public XQueryValue position(final XQueryVisitingContext context, final List<XQueryValue> args, final Map<String, XQueryValue> kwargs) {
+    public XQueryValue position(final XQueryVisitingContext context, final List<XQueryValue> args) {
         if (!args.isEmpty()) return XQueryError.WrongNumberOfArguments;
         return valueFactory.number(context.getPosition());
     }
 
-    public XQueryValue last(final XQueryVisitingContext context, final List<XQueryValue> args, final Map<String, XQueryValue> kwargs) {
+    public XQueryValue last(final XQueryVisitingContext context, final List<XQueryValue> args) {
         if (!args.isEmpty()) return XQueryError.WrongNumberOfArguments;
         return valueFactory.number(context.getSize());
     }
@@ -453,8 +450,7 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
     }
 
     public XQueryValue replace(final XQueryVisitingContext context,
-                                final List<XQueryValue> args,
-                                final Map<String, XQueryValue> kwargs)
+                                final List<XQueryValue> args)
     {
         if (args.size() == 3) {
             try {
@@ -487,7 +483,12 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
     private void registerFunction(final String namespace, final String localName, final XQueryFunction function, final List<String> argNames, final Map<String, ParseTree> defaultArguments) {
         final var maxArity = argNames.size();
         final var minArity = maxArity - defaultArguments.size();
-        final FunctionEntry functionEntry = new FunctionEntry(function, minArity, maxArity, defaultArguments);
+        // // Guard against overflow
+        // if (functionEntry.maxArity == Long.MAX_VALUE) {
+        //     return XQueryError.TooManyArguments;
+        // }
+
+        final FunctionEntry functionEntry = new FunctionEntry(function, minArity, maxArity, argNames, defaultArguments);
         final Map<String, List<FunctionEntry>> namespaceFunctions = namespaces.computeIfAbsent(namespace, _ -> new HashMap<>());
         final List<FunctionEntry> functionsWithDesiredName = namespaceFunctions.computeIfAbsent(localName, _ -> new ArrayList<FunctionEntry>());
         functionsWithDesiredName.add(functionEntry);
@@ -515,21 +516,37 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
     public XQueryValue call(final String namespace, final String functionName, final XQueryVisitingContext context,
             final List<XQueryValue> args, final Map<String, XQueryValue> keywordArgs)
     {
-        final long arity = args.size() + keywordArgs.size();
+        // Copy is made to allow for immutable hashmaps
+        final var keywordArgs_ = new HashMap<>(keywordArgs);
+        final int argsCount = args.size();
+        final long arity = argsCount + keywordArgs_.size();
         final FunctionOrError functionOrError = getFunction(namespace, functionName, arity);
         if (functionOrError.isError())
             return functionOrError.error();
         final FunctionEntry functionEntry = functionOrError.entry();
-        // functionEntry.defaultArguments;
         final var function = functionEntry.function;
         final var defaultArgs = functionEntry.defaultArguments;
-        final Stream<String> defaultedArgumentNames = functionEntry.defaultArguments.keySet().stream().filter(name-> !keywordArgs.containsKey(name));
-        final Map<String, XQueryValue> defaultedArguments = defaultedArgumentNames.collect(Collectors.toMap(name->name, name->{
+
+        // Additional positional args are ignored as per function coersion rules
+        final var positionalSize = Math.min(argsCount, functionEntry.maxArity);
+        // Too few args are however an error
+        if (positionalSize < functionEntry.minArity)
+            return XQueryError.WrongNumberOfArguments;
+
+        // TODO: add overflow check at function registration
+        // so as not to check already registed functions at each call
+        final List<String> remainingArgs = functionEntry.argNames.subList(argsCount, (int) functionEntry.maxArity);
+        final Stream<String> defaultedArgumentNames = functionEntry
+            .defaultArguments.keySet().stream()
+            .filter(name-> remainingArgs.contains(name) && !keywordArgs_.containsKey(name));
+        final Map<String, XQueryValue> defaultedArguments = defaultedArgumentNames.collect(
+            Collectors.toMap(name->name, name->{
                 final ParseTree default_ = defaultArgs.get(name);
                 return default_.accept(evaluator);
             }));
-        keywordArgs.putAll(defaultedArguments);
-        return function.call(context, args, keywordArgs);
+        keywordArgs_.putAll(defaultedArguments);
+        var rearranged = rearrangeArguments(remainingArgs, context, args, keywordArgs_);
+        return function.call(context, rearranged);
     }
 
     @Override
@@ -539,7 +556,6 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
             return XQueryError.UnknownFunctionName;
         }
         return valueFactory.functionReference(function.entry().function);
-        // return null;
     }
 
 
@@ -550,5 +566,24 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         final AntlrXqueryParser parser = new AntlrXqueryParser(stream);
         return initialRule.apply(parser);
     }
+
+    List<XQueryValue> rearrangeArguments(
+        final List<String> remainingArgs,
+        final XQueryVisitingContext context,
+        final List<XQueryValue> args,
+        final Map<String, XQueryValue> keywordArgs)
+    {
+        final List<XQueryValue> rearranged = new ArrayList<>(args.size() + keywordArgs.size());
+        rearranged.addAll(args);
+        for (var arg : remainingArgs) {
+            var argValue = keywordArgs.get(arg);
+            if (argValue == null) {
+                argValue = XQueryError.WrongNumberOfArguments;
+            }
+            rearranged.add(argValue);
+        }
+        return rearranged;
+    }
+
 
 }

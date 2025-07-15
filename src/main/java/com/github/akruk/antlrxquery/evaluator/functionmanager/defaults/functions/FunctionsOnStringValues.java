@@ -28,7 +28,7 @@ public class FunctionsOnStringValues {
     }
 
     // TODO: Reevaluate later
-    public XQueryValue concat(final XQueryVisitingContext context, final List<XQueryValue> args, final Map<String, XQueryValue> kwargs) {
+    public XQueryValue concat(final XQueryVisitingContext context, final List<XQueryValue> args) {
         if (args.size() >= 2)
             return XQueryError.WrongNumberOfArguments;
         if (args.size() == 0)
@@ -48,8 +48,7 @@ public class FunctionsOnStringValues {
      */
     public XQueryValue substring(
             XQueryVisitingContext ctx,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs) {
+            List<XQueryValue> args) {
 
         // must have 2 or 3 args
         if (args.size() != 2 && args.size() != 3) {
@@ -160,8 +159,7 @@ public class FunctionsOnStringValues {
      */
     public XQueryValue stringJoin(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs)
+            List<XQueryValue> args)
     {
 
         // Determine the sequence of values to join
@@ -205,8 +203,7 @@ public class FunctionsOnStringValues {
      */
     public XQueryValue normalizeSpace(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs)
+            List<XQueryValue> args)
     {
 
         if (args.size() > 1) {
@@ -243,8 +240,7 @@ public class FunctionsOnStringValues {
 
     public XQueryValue upperCase(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs) {
+            List<XQueryValue> args) {
 
         final XQueryValue input = args.get(0);
         if (input.isEmptySequence()) {
@@ -261,8 +257,7 @@ public class FunctionsOnStringValues {
 
     public XQueryValue lowerCase(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs) {
+            List<XQueryValue> args) {
 
         final XQueryValue input = args.get(0);
         if (input.isEmptySequence()) {
@@ -294,8 +289,7 @@ public class FunctionsOnStringValues {
      */
     public XQueryValue char_(
             final XQueryVisitingContext context,
-            final List<XQueryValue> args,
-            final Map<String, XQueryValue> kwargs) {
+            final List<XQueryValue> args) {
         final XQueryValue arg = args.get(0);
         // A Unicode codepoint, supplied as an integer. For example fn:char(9) returns
         // the tab character.
@@ -351,8 +345,7 @@ public class FunctionsOnStringValues {
      */
     public XQueryValue characters(
             final XQueryVisitingContext context,
-            final List<XQueryValue> args,
-            final Map<String, XQueryValue> kwargs)
+            final List<XQueryValue> args)
     {
 
         // obtain the string: either argument or context item
@@ -389,8 +382,7 @@ public class FunctionsOnStringValues {
      */
     public XQueryValue graphemes(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs) {
+            List<XQueryValue> args) {
 
         // wrong arity?
         if (args.size() > 1) {
@@ -437,8 +429,7 @@ public class FunctionsOnStringValues {
      */
     public XQueryValue normalizeUnicode(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs) {
+            List<XQueryValue> args) {
 
         // arity check
         if (args.size() > 2) {
@@ -526,8 +517,7 @@ public class FunctionsOnStringValues {
      */
     public XQueryValue translate(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs) {
+            List<XQueryValue> args) {
 
         XQueryValue valArg = args.get(0);
 
@@ -581,8 +571,7 @@ public class FunctionsOnStringValues {
      */
     public XQueryValue stringLength(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs) {
+            List<XQueryValue> args) {
 
         String input;
 

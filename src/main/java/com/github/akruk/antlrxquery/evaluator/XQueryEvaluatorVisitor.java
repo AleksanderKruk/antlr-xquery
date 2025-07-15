@@ -610,9 +610,10 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             return ctx.predicate().accept(this);
         }
         // TODO: verify logic
+        // TODO: add semantic check for no keyword args
         final var contextItem = context.getItem();
         final var function = contextItem.functionValue();
-        final var value = function.call(context, visitedArgumentList, visitedKeywordArguments);
+        final var value = function.call(context, visitedArgumentList);
         return value;
     }
 
@@ -857,7 +858,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
                                               // it has to be called before visiting arrowFunctionSpecifier
                                               // because arity of arguments is needed for function lookup
             final var visitedFunction = ctx.arrowFunctionSpecifier(i).accept(this);
-            contextArgument = visitedFunction.functionValue().call(context, visitedArgumentList, visitedKeywordArguments);
+            // TODO: add semantic check for no keyword args
+            contextArgument = visitedFunction.functionValue().call(context, visitedArgumentList);
             visitedArgumentList = new ArrayList<>();
             visitedArgumentList.add(contextArgument);
         }

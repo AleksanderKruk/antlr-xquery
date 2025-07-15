@@ -209,6 +209,7 @@ public class XQueryError implements XQueryValue {
     public static final XQueryError XsltInvalidOutputCharacters = new XQueryError("FOXT0006",
             "XSLT output contains non-accepted characters.");
     public static final XQueryValue UnknownFunctionName = new XQueryError("AXQY0001", "Called function that is not registered");
+    public static final XQueryValue TooManyArguments = new XQueryError("AXQY0002", "Tried to register a function with too many arguments");
 
     private final String code;
     private final String description;

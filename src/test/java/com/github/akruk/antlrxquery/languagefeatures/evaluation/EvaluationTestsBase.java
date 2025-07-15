@@ -1,7 +1,6 @@
 package com.github.akruk.antlrxquery.languagefeatures.evaluation;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.contains;
 
 import java.lang.reflect.Method;
 import java.math.BigDecimal;

@@ -1,7 +1,6 @@
 package com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions;
 
 import java.util.List;
-import java.util.Map;
 
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -25,8 +24,7 @@ public class Accessors {
 
     public XQueryValue nodeName(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs) {
+            List<XQueryValue> args) {
 
         XQueryValue node;
         if (args.isEmpty()) {
@@ -56,8 +54,7 @@ public class Accessors {
 
     public XQueryValue string(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs) {
+            List<XQueryValue> args) {
 
         XQueryValue target;
 
@@ -80,7 +77,7 @@ public class Accessors {
     }
 
 
-    public XQueryValue data(XQueryVisitingContext ctx, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
+    public XQueryValue data(XQueryVisitingContext ctx, List<XQueryValue> args) {
         return args.get(0).data();
     }
 

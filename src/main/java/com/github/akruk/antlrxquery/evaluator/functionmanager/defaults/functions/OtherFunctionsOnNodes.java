@@ -2,7 +2,6 @@ package com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.function
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -24,8 +23,7 @@ public class OtherFunctionsOnNodes {
 
     private XQueryValue getNode(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs)
+            List<XQueryValue> args)
     {
         XQueryValue node;
         if (args.isEmpty()) {
@@ -50,10 +48,9 @@ public class OtherFunctionsOnNodes {
 
     public XQueryValue root(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs)
+            List<XQueryValue> args)
     {
-        XQueryValue node = getNode(context, args, kwargs);
+        XQueryValue node = getNode(context, args);
         if (!node.isNode()) {
             return node;
         }
@@ -74,10 +71,9 @@ public class OtherFunctionsOnNodes {
 
     public XQueryValue hasChildren(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs)
+            List<XQueryValue> args)
     {
-        XQueryValue node = getNode(context, args, kwargs);
+        XQueryValue node = getNode(context, args);
         if (!node.isNode()) {
             return node;
         }
@@ -87,10 +83,9 @@ public class OtherFunctionsOnNodes {
 
     public XQueryValue siblings(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs)
+            List<XQueryValue> args)
     {
-        XQueryValue node = getNode(context, args, kwargs);
+        XQueryValue node = getNode(context, args);
         if (!node.isNode()) {
             return node;
         }

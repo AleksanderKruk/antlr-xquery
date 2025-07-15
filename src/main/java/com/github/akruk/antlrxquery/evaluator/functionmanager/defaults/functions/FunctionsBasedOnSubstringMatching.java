@@ -2,7 +2,6 @@
 package com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions;
 
 import java.util.List;
-import java.util.Map;
 
 import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
 import com.github.akruk.antlrxquery.evaluator.collations.Collations;
@@ -12,7 +11,7 @@ import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
 public class FunctionsBasedOnSubstringMatching {
     private final XQueryValueFactory valueFactory;
-    public FunctionsBasedOnSubstringMatching(XQueryValueFactory valueFactory) {
+    public FunctionsBasedOnSubstringMatching(final XQueryValueFactory valueFactory) {
         this.valueFactory = valueFactory;
     }
 
@@ -24,9 +23,8 @@ public class FunctionsBasedOnSubstringMatching {
      * ) as xs:boolean
      */
     public XQueryValue contains(
-            XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs) {
+            final XQueryVisitingContext context,
+            final List<XQueryValue> args) {
 
         // arity check
         if (args.size() < 2 || args.size() > 3) {
@@ -34,21 +32,21 @@ public class FunctionsBasedOnSubstringMatching {
         }
 
         // extract and handle empty-sequence for $value
-        XQueryValue valArg = args.get(0);
-        String value = valArg.isEmptySequence()
+        final XQueryValue valArg = args.get(0);
+        final String value = valArg.isEmptySequence()
             ? ""
             : valArg.stringValue();
 
         // extract and handle empty-sequence for $substring
-        XQueryValue subArg = args.get(1);
-        String substring = subArg.isEmptySequence()
+        final XQueryValue subArg = args.get(1);
+        final String substring = subArg.isEmptySequence()
             ? ""
             : subArg.stringValue();
 
         // determine collation URI
         String collationUri = Collations.CODEPOINT_URI;
         if (args.size() == 3) {
-            XQueryValue collArg = args.get(2);
+            final XQueryValue collArg = args.get(2);
             if (!collArg.isEmptySequence()) {
                 collationUri = collArg.stringValue();
             }
@@ -69,7 +67,7 @@ public class FunctionsBasedOnSubstringMatching {
         }
 
         // simple substring search under codepoint collation
-        boolean found = value.contains(substring);
+        final boolean found = value.contains(substring);
         return valueFactory.bool(found);
     }
 
@@ -82,9 +80,8 @@ public class FunctionsBasedOnSubstringMatching {
      * ) as xs:boolean
      */
     public XQueryValue startsWith(
-            XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs) {
+            final XQueryVisitingContext context,
+            final List<XQueryValue> args) {
 
         // Arity check: only 2 or 3 arguments allowed
         if (args.size() < 2 || args.size() > 3) {
@@ -92,21 +89,21 @@ public class FunctionsBasedOnSubstringMatching {
         }
 
         // Handle $value
-        XQueryValue valArg = args.get(0);
-        String value = valArg.isEmptySequence()
+        final XQueryValue valArg = args.get(0);
+        final String value = valArg.isEmptySequence()
             ? ""
             : valArg.stringValue();
 
         // Handle $substring
-        XQueryValue subArg = args.get(1);
-        String substring = subArg.isEmptySequence()
+        final XQueryValue subArg = args.get(1);
+        final String substring = subArg.isEmptySequence()
             ? ""
             : subArg.stringValue();
 
         // Determine collation URI (default if omitted or empty)
         String collationUri = Collations.CODEPOINT_URI;
         if (args.size() == 3) {
-            XQueryValue collArg = args.get(2);
+            final XQueryValue collArg = args.get(2);
             if (!collArg.isEmptySequence()) {
                 collationUri = collArg.stringValue();
             }
@@ -127,15 +124,14 @@ public class FunctionsBasedOnSubstringMatching {
         }
 
         // Simple prefix check under codepoint collation
-        boolean result = value.startsWith(substring);
+        final boolean result = value.startsWith(substring);
         return valueFactory.bool(result);
     }
 
 
     public XQueryValue endsWith(
-            XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs) {
+            final XQueryVisitingContext context,
+            final List<XQueryValue> args) {
 
         // Ensure correct arity: must be 2 or 3 arguments
         if (args.size() < 2 || args.size() > 3) {
@@ -143,19 +139,19 @@ public class FunctionsBasedOnSubstringMatching {
         }
 
         // Normalize $value to zero-length string if empty sequence
-        String value = args.get(0).isEmptySequence()
+        final String value = args.get(0).isEmptySequence()
             ? ""
             : args.get(0).stringValue();
 
         // Normalize $substring to zero-length string if empty sequence
-        String substring = args.get(1).isEmptySequence()
+        final String substring = args.get(1).isEmptySequence()
             ? ""
             : args.get(1).stringValue();
 
         // Determine collation URI, defaulting if omitted or empty
         String collationUri = Collations.CODEPOINT_URI;
         if (args.size() == 3) {
-            XQueryValue collArg = args.get(2);
+            final XQueryValue collArg = args.get(2);
             if (!collArg.isEmptySequence()) {
                 collationUri = collArg.stringValue();
             }
@@ -177,7 +173,7 @@ public class FunctionsBasedOnSubstringMatching {
         }
 
         // Check if value ends with substring
-        boolean result = value.endsWith(substring);
+        final boolean result = value.endsWith(substring);
         return valueFactory.bool(result);
     }
 
@@ -189,9 +185,8 @@ public class FunctionsBasedOnSubstringMatching {
      * ) as xs:string
      */
     public XQueryValue substringBefore(
-            XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs) {
+            final XQueryVisitingContext context,
+            final List<XQueryValue> args) {
 
         // Ensure correct arity: must be 2 or 3 args
         if (args.size() < 2 || args.size() > 3) {
@@ -199,17 +194,17 @@ public class FunctionsBasedOnSubstringMatching {
         }
 
         // Normalize $value and $substring to zero-length if empty sequence
-        String value = args.get(0).isEmptySequence()
+        final String value = args.get(0).isEmptySequence()
             ? ""
             : args.get(0).stringValue();
-        String substring = args.get(1).isEmptySequence()
+        final String substring = args.get(1).isEmptySequence()
             ? ""
             : args.get(1).stringValue();
 
         // Determine collation URI (default if omitted or empty)
         String collationUri = Collations.CODEPOINT_URI;
         if (args.size() == 3) {
-            XQueryValue collArg = args.get(2);
+            final XQueryValue collArg = args.get(2);
             if (!collArg.isEmptySequence()) {
                 collationUri = collArg.stringValue();
             }
@@ -229,12 +224,12 @@ public class FunctionsBasedOnSubstringMatching {
         }
 
         // Search for first occurrence
-        int index = value.indexOf(substring);
+        final int index = value.indexOf(substring);
         if (index == -1) {
             return valueFactory.string("");
         }
 
-        String result = value.substring(0, index);
+        final String result = value.substring(0, index);
         return valueFactory.string(result);
     }
 
@@ -246,9 +241,8 @@ public class FunctionsBasedOnSubstringMatching {
      * ) as xs:string
      */
     public XQueryValue substringAfter(
-            XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String, XQueryValue> kwargs) {
+            final XQueryVisitingContext context,
+            final List<XQueryValue> args) {
 
         // must have 2 or 3 args
         if (args.size() < 2 || args.size() > 3) {
@@ -256,8 +250,8 @@ public class FunctionsBasedOnSubstringMatching {
         }
 
         // normalize $value and $substring
-        String value = args.get(0).isEmptySequence() ? "" : args.get(0).stringValue();
-        String substring = args.get(1).isEmptySequence() ? "" : args.get(1).stringValue();
+        final String value = args.get(0).isEmptySequence() ? "" : args.get(0).stringValue();
+        final String substring = args.get(1).isEmptySequence() ? "" : args.get(1).stringValue();
 
         // determine collation URI (default if omitted or empty)
         String collationUri = Collations.CODEPOINT_URI;
@@ -281,12 +275,12 @@ public class FunctionsBasedOnSubstringMatching {
         }
 
         // locate first match
-        int idx = value.indexOf(substring);
+        final int idx = value.indexOf(substring);
         if (idx == -1) {
             return valueFactory.string("");
         }
 
-        String result = value.substring(idx + substring.length());
+        final String result = value.substring(idx + substring.length());
         return valueFactory.string(result);
     }
 

@@ -2,7 +2,6 @@
 package com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions;
 
 import java.util.List;
-import java.util.Map;
 
 import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
 import com.github.akruk.antlrxquery.values.XQueryError;
@@ -20,8 +19,7 @@ public class CardinalityFunctions {
      */
     public XQueryValue zeroOrOne(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String,XQueryValue> kwargs) {
+            List<XQueryValue> args) {
 
         XQueryValue input = args.get(0);
         List<XQueryValue> seq = input.atomize();
@@ -39,8 +37,7 @@ public class CardinalityFunctions {
      */
     public XQueryValue oneOrMore(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String,XQueryValue> kwargs) {
+            List<XQueryValue> args) {
 
         XQueryValue input = args.get(0);
         List<XQueryValue> seq = input.atomize();
@@ -58,8 +55,7 @@ public class CardinalityFunctions {
      */
     public XQueryValue exactlyOne(
             XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String,XQueryValue> kwargs) {
+            List<XQueryValue> args) {
 
         XQueryValue input = args.get(0);
         List<XQueryValue> seq = input.atomize();

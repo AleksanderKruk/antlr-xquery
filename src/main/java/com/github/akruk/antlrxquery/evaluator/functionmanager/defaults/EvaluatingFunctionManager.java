@@ -136,13 +136,13 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         registerFunction("fn", "round-half-to-even", functionsOnNumericValues::roundHalfToEven, 1, 2, Map.of("precision", ZERO_LITERAL));
         registerFunction("fn", "divide-decimals", functionsOnNumericValues::divideDecimals, 2, 3, Map.of("precision", ZERO_LITERAL));
 
-        registerFunction("fn", "empty", this::empty, 0, 0, Map.of());
-        registerFunction("fn", "exists", this::exists, 0, 0, Map.of());
-        registerFunction("fn", "head", this::head, 0, 0, Map.of());
-        registerFunction("fn", "tail", this::tail, 0, 0, Map.of());
-        registerFunction("fn", "insert-before", this::insertBefore, 0, 0, Map.of());
-        registerFunction("fn", "remove", this::remove, 0, 0, Map.of());
-        registerFunction("fn", "reverse", this::reverse, 0, 0, Map.of());
+        registerFunction("fn", "empty", this::empty, 1, 1, Map.of());
+        registerFunction("fn", "exists", this::exists, 1, 1, Map.of());
+        registerFunction("fn", "head", this::head, 1, 1, Map.of());
+        registerFunction("fn", "tail", this::tail, 1, 1, Map.of());
+        registerFunction("fn", "insert-before", this::insertBefore, 3, 3, Map.of());
+        registerFunction("fn", "remove", this::remove, 2, 2, Map.of());
+        registerFunction("fn", "reverse", this::reverse, 1, 1, Map.of());
         registerFunction("fn", "subsequence", this::subsequence, 2, 3, Map.of());
         registerFunction("fn", "distinct-values", this::distinctValues, 1, 2, Map.of());
 

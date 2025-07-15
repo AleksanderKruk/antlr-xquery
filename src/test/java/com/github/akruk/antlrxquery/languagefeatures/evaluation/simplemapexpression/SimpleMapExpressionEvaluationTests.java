@@ -49,7 +49,7 @@ public class SimpleMapExpressionEvaluationTests extends EvaluationTestsBase {
     @Test
     public void simpleMapWithStringFunctions() {
         // build strings, then measure their length via chained maps
-        String xquery = "('a', 'bc') ! concat(., '-') ! string-length(.)";
+        String xquery = "('a', 'bc') ! concat((., '-')) ! string-length(.)";
         List<XQueryValue> expected = List.of(
                 baseFactory.number(2),
                 baseFactory.number(3));

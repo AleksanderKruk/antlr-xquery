@@ -27,17 +27,12 @@ public class FunctionsOnStringValues {
         this.valueFactory = valueFactory;
     }
 
-    // TODO: Reevaluate later
     public XQueryValue concat(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        if (args.size() >= 2)
-            return XQueryError.WrongNumberOfArguments;
-        if (args.size() == 0)
-            return valueFactory.string(context.getItem().stringValue());
-        final String joined = args.get(0).atomize().stream().map(XQueryValue::stringValue).collect(Collectors.joining());
+        final String joined = args.stream()
+            .flatMap(arg->arg.atomize().stream())
+            .map(XQueryValue::stringValue).collect(Collectors.joining());
         return valueFactory.string(joined);
     }
-
-
 
     /**
      * fn:substring(

@@ -170,20 +170,17 @@ public class ProcessingSequencesFunctions {
             XQueryVisitingContext context,
             List<XQueryValue> args) {
 
-        if (args.size() < 1 || args.size() > 4)
-            return XQueryError.WrongNumberOfArguments;
-
         XQueryValue input = args.get(0);
+        XQueryValue startArg = args.get(1);
+        XQueryValue endArg = args.get(2);
+        XQueryValue stepArg = args.get(3);
+
         List<XQueryValue> sequence = input.sequence();
         int count = sequence.size();
 
         if (count == 0) {
             return valueFactory.emptySequence();
         }
-
-        XQueryValue startArg = args.get(1);
-        XQueryValue endArg = args.get(2);
-        XQueryValue stepArg = args.get(3);
 
         // Validate types
         if (!startArg.isEmptySequence() && !startArg.isNumericValue())

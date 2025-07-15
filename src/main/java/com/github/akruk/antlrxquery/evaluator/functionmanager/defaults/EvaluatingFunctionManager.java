@@ -44,13 +44,13 @@ import com.github.akruk.nodegetter.INodeGetter;
 
 public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManager {
     private static final ParseTree CONTEXT_VALUE = getTree(".", parser -> parser.contextItemExpr());
-    // private static final ParseTree DEFAULT_COLLATION = getTree("fn:default-collation()", parser->parser.functionCall());
+    private static final ParseTree DEFAULT_COLLATION = getTree("fn:default-collation()", parser->parser.functionCall());
     private static final ParseTree EMPTY_SEQUENCE = getTree("()", p->p.parenthesizedExpr());
     private static final ParseTree DEFAULT_ROUNDING_MODE = getTree("'half-to-ceiling'", parser->parser.literal());
     private static final ParseTree ZERO_LITERAL = getTree("0", parser->parser.literal());
-    // private static final ParseTree NFC = getTree("\"NFC\"", parser -> parser.literal());
-    // private static final ParseTree STRING_AT_CONTEXT_VALUE = getTree("fn:string(.)", (parser) -> parser.functionCall());
-    // private static final ParseTree EMPTY_STRING = getTree("\"\"", (parser)->parser.literal());
+    private static final ParseTree NFC = getTree("\"NFC\"", parser -> parser.literal());
+    private static final ParseTree STRING_AT_CONTEXT_VALUE = getTree("fn:string(.)", (parser) -> parser.functionCall());
+    private static final ParseTree EMPTY_STRING = getTree("\"\"", (parser)->parser.literal());
 
 
     record FunctionEntry(
@@ -101,127 +101,279 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         Map<String, ParseTree> optionalNodeArg = Map.of( "node", CONTEXT_VALUE);
 
         // Accessors
-        registerFunction("fn", "name", accessors::nodeName, 0, 1, optionalNodeArg);
-        registerFunction("fn", "node-name", accessors::nodeName, 0, 1, optionalNodeArg);
-        registerFunction("fn", "string", accessors::string, 0, 1, Map.of(
-            "value", CONTEXT_VALUE
-        ));
-        registerFunction("fn", "data", accessors::data, 0, 1, Map.of(
-            "input", CONTEXT_VALUE
-        ));
+        Map<String, ParseTree> defaultNodeArg = Map.of("node", CONTEXT_VALUE);
+        Map<String, ParseTree> defaultValueArg = Map.of("value", CONTEXT_VALUE);
+        Map<String, ParseTree> defaultInputArg = Map.of("input", CONTEXT_VALUE);
+
+        registerFunction("fn", "name", accessors::nodeName, List.of("node"), defaultNodeArg);
+        registerFunction("fn", "node-name", accessors::nodeName, List.of("node"), defaultNodeArg);
+        registerFunction("fn", "string", accessors::string, List.of("value"), defaultValueArg);
+        registerFunction("fn", "data", accessors::data, List.of("input"), defaultInputArg);
+
+
 
         // Other functions on nodes
-        registerFunction("fn", "root", otherFuctionsOnNodes::root, 0, 1, optionalNodeArg);
-        // registerFunction("fn", "path", otherFuctionsOnNodes::path, 0, 2, Map.of(
-        //     "node", CONTEXT_VALUE
-        //     "options", EMPTY_MAP
-        // ));
-        registerFunction("fn", "has-children", otherFuctionsOnNodes::hasChildren, 0, 1, optionalNodeArg);
-        registerFunction("fn", "siblings", otherFuctionsOnNodes::siblings, 0, 1, optionalNodeArg);
+        // Rejestracja funkcji na węzłach
+        registerFunction("fn", "root", otherFuctionsOnNodes::root, List.of("node"), defaultNodeArg);
+        registerFunction("fn", "has-children", otherFuctionsOnNodes::hasChildren, List.of("node"), defaultNodeArg);
+        registerFunction("fn", "siblings", otherFuctionsOnNodes::siblings, List.of("node"), defaultNodeArg);
 
-        registerFunction("fn", "true", this::true_, 0, 0, Map.of());
-        registerFunction("fn", "false", this::false_, 0, 0, Map.of());
+        registerFunction("fn", "true", this::true_, List.of(), Map.of());
+        registerFunction("fn", "false", this::false_, List.of(), Map.of());
 
-        registerFunction("fn", "not", this::not, 1, 1, Map.of());
+        registerFunction("fn", "not", this::not, List.of("input"), Map.of());
 
-        registerFunction("fn", "abs", functionsOnNumericValues::abs, 1, 1, Map.of());
-        registerFunction("fn", "ceiling", functionsOnNumericValues::ceiling, 1, 1, Map.of());
-        registerFunction("fn", "floor", functionsOnNumericValues::floor, 1, 1, Map.of());
-        registerFunction("fn", "round", functionsOnNumericValues::round, 1, 3, Map.of("precision", ZERO_LITERAL, "mode", DEFAULT_ROUNDING_MODE));
-        registerFunction("fn", "round-half-to-even", functionsOnNumericValues::roundHalfToEven, 1, 2, Map.of("precision", ZERO_LITERAL));
-        registerFunction("fn", "divide-decimals", functionsOnNumericValues::divideDecimals, 2, 3, Map.of("precision", ZERO_LITERAL));
+        // Processing numerics
+        registerFunction("fn", "abs", functionsOnNumericValues::abs,
+            List.of("value"), Map.of());
 
-        registerFunction("fn", "empty", processingSequences::empty, 1, 1, Map.of());
-        registerFunction("fn", "exists", processingSequences::exists, 1, 1, Map.of());
-        registerFunction("fn", "foot", processingSequences::foot, 1, 1, Map.of());
-        registerFunction("fn", "head", processingSequences::head, 1, 1, Map.of());
-        registerFunction("fn", "identity", processingSequences::identity, 1, 1, Map.of());
-        registerFunction("fn", "insert-before", processingSequences::insertBefore, 3, 3, Map.of());
-        registerFunction("fn", "items-at", processingSequences::itemsAt, 2, 2, Map.of());
-        registerFunction("fn", "remove", processingSequences::remove, 2, 2, Map.of());
-        registerFunction("fn", "replicate", processingSequences::replicate, 2, 2, Map.of());
-        registerFunction("fn", "reverse", processingSequences::reverse, 1, 1, Map.of());
-        registerFunction("fn", "sequence-join", processingSequences::sequenceJoin, 2, 2, Map.of());
-        registerFunction("fn", "slice", processingSequences::slice, 1, 4, Map.of("start", EMPTY_SEQUENCE, "end", EMPTY_SEQUENCE, "step", EMPTY_SEQUENCE));
-        registerFunction("fn", "subsequence", processingSequences::subsequence, 2, 3, Map.of("length", EMPTY_SEQUENCE));
-        registerFunction("fn", "tail", processingSequences::tail, 1, 1, Map.of());
-        registerFunction("fn", "trunk", processingSequences::trunk, 1, 1, Map.of());
-        registerFunction("fn", "unordered", processingSequences::unordered, 1, 1, Map.of());
-        registerFunction("fn", "void", processingSequences::voidFunction, 0, 1, Map.of("input", EMPTY_SEQUENCE));
+        registerFunction("fn", "ceiling", functionsOnNumericValues::ceiling,
+            List.of("value"), Map.of());
+
+        registerFunction("fn", "floor", functionsOnNumericValues::floor,
+            List.of("value"), Map.of());
+
+        registerFunction("fn", "round", functionsOnNumericValues::round,
+            List.of("value", "precision", "mode"),
+            Map.of(
+                "precision", ZERO_LITERAL,
+                "mode", DEFAULT_ROUNDING_MODE
+            ));
+
+        registerFunction("fn", "round-half-to-even", functionsOnNumericValues::roundHalfToEven,
+            List.of("value", "precision"),
+            Map.of("precision", ZERO_LITERAL));
+
+        registerFunction("fn", "divide-decimals", functionsOnNumericValues::divideDecimals,
+            List.of("value", "divisor", "precision"),
+            Map.of("precision", ZERO_LITERAL));
 
 
-        registerFunction("fn", "distinct-values", this::distinctValues, 1, 2, Map.of());
+        // Processing sequences
+        Map<String, ParseTree> emptyInputArg = Map.of("input", EMPTY_SEQUENCE);
+        registerFunction("fn", "empty", processingSequences::empty,
+            List.of("input"), Map.of());
 
-        registerFunction("fn", "zero-or-one", cardinalityFunctions::zeroOrOne, 1, 1, Map.of());
-        registerFunction("fn", "one-or-more", cardinalityFunctions::oneOrMore, 1, 1, Map.of());
-        registerFunction("fn", "exactly-one", cardinalityFunctions::exactlyOne, 1, 1, Map.of());
+        registerFunction("fn", "exists", processingSequences::exists,
+            List.of("input"), Map.of());
+
+        registerFunction("fn", "foot", processingSequences::foot,
+            List.of("input"), Map.of());
+
+        registerFunction("fn", "head", processingSequences::head,
+            List.of("input"), Map.of());
+
+        registerFunction("fn", "identity", processingSequences::identity,
+            List.of("input"), Map.of());
+
+        registerFunction("fn", "insert-before", processingSequences::insertBefore,
+            List.of("input", "position", "insert"), Map.of());
+
+        registerFunction("fn", "items-at", processingSequences::itemsAt,
+            List.of("input", "at"), Map.of());
+
+        registerFunction("fn", "remove", processingSequences::remove,
+            List.of("input", "positions"), Map.of());
+
+        registerFunction("fn", "replicate", processingSequences::replicate,
+            List.of("input", "count"), Map.of());
+
+        registerFunction("fn", "reverse", processingSequences::reverse,
+            List.of("input"), Map.of());
+
+        registerFunction("fn", "sequence-join", processingSequences::sequenceJoin,
+            List.of("input", "separator"), Map.of());
+
+        registerFunction("fn", "slice", processingSequences::slice,
+            List.of("input", "start", "end", "step"),
+            Map.of(
+                "start", EMPTY_SEQUENCE,
+                "end", EMPTY_SEQUENCE,
+                "step", EMPTY_SEQUENCE
+            ));
+
+        registerFunction("fn", "subsequence", processingSequences::subsequence,
+            List.of("input", "start", "length"),
+            Map.of("length", EMPTY_SEQUENCE));
+
+        registerFunction("fn", "tail", processingSequences::tail,
+            List.of("input"), Map.of());
+
+        registerFunction("fn", "trunk", processingSequences::trunk,
+            List.of("input"), Map.of());
+
+        registerFunction("fn", "unordered", processingSequences::unordered,
+            List.of("input"), Map.of());
+
+        registerFunction("fn", "void", processingSequences::voidFunction,
+            List.of("input"), emptyInputArg);
 
 
-        registerFunction("fn", "default-collation", this::defaultCollation, 0, 0, Map.of());
 
-        final ParseTree DEFAULT_COLLATION = getTree("fn:default-collation()", parser_->parser_.functionCall());
+        registerFunction("fn", "distinct-values", this::distinctValues,
+            List.of("values", "collation"), Map.of("collation", DEFAULT_COLLATION));
+
+        registerFunction("fn", "zero-or-one", cardinalityFunctions::zeroOrOne,
+            List.of("input"), Map.of());
+
+        registerFunction("fn", "one-or-more", cardinalityFunctions::oneOrMore,
+            List.of("input"), Map.of());
+
+        registerFunction("fn", "exactly-one", cardinalityFunctions::exactlyOne,
+            List.of("input"), Map.of());
+
+
+        registerFunction("fn", "default-collation", this::defaultCollation, List.of(), Map.of());
+
         final Map<String, ParseTree> DEFAULT_COLLATION_MAP = Map.of("collation", DEFAULT_COLLATION);
+        List<String> valueSubstringCollation = List.of("value", "substring", "collation");
         registerFunction("fn", "contains",
-            functionsBasedOnSubstringMatching::contains, 2, 3, DEFAULT_COLLATION_MAP);
+            functionsBasedOnSubstringMatching::contains, valueSubstringCollation, DEFAULT_COLLATION_MAP);
         registerFunction("fn", "starts-with",
-            functionsBasedOnSubstringMatching::startsWith, 2, 3, DEFAULT_COLLATION_MAP);
+            functionsBasedOnSubstringMatching::startsWith, valueSubstringCollation, DEFAULT_COLLATION_MAP);
         registerFunction("fn", "ends-with",
-            functionsBasedOnSubstringMatching::endsWith, 2, 3, DEFAULT_COLLATION_MAP);
+            functionsBasedOnSubstringMatching::endsWith, valueSubstringCollation, DEFAULT_COLLATION_MAP);
         registerFunction("fn", "substring-after",
-            functionsBasedOnSubstringMatching::substringAfter, 2, 3, DEFAULT_COLLATION_MAP);
+            functionsBasedOnSubstringMatching::substringAfter, valueSubstringCollation, DEFAULT_COLLATION_MAP);
         registerFunction("fn", "substring-before",
-            functionsBasedOnSubstringMatching::substringBefore, 2, 3, DEFAULT_COLLATION_MAP);
+            functionsBasedOnSubstringMatching::substringBefore, valueSubstringCollation, DEFAULT_COLLATION_MAP);
 
 
-        registerFunction("fn", "char", functionsOnStringValues::char_, 1, 1, Map.of());
-        registerFunction("fn", "characters", functionsOnStringValues::characters, 1, 1, Map.of());
-        registerFunction("fn", "graphemes", functionsOnStringValues::graphemes, 1, 1, Map.of());
-        registerFunction("fn", "concat", functionsOnStringValues::concat, 0, 1, Map.of());
-        registerFunction("fn", "string-join", functionsOnStringValues::stringJoin, 1, 2, Map.of());
-        registerFunction("fn", "substring", functionsOnStringValues::substring, 2, 3, Map.of());
-        registerFunction("fn", "string-length", functionsOnStringValues::stringLength, 0, 1, Map.of());
-        registerFunction("fn", "normalize-space", functionsOnStringValues::normalizeSpace, 0, 1, Map.of());
-        registerFunction("fn", "normalize-unicode", functionsOnStringValues::normalizeUnicode, 1, 2, Map.of());
-        registerFunction("fn", "upper-case", functionsOnStringValues::upperCase, 1, 1, Map.of());
-        registerFunction("fn", "lower-case", functionsOnStringValues::lowerCase, 1, 1, Map.of());
-        registerFunction("fn", "translate", functionsOnStringValues::translate, 3, 3, Map.of());
+        registerFunction("fn", "char", functionsOnStringValues::char_,
+            List.of("value"), Map.of());
 
-        registerFunction("fn", "replace", this::replace, 0, 0, Map.of());
-        registerFunction("fn", "position", this::position, 0, 0, Map.of());
-        registerFunction("fn", "last", this::last, 0, 0, Map.of());
+        registerFunction("fn", "characters", functionsOnStringValues::characters,
+            List.of("value"), Map.of());
 
-        registerFunction("math", "pi", mathFunctions::pi, 0, 0, Map.of());
-        registerFunction("math", "e", mathFunctions::e, 0, 0, Map.of());
-        registerFunction("math", "exp", mathFunctions::exp, 1, 1, Map.of());
-        registerFunction("math", "exp10", mathFunctions::exp10,1, 1, Map.of());
-        registerFunction("math", "log", mathFunctions::log, 1, 1, Map.of());
-        registerFunction("math", "log10", mathFunctions::log10, 1, 1, Map.of());
-        registerFunction("math", "pow", mathFunctions::pow, 2, 2, Map.of());
-        registerFunction("math", "sqrt", mathFunctions::sqrt, 1, 1, Map.of());
-        registerFunction("math", "sin", mathFunctions::sin, 1, 1, Map.of());
-        registerFunction("math", "cos", mathFunctions::cos, 1, 1, Map.of());
-        registerFunction("math", "tan", mathFunctions::tan, 1, 1, Map.of());
-        registerFunction("math", "asin", mathFunctions::asin, 1, 1, Map.of());
-        registerFunction("math", "acos", mathFunctions::acos, 1, 1, Map.of());
-        registerFunction("math", "atan", mathFunctions::atan, 1, 1, Map.of());
-        registerFunction("math", "atan2", mathFunctions::atan2, 2, 2, Map.of());
-        registerFunction("math", "sinh", mathFunctions::sinh, 1, 1, Map.of());
-        registerFunction("math", "cosh", mathFunctions::cosh, 1, 1, Map.of());
-        registerFunction("math", "tanh", mathFunctions::tanh, 1, 1, Map.of());
+        registerFunction("fn", "graphemes", functionsOnStringValues::graphemes,
+            List.of("value"), Map.of());
 
-        registerFunction("op", "numeric-add", numericOperators::numericAdd, 2, 2, Map.of());
-        registerFunction("op", "numeric-subtract", numericOperators::numericSubtract, 2, 2, Map.of());
-        registerFunction("op", "numeric-multiply", numericOperators::numericMultiply, 2, 2, Map.of());
-        registerFunction("op", "numeric-divide", numericOperators::numericDivide, 2, 2, Map.of());
-        registerFunction("op", "numeric-integer-divide", numericOperators::numericIntegerDivide, 2, 2, Map.of());
-        registerFunction("op", "numeric-mod", numericOperators::numericMod, 2, 2, Map.of());
-        registerFunction("op", "numeric-unary-plus", numericOperators::numericUnaryPlus, 1, 1, Map.of());
-        registerFunction("op", "numeric-unary-minus", numericOperators::numericUnaryMinus, 1, 1, Map.of());
-        registerFunction("op", "numeric-equal", numericOperators::numericEqual, 2, 2, Map.of());
-        registerFunction("op", "numeric-less-than", numericOperators::numericLessThan, 2, 2, Map.of());
-        registerFunction("op", "numeric-less-than-or-equal", numericOperators::numericLessThanOrEqual, 2, 2, Map.of());
-        registerFunction("op", "numeric-greater-than", numericOperators::numericGreaterThan, 2, 2, Map.of());
-        registerFunction("op", "numeric-greater-than-or-equal", numericOperators::numericGreaterThanOrEqual, 2, 2, Map.of());
+        registerFunction("fn", "concat", functionsOnStringValues::concat,
+            List.of("values"), Map.of("values", EMPTY_SEQUENCE));
+
+        registerFunction("fn", "string-join", functionsOnStringValues::stringJoin,
+            List.of("values", "separator"), Map.of("separator", EMPTY_STRING));
+
+        registerFunction("fn", "substring", functionsOnStringValues::substring,
+            List.of("value", "start", "length"), Map.of("length", EMPTY_SEQUENCE));
+
+        registerFunction("fn", "string-length", functionsOnStringValues::stringLength,
+            List.of("value"), Map.of("value", CONTEXT_VALUE)); // := fn:string(.)
+
+        registerFunction("fn", "normalize-space", functionsOnStringValues::normalizeSpace,
+            List.of("value"), Map.of("value", CONTEXT_VALUE)); // := fn:string(.)
+
+        registerFunction("fn", "normalize-unicode", functionsOnStringValues::normalizeUnicode,
+            List.of("value", "form"), Map.of("form", NFC));
+
+        registerFunction("fn", "upper-case", functionsOnStringValues::upperCase,
+            List.of("value"), Map.of());
+
+        registerFunction("fn", "lower-case", functionsOnStringValues::lowerCase,
+            List.of("value"), Map.of());
+
+        registerFunction("fn", "translate", functionsOnStringValues::translate,
+            List.of("value", "map", "trans"), Map.of());
+
+
+        registerFunction("fn", "replace", this::replace, List.of(), Map.of());
+        registerFunction("fn", "position", this::position, List.of(), Map.of());
+        registerFunction("fn", "last", this::last, List.of(), Map.of());
+
+        registerFunction("math", "pi", mathFunctions::pi,
+            List.of(), Map.of());
+
+        registerFunction("math", "e", mathFunctions::e,
+            List.of(), Map.of());
+
+        registerFunction("math", "exp", mathFunctions::exp,
+            List.of("value"), Map.of());
+
+        registerFunction("math", "exp10", mathFunctions::exp10,
+            List.of("value"), Map.of());
+
+        registerFunction("math", "log", mathFunctions::log,
+            List.of("value"), Map.of());
+
+        registerFunction("math", "log10", mathFunctions::log10,
+            List.of("value"), Map.of());
+
+        registerFunction("math", "pow", mathFunctions::pow,
+            List.of("x", "y"), Map.of());
+
+        registerFunction("math", "sqrt", mathFunctions::sqrt,
+            List.of("value"), Map.of());
+
+        registerFunction("math", "sin", mathFunctions::sin,
+            List.of("radians"), Map.of());
+
+        registerFunction("math", "cos", mathFunctions::cos,
+            List.of("radians"), Map.of());
+
+        registerFunction("math", "tan", mathFunctions::tan,
+            List.of("radians"), Map.of());
+
+        registerFunction("math", "asin", mathFunctions::asin,
+            List.of("value"), Map.of());
+
+        registerFunction("math", "acos", mathFunctions::acos,
+            List.of("value"), Map.of());
+
+        registerFunction("math", "atan", mathFunctions::atan,
+            List.of("value"), Map.of());
+
+        registerFunction("math", "atan2", mathFunctions::atan2,
+            List.of("y", "x"), Map.of());
+
+        registerFunction("math", "sinh", mathFunctions::sinh,
+            List.of("value"), Map.of());
+
+        registerFunction("math", "cosh", mathFunctions::cosh,
+            List.of("value"), Map.of());
+
+        registerFunction("math", "tanh", mathFunctions::tanh,
+            List.of("value"), Map.of());
+
+
+        registerFunction("op", "numeric-add", numericOperators::numericAdd,
+            List.of("arg1", "arg2"), Map.of());
+
+        registerFunction("op", "numeric-subtract", numericOperators::numericSubtract,
+            List.of("arg1", "arg2"), Map.of());
+
+        registerFunction("op", "numeric-multiply", numericOperators::numericMultiply,
+            List.of("arg1", "arg2"), Map.of());
+
+        registerFunction("op", "numeric-divide", numericOperators::numericDivide,
+            List.of("arg1", "arg2"), Map.of());
+
+        registerFunction("op", "numeric-integer-divide", numericOperators::numericIntegerDivide,
+            List.of("arg1", "arg2"), Map.of());
+
+        registerFunction("op", "numeric-mod", numericOperators::numericMod,
+            List.of("arg1", "arg2"), Map.of());
+
+        registerFunction("op", "numeric-unary-plus", numericOperators::numericUnaryPlus,
+            List.of("arg"), Map.of());
+
+        registerFunction("op", "numeric-unary-minus", numericOperators::numericUnaryMinus,
+            List.of("arg"), Map.of());
+
+        registerFunction("op", "numeric-equal", numericOperators::numericEqual,
+            List.of("arg1", "arg2"), Map.of());
+
+        registerFunction("op", "numeric-less-than", numericOperators::numericLessThan,
+            List.of("arg1", "arg2"), Map.of());
+
+        registerFunction("op", "numeric-less-than-or-equal", numericOperators::numericLessThanOrEqual,
+            List.of("arg1", "arg2"), Map.of());
+
+        registerFunction("op", "numeric-greater-than", numericOperators::numericGreaterThan,
+            List.of("arg1", "arg2"), Map.of());
+
+        registerFunction("op", "numeric-greater-than-or-equal", numericOperators::numericGreaterThanOrEqual,
+            List.of("arg1", "arg2"), Map.of());
+
     }
 
     /**
@@ -334,7 +486,9 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         }
     }
 
-    private void registerFunction(String namespace, String localName, XQueryFunction function, int minArity, int maxArity, Map<String, ParseTree> defaultArguments) {
+    private void registerFunction(String namespace, String localName, XQueryFunction function, List<String> argNames, Map<String, ParseTree> defaultArguments) {
+        final var maxArity = argNames.size();
+        final var minArity = maxArity - defaultArguments.size();
         final FunctionEntry functionEntry = new FunctionEntry(function, minArity, maxArity, defaultArguments);
         final Map<String, List<FunctionEntry>> namespaceFunctions = namespaces.computeIfAbsent(namespace, _ -> new HashMap<>());
         final List<FunctionEntry> functionsWithDesiredName = namespaceFunctions.computeIfAbsent(localName, _ -> new ArrayList<FunctionEntry>());

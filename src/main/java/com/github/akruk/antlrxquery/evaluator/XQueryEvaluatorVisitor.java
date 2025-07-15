@@ -1714,4 +1714,16 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
                 .collect(Collectors.joining(" "));
     }
 
+
+    @Override
+    public XQueryValue visitCurlyArrayConstructor(CurlyArrayConstructorContext ctx) {
+        return valueFactory.array(ctx.enclosedExpr().accept(this).atomize());
+    }
+
+
+    @Override
+    public XQueryValue visitSquareArrayConstructor(SquareArrayConstructorContext ctx) {
+        List<XQueryValue> values = ctx.exprSingle().stream().map(this::visit).toList();
+        return valueFactory.sequence(values);
+    }
 }

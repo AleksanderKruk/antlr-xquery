@@ -98,16 +98,17 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         this.parsingNumbers = new ParsingNumbers(valueFactory, parser);
         this.processingStrings = new ProcessingStrings(valueFactory, parser);
 
-        Map<String, ParseTree> optionalNodeArg = Map.of( "node", CONTEXT_VALUE);
+        final Map<String, ParseTree> optionalNodeArg = Map.of( "node", CONTEXT_VALUE);
 
         // Accessors
-        Map<String, ParseTree> defaultNodeArg = Map.of("node", CONTEXT_VALUE);
-        Map<String, ParseTree> defaultValueArg = Map.of("value", CONTEXT_VALUE);
-        Map<String, ParseTree> defaultInputArg = Map.of("input", CONTEXT_VALUE);
+        final Map<String, ParseTree> defaultNodeArg = Map.of("node", CONTEXT_VALUE);
+        final Map<String, ParseTree> defaultValueArg = Map.of("value", CONTEXT_VALUE);
+        final Map<String, ParseTree> defaultInputArg = Map.of("input", CONTEXT_VALUE);
 
         registerFunction("fn", "name", accessors::nodeName, List.of("node"), defaultNodeArg);
         registerFunction("fn", "node-name", accessors::nodeName, List.of("node"), defaultNodeArg);
-        registerFunction("fn", "string", accessors::string, List.of("value"), defaultValueArg);
+        final List<String> valueArg = List.of("value");
+        registerFunction("fn", "string", accessors::string, valueArg, defaultValueArg);
         registerFunction("fn", "data", accessors::data, List.of("input"), defaultInputArg);
 
 
@@ -125,13 +126,13 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
 
         // Processing numerics
         registerFunction("fn", "abs", functionsOnNumericValues::abs,
-            List.of("value"), Map.of());
+            valueArg, Map.of());
 
         registerFunction("fn", "ceiling", functionsOnNumericValues::ceiling,
-            List.of("value"), Map.of());
+            valueArg, Map.of());
 
         registerFunction("fn", "floor", functionsOnNumericValues::floor,
-            List.of("value"), Map.of());
+            valueArg, Map.of());
 
         registerFunction("fn", "round", functionsOnNumericValues::round,
             List.of("value", "precision", "mode"),
@@ -150,7 +151,7 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
 
 
         // Processing sequences
-        Map<String, ParseTree> emptyInputArg = Map.of("input", EMPTY_SEQUENCE);
+        final Map<String, ParseTree> emptyInputArg = Map.of("input", EMPTY_SEQUENCE);
         registerFunction("fn", "empty", processingSequences::empty,
             List.of("input"), Map.of());
 
@@ -226,7 +227,7 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         registerFunction("fn", "default-collation", this::defaultCollation, List.of(), Map.of());
 
         final Map<String, ParseTree> DEFAULT_COLLATION_MAP = Map.of("collation", DEFAULT_COLLATION);
-        List<String> valueSubstringCollation = List.of("value", "substring", "collation");
+        final List<String> valueSubstringCollation = List.of("value", "substring", "collation");
         registerFunction("fn", "contains",
             functionsBasedOnSubstringMatching::contains, valueSubstringCollation, DEFAULT_COLLATION_MAP);
         registerFunction("fn", "starts-with",
@@ -239,14 +240,11 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
             functionsBasedOnSubstringMatching::substringBefore, valueSubstringCollation, DEFAULT_COLLATION_MAP);
 
 
-        registerFunction("fn", "char", functionsOnStringValues::char_,
-            List.of("value"), Map.of());
+        registerFunction("fn", "char", functionsOnStringValues::char_, valueArg, Map.of());
 
-        registerFunction("fn", "characters", functionsOnStringValues::characters,
-            List.of("value"), Map.of());
+        registerFunction("fn", "characters", functionsOnStringValues::characters, valueArg, Map.of());
 
-        registerFunction("fn", "graphemes", functionsOnStringValues::graphemes,
-            List.of("value"), Map.of());
+        registerFunction("fn", "graphemes", functionsOnStringValues::graphemes, valueArg, Map.of());
 
         registerFunction("fn", "concat", functionsOnStringValues::concat,
             List.of("values"), Map.of("values", EMPTY_SEQUENCE));
@@ -258,19 +256,19 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
             List.of("value", "start", "length"), Map.of("length", EMPTY_SEQUENCE));
 
         registerFunction("fn", "string-length", functionsOnStringValues::stringLength,
-            List.of("value"), Map.of("value", CONTEXT_VALUE)); // := fn:string(.)
+            valueArg, Map.of("value", CONTEXT_VALUE)); // := fn:string(.)
 
         registerFunction("fn", "normalize-space", functionsOnStringValues::normalizeSpace,
-            List.of("value"), Map.of("value", CONTEXT_VALUE)); // := fn:string(.)
+            valueArg, Map.of("value", CONTEXT_VALUE)); // := fn:string(.)
 
         registerFunction("fn", "normalize-unicode", functionsOnStringValues::normalizeUnicode,
             List.of("value", "form"), Map.of("form", NFC));
 
         registerFunction("fn", "upper-case", functionsOnStringValues::upperCase,
-            List.of("value"), Map.of());
+            valueArg, Map.of());
 
         registerFunction("fn", "lower-case", functionsOnStringValues::lowerCase,
-            List.of("value"), Map.of());
+            valueArg, Map.of());
 
         registerFunction("fn", "translate", functionsOnStringValues::translate,
             List.of("value", "map", "trans"), Map.of());
@@ -287,22 +285,22 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
             List.of(), Map.of());
 
         registerFunction("math", "exp", mathFunctions::exp,
-            List.of("value"), Map.of());
+            valueArg, Map.of());
 
         registerFunction("math", "exp10", mathFunctions::exp10,
-            List.of("value"), Map.of());
+            valueArg, Map.of());
 
         registerFunction("math", "log", mathFunctions::log,
-            List.of("value"), Map.of());
+            valueArg, Map.of());
 
         registerFunction("math", "log10", mathFunctions::log10,
-            List.of("value"), Map.of());
+            valueArg, Map.of());
 
         registerFunction("math", "pow", mathFunctions::pow,
             List.of("x", "y"), Map.of());
 
         registerFunction("math", "sqrt", mathFunctions::sqrt,
-            List.of("value"), Map.of());
+            valueArg, Map.of());
 
         registerFunction("math", "sin", mathFunctions::sin,
             List.of("radians"), Map.of());
@@ -314,25 +312,25 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
             List.of("radians"), Map.of());
 
         registerFunction("math", "asin", mathFunctions::asin,
-            List.of("value"), Map.of());
+            valueArg, Map.of());
 
         registerFunction("math", "acos", mathFunctions::acos,
-            List.of("value"), Map.of());
+            valueArg, Map.of());
 
         registerFunction("math", "atan", mathFunctions::atan,
-            List.of("value"), Map.of());
+            valueArg, Map.of());
 
         registerFunction("math", "atan2", mathFunctions::atan2,
             List.of("y", "x"), Map.of());
 
         registerFunction("math", "sinh", mathFunctions::sinh,
-            List.of("value"), Map.of());
+            valueArg, Map.of());
 
         registerFunction("math", "cosh", mathFunctions::cosh,
-            List.of("value"), Map.of());
+            valueArg, Map.of());
 
         registerFunction("math", "tanh", mathFunctions::tanh,
-            List.of("value"), Map.of());
+            valueArg, Map.of());
 
 
         registerFunction("op", "numeric-add", numericOperators::numericAdd,
@@ -381,52 +379,52 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
      * Returns the URI of the default collation from the dynamic context.
      */
     public XQueryValue defaultCollation(
-            XQueryVisitingContext context,
-            List<XQueryValue> args,
-            Map<String,XQueryValue> kwargs)
+            final XQueryVisitingContext context,
+            final List<XQueryValue> args,
+            final Map<String,XQueryValue> kwargs)
     {
         return valueFactory.string(Collations.CODEPOINT_URI);
     }
 
-    public XQueryValue not(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
+    public XQueryValue not(final XQueryVisitingContext context, final List<XQueryValue> args, final Map<String, XQueryValue> kwargs) {
         if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         return args.get(0).not();
     }
 
 
-    public XQueryValue true_(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
+    public XQueryValue true_(final XQueryVisitingContext context, final List<XQueryValue> args, final Map<String, XQueryValue> kwargs) {
         if (!args.isEmpty()) return XQueryError.WrongNumberOfArguments;
         return valueFactory.bool(true);
     }
 
-    public XQueryValue false_(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
+    public XQueryValue false_(final XQueryVisitingContext context, final List<XQueryValue> args, final Map<String, XQueryValue> kwargs) {
         if (!args.isEmpty()) return XQueryError.WrongNumberOfArguments;
         return valueFactory.bool(false);
     }
 
-    public XQueryValue distinctValues(XQueryVisitingContext ctx, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
+    public XQueryValue distinctValues(final XQueryVisitingContext ctx, final List<XQueryValue> args, final Map<String, XQueryValue> kwargs) {
         if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         return args.get(0).distinctValues();
     }
 
 
 
-    public XQueryValue position(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
+    public XQueryValue position(final XQueryVisitingContext context, final List<XQueryValue> args, final Map<String, XQueryValue> kwargs) {
         if (!args.isEmpty()) return XQueryError.WrongNumberOfArguments;
         return valueFactory.number(context.getPosition());
     }
 
-    public XQueryValue last(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
+    public XQueryValue last(final XQueryVisitingContext context, final List<XQueryValue> args, final Map<String, XQueryValue> kwargs) {
         if (!args.isEmpty()) return XQueryError.WrongNumberOfArguments;
         return valueFactory.number(context.getSize());
     }
 
     record ParseFlagsResult(int flags, String newPattern, String newReplacement) {}
 
-    public ParseFlagsResult parseFlags(String flags, String pattern, String replacement) {
+    public ParseFlagsResult parseFlags(final String flags, String pattern, String replacement) {
         int flagBitMap = 0;
-        Set<Character> uniqueFlags = flags.chars().mapToObj(i->(char) i).collect(Collectors.toSet());
-        for (char c : uniqueFlags) {
+        final Set<Character> uniqueFlags = flags.chars().mapToObj(i->(char) i).collect(Collectors.toSet());
+        for (final char c : uniqueFlags) {
             flagBitMap = switch (c) {
                 case 'q' -> {
                     pattern = Pattern.quote(pattern);
@@ -454,31 +452,31 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         return new ParseFlagsResult(flagBitMap, pattern, replacement);
     }
 
-    public XQueryValue replace(XQueryVisitingContext context,
-                                List<XQueryValue> args,
-                                Map<String, XQueryValue> kwargs)
+    public XQueryValue replace(final XQueryVisitingContext context,
+                                final List<XQueryValue> args,
+                                final Map<String, XQueryValue> kwargs)
     {
         if (args.size() == 3) {
             try {
-                String input = args.get(0).stringValue();
-                String pattern = args.get(1).stringValue();
-                String replacement = args.get(2).stringValue();
-                String result = input.replaceAll(pattern, replacement);
+                final String input = args.get(0).stringValue();
+                final String pattern = args.get(1).stringValue();
+                final String replacement = args.get(2).stringValue();
+                final String result = input.replaceAll(pattern, replacement);
                 return valueFactory.string(result);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 return XQueryError.InvalidRegex;
             }
         } else if (args.size() == 4) {
             try {
-                String input = args.get(0).stringValue();
-                String pattern = args.get(1).stringValue();
-                String replacement = args.get(2).stringValue();
-                String flags = args.get(3).stringValue();
-                var parsed = parseFlags(flags, pattern, replacement);
-                Pattern compiled = Pattern.compile(parsed.newPattern(), parsed.flags());
-                String result = compiled.matcher(input).replaceAll(parsed.newReplacement());
+                final String input = args.get(0).stringValue();
+                final String pattern = args.get(1).stringValue();
+                final String replacement = args.get(2).stringValue();
+                final String flags = args.get(3).stringValue();
+                final var parsed = parseFlags(flags, pattern, replacement);
+                final Pattern compiled = Pattern.compile(parsed.newPattern(), parsed.flags());
+                final String result = compiled.matcher(input).replaceAll(parsed.newReplacement());
                 return valueFactory.string(result);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 return XQueryError.InvalidRegexFlags;
             }
         } else {
@@ -486,7 +484,7 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         }
     }
 
-    private void registerFunction(String namespace, String localName, XQueryFunction function, List<String> argNames, Map<String, ParseTree> defaultArguments) {
+    private void registerFunction(final String namespace, final String localName, final XQueryFunction function, final List<String> argNames, final Map<String, ParseTree> defaultArguments) {
         final var maxArity = argNames.size();
         final var minArity = maxArity - defaultArguments.size();
         final FunctionEntry functionEntry = new FunctionEntry(function, minArity, maxArity, defaultArguments);
@@ -500,34 +498,34 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
             return error != null;
         }
     }
-    private FunctionOrError getFunction(String namespace, String functionName, long arity) {
-        Map<String, List<FunctionEntry>> functionsInNs = namespaces.get(namespace);
+    private FunctionOrError getFunction(final String namespace, final String functionName, final long arity) {
+        final Map<String, List<FunctionEntry>> functionsInNs = namespaces.get(namespace);
         if (functionsInNs == null) {
             return new FunctionOrError(null, XQueryError.UnknownFunctionName);
         }
-        List<FunctionEntry> functionsWithGivenName = functionsInNs.get(functionName);
-        Predicate<FunctionEntry> withinArityRange = f -> (f.minArity() <= arity && arity <= f.maxArity());
-        Optional<FunctionEntry> functionWithRequiredArity = functionsWithGivenName.stream().filter(withinArityRange).findFirst();
+        final List<FunctionEntry> functionsWithGivenName = functionsInNs.get(functionName);
+        final Predicate<FunctionEntry> withinArityRange = f -> (f.minArity() <= arity && arity <= f.maxArity());
+        final Optional<FunctionEntry> functionWithRequiredArity = functionsWithGivenName.stream().filter(withinArityRange).findFirst();
         if (!functionWithRequiredArity.isPresent())
             return new FunctionOrError(null, XQueryError.WrongNumberOfArguments);
         return new FunctionOrError(functionWithRequiredArity.get(), null);
     }
 
     @Override
-    public XQueryValue call(String namespace, String functionName, XQueryVisitingContext context,
-            List<XQueryValue> args, Map<String, XQueryValue> keywordArgs)
+    public XQueryValue call(final String namespace, final String functionName, final XQueryVisitingContext context,
+            final List<XQueryValue> args, final Map<String, XQueryValue> keywordArgs)
     {
         final long arity = args.size() + keywordArgs.size();
-        FunctionOrError functionOrError = getFunction(namespace, functionName, arity);
+        final FunctionOrError functionOrError = getFunction(namespace, functionName, arity);
         if (functionOrError.isError())
             return functionOrError.error();
-        FunctionEntry functionEntry = functionOrError.entry();
+        final FunctionEntry functionEntry = functionOrError.entry();
         // functionEntry.defaultArguments;
         final var function = functionEntry.function;
         final var defaultArgs = functionEntry.defaultArguments;
         final Stream<String> defaultedArgumentNames = functionEntry.defaultArguments.keySet().stream().filter(name-> !keywordArgs.containsKey(name));
         final Map<String, XQueryValue> defaultedArguments = defaultedArgumentNames.collect(Collectors.toMap(name->name, name->{
-                ParseTree default_ = defaultArgs.get(name);
+                final ParseTree default_ = defaultArgs.get(name);
                 return default_.accept(evaluator);
             }));
         keywordArgs.putAll(defaultedArguments);
@@ -535,8 +533,8 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
     }
 
     @Override
-    public XQueryValue getFunctionReference(String namespace, String functionName, long arity) {
-        FunctionOrError function = getFunction(namespace, functionName, arity);
+    public XQueryValue getFunctionReference(final String namespace, final String functionName, final long arity) {
+        final FunctionOrError function = getFunction(namespace, functionName, arity);
         if (function.isError()) {
             return XQueryError.UnknownFunctionName;
         }
@@ -545,7 +543,7 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
     }
 
 
-    private static ParseTree getTree(final String xquery, Function<AntlrXqueryParser, ParseTree> initialRule) {
+    private static ParseTree getTree(final String xquery, final Function<AntlrXqueryParser, ParseTree> initialRule) {
         final CodePointCharStream charStream = CharStreams.fromString(xquery);
         final AntlrXqueryLexer lexer = new AntlrXqueryLexer(charStream);
         final CommonTokenStream stream = new CommonTokenStream(lexer);

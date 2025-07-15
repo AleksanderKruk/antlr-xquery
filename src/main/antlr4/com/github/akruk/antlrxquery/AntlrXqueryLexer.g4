@@ -77,6 +77,9 @@ TRY: 'try' ;
 CATCH: 'catch' ;
 FINALLY: 'finally' ;
 
+PIPE_ARROW: '->';
+CASTABLE: 'castable';
+
 COMMENT: '(:' .*? ':)'-> channel(HIDDEN);
 WS: [\p{White_Space}]+ -> channel(HIDDEN);
 FOR: 'for';

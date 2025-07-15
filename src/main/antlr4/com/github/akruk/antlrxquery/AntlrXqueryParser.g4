@@ -54,6 +54,8 @@ pureNameTestUnion	:	nameTest ('|' nameTest)*;
 
 
 
+
+
 orExpr: andExpr ( OR andExpr)*;
 andExpr: comparisonExpr ( AND comparisonExpr )*;
 comparisonExpr: otherwiseExpr ((valueComp | generalComp | nodeComp) otherwiseExpr)?;
@@ -63,9 +65,11 @@ additiveExpr: multiplicativeExpr (additiveOperator multiplicativeExpr)*;
 multiplicativeExpr: unionExpr (multiplicativeOperator unionExpr )*;
 unionExpr: intersectExpr (unionOperator intersectExpr)*;
 intersectExpr: instanceofExpr (exceptOrIntersect instanceofExpr)*;
-instanceofExpr: treatExpr (INSTANCE OF treatExpr)*;
-treatExpr: castableExpr (TREAT AS castableExpr)*;
-castableExpr: arrowExpr ((CAST AS) singleType)*;
+instanceofExpr: treatExpr (INSTANCE OF treatExpr)?;
+treatExpr: castableExpr (TREAT AS castExpr)?;
+castableExpr: castExpr ((CASTABLE AS) singleType)?;
+castExpr: pipelineExpr ((CAST AS) singleType)*;
+pipelineExpr:	arrowExpr (PIPE_ARROW arrowExpr)*;
 arrowExpr: unaryExpr (ARROW arrowFunctionSpecifier argumentList)*;
 unaryExpr: (MINUS | PLUS)? simpleMapExpr;
 simpleMapExpr: pathExpr (EXCLAMATION_MARK pathExpr)*;

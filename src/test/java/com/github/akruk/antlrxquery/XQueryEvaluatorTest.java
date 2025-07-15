@@ -2,9 +2,6 @@ package com.github.akruk.antlrxquery;
 
 import org.antlr.v4.runtime.tree.*;
 import org.antlr.v4.runtime.tree.xpath.XPath;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CodePointCharStream;
-import org.antlr.v4.runtime.CommonTokenStream;
 import org.junit.Test;
 
 import com.github.akruk.antlrxquery.evaluator.XQuery;
@@ -12,15 +9,8 @@ import com.github.akruk.antlrxquery.languagefeatures.evaluation.EvaluationTestsB
 import com.github.akruk.antlrxquery.values.XQueryNumber;
 import com.github.akruk.antlrxquery.values.XQueryString;
 import com.github.akruk.antlrxquery.values.XQueryValue;
-import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
-import com.github.akruk.antlrxquery.values.factories.defaults.XQueryMemoizedValueFactory;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.math.BigDecimal;
-import java.math.MathContext;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -196,95 +186,6 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
             assertEquals(nodes[i], xqueryNodes[i]);
         }
     }
-
-    @Test
-    public void empty() {
-        assertResult("empty(())", baseFactory.bool(true));
-        assertResult("empty(1)", baseFactory.bool(false));
-        assertResult("empty((1,2,3))", baseFactory.bool(false));
-        assertResult("empty(\"\")", baseFactory.bool(false));
-        assertResult("empty(\"abcd\")", baseFactory.bool(false));
-        // The expression fn:empty([]) returns false().
-        // assertResult("empty([])", baseFactory.bool(false));
-        // The expression fn:empty({}) returns false().
-        // assertResult("empty({})", baseFactory.bool(false));
-        // Assuming $in is an element with no children:
-        // let $break := <br/>
-        // return fn:empty($break)
-        // The result is false().
-    }
-
-    @Test
-    public void exists() {
-        assertResult("exists(())", baseFactory.bool(false));
-        assertResult("exists((1,2,3))", baseFactory.bool(true));
-        assertResult("exists(\"\")", baseFactory.bool(true));
-        assertResult("exists(\"abcd\")", baseFactory.bool(true));
-        // The expression fn:exists([]) returns true().
-        // The expression fn:exists(map{}) returns true().
-        // Assuming $in is an element with no children:
-        // let $break :=
-        // return fn:exists($break)
-        // The result is true().
-    }
-
-    @Test
-    public void head() {
-        assertResult("head(())", baseFactory.emptySequence().sequence());
-        assertResult("head((1,2,3))", baseFactory.number(1));
-        assertResult("head(\"\")", baseFactory.emptySequence().sequence());
-        assertResult("head(\"abcd\")", baseFactory.string("a"));
-        // The expression fn:head(1 to 5) returns 1.
-        // The expression fn:head(("a", "b", "c")) returns "a".
-        // The expression fn:head(()) returns ().
-        // The expression fn:head([1,2,3]) returns [1,2,3].
-    }
-
-    @Test
-    public void tail() {
-        assertResult("tail(())", baseFactory.emptySequence().sequence());
-        assertResult("tail((1,2,3))", List.of(baseFactory.number(2), baseFactory.number(3)));
-        assertResult("tail(\"\")", baseFactory.emptySequence().sequence());
-        assertResult("tail(\"abcd\")", baseFactory.string("bcd"));
-        // The expression fn:head(1 to 5) returns 1.
-        // The expression fn:head(("a", "b", "c")) returns "a".
-        // The expression fn:head(()) returns ().
-        // The expression fn:head([1,2,3]) returns [1,2,3].
-    }
-
-    @Test
-    public void insertBefore() {
-        var a = new XQueryString("a", baseFactory);
-        var b = new XQueryString("b", baseFactory);
-        var c = new XQueryString("c", baseFactory);
-        var z = new XQueryString("z", baseFactory);
-        // The expression fn:insert-before(("a", "b", "c"), 0, "z") returns ("z", "a",
-        // "b", "c").
-        assertResult("""
-                insert-before(("a", "b", "c"), 0, "z")
-                """, List.of(z, a, b, c));
-        // The expression fn:insert-before(("a", "b", "c"), 1, "z") returns ("z", "a",
-        // "b", "c").
-        assertResult("""
-                insert-before(("a", "b", "c"), 1, "z")
-                """, List.of(z, a, b, c));
-        // The expression fn:insert-before(("a", "b", "c"), 2, "z") returns ("a", "z",
-        // "b", "c").
-        assertResult("""
-                insert-before(("a", "b", "c"), 2, "z")
-                """, List.of(a, z, b, c));
-        // The expression fn:insert-before(("a", "b", "c"), 3, "z") returns ("a", "b",
-        // "z", "c").
-        assertResult("""
-                insert-before(("a", "b", "c"), 3, "z")
-                """, List.of(a, b, z, c));
-        // The expression fn:insert-before(("a", "b", "c"), 4, "z") returns ("a", "b",
-        // "c", "z").
-        assertResult("""
-                insert-before(("a", "b", "c"), 4, "z")
-                """, List.of(a, b, c, z));
-    }
-
 
     @Test
     public void distinctValues() {

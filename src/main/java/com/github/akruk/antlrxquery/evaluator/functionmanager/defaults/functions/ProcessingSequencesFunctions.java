@@ -7,9 +7,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.antlr.v4.runtime.Parser;
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.tree.ParseTree;
-
 import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
 import com.github.akruk.antlrxquery.values.XQueryError;
 import com.github.akruk.antlrxquery.values.XQueryValue;
@@ -303,7 +300,7 @@ public class ProcessingSequencesFunctions {
         if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         var input = args.get(0);
 
-        var sequence = input.sequence();
+        var sequence = input.atomize();
         if (sequence.isEmpty()) return valueFactory.emptySequence();
 
         return valueFactory.sequence(sequence.subList(1, sequence.size()));

@@ -1,7 +1,5 @@
 package com.github.akruk.antlrxquery.languagefeatures.semantics.flworexpression;
 
-import java.util.List;
-
 import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
@@ -19,6 +17,11 @@ public class FLWORExpressionSemanticTests extends SemanticTestsBase {
     public void forClauseBinding() {
         assertType("for $x in (1, 2, 3) return $x", typeFactory.oneOrMore(typeFactory.itemNumber()));
     }
+
+    // @Test
+    // public void forMembers() {
+    //     assertType("for $x in (1, 2, 3) return $x", typeFactory.oneOrMore(typeFactory.itemNumber()));
+    // }
 
     @Test
     public void indexVariableBinding() {

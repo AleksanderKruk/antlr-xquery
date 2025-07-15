@@ -25,6 +25,51 @@ import com.github.akruk.antlrxquery.values.factories.defaults.XQueryMemoizedValu
 public class EvaluationTestsBase {
     public XQueryValueFactory baseFactory = new XQueryMemoizedValueFactory();
 
+    public static boolean deepEquals(XQueryValue sequence1, XQueryValue sequence2) {
+        if (sequence1 == sequence2) {
+            return true;
+        }
+
+        if (sequence1 == null || sequence2 == null) {
+            return false;
+        }
+
+        List<XQueryValue> seq1 = sequence1.sequence();
+        List<XQueryValue> seq2 = sequence2.sequence();
+
+        if (seq1.size() != seq2.size()) {
+            return false;
+        }
+
+        for (int i = 0; i < seq1.size(); i++) {
+            XQueryValue element1 = seq1.get(i);
+            XQueryValue element2 = seq2.get(i);
+
+            if (!deepEqualsElements(element1, element2)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static boolean deepEqualsElements(XQueryValue element1, XQueryValue element2) {
+        if (element1 == element2) {
+            return true;
+        }
+
+        if (element1 == null || element2 == null) {
+            return false;
+        }
+
+        if (element1.sequence() != null && element2.sequence() != null) {
+            return deepEquals(element1, element2);
+        }
+
+        return true;
+    }
+
+
     public void assertResult(String xquery, String result) {
         var value = XQuery.evaluate(null, xquery, null);
         assertNotNull(value);

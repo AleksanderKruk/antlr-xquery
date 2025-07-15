@@ -1038,24 +1038,6 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitInstanceofExpr(final InstanceofExprContext ctx) {
-        // TODO: handle
-        return ctx.treatExpr(0).accept(this);
-    }
-
-    @Override
-    public XQueryValue visitTreatExpr(final TreatExprContext ctx) {
-        // TODO: handle
-        return ctx.castableExpr(0).accept(this);
-    }
-
-    @Override
-    public XQueryValue visitCastableExpr(final CastableExprContext ctx) {
-        // TODO: handle
-        return ctx.arrowExpr().accept(this);
-    }
-
-    @Override
     public XQueryValue visitSimpleMapExpr(final SimpleMapExprContext ctx) {
         final List<PathExprContext> terms = ctx.pathExpr();
         // if there's only one term, no mapping needed

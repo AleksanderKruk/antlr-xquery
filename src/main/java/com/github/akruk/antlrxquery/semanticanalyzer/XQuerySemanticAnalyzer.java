@@ -173,15 +173,15 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
     @Override
     public XQuerySequenceType visitChoiceItemType(final ChoiceItemTypeContext ctx) {
-        List<ItemTypeContext> itemTypes = ctx.itemType();
+        final List<ItemTypeContext> itemTypes = ctx.itemType();
         if (itemTypes.size() == 1) {
             return ctx.itemType(0).accept(this);
         }
-        var choiceItemNames = itemTypes.stream().map(i -> i.getText()).collect(Collectors.toSet());
+        final var choiceItemNames = itemTypes.stream().map(i -> i.getText()).collect(Collectors.toSet());
         if (choiceItemNames.size() != itemTypes.size()) {
             addError(ctx, "Duplicated type signatures in choice item type declaration");
         }
-        var choiceItems = itemTypes.stream().map(i -> i.accept(this)).map(sequenceType -> sequenceType.getItemType())
+        final var choiceItems = itemTypes.stream().map(i -> i.accept(this)).map(sequenceType -> sequenceType.getItemType())
                 .toList();
         return typeFactory.choice(choiceItems);
     }
@@ -468,7 +468,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         final AnalysisResult callAnalysisResult = functionManager.call(
                 namespace, functionName, visitedPositionalArguments, visitedKeywordArguments, context);
         errors.addAll(callAnalysisResult.errors());
-        for (ArgumentSpecification defaultArg : callAnalysisResult.requiredDefaultArguments()) {
+        for (final ArgumentSpecification defaultArg : callAnalysisResult.requiredDefaultArguments()) {
             final var expectedType = defaultArg.type();
             final var receivedType = defaultArg.defaultArgument().accept(this);
             if (!receivedType.isSubtypeOf(expectedType)) {
@@ -621,7 +621,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     // }
 
     private XQueryVisitingSemanticContext saveVisitedContext() {
-        var saved = context;
+        final var saved = context;
         context = new XQueryVisitingSemanticContext();
         return saved;
     }
@@ -782,20 +782,20 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     }
 
     @Override
-    public XQuerySequenceType visitNamedFunctionRef(NamedFunctionRefContext ctx) {
-        int arity = Integer.parseInt(ctx.IntegerLiteral().getText());
-        ResolvedName resolvedName = namespaceResolver.resolve(ctx.qname().getText());
-        var analysis = functionManager.getFunctionReference(resolvedName.namespace(), resolvedName.name(), arity);
+    public XQuerySequenceType visitNamedFunctionRef(final NamedFunctionRefContext ctx) {
+        final int arity = Integer.parseInt(ctx.IntegerLiteral().getText());
+        final ResolvedName resolvedName = namespaceResolver.resolve(ctx.qname().getText());
+        final var analysis = functionManager.getFunctionReference(resolvedName.namespace(), resolvedName.name(), arity);
         errors.addAll(analysis.errors());
         return analysis.result();
     }
 
     @Override
-    public XQuerySequenceType visitSquareArrayConstructor(SquareArrayConstructorContext ctx) {
+    public XQuerySequenceType visitSquareArrayConstructor(final SquareArrayConstructorContext ctx) {
         if (ctx.exprSingle().isEmpty()) {
             return typeFactory.anyArray();
         }
-        XQuerySequenceType arrayType = ctx.exprSingle().stream()
+        final XQuerySequenceType arrayType = ctx.exprSingle().stream()
                 .map(expr -> expr.accept(this))
                 .reduce((t1, t2) -> t1.alternativeMerge(t2))
                 .get();
@@ -803,33 +803,53 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     }
 
     @Override
-    public XQuerySequenceType visitCurlyArrayConstructor(CurlyArrayConstructorContext ctx) {
-        var expressions = ctx.enclosedExpr().expr();
+    public XQuerySequenceType visitCurlyArrayConstructor(final CurlyArrayConstructorContext ctx)
+    {
+        final var expressions = ctx.enclosedExpr().expr();
         if (expressions == null) {
             return typeFactory.anyArray();
         }
 
-        XQuerySequenceType arrayType = expressions.exprSingle().stream()
-                .map(expr -> expr.accept(this))
-                .reduce((t1, t2) -> t1.alternativeMerge(t2))
-                .get();
+        final XQuerySequenceType arrayType = expressions.exprSingle().stream()
+            .map(expr -> expr.accept(this))
+            .reduce((t1, t2) -> t1.alternativeMerge(t2))
+            .get();
         return typeFactory.array(arrayType);
 
     }
 
 
     @Override
-    public XQuerySequenceType visitTryCatchExpr(TryCatchExprContext ctx)
+    public XQuerySequenceType visitPipelineExpr(final PipelineExprContext ctx)
     {
-        var savedContext = saveVisitedContext();
-        XQueryItemType errorType = typeFactory.itemError();
-        var testedExprType = ctx.tryClause().enclosedExpr().accept(this);
-        var alternativeCatches = ctx.catchClause().stream()
+        if (ctx.PIPE_ARROW().isEmpty())
+            return ctx.arrowExpr(0).accept(this);
+        final var saved = saveVisitedContext();
+        final int size = ctx.arrowExpr().size();
+        XQuerySequenceType contextType = ctx.arrowExpr(0).accept(this);
+        for (var i = 1; i < size; i++ ) {
+            final var contextualizedExpr = ctx.arrowExpr(i);
+            context.setType(contextType);
+            context.setPositionType(null);
+            context.setSizeType(null);
+            contextType = contextualizedExpr.accept(this);
+        }
+        context = saved;
+        return contextType;
+    }
+
+    @Override
+    public XQuerySequenceType visitTryCatchExpr(final TryCatchExprContext ctx)
+    {
+        final var savedContext = saveVisitedContext();
+        final XQueryItemType errorType = typeFactory.itemError();
+        final var testedExprType = ctx.tryClause().enclosedExpr().accept(this);
+        final var alternativeCatches = ctx.catchClause().stream()
             .map(c -> {
                 XQuerySequenceType choicedErrors;
                 if (c.pureNameTestUnion() != null) {
-                    var foundErrors = new ArrayList<XQueryItemType>();
-                    for (var error : c.pureNameTestUnion().nameTest()) {
+                    final var foundErrors = new ArrayList<XQueryItemType>();
+                    for (final var error : c.pureNameTestUnion().nameTest()) {
                         var typeRef = typeFactory.itemNamedType(error.getText());
                         if (typeRef == null) {
                             typeRef = errorType;
@@ -859,18 +879,18 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
                 contextManager.entypeVariable("$err:additional", typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
                 contextManager.entypeVariable("$err:map", typeFactory.anyMap());
 
-                var visited = c.enclosedExpr().accept(this);
+                final var visited = c.enclosedExpr().accept(this);
                 contextManager.leaveScope();
                 return visited;
             });
 
 
-        Set<String> errors = new HashSet<>();
+        final Set<String> errors = new HashSet<>();
         // Marking duplicate error type names as errors
-        for (var catchClause : ctx.catchClause()) {
+        for (final var catchClause : ctx.catchClause()) {
             if (catchClause.pureNameTestUnion() != null) {
-                for (var qname : catchClause.pureNameTestUnion().nameTest()) {
-                    String name = qname.getText();
+                for (final var qname : catchClause.pureNameTestUnion().nameTest()) {
+                    final String name = qname.getText();
                     if (errors.contains(name)) {
                         addError(qname, "Error: " + name + "already used in catch clause");
                     } else {
@@ -883,13 +903,13 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
         // Marking multiple catch * {} as errors
         int wildcardCount = 0;
-        for (var catchClause : ctx.catchClause()) {
+        for (final var catchClause : ctx.catchClause()) {
             if (catchClause.wildcard() != null && wildcardCount++ > 1) {
                 addError(catchClause, "Unnecessary catch clause, wildcard already used");
             }
         }
 
-        FinallyClauseContext finallyClause = ctx.finallyClause();
+        final FinallyClauseContext finallyClause = ctx.finallyClause();
         if (finallyClause != null) {
             context = new XQueryVisitingSemanticContext();
             context.setType(typeFactory.anyNode());
@@ -899,7 +919,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             }
         }
         context = savedContext;
-        var mergedAlternativeCatches = alternativeCatches.reduce(XQuerySequenceType::alternativeMerge).get();
+        final var mergedAlternativeCatches = alternativeCatches.reduce(XQuerySequenceType::alternativeMerge).get();
         return testedExprType.alternativeMerge(mergedAlternativeCatches);
     }
 
@@ -907,11 +927,11 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
     @SuppressWarnings("unchecked")
     @Override
-    public XQuerySequenceType visitMapConstructor(MapConstructorContext ctx) {
-        var entries = ctx.mapConstructorEntry();
+    public XQuerySequenceType visitMapConstructor(final MapConstructorContext ctx) {
+        final var entries = ctx.mapConstructorEntry();
         if (entries.isEmpty())
             return typeFactory.anyArray();
-        XQueryItemType keyType = entries.stream()
+        final XQueryItemType keyType = entries.stream()
                 .map(e -> e.mapKeyExpr().accept(this).getItemType())
                 .reduce((t1, t2) -> t1.alternativeMerge(t2))
                 .get();
@@ -921,14 +941,14 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             final List<Entry<String, XQueryRecordField>> recordEntries = new ArrayList<>(enumMembers.size());
             int i = 0;
             for (final var enumMember : enumMembers) {
-                var valueType = entries.get(i).mapValueExpr().accept(this);
+                final var valueType = entries.get(i).mapValueExpr().accept(this);
                 recordEntries.add(Map.entry(enumMember, new XQueryRecordField(valueType, true)));
                 i++;
             }
             return typeFactory.record(Map.ofEntries(recordEntries.toArray(Entry[]::new)));
         }
         // TODO: refine
-        XQuerySequenceType valueType = entries.stream()
+        final XQuerySequenceType valueType = entries.stream()
                 .map(e -> e.mapValueExpr().accept(this))
                 .reduce((t1, t2) -> t1.alternativeMerge(t2)).get();
         return typeFactory.map(keyType, valueType);
@@ -1188,7 +1208,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     }
 
     @Override
-    public XQuerySequenceType visitKeywordArgument(KeywordArgumentContext ctx) {
+    public XQuerySequenceType visitKeywordArgument(final KeywordArgumentContext ctx) {
         final ExprSingleContext keywordAssignedTypeExpr = ctx.argument().exprSingle();
         if (keywordAssignedTypeExpr != null) {
             final var keywordType = keywordAssignedTypeExpr.accept(this);
@@ -1285,7 +1305,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     }
 
     @Override
-    public XQuerySequenceType visitInlineFunctionExpr(InlineFunctionExprContext ctx) {
+    public XQuerySequenceType visitInlineFunctionExpr(final InlineFunctionExprContext ctx) {
         // Is a focus function?
         if (ctx.functionSignature() == null) {
             // TODO: implement focus function
@@ -1329,7 +1349,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
 
     @Override
-    public XQuerySequenceType visitEnclosedExpr(EnclosedExprContext ctx) {
+    public XQuerySequenceType visitEnclosedExpr(final EnclosedExprContext ctx) {
         if (ctx.expr() != null) {
             return ctx.expr().accept(this);
         }

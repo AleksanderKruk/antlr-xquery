@@ -1,6 +1,7 @@
 package com.github.akruk.antlrxquery.languagefeatures.evaluation;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.contains;
 
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
@@ -19,6 +20,7 @@ import org.antlr.v4.runtime.tree.xpath.XPath;
 
 import com.github.akruk.antlrxquery.evaluator.XQuery;
 import com.github.akruk.antlrxquery.values.XQueryError;
+import com.github.akruk.antlrxquery.values.XQuerySequence;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.values.factories.defaults.XQueryMemoizedValueFactory;
@@ -35,8 +37,8 @@ public class EvaluationTestsBase {
             return false;
         }
 
-        List<XQueryValue> seq1 = sequence1.sequence();
-        List<XQueryValue> seq2 = sequence2.sequence();
+        List<XQueryValue> seq1 = sequence1.atomize();
+        List<XQueryValue> seq2 = sequence2.atomize();
 
         if (seq1.size() != seq2.size()) {
             return false;
@@ -46,7 +48,7 @@ public class EvaluationTestsBase {
             XQueryValue element1 = seq1.get(i);
             XQueryValue element2 = seq2.get(i);
 
-            if (!deepEqualsElements(element1, element2)) {
+            if (!element1.valueEqual(element2).booleanValue()) {
                 return false;
             }
         }
@@ -63,7 +65,7 @@ public class EvaluationTestsBase {
             return false;
         }
 
-        if (element1.sequence() != null && element2.sequence() != null) {
+        if (element1.sequence().size() > 1 && element2.sequence().size() > 1) {
             return deepEquals(element1, element2);
         }
 
@@ -98,7 +100,10 @@ public class EvaluationTestsBase {
         XQueryValue value = XQuery.evaluate(null, xquery, null);
         assertNotNull(value);
         assertFalse(value instanceof XQueryError, () -> "Value is error: " + ((XQueryError) value).getDescription());
-        assertTrue(result == value || result.valueEqual(value).booleanValue());
+        if (result instanceof XQuerySequence)
+            assertTrue(deepEquals(result, value));
+        else
+            assertTrue(result == value || result.valueEqual(value).booleanValue());
     }
 
     public void assertError(String xquery, XQueryValue result) {

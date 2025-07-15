@@ -49,7 +49,7 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
 
     @Override
     public List<XQueryValue> sequence() {
-        return null;
+        return List.of(this);
     }
 
     @Override
@@ -84,7 +84,7 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
 
     @Override
     public boolean isSequence() {
-        return sequence() != null;
+        return false;
     }
 
     @Override

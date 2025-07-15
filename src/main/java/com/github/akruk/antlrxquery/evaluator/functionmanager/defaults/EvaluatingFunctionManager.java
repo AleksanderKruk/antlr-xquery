@@ -34,6 +34,7 @@ import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.NumericOperators;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.OtherFunctionsOnNodes;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.ParsingNumbers;
+import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.ProcessingSequencesFunctions;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.ProcessingStrings;
 import com.github.akruk.antlrxquery.values.XQueryError;
 import com.github.akruk.antlrxquery.values.XQueryFunction;
@@ -44,7 +45,7 @@ import com.github.akruk.nodegetter.INodeGetter;
 public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManager {
     private static final ParseTree CONTEXT_VALUE = getTree(".", parser -> parser.contextItemExpr());
     // private static final ParseTree DEFAULT_COLLATION = getTree("fn:default-collation()", parser->parser.functionCall());
-    // private static final ParseTree EMPTY_LIST = getTree("()", p->p.parenthesizedExpr());
+    private static final ParseTree EMPTY_SEQUENCE = getTree("()", p->p.parenthesizedExpr());
     private static final ParseTree DEFAULT_ROUNDING_MODE = getTree("'half-to-ceiling'", parser->parser.literal());
     private static final ParseTree ZERO_LITERAL = getTree("0", parser->parser.literal());
     // private static final ParseTree NFC = getTree("\"NFC\"", parser -> parser.literal());
@@ -74,6 +75,7 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
     private final FunctionsOnSequencesOfNodes functionsOnSequencesOfNodes;
     private final ParsingNumbers parsingNumbers;
     private final ProcessingStrings processingStrings;
+    private final ProcessingSequencesFunctions processingSequences;
 
     public EvaluatingFunctionManager(final XQueryEvaluatorVisitor evaluator,
                                         final Parser parser,
@@ -92,6 +94,7 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         this.numericOperators = new NumericOperators(valueFactory);
         this.otherFuctionsOnNodes = new OtherFunctionsOnNodes(valueFactory, nodeGetter, parser);
         this.functionsOnSequencesOfNodes = new FunctionsOnSequencesOfNodes(valueFactory, parser);
+        this.processingSequences = new ProcessingSequencesFunctions(valueFactory, parser);
         this.parsingNumbers = new ParsingNumbers(valueFactory, parser);
         this.processingStrings = new ProcessingStrings(valueFactory, parser);
 
@@ -136,14 +139,25 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         registerFunction("fn", "round-half-to-even", functionsOnNumericValues::roundHalfToEven, 1, 2, Map.of("precision", ZERO_LITERAL));
         registerFunction("fn", "divide-decimals", functionsOnNumericValues::divideDecimals, 2, 3, Map.of("precision", ZERO_LITERAL));
 
-        registerFunction("fn", "empty", this::empty, 1, 1, Map.of());
-        registerFunction("fn", "exists", this::exists, 1, 1, Map.of());
-        registerFunction("fn", "head", this::head, 1, 1, Map.of());
-        registerFunction("fn", "tail", this::tail, 1, 1, Map.of());
-        registerFunction("fn", "insert-before", this::insertBefore, 3, 3, Map.of());
-        registerFunction("fn", "remove", this::remove, 2, 2, Map.of());
-        registerFunction("fn", "reverse", this::reverse, 1, 1, Map.of());
-        registerFunction("fn", "subsequence", this::subsequence, 2, 3, Map.of());
+        registerFunction("fn", "empty", processingSequences::empty, 1, 1, Map.of());
+        registerFunction("fn", "exists", processingSequences::exists, 1, 1, Map.of());
+        registerFunction("fn", "foot", processingSequences::foot, 1, 1, Map.of());
+        registerFunction("fn", "head", processingSequences::head, 1, 1, Map.of());
+        registerFunction("fn", "identity", processingSequences::identity, 1, 1, Map.of());
+        registerFunction("fn", "insert-before", processingSequences::insertBefore, 3, 3, Map.of());
+        registerFunction("fn", "items-at", processingSequences::itemsAt, 2, 2, Map.of());
+        registerFunction("fn", "remove", processingSequences::remove, 2, 2, Map.of());
+        registerFunction("fn", "replicate", processingSequences::replicate, 2, 2, Map.of());
+        registerFunction("fn", "reverse", processingSequences::reverse, 1, 1, Map.of());
+        registerFunction("fn", "sequence-join", processingSequences::sequenceJoin, 2, 2, Map.of());
+        registerFunction("fn", "slice", processingSequences::slice, 1, 4, Map.of("start", EMPTY_SEQUENCE, "end", EMPTY_SEQUENCE, "step", EMPTY_SEQUENCE));
+        registerFunction("fn", "subsequence", processingSequences::subsequence, 2, 3, Map.of("length", EMPTY_SEQUENCE));
+        registerFunction("fn", "tail", processingSequences::tail, 1, 1, Map.of());
+        registerFunction("fn", "trunk", processingSequences::trunk, 1, 1, Map.of());
+        registerFunction("fn", "unordered", processingSequences::unordered, 1, 1, Map.of());
+        registerFunction("fn", "void", processingSequences::voidFunction, 0, 1, Map.of("input", EMPTY_SEQUENCE));
+
+
         registerFunction("fn", "distinct-values", this::distinctValues, 1, 2, Map.of());
 
         registerFunction("fn", "zero-or-one", cardinalityFunctions::zeroOrOne, 1, 1, Map.of());
@@ -244,61 +258,6 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
     public XQueryValue false_(XQueryVisitingContext context, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
         if (!args.isEmpty()) return XQueryError.WrongNumberOfArguments;
         return valueFactory.bool(false);
-    }
-
-    public XQueryValue empty(XQueryVisitingContext ctx, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
-        return args.get(0).empty();
-    }
-
-    public XQueryValue exists(XQueryVisitingContext ctx, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        var result = empty(ctx, args, Map.of());
-        if (result.isError()) return result;
-        return result.not();
-    }
-
-    public XQueryValue head(XQueryVisitingContext ctx, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
-        return args.get(0).head();
-    }
-
-    public XQueryValue tail(XQueryVisitingContext ctx, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
-        return args.get(0).tail();
-    }
-
-    public XQueryValue insertBefore(XQueryVisitingContext ctx, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() != 3) return XQueryError.WrongNumberOfArguments;
-        return args.get(0).insertBefore(args.get(1), args.get(2));
-    }
-
-    public XQueryValue remove(XQueryVisitingContext ctx, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
-        return args.get(0).remove(args.get(1));
-    }
-
-    public XQueryValue reverse(XQueryVisitingContext ctx, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
-        var target = args.get(0);
-        return target.isAtomic()
-            ? valueFactory.sequence(List.of(target))
-            : target.reverse();
-    }
-
-    public XQueryValue subsequence(XQueryVisitingContext ctx, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {
-        if (args.size() == 2 || args.size() == 3) {
-            var target = args.get(0);
-            if (!args.get(1).isNumericValue()) return XQueryError.InvalidArgumentType;
-            int position = args.get(1).numericValue().intValue();
-            if (args.size() == 2) {
-                return target.subsequence(position);
-            } else {
-                if (!args.get(2).isNumericValue()) return XQueryError.InvalidArgumentType;
-                int length = args.get(2).numericValue().intValue();
-                return target.subsequence(position, length);
-            }
-        }
-        return XQueryError.WrongNumberOfArguments;
     }
 
     public XQueryValue distinctValues(XQueryVisitingContext ctx, List<XQueryValue> args, Map<String, XQueryValue> kwargs) {

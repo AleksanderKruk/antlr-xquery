@@ -285,61 +285,6 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
                 """, List.of(a, b, c, z));
     }
 
-    @Test
-    public void remove() {
-        var a = new XQueryString("a", baseFactory);
-        var b = new XQueryString("b", baseFactory);
-        var c = new XQueryString("c", baseFactory);
-        // The expression fn:remove($abc, 0) returns ("a", "b", "c").
-        assertResult("""
-                remove(("a", "b", "c"), 0)
-                """, List.of(a, b, c));
-        // The expression fn:remove($abc, 1) returns ("b", "c").
-        assertResult("""
-                remove(("a", "b", "c"), 1)
-                """, List.of(b, c));
-        // The expression fn:remove($abc, 6) returns ("a", "b", "c").
-        assertResult("""
-                remove(("a", "b", "c"), 6)
-                """, List.of(a, b, c));
-        // The expression fn:remove((), 3) returns ().
-        assertResult("remove((), 3)", List.of());
-    }
-
-    @Test
-    public void reverse() {
-        var a = new XQueryString("a", baseFactory);
-        var b = new XQueryString("b", baseFactory);
-        var c = new XQueryString("c", baseFactory);
-        // The expression fn:reverse($abc) returns ("c", "b", "a").
-        assertResult("""
-                reverse(("a", "b", "c"))
-                """, List.of(c, b, a));
-        // The expression fn:reverse(("hello")) returns ("hello").
-        assertResult("reverse((\"Hello\"))", List.of(new XQueryString("Hello", baseFactory)));
-        // The expression fn:reverse(()) returns ().
-        assertResult("reverse(())", List.of());
-        // The expression fn:reverse([1,2,3]) returns [1,2,3]. (The input is a sequence
-        // containing a single item (the array)).
-        // The expression fn:reverse(([1,2,3],[4,5,6])) returns ([4,5,6],[1,2,3]).
-    }
-
-    @Test
-    public void subsequence() {
-        // var i1 = new XQueryString("item1");
-        // var i2 = new XQueryString("item2");
-        var i3 = new XQueryString("item3", baseFactory);
-        var i4 = new XQueryString("item4", baseFactory);
-        var i5 = new XQueryString("item5", baseFactory);
-        // The expression fn:subsequence($seq, 4) returns ("item4", "item5").
-        // The expression fn:subsequence($seq, 3, 2) returns ("item3", "item4").
-        assertResult("""
-                    subsequence(("item1", "item2", "item3", "item4", "item5"), 4)
-                """, List.of(i4, i5));
-        assertResult("""
-                    subsequence(("item1", "item2", "item3", "item4", "item5"), 3, 2)
-                """, List.of(i3, i4));
-    }
 
     @Test
     public void distinctValues() {

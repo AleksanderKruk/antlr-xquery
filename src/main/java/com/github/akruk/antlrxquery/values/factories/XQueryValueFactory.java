@@ -19,6 +19,7 @@ public interface XQueryValueFactory {
     public XQueryValue emptySequence();
     public XQueryValue functionReference(XQueryFunction f);
     public XQueryValue node(ParseTree v);
+    public XQueryValue array(List<XQueryValue> value);
     public XQueryValue map(Map<XQueryValue, XQueryValue> value);
     public XQueryValue record(Map<String, XQueryValue> value);
 }

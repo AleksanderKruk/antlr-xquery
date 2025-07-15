@@ -9,6 +9,12 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
     public List<XQueryValue> sequence() {
         return value;
     }
+
+    @Override
+    public boolean isSequence() {
+        return true;
+    }
+
     final boolean isEmptySequence;
     public XQuerySequence(List<XQueryValue> list, XQueryValueFactory valueFactory) {
         super(list, valueFactory);

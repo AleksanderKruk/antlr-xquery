@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import org.antlr.v4.runtime.tree.ParseTree;
 
+import com.github.akruk.antlrxquery.values.XQueryArray;
 import com.github.akruk.antlrxquery.values.XQueryBoolean;
 import com.github.akruk.antlrxquery.values.XQueryFunction;
 import com.github.akruk.antlrxquery.values.XQueryFunctionReference;
@@ -62,6 +63,8 @@ public class XQueryMemoizedValueFactory implements XQueryValueFactory{
 
     @Override
     public XQueryValue sequence(List<XQueryValue> v) {
+        if (v.size() == 1)
+            return v.get(0);
         XQueryValue returnedSequence = createdSequences.computeIfAbsent(v, _ -> new XQuerySequence(v, this));
         return returnedSequence;
     }
@@ -94,6 +97,11 @@ public class XQueryMemoizedValueFactory implements XQueryValueFactory{
             converted.put(string(entry.getKey()), entry.getValue());
         }
         return map(Map.copyOf(converted));
+    }
+
+    @Override
+    public XQueryValue array(List<XQueryValue> value) {
+        return new XQueryArray(value, this);
     }
 
 }

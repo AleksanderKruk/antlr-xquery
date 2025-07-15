@@ -15,11 +15,8 @@ import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 public class ProcessingSequencesFunctions {
 
     private final XQueryValueFactory valueFactory;
-    private final Parser targetParser;
-
     public ProcessingSequencesFunctions(final XQueryValueFactory valueFactory, final Parser targetParser) {
         this.valueFactory = valueFactory;
-        this.targetParser = targetParser;
     }
 
 

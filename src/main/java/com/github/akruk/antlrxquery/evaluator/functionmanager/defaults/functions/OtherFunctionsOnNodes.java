@@ -16,11 +16,9 @@ import com.github.akruk.nodegetter.INodeGetter;
 public class OtherFunctionsOnNodes {
     private final XQueryValueFactory valueFactory;
     private final INodeGetter nodeGetter;
-    private final Parser targetParser;
     public OtherFunctionsOnNodes(final XQueryValueFactory valueFactory, final INodeGetter nodeGetter, final Parser targetParser) {
         this.valueFactory = valueFactory;
         this.nodeGetter = nodeGetter;
-        this.targetParser = targetParser;
     }
 
 

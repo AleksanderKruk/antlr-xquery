@@ -1073,12 +1073,35 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
     @Override
     public XQueryValue visitSwitchExpr(final SwitchExprContext ctx) {
-        final Map<XQueryValue, ParseTree> valueToExpression = ctx.switchCaseClause().stream()
-                .flatMap(clause -> clause.switchCaseOperand()
-                        .stream().map(operand -> Map.entry(operand.accept(this), clause.exprSingle())))
+        // Wyekstrahuj switchComparand aby uniknąć powtórnych wywołań
+        final SwitchComparandContext switchComparand = ctx.switchComparand();
+
+        // Obsługa opcjonalnego wyrażenia przełączającego
+        final XQueryValue switchedValue = switchComparand.switchedExpr != null
+            ? switchComparand.switchedExpr.accept(this)
+            : null;
+
+        // Wybór między zwykłymi przypadkami a przypadkami w klamrach
+        final SwitchCasesContext switchCasesCtx = ctx.switchCases();
+        final SwitchCasesContext switchCases = switchCasesCtx != null
+            ? switchCasesCtx
+            : ctx.bracedSwitchCases().switchCases();
+
+        // Wyekstrahuj listę klauzul case aby uniknąć powtórnych wywołań
+        final List<SwitchCaseClauseContext> caseClauseList = switchCases.switchCaseClause();
+
+        // Mapowanie wartości do wyrażeń dla przypadków switch
+        final Map<XQueryValue, ParseTree> valueToExpression = caseClauseList.stream()
+                .flatMap(clause -> {
+                    final ExprSingleContext exprSingle = clause.exprSingle();
+                    return clause.switchCaseOperand().stream()
+                            .map(operand -> Map.entry(operand.expr().accept(this), exprSingle));
+                })
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        final XQueryValue switchedValue = ctx.switchedExpr.accept(this);
-        final ParseTree toBeExecuted = valueToExpression.getOrDefault(switchedValue, ctx.defaultExpr);
+
+        // Znajdź odpowiedni przypadek lub użyj domyślnego
+        final ParseTree toBeExecuted = valueToExpression.getOrDefault(switchedValue, switchCases.defaultExpr);
+
         return toBeExecuted.accept(this);
     }
 

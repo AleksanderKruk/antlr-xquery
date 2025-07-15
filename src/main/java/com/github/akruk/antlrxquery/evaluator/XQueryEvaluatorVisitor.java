@@ -1724,7 +1724,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     @Override
     public XQueryValue visitSquareArrayConstructor(SquareArrayConstructorContext ctx) {
         List<XQueryValue> values = ctx.exprSingle().stream().map(this::visit).toList();
-        return valueFactory.sequence(values);
+        return valueFactory.array(values);
     }
 
 

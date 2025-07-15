@@ -98,13 +98,11 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         this.parsingNumbers = new ParsingNumbers(valueFactory, parser);
         this.processingStrings = new ProcessingStrings(valueFactory, parser);
 
+        Map<String, ParseTree> optionalNodeArg = Map.of( "node", CONTEXT_VALUE);
+
         // Accessors
-        registerFunction("fn", "name", accessors::nodeName, 0, 1, Map.of(
-            "node", CONTEXT_VALUE
-        ));
-        registerFunction("fn", "node-name", accessors::nodeName, 0, 1, Map.of(
-            "node", CONTEXT_VALUE
-        ));
+        registerFunction("fn", "name", accessors::nodeName, 0, 1, optionalNodeArg);
+        registerFunction("fn", "node-name", accessors::nodeName, 0, 1, optionalNodeArg);
         registerFunction("fn", "string", accessors::string, 0, 1, Map.of(
             "value", CONTEXT_VALUE
         ));
@@ -113,19 +111,13 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         ));
 
         // Other functions on nodes
-        registerFunction("fn", "root", otherFuctionsOnNodes::root, 0, 1, Map.of(
-            "node", CONTEXT_VALUE
-        ));
+        registerFunction("fn", "root", otherFuctionsOnNodes::root, 0, 1, optionalNodeArg);
         // registerFunction("fn", "path", otherFuctionsOnNodes::path, 0, 2, Map.of(
         //     "node", CONTEXT_VALUE
         //     "options", EMPTY_MAP
         // ));
-        registerFunction("fn", "has-children", otherFuctionsOnNodes::hasChildren, 0, 1, Map.of(
-            "node", CONTEXT_VALUE
-        ));
-        registerFunction("fn", "siblings", otherFuctionsOnNodes::siblings, 0, 1, Map.of(
-            "node", CONTEXT_VALUE
-        ));
+        registerFunction("fn", "has-children", otherFuctionsOnNodes::hasChildren, 0, 1, optionalNodeArg);
+        registerFunction("fn", "siblings", otherFuctionsOnNodes::siblings, 0, 1, optionalNodeArg);
 
         registerFunction("fn", "true", this::true_, 0, 0, Map.of());
         registerFunction("fn", "false", this::false_, 0, 0, Map.of());

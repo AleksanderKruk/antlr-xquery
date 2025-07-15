@@ -1726,4 +1726,12 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         List<XQueryValue> values = ctx.exprSingle().stream().map(this::visit).toList();
         return valueFactory.sequence(values);
     }
+
+
+    @Override
+    public XQueryValue visitMapConstructor(MapConstructorContext ctx) {
+        var map = ctx.mapConstructorEntry().stream()
+            .collect(Collectors.toMap(entry->entry.mapKeyExpr().accept(this), entry->entry.mapValueExpr().accept(this)));
+        return valueFactory.map(map);
+    }
 }

@@ -3,14 +3,14 @@ package com.github.akruk.antlrxquery.evaluator;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 
 public class XQueryVisitingContext {
-    private XQueryValue item;
+    private XQueryValue value;
     private int position;
     private int size;
-    public XQueryValue getItem() {
-        return item;
+    public XQueryValue getValue() {
+        return value;
     }
-    public void setItem(XQueryValue item) {
-        this.item = item;
+    public void setValue(XQueryValue item) {
+        this.value = item;
     }
     public int getPosition() {
         return position;

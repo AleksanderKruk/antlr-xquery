@@ -161,7 +161,7 @@ public class FunctionsOnStringValues {
         List<XQueryValue> atomized;
         if (args.isEmpty()) {
             // No explicit $values: use context item sequence
-            atomized = context.getItem().atomize();
+            atomized = context.getValue().atomize();
         } else {
             atomized = args.get(0).atomize();
         }
@@ -207,7 +207,7 @@ public class FunctionsOnStringValues {
 
         String input;
         if (args.isEmpty()) {
-            XQueryValue ctxItem = context.getItem();
+            XQueryValue ctxItem = context.getValue();
             if (ctxItem == null) {
                 return XQueryError.MissingDynamicContextComponent;
             }
@@ -346,7 +346,7 @@ public class FunctionsOnStringValues {
         // obtain the string: either argument or context item
         final XQueryValue inputValue;
         if (args.isEmpty()) {
-            inputValue = context.getItem();
+            inputValue = context.getValue();
         } else {
             inputValue = args.get(0);
         }
@@ -387,7 +387,7 @@ public class FunctionsOnStringValues {
         // obtain the input string (argument or context item)
         final XQueryValue inputValue;
         if (args.isEmpty()) {
-            inputValue = context.getItem();
+            inputValue = context.getValue();
         } else {
             inputValue = args.get(0);
         }
@@ -434,7 +434,7 @@ public class FunctionsOnStringValues {
         // determine input string (arg0 or context item)
         String input;
         if (args.isEmpty()) {
-            XQueryValue ctxItem = context.getItem();
+            XQueryValue ctxItem = context.getValue();
             if (ctxItem == null) {
                 return XQueryError.MissingDynamicContextComponent;
             }
@@ -572,7 +572,7 @@ public class FunctionsOnStringValues {
 
         if (args.isEmpty()) {
             // zero‐arg form: use context item
-            XQueryValue ctxItem = context.getItem();
+            XQueryValue ctxItem = context.getValue();
             if (ctxItem == null) {
                 return XQueryError.MissingDynamicContextComponent;
             }

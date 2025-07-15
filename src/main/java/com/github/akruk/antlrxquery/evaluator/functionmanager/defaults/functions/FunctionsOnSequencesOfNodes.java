@@ -28,10 +28,10 @@ public class FunctionsOnSequencesOfNodes {
 
         XQueryValue node;
         if (args.isEmpty()) {
-            if (context.getItem() == null) {
+            if (context.getValue() == null) {
                 return XQueryError.MissingDynamicContextComponent;
             }
-            node = context.getItem();
+            node = context.getValue();
         } else {
             node = args.get(0);
             if (node.isEmptySequence()) {
@@ -59,10 +59,10 @@ public class FunctionsOnSequencesOfNodes {
         XQueryValue target;
 
         if (args.isEmpty()) {
-            if (context.getItem() == null) {
+            if (context.getValue() == null) {
                 return XQueryError.MissingDynamicContextComponent;
             }
-            target = context.getItem();
+            target = context.getValue();
         } else {
             target = args.get(0);
             if (target.isEmptySequence()) {

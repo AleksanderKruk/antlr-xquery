@@ -599,7 +599,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             return stepResult;
         }
         final var savedArgs = saveVisitedArguments();
-        final var savedContext = saveVisitedContext();
+        final var savedContext = saveContext();
         context.setType(savedContext.getType());
         context.setPositionType(typeFactory.number());
         context.setSizeType(typeFactory.number());
@@ -620,7 +620,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     // return matchedTreeNodes();
     // }
 
-    private XQueryVisitingSemanticContext saveVisitedContext() {
+    private XQueryVisitingSemanticContext saveContext() {
         final var saved = context;
         context = new XQueryVisitingSemanticContext();
         return saved;
@@ -633,7 +633,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         }
 
         final var savedArgs = saveVisitedArguments();
-        final var savedContext = saveVisitedContext();
+        final var savedContext = saveContext();
         context.setType(savedContext.getType());
         context.setPositionType(typeFactory.number());
         context.setSizeType(typeFactory.number());
@@ -651,7 +651,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     public XQuerySequenceType visitPredicate(final PredicateContext ctx) {
         final var contextType = context.getType();
         final var predicateExpression = ctx.expr().accept(this);
-        final var savedContext = saveVisitedContext();
+        final var savedContext = saveContext();
         context.setType(savedContext.getType());
         context.setPositionType(typeFactory.number());
         context.setSizeType(typeFactory.number());
@@ -766,7 +766,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             return ctx.pathExpr(0).accept(this);
         final XQuerySequenceType firstExpressionType = ctx.pathExpr(0).accept(this);
         final XQuerySequenceType iterator = firstExpressionType.iteratedItem();
-        final var savedContext = saveVisitedContext();
+        final var savedContext = saveContext();
         context.setType(iterator);
         context.setPositionType(typeFactory.number());
         context.setSizeType(typeFactory.number());
@@ -824,7 +824,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     {
         if (ctx.PIPE_ARROW().isEmpty())
             return ctx.arrowExpr(0).accept(this);
-        final var saved = saveVisitedContext();
+        final var saved = saveContext();
         final int size = ctx.arrowExpr().size();
         XQuerySequenceType contextType = ctx.arrowExpr(0).accept(this);
         for (var i = 1; i < size; i++ ) {
@@ -841,7 +841,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     @Override
     public XQuerySequenceType visitTryCatchExpr(final TryCatchExprContext ctx)
     {
-        final var savedContext = saveVisitedContext();
+        final var savedContext = saveContext();
         final XQueryItemType errorType = typeFactory.itemError();
         final var testedExprType = ctx.tryClause().enclosedExpr().accept(this);
         final var alternativeCatches = ctx.catchClause().stream()

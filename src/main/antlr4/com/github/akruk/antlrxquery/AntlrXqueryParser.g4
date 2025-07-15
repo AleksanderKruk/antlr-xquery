@@ -65,7 +65,7 @@ additiveExpr: multiplicativeExpr (additiveOperator multiplicativeExpr)*;
 multiplicativeExpr: unionExpr (multiplicativeOperator unionExpr )*;
 unionExpr: intersectExpr (unionOperator intersectExpr)*;
 intersectExpr: instanceofExpr (exceptOrIntersect instanceofExpr)*;
-instanceofExpr: treatExpr (INSTANCE OF treatExpr)?;
+instanceofExpr: treatExpr (INSTANCE OF sequenceType)?;
 treatExpr: castableExpr (TREAT AS castExpr)?;
 castableExpr: castExpr ((CASTABLE AS) singleType)?;
 castExpr: pipelineExpr ((CAST AS) singleType)*;

@@ -39,6 +39,7 @@ import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQuerySequenceType> {
     final XQuerySemanticContextManager contextManager;
     final List<String> errors;
+    final List<String> warnings;
     final XQueryTypeFactory typeFactory;
     final XQueryValueFactory valueFactory;
     final IXQuerySemanticFunctionManager functionManager;
@@ -72,6 +73,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         this.context.setPositionType(null);
         this.context.setSizeType(null);
         this.errors = new ArrayList<>();
+        this.warnings = new ArrayList<>();
     }
 
     @Override
@@ -761,7 +763,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     }
 
     @Override
-    public XQuerySequenceType visitSimpleMapExpr(final SimpleMapExprContext ctx) {
+    public XQuerySequenceType visitSimpleMapExpr(final SimpleMapExprContext ctx)
+    {
         if (ctx.EXCLAMATION_MARK().isEmpty())
             return ctx.pathExpr(0).accept(this);
         final XQuerySequenceType firstExpressionType = ctx.pathExpr(0).accept(this);
@@ -779,6 +782,21 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         }
         context = savedContext;
         return result;
+    }
+
+
+    @Override
+    public XQuerySequenceType visitInstanceofExpr(InstanceofExprContext ctx)
+    {
+        XQuerySequenceType expression = ctx.treatExpr().accept(this);
+        if (ctx.INSTANCE() == null) {
+            return expression;
+        }
+        var testedType = ctx.sequenceType().accept(this);
+        if (expression.isSubtypeOf(testedType)) {
+            warn(ctx, "Unnecessary instance of expression is always true");
+        }
+        return typeFactory.boolean_();
     }
 
     @Override
@@ -1236,6 +1254,15 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         final Token start = where.getStart();
         final Token stop = where.getStop();
         errors.add(String.format("[line:%s, column:%s] %s [/line:%s, column:%s]",
+                start.getLine(), start.getCharPositionInLine(),
+                message,
+                stop.getLine(), stop.getCharPositionInLine()));
+    }
+
+    void warn(final ParserRuleContext where, final String message) {
+        final Token start = where.getStart();
+        final Token stop = where.getStop();
+        warnings.add(String.format("[line:%s, column:%s] %s [/line:%s, column:%s]",
                 start.getLine(), start.getCharPositionInLine(),
                 message,
                 stop.getLine(), stop.getCharPositionInLine()));

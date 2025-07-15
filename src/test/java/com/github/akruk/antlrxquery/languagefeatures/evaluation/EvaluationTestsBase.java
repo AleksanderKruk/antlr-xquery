@@ -7,16 +7,17 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.antlr.v4.Tool;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.xpath.XPath;
 
 import com.github.akruk.antlrxquery.evaluator.XQuery;
-import com.github.akruk.antlrxquery.testgrammars.TestLexer;
-import com.github.akruk.antlrxquery.testgrammars.TestParser;
 import com.github.akruk.antlrxquery.values.XQueryError;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
@@ -106,31 +107,35 @@ public class EvaluationTestsBase {
         assertTrue(result == value);
     }
 
-    public void assertResult(String xquery, String textualTree, XQueryValue result) {
-        TestParserAndTree parserAndTree = parseTestTree(textualTree);
-        var value = XQuery.evaluate(parserAndTree.tree, xquery, parserAndTree.parser);
-        assertNotNull(value);
-        assertTrue(result.valueEqual(value).booleanValue());
-    }
-
-    record TestParserAndTree(TestParser parser, ParseTree tree) {}
-
-    TestParserAndTree parseTestTree(String text) {
-        CodePointCharStream stream = CharStreams.fromString(text);
-        TestLexer lexer = new TestLexer(stream);
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        TestParser parser = new TestParser(tokens);
-        ParseTree tree = parser.test();
-        return new TestParserAndTree(parser, tree);
-    }
-
     private static final java.util.Map<String, Parser> grammarParserCache = new HashMap<>();
+
+    protected record ValueParserAndTree(XQueryValue value, Parser parser, ParseTree tree) {};
 
     /**
      * Generates grammar and parser/lexer classes in a dedicated directory structure.
      * Each grammar gets its own folder under a common temp directory.
      */
-    public XQueryValue executeDynamicGrammarQuery(String grammarName, String grammarString, String startRuleName, String textualTree, String xquery) throws Exception {
+    public XQueryValue executeDynamicGrammarQuery(String grammarName,
+                                                  String grammarString,
+                                                  String startRuleName,
+                                                  String textualTree,
+                                                  String xquery) throws Exception
+    {
+        var valueParserAndTree = executeDynamicGrammarQueryWithTree(grammarName, grammarString, startRuleName, textualTree, xquery);
+        return valueParserAndTree.value;
+    }
+
+
+    /**
+     * Generates grammar and parser/lexer classes in a dedicated directory structure.
+     * Each grammar gets its own folder under a common temp directory.
+     */
+    public ValueParserAndTree executeDynamicGrammarQueryWithTree(String grammarName,
+                                                  String grammarString,
+                                                  String startRuleName,
+                                                  String textualTree,
+                                                  String xquery) throws Exception
+    {
         Parser parser = grammarParserCache.get(grammarString);
 
         if (parser == null) {
@@ -190,12 +195,33 @@ public class EvaluationTestsBase {
 
         var value = XQuery.evaluate(tree, xquery, parser);
         assertNotNull(value);
-        return value;
+        return new ValueParserAndTree(value, parser, tree);
     }
+
+
+
 
     public void assertDynamicGrammarQuery(String grammarName, String grammarString, String startRuleName, String textualTree, String xquery, XQueryValue expected) throws Exception {
         var value = executeDynamicGrammarQuery(grammarName, grammarString, startRuleName, textualTree, xquery);
         assertNotNull(value);;
     }
+
+
+    public void assertSameResultsAsAntlrXPath(String grammarname,
+                                                String grammar,
+                                                String startingRule,
+                                                String textualTree,
+                                                String xquery)
+        throws Exception
+    {
+        ValueParserAndTree results = executeDynamicGrammarQueryWithTree(grammarname, grammar, startingRule, textualTree, xquery);
+        ParseTree[] nodes = XPath.findAll(results.tree(), xquery, results.parser())
+                .toArray(ParseTree[]::new);
+        ParseTree[] xqueryNodes = results.value().sequence().stream().map(val -> val.node())
+                .toArray(ParseTree[]::new);
+        assertArrayEquals(nodes, xqueryNodes);
+    }
+
+
 
 }

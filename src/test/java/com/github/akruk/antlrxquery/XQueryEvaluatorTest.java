@@ -9,8 +9,6 @@ import org.junit.Test;
 
 import com.github.akruk.antlrxquery.evaluator.XQuery;
 import com.github.akruk.antlrxquery.languagefeatures.evaluation.EvaluationTestsBase;
-import com.github.akruk.antlrxquery.testgrammars.TestLexer;
-import com.github.akruk.antlrxquery.testgrammars.TestParser;
 import com.github.akruk.antlrxquery.values.XQueryNumber;
 import com.github.akruk.antlrxquery.values.XQueryString;
 import com.github.akruk.antlrxquery.values.XQueryValue;
@@ -28,6 +26,8 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class XQueryEvaluatorTest extends EvaluationTestsBase {
+
+
 
     @Test
     public void atomization() {
@@ -124,76 +124,72 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
                     """, new XQueryString("concatenate", baseFactory));
     }
 
-    record TestParserAndTree(TestParser parser, ParseTree tree) {
-    }
 
-    TestParserAndTree parseTestTree(String text) {
-        CodePointCharStream stream = CharStreams.fromString(text);
-        TestLexer lexer = new TestLexer(stream);
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        TestParser parser = new TestParser(tokens);
-        ParseTree tree = parser.test();
-        return new TestParserAndTree(parser, tree);
-    }
+    private static final String TEST_GRAMMAR_NAME = "Test";
+    private static final String TEST_GRAMMAR = """
+        grammar Test;
+        test: (A | rule)+;
+        rule: B C | D;
+        A: 'a';
+        B: 'b';
+        C: 'c';
+        D: 'd';
+        WS: [\\p{White_Space}]+ -> skip;
+            """;
 
-    public void assertSameResultsAsAntlrXPath(String textualTree, String xquery) {
-        TestParserAndTree parserAndTree = parseTestTree(textualTree);
-        ParseTree[] nodes = XPath.findAll(parserAndTree.tree, xquery, parserAndTree.parser)
-                .toArray(ParseTree[]::new);
-        var value = XQuery.evaluate(parserAndTree.tree, xquery, parserAndTree.parser);
-        ParseTree[] xqueryNodes = value.sequence().stream().map(val -> val.node())
-                .toArray(ParseTree[]::new);
-        assertArrayEquals(nodes, xqueryNodes);
-    }
+
 
     @Test
-    public void rootPath() {
+    public void rootPath() throws Exception {
         // assert false;
-        assertSameResultsAsAntlrXPath("a bc a d", "/test");
+        assertSameResultsAsAntlrXPath(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "/test");
     }
 
     @Test
-    public void rulePath() {
+    public void rulePath() throws Exception {
         // assert false;
-        assertSameResultsAsAntlrXPath("a bc a d", "/test/rule");
-        assertSameResultsAsAntlrXPath("a bc a d", "/test//rule");
+        assertSameResultsAsAntlrXPath(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "/test/rule");
+        assertSameResultsAsAntlrXPath(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "/test//rule");
     }
 
     @Test
-    public void tokenPath() {
+    public void tokenPath() throws Exception {
         // assert false;
-        assertSameResultsAsAntlrXPath("a bc a d", "//A");
-        assertSameResultsAsAntlrXPath("a bc a d", "//B");
-        assertSameResultsAsAntlrXPath("a bc a d", "//C");
-        assertSameResultsAsAntlrXPath("a bc a d", "//D");
+        assertSameResultsAsAntlrXPath(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "//A");
+        assertSameResultsAsAntlrXPath(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "//B");
+        assertSameResultsAsAntlrXPath(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "//C");
+        assertSameResultsAsAntlrXPath(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "//D");
     }
 
     @Test
-    public void identityNodeComparison() {
-        assertResult("/test is /test", "a bc a d", baseFactory.bool(true));
+    public void identityNodeComparison() throws Exception {
+        assertDynamicGrammarQuery(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "/test is /test",
+                                    baseFactory.bool(true));
     }
 
     @Test
-    public void beforeNode() {
-        assertResult("/test << /test", "a bc a d", baseFactory.bool(false));
-        assertResult("/test << /test/A[1]", "a bc a d", baseFactory.bool(true));
+    public void beforeNode() throws Exception {
+        assertDynamicGrammarQuery(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "/test << /test",
+                                    baseFactory.bool(false));
+        assertDynamicGrammarQuery(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test",
+                    "a bc a d", "/test << /test/A[1]", baseFactory.bool(true));
     }
 
     @Test
-    public void afterNode() {
-        assertResult("/test >> /test", "a bc a d", baseFactory.bool(false));
-        assertResult("/test/A[1] >> /test", "a bc a d", baseFactory.bool(true));
+    public void afterNode() throws Exception {
+        assertDynamicGrammarQuery(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "/test >> /test", baseFactory.bool(false));
+        assertDynamicGrammarQuery(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "/test/A[1] >> /test", baseFactory.bool(true));
     }
 
     @Test
-    public void wildcards() {
+    public void wildcards() throws Exception {
         String textualTree = "a bc a d";
         String xquery = "//*";
-        TestParserAndTree parserAndTree = parseTestTree(textualTree);
-        ParseTree[] nodes = XPath.findAll(parserAndTree.tree, xquery, parserAndTree.parser)
+        ValueParserAndTree parserAndTree = executeDynamicGrammarQueryWithTree(
+            TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", textualTree, xquery);
+        ParseTree[] nodes = XPath.findAll(parserAndTree.tree(), xquery, parserAndTree.parser())
                 .toArray(ParseTree[]::new);
-        var value = XQuery.evaluate(parserAndTree.tree, xquery, parserAndTree.parser);
-        ParseTree[] xqueryNodes = value.sequence().stream().map(val -> val.node())
+        ParseTree[] xqueryNodes = parserAndTree.value().sequence().stream().map(val -> val.node())
                 .toArray(ParseTree[]::new);
         assertEquals(nodes.length, xqueryNodes.length);
         for (int i = 1; i < xqueryNodes.length; i++) {

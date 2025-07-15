@@ -55,23 +55,6 @@ public class EvaluationTestsBase {
         return true;
     }
 
-    private static boolean deepEqualsElements(XQueryValue element1, XQueryValue element2) {
-        if (element1 == element2) {
-            return true;
-        }
-
-        if (element1 == null || element2 == null) {
-            return false;
-        }
-
-        if (element1.sequence().size() > 1 && element2.sequence().size() > 1) {
-            return deepEquals(element1, element2);
-        }
-
-        return true;
-    }
-
-
     public void assertResult(String xquery, String result) {
         var value = XQuery.evaluate(null, xquery, null);
         assertNotNull(value);

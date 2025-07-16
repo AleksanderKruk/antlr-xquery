@@ -32,7 +32,6 @@ import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper.XQuery
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
-import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType.RelativeCoercability;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeEnum;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
@@ -592,42 +591,25 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
 
     @Override
     public XQuerySequenceType visitQuantifiedExpr(final QuantifiedExprContext ctx) {
-        final List<QuantifierBindingContext> quantifierBindings = ctx.quantifierBinding();
-
-        final List<String> variableNames = quantifierBindings.stream()
-                .map(binding -> binding.varNameAndType().qname().getText())
+        final List<String> variableNames = ctx.varName().stream()
+                .map(VarNameContext::qname)
+                .map(QnameContext::getText)
                 .toList();
-
-        final List<XQuerySequenceType> coercedTypes = quantifierBindings.stream()
-                .map(binding -> {
-                    TypeDeclarationContext typeDeclaration = binding.varNameAndType().typeDeclaration();
-                    return typeDeclaration != null? typeDeclaration.accept(this) : null;
-                })
-                .toList();
-
-        final List<XQuerySequenceType> variableTypes = quantifierBindings.stream()
-                .map(binding -> binding.exprSingle().accept(this))
-                .toList();
-
-        final ExprSingleContext criterionNode = ctx.exprSingle();
-
-        for (int i = 0; i < variableNames.size(); i++) {
-            final var assignedType = variableTypes.get(i);
-            final var desiredType = coercedTypes.get(i);
-            if (desiredType !=null
-                && assignedType.coerceableTo(desiredType) == RelativeCoercability.NEVER)
-            {
-                addError(ctx.quantifierBinding(i).varNameAndType(), String.format("Type: %s is not coercable to %s", assignedType, desiredType));
-            }
-
-            contextManager.entypeVariable(variableNames.get(i), variableTypes.get(i));
+        final int variableExpressionCount = ctx.exprSingle().size() - 1;
+        final List<XQuerySequenceType> variableTypes = new ArrayList<>(variableExpressionCount);
+        for (final var expr : ctx.exprSingle().subList(0, variableExpressionCount)) {
+            final var sequenceType = expr.accept(this);
+            variableTypes.add(sequenceType);
         }
 
+        final var criterionNode = ctx.exprSingle().getLast();
+        for (int i = 0; i < variableNames.size(); i++) {
+            contextManager.entypeVariable(variableNames.get(i), variableTypes.get(i));
+        }
         final XQuerySequenceType queriedType = criterionNode.accept(this);
         if (!queriedType.hasEffectiveBooleanValue()) {
             addError(criterionNode, "Criterion value needs to have effective boolean value");
         }
-
         return typeFactory.boolean_();
     }
 

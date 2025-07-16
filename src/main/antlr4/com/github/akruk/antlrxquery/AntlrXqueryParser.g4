@@ -335,11 +335,14 @@ anyName: ID
         | INTERSECT
         | IS
         | ITEM
+        | KEY
+        | VALUE
         | LE
         | LEAST
         | LET
         | LT
         | MAP
+        | MEMBER
         | MOD
         | MULTIPLICATION
         | NE

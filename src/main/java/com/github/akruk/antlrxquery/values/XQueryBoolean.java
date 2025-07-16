@@ -1,5 +1,8 @@
 package com.github.akruk.antlrxquery.values;
 
+import java.util.List;
+import java.util.Map;
+
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
 public class XQueryBoolean extends XQueryValueBase<Boolean> {
@@ -71,4 +74,15 @@ public class XQueryBoolean extends XQueryValueBase<Boolean> {
     public boolean isEmptySequence() {
         return false;
     }
+
+    @Override
+    public List<XQueryValue> arrayMembers() {
+        return null;
+    }
+
+    @Override
+    public Map<XQueryValue, XQueryValue> mapEntries() {
+        return null;
+    }
+
 }

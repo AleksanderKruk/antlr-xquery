@@ -454,20 +454,22 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
                         }));
     }
 
+
+
     @Override
     public XQueryValue visitQuantifiedExpr(final QuantifiedExprContext ctx) {
-        final List<String> variableNames = ctx.varName().stream()
-                .map(VarNameContext::qname)
-                .map(QnameContext::getText)
-                .toList();
-        final int variableExpressionCount = ctx.exprSingle().size() - 1;
-        final List<List<XQueryValue>> sequences = new ArrayList<>(variableExpressionCount);
-        for (final var expr : ctx.exprSingle().subList(0, variableExpressionCount)) {
-            final var sequenceValue = expr.accept(this);
-            sequences.add(sequenceValue.sequence());
-        }
+        final List<QuantifierBindingContext> quantifierBindings = ctx.quantifierBinding();
 
-        final var criterionNode = ctx.exprSingle().getLast();
+        final List<String> variableNames = quantifierBindings.stream()
+                .map(binding -> binding.varNameAndType().qname().getText())
+                .toList();
+
+        final List<List<XQueryValue>> sequences = quantifierBindings.stream()
+                .map(binding -> binding.exprSingle().accept(this).sequence())
+                .toList();
+
+        final ExprSingleContext criterionNode = ctx.exprSingle();
+
         if (ctx.EVERY() != null) {
             final boolean every = cartesianProduct(sequences).allMatch(variableProduct -> {
                 for (int i = 0; i < variableNames.size(); i++) {
@@ -477,6 +479,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             });
             return valueFactory.bool(every);
         }
+
         if (ctx.SOME() != null) {
             final boolean some = cartesianProduct(sequences).anyMatch(variableProduct -> {
                 for (int i = 0; i < variableNames.size(); i++) {
@@ -486,8 +489,10 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             });
             return valueFactory.bool(some);
         }
+
         return null;
     }
+
 
     @Override
     public XQueryValue visitOrExpr(final OrExprContext ctx) {

@@ -21,4 +21,9 @@ public interface XQuerySequenceType {
     boolean hasEffectiveBooleanValue();
     boolean castableAs(XQuerySequenceType other);
     boolean isValueComparableWith(XQuerySequenceType other);
+
+    public enum RelativeCoercability {
+        ALWAYS, POSSIBLE, NEVER
+    }
+    RelativeCoercability coerceableTo(XQuerySequenceType desiredType);
 }

@@ -2,6 +2,9 @@ package com.github.akruk.antlrxquery.typesystem;
 
 public interface XQuerySequenceType {
     XQueryItemType getItemType();
+    XQueryItemType getMapKeyType();
+    XQuerySequenceType getMapValueType();
+    XQuerySequenceType getArrayMemberType();
     XQuerySequenceType sequenceMerge(XQuerySequenceType other);
     XQuerySequenceType unionMerge(XQuerySequenceType other);
     XQuerySequenceType intersectionMerge(XQuerySequenceType other);

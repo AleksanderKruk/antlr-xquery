@@ -90,21 +90,6 @@ public class XQueryString extends XQueryValueBase<String> {
     public XQueryValue empty() {
         return valueFactory.bool(false);
     }
-
-    @Override
-    public XQueryValue head() {
-        if (value.isEmpty())
-            return valueFactory.emptySequence();
-        return valueFactory.string(value.substring(0, 1));
-    }
-
-    @Override
-    public XQueryValue tail() {
-        if (value.isEmpty())
-            return valueFactory.emptySequence();
-        return valueFactory.string(value.substring(1));
-    }
-
     @Override
     public XQueryValue data() {
         var atomized = atomize();

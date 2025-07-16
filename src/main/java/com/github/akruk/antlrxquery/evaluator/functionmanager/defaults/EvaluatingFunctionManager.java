@@ -401,7 +401,8 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
     }
 
     public XQueryValue distinctValues(final XQueryVisitingContext ctx, final List<XQueryValue> args) {
-        return args.get(0).distinctValues();
+        return null;
+        // return args.get(0).distinctValues();
     }
 
 

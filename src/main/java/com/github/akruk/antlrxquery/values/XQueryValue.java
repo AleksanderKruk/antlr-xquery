@@ -52,15 +52,7 @@ public interface XQueryValue {
     public XQueryValue union(XQueryValue otherSequence);
     public XQueryValue intersect(XQueryValue otherSequence);
     public XQueryValue except(XQueryValue other);
-    public XQueryValue head();
-    public XQueryValue tail();
-    public XQueryValue insertBefore(XQueryValue position, XQueryValue inserted);
-    public XQueryValue insertAfter(XQueryValue position, XQueryValue inserted);
     public XQueryValue remove(XQueryValue position);
-    public XQueryValue reverse();
-    public XQueryValue subsequence(int startingLoc);
-    public XQueryValue subsequence(int startingLoc, int length);
-    public XQueryValue distinctValues();
     public XQueryValue data();
     public boolean isEmptySequence();
 }

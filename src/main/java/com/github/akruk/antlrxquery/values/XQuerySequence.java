@@ -121,42 +121,6 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
 
 
     @Override
-    public XQueryValue head() {
-        if (value.isEmpty())
-            return valueFactory.emptySequence();
-        return value.get(0);
-    }
-
-
-    @Override
-    public XQueryValue tail() {
-        if (value.isEmpty())
-            return valueFactory.emptySequence();
-        return valueFactory.sequence(value.subList(1, value.size()));
-    }
-
-    @Override
-    public XQueryValue insertBefore(XQueryValue position, XQueryValue inserted)
-
-    {
-        var newSequence = new ArrayList<XQueryValue>(value.size());
-        newSequence.addAll(value);
-        if (!position.isNumericValue())
-            return XQueryError.InvalidArgumentType;
-        int positionIndex = position.numericValue().intValue();
-        if (positionIndex > value.size()) {
-            newSequence.addAll(inserted.atomize());
-            return valueFactory.sequence(newSequence);
-        }
-        if (positionIndex <= 0) {
-            newSequence.addAll(0, inserted.atomize());
-            return valueFactory.sequence(newSequence);
-        }
-        newSequence.addAll(positionIndex - 1, inserted.atomize());
-        return valueFactory.sequence(newSequence);
-    }
-
-    @Override
     public XQueryValue remove(XQueryValue position)
     {
         var newSequence = new ArrayList<XQueryValue>(value.size());
@@ -171,49 +135,6 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
             return valueFactory.sequence(newSequence);
         }
         newSequence.remove(positionIndex-1);
-        return valueFactory.sequence(newSequence);
-    }
-
-    @Override
-    public XQueryValue reverse()
-    {
-        var newSequence = List.copyOf(value);
-        return valueFactory.sequence(newSequence.reversed());
-    }
-
-
-
-    @Override
-    public XQueryValue subsequence(int startingLoc) {
-        return subsequence(startingLoc, value.size()-startingLoc+1);
-    }
-
-    @Override
-    public XQueryValue subsequence(int startingLoc, int length) {
-        int currentLength = value.size();
-        if (startingLoc > currentLength) {
-            return valueFactory.emptySequence();
-        }
-        int startIndexIncluded = Math.max(startingLoc - 1, 0);
-        int endIndexExcluded = Math.min(startingLoc + length - 1, currentLength);
-        var newSequence = value.subList(startIndexIncluded, endIndexExcluded);
-        return valueFactory.sequence(newSequence);
-    }
-
-    @Override
-    public XQueryValue distinctValues() {
-        int currentLength = value.size();
-        if (currentLength == 0) {
-            return valueFactory.emptySequence();
-        }
-        var newSequence = new ArrayList<XQueryValue>(value.size());
-        for (var element : value) {
-            var exists = newSequence.stream().filter(
-                    v -> v == element || v.valueEqual(element).booleanValue()).findFirst().isPresent();
-            if (!exists) {
-                newSequence.add(element);
-            }
-        }
         return valueFactory.sequence(newSequence);
     }
 

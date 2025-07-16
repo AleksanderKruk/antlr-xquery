@@ -245,47 +245,7 @@ public record XQueryArray(List<XQueryValue> value, XQueryValueFactory valueFacto
     }
 
     @Override
-    public XQueryValue head() {
-        return XQueryError.InvalidArgumentType;
-    }
-
-    @Override
-    public XQueryValue tail() {
-        return XQueryError.InvalidArgumentType;
-    }
-
-    @Override
-    public XQueryValue insertBefore(XQueryValue position, XQueryValue inserted) {
-        return XQueryError.InvalidArgumentType;
-    }
-
-    @Override
-    public XQueryValue insertAfter(XQueryValue position, XQueryValue inserted) {
-        return XQueryError.InvalidArgumentType;
-    }
-
-    @Override
     public XQueryValue remove(XQueryValue position) {
-        return XQueryError.InvalidArgumentType;
-    }
-
-    @Override
-    public XQueryValue reverse() {
-        return XQueryError.InvalidArgumentType;
-    }
-
-    @Override
-    public XQueryValue subsequence(int startingLoc) {
-        return XQueryError.InvalidArgumentType;
-    }
-
-    @Override
-    public XQueryValue subsequence(int startingLoc, int length) {
-        return XQueryError.InvalidArgumentType;
-    }
-
-    @Override
-    public XQueryValue distinctValues() {
         return XQueryError.InvalidArgumentType;
     }
 

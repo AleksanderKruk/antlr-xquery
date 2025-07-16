@@ -444,47 +444,7 @@ public class XQueryError implements XQueryValue {
     }
 
     @Override
-    public XQueryValue head() {
-        return null;
-    }
-
-    @Override
-    public XQueryValue tail() {
-        return null;
-    }
-
-    @Override
-    public XQueryValue insertBefore(final XQueryValue position, final XQueryValue inserted) {
-        return null;
-    }
-
-    @Override
-    public XQueryValue insertAfter(final XQueryValue position, final XQueryValue inserted) {
-        return null;
-    }
-
-    @Override
     public XQueryValue remove(final XQueryValue position) {
-        return null;
-    }
-
-    @Override
-    public XQueryValue reverse() {
-        return null;
-    }
-
-    @Override
-    public XQueryValue subsequence(final int startingLoc) {
-        return null;
-    }
-
-    @Override
-    public XQueryValue subsequence(final int startingLoc, final int length) {
-        return null;
-    }
-
-    @Override
-    public XQueryValue distinctValues() {
         return null;
     }
 

@@ -120,20 +120,17 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
     @Override
     public XQuerySequenceType visitForClause(final ForClauseContext ctx) {
+        // TODO: add coercion
         for (final ForBindingContext forBinding : ctx.forBinding()) {
-            processForBinding(forBinding);
+            if (forBinding.forItemBinding() != null) {
+                processForItemBinding(forBinding.forItemBinding());
+            } else if (forBinding.forMemberBinding() != null) {
+                processForMemberBinding(forBinding.forMemberBinding());
+            } else if (forBinding.forEntryBinding() != null) {
+                processForEntryBinding(forBinding.forEntryBinding());
+            }
         }
         return null;
-    }
-
-    private void processForBinding(final ForBindingContext forBinding) {
-        if (forBinding.forItemBinding() != null) {
-            processForItemBinding(forBinding.forItemBinding());
-        } else if (forBinding.forMemberBinding() != null) {
-            processForMemberBinding(forBinding.forMemberBinding());
-        } else if (forBinding.forEntryBinding() != null) {
-            processForEntryBinding(forBinding.forEntryBinding());
-        }
     }
 
     private void processForItemBinding(final ForItemBindingContext ctx) {

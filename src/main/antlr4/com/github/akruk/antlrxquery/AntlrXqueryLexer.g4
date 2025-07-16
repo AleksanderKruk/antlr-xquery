@@ -190,6 +190,9 @@ CAST: 'cast';
 PERCENTAGE: '%';
 MULTIPLICATION: 'x';
 FN: 'fn';
+MEMBER : 'member' ;
+KEY : 'key' ;
+VALUE : 'value' ;
 
 
 ID: NAME_START (DASH NAME_MIDDLE)*

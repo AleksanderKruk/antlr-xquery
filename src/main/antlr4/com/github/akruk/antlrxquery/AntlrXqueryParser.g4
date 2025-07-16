@@ -20,10 +20,44 @@ intermediateClause: initialClause
                 | whileClause
                 | orderByClause
                 | countClause;
-forClause: FOR forBinding (COMMA forBinding)*;
-forBinding: DOLLAR varName typeDeclaration? allowingEmpty? positionalVar? IN exprSingle;
-allowingEmpty: ALLOWING EMPTY;
+
+forClause
+    : FOR forBinding (COMMA forBinding)*
+    ;
+
+forBinding
+    : forItemBinding
+    | forMemberBinding
+    | forEntryBinding
+    ;
+
+forItemBinding
+    : varNameAndType allowingEmpty? positionalVar? IN exprSingle
+    ;
+
+allowingEmpty
+    : ALLOWING EMPTY
+    ;
+
+forMemberBinding
+    : MEMBER varNameAndType positionalVar? IN exprSingle
+    ;
+
+forEntryBinding
+    : ((forEntryKeyBinding forEntryValueBinding?) | forEntryValueBinding) positionalVar? IN exprSingle
+    ;
+
+forEntryKeyBinding
+    : KEY varNameAndType
+    ;
+
+forEntryValueBinding
+    : VALUE varNameAndType
+    ;
+
+
 positionalVar: AT DOLLAR varName;
+
 letClause: LET letBinding (COMMA letBinding)*;
 letBinding: DOLLAR varName typeDeclaration? ASSIGNMENT_OP exprSingle;
 countClause: COUNT DOLLAR varName;

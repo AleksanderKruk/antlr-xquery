@@ -2,6 +2,7 @@ package com.github.akruk.antlrxquery.values;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 
@@ -259,6 +260,16 @@ public class XQueryError implements XQueryValue {
 
     @Override
     public List<XQueryValue> sequence() {
+        return null;
+    }
+
+    @Override
+    public List<XQueryValue> arrayMembers() {
+        return null;
+    }
+
+    @Override
+    public Map<XQueryValue, XQueryValue> mapEntries() {
         return null;
     }
 

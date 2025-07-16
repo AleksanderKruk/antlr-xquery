@@ -2,6 +2,8 @@ package com.github.akruk.antlrxquery.values;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
+
 import org.antlr.v4.runtime.tree.ParseTree;
 
 
@@ -13,6 +15,8 @@ public interface XQueryValue {
     public XQueryFunction functionValue();
     public Boolean effectiveBooleanValue();
     public List<XQueryValue> sequence();
+    public List<XQueryValue> arrayMembers();
+    public Map<XQueryValue, XQueryValue> mapEntries();
     public boolean isNumericValue();
     public boolean isStringValue();
     public boolean isBooleanValue();

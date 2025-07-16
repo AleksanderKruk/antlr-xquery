@@ -2,6 +2,7 @@ package com.github.akruk.antlrxquery.values;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 
@@ -297,4 +298,17 @@ public record XQueryArray(List<XQueryValue> value, XQueryValueFactory valueFacto
     public boolean isEmptySequence() {
         return false;
     }
+
+    @Override
+    public List<XQueryValue> arrayMembers() {
+        return value;
+    }
+
+    @Override
+    public Map<XQueryValue, XQueryValue> mapEntries() {
+        return null;
+    }
+
+
+
 }

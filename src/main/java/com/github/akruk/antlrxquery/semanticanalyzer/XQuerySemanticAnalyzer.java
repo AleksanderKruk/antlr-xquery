@@ -120,36 +120,141 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
     @Override
     public XQuerySequenceType visitForClause(final ForClauseContext ctx) {
-        for (final var forBinding : ctx.forBinding()) {
-            final String variableName = forBinding.varName().getText();
-            final XQuerySequenceType sequenceType = forBinding.exprSingle().accept(this);
-            returnedOccurrence = mergeFLWOROccurrence(sequenceType);
-
-            if (forBinding.positionalVar() != null) {
-                final String positionalVariableName = forBinding.positionalVar().varName().getText();
-                contextManager.entypeVariable(positionalVariableName, typeFactory.number());
-            }
-
-            final XQueryItemType itemType = sequenceType.getItemType();
-            final XQuerySequenceType iteratorType = (forBinding.allowingEmpty() != null)
-                    ? typeFactory.zeroOrOne(itemType)
-                    : typeFactory.one(itemType);
-            if (forBinding.typeDeclaration() == null) {
-                contextManager.entypeVariable(variableName, iteratorType);
-                continue;
-            }
-            final XQuerySequenceType type = forBinding.typeDeclaration().accept(this);
-            if (!iteratorType.isSubtypeOf(type)) {
-                final String msg = String.format(
-                        "Type of variable %s is not compatible with the assigned value: %s is not subtype of %s",
-                        variableName, iteratorType, type);
-                addError(forBinding, msg);
-            }
-            contextManager.entypeVariable(variableName, type);
+        for (final ForBindingContext forBinding : ctx.forBinding()) {
+            processForBinding(forBinding);
         }
         return null;
     }
 
+    private void processForBinding(final ForBindingContext forBinding) {
+        if (forBinding.forItemBinding() != null) {
+            processForItemBinding(forBinding.forItemBinding());
+        } else if (forBinding.forMemberBinding() != null) {
+            processForMemberBinding(forBinding.forMemberBinding());
+        } else if (forBinding.forEntryBinding() != null) {
+            processForEntryBinding(forBinding.forEntryBinding());
+        }
+    }
+
+    private void processForItemBinding(final ForItemBindingContext ctx) {
+        final String variableName = ctx.varNameAndType().qname().getText();
+        final XQuerySequenceType sequenceType = ctx.exprSingle().accept(this);
+        returnedOccurrence = mergeFLWOROccurrence(sequenceType);
+
+        checkPositionalVariableDistinct(ctx.positionalVar(), variableName, ctx);
+
+        final XQueryItemType itemType = sequenceType.getItemType();
+        final XQuerySequenceType iteratorType = (ctx.allowingEmpty() != null)
+                ? typeFactory.zeroOrOne(itemType)
+                : typeFactory.one(itemType);
+
+        processVariableTypeDeclaration(ctx.varNameAndType(), iteratorType, variableName, ctx);
+
+        if (ctx.positionalVar() != null) {
+            final String positionalVariableName = ctx.positionalVar().varName().getText();
+            contextManager.entypeVariable(positionalVariableName, typeFactory.number());
+        }
+    }
+
+    private void processForMemberBinding(final ForMemberBindingContext ctx) {
+        final String variableName = ctx.varNameAndType().qname().getText();
+        final XQuerySequenceType arrayType = ctx.exprSingle().accept(this);
+
+        if (!arrayType.isSubtypeOf(typeFactory.anyArray())) {
+            addError(ctx, "XPTY0141: ForMemberBinding requires a single array value; received: " + arrayType);
+        }
+
+        checkPositionalVariableDistinct(ctx.positionalVar(), variableName, ctx);
+
+        final XQueryItemType memberType = arrayType.getItemType();
+        final XQuerySequenceType iteratorType = typeFactory.zeroOrOne(memberType);
+
+        processVariableTypeDeclaration(ctx.varNameAndType(), iteratorType, variableName, ctx);
+
+        if (ctx.positionalVar() != null) {
+            final String positionalVariableName = ctx.positionalVar().varName().getText();
+            contextManager.entypeVariable(positionalVariableName, typeFactory.number());
+        }
+    }
+
+    private void processForEntryBinding(final ForEntryBindingContext ctx) {
+        return;
+        // final XQuerySequenceType mapType = ctx.exprSingle().accept(this);
+
+        // if (!mapType.isMapType()) {
+        //     addError(ctx, "XPTY0141: ForEntryBinding requires a single map value");
+        //     return;
+        // }
+
+        // final ForEntryKeyBindingContext keyBinding = ctx.forEntryKeyBinding();
+        // final ForEntryValueBindingContext valueBinding = ctx.forEntryValueBinding();
+
+        // // Check for duplicate key and value variable names
+        // if (keyBinding != null && valueBinding != null) {
+        //     final String keyVarName = keyBinding.varNameAndType().varName().getText();
+        //     final String valueVarName = valueBinding.varNameAndType().varName().getText();
+        //     if (keyVarName.equals(valueVarName)) {
+        //         addError(ctx, "XQST0089: Key and value variable names must be distinct");
+        //         return;
+        //     }
+        // }
+
+        // // Process key binding
+        // if (keyBinding != null) {
+        //     final String keyVariableName = keyBinding.varNameAndType().varName().getText();
+        //     final XQueryItemType keyType = mapType.getMapKeyType();
+        //     final XQuerySequenceType keyIteratorType = typeFactory.one(keyType);
+
+        //     checkPositionalVariableDistinct(ctx.positionalVar(), keyVariableName, ctx);
+        //     processVariableTypeDeclaration(keyBinding.varNameAndType(), keyIteratorType, keyVariableName, ctx);
+        // }
+
+        // // Process value binding
+        // if (valueBinding != null) {
+        //     final String valueVariableName = valueBinding.varNameAndType().varName().getText();
+        //     final XQuerySequenceType valueType = mapType.getMapValueType();
+
+        //     checkPositionalVariableDistinct(ctx.positionalVar(), valueVariableName, ctx);
+        //     processVariableTypeDeclaration(valueBinding.varNameAndType(), valueType, valueVariableName, ctx);
+        // }
+
+        // if (ctx.positionalVar() != null) {
+        //     final String positionalVariableName = ctx.positionalVar().varName().getText();
+        //     contextManager.entypeVariable(positionalVariableName, typeFactory.number());
+        // }
+    }
+
+    private void checkPositionalVariableDistinct(final PositionalVarContext positionalVar,
+                                            final String mainVariableName,
+                                            final ParserRuleContext context)
+    {
+        if (positionalVar != null) {
+            final String positionalVariableName = positionalVar.varName().getText();
+            if (mainVariableName.equals(positionalVariableName)) {
+                addError(context, "XQST0089: Positional variable name must be distinct from main variable name");
+            }
+        }
+    }
+
+private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameAndType,
+                                          final XQuerySequenceType inferredType,
+                                          final String variableName,
+                                          final ParseTree context)
+{
+    if (varNameAndType.typeDeclaration() == null) {
+        contextManager.entypeVariable(variableName, inferredType);
+        return;
+    }
+
+    final XQuerySequenceType declaredType = varNameAndType.typeDeclaration().accept(this);
+    if (!inferredType.isSubtypeOf(declaredType)) {
+        final String msg = String.format(
+                "Type of variable %s is not compatible with the assigned value: %s is not subtype of %s",
+                variableName, inferredType, declaredType);
+        addError((ParserRuleContext)context, msg);
+    }
+    contextManager.entypeVariable(variableName, declaredType);
+}
     @Override
     public XQuerySequenceType visitSequenceType(final SequenceTypeContext ctx) {
         if (ctx.EMPTY_SEQUENCE() != null) {

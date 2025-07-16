@@ -155,40 +155,128 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
     @Override
     public XQueryValue visitForClause(final ForClauseContext ctx) {
-        final int numberOfVariables = (int) ctx.forBinding().size();
+        final int numberOfVariables = ctx.forBinding().size();
         visitedTupleStream = visitedTupleStream.flatMap(tuple -> {
             final List<List<TupleElement>> newTupleLike = tuple.stream().map(e -> List.of(e))
                     .collect(Collectors.toList());
-            for (final ForBindingContext streamVariable : ctx.forBinding()) {
-                final String variableName = streamVariable.varName().getText();
-                final List<XQueryValue> sequence = streamVariable.exprSingle().accept(this).sequence();
-                final PositionalVarContext positional = streamVariable.positionalVar();
-                final int sequenceSize = sequence.size();
-                if (positional != null) {
-                    final List<TupleElement> elementsWithIndex = new ArrayList<>(numberOfVariables);
-                    final String positionalName = positional.varName().getText();
-                    for (int i = 0; i < sequenceSize; i++) {
-                        final var value = sequence.get(i);
-                        final var element = new TupleElement(variableName, value, positionalName,
-                                valueFactory.number(i + 1));
-                        elementsWithIndex.add(element);
-                    }
-                    newTupleLike.add(elementsWithIndex);
-                } else {
-                    final List<TupleElement> elementsWithoutIndex = sequence.stream()
-                            .map(value -> new TupleElement(variableName, value, null, null))
-                            .toList();
-                    newTupleLike.add(elementsWithoutIndex);
-                }
+
+            for (final ForBindingContext forBinding : ctx.forBinding()) {
+                final List<TupleElement> tupleElements = processForBinding(forBinding);
+                newTupleLike.add(tupleElements);
             }
+
             return cartesianProduct(newTupleLike);
         }).map(tuple -> {
-            // the newly declared variables need to be provided to the context
             final List<TupleElement> addedVariables = tuple.subList(tuple.size() - numberOfVariables, tuple.size());
             provideVariables(addedVariables);
             return tuple;
         });
         return null;
+    }
+
+    private List<TupleElement> processForBinding(final ForBindingContext forBinding) {
+        if (forBinding.forItemBinding() != null) {
+            return processForItemBinding(forBinding.forItemBinding());
+        }
+        if (forBinding.forMemberBinding() != null) {
+            return processForMemberBinding(forBinding.forMemberBinding());
+        }
+        if (forBinding.forEntryBinding() != null) {
+            return processForEntryBinding(forBinding.forEntryBinding());
+        }
+        throw new IllegalStateException("Unknown for binding type");
+    }
+
+    private List<TupleElement> processForItemBinding(final ForItemBindingContext ctx) {
+        final String variableName = ctx.varNameAndType().qname().getText();
+        final List<XQueryValue> sequence = ctx.exprSingle().accept(this).sequence();
+        final PositionalVarContext positional = ctx.positionalVar();
+        final boolean allowingEmpty = ctx.allowingEmpty() != null;
+
+        if (sequence.isEmpty() && allowingEmpty) {
+            final TupleElement element = positional != null
+                ? new TupleElement(variableName, valueFactory.emptySequence(),
+                                positional.varName().getText(), valueFactory.number(0))
+                : new TupleElement(variableName, valueFactory.emptySequence(), null, null);
+            return List.of(element);
+        }
+
+        if (positional != null) {
+            final String positionalName = positional.varName().getText();
+            final List<TupleElement> elementsWithIndex = new ArrayList<>();
+            for (int i = 0; i < sequence.size(); i++) {
+                final XQueryValue value = sequence.get(i);
+                final TupleElement element = new TupleElement(variableName, value, positionalName,
+                        valueFactory.number(i + 1));
+                elementsWithIndex.add(element);
+            }
+            return elementsWithIndex;
+        }
+
+        return sequence.stream()
+                .map(value -> new TupleElement(variableName, value, null, null))
+                .toList();
+    }
+
+    private List<TupleElement> processForMemberBinding(final ForMemberBindingContext ctx) {
+        final String variableName = ctx.varNameAndType().qname().getText();
+        final XQueryValue arrayValue = ctx.exprSingle().accept(this);
+        final PositionalVarContext positional = ctx.positionalVar();
+
+        final List<XQueryValue> arrayMembers = arrayValue.arrayMembers();
+
+        if (positional != null) {
+            final String positionalName = positional.varName().getText();
+            final List<TupleElement> elementsWithIndex = new ArrayList<>();
+            for (int i = 0; i < arrayMembers.size(); i++) {
+                final XQueryValue member = arrayMembers.get(i);
+                final TupleElement element = new TupleElement(variableName, member, positionalName,
+                        valueFactory.number(i + 1));
+                elementsWithIndex.add(element);
+            }
+            return elementsWithIndex;
+        }
+
+        return arrayMembers.stream()
+                .map(member -> new TupleElement(variableName, member, null, null))
+                .toList();
+    }
+
+    private List<TupleElement> processForEntryBinding(final ForEntryBindingContext ctx) {
+        final XQueryValue mapValue = ctx.exprSingle().accept(this);
+        final PositionalVarContext positional = ctx.positionalVar();
+
+        final ForEntryKeyBindingContext keyBinding = ctx.forEntryKeyBinding();
+        final ForEntryValueBindingContext valueBinding = ctx.forEntryValueBinding();
+
+        final Map<XQueryValue, XQueryValue> mapEntries = mapValue.mapEntries();
+        final List<TupleElement> tupleElements = new ArrayList<>();
+
+        int index = 1;
+        for (final Map.Entry<XQueryValue, XQueryValue> entry : mapEntries.entrySet()) {
+            final List<TupleElement> entryElements = new ArrayList<>();
+
+            if (keyBinding != null) {
+                final String keyVariableName = keyBinding.varNameAndType().qname().getText();
+                entryElements.add(new TupleElement(keyVariableName, entry.getKey(), null, null));
+            }
+
+            if (valueBinding != null) {
+                String positionalName = null;
+                XQueryValue position = null;
+                if (positional != null) {
+                    positionalName = positional.varName().getText();
+                    position = valueFactory.number(index);
+                }
+                final String valueVariableName = valueBinding.varNameAndType().qname().getText();
+                entryElements.add(new TupleElement(valueVariableName, entry.getValue(), positionalName, position));
+            }
+
+            tupleElements.addAll(entryElements);
+            index++;
+        }
+
+        return tupleElements;
     }
 
     private class MutableInt {

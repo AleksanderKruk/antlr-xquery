@@ -159,6 +159,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     private void processForMemberBinding(final ForMemberBindingContext ctx) {
         final String variableName = ctx.varNameAndType().qname().getText();
         final XQuerySequenceType arrayType = ctx.exprSingle().accept(this);
+        returnedOccurrence = arrayMergeFLWOROccurence();
 
         if (!arrayType.isSubtypeOf(typeFactory.anyArray())) {
             addError(ctx, "XPTY0141: ForMemberBinding requires a single array value; received: " + arrayType);
@@ -166,8 +167,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
         checkPositionalVariableDistinct(ctx.positionalVar(), variableName, ctx);
 
-        final XQueryItemType memberType = arrayType.getItemType();
-        final XQuerySequenceType iteratorType = typeFactory.zeroOrOne(memberType);
+        final XQuerySequenceType memberType = arrayType.getArrayMemberType();
+        final XQuerySequenceType iteratorType = memberType.addOptionality();
 
         processVariableTypeDeclaration(ctx.varNameAndType(), iteratorType, variableName, ctx);
 
@@ -178,50 +179,50 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     }
 
     private void processForEntryBinding(final ForEntryBindingContext ctx) {
-        return;
-        // final XQuerySequenceType mapType = ctx.exprSingle().accept(this);
+        final XQuerySequenceType mapType = ctx.exprSingle().accept(this);
+        returnedOccurrence = arrayMergeFLWOROccurence();
 
-        // if (!mapType.isMapType()) {
-        //     addError(ctx, "XPTY0141: ForEntryBinding requires a single map value");
-        //     return;
-        // }
+        if (!mapType.isSubtypeOf(typeFactory.anyMap())) {
+            addError(ctx, "XPTY0141: ForEntryBinding requires a single map value");
+            return;
+        }
 
-        // final ForEntryKeyBindingContext keyBinding = ctx.forEntryKeyBinding();
-        // final ForEntryValueBindingContext valueBinding = ctx.forEntryValueBinding();
+        final ForEntryKeyBindingContext keyBinding = ctx.forEntryKeyBinding();
+        final ForEntryValueBindingContext valueBinding = ctx.forEntryValueBinding();
 
-        // // Check for duplicate key and value variable names
-        // if (keyBinding != null && valueBinding != null) {
-        //     final String keyVarName = keyBinding.varNameAndType().varName().getText();
-        //     final String valueVarName = valueBinding.varNameAndType().varName().getText();
-        //     if (keyVarName.equals(valueVarName)) {
-        //         addError(ctx, "XQST0089: Key and value variable names must be distinct");
-        //         return;
-        //     }
-        // }
+        // Check for duplicate key and value variable names
+        if (keyBinding != null && valueBinding != null) {
+            final String keyVarName = keyBinding.varNameAndType().qname().getText();
+            final String valueVarName = valueBinding.varNameAndType().qname().getText();
+            if (keyVarName.equals(valueVarName)) {
+                addError(ctx, "XQST0089: Key and value variable names must be distinct");
+                return;
+            }
+        }
 
-        // // Process key binding
-        // if (keyBinding != null) {
-        //     final String keyVariableName = keyBinding.varNameAndType().varName().getText();
-        //     final XQueryItemType keyType = mapType.getMapKeyType();
-        //     final XQuerySequenceType keyIteratorType = typeFactory.one(keyType);
+        // Process key binding
+        if (keyBinding != null) {
+            final String keyVariableName = keyBinding.varNameAndType().qname().getText();
+            final XQueryItemType keyType = mapType.getMapKeyType();
+            final XQuerySequenceType keyIteratorType = typeFactory.one(keyType);
 
-        //     checkPositionalVariableDistinct(ctx.positionalVar(), keyVariableName, ctx);
-        //     processVariableTypeDeclaration(keyBinding.varNameAndType(), keyIteratorType, keyVariableName, ctx);
-        // }
+            checkPositionalVariableDistinct(ctx.positionalVar(), keyVariableName, ctx);
+            processVariableTypeDeclaration(keyBinding.varNameAndType(), keyIteratorType, keyVariableName, ctx);
+        }
 
-        // // Process value binding
-        // if (valueBinding != null) {
-        //     final String valueVariableName = valueBinding.varNameAndType().varName().getText();
-        //     final XQuerySequenceType valueType = mapType.getMapValueType();
+        // Process value binding
+        if (valueBinding != null) {
+            final String valueVariableName = valueBinding.varNameAndType().qname().getText();
+            final XQuerySequenceType valueType = mapType.getMapValueType();
 
-        //     checkPositionalVariableDistinct(ctx.positionalVar(), valueVariableName, ctx);
-        //     processVariableTypeDeclaration(valueBinding.varNameAndType(), valueType, valueVariableName, ctx);
-        // }
+            checkPositionalVariableDistinct(ctx.positionalVar(), valueVariableName, ctx);
+            processVariableTypeDeclaration(valueBinding.varNameAndType(), valueType, valueVariableName, ctx);
+        }
 
-        // if (ctx.positionalVar() != null) {
-        //     final String positionalVariableName = ctx.positionalVar().varName().getText();
-        //     contextManager.entypeVariable(positionalVariableName, typeFactory.number());
-        // }
+        if (ctx.positionalVar() != null) {
+            final String positionalVariableName = ctx.positionalVar().varName().getText();
+            contextManager.entypeVariable(positionalVariableName, typeFactory.number());
+        }
     }
 
     private void checkPositionalVariableDistinct(final PositionalVarContext positionalVar,
@@ -438,6 +439,12 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     private int mergeFLWOROccurrence(final XQuerySequenceType type) {
         final int typeOccurrence = occurrence(type);
         return OCCURRENCE_MERGE_AUTOMATA[returnedOccurrence][typeOccurrence];
+    }
+
+    private int arrayMergeFLWOROccurence() {
+        if (returnedOccurrence == 0)
+            return 0;
+        return 3;
     }
 
     @Override

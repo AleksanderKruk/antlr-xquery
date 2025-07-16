@@ -18,6 +18,7 @@ import static org.junit.Assert.*;
 public class XQueryEvaluatorTest extends EvaluationTestsBase {
 
 
+    // TODO: add no grammar errors requirement
 
     @Test
     public void atomization() {

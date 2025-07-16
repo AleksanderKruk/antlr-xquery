@@ -27,10 +27,10 @@ public class OtherFunctionsOnNodes {
     {
         XQueryValue node;
         if (args.isEmpty()) {
-            if (context.getItem() == null) {
+            if (context.getValue() == null) {
                 return XQueryError.MissingDynamicContextComponent;
             }
-            node = context.getItem();
+            node = context.getValue();
         } else {
             node = args.get(0);
             if (node.isEmptySequence()) {

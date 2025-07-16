@@ -32,6 +32,7 @@ import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper.XQuery
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType.RelativeCoercability;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeEnum;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
@@ -517,27 +518,43 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     }
 
     @Override
-    public XQuerySequenceType visitQuantifiedExpr(final QuantifiedExprContext ctx)
-    {
-        final List<String> variableNames = ctx.varName().stream()
-            .map(VarNameContext::qname)
-            .map(QnameContext::getText)
-            .toList();
-        final int variableExpressionCount = ctx.exprSingle().size() - 1;
-        final List<XQuerySequenceType> variableTypes = new ArrayList<>(variableExpressionCount);
-        for (final var expr : ctx.exprSingle().subList(0, variableExpressionCount)) {
-            final var sequenceType = expr.accept(this);
-            variableTypes.add(sequenceType);
-        }
+    public XQuerySequenceType visitQuantifiedExpr(final QuantifiedExprContext ctx) {
+        final List<QuantifierBindingContext> quantifierBindings = ctx.quantifierBinding();
 
-        final var criterionNode = ctx.exprSingle().getLast();
+        final List<String> variableNames = quantifierBindings.stream()
+                .map(binding -> binding.varNameAndType().qname().getText())
+                .toList();
+
+        final List<XQuerySequenceType> coercedTypes = quantifierBindings.stream()
+                .map(binding -> {
+                    TypeDeclarationContext typeDeclaration = binding.varNameAndType().typeDeclaration();
+                    return typeDeclaration != null? typeDeclaration.accept(this) : null;
+                })
+                .toList();
+
+        final List<XQuerySequenceType> variableTypes = quantifierBindings.stream()
+                .map(binding -> binding.exprSingle().accept(this))
+                .toList();
+
+        final ExprSingleContext criterionNode = ctx.exprSingle();
+
         for (int i = 0; i < variableNames.size(); i++) {
+            final var assignedType = variableTypes.get(i);
+            final var desiredType = coercedTypes.get(i);
+            if (desiredType !=null
+                && assignedType.coerceableTo(desiredType) == RelativeCoercability.NEVER)
+            {
+                addError(ctx.quantifierBinding(i).varNameAndType(), String.format("Type: %s is not coercable to %s", assignedType, desiredType));
+            }
+
             contextManager.entypeVariable(variableNames.get(i), variableTypes.get(i));
         }
+
         final XQuerySequenceType queriedType = criterionNode.accept(this);
         if (!queriedType.hasEffectiveBooleanValue()) {
             addError(criterionNode, "Criterion value needs to have effective boolean value");
         }
+
         return typeFactory.boolean_();
     }
 
@@ -638,7 +655,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             return stepResult;
         }
         final var savedArgs = saveVisitedArguments();
-        final var savedContext = saveVisitedContext();
+        final var savedContext = saveContext();
         context.setType(savedContext.getType());
         context.setPositionType(typeFactory.number());
         context.setSizeType(typeFactory.number());
@@ -659,8 +676,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     // return matchedTreeNodes();
     // }
 
-    private XQueryVisitingSemanticContext saveVisitedContext()
-    {
+    private XQueryVisitingSemanticContext saveContext() {
         final var saved = context;
         context = new XQueryVisitingSemanticContext();
         return saved;
@@ -674,7 +690,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         }
 
         final var savedArgs = saveVisitedArguments();
-        final var savedContext = saveVisitedContext();
+        final var savedContext = saveContext();
         context.setType(savedContext.getType());
         context.setPositionType(typeFactory.number());
         context.setSizeType(typeFactory.number());
@@ -693,7 +709,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     {
         final var contextType = context.getType();
         final var predicateExpression = ctx.expr().accept(this);
-        final var savedContext = saveVisitedContext();
+        final var savedContext = saveContext();
         context.setType(savedContext.getType());
         context.setPositionType(typeFactory.number());
         context.setSizeType(typeFactory.number());
@@ -815,7 +831,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             return ctx.pathExpr(0).accept(this);
         final XQuerySequenceType firstExpressionType = ctx.pathExpr(0).accept(this);
         final XQuerySequenceType iterator = firstExpressionType.iteratedItem();
-        final var savedContext = saveVisitedContext();
+        final var savedContext = saveContext();
         context.setType(iterator);
         context.setPositionType(typeFactory.number());
         context.setSizeType(typeFactory.number());
@@ -921,7 +937,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     {
         if (ctx.PIPE_ARROW().isEmpty())
             return ctx.arrowExpr(0).accept(this);
-        final var saved = saveVisitedContext();
+        final var saved = saveContext();
         final int size = ctx.arrowExpr().size();
         XQuerySequenceType contextType = ctx.arrowExpr(0).accept(this);
         for (var i = 1; i < size; i++) {
@@ -938,7 +954,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     @Override
     public XQuerySequenceType visitTryCatchExpr(final TryCatchExprContext ctx)
     {
-        final var savedContext = saveVisitedContext();
+        final var savedContext = saveContext();
         final XQueryItemType errorType = typeFactory.itemError();
         final var testedExprType = ctx.tryClause().enclosedExpr().accept(this);
         final var alternativeCatches = ctx.catchClause().stream()
@@ -1299,14 +1315,36 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     }
 
     @Override
-    public XQuerySequenceType visitSwitchExpr(final SwitchExprContext ctx)
-    {
-        final Map<XQuerySequenceType, ParseTree> valueToExpression = ctx.switchCaseClause().stream()
-            .flatMap(clause -> clause.switchCaseOperand()
-                .stream().map(operand -> Map.entry(operand.accept(this), clause.exprSingle())))
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        final XQuerySequenceType switchedValue = ctx.switchedExpr.accept(this);
-        final ParseTree toBeExecuted = valueToExpression.getOrDefault(switchedValue, ctx.defaultExpr);
+    public XQuerySequenceType visitSwitchExpr(final SwitchExprContext ctx) {
+        // Wyekstrahuj switchComparand aby uniknąć powtórnych wywołań
+        final SwitchComparandContext switchComparand = ctx.switchComparand();
+
+        // Obsługa opcjonalnego wyrażenia przełączającego
+        final XQuerySequenceType switchedValue = switchComparand.switchedExpr != null
+            ? switchComparand.switchedExpr.accept(this)
+            : null;
+
+        // Wybór między zwykłymi przypadkami a przypadkami w klamrach
+        final SwitchCasesContext switchCasesCtx = ctx.switchCases();
+        final SwitchCasesContext switchCases = switchCasesCtx != null
+            ? switchCasesCtx
+            : ctx.bracedSwitchCases().switchCases();
+
+        // Wyekstrahuj listę klauzul case aby uniknąć powtórnych wywołań
+        final List<SwitchCaseClauseContext> caseClauseList = switchCases.switchCaseClause();
+
+        // Mapowanie typów wartości do wyrażeń dla przypadków switch
+        final Map<XQuerySequenceType, ParseTree> valueToExpression = caseClauseList.stream()
+                .flatMap(clause -> {
+                    final ExprSingleContext exprSingle = clause.exprSingle();
+                    return clause.switchCaseOperand().stream()
+                            .map(operand -> Map.entry(operand.expr().accept(this), exprSingle));
+                })
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        // Znajdź odpowiedni przypadek lub użyj domyślnego
+        final ParseTree toBeExecuted = valueToExpression.getOrDefault(switchedValue, switchCases.defaultExpr);
+
         return toBeExecuted.accept(this);
     }
 

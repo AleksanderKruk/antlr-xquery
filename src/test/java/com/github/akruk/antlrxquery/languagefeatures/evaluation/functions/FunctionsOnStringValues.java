@@ -191,6 +191,11 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
     }
 
     @Test
+    public void concatVariadic() {
+        assertResult("concat('a', 'b', 'c')", new XQueryString("abc", baseFactory));
+    }
+
+    @Test
     public void stringJoin() {
         assertResult("string-join(('a', 'b', 'c'))", new XQueryString("abc", baseFactory));
         assertResult("string-join(('a', 'b', 'c'), '-')", new XQueryString("a-b-c", baseFactory));

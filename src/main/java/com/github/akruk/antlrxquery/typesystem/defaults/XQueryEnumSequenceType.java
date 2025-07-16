@@ -522,5 +522,16 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
                                         || itemType instanceof XQueryEnumChoiceItemType);
     }
 
+    @Override
+    public RelativeCoercability coerceableTo(XQuerySequenceType requiredType) {
+        if (this == requiredType || isSubtypeOf(requiredType)) {
+            return RelativeCoercability.ALWAYS;
+        }
+        boolean emptySequenceRequired = requiredType.isSubtypeOf(typeFactory.emptySequence());
+        if (emptySequenceRequired) {
+            return RelativeCoercability.NEVER;
+        }
+        return RelativeCoercability.POSSIBLE;
+    }
 
 }

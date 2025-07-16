@@ -49,7 +49,7 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
     private static final ParseTree DEFAULT_ROUNDING_MODE = getTree("'half-to-ceiling'", parser->parser.literal());
     private static final ParseTree ZERO_LITERAL = getTree("0", parser->parser.literal());
     private static final ParseTree NFC = getTree("\"NFC\"", parser -> parser.literal());
-    private static final ParseTree STRING_AT_CONTEXT_VALUE = getTree("fn:string(.)", (parser) -> parser.functionCall());
+    // private static final ParseTree STRING_AT_CONTEXT_VALUE = getTree("fn:string(.)", (parser) -> parser.functionCall());
     private static final ParseTree EMPTY_STRING = getTree("\"\"", (parser)->parser.literal());
 
 
@@ -58,7 +58,8 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
             long minArity,
             long maxArity,
             List<String> argNames,
-            Map<String, ParseTree> defaultArguments) {
+            Map<String, ParseTree> defaultArguments,
+            String variadicArg) {
     }
     private final Map<String, Map<String, List<FunctionEntry>>> namespaces;
     private final XQueryValueFactory valueFactory;
@@ -245,8 +246,7 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
 
         registerFunction("fn", "graphemes", functionsOnStringValues::graphemes, valueArg, Map.of());
 
-        registerFunction("fn", "concat", functionsOnStringValues::concat,
-            List.of("values"), Map.of("values", EMPTY_SEQUENCE));
+        registerVariadicFunction("fn", "concat", functionsOnStringValues::concat, "values");
 
         registerFunction("fn", "string-join", functionsOnStringValues::stringJoin,
             List.of("values", "separator"), Map.of("separator", EMPTY_STRING));
@@ -480,15 +480,28 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         }
     }
 
-    private void registerFunction(final String namespace, final String localName, final XQueryFunction function, final List<String> argNames, final Map<String, ParseTree> defaultArguments) {
+    private void registerFunction(final String namespace,
+                                  final String localName,
+                                  final XQueryFunction function,
+                                  final List<String> argNames,
+                                  final Map<String, ParseTree> defaultArguments)
+    {
         final var maxArity = argNames.size();
         final var minArity = maxArity - defaultArguments.size();
-        // // Guard against overflow
-        // if (functionEntry.maxArity == Long.MAX_VALUE) {
-        //     return XQueryError.TooManyArguments;
-        // }
+        final FunctionEntry functionEntry = new FunctionEntry(function, minArity, maxArity, argNames, defaultArguments, null);
+        final Map<String, List<FunctionEntry>> namespaceFunctions = namespaces.computeIfAbsent(namespace, _ -> new HashMap<>());
+        final List<FunctionEntry> functionsWithDesiredName = namespaceFunctions.computeIfAbsent(localName, _ -> new ArrayList<FunctionEntry>());
+        functionsWithDesiredName.add(functionEntry);
+    }
 
-        final FunctionEntry functionEntry = new FunctionEntry(function, minArity, maxArity, argNames, defaultArguments);
+    private void registerVariadicFunction(final String namespace,
+                                            final String localName,
+                                            final XQueryFunction function,
+                                            final String variadicArg)
+    {
+        final var maxArity = Long.MAX_VALUE;
+        final var minArity = 0;
+        final FunctionEntry functionEntry = new FunctionEntry(function, minArity, maxArity, List.of(), Map.of(), variadicArg);
         final Map<String, List<FunctionEntry>> namespaceFunctions = namespaces.computeIfAbsent(namespace, _ -> new HashMap<>());
         final List<FunctionEntry> functionsWithDesiredName = namespaceFunctions.computeIfAbsent(localName, _ -> new ArrayList<FunctionEntry>());
         functionsWithDesiredName.add(functionEntry);
@@ -524,6 +537,9 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         if (functionOrError.isError())
             return functionOrError.error();
         final FunctionEntry functionEntry = functionOrError.entry();
+        if (functionEntry.variadicArg != null) {
+            return callVariadicFunction(functionEntry, context, args, keywordArgs);
+        }
         final var function = functionEntry.function;
         final var defaultArgs = functionEntry.defaultArguments;
 
@@ -533,8 +549,6 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         if (positionalSize < functionEntry.minArity)
             return XQueryError.WrongNumberOfArguments;
 
-        // TODO: add overflow check at function registration
-        // so as not to check already registed functions at each call
         final List<String> remainingArgs = functionEntry.argNames.subList(argsCount, (int) functionEntry.maxArity);
         final Stream<String> defaultedArgumentNames = functionEntry
             .defaultArguments.keySet().stream()
@@ -549,7 +563,14 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         return function.call(context, rearranged);
     }
 
-    @Override
+    private XQueryValue callVariadicFunction(FunctionEntry functionEntry,
+                                                XQueryVisitingContext context,
+                                                List<XQueryValue> args,
+                                                Map<String, XQueryValue> keywordArgs)
+    {
+        return functionEntry.function.call(context, args);
+    }
+
     public XQueryValue getFunctionReference(final String namespace, final String functionName, final long arity) {
         final FunctionOrError function = getFunction(namespace, functionName, arity);
         if (function.isError()) {

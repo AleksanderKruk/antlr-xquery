@@ -20,21 +20,18 @@ public class ProcessingSequencesFunctions {
 
 
     public XQueryValue empty(XQueryVisitingContext ctx, List<XQueryValue> args) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         var input = args.get(0);
 
         return valueFactory.bool(input.isEmptySequence());
     }
 
     public XQueryValue exists(XQueryVisitingContext ctx, List<XQueryValue> args) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         var input = args.get(0);
 
         return valueFactory.bool(!input.isEmptySequence());
     }
 
     public XQueryValue foot(XQueryVisitingContext context, List<XQueryValue> args) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         var input = args.get(0);
 
         var sequence = input.atomize();
@@ -42,7 +39,6 @@ public class ProcessingSequencesFunctions {
     }
 
     public XQueryValue head(XQueryVisitingContext ctx, List<XQueryValue> args) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         var input = args.get(0);
 
         var sequence = input.atomize();
@@ -50,13 +46,10 @@ public class ProcessingSequencesFunctions {
     }
 
     public XQueryValue identity(XQueryVisitingContext context, List<XQueryValue> args) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
-
         return args.get(0);
     }
 
     public XQueryValue insertBefore(XQueryVisitingContext ctx, List<XQueryValue> args) {
-        if (args.size() != 3) return XQueryError.WrongNumberOfArguments;
         var input = args.get(0);
         var positionArg = args.get(1);
         var insertArg = args.get(2);
@@ -131,7 +124,6 @@ public class ProcessingSequencesFunctions {
     }
 
     public XQueryValue replicate(XQueryVisitingContext context, List<XQueryValue> args) {
-        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
         var input = args.get(0);
         var countArg = args.get(1);
 
@@ -149,7 +141,6 @@ public class ProcessingSequencesFunctions {
     }
 
     public XQueryValue reverse(XQueryVisitingContext ctx, List<XQueryValue> args) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         var input = args.get(0);
 
         var sequence = input.sequence();
@@ -157,7 +148,6 @@ public class ProcessingSequencesFunctions {
     }
 
     public XQueryValue sequenceJoin(XQueryVisitingContext context, List<XQueryValue> args) {
-        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
         var input = args.get(0);
         var separator = args.get(1);
 
@@ -180,20 +170,17 @@ public class ProcessingSequencesFunctions {
             XQueryVisitingContext context,
             List<XQueryValue> args) {
 
-        if (args.size() < 1 || args.size() > 4)
-            return XQueryError.WrongNumberOfArguments;
-
         XQueryValue input = args.get(0);
+        XQueryValue startArg = args.get(1);
+        XQueryValue endArg = args.get(2);
+        XQueryValue stepArg = args.get(3);
+
         List<XQueryValue> sequence = input.sequence();
         int count = sequence.size();
 
         if (count == 0) {
             return valueFactory.emptySequence();
         }
-
-        XQueryValue startArg = args.get(1);
-        XQueryValue endArg = args.get(2);
-        XQueryValue stepArg = args.get(3);
 
         // Validate types
         if (!startArg.isEmptySequence() && !startArg.isNumericValue())
@@ -261,45 +248,34 @@ public class ProcessingSequencesFunctions {
     }
 
     public XQueryValue subsequence(XQueryVisitingContext ctx, List<XQueryValue> args) {
-        if (args.size() < 2 || args.size() > 3) return XQueryError.WrongNumberOfArguments;
         var input = args.get(0);
         var startArg = args.get(1);
+        var lengthArg = args.get(2);
 
         if (!startArg.isNumericValue()) return XQueryError.InvalidArgumentType;
 
         var sequence = input.sequence();
         int start = startArg.numericValue().intValue() - 1; // Convert to 0-based
-
-        if (args.size() == 2) {
+        if (lengthArg.isEmptySequence()) {
             // No length specified, take from start to end
             if (start >= sequence.size() || start < 0) {
                 return valueFactory.emptySequence();
             }
             return valueFactory.sequence(sequence.subList(start, sequence.size()));
-        } else {
-            var lengthArg = args.get(2);
-            if (lengthArg.isEmptySequence()) {
-                // No length specified, take from start to end
-                if (start >= sequence.size() || start < 0) {
-                    return valueFactory.emptySequence();
-                }
-                return valueFactory.sequence(sequence.subList(start, sequence.size()));
 
-            }
-            if (!lengthArg.isNumericValue()) return XQueryError.InvalidArgumentType;
-
-            int length = lengthArg.numericValue().intValue();
-            if (length <= 0 || start >= sequence.size() || start < 0) {
-                return valueFactory.emptySequence();
-            }
-
-            int end = Math.min(start + length, sequence.size());
-            return valueFactory.sequence(sequence.subList(start, end));
         }
+        if (!lengthArg.isNumericValue()) return XQueryError.InvalidArgumentType;
+
+        int length = lengthArg.numericValue().intValue();
+        if (length <= 0 || start >= sequence.size() || start < 0) {
+            return valueFactory.emptySequence();
+        }
+
+        int end = Math.min(start + length, sequence.size());
+        return valueFactory.sequence(sequence.subList(start, end));
     }
 
     public XQueryValue tail(XQueryVisitingContext ctx, List<XQueryValue> args) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         var input = args.get(0);
 
         var sequence = input.atomize();
@@ -309,7 +285,6 @@ public class ProcessingSequencesFunctions {
     }
 
     public XQueryValue trunk(XQueryVisitingContext context, List<XQueryValue> args) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
         var input = args.get(0);
 
         var sequence = input.atomize();
@@ -320,7 +295,6 @@ public class ProcessingSequencesFunctions {
     }
 
     public XQueryValue unordered(XQueryVisitingContext context, List<XQueryValue> args) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
 
         // fn:unordered simply returns the input sequence as-is
         // It's a hint to the processor that order doesn't matter

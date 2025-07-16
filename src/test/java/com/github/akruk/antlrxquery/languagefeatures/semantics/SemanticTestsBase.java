@@ -62,7 +62,7 @@ public class SemanticTestsBase {
     protected void assertType(final String xquery, final XQuerySequenceType expectedType) {
         final var analysisResult = analyze(xquery);
         assertNoErrors(analysisResult);
-        assertTrue(analysisResult.expressionType.equals(expectedType));
+        assertEquals(expectedType, analysisResult.expressionType);
     }
 
 

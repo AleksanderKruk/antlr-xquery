@@ -12,7 +12,7 @@ import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeRefere
 public final class XQueryNamedTypeSets {
     private Map<String, XQueryItemType> DEFAULT_ALL;
     public Map<String, XQueryItemType> all() {
-        XQueryEnumTypeFactory typeFactory = new XQueryEnumTypeFactory(null);
+        XQueryEnumTypeFactory typeFactory = new XQueryEnumTypeFactory(Map.of());
         if (DEFAULT_ALL != null)
             return DEFAULT_ALL;
         DEFAULT_ALL = new HashMap<>(10);

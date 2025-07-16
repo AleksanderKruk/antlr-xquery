@@ -535,4 +535,19 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
     }
 
 
+    @Override
+    public XQueryItemType getMapKeyType() {
+        return itemType.getMapKeyType();
+    }
+
+    @Override
+    public XQuerySequenceType getMapValueType() {
+        return itemType.getMapValueType();
+    }
+
+    @Override
+    public XQuerySequenceType getArrayMemberType() {
+        return itemType.getArrayType();
+    }
+
 }

@@ -30,7 +30,7 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
 
     private final EnumItemtypeAlternativeMerger alternativeMerger;
     private final IItemtypeIntersectionMerger intersectionMerger;
-    // private final XQueryTypeFactory typeFactory;
+    private final XQueryTypeFactory typeFactory;
     private final Collection<XQueryItemType> itemTypes;
     private final IItemtypeUnionMerger unionMerger;
 
@@ -45,7 +45,7 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
                                 final XQueryEnumItemType key,
                                 final XQuerySequenceType mapValueType,
                                 final Set<String> elementNames,
-                                final XQueryTypeFactory factory,
+                                final XQueryTypeFactory typeFactory,
                                 final Collection<XQueryItemType> itemTypes)
     {
         this.type = type;
@@ -56,18 +56,18 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
         this.mapKeyType = key;
         this.mapValueType = mapValueType;
         this.elementNames = elementNames;
-        // this.typeFactory = factory;
+        this.typeFactory = typeFactory;
         this.itemTypes = itemTypes;
-        this.alternativeMerger = new EnumItemtypeAlternativeMerger(typeOrdinal, factory);
-        this.unionMerger = new EnumItemtypeUnionMerger(typeOrdinal, factory);
-        this.intersectionMerger = new EnumItemtypeIntersectionMerger(typeOrdinal, factory);
+        this.alternativeMerger = new EnumItemtypeAlternativeMerger(typeOrdinal, typeFactory);
+        this.unionMerger = new EnumItemtypeUnionMerger(typeOrdinal, typeFactory);
+        this.intersectionMerger = new EnumItemtypeIntersectionMerger(typeOrdinal, typeFactory);
     }
-
 
 
     private final List<XQuerySequenceType> argumentTypes;
     private final XQuerySequenceType returnedType;
     private final XQuerySequenceType arrayType;
+
     @Override
     public XQuerySequenceType getArrayType() {
         return arrayType;

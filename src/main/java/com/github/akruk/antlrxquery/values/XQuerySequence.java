@@ -2,6 +2,8 @@ package com.github.akruk.antlrxquery.values;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
 public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
@@ -234,6 +236,16 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
     @Override
     public boolean isEmptySequence() {
         return isEmptySequence;
+    }
+
+    @Override
+    public List<XQueryValue> arrayMembers() {
+        return null;
+    }
+
+    @Override
+    public Map<XQueryValue, XQueryValue> mapEntries() {
+        return null;
     }
 
 }

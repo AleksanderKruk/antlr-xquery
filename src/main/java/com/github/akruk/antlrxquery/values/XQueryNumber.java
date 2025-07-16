@@ -3,7 +3,6 @@ package com.github.akruk.antlrxquery.values;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.List;
-import java.util.Map;
 
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
@@ -120,15 +119,5 @@ public class XQueryNumber extends XQueryValueBase<BigDecimal> {
     @Override
     public String toString() {
         return "<XQueryNumber:" + value + "/>";
-    }
-
-    @Override
-    public List<XQueryValue> arrayMembers() {
-        return null;
-    }
-
-    @Override
-    public Map<XQueryValue, XQueryValue> mapEntries() {
-        return null;
     }
 }

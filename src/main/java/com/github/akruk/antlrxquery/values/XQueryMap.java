@@ -301,14 +301,4 @@ public record XQueryMap(Map<XQueryValue, XQueryValue> value, XQueryValueFactory 
     public boolean isEmptySequence() {
         return false;
     }
-
-    @Override
-    public List<XQueryValue> arrayMembers() {
-        return null;
-    }
-
-    @Override
-    public Map<XQueryValue, XQueryValue> mapEntries() {
-        return value;
-    }
 }

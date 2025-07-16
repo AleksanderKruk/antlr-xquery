@@ -60,6 +60,36 @@ public class FLWORExpressionEvaluationTests extends EvaluationTestsBase {
     }
 
     @Test
+    public void forKeyClause() {
+        assertResult("for key $x in map {1: 'a', 2: 'b', 3: 'c', 4: 'd', 5: 'e'} return $x + 1",
+                List.of(baseFactory.number(2),
+                        baseFactory.number(3),
+                        baseFactory.number(4),
+                        baseFactory.number(5),
+                        baseFactory.number(6)));
+    }
+
+    @Test
+    public void forValueClause() {
+        assertResult("for value $x in {1: 'a', 2: 'b', 3: 'c', 4: 'd', 5: 'e'} return $x",
+                List.of(baseFactory.string("a"),
+                        baseFactory.string("b"),
+                        baseFactory.string("c"),
+                        baseFactory.string("d"),
+                        baseFactory.string("e")));
+    }
+
+    @Test
+    public void forEntryClause() {
+        assertResult("for key $x value $y in {1: 'a', 2: 'b', 3: 'c', 4: 'd', 5: 'e'} return $x || $y",
+                List.of(baseFactory.string("1a"),
+                        baseFactory.string("2b"),
+                        baseFactory.string("3c"),
+                        baseFactory.string("4d"),
+                        baseFactory.string("5e")));
+    }
+
+    @Test
     public void forClausePositionalVar() {
         assertResult("for $x at $i in (1 to 5) return $i",
                 List.of(baseFactory.number(1),

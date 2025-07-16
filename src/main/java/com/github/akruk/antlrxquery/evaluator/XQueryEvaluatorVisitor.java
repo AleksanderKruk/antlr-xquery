@@ -2,8 +2,10 @@ package com.github.akruk.antlrxquery.evaluator;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -28,6 +30,7 @@ import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.Evaluatin
 import com.github.akruk.antlrxquery.namespaceresolver.INamespaceResolver;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.ResolvedName;
+import com.github.akruk.antlrxquery.values.XQueryFunction;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.values.factories.defaults.XQueryMemoizedValueFactory;
@@ -40,17 +43,18 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     final private XQueryDynamicContextManager contextManager;
     final private XQueryValueFactory valueFactory;
     final private IXQueryEvaluatingFunctionManager functionManager;
+    final private XQueryFunction concat;
 
     private XQueryValue matchedNodes;
-    private Stream<List<TupleElement>> visitedTupleStream;
+    private Stream<List<VariableCoupling>> visitedTupleStream;
     private XQueryAxis currentAxis;
     private List<XQueryValue> visitedArgumentList;
     private XQueryVisitingContext context;
     private INodeGetter nodeGetter = new NodeGetter();
     private Map<String, XQueryValue> visitedKeywordArguments;
 
-    private record TupleElement(String name, XQueryValue value, String positionalName, XQueryValue index) {
-    };
+    private record VariableCoupling(Variable item, Variable key, Variable value, Variable position) {}
+    private record Variable(String name, XQueryValue value){}
 
     private enum XQueryAxis {
         CHILD, DESCENDANT, SELF, DESCENDANT_OR_SELF, FOLLOWING_SIBLING, FOLLOWING, PARENT, ANCESTOR, PRECEDING_SIBLING, PRECEDING, ANCESTOR_OR_SELF, FOLLOWING_OR_SELF, FOLLOWING_SIBLING_OR_SELF, PRECEDING_SIBLING_OR_SELF, PRECEDING_OR_SELF,
@@ -70,6 +74,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         this.valueFactory = valueFactory;
         this.functionManager = new EvaluatingFunctionManager(this, parser, valueFactory, nodeGetter);
         this.contextManager = new XQueryBaseDynamicContextManager();
+        this.concat = functionManager.getFunctionReference("fn", "concat", 2).functionValue();
         contextManager.enterContext();
     }
 
@@ -89,6 +94,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         this.valueFactory = valueFactory;
         this.functionManager = functionCaller;
         this.contextManager = contextManager;
+        this.concat = functionManager.getFunctionReference("fn", "concat", 2).functionValue();
         contextManager.enterContext();
     }
 
@@ -112,12 +118,12 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     public XQueryValue visitLetClause(final LetClauseContext ctx) {
         final int newVariableCount = ctx.letBinding().size();
         visitedTupleStream = visitedTupleStream.map(tuple -> {
-            final var newTuple = new ArrayList<TupleElement>(tuple.size() + newVariableCount);
+            final var newTuple = new ArrayList<VariableCoupling>(tuple.size() + newVariableCount);
             newTuple.addAll(tuple);
             for (final LetBindingContext streamVariable : ctx.letBinding()) {
                 final String variableName = streamVariable.varName().getText();
                 final XQueryValue assignedValue = streamVariable.exprSingle().accept(this);
-                final var element = new TupleElement(variableName, assignedValue, null, null);
+                final var element = new VariableCoupling(new Variable(variableName, assignedValue), null, null, null);
                 newTuple.add(element);
                 contextManager.provideVariable(variableName, assignedValue);
             }
@@ -157,24 +163,24 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     public XQueryValue visitForClause(final ForClauseContext ctx) {
         final int numberOfVariables = ctx.forBinding().size();
         visitedTupleStream = visitedTupleStream.flatMap(tuple -> {
-            final List<List<TupleElement>> newTupleLike = tuple.stream().map(e -> List.of(e))
+            final List<List<VariableCoupling>> newTupleLike = tuple.stream().map(e -> List.of(e))
                     .collect(Collectors.toList());
 
             for (final ForBindingContext forBinding : ctx.forBinding()) {
-                final List<TupleElement> tupleElements = processForBinding(forBinding);
+                final List<VariableCoupling> tupleElements = processForBinding(forBinding);
                 newTupleLike.add(tupleElements);
             }
 
             return cartesianProduct(newTupleLike);
         }).map(tuple -> {
-            final List<TupleElement> addedVariables = tuple.subList(tuple.size() - numberOfVariables, tuple.size());
+            final List<VariableCoupling> addedVariables = tuple.subList(tuple.size() - numberOfVariables, tuple.size());
             provideVariables(addedVariables);
             return tuple;
         });
         return null;
     }
 
-    private List<TupleElement> processForBinding(final ForBindingContext forBinding) {
+    private List<VariableCoupling> processForBinding(final ForBindingContext forBinding) {
         if (forBinding.forItemBinding() != null) {
             return processForItemBinding(forBinding.forItemBinding());
         }
@@ -187,38 +193,43 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         throw new IllegalStateException("Unknown for binding type");
     }
 
-    private List<TupleElement> processForItemBinding(final ForItemBindingContext ctx) {
+    private List<VariableCoupling> processForItemBinding(final ForItemBindingContext ctx) {
         final String variableName = ctx.varNameAndType().qname().getText();
         final List<XQueryValue> sequence = ctx.exprSingle().accept(this).sequence();
         final PositionalVarContext positional = ctx.positionalVar();
         final boolean allowingEmpty = ctx.allowingEmpty() != null;
+        String positionalName = null;
+        Variable positionalVar = null;
+        if (positional != null) {
+            positionalName = positional.varName().getText();
+            positionalVar = new Variable(positionalName, valueFactory.number(0));
+        }
 
         if (sequence.isEmpty() && allowingEmpty) {
-            final TupleElement element = positional != null
-                ? new TupleElement(variableName, valueFactory.emptySequence(),
-                                positional.varName().getText(), valueFactory.number(0))
-                : new TupleElement(variableName, valueFactory.emptySequence(), null, null);
+            final var emptyVar = new Variable(variableName, valueFactory.emptySequence());
+            final var element =  new VariableCoupling(emptyVar, null, null, positionalVar);
             return List.of(element);
         }
 
         if (positional != null) {
-            final String positionalName = positional.varName().getText();
-            final List<TupleElement> elementsWithIndex = new ArrayList<>();
+            final List<VariableCoupling> elementsWithIndex = new ArrayList<>();
             for (int i = 0; i < sequence.size(); i++) {
                 final XQueryValue value = sequence.get(i);
-                final TupleElement element = new TupleElement(variableName, value, positionalName,
-                        valueFactory.number(i + 1));
+                final VariableCoupling element = new VariableCoupling(new Variable(variableName, value),
+                                                                        null,
+                                                                        null,
+                                                                        new Variable(positionalName, valueFactory.number(i + 1)));
                 elementsWithIndex.add(element);
             }
             return elementsWithIndex;
         }
 
         return sequence.stream()
-                .map(value -> new TupleElement(variableName, value, null, null))
+                .map(value -> new VariableCoupling(new Variable(variableName, value), null, null, null))
                 .toList();
     }
 
-    private List<TupleElement> processForMemberBinding(final ForMemberBindingContext ctx) {
+    private List<VariableCoupling> processForMemberBinding(final ForMemberBindingContext ctx) {
         final String variableName = ctx.varNameAndType().qname().getText();
         final XQueryValue arrayValue = ctx.exprSingle().accept(this);
         final PositionalVarContext positional = ctx.positionalVar();
@@ -227,22 +238,24 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
         if (positional != null) {
             final String positionalName = positional.varName().getText();
-            final List<TupleElement> elementsWithIndex = new ArrayList<>();
+            final List<VariableCoupling> elementsWithIndex = new ArrayList<>();
             for (int i = 0; i < arrayMembers.size(); i++) {
                 final XQueryValue member = arrayMembers.get(i);
-                final TupleElement element = new TupleElement(variableName, member, positionalName,
-                        valueFactory.number(i + 1));
+                final VariableCoupling element = new VariableCoupling(new Variable(variableName, member),
+                                                                        null,
+                                                                        null,
+                                                                        new Variable(positionalName, valueFactory.number(i + 1)));
                 elementsWithIndex.add(element);
             }
             return elementsWithIndex;
         }
 
         return arrayMembers.stream()
-                .map(member -> new TupleElement(variableName, member, null, null))
+                .map(value -> new VariableCoupling(new Variable(variableName, value), null, null, null))
                 .toList();
     }
 
-    private List<TupleElement> processForEntryBinding(final ForEntryBindingContext ctx) {
+    private List<VariableCoupling> processForEntryBinding(final ForEntryBindingContext ctx) {
         final XQueryValue mapValue = ctx.exprSingle().accept(this);
         final PositionalVarContext positional = ctx.positionalVar();
 
@@ -250,29 +263,32 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         final ForEntryValueBindingContext valueBinding = ctx.forEntryValueBinding();
 
         final Map<XQueryValue, XQueryValue> mapEntries = mapValue.mapEntries();
-        final List<TupleElement> tupleElements = new ArrayList<>();
+        final List<VariableCoupling> tupleElements = new ArrayList<>();
 
         int index = 1;
         for (final Map.Entry<XQueryValue, XQueryValue> entry : mapEntries.entrySet()) {
-            final List<TupleElement> entryElements = new ArrayList<>();
+            Variable positionVar = null;
+            if (positional != null) {
+                final String positionalName = positional.varName().getText();
+                final XQueryValue position = valueFactory.number(index);
+                positionVar = new Variable(positionalName, position);
+            }
 
+            Variable keyVar = null;
             if (keyBinding != null) {
-                final String keyVariableName = keyBinding.varNameAndType().qname().getText();
-                entryElements.add(new TupleElement(keyVariableName, entry.getKey(), null, null));
+                final String keyName = keyBinding.varNameAndType().qname().getText();
+                final XQueryValue keyValue = entry.getKey();
+                keyVar = new Variable(keyName, keyValue);
             }
 
+            Variable valueVar = null;
             if (valueBinding != null) {
-                String positionalName = null;
-                XQueryValue position = null;
-                if (positional != null) {
-                    positionalName = positional.varName().getText();
-                    position = valueFactory.number(index);
-                }
-                final String valueVariableName = valueBinding.varNameAndType().qname().getText();
-                entryElements.add(new TupleElement(valueVariableName, entry.getValue(), positionalName, position));
+                final String valueName = valueBinding.varNameAndType().qname().getText();
+                final XQueryValue valueValue = entry.getValue();
+                valueVar = new Variable(valueName, valueValue);
             }
 
-            tupleElements.addAll(entryElements);
+            tupleElements.add(new VariableCoupling(null, keyVar, valueVar, positionVar));
             index++;
         }
 
@@ -289,10 +305,10 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         final MutableInt index = new MutableInt();
         index.i = 1;
         visitedTupleStream = visitedTupleStream.map(tuple -> {
-            final var newTuple = new ArrayList<TupleElement>(tuple.size() + 1);
+            final var newTuple = new ArrayList<VariableCoupling>(tuple.size() + 1);
             newTuple.addAll(tuple);
-            final var element = new TupleElement(countVariableName, valueFactory.number(index.i++), null, null);
-            contextManager.provideVariable(element.name, element.value);
+            final var element = new VariableCoupling(new Variable(countVariableName, valueFactory.number(index.i++)), null, null, null);
+            contextManager.provideVariable(element.item.name, element.item.value);
             newTuple.add(element);
             return newTuple;
         });
@@ -925,15 +941,12 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
     @Override
     public XQueryValue visitStringConcatExpr(final StringConcatExprContext ctx) {
-        var value = ctx.rangeExpr(0).accept(this);
+        final var firstValue = ctx.rangeExpr(0).accept(this);
         if (ctx.CONCATENATION().isEmpty())
-            return value;
-        final var operationCount = ctx.CONCATENATION().size();
-        for (int i = 1; i <= operationCount; i++) {
-            final var visitedExpression = ctx.rangeExpr(i).accept(this);
-            value = value.concatenate(visitedExpression);
-        }
-        return value;
+            return firstValue;
+        List<XQueryValue> arguments = ctx.rangeExpr().stream().map(this::visit).toList();
+        final var concatenated = concat.call(context, arguments);
+        return concatenated;
     }
 
     @Override
@@ -1211,8 +1224,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return saved;
     }
 
-    private Stream<List<TupleElement>> saveVisitedTupleStream() {
-        final Stream<List<TupleElement>> saved = visitedTupleStream;
+    private Stream<List<VariableCoupling>> saveVisitedTupleStream() {
+        final Stream<List<VariableCoupling>> saved = visitedTupleStream;
         visitedTupleStream = Stream.of(List.of());
         return saved;
     }
@@ -1229,7 +1242,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return saved;
     }
 
-    private Comparator<List<TupleElement>> ascendingEmptyGreatest(final ParseTree expr) {
+    private Comparator<List<VariableCoupling>> ascendingEmptyGreatest(final ParseTree expr) {
         return (tuple1, tuple2) -> {
             provideVariables(tuple1);
             final XQueryValue value1 = expr.accept(this);
@@ -1245,7 +1258,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         };
     };
 
-    private Comparator<List<TupleElement>> ascendingEmptyLeast(final ParseTree expr) {
+    private Comparator<List<VariableCoupling>> ascendingEmptyLeast(final ParseTree expr) {
         return (tuple1, tuple2) -> {
             provideVariables(tuple1);
             final XQueryValue value1 = expr.accept(this);
@@ -1261,7 +1274,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         };
     };
 
-    private Comparator<List<TupleElement>> descendingEmptyGreatest(final ParseTree expr) {
+    private Comparator<List<VariableCoupling>> descendingEmptyGreatest(final ParseTree expr) {
         return (tuple1, tuple2) -> {
             provideVariables(tuple1);
             final XQueryValue value1 = expr.accept(this);
@@ -1277,7 +1290,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         };
     };
 
-    private Comparator<List<TupleElement>> descendingEmptyLeast(final ParseTree expr) {
+    private Comparator<List<VariableCoupling>> descendingEmptyLeast(final ParseTree expr) {
         return (tuple1, tuple2) -> {
             provideVariables(tuple1);
             final XQueryValue value1 = expr.accept(this);
@@ -1293,7 +1306,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         };
     };
 
-    private Comparator<List<TupleElement>> comparatorFromNthOrderSpec(final List<OrderSpecContext> orderSpecs,
+    private Comparator<List<VariableCoupling>> comparatorFromNthOrderSpec(final List<OrderSpecContext> orderSpecs,
             final int[] modifierMaskArray, final int i) {
         final OrderSpecContext orderSpec = orderSpecs.get(0);
         final ExprSingleContext expr = orderSpec.exprSingle();
@@ -1431,12 +1444,12 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             condition.windowVars().nextVar().varRef().varName().getText() : null;
     }
 
-    private Stream<List<TupleElement>> processTumblingWindowSubSequences(final XQueryValue sequence, final TumblingWindowClauseContext ctx,
+    private Stream<List<VariableCoupling>> processTumblingWindowSubSequences(final XQueryValue sequence, final TumblingWindowClauseContext ctx,
         final String windowVarName, final String startVarName, final String startPosVarName, final String startPrevVarName, final String startNextVarName,
-        final String endVarName, final String endPosVarName, final String endPrevVarName, final String endNextVarName, final List<TupleElement> initialTupleElements) {
+        final String endVarName, final String endPosVarName, final String endPrevVarName, final String endNextVarName, final List<VariableCoupling> initialTupleElements) {
 
         final List<XQueryValue> sequenceList = sequence.sequence();
-        final List<List<TupleElement>> allTuples = new ArrayList<>();
+        final List<List<VariableCoupling>> allTuples = new ArrayList<>();
         int startIndex = 0;
 
         while (startIndex < sequenceList.size()) {
@@ -1447,7 +1460,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
                 if (endIndex < sequenceList.size() || !isOnlyEnd(windowEndCondition)) {
                     final List<XQueryValue> subSequence = sequenceList.subList(startIndex, endIndex + 1);
-                    final List<TupleElement> windowTupleElements = new ArrayList<>(initialTupleElements);
+                    final List<VariableCoupling> windowTupleElements = new ArrayList<>(initialTupleElements);
 
                     addWindowVariables(windowTupleElements, windowVarName, subSequence, startIndex, endIndex,
                         startVarName, startPosVarName, startPrevVarName, startNextVarName,
@@ -1470,12 +1483,12 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return allTuples.stream();
     }
 
-    private Stream<List<TupleElement>> processSlidingWindowSubSequences(final XQueryValue sequence, final SlidingWindowClauseContext ctx,
+    private Stream<List<VariableCoupling>> processSlidingWindowSubSequences(final XQueryValue sequence, final SlidingWindowClauseContext ctx,
         final String windowVarName, final String startVarName, final String startPosVarName, final String startPrevVarName, final String startNextVarName,
-        final String endVarName, final String endPosVarName, final String endPrevVarName, final String endNextVarName, final List<TupleElement> initialTupleElements) {
+        final String endVarName, final String endPosVarName, final String endPrevVarName, final String endNextVarName, final List<VariableCoupling> initialTupleElements) {
 
         final List<XQueryValue> sequenceList = sequence.sequence();
-        final List<List<TupleElement>> allTuples = new ArrayList<>();
+        final List<List<VariableCoupling>> allTuples = new ArrayList<>();
         int startIndex = 0;
 
         while (startIndex < sequenceList.size()) {
@@ -1486,7 +1499,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
                 if (endIndex < sequenceList.size() || !isOnlyEnd(windowEndCondition)) {
                     final List<XQueryValue> subSequence = sequenceList.subList(startIndex, endIndex + 1);
-                    final List<TupleElement> windowTupleElements = new ArrayList<>(initialTupleElements);
+                    final List<VariableCoupling> windowTupleElements = new ArrayList<>(initialTupleElements);
 
                     addWindowVariables(windowTupleElements, windowVarName, subSequence, startIndex, endIndex,
                         startVarName, startPosVarName, startPrevVarName, startNextVarName,
@@ -1509,47 +1522,58 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return allTuples.stream();
     }
 
-    private void addWindowVariables(final List<TupleElement> windowTupleElements, final String windowVarName, final List<XQueryValue> subSequence,
+    private void addWindowVariables(final List<VariableCoupling> windowTupleElements, final String windowVarName, final List<XQueryValue> subSequence,
         final int startIndex, final int endIndex, final String startVarName, final String startPosVarName, final String startPrevVarName, final String startNextVarName,
         final String endVarName, final String endPosVarName, final String endPrevVarName, final String endNextVarName) {
 
-        windowTupleElements.add(new TupleElement(windowVarName, valueFactory.sequence(subSequence), null, null));
+        windowTupleElements.add(new VariableCoupling(new Variable(windowVarName, valueFactory.sequence(subSequence)), null, null, null));
 
         addStartVariables(windowTupleElements, subSequence, startIndex, startVarName, startPosVarName, startPrevVarName, startNextVarName);
         addEndVariables(windowTupleElements, subSequence, endIndex, endVarName, endPosVarName, endPrevVarName, endNextVarName);
     }
 
-    private void addStartVariables(final List<TupleElement> windowTupleElements, final List<XQueryValue> subSequence, final int startIndex,
+    private void addStartVariables(final List<VariableCoupling> windowTupleElements, final List<XQueryValue> subSequence, final int startIndex,
         final String startVarName, final String startPosVarName, final String startPrevVarName, final String startNextVarName) {
 
         if (startVarName != null) {
-            windowTupleElements.add(new TupleElement(startVarName, subSequence.get(0), null, null));
+            final Variable startVar = new Variable(startVarName, subSequence.get(0));
+            windowTupleElements.add(new VariableCoupling(startVar, null, null, null));
         }
         if (startPosVarName != null) {
-            windowTupleElements.add(new TupleElement(startPosVarName, valueFactory.number(startIndex + 1), null, null));
+            final Variable startPosVar = new Variable(startPosVarName, valueFactory.number(startIndex + 1));
+            windowTupleElements.add(new VariableCoupling(startPosVar, null, null, null));
         }
         if (startPrevVarName != null) {
-            windowTupleElements.add(new TupleElement(startPrevVarName, startIndex > 0 ? subSequence.get(0) : valueFactory.emptySequence(), null, null));
+            final XQueryValue startPrevValue = startIndex > 0 ? subSequence.get(0) : valueFactory.emptySequence();
+            final Variable startPrevVar = new Variable(startPrevVarName, startPrevValue);
+            windowTupleElements.add(new VariableCoupling(startPrevVar, null, null, null));
         }
         if (startNextVarName != null) {
-            windowTupleElements.add(new TupleElement(startNextVarName, startIndex < subSequence.size() - 1 ? subSequence.get(1) : valueFactory.emptySequence(), null, null));
+            final XQueryValue startNextValue = startIndex < subSequence.size() - 1 ? subSequence.get(1) : valueFactory.emptySequence();
+            final Variable startNextVar = new Variable(startNextVarName, startNextValue);
+            windowTupleElements.add(new VariableCoupling(startNextVar, null, null, null));
         }
     }
 
-    private void addEndVariables(final List<TupleElement> windowTupleElements, final List<XQueryValue> subSequence, final int endIndex,
+    private void addEndVariables(final List<VariableCoupling> windowTupleElements, final List<XQueryValue> subSequence, final int endIndex,
         final String endVarName, final String endPosVarName, final String endPrevVarName, final String endNextVarName) {
 
         if (endVarName != null) {
-            windowTupleElements.add(new TupleElement(endVarName, subSequence.get(subSequence.size() - 1), null, null));
+            final Variable endVar = new Variable(endVarName, subSequence.get(subSequence.size() - 1));
+            windowTupleElements.add(new VariableCoupling(endVar, null, null, null));
         }
         if (endPosVarName != null) {
-            windowTupleElements.add(new TupleElement(endPosVarName, valueFactory.number(endIndex + 1), null, null));
+            final Variable endPosVar = new Variable(endPosVarName, valueFactory.number(endIndex + 1));
+            windowTupleElements.add(new VariableCoupling(endPosVar, null, null, null));
         }
         if (endPrevVarName != null) {
-            windowTupleElements.add(new TupleElement(endPrevVarName, subSequence.size() > 1 ? subSequence.get(subSequence.size() - 2) : valueFactory.emptySequence(), null, null));
+            var vl =subSequence.size() > 1 ? subSequence.get(subSequence.size() - 2) : valueFactory.emptySequence();
+            final Variable endPrevVar = new Variable(endPrevVarName, vl);
+            windowTupleElements.add(new VariableCoupling(endPrevVar, null, null, null));
         }
         if (endNextVarName != null) {
-            windowTupleElements.add(new TupleElement(endNextVarName, valueFactory.emptySequence(), null, null));
+            final Variable endNextVar = new Variable(endNextVarName, valueFactory.emptySequence());
+            windowTupleElements.add(new VariableCoupling(endNextVar, null, null, null));
         }
     }
 
@@ -1645,11 +1669,16 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
 
-    private void provideVariables(final List<TupleElement> tuple) {
+    private void provideVariables(final List<VariableCoupling> tuple) {
         for (final var e : tuple) {
-            contextManager.provideVariable(e.name, e.value);
-            if (e.positionalName != null)
-                contextManager.provideVariable(e.positionalName, e.index);
+            if (e.item != null)
+                contextManager.provideVariable(e.item.name, e.item.value);
+            if (e.key != null)
+                contextManager.provideVariable(e.key.name, e.key.value);
+            if (e.value != null)
+                contextManager.provideVariable(e.value.name, e.value.value);
+            if (e.position != null)
+                contextManager.provideVariable(e.position.name, e.position.value);
         }
     }
 
@@ -1825,10 +1854,14 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     @Override
     public XQueryValue visitMapConstructor(MapConstructorContext ctx) {
         var map = ctx.mapConstructorEntry().stream()
-            .collect(Collectors.toMap(entry->entry.mapKeyExpr().accept(this), entry->entry.mapValueExpr().accept(this)));
-        return valueFactory.map(map);
+            .collect(Collectors.toMap(
+                entry -> entry.mapKeyExpr().accept(this),
+                entry -> entry.mapValueExpr().accept(this),
+                (existing, _) -> existing, // merge function (w przypadku duplikatów kluczy)
+                LinkedHashMap::new // supplier - tworzy LinkedHashMap
+            ));
+        return valueFactory.map(Collections.unmodifiableMap(map));
     }
-
 
     @Override
     public XQueryValue visitPipelineExpr(PipelineExprContext ctx) {

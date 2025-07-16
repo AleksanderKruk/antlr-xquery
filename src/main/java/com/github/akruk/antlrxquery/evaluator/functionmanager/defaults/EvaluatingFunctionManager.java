@@ -34,6 +34,7 @@ import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.NumericOperators;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.OtherFunctionsOnNodes;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.ParsingNumbers;
+import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.ProcessingBooleans;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.ProcessingSequencesFunctions;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.ProcessingStrings;
 import com.github.akruk.antlrxquery.values.XQueryError;
@@ -77,6 +78,7 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
     private final FunctionsOnSequencesOfNodes functionsOnSequencesOfNodes;
     private final ParsingNumbers parsingNumbers;
     private final ProcessingStrings processingStrings;
+    private final ProcessingBooleans processingBooleans;
     private final ProcessingSequencesFunctions processingSequences;
 
     public EvaluatingFunctionManager(final XQueryEvaluatorVisitor evaluator,
@@ -99,6 +101,7 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         this.processingSequences = new ProcessingSequencesFunctions(valueFactory, parser);
         this.parsingNumbers = new ParsingNumbers(valueFactory, parser);
         this.processingStrings = new ProcessingStrings(valueFactory, parser);
+        this.processingBooleans = new ProcessingBooleans(valueFactory, parser);
 
         // Accessors
         final Map<String, ParseTree> defaultNodeArg = Map.of("node", CONTEXT_VALUE);
@@ -119,10 +122,26 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         registerFunction("fn", "has-children", otherFuctionsOnNodes::hasChildren, List.of("node"), defaultNodeArg);
         registerFunction("fn", "siblings", otherFuctionsOnNodes::siblings, List.of("node"), defaultNodeArg);
 
-        registerFunction("fn", "true", this::true_, List.of(), Map.of());
-        registerFunction("fn", "false", this::false_, List.of(), Map.of());
+        registerFunction("fn", "true", processingBooleans::true_, List.of(), Map.of());
+        registerFunction("fn", "false", processingBooleans::false_, List.of(), Map.of());
+        registerFunction("fn", "boolean", processingBooleans::boolean_, List.of("input"), Map.of());
+        registerFunction("fn", "not", processingBooleans::not, List.of("input"), Map.of());
 
-        registerFunction("fn", "not", this::not, List.of("input"), Map.of());
+        registerFunction("op", "boolean-equal", processingBooleans::booleanEqual,
+            List.of("arg1", "arg2"), Map.of());
+
+        registerFunction("op", "boolean-less-than", processingBooleans::booleanLessThan,
+            List.of("arg1", "arg2"), Map.of());
+
+        registerFunction("op", "boolean-less-than-or-equal", processingBooleans::booleanLessThanOrEqual,
+            List.of("arg1", "arg2"), Map.of());
+
+        registerFunction("op", "boolean-greater-than", processingBooleans::booleanGreaterThan,
+            List.of("arg1", "arg2"), Map.of());
+
+        registerFunction("op", "boolean-greater-than-or-equal", processingBooleans::booleanGreaterThanOrEqual,
+            List.of("arg1", "arg2"), Map.of());
+
 
         // Processing numerics
         registerFunction("fn", "abs", functionsOnNumericValues::abs,
@@ -384,21 +403,6 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         return valueFactory.string(Collations.CODEPOINT_URI);
     }
 
-    public XQueryValue not(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
-        return args.get(0).not();
-    }
-
-
-    public XQueryValue true_(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        if (!args.isEmpty()) return XQueryError.WrongNumberOfArguments;
-        return valueFactory.bool(true);
-    }
-
-    public XQueryValue false_(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        if (!args.isEmpty()) return XQueryError.WrongNumberOfArguments;
-        return valueFactory.bool(false);
-    }
 
     public XQueryValue distinctValues(final XQueryVisitingContext ctx, final List<XQueryValue> args) {
         return null;

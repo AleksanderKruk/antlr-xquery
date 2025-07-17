@@ -8,6 +8,8 @@ import org.antlr.v4.runtime.CharStreams;
 
 import java.util.List;
 
+import org.antlr.v4.runtime.ANTLRErrorListener;
+import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStream;
 import com.github.akruk.antlrxquery.AntlrXqueryLexer;
 import com.github.akruk.antlrxquery.AntlrXqueryParser;
@@ -19,6 +21,15 @@ public final class XQuery {
     var xqueryLexer = new AntlrXqueryLexer(characters);
     var xqueryTokens = new CommonTokenStream(xqueryLexer);
     var xqueryParser = new AntlrXqueryParser(xqueryTokens);
+    xqueryParser.addErrorListener(
+        new BaseErrorListener() {
+            public void syntaxError(org.antlr.v4.runtime.Recognizer<?,?> arg0, Object arg1, int arg2, int arg3, String arg4, org.antlr.v4.runtime.RecognitionException arg5) {
+                super.syntaxError(arg0, arg1, arg2, arg3, arg4, arg5);
+                assert false: "There are parsing errors in xquery";
+                System.exit(-1);
+            };
+        }
+    );
     var xqueryTree = xqueryParser.xquery();
     ParserRuleContext root = new ParserRuleContext();
     if (tree != null) {

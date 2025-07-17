@@ -28,6 +28,7 @@ BinaryIntegerLiteral
 DecimalLiteral
     : DOT DigitSeq                          // np. .75
     | DigitSeq DOT DigitSeq?               // np. 1.2 lub 1.
+    | DigitSeq DoubleLiteral
     ;
 
 DoubleLiteral

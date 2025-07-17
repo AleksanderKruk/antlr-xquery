@@ -1,6 +1,9 @@
 package com.github.akruk.antlrxquery.typesystem;
 
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryOccurence;
+
 public interface XQuerySequenceType {
+    XQueryOccurence getOccurence();
     XQueryItemType getItemType();
     XQueryItemType getMapKeyType();
     XQuerySequenceType getMapValueType();

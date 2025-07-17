@@ -19,20 +19,22 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
     private final XQueryTypeFactory typeFactory;
     private String occurenceSuffix;
 
-    public XQueryEnumItemType getItemType() {
+    public XQueryEnumItemType getItemType()
+    {
         return itemType;
     }
 
-    public XQueryEnumSequenceType(final XQueryTypeFactory typeFactory, final XQueryEnumItemType itemType, final XQueryOccurence occurence) {
+    public XQueryEnumSequenceType(final XQueryTypeFactory typeFactory, final XQueryEnumItemType itemType,
+        final XQueryOccurence occurence) {
         this.typeFactory = typeFactory;
         this.itemType = itemType;
         this.occurence = occurence;
         this.factoryByOccurence = new Function[XQueryOccurence.values().length];
         this.factoryByOccurence[ZERO] = _ -> typeFactory.emptySequence();
-        this.factoryByOccurence[ONE] = i -> typeFactory.one((XQueryItemType)i);
-        this.factoryByOccurence[ZERO_OR_ONE] = i -> typeFactory.zeroOrOne((XQueryItemType)i);
-        this.factoryByOccurence[ZERO_OR_MORE] = i -> typeFactory.zeroOrMore((XQueryItemType)i);
-        this.factoryByOccurence[ONE_OR_MORE] = i -> typeFactory.oneOrMore((XQueryItemType)i);
+        this.factoryByOccurence[ONE] = i -> typeFactory.one((XQueryItemType) i);
+        this.factoryByOccurence[ZERO_OR_ONE] = i -> typeFactory.zeroOrOne((XQueryItemType) i);
+        this.factoryByOccurence[ZERO_OR_MORE] = i -> typeFactory.zeroOrMore((XQueryItemType) i);
+        this.factoryByOccurence[ONE_OR_MORE] = i -> typeFactory.oneOrMore((XQueryItemType) i);
 
         this.occurenceSuffix = switch (occurence) {
             case ZERO -> "";
@@ -44,14 +46,16 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         requiresParentheses = requiresParentheses();
     }
 
-    private static boolean isNullableEquals(final Object one, final Object other) {
+    private static boolean isNullableEquals(final Object one, final Object other)
+    {
         if (one != null)
             return one.equals(other);
         return one == other;
     }
 
     @Override
-    public boolean equals(final Object obj) {
+    public boolean equals(final Object obj)
+    {
         if (this == obj)
             return true;
         if (obj == null)
@@ -69,7 +73,7 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
     private static final BiPredicate<XQueryEnumSequenceType, XQueryEnumSequenceType> alwaysTrue = (_, _) -> true;
     private static final BiPredicate<XQueryEnumSequenceType, XQueryEnumSequenceType> alwaysFalse = (_, _) -> false;
     private static final int occurenceCount = XQueryOccurence.values().length;
-	private static final BiPredicate[][] isSubtypeOf;
+    private static final BiPredicate[][] isSubtypeOf;
     static {
         isSubtypeOf = new BiPredicate[occurenceCount][occurenceCount];
         for (int i = 0; i < occurenceCount; i++) {
@@ -96,63 +100,72 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         isSubtypeOf[ONE_OR_MORE][ONE_OR_MORE] = XQueryEnumSequenceType::isSubtypeItemtype;
     }
 
-    private static boolean isSubtypeItemtype(final Object x, final Object y) {
+    private static boolean isSubtypeItemtype(final Object x, final Object y)
+    {
         final XQueryEnumSequenceType this_ = (XQueryEnumSequenceType) x;
         final XQueryEnumSequenceType other = (XQueryEnumSequenceType) y;
         return this_.getItemType().itemtypeIsSubtypeOf(other.getItemType());
     }
 
     @Override
-    public boolean isSubtypeOf(final XQuerySequenceType obj) {
+    public boolean isSubtypeOf(final XQuerySequenceType obj)
+    {
         if (!(obj instanceof XQueryEnumSequenceType))
             return false;
         final XQueryEnumSequenceType other = (XQueryEnumSequenceType) obj;
         final XQueryOccurence otherOccurence = other.getOccurence();
-        final BiPredicate<XQueryEnumSequenceType, XQueryEnumSequenceType> predicate =
-            isSubtypeOf[this.occurence.ordinal()][otherOccurence.ordinal()];
+        final BiPredicate<XQueryEnumSequenceType, XQueryEnumSequenceType> predicate = isSubtypeOf[this.occurence
+            .ordinal()][otherOccurence.ordinal()];
         return predicate.test(this, other);
     }
-    public XQueryOccurence getOccurence() {
+
+    public XQueryOccurence getOccurence()
+    {
         return occurence;
     }
 
     @Override
-    public boolean isOne() {
+    public boolean isOne()
+    {
         return occurence == XQueryOccurence.ONE;
     }
 
     @Override
-    public boolean isOneOrMore() {
+    public boolean isOneOrMore()
+    {
         return occurence == XQueryOccurence.ONE_OR_MORE;
     }
 
     @Override
-    public boolean isZeroOrMore() {
+    public boolean isZeroOrMore()
+    {
         return occurence == XQueryOccurence.ZERO_OR_MORE;
     }
 
     @Override
-    public boolean isZeroOrOne() {
+    public boolean isZeroOrOne()
+    {
         return occurence == XQueryOccurence.ZERO_OR_ONE;
     }
 
     @Override
-    public boolean isZero() {
+    public boolean isZero()
+    {
         return occurence == XQueryOccurence.ZERO;
     }
 
-
-	private static final Function[][] mergedOccurences = new Function[XQueryOccurence.values().length][XQueryOccurence.values().length];
-    private static final Function<XQueryTypeFactory, Function<XQueryItemType, XQuerySequenceType>> zero =
-        typeFactory -> (_) -> typeFactory.emptySequence();
-    private static final Function<XQueryTypeFactory, Function<XQueryItemType, XQuerySequenceType>> one =
-        typeFactory -> (item) -> typeFactory.one(item);
-    private static final Function<XQueryTypeFactory, Function<XQueryItemType, XQuerySequenceType>> zeroOrOne
-        = typeFactory -> (item) -> typeFactory.zeroOrOne(item);
-    private static final Function<XQueryTypeFactory, Function<XQueryItemType, XQuerySequenceType>> zeroOrMore
-        = typeFactory -> (item) -> typeFactory.zeroOrMore(item);
-    private static final Function<XQueryTypeFactory, Function<XQueryItemType, XQuerySequenceType>> oneOrMore
-        = typeFactory -> (item) -> typeFactory.oneOrMore(item);
+    private static final Function[][] mergedOccurences = new Function[XQueryOccurence.values().length][XQueryOccurence
+        .values().length];
+    private static final Function<XQueryTypeFactory, Function<XQueryItemType, XQuerySequenceType>> zero = typeFactory -> (
+        _) -> typeFactory.emptySequence();
+    private static final Function<XQueryTypeFactory, Function<XQueryItemType, XQuerySequenceType>> one = typeFactory -> (
+        item) -> typeFactory.one(item);
+    private static final Function<XQueryTypeFactory, Function<XQueryItemType, XQuerySequenceType>> zeroOrOne = typeFactory -> (
+        item) -> typeFactory.zeroOrOne(item);
+    private static final Function<XQueryTypeFactory, Function<XQueryItemType, XQuerySequenceType>> zeroOrMore = typeFactory -> (
+        item) -> typeFactory.zeroOrMore(item);
+    private static final Function<XQueryTypeFactory, Function<XQueryItemType, XQuerySequenceType>> oneOrMore = typeFactory -> (
+        item) -> typeFactory.oneOrMore(item);
 
     static {
         mergedOccurences[ZERO][ZERO] = zero;
@@ -186,15 +199,17 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         mergedOccurences[ONE_OR_MORE][ONE_OR_MORE] = oneOrMore;
     }
 
-
     @Override
-    public XQuerySequenceType sequenceMerge(final XQuerySequenceType other) {
+    public XQuerySequenceType sequenceMerge(final XQuerySequenceType other)
+    {
         final var enumType1 = this;
         final var enumType2 = (XQueryEnumSequenceType) other;
         final var enumItemType1 = this.getItemType();
         final var enumItemType2 = other.getItemType();
-        final var sequenceGetterWithoutFactory = mergedOccurences[enumType1.getOccurence().ordinal()][enumType2.getOccurence().ordinal()];
-		final Function<XQueryItemType, XQuerySequenceType> sequenceGetter = (Function) sequenceGetterWithoutFactory.apply(typeFactory);
+        final var sequenceGetterWithoutFactory = mergedOccurences[enumType1.getOccurence().ordinal()][enumType2
+            .getOccurence().ordinal()];
+        final Function<XQueryItemType, XQuerySequenceType> sequenceGetter = (Function) sequenceGetterWithoutFactory
+            .apply(typeFactory);
         if (enumItemType1 == null && enumItemType2 == null) {
             return sequenceGetter.apply(typeFactory.itemAnyItem());
         }
@@ -211,12 +226,14 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
     }
 
     @Override
-    public boolean itemtypeIsSubtypeOf(final XQuerySequenceType obj) {
+    public boolean itemtypeIsSubtypeOf(final XQuerySequenceType obj)
+    {
         return itemType.itemtypeIsSubtypeOf(itemType);
     }
 
     @Override
-    public boolean hasEffectiveBooleanValue() {
+    public boolean hasEffectiveBooleanValue()
+    {
         if (occurence == XQueryOccurence.ONE)
             return itemType.hasEffectiveBooleanValue();
         return true;
@@ -258,12 +275,13 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         unionOccurences[ONE_OR_MORE][ONE_OR_MORE] = XQueryOccurence.ONE_OR_MORE;
     }
 
-
     @Override
-    public XQuerySequenceType unionMerge(final XQuerySequenceType other) {
+    public XQuerySequenceType unionMerge(final XQuerySequenceType other)
+    {
         final var other_ = (XQueryEnumSequenceType) other;
         final XQueryEnumItemType otherItemType = other_.getItemType();
-        final XQueryOccurence mergedOccurence = unionOccurences[this.occurence.ordinal()][other_.getOccurence().ordinal()];
+        final XQueryOccurence mergedOccurence = unionOccurences[this.occurence.ordinal()][other_.getOccurence()
+            .ordinal()];
         final int occurence_ = mergedOccurence.ordinal();
         if (itemType == null) {
             return (XQuerySequenceType) factoryByOccurence[occurence_].apply(otherItemType);
@@ -324,10 +342,12 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
     }
 
     @Override
-    public XQuerySequenceType intersectionMerge(final XQuerySequenceType other) {
+    public XQuerySequenceType intersectionMerge(final XQuerySequenceType other)
+    {
         final var other_ = (XQueryEnumSequenceType) other;
         final XQueryEnumItemType otherItemType = other_.getItemType();
-        final XQueryOccurence mergedOccurence = intersectionOccurences[this.occurence.ordinal()][other_.getOccurence().ordinal()];
+        final XQueryOccurence mergedOccurence = intersectionOccurences[this.occurence.ordinal()][other_.getOccurence()
+            .ordinal()];
         final int occurence_ = mergedOccurence.ordinal();
         if (itemType == null) {
             return (XQuerySequenceType) factoryByOccurence[occurence_].apply(otherItemType);
@@ -338,7 +358,6 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         final var mergedType = itemType.intersectionMerge(otherItemType);
         return (XQuerySequenceType) factoryByOccurence[occurence_].apply(mergedType);
     }
-
 
     private static final XQueryOccurence[][] exceptOccurences;
     static {
@@ -377,16 +396,18 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
     }
 
     @Override
-    public XQuerySequenceType exceptionMerge(final XQuerySequenceType other) {
+    public XQuerySequenceType exceptionMerge(final XQuerySequenceType other)
+    {
         final var other_ = (XQueryEnumSequenceType) other;
-        final XQueryOccurence mergedOccurence = exceptOccurences[this.occurence.ordinal()][other_.getOccurence().ordinal()];
+        final XQueryOccurence mergedOccurence = exceptOccurences[this.occurence.ordinal()][other_.getOccurence()
+            .ordinal()];
         final Function typeFactoryMethod = factoryByOccurence[mergedOccurence.ordinal()];
-        final var usedItemType = occurence == XQueryOccurence.ZERO? typeFactory.itemAnyNode(): itemType;
+        final var usedItemType = occurence == XQueryOccurence.ZERO ? typeFactory.itemAnyNode() : itemType;
         return (XQuerySequenceType) typeFactoryMethod.apply(usedItemType);
     }
 
-
-    private static XQueryOccurence[][] typeAlternativeOccurence = new XQueryOccurence[XQueryOccurence.values().length][XQueryOccurence.values().length];
+    private static XQueryOccurence[][] typeAlternativeOccurence = new XQueryOccurence[XQueryOccurence
+        .values().length][XQueryOccurence.values().length];
     static {
         typeAlternativeOccurence[ZERO][ZERO] = XQueryOccurence.ZERO;
         typeAlternativeOccurence[ZERO][ONE] = XQueryOccurence.ZERO_OR_ONE;
@@ -419,24 +440,26 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         typeAlternativeOccurence[ONE_OR_MORE][ONE_OR_MORE] = XQueryOccurence.ONE_OR_MORE;
     }
 
-	final Function[] factoryByOccurence;
+    final Function[] factoryByOccurence;
 
     @Override
-    public XQuerySequenceType alternativeMerge(final XQuerySequenceType other) {
+    public XQuerySequenceType alternativeMerge(final XQuerySequenceType other)
+    {
         final var other_ = (XQueryEnumSequenceType) other;
         final var occurence_ = typeAlternativeOccurence[occurence.ordinal()][other_.getOccurence().ordinal()];
-		final Function sequenceTypeFactory = factoryByOccurence[occurence_.ordinal()];
+        final Function sequenceTypeFactory = factoryByOccurence[occurence_.ordinal()];
         XQueryItemType otherItemType = other.getItemType();
         if (this.itemType == null)
-            return (XQuerySequenceType)sequenceTypeFactory.apply(otherItemType);
+            return (XQuerySequenceType) sequenceTypeFactory.apply(otherItemType);
         if (otherItemType == null)
-            return (XQuerySequenceType)sequenceTypeFactory.apply(itemType);
+            return (XQuerySequenceType) sequenceTypeFactory.apply(itemType);
         final XQueryItemType mergedItemType = itemType.alternativeMerge(otherItemType);
         return (XQuerySequenceType) sequenceTypeFactory.apply(mergedItemType);
     }
 
     @Override
-    public boolean castableAs(final XQuerySequenceType other) {
+    public boolean castableAs(final XQuerySequenceType other)
+    {
         if (!(other instanceof XQueryEnumSequenceType))
             return false;
         final XQueryEnumSequenceType otherEnum = (XQueryEnumSequenceType) other;
@@ -446,11 +469,11 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         return this.getItemType().castableAs(otherEnum.getItemType());
     }
 
-	@Override
-    public XQuerySequenceType addOptionality() {
+    @Override
+    public XQuerySequenceType addOptionality()
+    {
         return alternativeMerge(typeFactory.emptySequence());
     }
-
 
     private static final boolean[][] isValueComparableWith;
     static {
@@ -474,16 +497,18 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
     }
 
     @Override
-    public boolean isValueComparableWith(final XQuerySequenceType other) {
+    public boolean isValueComparableWith(final XQuerySequenceType other)
+    {
         final var cast = (XQueryEnumSequenceType) other;
         if (isZero() || other.isZero())
             return true;
-        return isValueComparableWith[occurence.ordinal()][cast.getOccurence().ordinal()] && itemType.isValueComparableWith(other.getItemType());
+        return isValueComparableWith[occurence.ordinal()][cast.getOccurence().ordinal()]
+            && itemType.isValueComparableWith(other.getItemType());
     }
 
-
     @Override
-    public XQuerySequenceType iteratedItem() {
+    public XQuerySequenceType iteratedItem()
+    {
         if (occurence != XQueryOccurence.ZERO)
             return typeFactory.one(itemType);
         else
@@ -491,25 +516,25 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
     }
 
     @Override
-    public XQuerySequenceType mapping(final XQuerySequenceType mappingExpressionType) {
+    public XQuerySequenceType mapping(final XQuerySequenceType mappingExpressionType)
+    {
         return (XQuerySequenceType) factoryByOccurence[occurence.ordinal()].apply(mappingExpressionType.getItemType());
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         StringBuilder sb = new StringBuilder();
         if (occurence == XQueryOccurence.ZERO) {
             sb.append("empty-sequence()");
             return sb.toString();
         }
 
-        if (requiresParentheses)
-        {
+        if (requiresParentheses) {
             sb.append("(");
             sb.append(itemType);
             sb.append(")");
-        }
-        else {
+        } else {
             sb.append(itemType);
         }
         sb.append(occurenceSuffix);
@@ -517,36 +542,44 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
     }
 
     private final boolean requiresParentheses;
-    private boolean requiresParentheses() {
-        return occurenceSuffix != "" &&( itemType instanceof XQueryEnumItemTypeFunction
-                                        || itemType instanceof XQueryEnumChoiceItemType);
+
+    private boolean requiresParentheses()
+    {
+        return occurenceSuffix != "" && (itemType instanceof XQueryEnumItemTypeFunction
+            || itemType instanceof XQueryEnumChoiceItemType);
     }
 
     @Override
-    public RelativeCoercability coerceableTo(XQuerySequenceType requiredType) {
+    public RelativeCoercability coerceableTo(XQuerySequenceType requiredType)
+    {
+        // If the required type is empty-sequence(), no coercion takes place (the
+        // supplied value must be an empty sequence, or a type error occurs).
         if (this == requiredType || isSubtypeOf(requiredType)) {
             return RelativeCoercability.ALWAYS;
         }
-        boolean emptySequenceRequired = requiredType.isSubtypeOf(typeFactory.emptySequence());
-        if (emptySequenceRequired) {
+        XQueryOccurence requiredOccurence = requiredType.getOccurence();
+        if (occurence != requiredOccurence) {
             return RelativeCoercability.NEVER;
-        }
+        };
+        // A type error is raised if the cardinality of V′ does not match the required cardinality of T [err:XPTY0004].
         return RelativeCoercability.POSSIBLE;
     }
 
-
     @Override
-    public XQueryItemType getMapKeyType() {
+    public XQueryItemType getMapKeyType()
+    {
         return itemType.getMapKeyType();
     }
 
     @Override
-    public XQuerySequenceType getMapValueType() {
+    public XQuerySequenceType getMapValueType()
+    {
         return itemType.getMapValueType();
     }
 
     @Override
-    public XQuerySequenceType getArrayMemberType() {
+    public XQuerySequenceType getArrayMemberType()
+    {
         return itemType.getArrayType();
     }
 

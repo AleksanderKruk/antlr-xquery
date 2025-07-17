@@ -47,7 +47,7 @@ public class EvaluationTestsBase {
             XQueryValue element1 = seq1.get(i);
             XQueryValue element2 = seq2.get(i);
 
-            if (!element1.valueEqual(element2).booleanValue()) {
+            if (!element1.valueEqual(element2).effectiveBooleanValue()) {
                 return false;
             }
         }
@@ -74,7 +74,7 @@ public class EvaluationTestsBase {
         for (int i = 0; i < result.size(); i++) {
             var expected = result.get(i);
             var received = value.sequence().get(i);
-            assertTrue(expected.valueEqual(received).booleanValue());
+            assertTrue(expected.valueEqual(received).effectiveBooleanValue());
         }
     }
 
@@ -85,7 +85,7 @@ public class EvaluationTestsBase {
         if (result instanceof XQuerySequence)
             assertTrue(deepEquals(result, value));
         else
-            assertTrue(result == value || result.valueEqual(value).booleanValue());
+            assertTrue(result == value || result.valueEqual(value).effectiveBooleanValue());
     }
 
     public void assertError(String xquery, XQueryValue result) {

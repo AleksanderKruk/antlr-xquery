@@ -13,20 +13,20 @@ public class IfExpressionEvaluationTests extends EvaluationTestsBase {
     public void or() {
         String xquery = "false() or false() or true()";
         var value = XQuery.evaluate(null, xquery, null);
-        assertTrue(value.booleanValue());
+        assertTrue(value.effectiveBooleanValue());
         xquery = "false() or false() or false()";
         value = XQuery.evaluate(null, xquery, null);
-        assertFalse(value.booleanValue());
+        assertFalse(value.effectiveBooleanValue());
     }
 
     @Test
     public void and() {
         String xquery = "true() and true() and false()";
         var value = XQuery.evaluate(null, xquery, null);
-        assertFalse(value.booleanValue());
+        assertFalse(value.effectiveBooleanValue());
         xquery = "true() and true() and true()";
         value = XQuery.evaluate(null, xquery, null);
-        assertTrue(value.booleanValue());
+        assertTrue(value.effectiveBooleanValue());
     }
 
     @Test

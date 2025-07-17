@@ -88,7 +88,7 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
         var newSequence = new ArrayList<XQueryValue>(otherSequenceValue.size());
         for (var element : value) {
             for (var otherElement : otherSequenceValue) {
-                if (element.valueEqual(otherElement).booleanValue()) {
+                if (element.valueEqual(otherElement).effectiveBooleanValue()) {
                     newSequence.add(element);
                 }
             }
@@ -104,7 +104,7 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
         NEXT_ELEMENT:
         for (var element : value) {
             for (var otherElement : otherSequenceValue) {
-                if (element.valueEqual(otherElement).booleanValue()) {
+                if (element.valueEqual(otherElement).effectiveBooleanValue()) {
                     continue NEXT_ELEMENT;
                 }
             }

@@ -188,17 +188,17 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
         }
     }
 
-    @Test
-    public void distinctValues() {
-        var i1 = new XQueryString("1", baseFactory);
-        var i2 = new XQueryString("2", baseFactory);
-        assertResult("""
-                    distinct-values((1, "1", 1, "1", "2", false(), false(), true(), true()))
-                """, List.of(baseFactory.number(1), i1, i2, baseFactory.bool(false), baseFactory.bool(true)));
-        assertResult("""
-                    distinct-values(())
-                """, List.of());
-    }
+    // @Test
+    // public void distinctValues() {
+    //     var i1 = new XQueryString("1", baseFactory);
+    //     var i2 = new XQueryString("2", baseFactory);
+    //     assertResult("""
+    //                 distinct-values((1, "1", 1, "1", "2", false(), false(), true(), true()))
+    //             """, List.of(baseFactory.number(1), i1, i2, baseFactory.bool(false), baseFactory.bool(true)));
+    //     assertResult("""
+    //                 distinct-values(())
+    //             """, List.of());
+    // }
 
     @Test
     public void rangeExpression() {

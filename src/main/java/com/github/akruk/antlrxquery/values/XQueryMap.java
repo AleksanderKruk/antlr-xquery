@@ -21,7 +21,7 @@ public record XQueryMap(Map<XQueryValue, XQueryValue> value, XQueryValueFactory 
         }
         for (Map.Entry<XQueryValue, XQueryValue> entry : this.value.entrySet()) {
             XQueryValue otherValue = otherMap.value.get(entry.getKey());
-            if (otherValue == null || !entry.getValue().valueEqual(otherValue).booleanValue()) {
+            if (otherValue == null || !entry.getValue().valueEqual(otherValue).effectiveBooleanValue()) {
                 return valueFactory.bool(false);
             }
         }
@@ -64,12 +64,6 @@ public record XQueryMap(Map<XQueryValue, XQueryValue> value, XQueryValueFactory 
         }
         sb.append("}");
         return sb.toString();
-    }
-
-    @Override
-    public Boolean booleanValue() {
-        // TODO: verify
-        return true;
     }
 
     @Override
@@ -134,17 +128,17 @@ public record XQueryMap(Map<XQueryValue, XQueryValue> value, XQueryValueFactory 
 
     @Override
     public XQueryValue not() {
-        return valueFactory.bool(!this.booleanValue());
+        return valueFactory.bool(!this.effectiveBooleanValue());
     }
 
     @Override
     public XQueryValue and(XQueryValue other) {
-        return valueFactory.bool(this.booleanValue() && other.booleanValue());
+        return valueFactory.bool(this.effectiveBooleanValue() && other.effectiveBooleanValue());
     }
 
     @Override
     public XQueryValue or(XQueryValue other) {
-        return valueFactory.bool(this.booleanValue() || other.booleanValue());
+        return valueFactory.bool(this.effectiveBooleanValue() || other.effectiveBooleanValue());
     }
 
     @Override

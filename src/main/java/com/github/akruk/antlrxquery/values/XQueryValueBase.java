@@ -38,11 +38,6 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
     };
 
     @Override
-    public Boolean booleanValue() {
-        return null;
-    };
-
-    @Override
     public Boolean effectiveBooleanValue() {
         return null;
     };
@@ -79,7 +74,7 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
 
     @Override
     public boolean isBooleanValue() {
-        return booleanValue() != null;
+        return effectiveBooleanValue() != null;
     }
 
     @Override
@@ -165,7 +160,7 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
 
     @Override
     public XQueryValue valueUnequal(final XQueryValue other) {
-        final var isUnequal = !valueEqual(other).booleanValue();
+        final var isUnequal = !valueEqual(other).effectiveBooleanValue();
         return valueFactory.bool(isUnequal);
 	}
 
@@ -174,19 +169,19 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
 
     @Override
     public XQueryValue valueLessEqual(final XQueryValue other) {
-        final var isLessEqual = valueEqual(other).booleanValue() || valueLessThan(other).booleanValue();
+        final var isLessEqual = valueEqual(other).effectiveBooleanValue() || valueLessThan(other).effectiveBooleanValue();
         return valueFactory.bool(isLessEqual);
 	}
 
     @Override
     public XQueryValue valueGreaterThan(final XQueryValue other) {
-        final var isGreaterThan = !valueLessEqual(other).booleanValue();
+        final var isGreaterThan = !valueLessEqual(other).effectiveBooleanValue();
         return valueFactory.bool(isGreaterThan);
 	}
 
     @Override
     public XQueryValue valueGreaterEqual(final XQueryValue other) {
-        final var isGreaterEqual = !valueLessThan(other).booleanValue();
+        final var isGreaterEqual = !valueLessThan(other).effectiveBooleanValue();
         return valueFactory.bool(isGreaterEqual);
     }
 
@@ -196,7 +191,7 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
         final var otherAtomized = other.atomize();
         for (final var thisElement : thisAtomized) {
             for (final var otherElement : otherAtomized) {
-                if (thisElement.valueEqual(otherElement).booleanValue()) {
+                if (thisElement.valueEqual(otherElement).effectiveBooleanValue()) {
                     return valueFactory.bool(true);
                 }
             }
@@ -210,7 +205,7 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
         final var otherAtomized = other.atomize();
         for (final var thisElement : thisAtomized) {
             for (final var otherElement : otherAtomized) {
-                if (thisElement.valueUnequal(otherElement).booleanValue()) {
+                if (thisElement.valueUnequal(otherElement).effectiveBooleanValue()) {
                     return valueFactory.bool(true);
                 }
             }
@@ -224,7 +219,7 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
         final var otherAtomized = other.atomize();
         for (final var thisElement : thisAtomized) {
             for (final var otherElement : otherAtomized) {
-                if (thisElement.valueLessThan(otherElement).booleanValue()) {
+                if (thisElement.valueLessThan(otherElement).effectiveBooleanValue()) {
                     return valueFactory.bool(true);
                 }
             }
@@ -239,7 +234,7 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
         final var otherAtomized = other.atomize();
         for (final var thisElement : thisAtomized) {
             for (final var otherElement : otherAtomized) {
-                if (thisElement.valueLessEqual(otherElement).booleanValue()) {
+                if (thisElement.valueLessEqual(otherElement).effectiveBooleanValue()) {
                     return valueFactory.bool(true);
                 }
             }
@@ -254,7 +249,7 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
         final var otherAtomized = other.atomize();
         for (final var thisElement : thisAtomized) {
             for (final var otherElement : otherAtomized) {
-                if (thisElement.valueGreaterThan(otherElement).booleanValue()) {
+                if (thisElement.valueGreaterThan(otherElement).effectiveBooleanValue()) {
                     return valueFactory.bool(true);
                 }
             }
@@ -268,7 +263,7 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
         final var otherAtomized = other.atomize();
         for (final var thisElement : thisAtomized) {
             for (final var otherElement : otherAtomized) {
-                if (thisElement.valueGreaterEqual(otherElement).booleanValue()) {
+                if (thisElement.valueGreaterEqual(otherElement).effectiveBooleanValue()) {
                     return valueFactory.bool(true);
                 }
             }

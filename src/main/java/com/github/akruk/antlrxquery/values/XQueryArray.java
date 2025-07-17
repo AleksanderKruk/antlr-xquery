@@ -23,7 +23,7 @@ public record XQueryArray(List<XQueryValue> value, XQueryValueFactory valueFacto
         for (int i = 0; i < this.value.size(); i++) {
             XQueryValue thisValue = this.value.get(i);
             XQueryValue otherValue = otherArray.value.get(i);
-            if (!thisValue.valueEqual(otherValue).booleanValue()) {
+            if (!thisValue.valueEqual(otherValue).effectiveBooleanValue()) {
                 return valueFactory.bool(false);
             }
         }
@@ -61,12 +61,6 @@ public record XQueryArray(List<XQueryValue> value, XQueryValueFactory valueFacto
         }
         sb.append("]");
         return sb.toString();
-    }
-
-    @Override
-    public Boolean booleanValue() {
-        // TODO: verify
-        return true;
     }
 
     @Override
@@ -131,17 +125,17 @@ public record XQueryArray(List<XQueryValue> value, XQueryValueFactory valueFacto
 
     @Override
     public XQueryValue not() {
-        return valueFactory.bool(!this.booleanValue());
+        return valueFactory.bool(!this.effectiveBooleanValue());
     }
 
     @Override
     public XQueryValue and(XQueryValue other) {
-        return valueFactory.bool(this.booleanValue() && other.booleanValue());
+        return valueFactory.bool(this.effectiveBooleanValue() && other.effectiveBooleanValue());
     }
 
     @Override
     public XQueryValue or(XQueryValue other) {
-        return valueFactory.bool(this.booleanValue() || other.booleanValue());
+        return valueFactory.bool(this.effectiveBooleanValue() || other.effectiveBooleanValue());
     }
 
     @Override

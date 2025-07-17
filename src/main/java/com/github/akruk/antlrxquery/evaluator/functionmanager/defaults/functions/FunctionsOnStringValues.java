@@ -82,7 +82,7 @@ public class FunctionsOnStringValues {
     }
 
     private boolean isEmptySequence(XQueryValue targetString) {
-        return targetString instanceof XQuerySequence && targetString.empty().booleanValue();
+        return targetString instanceof XQuerySequence && targetString.empty().effectiveBooleanValue();
     }
 
     /** Round per XQuery fn:round: ties away from zero. */
@@ -356,7 +356,7 @@ public class FunctionsOnStringValues {
         }
 
         // empty‐string or empty‐sequence → empty sequence
-        if (empty.booleanValue()) {
+        if (empty.effectiveBooleanValue()) {
             return valueFactory.emptySequence();
         }
         final String input = inputValue.stringValue();
@@ -395,7 +395,7 @@ public class FunctionsOnStringValues {
         if (empty == null) {
             return XQueryError.InvalidArgumentType;
         }
-        if (inputValue.empty().booleanValue())
+        if (inputValue.empty().effectiveBooleanValue())
             return valueFactory.emptySequence();
 
         if (!(inputValue instanceof XQueryString)) {

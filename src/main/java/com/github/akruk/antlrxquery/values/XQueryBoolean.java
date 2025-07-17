@@ -16,10 +16,6 @@ public class XQueryBoolean extends XQueryValueBase<Boolean> {
         return value;
     }
 
-    @Override
-    public Boolean booleanValue() {
-        return value;
-    }
 
     @Override
     public String stringValue() {
@@ -39,25 +35,25 @@ public class XQueryBoolean extends XQueryValueBase<Boolean> {
     @Override
     public XQueryValue and(final XQueryValue other) {
         if (!other.isBooleanValue()) return XQueryError.InvalidArgumentType;
-        return valueFactory.bool(value && other.booleanValue());
+        return valueFactory.bool(value && other.effectiveBooleanValue());
     }
 
     @Override
     public XQueryValue or(final XQueryValue other) {
         if (!other.isBooleanValue()) return XQueryError.InvalidArgumentType;
-        return valueFactory.bool(value || other.booleanValue());
+        return valueFactory.bool(value || other.effectiveBooleanValue());
     }
 
     @Override
     public XQueryValue valueEqual(final XQueryValue other) {
         if (!other.isBooleanValue()) return valueFactory.bool(false);
-        return valueFactory.bool(value.equals(other.booleanValue()));
+        return valueFactory.bool(value.equals(other.effectiveBooleanValue()));
     }
 
     @Override
     public XQueryValue valueLessThan(final XQueryValue other) {
         if (!other.isBooleanValue()) return XQueryError.InvalidArgumentType;
-        return valueFactory.bool(!value && other.booleanValue());
+        return valueFactory.bool(!value && other.effectiveBooleanValue());
     }
 
     @Override

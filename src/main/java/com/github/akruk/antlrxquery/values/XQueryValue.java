@@ -11,7 +11,6 @@ public interface XQueryValue {
     public ParseTree node();
     public BigDecimal numericValue();
     public String stringValue();
-    public Boolean booleanValue();
     public XQueryFunction functionValue();
     public Boolean effectiveBooleanValue();
     public List<XQueryValue> sequence();

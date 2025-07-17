@@ -244,11 +244,6 @@ public class XQueryError implements XQueryValue {
     }
 
     @Override
-    public Boolean booleanValue() {
-        return null;
-    }
-
-    @Override
     public XQueryFunction functionValue() {
         return null;
     }

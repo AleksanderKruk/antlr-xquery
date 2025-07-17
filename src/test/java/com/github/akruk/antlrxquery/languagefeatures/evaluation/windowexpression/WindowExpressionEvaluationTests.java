@@ -23,11 +23,11 @@ public class WindowExpressionEvaluationTests extends EvaluationTestsBase {
                 """;
         XQueryValue value = XQuery.evaluate(null, xquery, null);
         List<XQueryValue> expected = Arrays.asList(
-                baseFactory.sequence(List.of(baseFactory.number(1), baseFactory.number(2), baseFactory.number(3))),
-                baseFactory.sequence(List.of(baseFactory.number(4), baseFactory.number(5), baseFactory.number(6))),
-                baseFactory.sequence(List.of(baseFactory.number(7), baseFactory.number(8), baseFactory.number(9))),
-                baseFactory.sequence(List.of(baseFactory.number(10))));
-        XQueryValue expectedSequence = baseFactory.sequence(expected);
+                valueFactory.sequence(List.of(valueFactory.number(1), valueFactory.number(2), valueFactory.number(3))),
+                valueFactory.sequence(List.of(valueFactory.number(4), valueFactory.number(5), valueFactory.number(6))),
+                valueFactory.sequence(List.of(valueFactory.number(7), valueFactory.number(8), valueFactory.number(9))),
+                valueFactory.sequence(List.of(valueFactory.number(10))));
+        XQueryValue expectedSequence = valueFactory.sequence(expected);
         assertTrue(deepEquals(expectedSequence, value));
     }
 
@@ -41,17 +41,17 @@ public class WindowExpressionEvaluationTests extends EvaluationTestsBase {
                 """;
         XQueryValue value = XQuery.evaluate(null, xquery, null);
         List<XQueryValue> expected = Arrays.asList(
-                baseFactory.sequence(List.of(baseFactory.number(1), baseFactory.number(2), baseFactory.number(3))),
-                baseFactory.sequence(List.of(baseFactory.number(2), baseFactory.number(3), baseFactory.number(4))),
-                baseFactory.sequence(List.of(baseFactory.number(3), baseFactory.number(4), baseFactory.number(5))),
-                baseFactory.sequence(List.of(baseFactory.number(4), baseFactory.number(5), baseFactory.number(6))),
-                baseFactory.sequence(List.of(baseFactory.number(5), baseFactory.number(6), baseFactory.number(7))),
-                baseFactory.sequence(List.of(baseFactory.number(6), baseFactory.number(7), baseFactory.number(8))),
-                baseFactory.sequence(List.of(baseFactory.number(7), baseFactory.number(8), baseFactory.number(9))),
-                baseFactory.sequence(List.of(baseFactory.number(8), baseFactory.number(9), baseFactory.number(10))),
-                baseFactory.sequence(List.of(baseFactory.number(9), baseFactory.number(10))),
-                baseFactory.sequence(List.of(baseFactory.number(10))));
-        XQueryValue expectedSequence = baseFactory.sequence(expected);
+                valueFactory.sequence(List.of(valueFactory.number(1), valueFactory.number(2), valueFactory.number(3))),
+                valueFactory.sequence(List.of(valueFactory.number(2), valueFactory.number(3), valueFactory.number(4))),
+                valueFactory.sequence(List.of(valueFactory.number(3), valueFactory.number(4), valueFactory.number(5))),
+                valueFactory.sequence(List.of(valueFactory.number(4), valueFactory.number(5), valueFactory.number(6))),
+                valueFactory.sequence(List.of(valueFactory.number(5), valueFactory.number(6), valueFactory.number(7))),
+                valueFactory.sequence(List.of(valueFactory.number(6), valueFactory.number(7), valueFactory.number(8))),
+                valueFactory.sequence(List.of(valueFactory.number(7), valueFactory.number(8), valueFactory.number(9))),
+                valueFactory.sequence(List.of(valueFactory.number(8), valueFactory.number(9), valueFactory.number(10))),
+                valueFactory.sequence(List.of(valueFactory.number(9), valueFactory.number(10))),
+                valueFactory.sequence(List.of(valueFactory.number(10))));
+        XQueryValue expectedSequence = valueFactory.sequence(expected);
         assertTrue(deepEquals(expectedSequence, value));
     }
 
@@ -64,11 +64,11 @@ public class WindowExpressionEvaluationTests extends EvaluationTestsBase {
                 """;
         XQueryValue value = XQuery.evaluate(null, xquery, null);
         List<XQueryValue> expected = Arrays.asList(
-                baseFactory.sequence(List.of(baseFactory.number(1), baseFactory.number(3))),
-                baseFactory.sequence(List.of(baseFactory.number(4), baseFactory.number(6))),
-                baseFactory.sequence(List.of(baseFactory.number(7), baseFactory.number(9))),
-                baseFactory.sequence(List.of(baseFactory.number(10), baseFactory.number(10))));
-        XQueryValue expectedSequence = baseFactory.sequence(expected);
+                valueFactory.sequence(List.of(valueFactory.number(1), valueFactory.number(3))),
+                valueFactory.sequence(List.of(valueFactory.number(4), valueFactory.number(6))),
+                valueFactory.sequence(List.of(valueFactory.number(7), valueFactory.number(9))),
+                valueFactory.sequence(List.of(valueFactory.number(10), valueFactory.number(10))));
+        XQueryValue expectedSequence = valueFactory.sequence(expected);
         assertTrue(deepEquals(expectedSequence, value));
     }
 
@@ -82,17 +82,17 @@ public class WindowExpressionEvaluationTests extends EvaluationTestsBase {
                 """;
         XQueryValue value = XQuery.evaluate(null, xquery, null);
         List<XQueryValue> expected = Arrays.asList(
-                baseFactory.sequence(List.of(baseFactory.number(1), baseFactory.number(3))),
-                baseFactory.sequence(List.of(baseFactory.number(2), baseFactory.number(4))),
-                baseFactory.sequence(List.of(baseFactory.number(3), baseFactory.number(5))),
-                baseFactory.sequence(List.of(baseFactory.number(4), baseFactory.number(6))),
-                baseFactory.sequence(List.of(baseFactory.number(5), baseFactory.number(7))),
-                baseFactory.sequence(List.of(baseFactory.number(6), baseFactory.number(8))),
-                baseFactory.sequence(List.of(baseFactory.number(7), baseFactory.number(9))),
-                baseFactory.sequence(List.of(baseFactory.number(8), baseFactory.number(10))),
-                baseFactory.sequence(List.of(baseFactory.number(9), baseFactory.number(10))),
-                baseFactory.sequence(List.of(baseFactory.number(10), baseFactory.number(10))));
-        XQueryValue expectedSequence = baseFactory.sequence(expected);
+                valueFactory.sequence(List.of(valueFactory.number(1), valueFactory.number(3))),
+                valueFactory.sequence(List.of(valueFactory.number(2), valueFactory.number(4))),
+                valueFactory.sequence(List.of(valueFactory.number(3), valueFactory.number(5))),
+                valueFactory.sequence(List.of(valueFactory.number(4), valueFactory.number(6))),
+                valueFactory.sequence(List.of(valueFactory.number(5), valueFactory.number(7))),
+                valueFactory.sequence(List.of(valueFactory.number(6), valueFactory.number(8))),
+                valueFactory.sequence(List.of(valueFactory.number(7), valueFactory.number(9))),
+                valueFactory.sequence(List.of(valueFactory.number(8), valueFactory.number(10))),
+                valueFactory.sequence(List.of(valueFactory.number(9), valueFactory.number(10))),
+                valueFactory.sequence(List.of(valueFactory.number(10), valueFactory.number(10))));
+        XQueryValue expectedSequence = valueFactory.sequence(expected);
         assertTrue(deepEquals(expectedSequence, value));
     }
 

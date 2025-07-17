@@ -9,12 +9,12 @@ public class GeneralComparisonEvaluationTests extends EvaluationTestsBase {
 
     @Test
     public void generalComparison() {
-        assertResult("(1, 2) = (2, 3)", baseFactory.bool(true));
-        assertResult("(1, 2) != (2, 3)", baseFactory.bool(true));
-        assertResult("(1, 2) < (2, 3)", baseFactory.bool(true));
-        assertResult("(1, 2) <= (2, 3)", baseFactory.bool(true));
-        assertResult("(1, 2) > (2, 3)", baseFactory.bool(false));
-        assertResult("(1, 2) >= (2, 3)", baseFactory.bool(true));
+        assertResult("(1, 2) = (2, 3)", valueFactory.bool(true));
+        assertResult("(1, 2) != (2, 3)", valueFactory.bool(true));
+        assertResult("(1, 2) < (2, 3)", valueFactory.bool(true));
+        assertResult("(1, 2) <= (2, 3)", valueFactory.bool(true));
+        assertResult("(1, 2) > (2, 3)", valueFactory.bool(false));
+        assertResult("(1, 2) >= (2, 3)", valueFactory.bool(true));
     }
 
 }

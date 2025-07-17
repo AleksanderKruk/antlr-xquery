@@ -25,7 +25,7 @@ import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.values.factories.defaults.XQueryMemoizedValueFactory;
 
 public class EvaluationTestsBase {
-    public XQueryValueFactory baseFactory = new XQueryMemoizedValueFactory();
+    public XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory();
 
     public static boolean deepEquals(XQueryValue sequence1, XQueryValue sequence2) {
         if (sequence1 == sequence2) {

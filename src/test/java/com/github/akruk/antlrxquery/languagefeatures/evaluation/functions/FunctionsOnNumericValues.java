@@ -39,7 +39,7 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void roundDefaultHalfToCeiling_positiveTie() {
         assertResult(
             "round(2.5)",
-            baseFactory.number(new BigDecimal("3.0"))
+            valueFactory.number(new BigDecimal("3.0"))
         );
     }
 
@@ -47,7 +47,7 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void roundDefaultHalfToCeiling_nonTie() {
         assertResult(
             "round(2.4999)",
-            baseFactory.number(new BigDecimal("2.0"))
+            valueFactory.number(new BigDecimal("2.0"))
         );
     }
 
@@ -55,7 +55,7 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void roundDefaultHalfToCeiling_negativeTie() {
         assertResult(
             "round(-2.5)",
-            baseFactory.number(new BigDecimal("-2.0"))
+            valueFactory.number(new BigDecimal("-2.0"))
         );
     }
 
@@ -63,7 +63,7 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void roundWithPrecision_positive() {
         assertResult(
             "round(1.125, 2)",
-            baseFactory.number(new BigDecimal("1.13"))
+            valueFactory.number(new BigDecimal("1.13"))
         );
     }
 
@@ -71,7 +71,7 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void roundWithNegativePrecision() {
         assertResult(
             "round(8452, -2)",
-            baseFactory.number(new BigDecimal("8500"))
+            valueFactory.number(new BigDecimal("8500"))
         );
     }
 
@@ -79,7 +79,7 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void roundScientificNotation() {
         assertResult(
             "round(3.1415e0, 2)",
-            baseFactory.number(new BigDecimal("3.14"))
+            valueFactory.number(new BigDecimal("3.14"))
         );
     }
 
@@ -87,7 +87,7 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void roundFloorMode_positive() {
         assertResult(
             "round(1.7, 0, \"floor\")",
-            baseFactory.number(BigDecimal.ONE)
+            valueFactory.number(BigDecimal.ONE)
         );
     }
 
@@ -95,7 +95,7 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void roundFloorMode_negative() {
         assertResult(
             "round(-1.7, 0, \"floor\")",
-            baseFactory.number(new BigDecimal("-2"))
+            valueFactory.number(new BigDecimal("-2"))
         );
     }
 
@@ -103,7 +103,7 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void roundCeilingMode_positive() {
         assertResult(
             "round(1.7, 0, \"ceiling\")",
-            baseFactory.number(new BigDecimal("2"))
+            valueFactory.number(new BigDecimal("2"))
         );
     }
 
@@ -111,7 +111,7 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void roundCeilingMode_negative() {
         assertResult(
             "round(-1.7, 0, \"ceiling\")",
-            baseFactory.number(new BigDecimal("-1"))
+            valueFactory.number(new BigDecimal("-1"))
         );
     }
 
@@ -119,7 +119,7 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void roundTowardZero_positive() {
         assertResult(
             "round(1.7, 0, \"toward-zero\")",
-            baseFactory.number(BigDecimal.ONE)
+            valueFactory.number(BigDecimal.ONE)
         );
     }
 
@@ -127,7 +127,7 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void roundTowardZero_negative() {
         assertResult(
             "round(-1.7, 0, \"toward-zero\")",
-            baseFactory.number(new BigDecimal("-1"))
+            valueFactory.number(new BigDecimal("-1"))
         );
     }
 
@@ -135,7 +135,7 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void roundAwayFromZero_positive() {
         assertResult(
             "round(1.7, 0, \"away-from-zero\")",
-            baseFactory.number(new BigDecimal("2"))
+            valueFactory.number(new BigDecimal("2"))
         );
     }
 
@@ -143,7 +143,7 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void roundAwayFromZero_negative() {
         assertResult(
             "round(-1.7, 0, \"away-from-zero\")",
-            baseFactory.number(new BigDecimal("-2"))
+            valueFactory.number(new BigDecimal("-2"))
         );
     }
 
@@ -151,7 +151,7 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void roundHalfToFloor_positive() {
         assertResult(
             "round(1.125, 2, \"half-to-floor\")",
-            baseFactory.number(new BigDecimal("1.12"))
+            valueFactory.number(new BigDecimal("1.12"))
         );
     }
 
@@ -159,7 +159,7 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void roundHalfToFloor_negative() {
         assertResult(
             "round(-1.125, 2, \"half-to-floor\")",
-            baseFactory.number(new BigDecimal("-1.13"))
+            valueFactory.number(new BigDecimal("-1.13"))
         );
     }
 
@@ -167,7 +167,7 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void roundHalfToCeiling_positive() {
         assertResult(
             "round(1.125, 2, \"half-to-ceiling\")",
-            baseFactory.number(new BigDecimal("1.13"))
+            valueFactory.number(new BigDecimal("1.13"))
         );
     }
 
@@ -175,7 +175,7 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void roundHalfToCeiling_negative() {
         assertResult(
             "round(-1.125, 2, \"half-to-ceiling\")",
-            baseFactory.number(new BigDecimal("-1.12"))
+            valueFactory.number(new BigDecimal("-1.12"))
         );
     }
 
@@ -183,7 +183,7 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void roundHalfTowardZero_positive() {
         assertResult(
             "round(1.125, 2, \"half-toward-zero\")",
-            baseFactory.number(new BigDecimal("1.12"))
+            valueFactory.number(new BigDecimal("1.12"))
         );
     }
 
@@ -191,7 +191,7 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void roundHalfTowardZero_negative() {
         assertResult(
             "round(-1.125, 2, \"half-toward-zero\")",
-            baseFactory.number(new BigDecimal("-1.12"))
+            valueFactory.number(new BigDecimal("-1.12"))
         );
     }
 
@@ -199,7 +199,7 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void roundHalfAwayFromZero_positive() {
         assertResult(
             "round(1.125, 2, \"half-away-from-zero\")",
-            baseFactory.number(new BigDecimal("1.13"))
+            valueFactory.number(new BigDecimal("1.13"))
         );
     }
 
@@ -207,7 +207,7 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void roundHalfAwayFromZero_negative() {
         assertResult(
             "round(-1.125, 2, \"half-away-from-zero\")",
-            baseFactory.number(new BigDecimal("-1.13"))
+            valueFactory.number(new BigDecimal("-1.13"))
         );
     }
 
@@ -215,7 +215,7 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void roundHalfToEven_positive() {
         assertResult(
             "round(1.125, 2, \"half-to-even\")",
-            baseFactory.number(new BigDecimal("1.12"))
+            valueFactory.number(new BigDecimal("1.12"))
         );
     }
 
@@ -223,7 +223,7 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void roundHalfToEven_negative() {
         assertResult(
             "round(-1.125, 2, \"half-to-even\")",
-            baseFactory.number(new BigDecimal("-1.12"))
+            valueFactory.number(new BigDecimal("-1.12"))
         );
     }
 
@@ -231,9 +231,9 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void dividesExact() {
         assertResult(
             "divide-decimals(120.6, 60.3, 4)",
-            baseFactory.record(Map.of(
-                "quotient", baseFactory.number(2),
-                "remainder", baseFactory.number(0)
+            valueFactory.record(Map.of(
+                "quotient", valueFactory.number(2),
+                "remainder", valueFactory.number(0)
             ))
         );
     }
@@ -242,9 +242,9 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void dividesPositive() {
         assertResult(
             "divide-decimals(10, 3)",
-            baseFactory.record(Map.of(
-                "quotient", baseFactory.number(3),
-                "remainder", baseFactory.number(1)
+            valueFactory.record(Map.of(
+                "quotient", valueFactory.number(3),
+                "remainder", valueFactory.number(1)
             ))
         );
     }
@@ -253,9 +253,9 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void dividesPositiveNegativeDivisor() {
         assertResult(
             "divide-decimals(10, -3)",
-            baseFactory.record(Map.of(
-                "quotient", baseFactory.number(-3),
-                "remainder", baseFactory.number(1)
+            valueFactory.record(Map.of(
+                "quotient", valueFactory.number(-3),
+                "remainder", valueFactory.number(1)
             ))
         );
     }
@@ -264,9 +264,9 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void dividesNegativePositiveDivisor() {
         assertResult(
             "divide-decimals(-10, 3)",
-            baseFactory.record(Map.of(
-                "quotient", baseFactory.number(-3),
-                "remainder", baseFactory.number(-1)
+            valueFactory.record(Map.of(
+                "quotient", valueFactory.number(-3),
+                "remainder", valueFactory.number(-1)
             ))
         );
     }
@@ -275,9 +275,9 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void dividesBothNegative() {
         assertResult(
             "divide-decimals(-10, -3)",
-            baseFactory.record(Map.of(
-                "quotient", baseFactory.number(3),
-                "remainder", baseFactory.number(-1)
+            valueFactory.record(Map.of(
+                "quotient", valueFactory.number(3),
+                "remainder", valueFactory.number(-1)
             ))
         );
     }
@@ -286,9 +286,9 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void dividesWithPrecisionSix() {
         assertResult(
             "divide-decimals(10, 3, 6)",
-            baseFactory.record(Map.of(
-                "quotient", baseFactory.number(new BigDecimal("3.333333")),
-                "remainder", baseFactory.number(new BigDecimal("0.000001"))
+            valueFactory.record(Map.of(
+                "quotient", valueFactory.number(new BigDecimal("3.333333")),
+                "remainder", valueFactory.number(new BigDecimal("0.000001"))
             ))
         );
     }
@@ -297,9 +297,9 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void dividesHundredThirty() {
         assertResult(
             "divide-decimals(100, 30)",
-            baseFactory.record(Map.of(
-                "quotient", baseFactory.number(3),
-                "remainder", baseFactory.number(10)
+            valueFactory.record(Map.of(
+                "quotient", valueFactory.number(3),
+                "remainder", valueFactory.number(10)
             ))
         );
     }
@@ -308,9 +308,9 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
     public void dividesWithNegativePrecision() {
         assertResult(
             "divide-decimals(150862, 7, -3)",
-            baseFactory.record(Map.of(
-                "quotient", baseFactory.number(21000),
-                "remainder", baseFactory.number(3862)
+            valueFactory.record(Map.of(
+                "quotient", valueFactory.number(21000),
+                "remainder", valueFactory.number(3862)
             ))
         );
     }

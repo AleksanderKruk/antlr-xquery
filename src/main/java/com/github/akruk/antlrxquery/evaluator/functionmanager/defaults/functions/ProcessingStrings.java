@@ -56,7 +56,7 @@ public class ProcessingStrings {
             Integer codepoint = value.numericValue().intValue();
             if (codepoint < 0 || codepoint > 0x10FFFF ||
                 (codepoint >= 0xD800 && codepoint <= 0xDFFF)) {
-                return XQueryError.InvalidArgumentType;
+                return XQueryError.InvalidCodepoint;
             }
 
             sb.appendCodePoint(codepoint);
@@ -87,26 +87,26 @@ public class ProcessingStrings {
         return valueFactory.sequence(codepoints);
     }
 
-    // public XQueryValue codepointEqual(
-    //         XQueryVisitingContext context,
-    //         List<XQueryValue> args) {
+    public XQueryValue codepointEqual(
+            XQueryVisitingContext context,
+            List<XQueryValue> args) {
 
-    //     XQueryValue value1 = args.get(0);
-    //     XQueryValue value2 = args.get(1);
+        XQueryValue value1 = args.get(0);
+        XQueryValue value2 = args.get(1);
 
-    //     if (value1.isEmpty() || value2.isEmpty()) {
-    //         return EMPTY_SEQUENCE;
-    //     }
+        if (value1.isEmptySequence() || value2.isEmptySequence()) {
+            return valueFactory.emptySequence();
+        }
 
-    //     String str1 = value1.stringValue();
-    //     String str2 = value2.stringValue();
+        String str1 = value1.stringValue();
+        String str2 = value2.stringValue();
 
-    //     if (str1 == null || str2 == null) {
-    //         return XQueryError.InvalidArgumentType;
-    //     }
+        if (str1 == null || str2 == null) {
+            return XQueryError.InvalidArgumentType;
+        }
 
-    //     return valueFactory.bool(str1.equals(str2));
-    // }
+        return valueFactory.bool(str1.equals(str2));
+    }
 
     public XQueryValue collation(
             XQueryVisitingContext context,

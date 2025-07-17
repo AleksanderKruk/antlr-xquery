@@ -13,7 +13,7 @@ public class SimpleMapExpressionEvaluationTests extends EvaluationTestsBase {
         // map on a single atomic value without let-binding
         assertResult(
                 "1 ! (. + 1)",
-                List.of(baseFactory.number(2)));
+                List.of(valueFactory.number(2)));
     }
 
     @Test
@@ -21,7 +21,7 @@ public class SimpleMapExpressionEvaluationTests extends EvaluationTestsBase {
         // map on a single atomic value without let-binding
         assertResult(
                 "1 ! .",
-                List.of(baseFactory.number(1)));
+                List.of(valueFactory.number(1)));
     }
 
     @Test
@@ -29,9 +29,9 @@ public class SimpleMapExpressionEvaluationTests extends EvaluationTestsBase {
         // add 1 to each item in a sequence directly
         String xquery = "(1, 2, 3) ! (. + 1)";
         List<XQueryValue> expected = List.of(
-                baseFactory.number(2),
-                baseFactory.number(3),
-                baseFactory.number(4));
+                valueFactory.number(2),
+                valueFactory.number(3),
+                valueFactory.number(4));
         assertResult(xquery, expected);
     }
 
@@ -40,8 +40,8 @@ public class SimpleMapExpressionEvaluationTests extends EvaluationTestsBase {
         // multiply by 2 then add 1, chaining two map operators
         String xquery = "(1, 2) ! (. * 2) ! (. + 1)";
         List<XQueryValue> expected = List.of(
-                baseFactory.number(3), // (1*2)+1
-                baseFactory.number(5) // (2*2)+1
+                valueFactory.number(3), // (1*2)+1
+                valueFactory.number(5) // (2*2)+1
         );
         assertResult(xquery, expected);
     }
@@ -51,8 +51,8 @@ public class SimpleMapExpressionEvaluationTests extends EvaluationTestsBase {
         // build strings, then measure their length via chained maps
         String xquery = "('a', 'bc') ! concat((., '-')) ! string-length(.)";
         List<XQueryValue> expected = List.of(
-                baseFactory.number(2),
-                baseFactory.number(3));
+                valueFactory.number(2),
+                valueFactory.number(3));
         assertResult(xquery, expected);
     }
 

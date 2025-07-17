@@ -25,13 +25,13 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
         String xquery = "(1, (2,3,4), ((5, 6), 7))";
         var value = XQuery.evaluate(null, xquery, null);
         List<XQueryValue> expected = List.of(
-                baseFactory.number(1),
-                baseFactory.number(2),
-                baseFactory.number(3),
-                baseFactory.number(4),
-                baseFactory.number(5),
-                baseFactory.number(6),
-                baseFactory.number(7));
+                valueFactory.number(1),
+                valueFactory.number(2),
+                valueFactory.number(3),
+                valueFactory.number(4),
+                valueFactory.number(5),
+                valueFactory.number(6),
+                valueFactory.number(7));
         assertArrayEquals(
                 expected.stream().map(XQueryValue::numericValue).toArray(),
                 value.sequence().stream().map(XQueryValue::numericValue).toArray());
@@ -45,12 +45,12 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
                 """;
         var value = XQuery.evaluate(null, xquery, null);
         var expected = List.of(
-                baseFactory.number(1),
-                baseFactory.number(2),
-                baseFactory.number(3),
-                baseFactory.number(4),
-                baseFactory.number(5),
-                baseFactory.number(6));
+                valueFactory.number(1),
+                valueFactory.number(2),
+                valueFactory.number(3),
+                valueFactory.number(4),
+                valueFactory.number(5),
+                valueFactory.number(6));
         assertEquals(expected.size(), value.sequence().size());
         var sequence = value.sequence();
         for (int i = 0; i < expected.size(); i++) {
@@ -109,10 +109,10 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
 
     @Test
     public void concatenationExpressions() {
-        assertResult("'abc' || 'def' || 'ghi'", new XQueryString("abcdefghi", baseFactory));
+        assertResult("'abc' || 'def' || 'ghi'", new XQueryString("abcdefghi", valueFactory));
         assertResult("""
                 () || "con" || ("cat", "enate")
-                    """, new XQueryString("concatenate", baseFactory));
+                    """, new XQueryString("concatenate", valueFactory));
     }
 
 
@@ -155,21 +155,21 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
     @Test
     public void identityNodeComparison() throws Exception {
         assertDynamicGrammarQuery(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "/test is /test",
-                                    baseFactory.bool(true));
+                                    valueFactory.bool(true));
     }
 
     @Test
     public void beforeNode() throws Exception {
         assertDynamicGrammarQuery(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "/test << /test",
-                                    baseFactory.bool(false));
+                                    valueFactory.bool(false));
         assertDynamicGrammarQuery(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test",
-                    "a bc a d", "/test << /test/A[1]", baseFactory.bool(true));
+                    "a bc a d", "/test << /test/A[1]", valueFactory.bool(true));
     }
 
     @Test
     public void afterNode() throws Exception {
-        assertDynamicGrammarQuery(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "/test >> /test", baseFactory.bool(false));
-        assertDynamicGrammarQuery(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "/test/A[1] >> /test", baseFactory.bool(true));
+        assertDynamicGrammarQuery(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "/test >> /test", valueFactory.bool(false));
+        assertDynamicGrammarQuery(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "/test/A[1] >> /test", valueFactory.bool(true));
     }
 
     @Test
@@ -202,11 +202,11 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
 
     @Test
     public void rangeExpression() {
-        var i1 = baseFactory.number(1);
-        var i2 = baseFactory.number(2);
-        var i3 = baseFactory.number(3);
-        var i4 = baseFactory.number(4);
-        var i5 = baseFactory.number(5);
+        var i1 = valueFactory.number(1);
+        var i2 = valueFactory.number(2);
+        var i3 = valueFactory.number(3);
+        var i4 = valueFactory.number(4);
+        var i5 = valueFactory.number(5);
         assertResult("1 to 5", List.of(i1, i2, i3, i4, i5));
         assertResult("4 to 3", List.of());
         assertResult("3 to 3", List.of(i3));
@@ -221,63 +221,63 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
         // var i1 = new XQueryNumber(1);
         // var i2 = new XQueryNumber(2);
         // var i3 = new XQueryNumber(3);
-        var i4 = new XQueryNumber(4, baseFactory);
-        var i5 = new XQueryNumber(5, baseFactory);
+        var i4 = new XQueryNumber(4, valueFactory);
+        var i5 = new XQueryNumber(5, valueFactory);
         assertResult("(1, 2, 3, 4, 5)[. gt 3]", List.of(i4, i5));
     }
 
     @Test
     public void booleanToString() {
-        assertResult("string(true())", new XQueryString("true", baseFactory));
-        assertResult("string(false())", new XQueryString("false", baseFactory));
+        assertResult("string(true())", new XQueryString("true", valueFactory));
+        assertResult("string(false())", new XQueryString("false", valueFactory));
     }
 
     @Test
     public void stringToString() {
-        assertResult("string('abc')", new XQueryString("abc", baseFactory));
+        assertResult("string('abc')", new XQueryString("abc", valueFactory));
     }
 
     @Test
     public void numberToString() {
-        assertResult("string(1.2)", new XQueryString("1.2", baseFactory));
+        assertResult("string(1.2)", new XQueryString("1.2", valueFactory));
     }
 
     @Test
     public void itemGetter() {
-        assertResult("(1, 2, 3)[2]", new XQueryNumber(2, baseFactory));
+        assertResult("(1, 2, 3)[2]", new XQueryNumber(2, valueFactory));
     }
 
     @Test
     public void itemGetterIndices() {
         assertResult("(1, 2, 3, 4, 5, 6)[()]", List.of());
-        assertResult("(1, 2, 3, 4, 5, 6)[3 to 5]", List.of(new XQueryNumber(3, baseFactory),
-                new XQueryNumber(4, baseFactory),
-                new XQueryNumber(5, baseFactory)));
+        assertResult("(1, 2, 3, 4, 5, 6)[3 to 5]", List.of(new XQueryNumber(3, valueFactory),
+                new XQueryNumber(4, valueFactory),
+                new XQueryNumber(5, valueFactory)));
     }
 
     @Test
     public void positionFunction() {
-        assertResult("(1, 2, 3)[position() eq 2][1]", new XQueryNumber(2, baseFactory));
-        assertResult("(1, 2, 3)[position() eq 2]", List.of(new XQueryNumber(2, baseFactory)));
+        assertResult("(1, 2, 3)[position() eq 2][1]", new XQueryNumber(2, valueFactory));
+        assertResult("(1, 2, 3)[position() eq 2]", List.of(new XQueryNumber(2, valueFactory)));
     }
 
     @Test
     public void lastFunction() {
-        assertResult("(1, 2, 3)[last()]", new XQueryNumber(3, baseFactory));
+        assertResult("(1, 2, 3)[last()]", new XQueryNumber(3, valueFactory));
     }
 
     @Test
     public void arrowExpression() {
-        assertResult("'a' => string-length()", new XQueryNumber(1, baseFactory));
-        assertResult("'a' => string-length() => string()", new XQueryString("1", baseFactory));
+        assertResult("'a' => string-length()", new XQueryNumber(1, valueFactory));
+        assertResult("'a' => string-length() => string()", new XQueryString("1", valueFactory));
     }
 
     @Test
     public void quantifiedExpression() {
-        assertResult("some $v in (1, 2, 3, 4) satisfies $v eq 3", baseFactory.bool(true));
-        assertResult("some $v in (1, 2, 3, 4) satisfies $v eq -1", baseFactory.bool(false));
-        assertResult("every $v in (1, 2, 3, 4) satisfies $v gt 0", baseFactory.bool(true));
-        assertResult("every $v in (1, 2, 3, 4) satisfies $v lt 4", baseFactory.bool(false));
+        assertResult("some $v in (1, 2, 3, 4) satisfies $v eq 3", valueFactory.bool(true));
+        assertResult("some $v in (1, 2, 3, 4) satisfies $v eq -1", valueFactory.bool(false));
+        assertResult("every $v in (1, 2, 3, 4) satisfies $v gt 0", valueFactory.bool(true));
+        assertResult("every $v in (1, 2, 3, 4) satisfies $v lt 4", valueFactory.bool(false));
     }
 
 
@@ -290,7 +290,7 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
                         case 5 return false()
                         case 4 return true()
                         default return false()
-                """, baseFactory.bool(true));
+                """, valueFactory.bool(true));
         assertResult("""
                     switch (0)
                         case 3 return false()
@@ -298,7 +298,7 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
                         case 5 return false()
                         case 4 return false()
                         default return true()
-                """, baseFactory.bool(true));
+                """, valueFactory.bool(true));
     }
 
     @Test
@@ -310,7 +310,7 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
                         case 5 return false()
                         case 4 case 0 return true()
                         default return false()
-                """, baseFactory.bool(true));
+                """, valueFactory.bool(true));
         assertResult("""
                     switch (0)
                         case 3 return false()
@@ -318,29 +318,29 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
                         case 5 return false()
                         case 4 case 0 return true()
                         default return false()
-                """, baseFactory.bool(true));
+                """, valueFactory.bool(true));
     }
 
     @Test
     public void arithmeticPrecedence() {
         assertResult("""
                     2 + 3 * -4
-                """, baseFactory.number(-10));
+                """, valueFactory.number(-10));
     }
 
     @Test
     public void otherwiseExpression() {
-        final List<XQueryValue> $123 = List.of(new XQueryNumber(1, baseFactory), new XQueryNumber(2, baseFactory),
-                new XQueryNumber(3, baseFactory));
+        final List<XQueryValue> $123 = List.of(new XQueryNumber(1, valueFactory), new XQueryNumber(2, valueFactory),
+                new XQueryNumber(3, valueFactory));
         assertResult("""
                     () otherwise 1
-                """, new XQueryNumber(1, baseFactory));
+                """, new XQueryNumber(1, valueFactory));
         assertResult("""
                     1 otherwise 2
-                """, new XQueryNumber(1, baseFactory));
+                """, new XQueryNumber(1, valueFactory));
         assertResult("""
                     "napis" otherwise 2
-                """, new XQueryString("napis", baseFactory));
+                """, new XQueryString("napis", valueFactory));
         assertResult("""
                     () otherwise () otherwise (1, 2, 3)
                 """, $123);

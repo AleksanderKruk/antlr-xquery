@@ -31,8 +31,8 @@ public class IfExpressionEvaluationTests extends EvaluationTestsBase {
 
     @Test
     public void not() {
-        assertResult("not(true())", baseFactory.bool(false));
-        assertResult("not(false())", baseFactory.bool(true));
+        assertResult("not(true())", valueFactory.bool(false));
+        assertResult("not(false())", valueFactory.bool(true));
     }
 
 }

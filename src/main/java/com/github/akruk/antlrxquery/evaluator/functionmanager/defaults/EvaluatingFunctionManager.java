@@ -240,8 +240,8 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         registerFunction("fn", "string-to-codepoints", processingStrings::stringToCodepoints,
             List.of("value"), Map.of());
 
-        // registerFunction("fn", "codepoint-equal", processingStrings::codepointEqual,
-        //     List.of("value1", "value2"), Map.of());
+        registerFunction("fn", "codepoint-equal", processingStrings::codepointEqual,
+            List.of("value1", "value2"), Map.of());
 
         // registerFunction("fn", "collation", processingStrings::collation,
         //     List.of("options"), Map.of());

@@ -177,9 +177,9 @@ public class LiteralsEvaluationTests extends EvaluationTestsBase {
         String xquery = "(1, 2, 3)";
         var value = XQuery.evaluate(null, xquery, null);
         final List<XQueryValue> expected = List.of(
-                baseFactory.number(1),
-                baseFactory.number(2),
-                baseFactory.number(3));
+                valueFactory.number(1),
+                valueFactory.number(2),
+                valueFactory.number(3));
         assertNotNull(value);
         assertNotNull(value.sequence());
         var sequence = value.sequence();
@@ -192,12 +192,12 @@ public class LiteralsEvaluationTests extends EvaluationTestsBase {
 
     @Test
     public void trueConstant() {
-        assertResult("true()", baseFactory.bool(true));
+        assertResult("true()", valueFactory.bool(true));
     }
 
     @Test
     public void falseConstant() {
-        assertResult("false()", baseFactory.bool(false));
+        assertResult("false()", valueFactory.bool(false));
     }
 
 

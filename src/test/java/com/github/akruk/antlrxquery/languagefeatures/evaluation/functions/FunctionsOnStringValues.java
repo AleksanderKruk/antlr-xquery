@@ -10,8 +10,8 @@ import com.github.akruk.antlrxquery.values.*;
 public class FunctionsOnStringValues extends EvaluationTestsBase {
     @Test
     public void charFromInteger() {
-        assertResult("fn:char(65)", new XQueryString("A", baseFactory));
-        assertResult("fn:char(0x1F600)", new XQueryString("\uD83D\uDE00", baseFactory)); // grinning face
+        assertResult("fn:char(65)", new XQueryString("A", valueFactory));
+        assertResult("fn:char(0x1F600)", new XQueryString("\uD83D\uDE00", valueFactory)); // grinning face
     }
 
     @Test
@@ -26,9 +26,9 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
 
     @Test
     public void charFromNamedEntity() {
-        assertResult("fn:char('amp')", new XQueryString("&", baseFactory));
-        assertResult("fn:char('quot')", new XQueryString("\"", baseFactory));
-        assertResult("fn:char('NotEqualTilde')", new XQueryString("\u2242\u0338", baseFactory));
+        assertResult("fn:char('amp')", new XQueryString("&", valueFactory));
+        assertResult("fn:char('quot')", new XQueryString("\"", valueFactory));
+        assertResult("fn:char('NotEqualTilde')", new XQueryString("\u2242\u0338", valueFactory));
     }
 
     @Test
@@ -38,9 +38,9 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
 
     @Test
     public void charFromEscape() {
-        assertResult("fn:char('\\n')", new XQueryString("\n", baseFactory));
-        assertResult("fn:char('\\t')", new XQueryString("\t", baseFactory));
-        assertResult("fn:char('\\r')", new XQueryString("\r", baseFactory));
+        assertResult("fn:char('\\n')", new XQueryString("\n", valueFactory));
+        assertResult("fn:char('\\t')", new XQueryString("\t", valueFactory));
+        assertResult("fn:char('\\r')", new XQueryString("\r", valueFactory));
     }
 
     @Test
@@ -62,13 +62,13 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
     @Test
     public void charactersFromString() {
         List<XQueryValue> expected = List.of(
-            baseFactory.string("T"),
-            baseFactory.string("h"),
-            baseFactory.string("é"),
-            baseFactory.string("r"),
-            baseFactory.string("è"),
-            baseFactory.string("s"),
-            baseFactory.string("e")
+            valueFactory.string("T"),
+            valueFactory.string("h"),
+            valueFactory.string("é"),
+            valueFactory.string("r"),
+            valueFactory.string("è"),
+            valueFactory.string("s"),
+            valueFactory.string("e")
         );
         assertResult("characters('Thérèse')",
             expected
@@ -89,9 +89,9 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
     @Test
     public void charactersWithContextItem() {
         List<XQueryValue> expected = List.of(
-            baseFactory.string("d"),
-            baseFactory.string("e"),
-            baseFactory.string("f")
+            valueFactory.string("d"),
+            valueFactory.string("e"),
+            valueFactory.string("f")
         );
         assertResult("('abc', 'def')[2] => characters()", expected);
     }
@@ -100,9 +100,9 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
     public void charactersSurrogatePair() {
         // "A𝄞B" where 𝄞 is U+1D11E
         List<XQueryValue> expected = List.of(
-            baseFactory.string("A"),
-            baseFactory.string("\uD834\uDD1E"),
-            baseFactory.string("B")
+            valueFactory.string("A"),
+            valueFactory.string("\uD834\uDD1E"),
+            valueFactory.string("B")
         );
         assertResult("characters('A\uD834\uDD1E' || 'B')", expected
         );
@@ -110,7 +110,7 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
 
     @Test
     public void charactersAutoConversion() {
-        assertResult("characters(123)", List.of(baseFactory.string("1"), baseFactory.string("2"), baseFactory.string("3")));
+        assertResult("characters(123)", List.of(valueFactory.string("1"), valueFactory.string("2"), valueFactory.string("3")));
     }
 
     @Test
@@ -121,8 +121,8 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
     @Test
     public void graphemes_combiningMarkFormsCluster() {
         List<XQueryValue> expected = List.of(
-            baseFactory.string("a\u0308"),
-            baseFactory.string("b")
+            valueFactory.string("a\u0308"),
+            valueFactory.string("b")
         );
         assertResult("graphemes('a' || fn:char(0x308) || 'b')", expected);
     }
@@ -140,7 +140,7 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
     @Test
     public void graphemes_crLfIsSingleGrapheme() {
         List<XQueryValue> expected = List.of(
-            baseFactory.string("\r\n")
+            valueFactory.string("\r\n")
         );
         assertResult("graphemes(fn:char(0xD) || fn:char(0xA))", expected);
     }
@@ -150,15 +150,15 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
         // 👶 (U+1F476), ZWJ, 🛑 (U+1F6D1)
         String cluster = "\uD83D\uDC76\u200D\uD83D\uDED1";
         assertResult("graphemes(fn:char(0x1F476) || fn:char(0x200D) || fn:char(0x1F6D1))",
-            List.of(baseFactory.string(cluster))
+            List.of(valueFactory.string(cluster))
         );
     }
 
     @Test
     public void graphemes_simpleDevanagari() {
         List<XQueryValue> expected = List.of(
-            baseFactory.string("क"),
-            baseFactory.string("त")
+            valueFactory.string("क"),
+            valueFactory.string("त")
         );
         assertResult("graphemes('कत')", expected);
     }
@@ -169,7 +169,7 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
         String cluster = "क\u093C\u200D\u094Dत";
         assertResult("graphemes('क' || fn:char(0x93C) || fn:char(0x200D) "
                    + "|| fn:char(0x94D) || 'त')",
-            List.of(baseFactory.string(cluster))
+            List.of(valueFactory.string(cluster))
         );
     }
 
@@ -187,25 +187,25 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
 
     @Test
     public void concat() {
-        assertResult("concat(('a', 'b', 'c'))", new XQueryString("abc", baseFactory));
+        assertResult("concat(('a', 'b', 'c'))", new XQueryString("abc", valueFactory));
     }
 
     @Test
     public void concatVariadic() {
-        assertResult("concat('a', 'b', 'c')", new XQueryString("abc", baseFactory));
+        assertResult("concat('a', 'b', 'c')", new XQueryString("abc", valueFactory));
     }
 
     @Test
     public void stringJoin() {
-        assertResult("string-join(('a', 'b', 'c'))", new XQueryString("abc", baseFactory));
-        assertResult("string-join(('a', 'b', 'c'), '-')", new XQueryString("a-b-c", baseFactory));
+        assertResult("string-join(('a', 'b', 'c'))", new XQueryString("abc", valueFactory));
+        assertResult("string-join(('a', 'b', 'c'), '-')", new XQueryString("a-b-c", valueFactory));
     }
    @Test
     public void joinDigitsRange() {
         // string-join(1 to 9) => "123456789"
         assertResult(
             "string-join(1 to 9)",
-            baseFactory.string("123456789")
+            valueFactory.string("123456789")
         );
     }
 
@@ -214,7 +214,7 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
         // string-join(('Now', 'is', 'the', 'time', '...'), ' ') => "Now is the time ..."
         assertResult(
             "string-join(('Now', 'is', 'the', 'time', '...'), ' ')",
-            baseFactory.string("Now is the time ...")
+            valueFactory.string("Now is the time ...")
         );
     }
 
@@ -224,7 +224,7 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
         // => "Blow, blow, thou winter wind!"
         assertResult(
             "string-join(('Blow, ', 'blow, ', 'thou ', 'winter ', 'wind!'), '')",
-            baseFactory.string("Blow, blow, thou winter wind!")
+            valueFactory.string("Blow, blow, thou winter wind!")
         );
     }
 
@@ -233,7 +233,7 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
         // string-join((), 'separator') => ""
         assertResult(
             "string-join((), 'separator')",
-            baseFactory.string("")
+            valueFactory.string("")
         );
     }
 
@@ -242,22 +242,22 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
         // string-join(1 to 5, ', ') => "1, 2, 3, 4, 5"
         assertResult(
             "string-join(1 to 5, ', ')",
-            baseFactory.string("1, 2, 3, 4, 5")
+            valueFactory.string("1, 2, 3, 4, 5")
         );
     }
 
 
     @Test
     public void substring() {
-        assertResult("substring('abcde', 4)", new XQueryString("de", baseFactory));
-        assertResult("substring('abcde', 3, 2)", new XQueryString("cd", baseFactory));
+        assertResult("substring('abcde', 4)", new XQueryString("de", valueFactory));
+        assertResult("substring('abcde', 3, 2)", new XQueryString("cd", valueFactory));
     }
 
     @Test
     public void substringFromPositionToEnd() {
         assertResult(
             "substring(\"motor car\", 6)",
-            baseFactory.string(" car")
+            valueFactory.string(" car")
         );
     }
 
@@ -265,7 +265,7 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
     public void substringWithLength() {
         assertResult(
             "substring(\"metadata\", 4, 3)",
-            baseFactory.string("ada")
+            valueFactory.string("ada")
         );
     }
 
@@ -273,7 +273,7 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
     public void substringFractionalArguments() {
         assertResult(
             "substring(\"12345\", 1.5, 2.6)",
-            baseFactory.string("234")
+            valueFactory.string("234")
         );
     }
 
@@ -281,7 +281,7 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
     public void substringZeroStart() {
         assertResult(
             "substring(\"12345\", 0, 3)",
-            baseFactory.string("12")
+            valueFactory.string("12")
         );
     }
 
@@ -289,7 +289,7 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
     public void substringNegativeLengthYieldsEmpty() {
         assertResult(
             "substring(\"12345\", 5, -3)",
-            baseFactory.string("")
+            valueFactory.string("")
         );
     }
 
@@ -297,7 +297,7 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
     public void substringNegativeStart() {
         assertResult(
             "substring(\"12345\", -3, 5)",
-            baseFactory.string("1")
+            valueFactory.string("1")
         );
     }
 
@@ -305,7 +305,7 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
     public void substringEmptyValueReturnsEmptyString() {
         assertResult(
             "substring((), 2, 3)",
-            baseFactory.string("")
+            valueFactory.string("")
         );
     }
 
@@ -340,15 +340,15 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
 
     @Test
     public void stringLength() {
-        assertResult("string-length('abcde')", new XQueryNumber(5, baseFactory));
-        assertResult("string-length('')", new XQueryNumber(0, baseFactory));
+        assertResult("string-length('abcde')", new XQueryNumber(5, valueFactory));
+        assertResult("string-length('')", new XQueryNumber(0, valueFactory));
     }
 
     @Test
     public void basicStringLength() {
         assertResult(
             "string-length(\"Harp not on that string, madam; that is past.\")",
-            baseFactory.number(45)
+            valueFactory.number(45)
         );
     }
 
@@ -356,7 +356,7 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
     public void contextStringLengthSingleGrapheme() {
         assertResult(
             "\"ᾧ\" => string-length()",
-            baseFactory.number(1)
+            valueFactory.number(1)
         );
     }
 
@@ -372,33 +372,33 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
     public void stringLengthEmptySequence() {
         assertResult(
             "string-length(())",
-            baseFactory.number(0)
+            valueFactory.number(0)
         );
     }
 
 
     @Test
     public void normalization() {
-        assertResult("normalize-space(' \t\n\r a    b \t \t c   \t')", new XQueryString("a b c", baseFactory));
+        assertResult("normalize-space(' \t\n\r a    b \t \t c   \t')", new XQueryString("a b c", valueFactory));
     }
 
     @Test
     public void lowercase() {
-        assertResult("lower-case('AbCdE')", new XQueryString("abcde", baseFactory));
-        assertResult("lower-case(())", new XQueryString("", baseFactory));
+        assertResult("lower-case('AbCdE')", new XQueryString("abcde", valueFactory));
+        assertResult("lower-case(())", new XQueryString("", valueFactory));
     }
 
     @Test
     public void uppercase() {
-        assertResult("upper-case('AbCdE')", new XQueryString("ABCDE", baseFactory));
-        assertResult("upper-case(())", new XQueryString("", baseFactory));
+        assertResult("upper-case('AbCdE')", new XQueryString("ABCDE", valueFactory));
+        assertResult("upper-case(())", new XQueryString("", valueFactory));
     }
 
         @Test
     public void translateBarAbc() {
         assertResult(
             "translate(\"bar\", \"abc\", \"ABC\")",
-            baseFactory.string("BAr")
+            valueFactory.string("BAr")
         );
     }
 
@@ -406,7 +406,7 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
     public void translateStripDashes() {
         assertResult(
             "translate(\"--aaa--\", \"abc-\", \"ABC\")",
-            baseFactory.string("AAA")
+            valueFactory.string("AAA")
         );
     }
 
@@ -414,7 +414,7 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
     public void translateAbcdabc() {
         assertResult(
             "translate(\"abcdabc\", \"abc\", \"AB\")",
-            baseFactory.string("ABdAB")
+            valueFactory.string("ABdAB")
         );
     }
 

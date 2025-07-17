@@ -30,7 +30,7 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
 
     private final EnumItemtypeAlternativeMerger alternativeMerger;
     private final IItemtypeIntersectionMerger intersectionMerger;
-    private final XQueryTypeFactory typeFactory;
+    // private final XQueryTypeFactory typeFactory;
     private final Collection<XQueryItemType> itemTypes;
     private final IItemtypeUnionMerger unionMerger;
 
@@ -56,7 +56,7 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
         this.mapKeyType = key;
         this.mapValueType = mapValueType;
         this.elementNames = elementNames;
-        this.typeFactory = typeFactory;
+        // this.typeFactory = typeFactory;
         this.itemTypes = itemTypes;
         this.alternativeMerger = new EnumItemtypeAlternativeMerger(typeOrdinal, typeFactory);
         this.unionMerger = new EnumItemtypeUnionMerger(typeOrdinal, typeFactory);

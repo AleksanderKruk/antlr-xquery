@@ -6,8 +6,6 @@ import java.util.function.Predicate;
 import org.antlr.v4.runtime.Parser;
 
 import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
-import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.EvaluatingFunctionManager;
-import com.github.akruk.antlrxquery.values.XQueryFunction;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 

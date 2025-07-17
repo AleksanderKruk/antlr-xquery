@@ -127,11 +127,6 @@ public record XQueryMap(Map<XQueryValue, XQueryValue> value, XQueryValueFactory 
     }
 
     @Override
-    public XQueryValue not() {
-        return valueFactory.bool(!this.effectiveBooleanValue());
-    }
-
-    @Override
     public XQueryValue and(XQueryValue other) {
         return valueFactory.bool(this.effectiveBooleanValue() && other.effectiveBooleanValue());
     }

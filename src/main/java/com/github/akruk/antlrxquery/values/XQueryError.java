@@ -314,11 +314,6 @@ public class XQueryError implements XQueryValue {
     }
 
     @Override
-    public XQueryValue not() {
-        return null;
-    }
-
-    @Override
     public XQueryValue and(final XQueryValue other) {
         return null;
     }

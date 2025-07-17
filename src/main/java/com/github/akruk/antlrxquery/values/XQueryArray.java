@@ -124,11 +124,6 @@ public record XQueryArray(List<XQueryValue> value, XQueryValueFactory valueFacto
     }
 
     @Override
-    public XQueryValue not() {
-        return valueFactory.bool(!this.effectiveBooleanValue());
-    }
-
-    @Override
     public XQueryValue and(XQueryValue other) {
         return valueFactory.bool(this.effectiveBooleanValue() && other.effectiveBooleanValue());
     }

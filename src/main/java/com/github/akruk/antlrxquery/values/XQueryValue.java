@@ -26,7 +26,6 @@ public interface XQueryValue {
     public boolean isError();
     public List<XQueryValue> atomize();
     public XQueryValue empty();
-    public XQueryValue not();
     public XQueryValue and(XQueryValue other);
     public XQueryValue or(XQueryValue other);
     public XQueryValue add(XQueryValue other);

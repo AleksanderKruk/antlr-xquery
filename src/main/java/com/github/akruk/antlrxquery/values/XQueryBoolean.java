@@ -28,11 +28,6 @@ public class XQueryBoolean extends XQueryValueBase<Boolean> {
     }
 
     @Override
-    public XQueryValue not() {
-        return valueFactory.bool(!value);
-    }
-
-    @Override
     public XQueryValue and(final XQueryValue other) {
         if (!other.isBooleanValue()) return XQueryError.InvalidArgumentType;
         return valueFactory.bool(value && other.effectiveBooleanValue());

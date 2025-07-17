@@ -1,5 +1,6 @@
 package com.github.akruk.antlrxquery.evaluator.functionmanager.defaults;
 
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -95,10 +96,12 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         this.functionsOnSequencesOfNodes = new FunctionsOnSequencesOfNodes(valueFactory, parser);
         this.processingSequences = new ProcessingSequencesFunctions(valueFactory, parser);
         this.parsingNumbers = new ParsingNumbers(valueFactory, parser);
-        this.processingStrings = new ProcessingStrings(valueFactory, parser, Collations.DEFAULT_COLLATOR,
-                Map.of(Collations.CODEPOINT_URI, Collations.DEFAULT_COLLATOR), Locale.getDefault());
+        final Collator defaultCollator = Collations.DEFAULT_COLLATOR;
+        final Map<String, Collator> collators = Map.of(Collations.CODEPOINT_URI, defaultCollator);
+        this.processingStrings = new ProcessingStrings(valueFactory, parser, defaultCollator,
+                collators, Locale.getDefault());
         this.processingBooleans = new ProcessingBooleans(valueFactory, parser);
-        this.aggregateFunctions = new AggregateFunctions(valueFactory, parser);
+        this.aggregateFunctions = new AggregateFunctions(valueFactory, parser, collators);
 
         // Accessors
         final Map<String, ParseTree> defaultNodeArg = Map.of("node", CONTEXT_VALUE);
@@ -110,13 +113,6 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         final List<String> valueArg = List.of("value");
         registerFunction("fn", "string", accessors::string, valueArg, defaultValueArg);
         registerFunction("fn", "data", accessors::data, List.of("input"), defaultInputArg);
-
-        // aggregate functions
-        registerFunction("fn", "count", accessors::nodeName, List.of("node"), defaultNodeArg);
-        registerFunction("fn", "avg", accessors::nodeName, List.of("node"), defaultNodeArg);
-        registerFunction("fn", "name", accessors::nodeName, List.of("node"), defaultNodeArg);
-        registerFunction("fn", "name", accessors::nodeName, List.of("node"), defaultNodeArg);
-        registerFunction("fn", "name", accessors::nodeName, List.of("node"), defaultNodeArg);
 
         final Map<String, ParseTree> noDefaults = Map.of();
         final Map<String, ParseTree> collationDefault = Map.of("collation", DEFAULT_COLLATION);

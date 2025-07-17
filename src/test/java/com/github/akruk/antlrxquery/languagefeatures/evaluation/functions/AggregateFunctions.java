@@ -1,5 +1,6 @@
 package com.github.akruk.antlrxquery.languagefeatures.evaluation.functions;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -8,47 +9,45 @@ import com.github.akruk.antlrxquery.languagefeatures.evaluation.EvaluationTestsB
 import com.github.akruk.antlrxquery.values.XQueryValue;
 
 public class AggregateFunctions extends EvaluationTestsBase {
-    @Test
-    public void nodeName() throws Exception {
-        String grammarName = "Grammar";
-        String grammar = """
-            grammar Grammar;
-            x: 'x';
 
-                """;
-        String startRuleName = "x";
-        String textualTree = "x";
-        String xquery = "fn:node-name(/x)";
-        XQueryValue expected = valueFactory.string("x");
-        assertDynamicGrammarQuery(grammarName, grammar, startRuleName, textualTree, xquery, expected);
+    @Test
+    public void count() {
+        assertResult("fn:count(())", valueFactory.number(0));
+        assertResult("fn:count((1, 2, 3))", valueFactory.number(3));
     }
 
     @Test
-    public void nodeName_emptySequence() throws Exception {
-        String grammarName = "Grammar";
-        String grammar = """
-            grammar Grammar;
-            x: 'x';
-
-                """;
-        String startRuleName = "x";
-        String textualTree = "x";
-        String xquery = "fn:node-name(())";
-        XQueryValue expected = valueFactory.string("");
-        assertDynamicGrammarQuery(grammarName, grammar, startRuleName, textualTree, xquery, expected);
+    public void avg() {
+        assertResult("fn:avg(())", List.of());
+        assertResult("fn:avg((1, 2, 3))", valueFactory.number(BigDecimal.valueOf(2)));
     }
 
     @Test
-    public void data() {
-        assertResult("data(1)", List.of(valueFactory.number(1)));
-        assertResult("data('a')", List.of(valueFactory.string("a")));
+    public void max() {
+        assertResult("fn:max(())", List.of());
+        assertResult("fn:max((1, 2, 3))", valueFactory.number(BigDecimal.valueOf(3)));
     }
 
     @Test
-    public void string() {
-        assertResult("string(1)", valueFactory.string("1"));
-        assertResult("string('a')", valueFactory.string("a"));
+    public void min() {
+        assertResult("fn:min(())", List.of());
+        assertResult("fn:min((1, 2, 3))", valueFactory.number(BigDecimal.valueOf(1)));
     }
 
+    @Test
+    public void allEqual() {
+        assertResult("fn:all-equal(())", valueFactory.bool(true));
+        assertResult("fn:all-equal((1, 2, 3))", valueFactory.bool(false));
+        assertResult("fn:all-equal((1, 1, 1))", valueFactory.bool(true));
+        assertResult("fn:all-equal(('a', 'a'))", valueFactory.bool(true));
+    }
+
+    @Test
+    public void allDifferent() {
+        assertResult("fn:all-different(())", valueFactory.bool(true));
+        assertResult("fn:all-different((1, 2, 3))", valueFactory.bool(false));
+        assertResult("fn:all-different((1, 1, 1))", valueFactory.bool(true));
+        assertResult("fn:all-different(('a', 'a'))", valueFactory.bool(true));
+    }
 
 }

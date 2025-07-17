@@ -3,19 +3,14 @@ package com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.function
 import java.text.Collator;
 import java.text.RuleBasedCollator;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 import org.antlr.v4.runtime.Parser;
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.tree.ParseTree;
-
 import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
 import com.github.akruk.antlrxquery.evaluator.collations.Collations;
 import com.github.akruk.antlrxquery.values.XQueryError;
-import com.github.akruk.antlrxquery.values.XQueryMap;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 

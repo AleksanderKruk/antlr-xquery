@@ -26,6 +26,7 @@ import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
 import com.github.akruk.antlrxquery.evaluator.collations.Collations;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.IXQueryEvaluatingFunctionManager;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.Accessors;
+import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.AggregateFunctions;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.CardinalityFunctions;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.FunctionsBasedOnSubstringMatching;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.FunctionsOnNumericValues;
@@ -73,8 +74,7 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
     private final CardinalityFunctions cardinalityFunctions;
     private final NumericOperators numericOperators;
     private final Accessors accessors;
-
-    // Added fields
+    private final AggregateFunctions aggregateFunctions;
     private final OtherFunctionsOnNodes otherFuctionsOnNodes;
     private final FunctionsOnSequencesOfNodes functionsOnSequencesOfNodes;
     private final ParsingNumbers parsingNumbers;
@@ -106,6 +106,7 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
             Map.of(Collations.CODEPOINT_URI, Collations.DEFAULT_COLLATOR),
             Locale.getDefault());
         this.processingBooleans = new ProcessingBooleans(valueFactory, parser);
+        this.aggregateFunctions = new AggregateFunctions(valueFactory, parser);
 
         // Accessors
         final Map<String, ParseTree> defaultNodeArg = Map.of("node", CONTEXT_VALUE);
@@ -119,9 +120,17 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         registerFunction("fn", "data", accessors::data, List.of("input"), defaultInputArg);
 
 
+        // aggregate functions
+        registerFunction("fn", "count", accessors::nodeName, List.of("node"), defaultNodeArg);
+        registerFunction("fn", "avg", accessors::nodeName, List.of("node"), defaultNodeArg);
+        registerFunction("fn", "name", accessors::nodeName, List.of("node"), defaultNodeArg);
+        registerFunction("fn", "name", accessors::nodeName, List.of("node"), defaultNodeArg);
+        registerFunction("fn", "name", accessors::nodeName, List.of("node"), defaultNodeArg);
+
+
+
 
         // Other functions on nodes
-        // Rejestracja funkcji na węzłach
         registerFunction("fn", "root", otherFuctionsOnNodes::root, List.of("node"), defaultNodeArg);
         registerFunction("fn", "has-children", otherFuctionsOnNodes::hasChildren, List.of("node"), defaultNodeArg);
         registerFunction("fn", "siblings", otherFuctionsOnNodes::siblings, List.of("node"), defaultNodeArg);

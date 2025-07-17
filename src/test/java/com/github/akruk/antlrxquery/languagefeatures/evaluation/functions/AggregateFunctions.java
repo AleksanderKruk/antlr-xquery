@@ -45,9 +45,10 @@ public class AggregateFunctions extends EvaluationTestsBase {
     @Test
     public void allDifferent() {
         assertResult("fn:all-different(())", valueFactory.bool(true));
-        assertResult("fn:all-different((1, 2, 3))", valueFactory.bool(false));
-        assertResult("fn:all-different((1, 1, 1))", valueFactory.bool(true));
-        assertResult("fn:all-different(('a', 'a'))", valueFactory.bool(true));
+        assertResult("fn:all-different((1, 2, 3))", valueFactory.bool(true));
+        assertResult("fn:all-different((1, 1, 1))", valueFactory.bool(false));
+        assertResult("fn:all-different((1, 2, 2))", valueFactory.bool(false));
+        assertResult("fn:all-different(('a', 'a'))", valueFactory.bool(false));
     }
 
 }

@@ -4,7 +4,6 @@ import java.text.Collator;
 import java.util.Locale;
 
 public final class Collations {
-    /** URI standardowej Unicode‐codepoint collation wg XPath-Functions. */
     public static final String CODEPOINT_URI =
       "http://www.w3.org/2005/xpath-functions/collation/codepoint";
 
@@ -17,6 +16,5 @@ public final class Collations {
     }
 
     private Collations() {
-        // tylko statyczne pola
     }
 }

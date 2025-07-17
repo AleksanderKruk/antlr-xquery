@@ -3,6 +3,7 @@ package com.github.akruk.antlrxquery.evaluator.functionmanager.defaults;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -100,7 +101,10 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         this.functionsOnSequencesOfNodes = new FunctionsOnSequencesOfNodes(valueFactory, parser);
         this.processingSequences = new ProcessingSequencesFunctions(valueFactory, parser);
         this.parsingNumbers = new ParsingNumbers(valueFactory, parser);
-        this.processingStrings = new ProcessingStrings(valueFactory, parser);
+        this.processingStrings = new ProcessingStrings(valueFactory, parser,
+            Collations.DEFAULT_COLLATOR,
+            Map.of(Collations.CODEPOINT_URI, Collations.DEFAULT_COLLATOR),
+            Locale.getDefault());
         this.processingBooleans = new ProcessingBooleans(valueFactory, parser);
 
         // Accessors
@@ -227,6 +231,32 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
 
         registerFunction("fn", "void", processingSequences::voidFunction,
             List.of("input"), emptyInputArg);
+
+
+
+        registerFunction("fn", "codepoints-to-string", processingStrings::codepointsToString,
+            List.of("values"), Map.of());
+
+        registerFunction("fn", "string-to-codepoints", processingStrings::stringToCodepoints,
+            List.of("value"), Map.of());
+
+        // registerFunction("fn", "codepoint-equal", processingStrings::codepointEqual,
+        //     List.of("value1", "value2"), Map.of());
+
+        // registerFunction("fn", "collation", processingStrings::collation,
+        //     List.of("options"), Map.of());
+
+        registerFunction("fn", "collation-available", processingStrings::collationAvailable,
+            List.of("collation", "usage"),
+            Map.of("usage", EMPTY_SEQUENCE));
+
+        // registerFunction("fn", "collation-key", processingStrings::collationKey,
+        //     List.of("value", "collation"),
+        //     Map.of("collation", DEFAULT_COLLATION));
+
+        registerFunction("fn", "contains-token", processingStrings::containsToken,
+            List.of("value", "token", "collation"),
+            Map.of("collation", DEFAULT_COLLATION));
 
 
 

@@ -32,15 +32,16 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
     private static final ParseTree EMPTY_SEQUENCE = getTree("()", p->p.parenthesizedExpr());
     private static final ParseTree DEFAULT_ROUNDING_MODE = getTree("'half-to-ceiling'", parser->parser.literal());
     private static final ParseTree ZERO_LITERAL = getTree("0", parser->parser.literal());
-    private static final ParseTree NFC = XQuerySemanticFunctionManager.getTree("\"NFC\"", parser -> parser.literal());
-    private static final ParseTree STRING_AT_CONTEXT_VALUE = XQuerySemanticFunctionManager.getTree("fn:string(.)", (parser) -> parser.functionCall());
-    private static final ParseTree EMPTY_STRING = XQuerySemanticFunctionManager.getTree("\"\"", (parser)->parser.literal());
+    private static final ParseTree NFC = getTree("\"NFC\"", parser -> parser.literal());
+    private static final ParseTree STRING_AT_CONTEXT_VALUE = getTree("fn:string(.)", (parser) -> parser.functionCall());
+    private static final ParseTree EMPTY_STRING = getTree("\"\"", (parser)->parser.literal());
     private static final ParseTree EMPTY_MAP = getTree("map {}", parser -> parser.mapConstructor());
-    private static final ParseTree IDENTITY$1 = XQuerySemanticFunctionManager.getTree("fn:identity#1", p->p.namedFunctionRef());
-    private static final ParseTree BOOLEAN$1 = XQuerySemanticFunctionManager.getTree("fn:boolean#1", p->p.namedFunctionRef());
-    private static final ParseTree DATA$1 = XQuerySemanticFunctionManager.getTree("fn:data#1", p->p.namedFunctionRef());
-    private static final ParseTree TRUE$0 = XQuerySemanticFunctionManager.getTree("fn:true#0", p->p.namedFunctionRef());
-    private static final ParseTree FALSE$0 = XQuerySemanticFunctionManager.getTree("fn:false#0", p->p.namedFunctionRef());
+    private static final ParseTree IDENTITY$1 = getTree("fn:identity#1", p->p.namedFunctionRef());
+    private static final ParseTree BOOLEAN$1 = getTree("fn:boolean#1", p->p.namedFunctionRef());
+    private static final ParseTree DATA$1 = getTree("fn:data#1", p->p.namedFunctionRef());
+    private static final ParseTree TRUE$0 = getTree("fn:true#0", p->p.namedFunctionRef());
+    private static final ParseTree FALSE$0 = getTree("fn:false#0", p->p.namedFunctionRef());
+    private static final ParseTree DEFAULT_COMPARATOR = getTree("fn:deep-equal#2", parser -> parser.namedFunctionRef());
 
     public interface XQuerySemanticFunction {
         public AnalysisResult call(final XQueryTypeFactory typeFactory,
@@ -1124,7 +1125,6 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         final ArgumentSpecification required_arg_subsequence_anyItems = new ArgumentSpecification("subsequence", zeroOrMoreItems, null);
         final var comparator = typeFactory.zeroOrOne(typeFactory.itemFunction(typeFactory.boolean_(),
                 List.of(typeFactory.anyItem(), typeFactory.anyItem())));
-        final var DEFAULT_COMPARATOR = getTree("fn:deep-equal#2", parser -> parser.namedFunctionRef());
         final ArgumentSpecification optional_arg_compare_comparator = new ArgumentSpecification("compare", comparator, DEFAULT_COMPARATOR);
         register("fn", "starts-with-subsequence",
                 List.of(anyItemsRequiredInput, required_arg_subsequence_anyItems, optional_arg_compare_comparator),

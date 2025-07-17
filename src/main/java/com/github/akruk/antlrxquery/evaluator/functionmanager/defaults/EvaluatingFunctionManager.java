@@ -29,6 +29,7 @@ import com.github.akruk.antlrxquery.evaluator.functionmanager.IXQueryEvaluatingF
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.Accessors;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.AggregateFunctions;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.CardinalityFunctions;
+import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.ComparisonFunctions;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.FunctionsBasedOnSubstringMatching;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.FunctionsOnNumericValues;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.FunctionsOnSequencesOfNodes;
@@ -58,6 +59,16 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
     // getTree("fn:string(.)", (parser) -> parser.functionCall());
     private static final ParseTree EMPTY_STRING = getTree("\"\"", (parser) -> parser.literal());
 
+    private static final ParseTree STRING_AT_CONTEXT_VALUE = getTree("fn:string(.)", (parser) -> parser.functionCall());
+    private static final ParseTree EMPTY_MAP = getTree("map {}", parser -> parser.mapConstructor());
+    private static final ParseTree IDENTITY$1 = getTree("fn:identity#1", p->p.namedFunctionRef());
+    private static final ParseTree BOOLEAN$1 = getTree("fn:boolean#1", p->p.namedFunctionRef());
+    private static final ParseTree DATA$1 = getTree("fn:data#1", p->p.namedFunctionRef());
+    private static final ParseTree TRUE$0 = getTree("fn:true#0", p->p.namedFunctionRef());
+    private static final ParseTree FALSE$0 = getTree("fn:false#0", p->p.namedFunctionRef());
+    private static final ParseTree DEEP_EQUAL$2 = getTree("fn:deep-equal#2", parser -> parser.namedFunctionRef());
+
+
     record FunctionEntry(XQueryFunction function, long minArity, long maxArity, List<String> argNames,
             Map<String, ParseTree> defaultArguments, String variadicArg) {
     }
@@ -79,6 +90,7 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
     private final ProcessingStrings processingStrings;
     private final ProcessingBooleans processingBooleans;
     private final ProcessingSequencesFunctions processingSequences;
+    private final ComparisonFunctions comparisonFunctions;
 
     public EvaluatingFunctionManager(final XQueryEvaluatorVisitor evaluator, final Parser parser,
             final XQueryValueFactory valueFactory, final INodeGetter nodeGetter) {
@@ -98,10 +110,11 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         this.parsingNumbers = new ParsingNumbers(valueFactory, parser);
         final Collator defaultCollator = Collations.DEFAULT_COLLATOR;
         final Map<String, Collator> collators = Map.of(Collations.CODEPOINT_URI, defaultCollator);
-        this.processingStrings = new ProcessingStrings(valueFactory, parser, defaultCollator,
-                collators, Locale.getDefault());
+        this.processingStrings = new ProcessingStrings(valueFactory, parser, defaultCollator, collators,
+                Locale.getDefault());
         this.processingBooleans = new ProcessingBooleans(valueFactory, parser);
         this.aggregateFunctions = new AggregateFunctions(valueFactory, parser, collators);
+        this.comparisonFunctions = new ComparisonFunctions(valueFactory, parser, collators);
 
         // Accessors
         final Map<String, ParseTree> defaultNodeArg = Map.of("node", CONTEXT_VALUE);
@@ -363,6 +376,38 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         registerFunction("op", "numeric-greater-than-or-equal", numericOperators::numericGreaterThanOrEqual,
                 List.of("arg1", "arg2"), Map.of());
 
+
+
+        final Map<String, ParseTree> defaultCollation = Map.of("collation", DEFAULT_COLLATION);
+        final Map<String, ParseTree> defaultOptions = Map.of("options", EMPTY_MAP);
+        final Map<String, ParseTree> defaultCompareFun = Map.of("compare", DEEP_EQUAL$2);
+
+        registerFunction("fn", "atomic-equal", comparisonFunctions::atomicEqual, List.of("value1", "value2"),
+                noDefaults);
+
+        registerFunction("fn", "deep-equal", comparisonFunctions::deepEqual, List.of("input1", "input2", "options"),
+                defaultOptions);
+
+        registerFunction("fn", "compare", comparisonFunctions::compare, List.of("value1", "value2", "collation"),
+                defaultCollation);
+
+        registerFunction("fn", "distinct-values", comparisonFunctions::distinctValues, List.of("values", "collation"),
+                defaultCollation);
+
+        registerFunction("fn", "duplicate-values", comparisonFunctions::duplicateValues, List.of("values", "collation"),
+                defaultCollation);
+
+        registerFunction("fn", "index-of", comparisonFunctions::indexOf, List.of("input", "target", "collation"),
+                defaultCollation);
+
+        registerFunction("fn", "starts-with-subsequence", comparisonFunctions::startsWithSubsequence,
+                List.of("input", "subsequence", "compare"), defaultCompareFun);
+
+        registerFunction("fn", "ends-with-subsequence", comparisonFunctions::endsWithSubsequence,
+                List.of("input", "subsequence", "compare"), defaultCompareFun);
+
+        registerFunction("fn", "contains-subsequence", comparisonFunctions::containsSubsequence,
+                List.of("input", "subsequence", "compare"), defaultCompareFun);
     }
 
     /**

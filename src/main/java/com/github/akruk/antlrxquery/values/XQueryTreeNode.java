@@ -66,4 +66,9 @@ public class XQueryTreeNode extends XQueryValueBase<ParseTree> {
     public Map<XQueryValue, XQueryValue> mapEntries() {
         return null;
     }
+
+    @Override
+    public boolean isAtomic() {
+        return true;
+    }
 }

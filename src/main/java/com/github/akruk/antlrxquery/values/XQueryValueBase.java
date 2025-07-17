@@ -83,11 +83,6 @@ public abstract class XQueryValueBase<T> implements XQueryValue {
     }
 
     @Override
-    public boolean isAtomic() {
-        return sequence() == null;
-    }
-
-    @Override
     public boolean isNode() {
         return node() != null;
     }

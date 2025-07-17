@@ -81,4 +81,8 @@ public class XQueryBoolean extends XQueryValueBase<Boolean> {
         return null;
     }
 
+    @Override
+    public boolean isAtomic() {
+        return true;
+    }
 }

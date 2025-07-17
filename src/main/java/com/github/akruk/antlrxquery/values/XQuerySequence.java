@@ -169,4 +169,9 @@ public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
     public Map<XQueryValue, XQueryValue> mapEntries() {
         return null;
     }
+
+    @Override
+    public boolean isAtomic() {
+        return false;
+    }
 }

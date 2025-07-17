@@ -131,4 +131,9 @@ public class XQueryNumber extends XQueryValueBase<BigDecimal> {
     public Map<XQueryValue, XQueryValue> mapEntries() {
         return null;
     }
+
+    @Override
+    public boolean isAtomic() {
+        return true;
+    }
 }

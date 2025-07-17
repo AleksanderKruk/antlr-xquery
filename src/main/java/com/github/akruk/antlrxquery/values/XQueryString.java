@@ -105,4 +105,9 @@ public class XQueryString extends XQueryValueBase<String> {
     public Map<XQueryValue, XQueryValue> mapEntries() {
         return null;
     }
+
+    @Override
+    public boolean isAtomic() {
+        return true;
+    }
 }

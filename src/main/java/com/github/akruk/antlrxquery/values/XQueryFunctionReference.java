@@ -62,4 +62,12 @@ public class XQueryFunctionReference extends XQueryValueBase<XQueryFunction> {
     public Map<XQueryValue, XQueryValue> mapEntries() {
         return null;
     }
+
+    @Override
+    public boolean isAtomic() {
+        // TODO: verify
+        return true;
+    }
+
+
 }

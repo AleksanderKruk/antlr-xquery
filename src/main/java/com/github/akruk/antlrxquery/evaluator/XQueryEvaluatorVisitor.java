@@ -22,9 +22,8 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.charescaper.XQueryCharEscaper;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.*;
 import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.XQueryDynamicContextManager;
-import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.baseimplementation.XQueryBaseDynamicContextManager;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.*;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.XQueryEvaluatingFunctionManager;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.ResolvedName;
@@ -70,7 +69,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         this.parser = parser;
         this.valueFactory = valueFactory;
         this.functionManager = new XQueryEvaluatingFunctionManager(this, parser, valueFactory, nodeGetter);
-        this.contextManager = new XQueryBaseDynamicContextManager();
+        this.contextManager = new XQueryDynamicContextManager();
         this.concat = functionManager.getFunctionReference("fn", "concat", 2).functionValue();
         contextManager.enterContext();
     }

@@ -8,7 +8,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 
 import com.github.akruk.antlrxquery.AntlrXqueryLexer;
 import com.github.akruk.antlrxquery.AntlrXqueryParser;
-import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.baseimplementation.XQueryBaseSemanticContextManager;
+import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.XQuerySemanticContextManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQuerySemanticFunctionManager;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
@@ -32,7 +32,7 @@ public class SemanticTestsBase {
         final XQuerySemanticFunctionManager caller = new XQuerySemanticFunctionManager(typeFactory);
         final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
                 xqueryParser,
-                new XQueryBaseSemanticContextManager(),
+                new XQuerySemanticContextManager(),
                 typeFactory,
                 new XQueryMemoizedValueFactory(),
                 caller);

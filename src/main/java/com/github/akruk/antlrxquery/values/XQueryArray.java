@@ -65,7 +65,11 @@ public record XQueryArray(List<XQueryValue> value, XQueryValueFactory valueFacto
 
     @Override
     public XQueryFunction functionValue() {
-        return null;
+        return (_, args) -> {
+            if (!args.get(0).isNumericValue())
+                return XQueryError.InvalidArgumentType;
+            return value.get(args.get(0).numericValue().intValue());
+        };
     }
 
     @Override

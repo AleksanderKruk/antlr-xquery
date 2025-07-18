@@ -11,6 +11,7 @@ import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 public record XQueryMap(Map<XQueryValue, XQueryValue> value, XQueryValueFactory valueFactory)
         implements XQueryValue
 {
+
     @Override
     public XQueryValue valueEqual(XQueryValue other) {
         if (!(other instanceof XQueryMap otherMap)) {
@@ -68,7 +69,9 @@ public record XQueryMap(Map<XQueryValue, XQueryValue> value, XQueryValueFactory 
 
     @Override
     public XQueryFunction functionValue() {
-        return null;
+        return (_, positionalArguments) -> {
+            return value.get(positionalArguments.get(0));
+        };
     }
 
     @Override

@@ -790,28 +790,16 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         return saved;
     }
 
+
     @Override
-    public XQuerySequenceType visitPostfixExpr(final PostfixExprContext ctx)
-    {
-        if (ctx.postfix().isEmpty()) {
-            return ctx.primaryExpr().accept(this);
-        }
-
-        final var savedArgs = saveVisitedArguments();
+    public XQuerySequenceType visitFilterExpr(FilterExprContext ctx) {
+        final XQuerySequenceType expr = ctx.postfixExpr().accept(this);
         final var savedContext = saveContext();
-        context.setType(savedContext.getType());
-        context.setPositionType(typeFactory.number());
-        context.setSizeType(typeFactory.number());
-        var value = ctx.primaryExpr().accept(this);
-        for (final var postfix : ctx.postfix()) {
-            context.setType(value);
-            value = postfix.accept(this);
-        }
-        visitedPositionalArguments = savedArgs;
+        context.setType(expr);
+        var filtered = ctx.predicate().accept(this);
         context = savedContext;
-        return value;
+        return filtered;
     }
-
     @Override
     public XQuerySequenceType visitPredicate(final PredicateContext ctx)
     {
@@ -825,14 +813,14 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             return typeFactory.emptySequence();
         if (predicateExpression.isSubtypeOf(typeFactory.zeroOrOne(typeFactory.itemNumber()))) {
             final var item = contextType.getItemType();
-            final var decucedType = typeFactory.zeroOrOne(item);
-            return decucedType;
+            final var deducedType = typeFactory.zeroOrOne(item);
+            return deducedType;
         }
         if (predicateExpression.isSubtypeOf(typeFactory.zeroOrMore(typeFactory.itemNumber()))) {
             final var item = contextType.getItemType();
-            final var decucedType = typeFactory.zeroOrMore(item);
-            context.setType(decucedType);
-            return decucedType;
+            final var deducedType = typeFactory.zeroOrMore(item);
+            context.setType(deducedType);
+            return deducedType;
         }
         if (!predicateExpression.hasEffectiveBooleanValue()) {
             final var msg = String.format(
@@ -844,11 +832,31 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         return contextType.addOptionality();
     }
 
-    // private XQueryVisitingSemanticContext saveContext() {
-    // var saved = context;
-    // context = new XQueryVisitingSemanticContext();
-    // return saved;
-    // }
+    @Override
+    public XQuerySequenceType visitDynamicFunctionCall(DynamicFunctionCallContext ctx) {
+        final var savedArgs = saveVisitedArguments();
+        final var savedContext = saveContext();
+        context.setType(savedContext.getType());
+        context.setPositionType(typeFactory.number());
+        context.setSizeType(typeFactory.number());
+        final XQuerySequenceType value = ctx.postfixExpr().accept(this);
+        boolean isCallable = value.isSubtypeOf(typeFactory.anyFunction());
+        if (!isCallable) {
+            addError(ctx.postfixExpr(),
+                "Expected function in dynamic function call expression, received: " + value);
+        }
+        ctx.positionalArgumentList().accept(this);
+        visitedPositionalArguments = savedArgs;
+
+
+        context = savedContext;
+
+        if (isCallable)
+            return value.getReturnedType();
+        else
+            return typeFactory.zeroOrMore(typeFactory.itemAnyItem());
+    }
+
 
     @Override
     public XQuerySequenceType visitContextItemExpr(final ContextItemExprContext ctx)

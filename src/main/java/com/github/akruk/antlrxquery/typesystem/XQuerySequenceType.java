@@ -5,6 +5,7 @@ public interface XQuerySequenceType {
     XQueryItemType getMapKeyType();
     XQuerySequenceType getMapValueType();
     XQuerySequenceType getArrayMemberType();
+    XQuerySequenceType getReturnedType();
     XQuerySequenceType sequenceMerge(XQuerySequenceType other);
     XQuerySequenceType unionMerge(XQuerySequenceType other);
     XQuerySequenceType intersectionMerge(XQuerySequenceType other);

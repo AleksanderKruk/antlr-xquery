@@ -692,39 +692,83 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     // }
 
     @Override
-    public XQueryValue visitPostfixExpr(final PostfixExprContext ctx) {
-        if (ctx.postfix().isEmpty()) {
-            return ctx.primaryExpr().accept(this);
-        }
-
+    public XQueryValue visitFilterExpr(FilterExprContext ctx) {
         final var savedContext = saveContext();
         final var savedArgs = saveVisitedArguments();
-        var value = ctx.primaryExpr().accept(this);
-        int index = 1;
-        context.setSize(ctx.postfix().size());
-        for (final var postfix : ctx.postfix()) {
-            context.setValue(value);
-            context.setPosition(index);
-            value = postfix.accept(this);
-            index++;
-        }
+        final var value = ctx.postfixExpr().accept(this);
+        context.setValue(value);
+        final var filtered = ctx.predicate().accept(this);
         context = savedContext;
         visitedArgumentList = savedArgs;
-        return value;
+        return filtered;
     }
 
     @Override
-    public XQueryValue visitPostfix(final PostfixContext ctx) {
-        if (ctx.predicate() != null) {
-            return ctx.predicate().accept(this);
+    public XQueryValue visitPredicate(final PredicateContext ctx) {
+        final var contextValue = context.getValue();
+        final var sequence = contextValue.atomize();
+        final var filteredValues = new ArrayList<XQueryValue>(sequence.size());
+        final var savedContext = saveContext();
+        int index = 1;
+        context.setSize(sequence.size());
+        for (final var contextItem : sequence) {
+            context.setValue(contextItem);
+            context.setPosition(index);
+            final XQueryValue visitedExpression = ctx.expr().accept(this);
+            final XQueryValue items = handleAsItemGetter(sequence, visitedExpression);
+            if (items != null) {
+                context = savedContext;
+                return items;
+            }
+
+            if (visitedExpression.effectiveBooleanValue()) {
+                filteredValues.add(contextItem);
+            }
+            index++;
         }
+        context = savedContext;
+        return valueFactory.sequence(filteredValues);
+    }
+
+    @Override
+    public XQueryValue visitDynamicFunctionCall(DynamicFunctionCallContext ctx) {
         // TODO: verify logic
-        // TODO: add semantic check for no keyword args
         final var contextItem = context.getValue();
         final var function = contextItem.functionValue();
         final var value = function.call(context, visitedArgumentList);
         return value;
     }
+
+    // @Override
+    // public XQueryValue visitLookupExpr(LookupExprContext ctx) {
+    //     var map = ctx.postfixExpr().accept(this);
+    //     if (map.mapEntries() == null)
+    //         return XQueryError.Map;
+    //     return matchedNodes;
+    // }
+
+
+    // @Override
+    // public XQueryValue visitPostfixExpr(final PostfixExprContext ctx) {
+    //     if (ctx.) {
+    //         return ctx.primaryExpr().accept(this);
+    //     }
+
+    //     final var savedContext = saveContext();
+    //     final var savedArgs = saveVisitedArguments();
+    //     var value = ctx.primaryExpr().accept(this);
+    //     int index = 1;
+    //     context.setSize(ctx.postfix().size());
+    //     for (final var postfix : ctx.postfix()) {
+    //         context.setValue(value);
+    //         context.setPosition(index);
+    //         value = postfix.accept(this);
+    //         index++;
+    //     }
+    //     context = savedContext;
+    //     visitedArgumentList = savedArgs;
+    //     return value;
+    // }
 
     XQueryValue handleAsItemGetter(final List<XQueryValue> sequence,
             final XQueryValue visitedExpression) {
@@ -756,32 +800,6 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return null;
     }
 
-    @Override
-    public XQueryValue visitPredicate(final PredicateContext ctx) {
-        final var contextValue = context.getValue();
-        final var sequence = contextValue.atomize();
-        final var filteredValues = new ArrayList<XQueryValue>(sequence.size());
-        final var savedContext = saveContext();
-        int index = 1;
-        context.setSize(sequence.size());
-        for (final var contextItem : sequence) {
-            context.setValue(contextItem);
-            context.setPosition(index);
-            final XQueryValue visitedExpression = ctx.expr().accept(this);
-            final XQueryValue items = handleAsItemGetter(sequence, visitedExpression);
-            if (items != null) {
-                context = savedContext;
-                return items;
-            }
-
-            if (visitedExpression.effectiveBooleanValue()) {
-                filteredValues.add(contextItem);
-            }
-            index++;
-        }
-        context = savedContext;
-        return valueFactory.sequence(filteredValues);
-    }
 
     @Override
     public XQueryValue visitContextItemExpr(final ContextItemExprContext ctx) {

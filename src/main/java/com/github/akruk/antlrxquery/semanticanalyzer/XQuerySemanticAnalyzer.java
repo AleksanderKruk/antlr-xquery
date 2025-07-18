@@ -423,9 +423,6 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     {
         final String variableName = ctx.varName().getText();
         final XQuerySequenceType variableType = contextManager.getVariable(variableName);
-        if (variableType == null) {
-            visitedPlaceholder = variableName;
-        }
         return variableType;
     }
 
@@ -1221,23 +1218,6 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             i++;
         }
         return boolean_;
-    }
-
-    private String visitedPlaceholder = null;
-
-    public void requireSubtypeOrRestraint(
-        final XQuerySequenceType type,
-        final XQuerySequenceType requiredType,
-        final String message,
-        final ParserRuleContext ctx)
-    {
-        if (!type.isSubtypeOf(requiredType)) {
-            if (visitedPlaceholder != null)
-                contextManager.restrainVariable(visitedPlaceholder, requiredType);
-            else
-                addError(ctx, message);
-        }
-
     }
 
     @Override

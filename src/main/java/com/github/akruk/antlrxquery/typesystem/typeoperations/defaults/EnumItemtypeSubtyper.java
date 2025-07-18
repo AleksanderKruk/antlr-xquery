@@ -10,14 +10,12 @@ import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeAnyItem;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeArray;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeEnum;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeFunction;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeMap;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeRecord;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumSequenceType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryOccurence;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
@@ -282,7 +280,7 @@ public class EnumItemtypeSubtyper
                 final List<XQuerySequenceType> aArgs = a.getArgumentTypes();
                 final List<XQuerySequenceType> bArgs = b.getArgumentTypes();
                 final int aArgCount = aArgs.size();
-                // TODO: verify arity constraint
+
                 if (aArgCount > bArgs.size())
                     return false;
                 for (int i = 0; i < aArgCount; i++) {

@@ -19,6 +19,8 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
     private final int occurence_;
     private final XQueryTypeFactory typeFactory;
     private final String occurenceSuffix;
+    private final BiPredicate<XQueryEnumSequenceType, XQueryEnumSequenceType>[] isSubtypeOf_;
+
     private Function<XQuerySequenceType, XQuerySequenceType> lookup;
 
     public XQueryItemType getItemType() {
@@ -38,6 +40,7 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         this.factoryByOccurence[ONE_OR_MORE] = i -> typeFactory.oneOrMore((XQueryItemType)i);
         this.occurenceSuffix = occurence.occurenceSuffix();
         this.requiresParentheses = requiresParentheses();
+        this.isSubtypeOf_ = XQueryEnumSequenceType.isSubtypeOf[occurence_];
         // this.lookup = lookup_();
     }
 
@@ -101,12 +104,11 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
 
     @Override
     public boolean isSubtypeOf(final XQuerySequenceType obj) {
-        if (!(obj instanceof XQueryEnumSequenceType))
+        if (!(obj instanceof XQueryEnumSequenceType other))
             return false;
-        final XQueryEnumSequenceType other = (XQueryEnumSequenceType) obj;
         final XQueryOccurence otherOccurence = other.getOccurence();
         final BiPredicate<XQueryEnumSequenceType, XQueryEnumSequenceType> predicate =
-            isSubtypeOf[this.occurence.ordinal()][otherOccurence.ordinal()];
+            isSubtypeOf_[otherOccurence.ordinal()];
         return predicate.test(this, other);
     }
     public XQueryOccurence getOccurence() {
@@ -475,7 +477,7 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         final var cast = (XQueryEnumSequenceType) other;
         if (isZero() || other.isZero())
             return true;
-        return isValueComparableWith[occurence.ordinal()][cast.getOccurence().ordinal()] && itemType.isValueComparableWith(other.getItemType());
+        return isValueComparableWith[occurence_][cast.getOccurence().ordinal()] && itemType.isValueComparableWith(other.getItemType());
     }
 
 
@@ -489,7 +491,7 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
 
     @Override
     public XQuerySequenceType mapping(final XQuerySequenceType mappingExpressionType) {
-        return (XQuerySequenceType) factoryByOccurence[occurence.ordinal()].apply(mappingExpressionType.getItemType());
+        return (XQuerySequenceType) factoryByOccurence[occurence_].apply(mappingExpressionType.getItemType());
     }
 
     @Override

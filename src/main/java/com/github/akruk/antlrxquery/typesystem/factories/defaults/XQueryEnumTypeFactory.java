@@ -45,10 +45,6 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
     private final XQuerySequenceType EMPTY_SEQUENCE = new XQueryEnumEmptySequenceType(this);
 
 
-    public XQueryEnumTypeFactory() {
-        namedTypes = Map.of();
-    }
-
 
     public XQueryEnumTypeFactory(final Map<String, XQueryItemType> predefinedNamedTypes) {
         namedTypes = predefinedNamedTypes;
@@ -226,7 +222,7 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
     @Override
     public XQuerySequenceType one(final XQueryItemType itemType) {
         return oneTypes.computeIfAbsent(itemType,
-                _ -> new XQueryEnumSequenceType(this, (XQueryEnumItemType) itemType, XQueryOccurence.ONE));
+                _ -> new XQueryEnumSequenceType(this, itemType, XQueryOccurence.ONE));
     }
 
     @Override

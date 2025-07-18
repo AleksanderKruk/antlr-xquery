@@ -8,12 +8,11 @@ import java.util.function.Supplier;
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 
-public class XQueryEnumItemTypeReference extends XQueryEnumItemType {
+public class XQueryEnumItemTypeReference implements XQueryItemType {
     private final Supplier<XQueryItemType> referenceSupplier;
     private XQueryEnumItemType referencedTypeCast;
 
     public XQueryEnumItemTypeReference(Supplier<XQueryItemType> referenceSupplier) {
-        super(XQueryTypes.ANY_ITEM, List.of(), null, null, null, null, null, null, null);
         this.referenceSupplier = referenceSupplier;
     }
 
@@ -25,19 +24,14 @@ public class XQueryEnumItemTypeReference extends XQueryEnumItemType {
         return referencedTypeCast;
     }
 
-    @Override
     public XQueryTypes getType() {
-        IXQueryEnumItemType type = getReferencedType();
+        XQueryEnumItemType type = getReferencedType();
         return type.getType();
     }
 
     @Override
     public List<XQuerySequenceType> getArgumentTypes() {
         return getReferencedType().getArgumentTypes();
-    }
-    @Override
-    public XQuerySequenceType getArrayType() {
-        return getReferencedType().getArrayType();
     }
 
     @Override
@@ -111,5 +105,14 @@ public class XQueryEnumItemTypeReference extends XQueryEnumItemType {
         return getReferencedType().isValueComparableWith(other);
     }
 
+    public XQuerySequenceType lookup(XQuerySequenceType keySpecifierType) {
+        return getReferencedType().lookup(keySpecifierType);
+    }
+
+    @Override
+    public XQuerySequenceType getArrayMemberType() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getArrayMemberType'");
+    }
 
 }

@@ -905,7 +905,7 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         // ) as element(fn:analyze-string-result)
         register("fn", "analyze-string",
                 List.of(optionalStringRequiredValue, pattern, flags),
-                typeFactory.one(typeFactory.itemElement(Set.of("fn:analyze-string-result"))));
+                typeFactory.one(typeFactory.itemNamedType("fn:analyze-string-result")));
 
         // fn:true() as xs:boolean
         register("fn", "true", List.of(), typeFactory.boolean_());

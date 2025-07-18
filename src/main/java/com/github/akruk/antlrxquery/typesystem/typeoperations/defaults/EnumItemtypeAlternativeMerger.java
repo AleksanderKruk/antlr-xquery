@@ -420,8 +420,8 @@ public class EnumItemtypeAlternativeMerger
     {
         final var x_ = (XQueryEnumItemTypeArray) x;
         final var y_ = (XQueryEnumItemTypeArray) y;
-        final var xArrayType = x_.getArrayType();
-        final var yArrayType = y_.getArrayType();
+        final var xArrayType = x_.getArrayMemberType();
+        final var yArrayType = y_.getArrayMemberType();
         final var merged = xArrayType.sequenceMerge(yArrayType);
         return typeFactory.itemArray(merged);
     }

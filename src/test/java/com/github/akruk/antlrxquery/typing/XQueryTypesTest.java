@@ -9,6 +9,7 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryEnumTypeFactory;
 import static org.junit.Assert.assertEquals;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -17,7 +18,7 @@ import static org.junit.Assert.*;
 
 public class XQueryTypesTest {
 
-    final XQueryTypeFactory typeFactory = new XQueryEnumTypeFactory();
+    final XQueryTypeFactory typeFactory = new XQueryEnumTypeFactory(new HashMap<>());
     final XQuerySequenceType error = typeFactory.error();
     final XQuerySequenceType boolean_ = typeFactory.boolean_();
     final XQuerySequenceType string = typeFactory.string();

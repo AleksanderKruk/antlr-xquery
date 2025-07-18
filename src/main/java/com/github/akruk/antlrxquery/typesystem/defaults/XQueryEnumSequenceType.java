@@ -14,18 +14,18 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
     private static final int ZERO_OR_ONE = XQueryOccurence.ZERO_OR_ONE.ordinal();
     private static final int ONE = XQueryOccurence.ONE.ordinal();
     private static final int ZERO = XQueryOccurence.ZERO.ordinal();
-    private final XQueryEnumItemType itemType;
+    private final XQueryItemType itemType;
     private final XQueryOccurence occurence;
     private final int occurence_;
     private final XQueryTypeFactory typeFactory;
     private final String occurenceSuffix;
-    private final Function<XQuerySequenceType, XQuerySequenceType> lookup;
+    private Function<XQuerySequenceType, XQuerySequenceType> lookup;
 
-    public XQueryEnumItemType getItemType() {
+    public XQueryItemType getItemType() {
         return itemType;
     }
 
-    public XQueryEnumSequenceType(final XQueryTypeFactory typeFactory, final XQueryEnumItemType itemType, final XQueryOccurence occurence) {
+    public XQueryEnumSequenceType(final XQueryTypeFactory typeFactory, final XQueryItemType itemType, final XQueryOccurence occurence) {
         this.typeFactory = typeFactory;
         this.itemType = itemType;
         this.occurence = occurence;
@@ -38,7 +38,7 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         this.factoryByOccurence[ONE_OR_MORE] = i -> typeFactory.oneOrMore((XQueryItemType)i);
         this.occurenceSuffix = occurence.occurenceSuffix();
         this.requiresParentheses = requiresParentheses();
-        this.lookup = lookup_();
+        // this.lookup = lookup_();
     }
 
     private static boolean isNullableEquals(final Object one, final Object other) {
@@ -259,7 +259,7 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
     @Override
     public XQuerySequenceType unionMerge(final XQuerySequenceType other) {
         final var other_ = (XQueryEnumSequenceType) other;
-        final XQueryEnumItemType otherItemType = other_.getItemType();
+        final XQueryEnumItemType otherItemType = (XQueryEnumItemType) other_.getItemType();
         final XQueryOccurence mergedOccurence = unionOccurences[this.occurence.ordinal()][other_.getOccurence().ordinal()];
         final int occurence_ = mergedOccurence.ordinal();
         if (itemType == null) {
@@ -323,7 +323,7 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
     @Override
     public XQuerySequenceType intersectionMerge(final XQuerySequenceType other) {
         final var other_ = (XQueryEnumSequenceType) other;
-        final XQueryEnumItemType otherItemType = other_.getItemType();
+        final XQueryEnumItemType otherItemType = (XQueryEnumItemType) other_.getItemType();
         final XQueryOccurence mergedOccurence = intersectionOccurences[this.occurence.ordinal()][other_.getOccurence().ordinal()];
         final int occurence_ = mergedOccurence.ordinal();
         if (itemType == null) {
@@ -544,7 +544,7 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
 
     @Override
     public XQuerySequenceType getArrayMemberType() {
-        return itemType.getArrayType();
+        return itemType.getArrayMemberType();
     }
 
     @Override
@@ -554,10 +554,17 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
 
     @Override
     public XQuerySequenceType lookup(XQuerySequenceType keySpecifierType) {
+        if (lookup == null)
+            lookup = lookup_();
         return this.lookup.apply(keySpecifierType);
     }
 
     public Function<XQuerySequenceType, XQuerySequenceType> lookup_() {
+        if (occurence_ == ZERO)
+            return (_)->typeFactory.emptySequence();
+        if (itemType == null)
+            return (_)->typeFactory.error();
+
         if (itemType.itemtypeIsSubtypeOf(typeFactory.itemAnyArray())) {
             return (keySpecifierType) -> {
                 XQueryItemType lookedUpItem = itemType.lookup(keySpecifierType).getItemType();

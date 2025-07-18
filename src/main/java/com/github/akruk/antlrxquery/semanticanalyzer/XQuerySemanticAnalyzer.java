@@ -325,7 +325,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     @Override
     public XQuerySequenceType visitElementTest(final ElementTestContext ctx)
     {
-        final Set<String> elementNames = ctx.nameTestUnion().nameTest().stream().map(e -> e.toString())
+        final Set<String> elementNames = ctx.nameTestUnion().nameTest().stream().map(e -> e.getText())
             .collect(Collectors.toSet());
         return typeFactory.element(elementNames);
     }

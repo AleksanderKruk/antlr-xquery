@@ -1,4 +1,4 @@
-package com.github.akruk.antlrxquery.contextmanagement.dynamiccontext;
+package com.github.akruk.antlrxquery.evaluator.dynamiccontext;
 
 import java.util.HashMap;
 import java.util.Map;

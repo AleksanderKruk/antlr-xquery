@@ -1,5 +1,5 @@
 
-package com.github.akruk.antlrxquery.typesystem.typeoperations.defaults;
+package com.github.akruk.antlrxquery.typesystem.typeoperations;
 
 import java.util.HashSet;
 import java.util.Set;

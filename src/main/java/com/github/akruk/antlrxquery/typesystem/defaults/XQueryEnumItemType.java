@@ -8,10 +8,10 @@ import java.util.stream.IntStream;
 import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.defaults.EnumItemtypeAlternativeMerger;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.defaults.EnumItemtypeIntersectionMerger;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.defaults.EnumItemtypeSubtyper;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.defaults.EnumItemtypeUnionMerger;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.EnumItemtypeAlternativeMerger;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.EnumItemtypeIntersectionMerger;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.EnumItemtypeSubtyper;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.EnumItemtypeUnionMerger;
 
 public class XQueryEnumItemType implements XQueryItemType {
     private static final int ANY_ITEM = XQueryTypes.ANY_ITEM.ordinal();

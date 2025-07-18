@@ -1,4 +1,4 @@
-package com.github.akruk.antlrxquery.contextmanagement.semanticcontext;
+package com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext;
 
 import java.util.HashMap;
 import java.util.Map;

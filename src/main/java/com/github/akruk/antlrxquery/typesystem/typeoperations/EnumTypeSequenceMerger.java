@@ -1,3 +1,4 @@
+package com.github.akruk.antlrxquery.typesystem.typeoperations;
 // package com.github.akruk.antlrxquery.typesystem.typeoperations.defaults;
 
 // import java.util.function.Function;

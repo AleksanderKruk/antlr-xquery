@@ -1,5 +1,5 @@
 
-package com.github.akruk.antlrxquery.typesystem.typeoperations.defaults;
+package com.github.akruk.antlrxquery.typesystem.typeoperations;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -52,12 +52,12 @@ public class EnumItemtypeSubtyper
             return anyIsSubtype;
         };
 
-        final Predicate<XQueryItemType> allchoicesSubtyped = (y) -> {
-            final XQueryEnumItemType y_ = (XQueryEnumItemType) y;
-            final var items = y_.getItemTypes();
-            final boolean anyIsSubtype = items.stream().anyMatch(i-> x.itemtypeIsSubtypeOf(i));
-            return anyIsSubtype;
-        };
+        // final Predicate<XQueryItemType> allchoicesSubtyped = (y) -> {
+        //     final XQueryEnumItemType y_ = (XQueryEnumItemType) y;
+        //     final var items = y_.getItemTypes();
+        //     final boolean anyIsSubtype = items.stream().anyMatch(i-> x.itemtypeIsSubtypeOf(i));
+        //     return anyIsSubtype;
+        // };
         itemtypeIsSubtypeOf = new Predicate[XQueryTypes.values().length];
         switch (XQueryTypes.values()[typeOrdinal]) {
             case ERROR:

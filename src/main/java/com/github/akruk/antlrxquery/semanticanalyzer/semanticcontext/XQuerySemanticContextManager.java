@@ -1,4 +1,4 @@
-package com.github.akruk.antlrxquery.contextmanagement.semanticcontext;
+package com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -294,11 +294,11 @@ typeName: qname;
 
 
 postfixExpr
-    : primaryExpr # postfixPrimary
-    | postfixExpr predicate # filterExpr
-    | postfixExpr positionalArgumentList # dynamicFunctionCall
-    | postfixExpr lookup # lookupExpr
-    | postfixExpr LOOKUP expr RBRACKET # filterExprAMLookup
+    : primaryExpr                         # postfixPrimary
+    | postfixExpr predicate               # filterExpr
+    | postfixExpr positionalArgumentList  # dynamicFunctionCall
+    | postfixExpr lookup                  # lookupExpr
+    | postfixExpr LOOKUP expr RBRACKET    # filterExprAMLookup
     ;
 
 positionalArgumentList:	LPAREN positionalArguments? RPAREN;

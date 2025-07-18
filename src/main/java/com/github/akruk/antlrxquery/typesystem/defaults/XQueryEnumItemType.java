@@ -20,17 +20,29 @@ import com.github.akruk.antlrxquery.typesystem.typeoperations.defaults.IItemtype
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class XQueryEnumItemType implements IXQueryEnumItemType {
+    private static final int ANY_ITEM = XQueryTypes.ANY_ITEM.ordinal();
+    private static final int ANY_ARRAY = XQueryTypes.ANY_ARRAY.ordinal();
+    private static final int ARRAY = XQueryTypes.ARRAY.ordinal();
+    private static final int FUNCTION = XQueryTypes.FUNCTION.ordinal();
+    private static final int ANY_FUNCTION = XQueryTypes.ANY_FUNCTION.ordinal();
+    private static final int ANY_NODE = XQueryTypes.ANY_NODE.ordinal();
+    private static final int ELEMENT = XQueryTypes.ELEMENT.ordinal();
     private static final int STRING = XQueryTypes.STRING.ordinal();
     private static final int ENUM = XQueryTypes.ENUM.ordinal();
     private static final int BOOLEAN = XQueryTypes.BOOLEAN.ordinal();
     private static final int NUMBER = XQueryTypes.NUMBER.ordinal();
+    private static final int MAP = XQueryTypes.MAP.ordinal();
+    private static final int ANY_MAP = XQueryTypes.ANY_MAP.ordinal();
+    private static final int RECORD = XQueryTypes.RECORD.ordinal();
+    private static final int EXTENSIBLE_RECORD = XQueryTypes.EXTENSIBLE_RECORD.ordinal();
+    private static final int choice = XQueryTypes.CHOICE.ordinal();
     private final XQueryTypes type;
     private final int typeOrdinal;
 
 
     private final EnumItemtypeAlternativeMerger alternativeMerger;
     private final IItemtypeIntersectionMerger intersectionMerger;
-    // private final XQueryTypeFactory typeFactory;
+    private final XQueryTypeFactory typeFactory;
     private final Collection<XQueryItemType> itemTypes;
     private final IItemtypeUnionMerger unionMerger;
 
@@ -52,11 +64,12 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
         this.typeOrdinal = type.ordinal();
         this.argumentTypes = argumentTypes;
         this.returnedType = returnedType;
+        this.returnedType_ = getReturnedType_();
         this.arrayType = arrayType;
         this.mapKeyType = key;
         this.mapValueType = mapValueType;
         this.elementNames = elementNames;
-        // this.typeFactory = typeFactory;
+        this.typeFactory = typeFactory;
         this.itemTypes = itemTypes;
         this.alternativeMerger = new EnumItemtypeAlternativeMerger(typeOrdinal, typeFactory);
         this.unionMerger = new EnumItemtypeUnionMerger(typeOrdinal, typeFactory);
@@ -78,6 +91,7 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
     private final XQuerySequenceType mapValueType;
 
     private final Set<String> elementNames;
+    private final XQuerySequenceType returnedType_;
 
 
     @Override
@@ -95,6 +109,12 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
 
     @Override
     public XQuerySequenceType getReturnedType() {
+        return this.returnedType_;
+    }
+
+    private XQuerySequenceType getReturnedType_() {
+        if (returnedType == null)
+            return typeFactory.error();
         return returnedType;
     }
 
@@ -157,24 +177,10 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
                 itemtypeIsSubtypeOf[i][j] = i == j ? alwaysTrue : alwaysFalse;
             }
         }
-        final int anyItem = XQueryTypes.ANY_ITEM.ordinal();
+        final int anyItem = ANY_ITEM;
         for (int i = 0; i < typesCount; i++) {
             itemtypeIsSubtypeOf[i][anyItem] = alwaysTrue;
         }
-
-        final int element = XQueryTypes.ELEMENT.ordinal();
-        final int anyNode = XQueryTypes.ANY_NODE.ordinal();
-        final int anyFunction = XQueryTypes.ANY_FUNCTION.ordinal();
-        final int function = XQueryTypes.FUNCTION.ordinal();
-        final int array = XQueryTypes.ARRAY.ordinal();
-        final int map = XQueryTypes.MAP.ordinal();
-        final int record = XQueryTypes.RECORD.ordinal();
-        final int extensibleRecord = XQueryTypes.EXTENSIBLE_RECORD.ordinal();
-        final int anyMap = XQueryTypes.ANY_MAP.ordinal();
-        final int anyArray = XQueryTypes.ANY_ARRAY.ordinal();
-        final int enum_ = ENUM;
-        final int string = STRING;
-        final int choice = XQueryTypes.CHOICE.ordinal();
 
         final BiPredicate<XQueryItemType, XQueryItemType> choicesubtype = (x, y) -> {
             final XQueryEnumItemType y_ = (XQueryEnumItemType) y;
@@ -201,16 +207,16 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
         ;
 
 
-        itemtypeIsSubtypeOf[anyArray][anyMap] = alwaysTrue;
-        itemtypeIsSubtypeOf[anyArray][map] = (_, y) -> {
+        itemtypeIsSubtypeOf[ANY_ARRAY][ANY_MAP] = alwaysTrue;
+        itemtypeIsSubtypeOf[ANY_ARRAY][MAP] = (_, y) -> {
             final XQueryEnumItemTypeMap y_ = (XQueryEnumItemTypeMap) y;
             final var mapKeyType = (XQueryEnumItemType) y_.getMapKeyType();
             final boolean isNumber = mapKeyType.getType() == XQueryTypes.NUMBER;
             return isNumber;
         };
 
-        itemtypeIsSubtypeOf[anyArray][anyFunction] = alwaysTrue;
-        itemtypeIsSubtypeOf[anyArray][function] = (_, y) -> {
+        itemtypeIsSubtypeOf[ANY_ARRAY][ANY_FUNCTION] = alwaysTrue;
+        itemtypeIsSubtypeOf[ANY_ARRAY][FUNCTION] = (_, y) -> {
             final XQueryEnumItemTypeFunction y_ = (XQueryEnumItemTypeFunction) y;
             final var argumentTypes = y_.getArgumentTypes();
             if (argumentTypes.size() != 1)
@@ -222,25 +228,25 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
                     && onlyArgItem.getType() == XQueryTypes.NUMBER;
         };
 
-        itemtypeIsSubtypeOf[array][anyMap] = alwaysTrue;
-        itemtypeIsSubtypeOf[array][map] = (x, y) -> {
+        itemtypeIsSubtypeOf[ARRAY][ANY_MAP] = alwaysTrue;
+        itemtypeIsSubtypeOf[ARRAY][MAP] = (x, y) -> {
             final XQueryEnumItemType x_ = (XQueryEnumItemType) x;
             final XQueryEnumItemType y_ = (XQueryEnumItemType) y;
-            if (!itemtypeIsSubtypeOf[anyArray][map].test(x, y))
+            if (!itemtypeIsSubtypeOf[ANY_ARRAY][MAP].test(x, y))
                 return false;
             return x_.getArrayType().isSubtypeOf(y_.getMapValueType());
         };
 
-        itemtypeIsSubtypeOf[element][anyNode] = alwaysTrue;
-        itemtypeIsSubtypeOf[element][element] = (x, y) -> {
+        itemtypeIsSubtypeOf[ELEMENT][ANY_NODE] = alwaysTrue;
+        itemtypeIsSubtypeOf[ELEMENT][ELEMENT] = (x, y) -> {
             final XQueryEnumItemType x_ = (XQueryEnumItemType) x;
             final XQueryEnumItemType y_ = (XQueryEnumItemType) y;
             return y_.elementNames.containsAll(x_.elementNames);
         };
 
-        itemtypeIsSubtypeOf[function][anyFunction] = alwaysTrue;
+        itemtypeIsSubtypeOf[FUNCTION][ANY_FUNCTION] = alwaysTrue;
         final var canBeKey = booleanEnumArray(XQueryTypes.NUMBER, XQueryTypes.BOOLEAN, XQueryTypes.STRING, XQueryTypes.ENUM);
-        itemtypeIsSubtypeOf[function][anyMap] = (x, _) -> {
+        itemtypeIsSubtypeOf[FUNCTION][ANY_MAP] = (x, _) -> {
             final XQueryEnumItemTypeFunction x_ = (XQueryEnumItemTypeFunction) x;
             // function must have one argument
             if (x_.getArgumentTypes().size() != 1)
@@ -252,8 +258,8 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
                     && canBeKey[onlyArgItem.getType().ordinal()];
         };
 
-        itemtypeIsSubtypeOf[function][map] = (x, y) -> {
-            if (!itemtypeIsSubtypeOf[function][anyMap].test(x, y))
+        itemtypeIsSubtypeOf[FUNCTION][MAP] = (x, y) -> {
+            if (!itemtypeIsSubtypeOf[FUNCTION][ANY_MAP].test(x, y))
                 return false;
             final XQueryEnumItemTypeFunction x_ = (XQueryEnumItemTypeFunction) x;
             final XQueryEnumItemTypeMap y_ = (XQueryEnumItemTypeMap) y;
@@ -267,7 +273,7 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
                     && returnedCanBeValue;
         };
 
-        itemtypeIsSubtypeOf[function][anyArray] = (x, _) -> {
+        itemtypeIsSubtypeOf[FUNCTION][ANY_ARRAY] = (x, _) -> {
             final XQueryEnumItemTypeFunction x_ = (XQueryEnumItemTypeFunction) x;
             // function must have one argument
             if (x_.getArgumentTypes().size() != 1)
@@ -280,8 +286,8 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
                     && onlyArgItem.getType() == XQueryTypes.NUMBER;
         };
 
-        itemtypeIsSubtypeOf[function][array] = (x, y) -> {
-            if (!itemtypeIsSubtypeOf[function][anyArray].test(x, y))
+        itemtypeIsSubtypeOf[FUNCTION][ARRAY] = (x, y) -> {
+            if (!itemtypeIsSubtypeOf[FUNCTION][ANY_ARRAY].test(x, y))
                 return false;
             final XQueryEnumItemTypeFunction x_ = (XQueryEnumItemTypeFunction) x;
             final XQueryEnumItemTypeArray y_ = (XQueryEnumItemTypeArray) y;
@@ -290,7 +296,7 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
             return returnedType.isSubtypeOf(y_.getArrayType());
         };
 
-        itemtypeIsSubtypeOf[function][function] = (x, y) -> {
+        itemtypeIsSubtypeOf[FUNCTION][FUNCTION] = (x, y) -> {
             final XQueryEnumItemTypeFunction a = (XQueryEnumItemTypeFunction) x;
             final XQueryEnumItemTypeFunction b = (XQueryEnumItemTypeFunction) y;
             final List<XQuerySequenceType> aArgs = a.getArgumentTypes();
@@ -309,8 +315,8 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
         };
 
 
-        itemtypeIsSubtypeOf[array][anyFunction] = alwaysTrue;
-        itemtypeIsSubtypeOf[array][function] = (x, y) -> {
+        itemtypeIsSubtypeOf[ARRAY][ANY_FUNCTION] = alwaysTrue;
+        itemtypeIsSubtypeOf[ARRAY][FUNCTION] = (x, y) -> {
             final XQueryEnumItemType x_ = (XQueryEnumItemType) x;
             final XQueryEnumItemType y_ = (XQueryEnumItemType) y;
             if (y_.getArgumentTypes().size() != 1)
@@ -326,16 +332,16 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
 
         final XQueryEnumSequenceType anyItems_ = new XQueryEnumSequenceType(null, new XQueryEnumItemTypeAnyItem(null), XQueryOccurence.ZERO_OR_MORE) ;
         final XQueryItemType anyArray_ = new XQueryEnumItemTypeArray(anyItems_, null);
-        itemtypeIsSubtypeOf[anyArray][array] = (_, y) -> {
+        itemtypeIsSubtypeOf[ANY_ARRAY][ARRAY] = (_, y) -> {
             final XQueryEnumItemType y_ = (XQueryEnumItemType) y;
             return anyArray_.itemtypeIsSubtypeOf(y_);
         };
 
-        itemtypeIsSubtypeOf[array][anyArray] = alwaysTrue;
-        itemtypeIsSubtypeOf[array][array] = (x, y) -> {
+        itemtypeIsSubtypeOf[ARRAY][ANY_ARRAY] = alwaysTrue;
+        itemtypeIsSubtypeOf[ARRAY][ARRAY] = (x, y) -> {
             final XQueryEnumItemType x_ = (XQueryEnumItemType) x;
             final XQueryEnumItemType y_ = (XQueryEnumItemType) y;
-            final boolean isSubtypeOfAnyArray = itemtypeIsSubtypeOf[array][anyArray].test(x, y);
+            final boolean isSubtypeOfAnyArray = itemtypeIsSubtypeOf[ARRAY][ANY_ARRAY].test(x, y);
             if (!isSubtypeOfAnyArray)
                 return false;
             final XQuerySequenceType xArrayItemType = x_.getArrayType();
@@ -343,12 +349,12 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
             return xArrayItemType.isSubtypeOf(yArrayItemType);
         };
 
-        itemtypeIsSubtypeOf[extensibleRecord][anyFunction] = alwaysTrue;
-        itemtypeIsSubtypeOf[record][anyFunction] = alwaysTrue;
-        itemtypeIsSubtypeOf[anyMap][anyFunction] = alwaysTrue;
+        itemtypeIsSubtypeOf[EXTENSIBLE_RECORD][ANY_FUNCTION] = alwaysTrue;
+        itemtypeIsSubtypeOf[RECORD][ANY_FUNCTION] = alwaysTrue;
+        itemtypeIsSubtypeOf[ANY_MAP][ANY_FUNCTION] = alwaysTrue;
 
-        itemtypeIsSubtypeOf[map][anyFunction] = alwaysTrue;
-        itemtypeIsSubtypeOf[map][function] = (x, y) -> {
+        itemtypeIsSubtypeOf[MAP][ANY_FUNCTION] = alwaysTrue;
+        itemtypeIsSubtypeOf[MAP][FUNCTION] = (x, y) -> {
             final XQueryEnumItemType x_ = (XQueryEnumItemType) x;
             final XQueryEnumItemType y_ = (XQueryEnumItemType) y;
             if (y_.getArgumentTypes().size() != 1)
@@ -360,8 +366,8 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
                     && x_.getMapKeyType().itemtypeIsSubtypeOf(onlyArgItem);
         };
 
-        itemtypeIsSubtypeOf[map][anyMap] = alwaysTrue;
-        itemtypeIsSubtypeOf[map][map] = (x, y) -> {
+        itemtypeIsSubtypeOf[MAP][ANY_MAP] = alwaysTrue;
+        itemtypeIsSubtypeOf[MAP][MAP] = (x, y) -> {
             final XQueryEnumItemType x_ = (XQueryEnumItemType) x;
             final XQueryEnumItemType y_ = (XQueryEnumItemType) y;
             return x_.getMapKeyType().itemtypeIsSubtypeOf(y_.getMapKeyType())
@@ -369,7 +375,7 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
         };
 
 
-        itemtypeIsSubtypeOf[map][anyArray] = (x, _) -> {
+        itemtypeIsSubtypeOf[MAP][ANY_ARRAY] = (x, _) -> {
             final XQueryEnumItemType x_ = (XQueryEnumItemType) x;
             // map must have a key that is a number
             final var key = (XQueryEnumItemType) x_.getMapKeyType();
@@ -377,25 +383,25 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
         };
 
 
-        itemtypeIsSubtypeOf[enum_][string] = alwaysTrue;
-        itemtypeIsSubtypeOf[enum_][enum_] = (x, y) -> {
+        itemtypeIsSubtypeOf[ENUM][STRING] = alwaysTrue;
+        itemtypeIsSubtypeOf[ENUM][ENUM] = (x, y) -> {
             final var x_ = (XQueryEnumItemTypeEnum) x;
             final var y_ = (XQueryEnumItemTypeEnum) y;
             return y_.getEnumMembers().containsAll(x_.getEnumMembers());
         };
 
-        itemtypeIsSubtypeOf[record][anyMap] = alwaysTrue;
-        itemtypeIsSubtypeOf[extensibleRecord][anyMap] = alwaysTrue;
-        itemtypeIsSubtypeOf[record][map] = XQueryEnumItemType::recordIsSubtypeOfMap;
+        itemtypeIsSubtypeOf[RECORD][ANY_MAP] = alwaysTrue;
+        itemtypeIsSubtypeOf[EXTENSIBLE_RECORD][ANY_MAP] = alwaysTrue;
+        itemtypeIsSubtypeOf[RECORD][MAP] = XQueryEnumItemType::recordIsSubtypeOfMap;
         // itemtypeIsSubtypeOf[extensibleRecord][map] = XQueryEnumItemType::recordIsSubtypeOfMap;
 
 
-        itemtypeIsSubtypeOf[record][anyFunction] = alwaysTrue;
-        itemtypeIsSubtypeOf[extensibleRecord][anyFunction] = alwaysTrue;
-        itemtypeIsSubtypeOf[record][function] = XQueryEnumItemType::recordIsSubtypeOfFunction;
-        itemtypeIsSubtypeOf[extensibleRecord][function] = XQueryEnumItemType::recordIsSubtypeOfFunction;
+        itemtypeIsSubtypeOf[RECORD][ANY_FUNCTION] = alwaysTrue;
+        itemtypeIsSubtypeOf[EXTENSIBLE_RECORD][ANY_FUNCTION] = alwaysTrue;
+        itemtypeIsSubtypeOf[RECORD][FUNCTION] = XQueryEnumItemType::recordIsSubtypeOfFunction;
+        itemtypeIsSubtypeOf[EXTENSIBLE_RECORD][FUNCTION] = XQueryEnumItemType::recordIsSubtypeOfFunction;
 
-        itemtypeIsSubtypeOf[record][record] = (x, y) -> {
+        itemtypeIsSubtypeOf[RECORD][RECORD] = (x, y) -> {
             final var x_ = (XQueryEnumItemTypeRecord) x;
             final var y_ = (XQueryEnumItemTypeRecord) y;
             final boolean allFieldsPresent = y_.getRecordFields().keySet().containsAll(x_.getRecordFields().keySet());
@@ -409,7 +415,7 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
             }
             return true;
         };
-        itemtypeIsSubtypeOf[extensibleRecord][extensibleRecord] = (x, y) -> {
+        itemtypeIsSubtypeOf[EXTENSIBLE_RECORD][EXTENSIBLE_RECORD] = (x, y) -> {
             // All of the following are true:
             // A is an extensible record type
             // B is an extensible record type
@@ -428,7 +434,7 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
             return true;
         };
 
-        itemtypeIsSubtypeOf[record][extensibleRecord] = (x, y) -> {
+        itemtypeIsSubtypeOf[RECORD][EXTENSIBLE_RECORD] = (x, y) -> {
             // All of the following are true:
             // A is a non-extensible record type.
             // B is an extensible record type.
@@ -567,7 +573,7 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
         }
         // final int number = XQueryTypes.NUMBER.ordinal();
         final int string = STRING;
-        final int anyItem = XQueryTypes.ANY_ITEM.ordinal();
+        final int anyItem = ANY_ITEM;
         for (int i = 0; i < typesCount; i++) {
             castableAs[i][anyItem] = true;
             castableAs[i][string] = true;
@@ -618,5 +624,10 @@ public class XQueryEnumItemType implements IXQueryEnumItemType {
     @Override
     public XQueryItemType alternativeMerge(XQueryItemType other) {
         return  alternativeMerger.alternativeMerge(this, other);
+    }
+
+    public XQuerySequenceType lookup(XQuerySequenceType keySpecifierType) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'lookup'");
     }
 }

@@ -8,20 +8,19 @@ import java.util.Set;
 import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 
-import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
-import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumChoiceItemType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeArray;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeElement;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeEnum;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeMap;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeRecord;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemTypeArray;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemTypeElement;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemTypeEnum;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemTypeMap;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemTypeRecord;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
-public class EnumItemtypeAlternativeMerger
+public class ItemtypeAlternativeMerger
 {
     private static final int STRING = XQueryTypes.STRING.ordinal();
     private static final int ELEMENT = XQueryTypes.ELEMENT.ordinal();
@@ -45,7 +44,7 @@ public class EnumItemtypeAlternativeMerger
     private final BinaryOperator<XQueryItemType>[] alternativeItemMerger;
 
     @SuppressWarnings("unchecked")
-    public EnumItemtypeAlternativeMerger(final int typeOrdinal, final XQueryTypeFactory typeFactory)
+    public ItemtypeAlternativeMerger(final int typeOrdinal, final XQueryTypeFactory typeFactory)
     {
         this.alternativeItemMerger = new BinaryOperator[typesCount];
         final BinaryOperator<XQueryItemType> error = (_, _) -> typeFactory.itemError();
@@ -416,8 +415,8 @@ public class EnumItemtypeAlternativeMerger
 
     private XQueryItemType mergeArrays(final XQueryTypeFactory typeFactory, XQueryItemType x, XQueryItemType y)
     {
-        final var x_ = (XQueryEnumItemTypeArray) x;
-        final var y_ = (XQueryEnumItemTypeArray) y;
+        final var x_ = (XQueryItemTypeArray) x;
+        final var y_ = (XQueryItemTypeArray) y;
         final var xArrayType = x_.getArrayMemberType();
         final var yArrayType = y_.getArrayMemberType();
         final var merged = xArrayType.sequenceMerge(yArrayType);
@@ -427,8 +426,8 @@ public class EnumItemtypeAlternativeMerger
 
     private XQueryItemType mergeMaps(final XQueryTypeFactory typeFactory, XQueryItemType x, XQueryItemType y)
     {
-        final var x_ = (XQueryEnumItemTypeMap) x;
-        final var y_ = (XQueryEnumItemTypeMap) y;
+        final var x_ = (XQueryItemTypeMap) x;
+        final var y_ = (XQueryItemTypeMap) y;
         final var xKey = x_.getMapKeyType();
         final var yKey = y_.getMapKeyType();
         final var xValue = x_.getMapValueType();
@@ -460,8 +459,8 @@ public class EnumItemtypeAlternativeMerger
 
     private XQueryItemType mergeElements(final XQueryTypeFactory typeFactory, XQueryItemType x, XQueryItemType y)
     {
-        final var els1 = ((XQueryEnumItemTypeElement) x).getElementNames();
-        final var els2 = ((XQueryEnumItemTypeElement) y).getElementNames();
+        final var els1 = ((XQueryItemTypeElement) x).getElementNames();
+        final var els2 = ((XQueryItemTypeElement) y).getElementNames();
         final Set<String> merged = new HashSet<>(els1.size() + els2.size());
         merged.addAll(els1);
         merged.addAll(els2);
@@ -484,8 +483,8 @@ public class EnumItemtypeAlternativeMerger
     private BinaryOperator<XQueryItemType> recordMerger(final XQueryTypeFactory typeFactory)
     {
         return (x, y) -> {
-            final var x_ = (XQueryEnumItemTypeRecord) x;
-            final var y_ = (XQueryEnumItemTypeRecord) y;
+            final var x_ = (XQueryItemTypeRecord) x;
+            final var y_ = (XQueryItemTypeRecord) y;
             final var xFields = x_.getRecordFields();
             final var yFields = y_.getRecordFields();
 
@@ -525,8 +524,8 @@ public class EnumItemtypeAlternativeMerger
     private BinaryOperator<XQueryItemType> extensibleRecordMerger(final XQueryTypeFactory typeFactory)
     {
         return (x, y) -> {
-            final var x_ = (XQueryEnumItemTypeRecord) x;
-            final var y_ = (XQueryEnumItemTypeRecord) y;
+            final var x_ = (XQueryItemTypeRecord) x;
+            final var y_ = (XQueryItemTypeRecord) y;
             final var xRecordFields = x_.getRecordFields();
             final var yRecordFields = y_.getRecordFields();
             final Set<String> allKeys = new HashSet<>(xRecordFields.keySet());
@@ -560,8 +559,8 @@ public class EnumItemtypeAlternativeMerger
     private BinaryOperator<XQueryItemType> enumMerger(final XQueryTypeFactory typeFactory)
     {
         return (x, y) -> {
-            final var x_ = (XQueryEnumItemTypeEnum) x;
-            final var y_ = (XQueryEnumItemTypeEnum) y;
+            final var x_ = (XQueryItemTypeEnum) x;
+            final var y_ = (XQueryItemTypeEnum) y;
             final var xMembers = x_.getEnumMembers();
             final var yMembers = y_.getEnumMembers();
             final var merged = new HashSet<String>(xMembers.size() + yMembers.size());
@@ -583,7 +582,7 @@ public class EnumItemtypeAlternativeMerger
     */
     public XQueryItemType alternativeMerge(final XQueryItemType type1, final XQueryItemType type2)
     {
-        final int otherOrdinal = ((XQueryEnumItemType) type2).getType().ordinal();
+        final int otherOrdinal = ((XQueryItemType) type2).getType().ordinal();
         return this.alternativeItemMerger[otherOrdinal].apply(type1, type2);
     }
 

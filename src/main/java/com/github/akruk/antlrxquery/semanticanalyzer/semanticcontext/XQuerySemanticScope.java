@@ -3,7 +3,8 @@ package com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
+
 
 public class XQuerySemanticScope {
     Map<String, XQuerySequenceType> variables = new HashMap<>();

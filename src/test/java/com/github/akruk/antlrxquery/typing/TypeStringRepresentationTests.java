@@ -3,7 +3,7 @@ package com.github.akruk.antlrxquery.typing;
 import org.junit.Test;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
-import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryEnumTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTypeSets;

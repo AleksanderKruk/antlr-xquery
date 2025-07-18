@@ -2,9 +2,9 @@ package com.github.akruk.antlrxquery.typesystem.defaults;
 
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
-public class XQueryEnumItemTypeBoolean extends XQueryEnumItemType {
+public class XQueryItemTypeBoolean extends XQueryItemType {
 
-  public XQueryEnumItemTypeBoolean(XQueryTypeFactory factory) {
+  public XQueryItemTypeBoolean(XQueryTypeFactory factory) {
     super(XQueryTypes.BOOLEAN, null, null, null, null, null, null, factory, null);
   }
 

@@ -20,8 +20,8 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQueryVisitingSemanticContext;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
-import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
-import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 public class XQuerySemanticFunctionManager {

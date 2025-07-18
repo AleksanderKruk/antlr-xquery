@@ -2,9 +2,9 @@ package com.github.akruk.antlrxquery.typesystem.defaults;
 
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
-public class XQueryEnumItemTypeAnyNode extends XQueryEnumItemType {
+public class XQueryItemTypeAnyNode extends XQueryItemType {
 
-  public XQueryEnumItemTypeAnyNode(XQueryTypeFactory factory) {
+  public XQueryItemTypeAnyNode(XQueryTypeFactory factory) {
     super(XQueryTypes.ANY_NODE, null, null, null, null, null, null, factory, null);
   }
 

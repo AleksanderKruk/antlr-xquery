@@ -5,66 +5,57 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
-import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 
-public class XQueryEnumItemTypeReference implements XQueryItemType {
+public class XQueryItemTypeReference extends XQueryItemType {
     private final Supplier<XQueryItemType> referenceSupplier;
-    private XQueryEnumItemType referencedTypeCast;
+    private XQueryItemType referencedTypeCast;
 
-    public XQueryEnumItemTypeReference(Supplier<XQueryItemType> referenceSupplier) {
+    public XQueryItemTypeReference(Supplier<XQueryItemType> referenceSupplier) {
+        super();
         this.referenceSupplier = referenceSupplier;
     }
 
-    private XQueryEnumItemType getReferencedType()  {
+    private XQueryItemType getReferencedType()  {
         if (referencedTypeCast == null) {
             var referencedType = referenceSupplier.get();
-            referencedTypeCast = (XQueryEnumItemType) referencedType;
+            referencedTypeCast = (XQueryItemType) referencedType;
         }
         return referencedTypeCast;
     }
 
     public XQueryTypes getType() {
-        XQueryEnumItemType type = getReferencedType();
+        XQueryItemType type = getReferencedType();
         return type.getType();
     }
 
-    @Override
     public List<XQuerySequenceType> getArgumentTypes() {
         return getReferencedType().getArgumentTypes();
     }
 
-    @Override
     public boolean equals(Object obj) {
         return getReferencedType().equals(obj);
     }
 
-    @Override
     public Set<String> getElementNames() {
         return getReferencedType().getElementNames();
     }
 
-    @Override
     public Collection<XQueryItemType> getItemTypes() {
         return getReferencedType().getItemTypes();
     }
 
-    @Override
     public XQueryItemType getMapKeyType() {
         return getReferencedType().getMapKeyType();
     }
 
-    @Override
     public XQuerySequenceType getMapValueType() {
         return getReferencedType().getMapValueType();
     }
 
-    @Override
     public XQuerySequenceType getReturnedType() {
         return getReferencedType().getReturnedType();
     }
 
-    @Override
     public String toString() {
         return getReferencedType().toString();
     }
@@ -109,7 +100,6 @@ public class XQueryEnumItemTypeReference implements XQueryItemType {
         return getReferencedType().lookup(keySpecifierType);
     }
 
-    @Override
     public XQuerySequenceType getArrayMemberType() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getArrayMemberType'");

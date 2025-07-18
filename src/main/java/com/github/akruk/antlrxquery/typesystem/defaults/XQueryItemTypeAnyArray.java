@@ -1,14 +1,13 @@
 package com.github.akruk.antlrxquery.typesystem.defaults;
 
-import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
-public class XQueryEnumItemTypeAnyArray extends XQueryEnumItemType {
-    final private XQueryEnumSequenceType anyItems;
+public class XQueryItemTypeAnyArray extends XQueryItemType {
+    final private XQuerySequenceType anyItems;
 
-    public XQueryEnumItemTypeAnyArray(XQueryTypeFactory factory) {
+    public XQueryItemTypeAnyArray(XQueryTypeFactory factory) {
         super(XQueryTypes.ANY_ARRAY, null, null, null, null, null, null, factory, null);
-        anyItems = new XQueryEnumSequenceType(factory, new XQueryEnumItemTypeAnyItem(factory), XQueryOccurence.ZERO_OR_MORE);
+        anyItems = new XQuerySequenceType(factory, new XQueryItemTypeAnyItem(factory), XQueryOccurence.ZERO_OR_MORE);
     }
 
     @Override

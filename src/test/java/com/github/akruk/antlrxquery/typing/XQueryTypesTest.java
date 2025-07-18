@@ -2,9 +2,9 @@ package com.github.akruk.antlrxquery.typing;
 
 import org.junit.Test;
 
-import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
-import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryEnumTypeFactory;
 import static org.junit.Assert.assertEquals;

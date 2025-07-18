@@ -4,10 +4,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
-import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeReference;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemTypeReference;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 
 public final class XQueryNamedTypeSets {
     private Map<String, XQueryItemType> DEFAULT_ALL;
@@ -41,7 +41,7 @@ public final class XQueryNamedTypeSets {
         // DEFAULT_ALL.put("fn:parsed-csv-structure-record", null);
 
 
-        final XQueryItemType randomRef = new XQueryEnumItemTypeReference(()->typeFactory.itemNamedType("fn:random-number-generator-record"));
+        final XQueryItemTypeReference randomRef = new XQueryItemTypeReference(()->typeFactory.itemNamedType("fn:random-number-generator-record"));
         final var oneRandomRef = typeFactory.one(randomRef);
         final XQueryItemType randomNumberGeneratorRecord = typeFactory.itemExtensibleRecord(Map.of(
             "number", new XQueryRecordField(typeFactory.number(), true),

@@ -38,7 +38,6 @@ public class EnumItemtypeSubtyper
     private static final int FUNCTION = XQueryTypes.FUNCTION.ordinal();
     private static final int RECORD = XQueryTypes.RECORD.ordinal();
     private static final int EXTENSIBLE_RECORD = XQueryTypes.EXTENSIBLE_RECORD.ordinal();
-    private static final int typesCount = XQueryTypes.values().length;
 
     private final Predicate<XQueryItemType>[] itemtypeIsSubtypeOf;
 

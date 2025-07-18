@@ -10,7 +10,7 @@ import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeElemen
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
-public class EnumItemtypeUnionMerger implements IItemtypeUnionMerger
+public class EnumItemtypeUnionMerger
 {
     private static final int ELEMENT = XQueryTypes.ELEMENT.ordinal();
     private static final int ANY_NODE = XQueryTypes.ANY_NODE.ordinal();
@@ -57,7 +57,6 @@ public class EnumItemtypeUnionMerger implements IItemtypeUnionMerger
         return typeFactory.itemElement(merged);
     }
 
-    @Override
     public XQueryItemType unionMerge(final XQueryItemType type1, final XQueryItemType type2)
     {
         final int otherOrdinal = ((XQueryEnumItemType) type2).getType().ordinal();

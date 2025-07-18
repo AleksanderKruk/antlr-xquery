@@ -20,12 +20,11 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 import com.github.akruk.antlrxquery.AntlrXqueryParser.*;
 import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.XQuerySemanticContextManager;
-import com.github.akruk.antlrxquery.namespaceresolver.INamespaceResolver;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.ResolvedName;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager.ArgumentSpecification;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager.AnalysisResult;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQuerySemanticFunctionManager;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQuerySemanticFunctionManager.AnalysisResult;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQuerySemanticFunctionManager.ArgumentSpecification;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper.XQuerySemanticCharEscaperResult;
@@ -43,7 +42,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     final List<String> warnings;
     final XQueryTypeFactory typeFactory;
     final XQueryValueFactory valueFactory;
-    final IXQuerySemanticFunctionManager functionManager;
+    final XQuerySemanticFunctionManager functionManager;
     final Parser parser;
     XQueryVisitingSemanticContext context;
     List<XQuerySequenceType> visitedPositionalArguments;
@@ -63,7 +62,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         final XQuerySemanticContextManager contextManager,
         final XQueryTypeFactory typeFactory,
         final XQueryValueFactory valueFactory,
-        final IXQuerySemanticFunctionManager functionCaller) {
+        final XQuerySemanticFunctionManager functionCaller) {
         this.context = new XQueryVisitingSemanticContext();
         this.parser = parser;
         this.typeFactory = typeFactory;
@@ -588,7 +587,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         return result.unescaped();
     }
 
-    private final INamespaceResolver namespaceResolver = new NamespaceResolver("fn");
+    private final NamespaceResolver namespaceResolver = new NamespaceResolver("fn");
 
     @Override
     public XQuerySequenceType visitFunctionCall(final FunctionCallContext ctx)
@@ -859,7 +858,18 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     @Override
     public XQuerySequenceType visitLookupExpr(LookupExprContext ctx) {
         var targetType = ctx.postfixExpr().accept(this);
-        var keySpecifierType = ctx.lookup().keySpecifier().accept(this);
+        KeySpecifierContext keySpecifier = ctx.lookup().keySpecifier();
+        var keySpecifierType = keySpecifier.accept(this);
+        XQuerySequenceType result = null;
+        if (keySpecifierType == null) {
+            // direct key access
+            var literalName= keySpecifier.qname();
+            if (literalName != null) {
+                result = targetType.lookup(typeFactory.string());
+            } else { // wildcard
+                result = targetType.lookupWildcard();
+            }
+        }
         return targetType.lookup(keySpecifierType);
     }
 

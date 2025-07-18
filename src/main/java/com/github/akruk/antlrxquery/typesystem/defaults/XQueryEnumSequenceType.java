@@ -585,4 +585,10 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         return (_) -> typeFactory.error();
     }
 
+    @Override
+    public XQuerySequenceType lookupWildcard() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'lookupWildcard'");
+    }
+
 }

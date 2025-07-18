@@ -445,6 +445,12 @@ public class EnumItemtypeSubtyper
 
 
 
+    /**
+     * Checks whether or not type1 is subtype of type2
+     * @param type1 the first item type
+     * @param type2 the second item type
+     * @return boolean predicate
+     */
     public boolean itemtypeIsSubtypeOf(XQueryItemType type1, XQueryItemType type2) {
         final int otherOrdinal = ((XQueryEnumItemType) type2).getType().ordinal();
         return this.itemtypeIsSubtypeOf[otherOrdinal].test(type2);

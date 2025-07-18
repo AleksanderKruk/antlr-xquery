@@ -20,10 +20,8 @@ import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeMap;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeRecord;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.IItemtypeAlternativeMerger;
 
 public class EnumItemtypeAlternativeMerger
-  implements IItemtypeAlternativeMerger
 {
     private static final int STRING = XQueryTypes.STRING.ordinal();
     private static final int ELEMENT = XQueryTypes.ELEMENT.ordinal();
@@ -574,7 +572,6 @@ public class EnumItemtypeAlternativeMerger
     }
 
 
-    @Override
     public XQueryItemType alternativeMerge(final XQueryItemType type1, final XQueryItemType type2)
     {
         final int otherOrdinal = ((XQueryEnumItemType) type2).getType().ordinal();

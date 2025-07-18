@@ -8,9 +8,8 @@ import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.IItemtypeIntersectionMerger;
 
-public class EnumItemtypeIntersectionMerger implements IItemtypeIntersectionMerger
+public class EnumItemtypeIntersectionMerger
 {
     private static final int ELEMENT = XQueryTypes.ELEMENT.ordinal();
     private static final int ANY_NODE = XQueryTypes.ANY_NODE.ordinal();
@@ -61,7 +60,6 @@ public class EnumItemtypeIntersectionMerger implements IItemtypeIntersectionMerg
             return typeFactory.itemElement(mergedElements);
     }
 
-    @Override
     public XQueryItemType intersectionMerge(final XQueryItemType type1, final XQueryItemType type2)
     {
         final int otherOrdinal = ((XQueryEnumItemType) type2).getType().ordinal();

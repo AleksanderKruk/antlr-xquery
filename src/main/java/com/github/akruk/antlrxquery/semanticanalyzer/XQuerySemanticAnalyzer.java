@@ -858,6 +858,14 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     }
 
 
+
+    @Override
+    public XQuerySequenceType visitLookupExpr(LookupExprContext ctx) {
+        var targetType = ctx.postfixExpr().accept(this);
+        var keySpecifierType = ctx.lookup().keySpecifier().accept(this);
+        return targetType.lookup(keySpecifierType);
+    }
+
     @Override
     public XQuerySequenceType visitContextItemExpr(final ContextItemExprContext ctx)
     {

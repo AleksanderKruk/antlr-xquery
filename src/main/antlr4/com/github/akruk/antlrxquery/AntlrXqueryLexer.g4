@@ -13,6 +13,8 @@ fragment BIN_PREFIX     : '0b';
 
 HASH: '#';
 
+LOOKUP: '?[';
+
 IntegerLiteral
     : DigitSeq
     ;

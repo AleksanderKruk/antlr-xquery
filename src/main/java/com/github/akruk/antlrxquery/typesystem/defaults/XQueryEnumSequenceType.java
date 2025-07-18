@@ -16,8 +16,10 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
     private static final int ZERO = XQueryOccurence.ZERO.ordinal();
     private final XQueryEnumItemType itemType;
     private final XQueryOccurence occurence;
+    private final int occurence_;
     private final XQueryTypeFactory typeFactory;
-    private String occurenceSuffix;
+    private final String occurenceSuffix;
+    private final Function<XQuerySequenceType, XQuerySequenceType> lookup;
 
     public XQueryEnumItemType getItemType() {
         return itemType;
@@ -27,21 +29,16 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         this.typeFactory = typeFactory;
         this.itemType = itemType;
         this.occurence = occurence;
+        this.occurence_ = occurence.ordinal();
         this.factoryByOccurence = new Function[XQueryOccurence.values().length];
         this.factoryByOccurence[ZERO] = _ -> typeFactory.emptySequence();
         this.factoryByOccurence[ONE] = i -> typeFactory.one((XQueryItemType)i);
         this.factoryByOccurence[ZERO_OR_ONE] = i -> typeFactory.zeroOrOne((XQueryItemType)i);
         this.factoryByOccurence[ZERO_OR_MORE] = i -> typeFactory.zeroOrMore((XQueryItemType)i);
         this.factoryByOccurence[ONE_OR_MORE] = i -> typeFactory.oneOrMore((XQueryItemType)i);
-
-        this.occurenceSuffix = switch (occurence) {
-            case ZERO -> "";
-            case ONE -> "";
-            case ZERO_OR_ONE -> "?";
-            case ZERO_OR_MORE -> "*";
-            case ONE_OR_MORE -> "+";
-        };
-        requiresParentheses = requiresParentheses();
+        this.occurenceSuffix = occurence.occurenceSuffix();
+        this.requiresParentheses = requiresParentheses();
+        this.lookup = lookup_();
     }
 
     private static boolean isNullableEquals(final Object one, final Object other) {
@@ -419,7 +416,7 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
         typeAlternativeOccurence[ONE_OR_MORE][ONE_OR_MORE] = XQueryOccurence.ONE_OR_MORE;
     }
 
-	final Function[] factoryByOccurence;
+	final Function<XQueryItemType, XQuerySequenceType>[] factoryByOccurence;
 
     @Override
     public XQuerySequenceType alternativeMerge(final XQuerySequenceType other) {
@@ -548,6 +545,35 @@ public class XQueryEnumSequenceType implements XQuerySequenceType {
     @Override
     public XQuerySequenceType getArrayMemberType() {
         return itemType.getArrayType();
+    }
+
+    @Override
+    public XQuerySequenceType getReturnedType() {
+        return itemType.getReturnedType();
+    }
+
+    @Override
+    public XQuerySequenceType lookup(XQuerySequenceType keySpecifierType) {
+        return this.lookup.apply(keySpecifierType);
+    }
+
+    public Function<XQuerySequenceType, XQuerySequenceType> lookup_() {
+        if (itemType.itemtypeIsSubtypeOf(typeFactory.itemAnyArray())) {
+            return (keySpecifierType) -> {
+                XQueryItemType lookedUpItem = itemType.lookup(keySpecifierType).getItemType();
+                XQuerySequenceType lookedUpSequence = factoryByOccurence[occurence_].apply(lookedUpItem);
+                return lookedUpSequence;
+            };
+        }
+
+        if (itemType.itemtypeIsSubtypeOf(typeFactory.itemAnyMap())) {
+            return keySpecifierType -> {
+                XQueryItemType lookedUpItem = itemType.lookup(keySpecifierType).getItemType();
+                XQuerySequenceType lookedUpSequence = factoryByOccurence[occurence_].apply(lookedUpItem);
+                return lookedUpSequence.addOptionality();
+            };
+        }
+        return (_) -> typeFactory.error();
     }
 
 }

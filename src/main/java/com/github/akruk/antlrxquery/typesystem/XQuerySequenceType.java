@@ -30,4 +30,6 @@ public interface XQuerySequenceType {
         ALWAYS, POSSIBLE, NEVER
     }
     RelativeCoercability coerceableTo(XQuerySequenceType desiredType);
+
+    XQuerySequenceType lookup(XQuerySequenceType keySpecifierType);
 }

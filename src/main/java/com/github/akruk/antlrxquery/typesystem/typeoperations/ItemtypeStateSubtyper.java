@@ -44,11 +44,7 @@ public class ItemtypeStateSubtyper
     {
         final var len = XQueryTypes.values().length;
         itemtypeIsSubtypeOf = new BiPredicate[len][len];
-        final BiPredicate<XQueryItemType, XQueryItemType> choicesubtype = (x, y) -> {
-            final var items = y.getItemTypes();
-            final boolean anyIsSubtype = items.stream().anyMatch(i-> x.itemtypeIsSubtypeOf(i));
-            return anyIsSubtype;
-        };
+
 
         // final Predicate<XQueryItemType> allchoicesSubtyped = (y) -> {
         //     final XQueryEnumItemType y_ = (XQueryEnumItemType) y;
@@ -64,6 +60,7 @@ public class ItemtypeStateSubtyper
         Arrays.fill(itemtypeIsSubtypeOf[ERROR], allFalse);
         itemtypeIsSubtypeOf[ERROR][ERROR] = alwaysTrue;
         itemtypeIsSubtypeOf[ERROR][ANY_ITEM] = alwaysTrue;
+        itemtypeIsSubtypeOf[ERROR][CHOICE] = this::rightChoice;
 
         // ANY_ITEM
         Arrays.fill(itemtypeIsSubtypeOf[ANY_ITEM], allFalse);
@@ -73,7 +70,7 @@ public class ItemtypeStateSubtyper
         Arrays.fill(itemtypeIsSubtypeOf[ANY_NODE], alwaysFalse);
         itemtypeIsSubtypeOf[ANY_NODE][ANY_ITEM] = alwaysTrue;
         itemtypeIsSubtypeOf[ANY_NODE][ANY_NODE] = alwaysTrue;
-        itemtypeIsSubtypeOf[ANY_NODE][CHOICE] = choicesubtype;
+        itemtypeIsSubtypeOf[ANY_NODE][CHOICE] = this::rightChoice;
 
         // ELEMENT
         Arrays.fill(itemtypeIsSubtypeOf[ELEMENT], alwaysFalse);
@@ -82,7 +79,7 @@ public class ItemtypeStateSubtyper
         itemtypeIsSubtypeOf[ELEMENT][ELEMENT] = (x, y) -> {
             return y.getElementNames().containsAll(x.getElementNames());
         };
-        itemtypeIsSubtypeOf[ELEMENT][CHOICE] = choicesubtype;
+        itemtypeIsSubtypeOf[ELEMENT][CHOICE] = this::rightChoice;
 
         // ANY_MAP
         Arrays.fill(itemtypeIsSubtypeOf[ANY_MAP], alwaysFalse);
@@ -90,7 +87,7 @@ public class ItemtypeStateSubtyper
         itemtypeIsSubtypeOf[ANY_MAP][ANY_MAP] = alwaysTrue;
         // TODO: refine
         // itemtypeIsSubtypeOf[MAP] = alwaysFalse;
-        itemtypeIsSubtypeOf[ANY_MAP][CHOICE] = choicesubtype;
+        itemtypeIsSubtypeOf[ANY_MAP][CHOICE] = this::rightChoice;
         itemtypeIsSubtypeOf[ANY_MAP][ANY_FUNCTION] = alwaysTrue;
         // TODO: refine
         // itemtypeIsSubtypeOf[FUNCTION] = simpleChoice;
@@ -108,7 +105,7 @@ public class ItemtypeStateSubtyper
             return x.getMapKeyType().itemtypeIsSubtypeOf(y.getMapKeyType())
                     && x.getMapValueType().isSubtypeOf(y.getMapValueType());
         };
-        itemtypeIsSubtypeOf[MAP][CHOICE] = choicesubtype;
+        itemtypeIsSubtypeOf[MAP][CHOICE] = this::rightChoice;
         itemtypeIsSubtypeOf[MAP][ARRAY] = (x, _) -> {
             // map must have a key that is a number
             final var key =  x.getMapKeyType();
@@ -129,7 +126,7 @@ public class ItemtypeStateSubtyper
         Arrays.fill(itemtypeIsSubtypeOf[ANY_ARRAY], alwaysFalse);
         itemtypeIsSubtypeOf[ANY_ARRAY][ANY_ITEM] = alwaysTrue;
         itemtypeIsSubtypeOf[ANY_ARRAY][ANY_ARRAY] = alwaysTrue;
-        itemtypeIsSubtypeOf[ANY_ARRAY][CHOICE] = choicesubtype;
+        itemtypeIsSubtypeOf[ANY_ARRAY][CHOICE] = this::rightChoice;
         itemtypeIsSubtypeOf[ANY_ARRAY][ARRAY] = (_, y) -> {
             final XQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
             return y.getArrayMemberType().equals(zeroOrMoreItems);
@@ -165,7 +162,7 @@ public class ItemtypeStateSubtyper
                 return false;
             return x.getArrayMemberType().isSubtypeOf(y.getMapValueType());
         };
-        itemtypeIsSubtypeOf[ARRAY][CHOICE] = choicesubtype;
+        itemtypeIsSubtypeOf[ARRAY][CHOICE] = this::rightChoice;
         itemtypeIsSubtypeOf[ARRAY][ANY_ARRAY] = alwaysTrue;
         itemtypeIsSubtypeOf[ARRAY][ARRAY] = (x, y) -> {
             final boolean isSubtypeOfAnyArray = itemtypeIsSubtypeOf[ANY_ARRAY][ARRAY].test(x, y);
@@ -192,7 +189,7 @@ public class ItemtypeStateSubtyper
         // ANY_FUNCTION
         Arrays.fill(itemtypeIsSubtypeOf[ANY_FUNCTION], alwaysFalse);
         itemtypeIsSubtypeOf[ANY_FUNCTION][ANY_ITEM] = alwaysTrue;
-        itemtypeIsSubtypeOf[ANY_FUNCTION][CHOICE] = choicesubtype;
+        itemtypeIsSubtypeOf[ANY_FUNCTION][CHOICE] = this::rightChoice;
         itemtypeIsSubtypeOf[ANY_FUNCTION][ANY_FUNCTION] = alwaysTrue;
 
         // FUNCTION
@@ -223,7 +220,7 @@ public class ItemtypeStateSubtyper
                     && returnedCanBeValue;
         };
 
-        itemtypeIsSubtypeOf[FUNCTION][CHOICE] = choicesubtype;
+        itemtypeIsSubtypeOf[FUNCTION][CHOICE] = this::rightChoice;
         itemtypeIsSubtypeOf[FUNCTION][ANY_ARRAY] = (x, _) -> {
             final XQueryItemTypeFunction x_ = (XQueryItemTypeFunction) x;
             // function must have one argument
@@ -276,7 +273,7 @@ public class ItemtypeStateSubtyper
             return y_.getEnumMembers().containsAll(x_.getEnumMembers());
         };
         itemtypeIsSubtypeOf[ENUM][STRING] = alwaysTrue;
-        itemtypeIsSubtypeOf[ENUM][CHOICE] = choicesubtype;
+        itemtypeIsSubtypeOf[ENUM][CHOICE] = this::rightChoice;
 
 
         Arrays.fill(itemtypeIsSubtypeOf[RECORD], alwaysFalse);
@@ -286,7 +283,7 @@ public class ItemtypeStateSubtyper
         itemtypeIsSubtypeOf[RECORD][ANY_FUNCTION] = alwaysTrue;
         itemtypeIsSubtypeOf[RECORD][FUNCTION] = (x, y) -> recordIsSubtypeOfFunction(x, y);
         itemtypeIsSubtypeOf[RECORD][ANY_ITEM] = alwaysTrue;
-        itemtypeIsSubtypeOf[RECORD][CHOICE] = choicesubtype;
+        itemtypeIsSubtypeOf[RECORD][CHOICE] = this::rightChoice;
         itemtypeIsSubtypeOf[RECORD][RECORD] = (x, y) -> {
             final boolean allFieldsPresent = y.getRecordFields().keySet().containsAll(x.getRecordFields().keySet());
             if (!allFieldsPresent)
@@ -317,7 +314,7 @@ public class ItemtypeStateSubtyper
         itemtypeIsSubtypeOf[EXTENSIBLE_RECORD][ANY_ITEM] = alwaysTrue;
         itemtypeIsSubtypeOf[EXTENSIBLE_RECORD][ANY_MAP] = alwaysTrue;
         // itemtypeIsSubtypeOf[EXTENSIBLE_RECORD][MAP] = simpleChoice;
-        itemtypeIsSubtypeOf[EXTENSIBLE_RECORD][CHOICE] = choicesubtype;
+        itemtypeIsSubtypeOf[EXTENSIBLE_RECORD][CHOICE] = this::rightChoice;
         // itemtypeIsSubtypeOf[ANY_ARRAY] = simpleChoice;
         // itemtypeIsSubtypeOf[ARRAY] = simpleChoice;
         itemtypeIsSubtypeOf[EXTENSIBLE_RECORD][ANY_FUNCTION] = alwaysTrue;
@@ -346,19 +343,19 @@ public class ItemtypeStateSubtyper
         Arrays.fill(itemtypeIsSubtypeOf[BOOLEAN], alwaysFalse);
         itemtypeIsSubtypeOf[BOOLEAN][BOOLEAN] = alwaysTrue;
         itemtypeIsSubtypeOf[BOOLEAN][ANY_ITEM] = alwaysTrue;
-        itemtypeIsSubtypeOf[BOOLEAN][CHOICE] = choicesubtype;
+        itemtypeIsSubtypeOf[BOOLEAN][CHOICE] = this::rightChoice;
 
         // STRING
         Arrays.fill(itemtypeIsSubtypeOf[STRING], alwaysFalse);
         itemtypeIsSubtypeOf[STRING][STRING] = alwaysTrue;
         itemtypeIsSubtypeOf[STRING][ANY_ITEM] = alwaysTrue;
-        itemtypeIsSubtypeOf[STRING][CHOICE] = choicesubtype;
+        itemtypeIsSubtypeOf[STRING][CHOICE] = this::rightChoice;
 
         // NUMBER
         Arrays.fill(itemtypeIsSubtypeOf[NUMBER], alwaysFalse);
         itemtypeIsSubtypeOf[NUMBER][NUMBER] = alwaysTrue;
         itemtypeIsSubtypeOf[NUMBER][ANY_ITEM] = alwaysTrue;
-        itemtypeIsSubtypeOf[NUMBER][CHOICE] = choicesubtype;
+        itemtypeIsSubtypeOf[NUMBER][CHOICE] = this::rightChoice;
 
         // CHOICE
         final BiPredicate<XQueryItemType, XQueryItemType> lchoice = (x, y) -> {
@@ -378,6 +375,12 @@ public class ItemtypeStateSubtyper
             });
             return allPresent;
         };
+    }
+
+    private boolean rightChoice(XQueryItemType x, XQueryItemType y) {
+        final var items = y.getItemTypes();
+        final boolean anyIsSubtype = items.stream().anyMatch(i-> x.itemtypeIsSubtypeOf(i));
+        return anyIsSubtype;
     }
 
     private static final BiPredicate<XQueryItemType, XQueryItemType> alwaysTrue = (_, _) -> true;

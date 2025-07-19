@@ -1,42 +1,42 @@
-package com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext;
+package com.github.akruk.antlrxquery.contextmanagement.semanticcontext.baseimplementation;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-<<<<<<< HEAD:src/main/java/com/github/akruk/antlrxquery/contextmanagement/semanticcontext/baseimplementation/XQueryBaseSemanticContext.java
 import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.XQuerySemanticContext;
 import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.XQuerySemanticScope;
-=======
->>>>>>> language-features/lookup-expression:src/main/java/com/github/akruk/antlrxquery/semanticanalyzer/semanticcontext/XQuerySemanticContext.java
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 
-
-public class XQuerySemanticContext {
+public class XQueryBaseSemanticContext implements XQuerySemanticContext {
     final List<XQuerySemanticScope> scopes;
     final Supplier<XQuerySemanticScope> scopeFactory;
 
-    public XQuerySemanticContext() {
-        this(XQuerySemanticScope::new);
+    public XQueryBaseSemanticContext() {
+        this(XQueryBaseSemanticScope::new);
     }
 
-    public XQuerySemanticContext(Supplier<XQuerySemanticScope> scopeFactory) {
+    public XQueryBaseSemanticContext(Supplier<XQuerySemanticScope> scopeFactory) {
         this.scopeFactory = scopeFactory;
         this.scopes = new ArrayList<>();
     }
 
+    @Override
     public void leaveScope() {
         this.scopes.removeLast();
     }
 
+    @Override
     public void enterScope() {
         this.scopes.add(scopeFactory.get());
     }
 
+    @Override
     public XQuerySemanticScope currentScope() {
         return scopes.getLast();
     }
 
+    @Override
     public XQuerySequenceType getVariable(String variableName) {
         for (var scope : scopes.reversed()) {
             var variable = scope.getVariable(variableName);
@@ -46,7 +46,7 @@ public class XQuerySemanticContext {
         }
         return null;
     }
-
+    @Override
     public boolean entypeVariable(String variableName, XQuerySequenceType assignedType) {
         return currentScope().entypeVariable(variableName, assignedType);
     }

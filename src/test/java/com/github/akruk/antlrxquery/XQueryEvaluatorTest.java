@@ -22,9 +22,9 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
 
     @Test
     public void atomization() {
-        final String xquery = "(1, (2,3,4), ((5, 6), 7))";
-        final var value = XQuery.evaluate(null, xquery, null);
-        final List<XQueryValue> expected = List.of(
+        String xquery = "(1, (2,3,4), ((5, 6), 7))";
+        var value = XQuery.evaluate(null, xquery, null);
+        List<XQueryValue> expected = List.of(
                 valueFactory.number(1),
                 valueFactory.number(2),
                 valueFactory.number(3),
@@ -44,7 +44,7 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
                     (1, 2, 3) | (4, 5, 6)
                 """;
         var value = XQuery.evaluate(null, xquery, null);
-        final var expected = List.of(
+        var expected = List.of(
                 valueFactory.number(1),
                 valueFactory.number(2),
                 valueFactory.number(3),
@@ -54,8 +54,8 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
         assertEquals(expected.size(), value.sequence().size());
         var sequence = value.sequence();
         for (int i = 0; i < expected.size(); i++) {
-            final var element = expected.get(i);
-            final var received = sequence.get(i);
+            var element = expected.get(i);
+            var received = sequence.get(i);
             assertEquals(element.numericValue(), received.numericValue());
         }
         xquery = """
@@ -65,8 +65,8 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
         assertEquals(expected.size(), value.sequence().size());
         sequence = value.sequence();
         for (int i = 0; i < expected.size(); i++) {
-            final var element = expected.get(i);
-            final var received = sequence.get(i);
+            var element = expected.get(i);
+            var received = sequence.get(i);
             assertEquals(element.numericValue(), received.numericValue());
         }
     }
@@ -74,15 +74,15 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
     // TODO: rewrite
     @Test
     public void sequenceIntersection() {
-        final String xquery = """
+        String xquery = """
                     (1, 2, 3, 4) intersect (0, 2, 4, 8)
                 """;
-        final var value = XQuery.evaluate(null, xquery, null);
-        final BigDecimal[] expected = {
+        var value = XQuery.evaluate(null, xquery, null);
+        BigDecimal[] expected = {
                 (BigDecimal.valueOf(2)),
                 (BigDecimal.valueOf(4)),
         };
-        final BigDecimal[] numbersFromSequence = value.sequence()
+        BigDecimal[] numbersFromSequence = value.sequence()
                 .stream()
                 .map(XQueryValue::numericValue)
                 .toArray(BigDecimal[]::new);
@@ -92,15 +92,15 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
     // TODO: rewrite
     @Test
     public void sequenceSubtraction() {
-        final String xquery = """
+        String xquery = """
                     (1, 2, 3, 4) except (2, 4)
                 """;
-        final var value = XQuery.evaluate(null, xquery, null);
-        final BigDecimal[] expected = {
+        var value = XQuery.evaluate(null, xquery, null);
+        BigDecimal[] expected = {
                 BigDecimal.valueOf(1),
                 BigDecimal.valueOf(3),
         };
-        final BigDecimal[] numbersFromSequence = value.sequence()
+        BigDecimal[] numbersFromSequence = value.sequence()
                 .stream()
                 .map(XQueryValue::numericValue)
                 .toArray(BigDecimal[]::new);
@@ -174,13 +174,13 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
 
     @Test
     public void wildcards() throws Exception {
-        final String textualTree = "a bc a d";
-        final String xquery = "//*";
-        final ValueParserAndTree parserAndTree = executeDynamicGrammarQueryWithTree(
+        String textualTree = "a bc a d";
+        String xquery = "//*";
+        ValueParserAndTree parserAndTree = executeDynamicGrammarQueryWithTree(
             TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", textualTree, xquery);
-        final ParseTree[] nodes = XPath.findAll(parserAndTree.tree(), xquery, parserAndTree.parser())
+        ParseTree[] nodes = XPath.findAll(parserAndTree.tree(), xquery, parserAndTree.parser())
                 .toArray(ParseTree[]::new);
-        final ParseTree[] xqueryNodes = parserAndTree.value().sequence().stream().map(val -> val.node())
+        ParseTree[] xqueryNodes = parserAndTree.value().sequence().stream().map(val -> val.node())
                 .toArray(ParseTree[]::new);
         assertEquals(nodes.length, xqueryNodes.length);
         for (int i = 1; i < xqueryNodes.length; i++) {
@@ -202,11 +202,11 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
 
     @Test
     public void rangeExpression() {
-        final var i1 = valueFactory.number(1);
-        final var i2 = valueFactory.number(2);
-        final var i3 = valueFactory.number(3);
-        final var i4 = valueFactory.number(4);
-        final var i5 = valueFactory.number(5);
+        var i1 = valueFactory.number(1);
+        var i2 = valueFactory.number(2);
+        var i3 = valueFactory.number(3);
+        var i4 = valueFactory.number(4);
+        var i5 = valueFactory.number(5);
         assertResult("1 to 5", List.of(i1, i2, i3, i4, i5));
         assertResult("4 to 3", List.of());
         assertResult("3 to 3", List.of(i3));
@@ -221,8 +221,8 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
         // var i1 = new XQueryNumber(1);
         // var i2 = new XQueryNumber(2);
         // var i3 = new XQueryNumber(3);
-        final var i4 = new XQueryNumber(4, valueFactory);
-        final var i5 = new XQueryNumber(5, valueFactory);
+        var i4 = new XQueryNumber(4, valueFactory);
+        var i5 = new XQueryNumber(5, valueFactory);
         assertResult("(1, 2, 3, 4, 5)[. gt 3]", List.of(i4, i5));
     }
 

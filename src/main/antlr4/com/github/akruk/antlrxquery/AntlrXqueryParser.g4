@@ -283,7 +283,7 @@ typedArrayType	:	ARRAY LPAREN sequenceType RPAREN;
 
 enumerationType	:	ENUM LPAREN STRING (COMMA STRING)* RPAREN;
 
-choiceItemType	:	LPAREN itemType (UNION_OP itemType)* RPAREN;
+choiceItemType	:	LPAREN itemType ('|' itemType)* RPAREN;
 
 anyItemTest	:	ITEM LPAREN RPAREN;
 anyKindTest	:	NODE LPAREN RPAREN;

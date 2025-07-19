@@ -11,11 +11,7 @@ public class XQueryItemTypeReference extends XQueryItemType {
     private XQueryItemType referencedTypeCast;
 
     public XQueryItemTypeReference(Supplier<XQueryItemType> referenceSupplier) {
-<<<<<<< HEAD
         super(XQueryTypes.ANY_ITEM, List.of(), null, null, null, null, null, null, null);
-=======
-        super();
->>>>>>> language-features/lookup-expression
         this.referenceSupplier = referenceSupplier;
     }
 
@@ -27,39 +23,52 @@ public class XQueryItemTypeReference extends XQueryItemType {
         return referencedTypeCast;
     }
 
+    @Override
     public XQueryTypes getType() {
         XQueryItemType type = getReferencedType();
         return type.getType();
     }
 
+    @Override
     public List<XQuerySequenceType> getArgumentTypes() {
         return getReferencedType().getArgumentTypes();
     }
+    @Override
+    public XQuerySequenceType getArrayType() {
+        return getReferencedType().getArrayType();
+    }
 
+    @Override
     public boolean equals(Object obj) {
         return getReferencedType().equals(obj);
     }
 
+    @Override
     public Set<String> getElementNames() {
         return getReferencedType().getElementNames();
     }
 
+    @Override
     public Collection<XQueryItemType> getItemTypes() {
         return getReferencedType().getItemTypes();
     }
 
+    @Override
     public XQueryItemType getMapKeyType() {
         return getReferencedType().getMapKeyType();
     }
 
+    @Override
     public XQuerySequenceType getMapValueType() {
         return getReferencedType().getMapValueType();
     }
 
+    @Override
     public XQuerySequenceType getReturnedType() {
         return getReferencedType().getReturnedType();
     }
 
+    @Override
     public String toString() {
         return getReferencedType().toString();
     }
@@ -100,13 +109,5 @@ public class XQueryItemTypeReference extends XQueryItemType {
         return getReferencedType().isValueComparableWith(other);
     }
 
-    public XQuerySequenceType lookup(XQuerySequenceType keySpecifierType) {
-        return getReferencedType().lookup(keySpecifierType);
-    }
-
-    public XQuerySequenceType getArrayMemberType() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getArrayMemberType'");
-    }
 
 }

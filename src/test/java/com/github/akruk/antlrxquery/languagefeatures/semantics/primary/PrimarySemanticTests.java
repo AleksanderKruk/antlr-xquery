@@ -1,7 +1,6 @@
 package com.github.akruk.antlrxquery.languagefeatures.semantics.primary;
 
 import java.util.List;
-import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -45,7 +44,7 @@ public class PrimarySemanticTests extends SemanticTestsBase {
         assertType("()", typeFactory.emptySequence());
         assertType("(1)", typeFactory.number());
         assertType("(1, 'a')", typeFactory
-                .oneOrMore(typeFactory.itemChoice(List.of(typeFactory.itemNumber(), typeFactory.itemEnum(Set.of("a"))))));
+                .oneOrMore(typeFactory.itemChoice(List.of(typeFactory.itemNumber(), typeFactory.itemString()))));
         assertType("(1, 2, 3)", typeFactory.oneOrMore(typeFactory.itemNumber()));
         assertType("((), (), (1))", typeFactory.number());
         assertType("((), (1), (1))", typeFactory.oneOrMore(typeFactory.itemNumber()));

@@ -1,7 +1,6 @@
 package com.github.akruk.antlrxquery.typesystem.defaults;
 
 import java.util.Collection;
-<<<<<<< HEAD
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -24,65 +23,28 @@ public class XQueryItemType {
     private static final int ANY_FUNCTION = XQueryTypes.ANY_FUNCTION.ordinal();
     private static final int ANY_NODE = XQueryTypes.ANY_NODE.ordinal();
     private static final int ELEMENT = XQueryTypes.ELEMENT.ordinal();
-=======
-import java.util.List;
-import java.util.Set;
-import java.util.stream.IntStream;
-
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.ItemtypeAlternativeMerger;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.ItemtypeIntersectionMerger;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.ItemtypeSubtyper;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.ItemtypeUnionMerger;
-
-public class XQueryItemType {
-    private static final int ANY_ITEM = XQueryTypes.ANY_ITEM.ordinal();
->>>>>>> language-features/lookup-expression
     private static final int STRING = XQueryTypes.STRING.ordinal();
     private static final int ENUM = XQueryTypes.ENUM.ordinal();
     private static final int BOOLEAN = XQueryTypes.BOOLEAN.ordinal();
     private static final int NUMBER = XQueryTypes.NUMBER.ordinal();
-<<<<<<< HEAD
     private static final int MAP = XQueryTypes.MAP.ordinal();
     private static final int ANY_MAP = XQueryTypes.ANY_MAP.ordinal();
     private static final int RECORD = XQueryTypes.RECORD.ordinal();
     private static final int EXTENSIBLE_RECORD = XQueryTypes.EXTENSIBLE_RECORD.ordinal();
     private static final int choice = XQueryTypes.CHOICE.ordinal();
-=======
->>>>>>> language-features/lookup-expression
     private final XQueryTypes type;
     private final int typeOrdinal;
 
 
-<<<<<<< HEAD
     private final ItemtypeAlternativeMerger alternativeMerger;
     private final ItemtypeIntersectionMerger intersectionMerger;
     private final XQueryTypeFactory typeFactory;
     private final Collection<XQueryItemType> itemTypes;
     private final ItemtypeUnionMerger unionMerger;
-=======
-    private final List<XQuerySequenceType> argumentTypes;
-    private final XQuerySequenceType returnedType;
-    private final XQueryItemType mapKeyType;
-    private final XQuerySequenceType mapValueType;
-    private final Set<String> elementNames;
-    private final XQuerySequenceType returnedType_;
-
-    private final XQueryTypeFactory typeFactory;
-    private final Collection<XQueryItemType> itemTypes;
-    private final ItemtypeUnionMerger unionMerger;
-    private final ItemtypeSubtyper itemtypeSubtyper;
-    private final ItemtypeAlternativeMerger alternativeMerger;
-    private final ItemtypeIntersectionMerger intersectionMerger;
->>>>>>> language-features/lookup-expression
 
     public Collection<XQueryItemType> getItemTypes() {
         return itemTypes;
     }
-<<<<<<< HEAD
-=======
-
->>>>>>> language-features/lookup-expression
     public XQueryItemType(final XQueryTypes type,
                                 final List<XQuerySequenceType> argumentTypes,
                                 final XQuerySequenceType returnedType,
@@ -97,18 +59,13 @@ public class XQueryItemType {
         this.typeOrdinal = type.ordinal();
         this.argumentTypes = argumentTypes;
         this.returnedType = returnedType;
-<<<<<<< HEAD
         this.returnedType_ = getReturnedType_();
         this.arrayType = arrayType;
-=======
-        // this.arrayType = arrayType;
->>>>>>> language-features/lookup-expression
         this.mapKeyType = key;
         this.mapValueType = mapValueType;
         this.elementNames = elementNames;
         this.typeFactory = typeFactory;
         this.itemTypes = itemTypes;
-<<<<<<< HEAD
         this.alternativeMerger = new ItemtypeAlternativeMerger(typeOrdinal, typeFactory);
         this.unionMerger = new ItemtypeUnionMerger(typeOrdinal, typeFactory);
         this.intersectionMerger = new ItemtypeIntersectionMerger(typeOrdinal, typeFactory);
@@ -130,37 +87,6 @@ public class XQueryItemType {
     private final Set<String> elementNames;
     private final XQuerySequenceType returnedType_;
 
-=======
-        this.returnedType_ = getReturnedType_();
-        this.alternativeMerger = new ItemtypeAlternativeMerger(typeOrdinal, typeFactory);
-        this.unionMerger = new ItemtypeUnionMerger(typeOrdinal, typeFactory);
-        this.intersectionMerger = new ItemtypeIntersectionMerger(typeOrdinal, typeFactory);
-        this.itemtypeSubtyper = new ItemtypeSubtyper(this, typeFactory);
-    }
-
-    public XQueryItemType()
-    {
-        this.type = null;
-        this.typeOrdinal = 0;
-        this.argumentTypes = null;
-        this.returnedType = null;
-        // this.arrayType = arrayType;
-        this.mapKeyType = null;
-        this.mapValueType = null;
-        this.elementNames = null;
-        this.typeFactory = null;
-        this.itemTypes = null;
-        this.returnedType_ = null;
-        this.alternativeMerger = null;
-        this.unionMerger = null;
-        this.intersectionMerger = null;
-        this.itemtypeSubtyper = null;
-    }
-
-    public List<XQuerySequenceType> getArgumentTypes() {
-        return argumentTypes;
-    }
->>>>>>> language-features/lookup-expression
 
     public XQueryItemType getMapKeyType() {
         return mapKeyType;
@@ -168,23 +94,17 @@ public class XQueryItemType {
     public XQuerySequenceType getMapValueType() {
         return mapValueType;
     }
-<<<<<<< HEAD
     public List<XQuerySequenceType> getArgumentTypes() {
         return argumentTypes;
     }
-=======
->>>>>>> language-features/lookup-expression
 
     public XQuerySequenceType getReturnedType() {
         return this.returnedType_;
     }
 
     private XQuerySequenceType getReturnedType_() {
-<<<<<<< HEAD
         if (returnedType == null)
             return typeFactory.error();
-=======
->>>>>>> language-features/lookup-expression
         return returnedType;
     }
 
@@ -214,11 +134,8 @@ public class XQueryItemType {
         final var otherArgumentTypes = other.getArgumentTypes();
         if (this.argumentTypes == null && otherArgumentTypes != null)
             return false;
-<<<<<<< HEAD
         if (this.argumentTypes != null && otherArgumentTypes == null)
             return false;
-=======
->>>>>>> language-features/lookup-expression
         if (this.argumentTypes != null) {
             if (this.argumentTypes.size() != otherArgumentTypes.size())
                 return false;
@@ -231,7 +148,6 @@ public class XQueryItemType {
             }
         }
         final XQuerySequenceType otherReturnedType = other.getReturnedType();
-<<<<<<< HEAD
         return isNullableEquals(this.returnedType, otherReturnedType);
     }
 
@@ -595,40 +511,6 @@ public class XQueryItemType {
         if (!(obj instanceof final XQueryItemType typed))
             return false;
         return itemtypeIsSubtypeOf[typeOrdinal][typed.getType().ordinal()].test(this, obj);
-=======
-        if (!isNullableEquals(this.returnedType, otherReturnedType))
-            return false;
-
-        final var names = other.getElementNames();
-        if (names != null &&elementNames != null && !this.elementNames.containsAll(names)) {
-            return false;
-        }
-
-        if (!isNullableEquals(getArrayMemberType(), other.getArrayMemberType()))
-            return false;
-
-        if (!isNullableEquals(mapKeyType, other.getMapKeyType()))
-            return false;
-
-        if (!isNullableEquals(mapValueType, other.getMapValueType()))
-            return false;
-
-        final var otherTypes = other.itemTypes;
-        if (itemTypes != null && otherTypes != null && !this.itemTypes.containsAll(otherTypes))
-            return false;
-        return true;
-    }
-
-    private static final int typesCount = XQueryTypes.values().length;
-
-
-
-    public boolean itemtypeIsSubtypeOf(final XQueryItemType obj) {
-        if (!(obj instanceof XQueryItemType))
-            return false;
-        final XQueryItemType typed = (XQueryItemType) obj;
-        return itemtypeSubtyper.itemtypeIsSubtypeOf(this, typed);
->>>>>>> language-features/lookup-expression
     }
 
 
@@ -681,11 +563,7 @@ public class XQueryItemType {
     }
 
     public boolean castableAs(final XQueryItemType itemType) {
-<<<<<<< HEAD
         if (!(itemType instanceof final XQueryItemType typed))
-=======
-        if (!(itemType instanceof XQueryItemType typed))
->>>>>>> language-features/lookup-expression
             return false;
         return castableAs[typeOrdinal][typed.getType().ordinal()];
     }
@@ -724,17 +602,7 @@ public class XQueryItemType {
     }
 
     public XQuerySequenceType lookup(XQuerySequenceType keySpecifierType) {
-<<<<<<< HEAD
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'lookup'");
-=======
-        // TODO:
-        return typeFactory.anyItem();
-    }
-
-    public XQuerySequenceType getArrayMemberType() {
-        // TODO:
-        return typeFactory.error();
->>>>>>> language-features/lookup-expression
     }
 }

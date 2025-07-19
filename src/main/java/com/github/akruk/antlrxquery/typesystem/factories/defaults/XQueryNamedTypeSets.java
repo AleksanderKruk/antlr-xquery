@@ -41,11 +41,7 @@ public final class XQueryNamedTypeSets {
         // DEFAULT_ALL.put("fn:parsed-csv-structure-record", null);
 
 
-<<<<<<< HEAD
         final XQueryItemType randomRef = new XQueryItemTypeReference(()->typeFactory.itemNamedType("fn:random-number-generator-record"));
-=======
-        final XQueryItemTypeReference randomRef = new XQueryItemTypeReference(()->typeFactory.itemNamedType("fn:random-number-generator-record"));
->>>>>>> language-features/lookup-expression
         final var oneRandomRef = typeFactory.one(randomRef);
         final XQueryItemType randomNumberGeneratorRecord = typeFactory.itemExtensibleRecord(Map.of(
             "number", new XQueryRecordField(typeFactory.number(), true),

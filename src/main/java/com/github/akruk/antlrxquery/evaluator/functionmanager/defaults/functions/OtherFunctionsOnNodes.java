@@ -10,12 +10,12 @@ import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
 import com.github.akruk.antlrxquery.values.XQueryError;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
-import com.github.akruk.nodegetter.NodeGetter;
+import com.github.akruk.nodegetter.INodeGetter;
 
 public class OtherFunctionsOnNodes {
     private final XQueryValueFactory valueFactory;
-    private final NodeGetter nodeGetter;
-    public OtherFunctionsOnNodes(final XQueryValueFactory valueFactory, final NodeGetter nodeGetter, final Parser targetParser) {
+    private final INodeGetter nodeGetter;
+    public OtherFunctionsOnNodes(final XQueryValueFactory valueFactory, final INodeGetter nodeGetter, final Parser targetParser) {
         this.valueFactory = valueFactory;
         this.nodeGetter = nodeGetter;
     }

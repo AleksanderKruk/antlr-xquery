@@ -23,14 +23,18 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.charescaper.XQueryCharEscaper;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.*;
-import com.github.akruk.antlrxquery.evaluator.dynamiccontext.XQueryDynamicContextManager;
-import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.XQueryEvaluatingFunctionManager;
+import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.XQueryDynamicContextManager;
+import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.baseimplementation.XQueryBaseDynamicContextManager;
+import com.github.akruk.antlrxquery.evaluator.functionmanager.IXQueryEvaluatingFunctionManager;
+import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.EvaluatingFunctionManager;
+import com.github.akruk.antlrxquery.namespaceresolver.INamespaceResolver;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.ResolvedName;
 import com.github.akruk.antlrxquery.values.XQueryFunction;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.values.factories.defaults.XQueryMemoizedValueFactory;
+import com.github.akruk.nodegetter.INodeGetter;
 import com.github.akruk.nodegetter.NodeGetter;
 
 public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
@@ -38,7 +42,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     final private Parser parser;
     final private XQueryDynamicContextManager contextManager;
     final private XQueryValueFactory valueFactory;
-    final private XQueryEvaluatingFunctionManager functionManager;
+    final private IXQueryEvaluatingFunctionManager functionManager;
     final private XQueryFunction concat;
 
     private XQueryValue matchedNodes;
@@ -46,7 +50,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     private XQueryAxis currentAxis;
     private List<XQueryValue> visitedArgumentList;
     private XQueryVisitingContext context;
-    private NodeGetter nodeGetter = new NodeGetter();
+    private INodeGetter nodeGetter = new NodeGetter();
     private Map<String, XQueryValue> visitedKeywordArguments;
 
     private record VariableCoupling(Variable item, Variable key, Variable value, Variable position) {}
@@ -68,8 +72,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         this.context.setSize(0);
         this.parser = parser;
         this.valueFactory = valueFactory;
-        this.functionManager = new XQueryEvaluatingFunctionManager(this, parser, valueFactory, nodeGetter);
-        this.contextManager = new XQueryDynamicContextManager();
+        this.functionManager = new EvaluatingFunctionManager(this, parser, valueFactory, nodeGetter);
+        this.contextManager = new XQueryBaseDynamicContextManager();
         this.concat = functionManager.getFunctionReference("fn", "concat", 2).functionValue();
         contextManager.enterContext();
     }
@@ -79,7 +83,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             final Parser parser,
             final XQueryDynamicContextManager contextManager,
             final XQueryValueFactory valueFactory,
-            final XQueryEvaluatingFunctionManager functionCaller)
+            final IXQueryEvaluatingFunctionManager functionCaller)
     {
         this.root = valueFactory.node(tree);
         this.context = new XQueryVisitingContext();
@@ -837,12 +841,12 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return ctx.nameTest().accept(this);
     }
 
-    private static final Function<NodeGetter, Function<List<ParseTree>, List<ParseTree>>>[] AXIS_DISPATCH_TABLE;
+    private static final Function<INodeGetter, Function<List<ParseTree>, List<ParseTree>>>[] AXIS_DISPATCH_TABLE;
 
     static {
         @SuppressWarnings("unchecked")
-        Function<NodeGetter, Function<List<ParseTree>, List<ParseTree>>>[] table =
-            (Function<NodeGetter, Function<List<ParseTree>, List<ParseTree>>>[])
+        Function<INodeGetter, Function<List<ParseTree>, List<ParseTree>>>[] table =
+            (Function<INodeGetter, Function<List<ParseTree>, List<ParseTree>>>[])
                 new Function[XQueryAxis.values().length];
 
         table[XQueryAxis.ANCESTOR.ordinal()] = ng -> ng::getAllAncestors;
@@ -869,7 +873,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     @Override
     public XQueryValue visitNameTest(final NameTestContext ctx) {
         var matchedTreeNodes = matchedTreeNodes();
-        final Function<NodeGetter, Function<List<ParseTree>,List<ParseTree>>> axisFunctionSelector = AXIS_DISPATCH_TABLE[currentAxis.ordinal()];
+        final Function<INodeGetter, Function<List<ParseTree>,List<ParseTree>>> axisFunctionSelector = AXIS_DISPATCH_TABLE[currentAxis.ordinal()];
         final Function<List<ParseTree>, List<ParseTree>> axisFunction = axisFunctionSelector.apply(nodeGetter);
         final List<ParseTree> stepNodes = axisFunction.apply(matchedTreeNodes);
 
@@ -987,7 +991,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return contextArgument;
     }
 
-    final NamespaceResolver namespaceResolver = new NamespaceResolver("fn");
+    final INamespaceResolver namespaceResolver = new NamespaceResolver("fn");
 
     @Override
     public XQueryValue visitArrowFunctionSpecifier(final ArrowFunctionSpecifierContext ctx) {

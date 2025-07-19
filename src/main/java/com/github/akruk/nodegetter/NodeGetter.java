@@ -8,8 +8,9 @@ import java.util.stream.IntStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 
-public class NodeGetter {
+public class NodeGetter implements INodeGetter {
 
+    @Override
     public List<ParseTree> getPrecedingSiblingsOrSelf(final ParseTree node) {
         final var newMatched = new ArrayList<ParseTree>();
         final var preceding = getPrecedingSiblings(node);
@@ -19,6 +20,7 @@ public class NodeGetter {
     }
 
 
+    @Override
     public List<ParseTree> getAllPrecedingSiblingsOrSelf(final List<ParseTree> matchedTreeNodes) {
         final var result = new ArrayList<ParseTree>();
         for (final var node : matchedTreeNodes) {
@@ -29,6 +31,7 @@ public class NodeGetter {
     }
 
 
+    @Override
     public List<ParseTree> getFollowingSiblingsOrSelf(final ParseTree node) {
         final var newMatched = new ArrayList<ParseTree>();
         final var following = getFollowingSiblings(node);
@@ -38,6 +41,7 @@ public class NodeGetter {
     }
 
 
+    @Override
     public List<ParseTree> getAllFollowingSiblingsOrSelf(final List<ParseTree> matchedTreeNodes) {
         final var result = new ArrayList<ParseTree>();
         for (final var node : matchedTreeNodes) {
@@ -47,6 +51,7 @@ public class NodeGetter {
         return result;
     }
 
+    @Override
     public List<ParseTree> getPrecedingOrSelf(final ParseTree node) {
         final var newMatched = new ArrayList<ParseTree>();
         final var following = getPreceding(node);
@@ -55,6 +60,8 @@ public class NodeGetter {
         return newMatched;
     }
 
+
+    @Override
     public List<ParseTree> getAllPrecedingOrSelf(final List<ParseTree> matchedTreeNodes) {
         final var result = new ArrayList<ParseTree>();
         for (final var node : matchedTreeNodes) {
@@ -65,6 +72,7 @@ public class NodeGetter {
     }
 
 
+    @Override
     public List<ParseTree> getFollowingOrSelf(final ParseTree node) {
         final var newMatched = new ArrayList<ParseTree>();
         final var following = getFollowing(node);
@@ -74,6 +82,7 @@ public class NodeGetter {
     }
 
 
+    @Override
     public List<ParseTree> getAllFollowingOrSelf(final List<ParseTree> matchedTreeNodes) {
         final var result = new ArrayList<ParseTree>();
         for (final var node : matchedTreeNodes) {
@@ -83,6 +92,7 @@ public class NodeGetter {
         return result;
     }
 
+    @Override
     public List<ParseTree> getAllFollowing(final List<ParseTree> nodes) {
         final var result = new ArrayList<ParseTree>();
         for (final var node : nodes) {
@@ -92,6 +102,7 @@ public class NodeGetter {
         return result;
     }
 
+    @Override
     public List<ParseTree> getFollowing(final ParseTree node) {
         final List<ParseTree> ancestors = getAncestors(node);
         final List<ParseTree> ancestorFollowingSiblings = getAllFollowingSiblings(ancestors);
@@ -112,6 +123,7 @@ public class NodeGetter {
     }
 
 
+    @Override
     public List<ParseTree> getAllPreceding(final List<ParseTree> nodes) {
         final var result = new ArrayList<ParseTree>();
         for (final var node : nodes) {
@@ -122,6 +134,7 @@ public class NodeGetter {
     }
 
 
+    @Override
     public List<ParseTree> getPreceding(final ParseTree node) {
         final List<ParseTree> ancestors = getAncestors(node);
         final List<ParseTree> ancestorPrecedingSiblings = getAllPrecedingSiblings(ancestors);
@@ -137,6 +150,7 @@ public class NodeGetter {
         return following;
     }
 
+    @Override
     public List<ParseTree> getAllFollowingSiblings(final List<ParseTree> nodes) {
         final var result = new ArrayList<ParseTree>();
         for (final var node : nodes) {
@@ -146,6 +160,7 @@ public class NodeGetter {
         return result;
     }
 
+    @Override
     public List<ParseTree> getFollowingSiblings(final ParseTree node) {
         final var parent = node.getParent();
         if (parent == null)
@@ -158,6 +173,7 @@ public class NodeGetter {
 
 
 
+    @Override
     public List<ParseTree> getAllPrecedingSiblings(final List<ParseTree> nodes) {
         final var result = new ArrayList<ParseTree>();
         for (final var node : nodes) {
@@ -168,6 +184,7 @@ public class NodeGetter {
     }
 
 
+    @Override
     public List<ParseTree> getPrecedingSiblings(final ParseTree node) {
         final var parent = node.getParent();
         if (parent == null)
@@ -179,6 +196,7 @@ public class NodeGetter {
     }
 
 
+    @Override
     public List<ParseTree> getAllDescendantsOrSelf(final List<ParseTree> nodes) {
         final var newMatched = new ArrayList<ParseTree>();
         for (final var node :nodes) {
@@ -189,6 +207,7 @@ public class NodeGetter {
     }
 
 
+    @Override
     public List<ParseTree> getDescendantsOrSelf(final ParseTree node) {
         final var newMatched = new ArrayList<ParseTree>();
         final var descendants = getDescendants(node);
@@ -198,6 +217,7 @@ public class NodeGetter {
         return newMatched;
     }
 
+    @Override
     public List<ParseTree> getAllDescendants(final List<ParseTree> nodes) {
         final var allDescendants = new ArrayList<ParseTree>();
         for (final var node : nodes) {
@@ -208,6 +228,7 @@ public class NodeGetter {
     }
 
 
+    @Override
     public List<ParseTree> getDescendants(final ParseTree treenode) {
         final List<ParseTree> allDescendants = new ArrayList<>();
         final List<ParseTree> children = getChildren(treenode);
@@ -223,6 +244,7 @@ public class NodeGetter {
     }
 
 
+    @Override
     public List<ParseTree> getChildren(final ParseTree treenode) {
         final List<ParseTree> children = IntStream.range(0, treenode.getChildCount())
             .mapToObj(i->treenode.getChild(i))
@@ -231,6 +253,7 @@ public class NodeGetter {
     }
 
 
+    @Override
     public List<ParseTree> getAllChildren(final List<ParseTree> nodes) {
         final var newMatched = new ArrayList<ParseTree>();
         for (final var node : nodes) {
@@ -241,6 +264,7 @@ public class NodeGetter {
     }
 
 
+    @Override
     public List<ParseTree> getAllAncestors(final List<ParseTree> nodes) {
         final var newMatched = new ArrayList<ParseTree>();
         for (final var valueNode : nodes) {
@@ -250,6 +274,7 @@ public class NodeGetter {
         return newMatched.reversed();
     }
 
+    @Override
     public List<ParseTree> getAncestors(final ParseTree node) {
         final List<ParseTree> newMatched = new ArrayList<ParseTree>();
         ParseTree parent = node.getParent();
@@ -260,6 +285,7 @@ public class NodeGetter {
         return newMatched.reversed();
     }
 
+    @Override
     public List<ParseTree> getAllParents(final List<ParseTree> nodes) {
         final List<ParseTree> newMatched = nodes.stream()
             .map(ParseTree::getParent)
@@ -267,6 +293,7 @@ public class NodeGetter {
         return newMatched;
     }
 
+    @Override
     public List<ParseTree> getAllAncestorsOrSelf(final List<ParseTree> nodes) {
         // TODO: Correct sequence
         final var newMatched = new ArrayList<ParseTree>();

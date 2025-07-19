@@ -4,9 +4,9 @@ import java.util.Set;
 
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
-public class XQueryEnumItemTypeElement extends XQueryEnumItemType {
+public class XQueryItemTypeElement extends XQueryItemType {
 
-  public XQueryEnumItemTypeElement(Set<String> elementName, XQueryTypeFactory factory) {
+  public XQueryItemTypeElement(Set<String> elementName, XQueryTypeFactory factory) {
     super(XQueryTypes.ELEMENT, null, null, null, null, null, elementName, factory, null);
   }
 

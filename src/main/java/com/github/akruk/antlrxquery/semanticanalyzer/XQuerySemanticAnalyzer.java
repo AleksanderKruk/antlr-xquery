@@ -29,11 +29,10 @@ import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQu
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper.XQuerySemanticCharEscaperResult;
-import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
-import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
-import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType.RelativeCoercability;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeEnum;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemTypeEnum;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
@@ -1172,8 +1171,8 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             .map(e -> e.mapKeyExpr().accept(this).getItemType())
             .reduce((t1, t2) -> t1.alternativeMerge(t2))
             .get();
-        if (keyType instanceof XQueryEnumItemTypeEnum) {
-            final var enum_ = (XQueryEnumItemTypeEnum) keyType;
+        if (keyType instanceof XQueryItemTypeEnum) {
+            final var enum_ = (XQueryItemTypeEnum) keyType;
             final var enumMembers = enum_.getEnumMembers();
             final List<Entry<String, XQueryRecordField>> recordEntries = new ArrayList<>(enumMembers.size());
             int i = 0;

@@ -7,10 +7,9 @@ import org.antlr.v4.runtime.tree.ParseTree;
 
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQueryVisitingSemanticContext;
-import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 
 public interface IXQuerySemanticFunctionManager {
-    // public static record ArgumentSpecification() {}
     public static record AnalysisResult(XQuerySequenceType result,
                                             List<ArgumentSpecification> requiredDefaultArguments,
                                             List<String> errors)

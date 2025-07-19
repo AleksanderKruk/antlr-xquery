@@ -1,7 +1,7 @@
 package com.github.akruk.antlrxquery.contextmanagement.semanticcontext;
 
 import com.github.akruk.antlrxquery.contextmanagement.XQueryContextManager;
-import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 
 public interface XQuerySemanticContextManager extends XQueryContextManager {
     boolean entypeVariable(String variableName, XQuerySequenceType assignedType);

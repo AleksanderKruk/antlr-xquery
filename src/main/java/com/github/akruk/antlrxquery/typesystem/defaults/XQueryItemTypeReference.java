@@ -5,29 +5,27 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
-import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
 
-public class XQueryEnumItemTypeReference extends XQueryEnumItemType {
+public class XQueryItemTypeReference extends XQueryItemType {
     private final Supplier<XQueryItemType> referenceSupplier;
-    private XQueryEnumItemType referencedTypeCast;
+    private XQueryItemType referencedTypeCast;
 
-    public XQueryEnumItemTypeReference(Supplier<XQueryItemType> referenceSupplier) {
+    public XQueryItemTypeReference(Supplier<XQueryItemType> referenceSupplier) {
         super(XQueryTypes.ANY_ITEM, List.of(), null, null, null, null, null, null, null);
         this.referenceSupplier = referenceSupplier;
     }
 
-    private XQueryEnumItemType getReferencedType()  {
+    private XQueryItemType getReferencedType()  {
         if (referencedTypeCast == null) {
             var referencedType = referenceSupplier.get();
-            referencedTypeCast = (XQueryEnumItemType) referencedType;
+            referencedTypeCast = (XQueryItemType) referencedType;
         }
         return referencedTypeCast;
     }
 
     @Override
     public XQueryTypes getType() {
-        IXQueryEnumItemType type = getReferencedType();
+        XQueryItemType type = getReferencedType();
         return type.getType();
     }
 

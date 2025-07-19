@@ -2,8 +2,8 @@ package com.github.akruk.antlrxquery.typesystem.defaults;
 
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
-public class XQueryEnumEmptySequenceType extends XQueryEnumSequenceType {
-    public XQueryEnumEmptySequenceType(XQueryTypeFactory typeFactory) {
+public class XQueryEmptySequenceType extends XQuerySequenceType {
+    public XQueryEmptySequenceType(XQueryTypeFactory typeFactory) {
         super(typeFactory, null, XQueryOccurence.ZERO);
     }
 

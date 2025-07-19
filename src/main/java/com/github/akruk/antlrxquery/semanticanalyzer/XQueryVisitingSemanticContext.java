@@ -1,6 +1,6 @@
 package com.github.akruk.antlrxquery.semanticanalyzer;
 
-import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 
 public class XQueryVisitingSemanticContext {
     private XQuerySequenceType itemType;

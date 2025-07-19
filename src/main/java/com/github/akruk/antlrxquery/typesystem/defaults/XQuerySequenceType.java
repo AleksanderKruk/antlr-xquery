@@ -3,7 +3,6 @@ package com.github.akruk.antlrxquery.typesystem.defaults;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 
-import com.github.akruk.antlrxquery.semanticanalyzer.RelativeCoercability;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })

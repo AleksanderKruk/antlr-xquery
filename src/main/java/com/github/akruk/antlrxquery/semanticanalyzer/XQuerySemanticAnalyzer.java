@@ -860,6 +860,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         var targetType = ctx.postfixExpr().accept(this);
         KeySpecifierContext keySpecifier = ctx.lookup().keySpecifier();
         var keySpecifierType = keySpecifier.accept(this);
+        // TODO: rewrite
         XQuerySequenceType result = null;
         if (keySpecifierType == null) {
             // direct key access
@@ -870,7 +871,8 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
                 result = targetType.lookupWildcard();
             }
         }
-        return targetType.lookup(keySpecifierType);
+        return result;
+        // return targetType.lookup(keySpecifierType);
     }
 
     @Override

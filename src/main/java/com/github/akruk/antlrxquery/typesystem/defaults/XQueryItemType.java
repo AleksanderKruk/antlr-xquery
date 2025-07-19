@@ -2,9 +2,11 @@ package com.github.akruk.antlrxquery.typesystem.defaults;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.IntStream;
 
+import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.ItemtypeAlternativeMerger;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.ItemtypeIntersectionMerger;
@@ -264,6 +266,10 @@ public class XQueryItemType {
         return null;
     }
     public XQuerySequenceType getArrayMemberType() {
+        return null;
+    }
+
+    public Map<String, XQueryRecordField> getRecordFields() {
         return null;
     }
 }

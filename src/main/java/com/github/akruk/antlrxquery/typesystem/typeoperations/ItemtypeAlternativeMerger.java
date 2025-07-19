@@ -1,5 +1,5 @@
 
-package com.github.akruk.antlrxquery.typesystem.typeoperations.defaults;
+package com.github.akruk.antlrxquery.typesystem.typeoperations;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -9,7 +9,11 @@ import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
+<<<<<<< HEAD:src/main/java/com/github/akruk/antlrxquery/typesystem/typeoperations/defaults/ItemtypeAlternativeMerger.java
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryChoiceItemType;
+=======
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumChoiceItemType;
+>>>>>>> language-features/lookup-expression:src/main/java/com/github/akruk/antlrxquery/typesystem/typeoperations/ItemtypeAlternativeMerger.java
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemTypeArray;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemTypeElement;
@@ -417,8 +421,13 @@ public class ItemtypeAlternativeMerger
     {
         final var x_ = (XQueryItemTypeArray) x;
         final var y_ = (XQueryItemTypeArray) y;
+<<<<<<< HEAD:src/main/java/com/github/akruk/antlrxquery/typesystem/typeoperations/defaults/ItemtypeAlternativeMerger.java
         final var xArrayType = x_.getArrayType();
         final var yArrayType = y_.getArrayType();
+=======
+        final var xArrayType = x_.getArrayMemberType();
+        final var yArrayType = y_.getArrayMemberType();
+>>>>>>> language-features/lookup-expression:src/main/java/com/github/akruk/antlrxquery/typesystem/typeoperations/ItemtypeAlternativeMerger.java
         final var merged = xArrayType.sequenceMerge(yArrayType);
         return typeFactory.itemArray(merged);
     }
@@ -571,6 +580,18 @@ public class ItemtypeAlternativeMerger
     }
 
 
+<<<<<<< HEAD:src/main/java/com/github/akruk/antlrxquery/typesystem/typeoperations/defaults/ItemtypeAlternativeMerger.java
+=======
+    /**
+     * Merges two item types into one alternative item type.
+     * e.g.
+     * number, string -> (number | xs:string)
+     * element(a), element(b) -> element(a | b)
+     * @param type1 the first item type
+     * @param type2 the second item type
+     * @return a new item type that is an alternative of the two input types
+    */
+>>>>>>> language-features/lookup-expression:src/main/java/com/github/akruk/antlrxquery/typesystem/typeoperations/ItemtypeAlternativeMerger.java
     public XQueryItemType alternativeMerge(final XQueryItemType type1, final XQueryItemType type2)
     {
         final int otherOrdinal = ((XQueryItemType) type2).getType().ordinal();

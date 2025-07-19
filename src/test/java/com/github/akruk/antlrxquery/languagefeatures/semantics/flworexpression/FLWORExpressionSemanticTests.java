@@ -27,7 +27,8 @@ public class FLWORExpressionSemanticTests extends SemanticTestsBase {
 
     @Test
     public void forMembers() {
-        assertType("for member $x in [1, 2, 3] return $x", typeFactory.zeroOrMore(typeFactory.itemNumber()));
+        assertType("for member $x in [1, 2, 3] return $x",
+            typeFactory.zeroOrMore(typeFactory.itemNumber()));
     }
 
     @Test
@@ -48,7 +49,7 @@ public class FLWORExpressionSemanticTests extends SemanticTestsBase {
     @Test
     public void forEntry() {
         assertType("for key $x value $y in {1: 'a', 2: 'b', 3: 'c'} return ($x, $y)", typeFactory.zeroOrMore(
-                typeFactory.itemChoice(Set.of(typeFactory.itemNumber(), typeFactory.itemString()))));
+                typeFactory.itemChoice(Set.of(typeFactory.itemNumber(), typeFactory.itemEnum(Set.of("a", "b", "c"))))));
     }
 
 

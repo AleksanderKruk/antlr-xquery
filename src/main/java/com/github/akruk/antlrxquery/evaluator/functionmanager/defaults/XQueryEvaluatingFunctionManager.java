@@ -25,7 +25,6 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser;
 import com.github.akruk.antlrxquery.evaluator.XQueryEvaluatorVisitor;
 import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
 import com.github.akruk.antlrxquery.evaluator.collations.Collations;
-import com.github.akruk.antlrxquery.evaluator.functionmanager.IXQueryEvaluatingFunctionManager;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.*;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.AggregateFunctions;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.CardinalityFunctions;
@@ -42,9 +41,9 @@ import com.github.akruk.antlrxquery.values.XQueryError;
 import com.github.akruk.antlrxquery.values.XQueryFunction;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
-import com.github.akruk.nodegetter.INodeGetter;
+import com.github.akruk.nodegetter.NodeGetter;
 
-public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManager {
+public class XQueryEvaluatingFunctionManager {
     private static final ParseTree CONTEXT_VALUE = getTree(".", parser -> parser.contextItemExpr());
     private static final ParseTree DEFAULT_COLLATION = getTree("fn:default-collation()",
             parser -> parser.functionCall());
@@ -78,8 +77,8 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
     private final ProcessingBooleans processingBooleans;
     private final ProcessingSequencesFunctions processingSequences;
 
-    public EvaluatingFunctionManager(final XQueryEvaluatorVisitor evaluator, final Parser parser,
-            final XQueryValueFactory valueFactory, final INodeGetter nodeGetter) {
+    public XQueryEvaluatingFunctionManager(final XQueryEvaluatorVisitor evaluator, final Parser parser,
+            final XQueryValueFactory valueFactory, final NodeGetter nodeGetter) {
         this.valueFactory = valueFactory;
         this.evaluator = evaluator;
         this.namespaces = new HashMap<>(10);
@@ -497,7 +496,6 @@ public class EvaluatingFunctionManager implements IXQueryEvaluatingFunctionManag
         return new FunctionOrError(functionWithRequiredArity.get(), null);
     }
 
-    @Override
     public XQueryValue call(final String namespace, final String functionName, final XQueryVisitingContext context,
             final List<XQueryValue> args, final Map<String, XQueryValue> keywordArgs) {
         // Copy is made to allow for immutable hashmaps

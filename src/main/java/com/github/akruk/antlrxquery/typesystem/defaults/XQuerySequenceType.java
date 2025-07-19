@@ -3,11 +3,20 @@ package com.github.akruk.antlrxquery.typesystem.defaults;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 
+<<<<<<< HEAD
 import com.github.akruk.antlrxquery.semanticanalyzer.RelativeCoercability;
+=======
+>>>>>>> language-features/lookup-expression
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class XQuerySequenceType {
+<<<<<<< HEAD
+=======
+    public enum RelativeCoercability {
+        ALWAYS, POSSIBLE, NEVER
+    }
+>>>>>>> language-features/lookup-expression
     private static final int ONE_OR_MORE = XQueryOccurence.ONE_OR_MORE.ordinal();
     private static final int ZERO_OR_MORE = XQueryOccurence.ZERO_OR_MORE.ordinal();
     private static final int ZERO_OR_ONE = XQueryOccurence.ZERO_OR_ONE.ordinal();
@@ -18,8 +27,13 @@ public class XQuerySequenceType {
     private final int occurence_;
     private final XQueryTypeFactory typeFactory;
     private final String occurenceSuffix;
-    private final Function<XQuerySequenceType, XQuerySequenceType> lookup;
+    private final BiPredicate<XQuerySequenceType, XQuerySequenceType>[] isSubtypeOf_;
 
+<<<<<<< HEAD
+=======
+    private Function<XQuerySequenceType, XQuerySequenceType> lookup;
+
+>>>>>>> language-features/lookup-expression
     public XQueryItemType getItemType() {
         return itemType;
     }
@@ -37,7 +51,8 @@ public class XQuerySequenceType {
         this.factoryByOccurence[ONE_OR_MORE] = i -> typeFactory.oneOrMore((XQueryItemType)i);
         this.occurenceSuffix = occurence.occurenceSuffix();
         this.requiresParentheses = requiresParentheses();
-        this.lookup = lookup_();
+        this.isSubtypeOf_ = XQuerySequenceType.isSubtypeOf[occurence_];
+        // this.lookup = lookup_();
     }
 
     private static boolean isNullableEquals(final Object one, final Object other) {
@@ -98,6 +113,7 @@ public class XQuerySequenceType {
         return this_.getItemType().itemtypeIsSubtypeOf(other.getItemType());
     }
 
+<<<<<<< HEAD
 
     public boolean isSubtypeOf(final XQuerySequenceType obj) {
         if (!(obj instanceof XQuerySequenceType))
@@ -106,6 +122,14 @@ public class XQuerySequenceType {
         final XQueryOccurence otherOccurence = other.getOccurence();
         final BiPredicate<XQuerySequenceType, XQuerySequenceType> predicate =
             isSubtypeOf[this.occurence.ordinal()][otherOccurence.ordinal()];
+=======
+    public boolean isSubtypeOf(final XQuerySequenceType obj) {
+        if (!(obj instanceof XQuerySequenceType other))
+            return false;
+        final XQueryOccurence otherOccurence = other.getOccurence();
+        final BiPredicate<XQuerySequenceType, XQuerySequenceType> predicate =
+            isSubtypeOf_[otherOccurence.ordinal()];
+>>>>>>> language-features/lookup-expression
         return predicate.test(this, other);
     }
     public XQueryOccurence getOccurence() {
@@ -116,22 +140,34 @@ public class XQuerySequenceType {
         return occurence == XQueryOccurence.ONE;
     }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> language-features/lookup-expression
     public boolean isOneOrMore() {
         return occurence == XQueryOccurence.ONE_OR_MORE;
     }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> language-features/lookup-expression
     public boolean isZeroOrMore() {
         return occurence == XQueryOccurence.ZERO_OR_MORE;
     }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> language-features/lookup-expression
     public boolean isZeroOrOne() {
         return occurence == XQueryOccurence.ZERO_OR_ONE;
     }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> language-features/lookup-expression
     public boolean isZero() {
         return occurence == XQueryOccurence.ZERO;
     }
@@ -182,7 +218,10 @@ public class XQuerySequenceType {
     }
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> language-features/lookup-expression
     public XQuerySequenceType sequenceMerge(final XQuerySequenceType other) {
         final var enumType1 = this;
         final var enumType2 = (XQuerySequenceType) other;
@@ -205,12 +244,18 @@ public class XQuerySequenceType {
 
     }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> language-features/lookup-expression
     public boolean itemtypeIsSubtypeOf(final XQuerySequenceType obj) {
         return itemType.itemtypeIsSubtypeOf(itemType);
     }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> language-features/lookup-expression
     public boolean hasEffectiveBooleanValue() {
         if (occurence == XQueryOccurence.ONE)
             return itemType.hasEffectiveBooleanValue();
@@ -254,10 +299,16 @@ public class XQuerySequenceType {
     }
 
 
+<<<<<<< HEAD
 
     public XQuerySequenceType unionMerge(final XQuerySequenceType other) {
         final var other_ = (XQuerySequenceType) other;
         final XQueryItemType otherItemType = other_.getItemType();
+=======
+    public XQuerySequenceType unionMerge(final XQuerySequenceType other) {
+        final var other_ = (XQuerySequenceType) other;
+        final XQueryItemType otherItemType = (XQueryItemType) other_.getItemType();
+>>>>>>> language-features/lookup-expression
         final XQueryOccurence mergedOccurence = unionOccurences[this.occurence.ordinal()][other_.getOccurence().ordinal()];
         final int occurence_ = mergedOccurence.ordinal();
         if (itemType == null) {
@@ -318,10 +369,16 @@ public class XQuerySequenceType {
         intersectionOccurences[oneOrMore_][oneOrMore_] = zeroOrMore;
     }
 
+<<<<<<< HEAD
 
     public XQuerySequenceType intersectionMerge(final XQuerySequenceType other) {
         final var other_ = (XQuerySequenceType) other;
         final XQueryItemType otherItemType = other_.getItemType();
+=======
+    public XQuerySequenceType intersectionMerge(final XQuerySequenceType other) {
+        final var other_ = (XQuerySequenceType) other;
+        final XQueryItemType otherItemType = (XQueryItemType) other_.getItemType();
+>>>>>>> language-features/lookup-expression
         final XQueryOccurence mergedOccurence = intersectionOccurences[this.occurence.ordinal()][other_.getOccurence().ordinal()];
         final int occurence_ = mergedOccurence.ordinal();
         if (itemType == null) {
@@ -371,7 +428,10 @@ public class XQuerySequenceType {
         exceptOccurences[ONE_OR_MORE][ONE_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
     }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> language-features/lookup-expression
     public XQuerySequenceType exceptionMerge(final XQuerySequenceType other) {
         final var other_ = (XQuerySequenceType) other;
         final XQueryOccurence mergedOccurence = exceptOccurences[this.occurence.ordinal()][other_.getOccurence().ordinal()];
@@ -416,7 +476,10 @@ public class XQuerySequenceType {
 
 	final Function<XQueryItemType, XQuerySequenceType>[] factoryByOccurence;
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> language-features/lookup-expression
     public XQuerySequenceType alternativeMerge(final XQuerySequenceType other) {
         final var other_ = (XQuerySequenceType) other;
         final var occurence_ = typeAlternativeOccurence[occurence.ordinal()][other_.getOccurence().ordinal()];
@@ -430,7 +493,10 @@ public class XQuerySequenceType {
         return (XQuerySequenceType) sequenceTypeFactory.apply(mergedItemType);
     }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> language-features/lookup-expression
     public boolean castableAs(final XQuerySequenceType other) {
         if (!(other instanceof XQuerySequenceType))
             return false;
@@ -441,7 +507,10 @@ public class XQuerySequenceType {
         return this.getItemType().castableAs(otherEnum.getItemType());
     }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> language-features/lookup-expression
     public XQuerySequenceType addOptionality() {
         return alternativeMerge(typeFactory.emptySequence());
     }
@@ -468,16 +537,22 @@ public class XQuerySequenceType {
         isValueComparableWith[ZERO_OR_ONE][ZERO_OR_ONE] = true;
     }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> language-features/lookup-expression
     public boolean isValueComparableWith(final XQuerySequenceType other) {
         final var cast = (XQuerySequenceType) other;
         if (isZero() || other.isZero())
             return true;
-        return isValueComparableWith[occurence.ordinal()][cast.getOccurence().ordinal()] && itemType.isValueComparableWith(other.getItemType());
+        return isValueComparableWith[occurence_][cast.getOccurence().ordinal()] && itemType.isValueComparableWith(other.getItemType());
     }
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> language-features/lookup-expression
     public XQuerySequenceType iteratedItem() {
         if (occurence != XQueryOccurence.ZERO)
             return typeFactory.one(itemType);
@@ -485,12 +560,18 @@ public class XQuerySequenceType {
             return typeFactory.emptySequence();
     }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> language-features/lookup-expression
     public XQuerySequenceType mapping(final XQuerySequenceType mappingExpressionType) {
-        return (XQuerySequenceType) factoryByOccurence[occurence.ordinal()].apply(mappingExpressionType.getItemType());
+        return (XQuerySequenceType) factoryByOccurence[occurence_].apply(mappingExpressionType.getItemType());
     }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> language-features/lookup-expression
     public String toString() {
         StringBuilder sb = new StringBuilder();
         if (occurence == XQueryOccurence.ZERO) {
@@ -514,10 +595,16 @@ public class XQuerySequenceType {
     private final boolean requiresParentheses;
     private boolean requiresParentheses() {
         return occurenceSuffix != "" &&( itemType instanceof XQueryItemTypeFunction
+<<<<<<< HEAD
                                         || itemType instanceof XQueryChoiceItemType);
     }
 
 
+=======
+                                        || itemType instanceof XQueryEnumChoiceItemType);
+    }
+
+>>>>>>> language-features/lookup-expression
     public RelativeCoercability coerceableTo(XQuerySequenceType requiredType) {
         if (this == requiredType || isSubtypeOf(requiredType)) {
             return RelativeCoercability.ALWAYS;
@@ -530,32 +617,54 @@ public class XQuerySequenceType {
     }
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> language-features/lookup-expression
     public XQueryItemType getMapKeyType() {
         return itemType.getMapKeyType();
     }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> language-features/lookup-expression
     public XQuerySequenceType getMapValueType() {
         return itemType.getMapValueType();
     }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> language-features/lookup-expression
     public XQuerySequenceType getArrayMemberType() {
-        return itemType.getArrayType();
+        return itemType.getArrayMemberType();
     }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> language-features/lookup-expression
     public XQuerySequenceType getReturnedType() {
         return itemType.getReturnedType();
     }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> language-features/lookup-expression
     public XQuerySequenceType lookup(XQuerySequenceType keySpecifierType) {
+        if (lookup == null)
+            lookup = lookup_();
         return this.lookup.apply(keySpecifierType);
     }
 
     public Function<XQuerySequenceType, XQuerySequenceType> lookup_() {
+        if (occurence_ == ZERO)
+            return (_)->typeFactory.emptySequence();
+        if (itemType == null)
+            return (_)->typeFactory.error();
+
         if (itemType.itemtypeIsSubtypeOf(typeFactory.itemAnyArray())) {
             return (keySpecifierType) -> {
                 XQueryItemType lookedUpItem = itemType.lookup(keySpecifierType).getItemType();
@@ -572,6 +681,11 @@ public class XQuerySequenceType {
             };
         }
         return (_) -> typeFactory.error();
+    }
+
+    public XQuerySequenceType lookupWildcard() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'lookupWildcard'");
     }
 
 }

@@ -1,14 +1,13 @@
-package com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.baseimplementation;
+package com.github.akruk.antlrxquery.evaluator.dynamiccontext;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import com.github.akruk.antlrxquery.contextmanagement.dynamiccontext.XQueryDynamicScope;
 import com.github.akruk.antlrxquery.values.XQueryValue;
 
-public class XQueryBaseDynamicScope implements XQueryDynamicScope {
+public class XQueryDynamicScope {
     Map<String, XQueryValue> variables = new HashMap<>();
-    @Override
+
     public boolean provideVariable(String variableName, XQueryValue assignedValue) {
         boolean addedVariable = variables.containsKey(variableName);
         variables.put(variableName, assignedValue);
@@ -16,13 +15,13 @@ public class XQueryBaseDynamicScope implements XQueryDynamicScope {
     }
 
 
-    @Override
+
     public XQueryValue getVariable(String variableName) {
         return variables.getOrDefault(variableName, null);
     }
 
 
-    @Override
+
     public boolean hasVariable(String variableName) {
         return variables.containsKey(variableName);
     }

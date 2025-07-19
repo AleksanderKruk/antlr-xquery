@@ -1,15 +1,18 @@
-package com.github.akruk.antlrxquery.contextmanagement.semanticcontext.baseimplementation;
+package com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext;
 
 import java.util.HashMap;
 import java.util.Map;
 
+<<<<<<< HEAD:src/main/java/com/github/akruk/antlrxquery/contextmanagement/semanticcontext/baseimplementation/XQueryBaseSemanticScope.java
 import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.XQuerySemanticScope;
+=======
+>>>>>>> language-features/lookup-expression:src/main/java/com/github/akruk/antlrxquery/semanticanalyzer/semanticcontext/XQuerySemanticScope.java
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 
-public class XQueryBaseSemanticScope implements XQuerySemanticScope {
+
+public class XQuerySemanticScope {
     Map<String, XQuerySequenceType> variables = new HashMap<>();
 
-    @Override
     public boolean entypeVariable(String variableName, XQuerySequenceType assignedType) {
         boolean addedVariable = variables.containsKey(variableName);
         variables.put(variableName, assignedType);
@@ -17,13 +20,11 @@ public class XQueryBaseSemanticScope implements XQuerySemanticScope {
     }
 
 
-    @Override
     public XQuerySequenceType getVariable(String variableName) {
         return variables.getOrDefault(variableName, null);
     }
 
 
-    @Override
     public boolean hasVariable(String variableName) {
         return variables.containsKey(variableName);
     }

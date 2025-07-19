@@ -18,11 +18,11 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.xpath.XPath;
 
 import com.github.akruk.antlrxquery.evaluator.XQuery;
-import com.github.akruk.antlrxquery.values.XQueryError;
-import com.github.akruk.antlrxquery.values.XQuerySequence;
-import com.github.akruk.antlrxquery.values.XQueryValue;
-import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
-import com.github.akruk.antlrxquery.values.factories.defaults.XQueryMemoizedValueFactory;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryError;
+import com.github.akruk.antlrxquery.evaluator.values.XQuerySequence;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
+import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
+import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMemoizedValueFactory;
 
 public class EvaluationTestsBase {
     public XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory();

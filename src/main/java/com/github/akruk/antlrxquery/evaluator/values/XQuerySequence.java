@@ -1,10 +1,10 @@
-package com.github.akruk.antlrxquery.values;
+package com.github.akruk.antlrxquery.evaluator.values;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
+import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 
 public class XQuerySequence extends XQueryValueBase<List<XQueryValue>> {
     @Override

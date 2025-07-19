@@ -3,8 +3,8 @@ package com.github.akruk.antlrxquery.languagefeatures.evaluation.functions;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
+import com.github.akruk.antlrxquery.evaluator.values.XQueryString;
 import com.github.akruk.antlrxquery.languagefeatures.evaluation.EvaluationTestsBase;
-import com.github.akruk.antlrxquery.values.XQueryString;
 
 public class ProcessingSequences extends EvaluationTestsBase {
 

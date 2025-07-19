@@ -13,12 +13,12 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
-import com.github.akruk.antlrxquery.values.XQueryError;
-import com.github.akruk.antlrxquery.values.XQuerySequence;
-import com.github.akruk.antlrxquery.values.XQueryString;
-import com.github.akruk.antlrxquery.values.XQueryValue;
-import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.htmlentities.HTMLEntities;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryError;
+import com.github.akruk.antlrxquery.evaluator.values.XQuerySequence;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryString;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
+import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 
 public class FunctionsOnStringValues {
     private final XQueryValueFactory valueFactory;

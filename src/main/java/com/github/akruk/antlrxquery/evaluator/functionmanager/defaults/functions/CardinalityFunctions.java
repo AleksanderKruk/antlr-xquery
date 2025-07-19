@@ -4,9 +4,9 @@ package com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.function
 import java.util.List;
 
 import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
-import com.github.akruk.antlrxquery.values.XQueryError;
-import com.github.akruk.antlrxquery.values.XQueryValue;
-import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryError;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
+import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 
 public class CardinalityFunctions {
     public CardinalityFunctions(final XQueryValueFactory valueFactory) {

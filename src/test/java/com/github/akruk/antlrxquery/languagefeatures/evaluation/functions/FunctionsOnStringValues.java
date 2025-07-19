@@ -4,8 +4,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import com.github.akruk.antlrxquery.evaluator.values.*;
 import com.github.akruk.antlrxquery.languagefeatures.evaluation.EvaluationTestsBase;
-import com.github.akruk.antlrxquery.values.*;
 
 public class FunctionsOnStringValues extends EvaluationTestsBase {
     @Test

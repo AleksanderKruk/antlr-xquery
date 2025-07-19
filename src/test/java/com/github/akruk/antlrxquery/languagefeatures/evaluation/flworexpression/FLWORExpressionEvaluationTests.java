@@ -4,9 +4,9 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import com.github.akruk.antlrxquery.evaluator.values.XQueryNumber;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryString;
 import com.github.akruk.antlrxquery.languagefeatures.evaluation.EvaluationTestsBase;
-import com.github.akruk.antlrxquery.values.XQueryNumber;
-import com.github.akruk.antlrxquery.values.XQueryString;
 
 public class FLWORExpressionEvaluationTests extends EvaluationTestsBase {
 

@@ -1,4 +1,4 @@
-package com.github.akruk.antlrxquery.values.factories.defaults;
+package com.github.akruk.antlrxquery.evaluator.values.factories.defaults;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -6,17 +6,17 @@ import java.util.List;
 import java.util.Map;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import com.github.akruk.antlrxquery.values.XQueryArray;
-import com.github.akruk.antlrxquery.values.XQueryBoolean;
-import com.github.akruk.antlrxquery.values.XQueryFunction;
-import com.github.akruk.antlrxquery.values.XQueryFunctionReference;
-import com.github.akruk.antlrxquery.values.XQueryMap;
-import com.github.akruk.antlrxquery.values.XQueryNumber;
-import com.github.akruk.antlrxquery.values.XQuerySequence;
-import com.github.akruk.antlrxquery.values.XQueryString;
-import com.github.akruk.antlrxquery.values.XQueryTreeNode;
-import com.github.akruk.antlrxquery.values.XQueryValue;
-import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryArray;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryBoolean;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryFunction;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryFunctionReference;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryMap;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryNumber;
+import com.github.akruk.antlrxquery.evaluator.values.XQuerySequence;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryString;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryTreeNode;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
+import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 
 public class XQueryMemoizedValueFactory implements XQueryValueFactory{
     private Map<ParseTree, XQueryValue> createdNodes = new HashMap<>();

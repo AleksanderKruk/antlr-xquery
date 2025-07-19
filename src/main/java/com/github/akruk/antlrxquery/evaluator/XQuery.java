@@ -11,7 +11,7 @@ import java.util.List;
 import org.antlr.v4.runtime.CharStream;
 import com.github.akruk.antlrxquery.AntlrXqueryLexer;
 import com.github.akruk.antlrxquery.AntlrXqueryParser;
-import com.github.akruk.antlrxquery.values.XQueryValue;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 
 public final class XQuery {
   public static XQueryValue evaluate(ParseTree tree, String xquery, Parser parser) {

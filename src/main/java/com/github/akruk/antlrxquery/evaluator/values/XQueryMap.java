@@ -1,4 +1,4 @@
-package com.github.akruk.antlrxquery.values;
+package com.github.akruk.antlrxquery.evaluator.values;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -6,24 +6,23 @@ import java.util.Map;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
+import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 
-public record XQueryArray(List<XQueryValue> value, XQueryValueFactory valueFactory)
+public record XQueryMap(Map<XQueryValue, XQueryValue> value, XQueryValueFactory valueFactory)
         implements XQueryValue
 {
+
     @Override
     public XQueryValue valueEqual(XQueryValue other) {
-        if (!(other instanceof XQueryArray otherArray)) {
+        if (!(other instanceof XQueryMap otherMap)) {
             return XQueryError.InvalidArgumentType;
         }
-        if (this.value.size() != otherArray.value.size()) {
+        if (this.value.size() != otherMap.value.size()) {
             return valueFactory.bool(false);
         }
-
-        for (int i = 0; i < this.value.size(); i++) {
-            XQueryValue thisValue = this.value.get(i);
-            XQueryValue otherValue = otherArray.value.get(i);
-            if (!thisValue.valueEqual(otherValue).effectiveBooleanValue()) {
+        for (Map.Entry<XQueryValue, XQueryValue> entry : this.value.entrySet()) {
+            XQueryValue otherValue = otherMap.value.get(entry.getKey());
+            if (otherValue == null || !entry.getValue().valueEqual(otherValue).effectiveBooleanValue()) {
                 return valueFactory.bool(false);
             }
         }
@@ -52,23 +51,26 @@ public record XQueryArray(List<XQueryValue> value, XQueryValueFactory valueFacto
 
     @Override
     public String stringValue() {
-        StringBuilder sb = new StringBuilder("[");
-        for (int i = 0; i < value.size(); i++) {
-            sb.append(value.get(i).stringValue());
-            if (i < value.size() - 1) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{");
+        boolean first = true;
+        for (Map.Entry<XQueryValue, XQueryValue> entry : value.entrySet()) {
+            if (!first) {
                 sb.append(", ");
             }
+            first = false;
+            sb.append(String.valueOf(entry.getKey()))
+              .append(": ")
+              .append(entry.getValue() != null ? entry.getValue().stringValue() : "null");
         }
-        sb.append("]");
+        sb.append("}");
         return sb.toString();
     }
 
     @Override
     public XQueryFunction functionValue() {
-        return (_, args) -> {
-            if (!args.get(0).isNumericValue())
-                return XQueryError.InvalidArgumentType;
-            return value.get(args.get(0).numericValue().intValue());
+        return (_, positionalArguments) -> {
+            return value.get(positionalArguments.get(0));
         };
     }
 
@@ -259,14 +261,11 @@ public record XQueryArray(List<XQueryValue> value, XQueryValueFactory valueFacto
 
     @Override
     public List<XQueryValue> arrayMembers() {
-        return value;
+        return null;
     }
 
     @Override
     public Map<XQueryValue, XQueryValue> mapEntries() {
-        return null;
+        return value;
     }
-
-
-
 }

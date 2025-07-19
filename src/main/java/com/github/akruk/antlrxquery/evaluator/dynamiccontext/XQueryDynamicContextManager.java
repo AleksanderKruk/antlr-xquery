@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-import com.github.akruk.antlrxquery.values.XQueryValue;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 
 public class XQueryDynamicContextManager {
     final List<XQueryDynamicContext> contexts;

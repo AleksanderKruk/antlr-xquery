@@ -1,4 +1,4 @@
-package com.github.akruk.antlrxquery.values;
+package com.github.akruk.antlrxquery.evaluator.values;
 
 
 import java.util.List;
@@ -6,7 +6,7 @@ import java.util.Map;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
+import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 
 public class XQueryTreeNode extends XQueryValueBase<ParseTree> {
     public XQueryTreeNode(ParseTree node, XQueryValueFactory valueFactory) {

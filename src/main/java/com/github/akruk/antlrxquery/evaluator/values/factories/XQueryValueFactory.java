@@ -1,4 +1,4 @@
-package com.github.akruk.antlrxquery.values.factories;
+package com.github.akruk.antlrxquery.evaluator.values.factories;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -6,8 +6,8 @@ import java.util.Map;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import com.github.akruk.antlrxquery.values.XQueryFunction;
-import com.github.akruk.antlrxquery.values.XQueryValue;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryFunction;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 
 public interface XQueryValueFactory {
     public XQueryValue bool(boolean v);

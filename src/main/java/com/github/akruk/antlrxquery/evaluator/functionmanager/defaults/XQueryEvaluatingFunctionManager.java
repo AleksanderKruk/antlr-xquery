@@ -37,10 +37,10 @@ import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.ProcessingBooleans;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.ProcessingSequencesFunctions;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.ProcessingStrings;
-import com.github.akruk.antlrxquery.values.XQueryError;
-import com.github.akruk.antlrxquery.values.XQueryFunction;
-import com.github.akruk.antlrxquery.values.XQueryValue;
-import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryError;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryFunction;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
+import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 import com.github.akruk.nodegetter.NodeGetter;
 
 public class XQueryEvaluatingFunctionManager {

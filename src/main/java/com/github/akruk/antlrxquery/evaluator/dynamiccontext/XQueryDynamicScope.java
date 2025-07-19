@@ -3,7 +3,7 @@ package com.github.akruk.antlrxquery.evaluator.dynamiccontext;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.github.akruk.antlrxquery.values.XQueryValue;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 
 public class XQueryDynamicScope {
     Map<String, XQueryValue> variables = new HashMap<>();

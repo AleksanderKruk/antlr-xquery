@@ -1,4 +1,4 @@
-package com.github.akruk.antlrxquery.values;
+package com.github.akruk.antlrxquery.evaluator.values;
 
 import java.math.BigDecimal;
 import java.util.List;

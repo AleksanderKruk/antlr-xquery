@@ -14,7 +14,6 @@ import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 public class AggregateFunctions {
 
     private final XQueryValueFactory valueFactory;
-    private final Parser targetParser;
     private final Map<String, Collator> collationUriToCollator;;
 
     public AggregateFunctions(final XQueryValueFactory valueFactory,
@@ -22,7 +21,6 @@ public class AggregateFunctions {
                                 final Map<String, Collator> collationUriToCollator)
     {
         this.valueFactory = valueFactory;
-        this.targetParser = targetParser;
         this.collationUriToCollator = collationUriToCollator;
     }
 

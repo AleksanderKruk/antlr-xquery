@@ -17,9 +17,9 @@ import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 public class ProcessingStrings {
 
     private final XQueryValueFactory valueFactory;
-    private final Parser targetParser;
+    // private final Parser targetParser;
     private final Map<String, Collator> collationUriToCollator;
-    private final Collator defaultCollation;
+    // private final Collator defaultCollation;
     private final Locale defaultLocale;;
 
     public ProcessingStrings(final XQueryValueFactory valueFactory,
@@ -29,8 +29,8 @@ public class ProcessingStrings {
                             final Locale defaultLocale)
     {
         this.valueFactory = valueFactory;
-        this.targetParser = targetParser;
-        this.defaultCollation = defaultCollation;
+        // this.targetParser = targetParser;
+        // this.defaultCollation = defaultCollation;
         this.collationUriToCollator = collationUriToCollator;
         this.defaultLocale = defaultLocale;
     }
@@ -189,7 +189,7 @@ public class ProcessingStrings {
 
             final XQueryValue caseFirst = valueFactory.string("caseFirst");
             if (map.containsKey(caseFirst)) {
-                String cf = map.get(caseFirst).stringValue();
+                // String cf = map.get(caseFirst).stringValue();
                 // TODO: ...
                 // rbc.setUpperCaseFirst("upper".equals(cf));
             }

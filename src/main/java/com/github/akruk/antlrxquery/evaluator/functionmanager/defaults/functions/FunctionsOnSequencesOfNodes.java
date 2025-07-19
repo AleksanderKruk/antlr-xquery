@@ -14,7 +14,7 @@ import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 public class FunctionsOnSequencesOfNodes {
 
     private final XQueryValueFactory valueFactory;
-    private final Parser targetParser;;
+    private final Parser targetParser;
 
     public FunctionsOnSequencesOfNodes(final XQueryValueFactory valueFactory, final Parser targetParser) {
         this.valueFactory = valueFactory;

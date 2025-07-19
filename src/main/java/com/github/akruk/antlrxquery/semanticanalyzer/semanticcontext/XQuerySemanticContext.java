@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.XQuerySemanticScope;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 
 

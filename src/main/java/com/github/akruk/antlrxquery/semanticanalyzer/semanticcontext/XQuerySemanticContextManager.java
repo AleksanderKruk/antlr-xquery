@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 
 
+
 public class XQuerySemanticContextManager {
     final List<XQuerySemanticContext> contexts;
     final Supplier<XQuerySemanticContext> contextFactory;

@@ -13,21 +13,10 @@ import com.github.akruk.antlrxquery.typesystem.typeoperations.ItemtypeUnionMerge
 
 public class XQueryItemType {
     private static final int ANY_ITEM = XQueryTypes.ANY_ITEM.ordinal();
-    private static final int ANY_ARRAY = XQueryTypes.ANY_ARRAY.ordinal();
-    private static final int ARRAY = XQueryTypes.ARRAY.ordinal();
-    private static final int FUNCTION = XQueryTypes.FUNCTION.ordinal();
-    private static final int ANY_FUNCTION = XQueryTypes.ANY_FUNCTION.ordinal();
-    private static final int ANY_NODE = XQueryTypes.ANY_NODE.ordinal();
-    private static final int ELEMENT = XQueryTypes.ELEMENT.ordinal();
     private static final int STRING = XQueryTypes.STRING.ordinal();
     private static final int ENUM = XQueryTypes.ENUM.ordinal();
     private static final int BOOLEAN = XQueryTypes.BOOLEAN.ordinal();
     private static final int NUMBER = XQueryTypes.NUMBER.ordinal();
-    private static final int MAP = XQueryTypes.MAP.ordinal();
-    private static final int ANY_MAP = XQueryTypes.ANY_MAP.ordinal();
-    private static final int RECORD = XQueryTypes.RECORD.ordinal();
-    private static final int EXTENSIBLE_RECORD = XQueryTypes.EXTENSIBLE_RECORD.ordinal();
-    private static final int choice = XQueryTypes.CHOICE.ordinal();
     private final XQueryTypes type;
     private final int typeOrdinal;
 

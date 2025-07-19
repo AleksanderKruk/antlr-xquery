@@ -10,9 +10,9 @@ import java.util.stream.IntStream;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.defaults.ItemtypeAlternativeMerger;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.defaults.ItemtypeIntersectionMerger;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.defaults.ItemtypeUnionMerger;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.ItemtypeAlternativeMerger;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.ItemtypeIntersectionMerger;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.ItemtypeUnionMerger;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class XQueryItemType {
@@ -45,6 +45,7 @@ public class XQueryItemType {
     public Collection<XQueryItemType> getItemTypes() {
         return itemTypes;
     }
+
     public XQueryItemType(final XQueryTypes type,
                                 final List<XQuerySequenceType> argumentTypes,
                                 final XQuerySequenceType returnedType,
@@ -602,7 +603,6 @@ public class XQueryItemType {
     }
 
     public XQuerySequenceType lookup(XQuerySequenceType keySpecifierType) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'lookup'");
+        return null;
     }
 }

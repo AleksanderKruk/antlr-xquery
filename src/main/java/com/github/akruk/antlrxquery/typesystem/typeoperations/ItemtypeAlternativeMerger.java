@@ -417,8 +417,8 @@ public class ItemtypeAlternativeMerger
     {
         final var x_ = (XQueryItemTypeArray) x;
         final var y_ = (XQueryItemTypeArray) y;
-        final var xArrayType = x_.getArrayType();
-        final var yArrayType = y_.getArrayType();
+        final var xArrayType = x_.getArrayMemberType();
+        final var yArrayType = y_.getArrayMemberType();
         final var merged = xArrayType.sequenceMerge(yArrayType);
         return typeFactory.itemArray(merged);
     }
@@ -571,6 +571,15 @@ public class ItemtypeAlternativeMerger
     }
 
 
+    /**
+     * Merges two item types into one alternative item type.
+     * e.g.
+     * number, string -> (number | xs:string)
+     * element(a), element(b) -> element(a | b)
+     * @param type1 the first item type
+     * @param type2 the second item type
+     * @return a new item type that is an alternative of the two input types
+    */
     public XQueryItemType alternativeMerge(final XQueryItemType type1, final XQueryItemType type2)
     {
         final int otherOrdinal = ((XQueryItemType) type2).getType().ordinal();

@@ -19,13 +19,17 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQueryVisitingSemanticContext;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
-public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionManager {
+public class XQuerySemanticFunctionManager {
+    public static record AnalysisResult(XQuerySequenceType result,
+                                            List<ArgumentSpecification> requiredDefaultArguments,
+                                            List<String> errors)
+                                            {}
+    public static record ArgumentSpecification(String name, XQuerySequenceType type, ParseTree defaultArgument) {}
 
     private static final ParseTree CONTEXT_ITEM = getTree(".", parser -> parser.contextItemExpr());
     private static final ParseTree DEFAULT_COLLATION = getTree("fn:default-collation()", parser->parser.functionCall());
@@ -2742,7 +2746,6 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         return new SpecAndErrors(null, List.of(errorMessage));
     }
 
-    @Override
     public AnalysisResult call(
             final String namespace,
             final String name,
@@ -2924,7 +2927,6 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         return positionalTypeMismatch;
     }
 
-    @Override
     public AnalysisResult getFunctionReference(final String namespace, final String functionName, final int arity) {
         // TODO: Verify logic
         final var fallback = typeFactory.anyFunction();
@@ -2977,7 +2979,6 @@ public class XQuerySemanticFunctionManager implements IXQuerySemanticFunctionMan
         return register(namespace, functionName, args, returnedType, null, false, false);
     }
 
-    @Override
     public XQuerySemanticError register(
             final String namespace,
             final String functionName,

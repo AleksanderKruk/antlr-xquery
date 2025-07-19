@@ -4,12 +4,19 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 public class XQueryItemTypeArray extends XQueryItemType {
 
-  public XQueryItemTypeArray(XQuerySequenceType containedType, XQueryTypeFactory factory) {
-    super(XQueryTypes.ARRAY, null, null, containedType, null, null, null, factory, null);
-  }
+    private final XQuerySequenceType arrayType;
+    public XQueryItemTypeArray(XQuerySequenceType containedType, XQueryTypeFactory factory) {
+        super(XQueryTypes.ARRAY, null, null, null, null, null, null, factory, null);
+        arrayType = containedType;
+    }
 
-  @Override
-  public String toString() {
-      return "array(" + getArrayType() + ")";
-  }
+    @Override
+    public XQuerySequenceType getArrayMemberType() {
+        return arrayType;
+    }
+
+    @Override
+    public String toString() {
+        return "array(" + getArrayMemberType() + ")";
+    }
 }

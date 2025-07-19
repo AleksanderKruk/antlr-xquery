@@ -2,7 +2,7 @@ package com.github.akruk.antlrxquery.namespaceresolver;
 
 import java.util.regex.Pattern;
 
-public class NamespaceResolver implements INamespaceResolver {
+public class NamespaceResolver {
     public record ResolvedName(String namespace, String name) {}
 
     private String defaultNamespace;
@@ -13,7 +13,6 @@ public class NamespaceResolver implements INamespaceResolver {
         this.splitter = Pattern.compile(":");
     }
 
-    @Override
     public ResolvedName resolve(String fullName) {
         String[] parts = splitter.split(fullName, 2);
         boolean hasNamespace = parts.length == 2;

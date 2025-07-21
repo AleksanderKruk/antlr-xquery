@@ -1,84 +1,26 @@
-package com.github.akruk.antlrxquery.evaluator.values;
+// package com.github.akruk.antlrxquery.evaluator.values;
 
-import java.util.List;
-import java.util.Map;
+// import java.util.List;
+// import java.util.Map;
 
-import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
+// import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 
-public class XQueryBoolean extends XQueryValueBase<Boolean> {
+// public class XQueryBoolean
+//     implements XQueryValue<Boolean>
+// {
 
-    public XQueryBoolean(final boolean bool, final XQueryValueFactory valueFactory) {
-        super(bool, valueFactory);
-    }
-
-    @Override
-    public Boolean effectiveBooleanValue() {
-        return value;
-    }
+//     public XQueryBoolean(final boolean bool, final XQueryValueFactory valueFactory) {
+//     }
 
 
-    @Override
-    public String stringValue() {
-        return value ? "true" : "false";
-    }
+//     @Override
+//     public String stringValue() {
+//         return value ? "true" : "false";
+//     }
 
-    @Override
-    public String toString() {
-        return "<XQueryBoolean:" + stringValue() + "/>";
-    }
+//     @Override
+//     public String toString() {
+//         return "<XQueryBoolean:" + stringValue() + "/>";
+//     }
 
-    @Override
-    public XQueryValue not() {
-        return valueFactory.bool(!value);
-    }
-
-    @Override
-    public XQueryValue and(final XQueryValue other) {
-        if (!other.isBooleanValue()) return XQueryError.InvalidArgumentType;
-        return valueFactory.bool(value && other.effectiveBooleanValue());
-    }
-
-    @Override
-    public XQueryValue or(final XQueryValue other) {
-        if (!other.isBooleanValue()) return XQueryError.InvalidArgumentType;
-        return valueFactory.bool(value || other.effectiveBooleanValue());
-    }
-
-    @Override
-    public XQueryValue valueEqual(final XQueryValue other) {
-        if (!other.isBooleanValue()) return valueFactory.bool(false);
-        return valueFactory.bool(value.equals(other.effectiveBooleanValue()));
-    }
-
-    @Override
-    public XQueryValue valueLessThan(final XQueryValue other) {
-        if (!other.isBooleanValue()) return XQueryError.InvalidArgumentType;
-        return valueFactory.bool(!value && other.effectiveBooleanValue());
-    }
-
-    @Override
-    public XQueryValue data() {
-        return valueFactory.sequence(atomize());
-    }
-
-    @Override
-    public XQueryValue empty() {
-        return valueFactory.bool(false);
-    }
-
-    @Override
-    public boolean isEmptySequence() {
-        return false;
-    }
-
-    @Override
-    public List<XQueryValue> arrayMembers() {
-        return null;
-    }
-
-    @Override
-    public Map<XQueryValue, XQueryValue> mapEntries() {
-        return null;
-    }
-
-}
+// }

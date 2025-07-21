@@ -29,25 +29,25 @@ public class ParsingNumbers {
         XQueryValue node;
         if (args.isEmpty()) {
             if (context.getValue() == null) {
-                return XQueryError.MissingDynamicContextComponent;
+                return valueFactory.error(XQueryError.MissingDynamicContextComponent, "");
             }
             node = context.getValue();
         } else {
             node = args.get(0);
-            if (node.isEmptySequence()) {
+            if (node.isEmptySequence) {
                 return valueFactory.emptyString();
             }
-            if (!node.isNode()) {
-                return XQueryError.InvalidArgumentType;
+            if (!node.isNode) {
+                return valueFactory.error(XQueryError.InvalidArgumentType, "");
             }
         }
 
-        ParseTree nodeTree = node.node();
+        final ParseTree nodeTree = node.node;
         if (nodeTree == null || !(nodeTree instanceof ParserRuleContext ctx)) {
             return valueFactory.emptyString();
         }
 
-        String ruleName = targetParser.getRuleNames()[ctx.getRuleIndex()];
+        final String ruleName = targetParser.getRuleNames()[ctx.getRuleIndex()];
         return valueFactory.string(ruleName != null ? ruleName : "");
     }
 
@@ -60,25 +60,26 @@ public class ParsingNumbers {
 
         if (args.isEmpty()) {
             if (context.getValue() == null) {
-                return XQueryError.MissingDynamicContextComponent;
+                return valueFactory.error(XQueryError.MissingDynamicContextComponent, "");
             }
             target = context.getValue();
         } else {
             target = args.get(0);
-            if (target.isEmptySequence()) {
+            if (target.isEmptySequence) {
                 return valueFactory.emptyString();
             }
         }
-        if (target.isEmptySequence()) {
+        if (target.isEmptySequence) {
             return valueFactory.emptyString();
         }
 
-        return valueFactory.string(target.stringValue());
+        return valueFactory.string(target.stringValue);
     }
 
 
     public XQueryValue data(XQueryVisitingContext ctx, List<XQueryValue> args) {
-        return args.get(0).data();
+        return null;
+        // return args.get(0).data();
     }
 
 }

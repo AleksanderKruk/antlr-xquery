@@ -25,17 +25,17 @@ public class NumericOperators {
 
         // Must have exactly 2 arguments
         if (args.size() != 2) {
-            return XQueryError.WrongNumberOfArguments;
+            return valueFactory.error(XQueryError.WrongNumberOfArguments, "");
         }
 
         XQueryValue a = args.get(0), b = args.get(1);
 
         // Type validation
-        if (!a.isNumericValue() || !b.isNumericValue()) {
-            return XQueryError.InvalidArgumentType;
+        if (!a.isNumeric || !b.isNumeric) {
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
         }
 
-        BigDecimal result = a.numericValue().add(b.numericValue());
+        BigDecimal result = a.numericValue.add(b.numericValue);
         return valueFactory.number(result);
     }
 
@@ -48,17 +48,17 @@ public class NumericOperators {
 
         // Must have exactly 2 arguments
         if (args.size() != 2) {
-            return XQueryError.WrongNumberOfArguments;
+            return valueFactory.error(XQueryError.WrongNumberOfArguments, "");
         }
 
         XQueryValue a = args.get(0), b = args.get(1);
 
         // Type validation
-        if (!a.isNumericValue() || !b.isNumericValue()) {
-            return XQueryError.InvalidArgumentType;
+        if (!a.isNumeric || !b.isNumeric) {
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
         }
 
-        BigDecimal result = a.numericValue().subtract(b.numericValue());
+        BigDecimal result = a.numericValue.subtract(b.numericValue);
         return valueFactory.number(result);
     }
 
@@ -71,13 +71,13 @@ public class NumericOperators {
             XQueryVisitingContext context,
             List<XQueryValue> args) {
 
-        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
+        if (args.size() != 2) return valueFactory.error(XQueryError.WrongNumberOfArguments, "");
         XQueryValue a = args.get(0), b = args.get(1);
-        if (!a.isNumericValue() || !b.isNumericValue()) {
-            return XQueryError.InvalidArgumentType;
+        if (!a.isNumeric || !b.isNumeric) {
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
         }
 
-        BigDecimal result = a.numericValue().multiply(b.numericValue());
+        BigDecimal result = a.numericValue.multiply(b.numericValue);
         return valueFactory.number(result);
     }
 
@@ -88,22 +88,22 @@ public class NumericOperators {
             XQueryVisitingContext context,
             List<XQueryValue> args) {
 
-        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
+        if (args.size() != 2) return valueFactory.error(XQueryError.WrongNumberOfArguments, "");
         XQueryValue a = args.get(0), b = args.get(1);
-        if (!a.isNumericValue() || !b.isNumericValue()) {
-            return XQueryError.InvalidArgumentType;
+        if (!a.isNumeric || !b.isNumeric) {
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
         }
 
-        BigDecimal divisor = b.numericValue();
+        BigDecimal divisor = b.numericValue;
         if (divisor.signum() == 0) {
-            return XQueryError.DivisionByZero; // divide-by-zero
+            return valueFactory.error(XQueryError.DivisionByZero, ""); // divide-by-zero
         }
 
         try {
-            BigDecimal result = a.numericValue().divide(divisor, MathContext.DECIMAL128);
+            BigDecimal result = a.numericValue.divide(divisor, MathContext.DECIMAL128);
             return valueFactory.number(result);
         } catch (ArithmeticException ex) {
-            return XQueryError.NumericOverflowUnderflow;
+            return valueFactory.error(XQueryError.NumericOverflowUnderflow, "");
         }
     }
 
@@ -114,17 +114,17 @@ public class NumericOperators {
             XQueryVisitingContext context,
             List<XQueryValue> args) {
 
-        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
+        if (args.size() != 2) return valueFactory.error(XQueryError.WrongNumberOfArguments, "");
         XQueryValue a = args.get(0), b = args.get(1);
-        if (!a.isNumericValue() || !b.isNumericValue()) {
-            return XQueryError.InvalidArgumentType;
+        if (!a.isNumeric || !b.isNumeric) {
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
         }
 
-        BigDecimal arg1 = a.numericValue();
-        BigDecimal arg2 = b.numericValue();
+        BigDecimal arg1 = a.numericValue;
+        BigDecimal arg2 = b.numericValue;
 
         if (arg2.signum() == 0) {
-            return XQueryError.DivisionByZero; // divide-by-zero
+            return valueFactory.error(XQueryError.DivisionByZero, ""); // divide-by-zero
         }
 
         try {
@@ -132,7 +132,7 @@ public class NumericOperators {
             BigDecimal result = arg1.divide(arg2, 0, RoundingMode.DOWN);
             return valueFactory.number(result);
         } catch (ArithmeticException ex) {
-            return XQueryError.NumericOverflowUnderflow;
+            return valueFactory.error(XQueryError.NumericOverflowUnderflow, "");
         }
     }
 
@@ -144,18 +144,18 @@ public class NumericOperators {
             XQueryVisitingContext context,
             List<XQueryValue> args) {
 
-        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
+        if (args.size() != 2) return valueFactory.error(XQueryError.WrongNumberOfArguments, "");
         XQueryValue dividend = args.get(0), divisor = args.get(1);
 
-        if (!dividend.isNumericValue() || !divisor.isNumericValue()) {
-            return XQueryError.InvalidArgumentType;
+        if (!dividend.isNumeric || !divisor.isNumeric) {
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
         }
 
-        BigDecimal a = dividend.numericValue();
-        BigDecimal b = divisor.numericValue();
+        BigDecimal a = dividend.numericValue;
+        BigDecimal b = divisor.numericValue;
 
         if (b.signum() == 0) {
-            return XQueryError.DivisionByZero;
+            return valueFactory.error(XQueryError.DivisionByZero, "");
         }
 
         try {
@@ -163,7 +163,7 @@ public class NumericOperators {
             BigDecimal mod = a.subtract(idiv.multiply(b));
             return valueFactory.number(mod);
         } catch (ArithmeticException ex) {
-            return XQueryError.NumericOverflowUnderflow;
+            return valueFactory.error(XQueryError.NumericOverflowUnderflow, "");
         }
     }
 
@@ -174,14 +174,14 @@ public class NumericOperators {
             XQueryVisitingContext context,
             List<XQueryValue> args) {
 
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
+        if (args.size() != 1) return valueFactory.error(XQueryError.WrongNumberOfArguments, "");
         XQueryValue v = args.get(0);
 
-        if (!v.isNumericValue()) {
-            return XQueryError.InvalidArgumentType;
+        if (!v.isNumeric) {
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
         }
 
-        return valueFactory.number(v.numericValue());
+        return valueFactory.number(v.numericValue);
     }
 
     /**
@@ -191,14 +191,14 @@ public class NumericOperators {
             XQueryVisitingContext context,
             List<XQueryValue> args) {
 
-        if (args.size() != 1) return XQueryError.WrongNumberOfArguments;
+        if (args.size() != 1) return valueFactory.error(XQueryError.WrongNumberOfArguments, "");
         XQueryValue v = args.get(0);
 
-        if (!v.isNumericValue()) {
-            return XQueryError.InvalidArgumentType;
+        if (!v.isNumeric) {
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
         }
 
-        BigDecimal negated = v.numericValue().negate();
+        BigDecimal negated = v.numericValue.negate();
         return valueFactory.number(negated);
     }
 
@@ -210,13 +210,13 @@ public class NumericOperators {
             XQueryVisitingContext context,
             List<XQueryValue> args) {
 
-        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
+        if (args.size() != 2) return valueFactory.error(XQueryError.WrongNumberOfArguments, "");
         XQueryValue a = args.get(0), b = args.get(1);
-        if (!a.isNumericValue() || !b.isNumericValue()) {
-            return XQueryError.InvalidArgumentType;
+        if (!a.isNumeric || !b.isNumeric) {
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
         }
 
-        boolean result = a.numericValue().compareTo(b.numericValue()) == 0;
+        boolean result = a.numericValue.compareTo(b.numericValue) == 0;
         return valueFactory.bool(result);
     }
 
@@ -227,13 +227,13 @@ public class NumericOperators {
             XQueryVisitingContext context,
             List<XQueryValue> args) {
 
-        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
+        if (args.size() != 2) return valueFactory.error(XQueryError.WrongNumberOfArguments, "");
         XQueryValue a = args.get(0), b = args.get(1);
-        if (!a.isNumericValue() || !b.isNumericValue()) {
-            return XQueryError.InvalidArgumentType;
+        if (!a.isNumeric || !b.isNumeric) {
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
         }
 
-        boolean result = a.numericValue().compareTo(b.numericValue()) < 0;
+        boolean result = a.numericValue.compareTo(b.numericValue) < 0;
         return valueFactory.bool(result);
     }
 
@@ -244,13 +244,13 @@ public class NumericOperators {
             XQueryVisitingContext context,
             List<XQueryValue> args) {
 
-        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
+        if (args.size() != 2) return valueFactory.error(XQueryError.WrongNumberOfArguments, "");
         XQueryValue a = args.get(0), b = args.get(1);
-        if (!a.isNumericValue() || !b.isNumericValue()) {
-            return XQueryError.InvalidArgumentType;
+        if (!a.isNumeric || !b.isNumeric) {
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
         }
 
-        boolean result = a.numericValue().compareTo(b.numericValue()) <= 0;
+        boolean result = a.numericValue.compareTo(b.numericValue) <= 0;
         return valueFactory.bool(result);
     }
 
@@ -261,13 +261,13 @@ public class NumericOperators {
             XQueryVisitingContext context,
             List<XQueryValue> args) {
 
-        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
+        if (args.size() != 2) return valueFactory.error(XQueryError.WrongNumberOfArguments, "");
         XQueryValue a = args.get(0), b = args.get(1);
-        if (!a.isNumericValue() || !b.isNumericValue()) {
-            return XQueryError.InvalidArgumentType;
+        if (!a.isNumeric || !b.isNumeric) {
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
         }
 
-        boolean result = a.numericValue().compareTo(b.numericValue()) > 0;
+        boolean result = a.numericValue.compareTo(b.numericValue) > 0;
         return valueFactory.bool(result);
     }
 
@@ -278,13 +278,13 @@ public class NumericOperators {
             XQueryVisitingContext context,
             List<XQueryValue> args) {
 
-        if (args.size() != 2) return XQueryError.WrongNumberOfArguments;
+        if (args.size() != 2) return valueFactory.error(XQueryError.WrongNumberOfArguments, "");
         XQueryValue a = args.get(0), b = args.get(1);
-        if (!a.isNumericValue() || !b.isNumericValue()) {
-            return XQueryError.InvalidArgumentType;
+        if (!a.isNumeric || !b.isNumeric) {
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
         }
 
-        boolean result = a.numericValue().compareTo(b.numericValue()) >= 0;
+        boolean result = a.numericValue.compareTo(b.numericValue) >= 0;
         return valueFactory.bool(result);
     }
 

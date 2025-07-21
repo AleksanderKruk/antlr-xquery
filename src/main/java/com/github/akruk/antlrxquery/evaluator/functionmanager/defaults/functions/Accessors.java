@@ -10,15 +10,18 @@ import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryError;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
+import com.github.akruk.antlrxquery.evaluator.values.operations.ValueAtomizer;
 
 public class Accessors {
 
     private final XQueryValueFactory valueFactory;
-    private final Parser targetParser;;
+    private final Parser targetParser;
+    private final ValueAtomizer atomizer;
 
-    public Accessors(final XQueryValueFactory valueFactory, final Parser targetParser) {
+    public Accessors(final XQueryValueFactory valueFactory, final Parser targetParser, final ValueAtomizer atomizer) {
         this.valueFactory = valueFactory;
         this.targetParser = targetParser;
+        this.atomizer = atomizer;
     }
 
 
@@ -29,20 +32,20 @@ public class Accessors {
         XQueryValue node;
         if (args.isEmpty()) {
             if (context.getValue() == null) {
-                return XQueryError.MissingDynamicContextComponent;
+                return valueFactory.error(XQueryError.MissingDynamicContextComponent, "");
             }
             node = context.getValue();
         } else {
             node = args.get(0);
-            if (node.isEmptySequence()) {
+            if (node.sequence.size() == 0) {
                 return valueFactory.emptyString();
             }
-            if (!node.isNode()) {
-                return XQueryError.InvalidArgumentType;
+            if (!node.isNode) {
+                return valueFactory.error(XQueryError.InvalidArgumentType, "");
             }
         }
 
-        ParseTree nodeTree = node.node();
+        ParseTree nodeTree = node.node;
         if (nodeTree == null || !(nodeTree instanceof ParserRuleContext ctx)) {
             return valueFactory.emptyString();
         }
@@ -54,31 +57,26 @@ public class Accessors {
 
     public XQueryValue string(
             XQueryVisitingContext context,
-            List<XQueryValue> args) {
+            List<XQueryValue> args)
+    {
 
-        XQueryValue target;
-
-        if (args.isEmpty()) {
-            if (context.getValue() == null) {
-                return XQueryError.MissingDynamicContextComponent;
-            }
-            target = context.getValue();
-        } else {
-            target = args.get(0);
-            if (target.isEmptySequence()) {
-                return valueFactory.emptyString();
-            }
-        }
-        if (target.isEmptySequence()) {
+        XQueryValue target = args.get(0);
+        if (target.isError)
+            return target;
+        if (target.isEmptySequence)
             return valueFactory.emptyString();
-        }
-
-        return valueFactory.string(target.stringValue());
+        if (target.isString)
+            return target;
+        if (target.isBoolean)
+            return valueFactory.string(target.booleanValue? "true" : "false");
+        if (target.isNumeric)
+            return valueFactory.string(target.numericValue.toString());
+        return valueFactory.string(target.toString());
     }
 
 
     public XQueryValue data(XQueryVisitingContext ctx, List<XQueryValue> args) {
-        return args.get(0).data();
+        return valueFactory.sequence(atomizer.atomize(args.get(0)));
     }
 
 }

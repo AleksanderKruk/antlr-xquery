@@ -34,7 +34,7 @@ public class SemanticTestsBase {
                 xqueryParser,
                 new XQuerySemanticContextManager(),
                 typeFactory,
-                new XQueryMemoizedValueFactory(),
+                new XQueryMemoizedValueFactory(typeFactory),
                 caller);
         final var lastVisitedType = analyzer.visit(xqueryTree);
         return new AnalysisResult(analyzer, lastVisitedType);

@@ -3,7 +3,6 @@ package com.github.akruk.antlrxquery.languagefeatures.evaluation.functions;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrxquery.evaluator.values.XQueryString;
 import com.github.akruk.antlrxquery.languagefeatures.evaluation.EvaluationTestsBase;
 
 public class ProcessingSequences extends EvaluationTestsBase {
@@ -422,15 +421,15 @@ public class ProcessingSequences extends EvaluationTestsBase {
 
     @Test
     public void reverse() {
-        var a = new XQueryString("a", valueFactory);
-        var b = new XQueryString("b", valueFactory);
-        var c = new XQueryString("c", valueFactory);
+        var a = valueFactory.string("a");
+        var b = valueFactory.string("b");
+        var c = valueFactory.string("c");
         // The expression fn:reverse($abc) returns ("c", "b", "a").
         assertResult("""
                 reverse(("a", "b", "c"))
                 """, List.of(c, b, a));
         // The expression fn:reverse(("hello")) returns ("hello").
-        assertResult("reverse((\"Hello\"))", List.of(new XQueryString("Hello", valueFactory)));
+        assertResult("reverse((\"Hello\"))", List.of(valueFactory.string("Hello")));
         // The expression fn:reverse(()) returns ().
         assertResult("reverse(())", List.of());
         // The expression fn:reverse([1,2,3]) returns [1,2,3]. (The input is a sequence
@@ -442,9 +441,9 @@ public class ProcessingSequences extends EvaluationTestsBase {
     public void subsequence() {
         // var i1 = new XQueryString("item1");
         // var i2 = new XQueryString("item2");
-        var i3 = new XQueryString("item3", valueFactory);
-        var i4 = new XQueryString("item4", valueFactory);
-        var i5 = new XQueryString("item5", valueFactory);
+        var i3 = valueFactory.string("item3");
+        var i4 = valueFactory.string("item4");
+        var i5 = valueFactory.string("item5");
         // The expression fn:subsequence($seq, 4) returns ("item4", "item5").
         // The expression fn:subsequence($seq, 3, 2) returns ("item3", "item4").
         assertResult("""

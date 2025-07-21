@@ -5,15 +5,14 @@
 // import java.util.List;
 // import java.util.Map;
 
+// import org.antlr.v4.runtime.ParserRuleContext;
 // import org.antlr.v4.runtime.tree.ParseTree;
 
 // import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 
-// public sealed class XQueryTreeNode<T extends ParseTree>
-//     implements XQueryValue<ParseTree>
-
+// public final class XQueryAntlrRule implements XQueryValue<ParserRuleContext>
 // {
-//     public XQueryTreeNode(ParseTree node, XQueryValueFactory valueFactory) {
+//     public XQueryAntlrRule(ParseTree node, XQueryValueFactory valueFactory) {
 //         super(node, valueFactory);
 //     }
 

@@ -9,24 +9,25 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class IfExpressionEvaluationTests extends EvaluationTestsBase {
 
+
     @Test
     public void or() {
         String xquery = "false() or false() or true()";
         var value = XQuery.evaluate(null, xquery, null);
-        assertTrue(value.effectiveBooleanValue());
+        assertTrue(value.booleanValue);
         xquery = "false() or false() or false()";
         value = XQuery.evaluate(null, xquery, null);
-        assertFalse(value.effectiveBooleanValue());
+        assertFalse(value.booleanValue);
     }
 
     @Test
     public void and() {
         String xquery = "true() and true() and false()";
         var value = XQuery.evaluate(null, xquery, null);
-        assertFalse(value.effectiveBooleanValue());
+        assertFalse(value.booleanValue);
         xquery = "true() and true() and true()";
         value = XQuery.evaluate(null, xquery, null);
-        assertTrue(value.effectiveBooleanValue());
+        assertTrue(value.booleanValue);
     }
 
     @Test

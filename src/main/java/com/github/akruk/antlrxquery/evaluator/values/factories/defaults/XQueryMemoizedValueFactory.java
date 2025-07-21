@@ -1,33 +1,54 @@
 package com.github.akruk.antlrxquery.evaluator.values.factories.defaults;
 
+import static com.github.akruk.antlrxquery.evaluator.values.XQueryValue.boolean_;
+
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import com.github.akruk.antlrxquery.evaluator.values.XQueryArray;
-import com.github.akruk.antlrxquery.evaluator.values.XQueryBoolean;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryError;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryFunction;
-import com.github.akruk.antlrxquery.evaluator.values.XQueryFunctionReference;
-import com.github.akruk.antlrxquery.evaluator.values.XQueryMap;
-import com.github.akruk.antlrxquery.evaluator.values.XQueryNumber;
-import com.github.akruk.antlrxquery.evaluator.values.XQuerySequence;
-import com.github.akruk.antlrxquery.evaluator.values.XQueryString;
-import com.github.akruk.antlrxquery.evaluator.values.XQueryTreeNode;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
-public class XQueryMemoizedValueFactory implements XQueryValueFactory{
-    private Map<ParseTree, XQueryValue> createdNodes = new HashMap<>();
-    private Map<BigDecimal, XQueryValue> createdNumbers = new HashMap<>();
-    private Map<Integer, XQueryValue> createdIntegers = new HashMap<>();
-    private Map<String, XQueryValue> createdStrings = new HashMap<>();
-    private Map<List<XQueryValue>, XQueryValue> createdSequences = new HashMap<>();
+public class XQueryMemoizedValueFactory implements XQueryValueFactory {
+    private final Map<ParseTree, XQueryValue> createdNodes;
+    private final Map<BigDecimal, XQueryValue> createdNumbers;
+    private final Map<Integer, XQueryValue> createdIntegers;
+    private final Map<String, XQueryValue> createdStrings;
+    private final Map<List<XQueryValue>, XQueryValue> createdSequences;
+    private final XQueryTypeFactory typeFactory;
+    private final XQueryValue TRUE;
+    private final XQueryValue FALSE;
 
 
-    private XQueryBoolean TRUE = new XQueryBoolean(true, this);
-    private XQueryBoolean FALSE = new XQueryBoolean(false, this);
+    public XQueryMemoizedValueFactory(XQueryTypeFactory typeFactory)
+    {
+        this( new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), typeFactory);
+    }
+
+
+    public XQueryMemoizedValueFactory(Map<ParseTree, XQueryValue> createdNodes,
+            Map<BigDecimal, XQueryValue> createdNumbers, Map<Integer, XQueryValue> createdIntegers,
+            Map<String, XQueryValue> createdStrings, Map<List<XQueryValue>, XQueryValue> createdSequences,
+            XQueryTypeFactory typeFactory)
+    {
+        this.createdNodes = createdNodes;
+        this.createdNumbers = createdNumbers;
+        this.createdIntegers = createdIntegers;
+        this.createdStrings = createdStrings;
+        this.createdSequences = createdSequences;
+        this.typeFactory = typeFactory;
+        final var booleanType = typeFactory.boolean_();
+        this.TRUE = boolean_(true, booleanType);
+        this.FALSE = boolean_(false, booleanType);
+    }
 
 
     @Override
@@ -40,24 +61,26 @@ public class XQueryMemoizedValueFactory implements XQueryValueFactory{
     }
 
     @Override
-    public XQueryValue functionReference(XQueryFunction f) {
-        return new XQueryFunctionReference(f, this);
+    public XQueryValue functionReference(XQueryFunction f, XQuerySequenceType type) {
+        return XQueryValue.functionReference(f, type);
     }
 
     @Override
     public XQueryValue node(ParseTree v) {
-        XQueryValue returnedNode = createdNodes.computeIfAbsent(v, _ -> new XQueryTreeNode(v, this));
+        // TODO:
+        XQueryValue returnedNode = createdNodes.computeIfAbsent(v, _ -> XQueryValue.node(v, typeFactory.element(Set.of())));
         return returnedNode;
     }
 
     @Override
     public XQueryValue number(BigDecimal d) {
-        XQueryValue returnedNumber = createdNumbers.computeIfAbsent(d, _ -> new XQueryNumber(d, this));
+        // TODO:
+        XQueryValue returnedNumber = createdNumbers.computeIfAbsent(d, _ -> XQueryValue.number(d, typeFactory.number()));
         return returnedNumber;
     }
     @Override
     public XQueryValue number(int integer) {
-        XQueryValue returnedNumber = createdIntegers.computeIfAbsent(integer, _ -> new XQueryNumber(integer, this));
+        XQueryValue returnedNumber = createdIntegers.computeIfAbsent(integer, _ -> XQueryValue.number(integer, typeFactory.number()));
         return returnedNumber;
     }
 
@@ -65,13 +88,13 @@ public class XQueryMemoizedValueFactory implements XQueryValueFactory{
     public XQueryValue sequence(List<XQueryValue> v) {
         if (v.size() == 1)
             return v.get(0);
-        XQueryValue returnedSequence = createdSequences.computeIfAbsent(v, _ -> new XQuerySequence(v, this));
+        XQueryValue returnedSequence = createdSequences.computeIfAbsent(v, _ -> XQueryValue.sequence(v, typeFactory.zeroOrMore(typeFactory.itemAnyItem())));
         return returnedSequence;
     }
 
     @Override
     public XQueryValue string(String s) {
-        XQueryValue returnedString = createdStrings.computeIfAbsent(s, _ -> new XQueryString(s, this));
+        XQueryValue returnedString = createdStrings.computeIfAbsent(s, _ -> XQueryValue.string(s, typeFactory.string()));
         return returnedString;
     }
 
@@ -87,7 +110,7 @@ public class XQueryMemoizedValueFactory implements XQueryValueFactory{
 
     @Override
     public XQueryValue map(Map<XQueryValue, XQueryValue> value) {
-        return new XQueryMap(value, this);
+        return XQueryValue.map(value, typeFactory.anyMap());
     }
 
     @Override
@@ -101,7 +124,13 @@ public class XQueryMemoizedValueFactory implements XQueryValueFactory{
 
     @Override
     public XQueryValue array(List<XQueryValue> value) {
-        return new XQueryArray(value, this);
+        return XQueryValue.array(value, typeFactory.anyArray());
+    }
+
+
+    @Override
+    public XQueryValue error(XQueryError error, String message) {
+        return XQueryValue.error(error, message, typeFactory.error());
     }
 
 }

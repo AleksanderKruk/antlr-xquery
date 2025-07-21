@@ -1,5 +1,7 @@
 package com.github.akruk.antlrxquery.evaluator.functionmanager.defaults;
 
+import static com.github.akruk.antlrxquery.evaluator.values.XQueryValue.error;
+
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,6 +43,12 @@ import com.github.akruk.antlrxquery.evaluator.values.XQueryError;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryFunction;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
+import com.github.akruk.antlrxquery.evaluator.values.operations.EffectiveBooleanValue;
+import com.github.akruk.antlrxquery.evaluator.values.operations.Stringifier;
+import com.github.akruk.antlrxquery.evaluator.values.operations.ValueAtomizer;
+import com.github.akruk.antlrxquery.evaluator.values.operations.ValueComparisonOperator;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.nodegetter.NodeGetter;
 
 public class XQueryEvaluatingFunctionManager {
@@ -56,7 +64,7 @@ public class XQueryEvaluatingFunctionManager {
     private static final ParseTree EMPTY_STRING = getTree("\"\"", (parser) -> parser.literal());
 
     record FunctionEntry(XQueryFunction function, long minArity, long maxArity, List<String> argNames,
-            Map<String, ParseTree> defaultArguments, String variadicArg) {
+            Map<String, ParseTree> defaultArguments, String variadicArg, XQuerySequenceType type) {
     }
 
     private final Map<String, Map<String, List<FunctionEntry>>> namespaces;
@@ -76,29 +84,32 @@ public class XQueryEvaluatingFunctionManager {
     private final ProcessingStrings processingStrings;
     private final ProcessingBooleans processingBooleans;
     private final ProcessingSequencesFunctions processingSequences;
+    private final XQueryTypeFactory typeFactory;
 
     public XQueryEvaluatingFunctionManager(final XQueryEvaluatorVisitor evaluator, final Parser parser,
-            final XQueryValueFactory valueFactory, final NodeGetter nodeGetter) {
+            final XQueryValueFactory valueFactory, final NodeGetter nodeGetter, XQueryTypeFactory typeFactory, EffectiveBooleanValue ebv, ValueAtomizer atomizer, ValueComparisonOperator valueComparisonOperator)
+    {
         this.valueFactory = valueFactory;
         this.evaluator = evaluator;
+        this.typeFactory = typeFactory;
         this.namespaces = new HashMap<>(10);
         this.mathFunctions = new MathFunctions(valueFactory);
-        this.accessors = new Accessors(valueFactory, parser);
-        this.functionsOnStringValues = new FunctionsOnStringValues(valueFactory);
+        this.accessors = new Accessors(valueFactory, parser, atomizer);
+        this.functionsOnStringValues = new FunctionsOnStringValues(valueFactory, atomizer, new Stringifier(valueFactory, ebv));
         this.functionsOnNumericValues = new FunctionsOnNumericValues(valueFactory);
         this.functionsBasedOnSubstringMatching = new FunctionsBasedOnSubstringMatching(valueFactory);
-        this.cardinalityFunctions = new CardinalityFunctions(valueFactory);
+        this.cardinalityFunctions = new CardinalityFunctions(valueFactory, atomizer);
         this.numericOperators = new NumericOperators(valueFactory);
         this.otherFuctionsOnNodes = new OtherFunctionsOnNodes(valueFactory, nodeGetter, parser);
         // this.functionsOnSequencesOfNodes = new FunctionsOnSequencesOfNodes(valueFactory, parser);
-        this.processingSequences = new ProcessingSequencesFunctions(valueFactory, parser);
+        this.processingSequences = new ProcessingSequencesFunctions(valueFactory, parser, atomizer);
         // this.parsingNumbers = new ParsingNumbers(valueFactory, parser);
         final Collator defaultCollator = Collations.DEFAULT_COLLATOR;
         final Map<String, Collator> collators = Map.of(Collations.CODEPOINT_URI, defaultCollator);
         this.processingStrings = new ProcessingStrings(valueFactory, parser, defaultCollator,
-                collators, Locale.getDefault());
-        this.processingBooleans = new ProcessingBooleans(valueFactory, parser);
-        this.aggregateFunctions = new AggregateFunctions(valueFactory, parser, collators);
+                collators, Locale.getDefault(), atomizer, ebv);
+        this.processingBooleans = new ProcessingBooleans(valueFactory, parser, ebv);
+        this.aggregateFunctions = new AggregateFunctions(valueFactory, parser, collators, atomizer, valueComparisonOperator);
 
         // Accessors
         final Map<String, ParseTree> defaultNodeArg = Map.of("node", CONTEXT_VALUE);
@@ -377,13 +388,13 @@ public class XQueryEvaluatingFunctionManager {
 
     public XQueryValue position(final XQueryVisitingContext context, final List<XQueryValue> args) {
         if (!args.isEmpty())
-            return XQueryError.WrongNumberOfArguments;
+            return error(XQueryError.WrongNumberOfArguments, "", typeFactory.error());
         return valueFactory.number(context.getPosition());
     }
 
     public XQueryValue last(final XQueryVisitingContext context, final List<XQueryValue> args) {
         if (!args.isEmpty())
-            return XQueryError.WrongNumberOfArguments;
+            return error(XQueryError.WrongNumberOfArguments, "", typeFactory.error());
         return valueFactory.number(context.getSize());
     }
 
@@ -424,29 +435,29 @@ public class XQueryEvaluatingFunctionManager {
     public XQueryValue replace(final XQueryVisitingContext context, final List<XQueryValue> args) {
         if (args.size() == 3) {
             try {
-                final String input = args.get(0).stringValue();
-                final String pattern = args.get(1).stringValue();
-                final String replacement = args.get(2).stringValue();
+                final String input = args.get(0).stringValue;
+                final String pattern = args.get(1).stringValue;
+                final String replacement = args.get(2).stringValue;
                 final String result = input.replaceAll(pattern, replacement);
                 return valueFactory.string(result);
             } catch (final Exception e) {
-                return XQueryError.InvalidRegex;
+                return error(XQueryError.InvalidRegex, "", typeFactory.error());
             }
         } else if (args.size() == 4) {
             try {
-                final String input = args.get(0).stringValue();
-                final String pattern = args.get(1).stringValue();
-                final String replacement = args.get(2).stringValue();
-                final String flags = args.get(3).stringValue();
+                final String input = args.get(0).stringValue;
+                final String pattern = args.get(1).stringValue;
+                final String replacement = args.get(2).stringValue;
+                final String flags = args.get(3).stringValue;
                 final var parsed = parseFlags(flags, pattern, replacement);
                 final Pattern compiled = Pattern.compile(parsed.newPattern(), parsed.flags());
                 final String result = compiled.matcher(input).replaceAll(parsed.newReplacement());
                 return valueFactory.string(result);
             } catch (final Exception e) {
-                return XQueryError.InvalidRegexFlags;
+                return error(XQueryError.InvalidRegex, "", typeFactory.error());
             }
         } else {
-            return XQueryError.WrongNumberOfArguments;
+            return error(XQueryError.WrongNumberOfArguments, "", typeFactory.error());
         }
     }
 
@@ -455,7 +466,7 @@ public class XQueryEvaluatingFunctionManager {
         final var maxArity = argNames.size();
         final var minArity = maxArity - defaultArguments.size();
         final FunctionEntry functionEntry = new FunctionEntry(function, minArity, maxArity, argNames, defaultArguments,
-                null);
+                null, null);
         final Map<String, List<FunctionEntry>> namespaceFunctions = namespaces.computeIfAbsent(namespace,
                 _ -> new HashMap<>());
         final List<FunctionEntry> functionsWithDesiredName = namespaceFunctions.computeIfAbsent(localName,
@@ -468,7 +479,7 @@ public class XQueryEvaluatingFunctionManager {
         final var maxArity = Long.MAX_VALUE;
         final var minArity = 0;
         final FunctionEntry functionEntry = new FunctionEntry(function, minArity, maxArity, List.of(), Map.of(),
-                variadicArg);
+                variadicArg, null);
         final Map<String, List<FunctionEntry>> namespaceFunctions = namespaces.computeIfAbsent(namespace,
                 _ -> new HashMap<>());
         final List<FunctionEntry> functionsWithDesiredName = namespaceFunctions.computeIfAbsent(localName,
@@ -485,14 +496,14 @@ public class XQueryEvaluatingFunctionManager {
     private FunctionOrError getFunction(final String namespace, final String functionName, final long arity) {
         final Map<String, List<FunctionEntry>> functionsInNs = namespaces.get(namespace);
         if (functionsInNs == null) {
-            return new FunctionOrError(null, XQueryError.UnknownFunctionName);
+            return new FunctionOrError(null, error(XQueryError.UnknownFunctionName, "", typeFactory.error()));
         }
         final List<FunctionEntry> functionsWithGivenName = functionsInNs.get(functionName);
         final Predicate<FunctionEntry> withinArityRange = f -> (f.minArity() <= arity && arity <= f.maxArity());
         final Optional<FunctionEntry> functionWithRequiredArity = functionsWithGivenName.stream()
                 .filter(withinArityRange).findFirst();
         if (!functionWithRequiredArity.isPresent())
-            return new FunctionOrError(null, XQueryError.WrongNumberOfArguments);
+            return new FunctionOrError(null, error(XQueryError.WrongNumberOfArguments, "", typeFactory.error()));
         return new FunctionOrError(functionWithRequiredArity.get(), null);
     }
 
@@ -516,7 +527,7 @@ public class XQueryEvaluatingFunctionManager {
         final var positionalSize = Math.min(argsCount, functionEntry.maxArity);
         // Too few args are however an error
         if (positionalSize < functionEntry.minArity)
-            return XQueryError.WrongNumberOfArguments;
+            return error(XQueryError.WrongNumberOfArguments, "", typeFactory.error());
 
         final List<String> remainingArgs = functionEntry.argNames.subList(argsCount, (int) functionEntry.maxArity);
         final Stream<String> defaultedArgumentNames = functionEntry.defaultArguments.keySet().stream()
@@ -539,9 +550,9 @@ public class XQueryEvaluatingFunctionManager {
     public XQueryValue getFunctionReference(final String namespace, final String functionName, final long arity) {
         final FunctionOrError function = getFunction(namespace, functionName, arity);
         if (function.isError()) {
-            return XQueryError.UnknownFunctionName;
+            return error(XQueryError.UnknownFunctionName, "", typeFactory.error());
         }
-        return valueFactory.functionReference(function.entry().function);
+        return valueFactory.functionReference(function.entry().function, null);
     }
 
     private static ParseTree getTree(final String xquery, final Function<AntlrXqueryParser, ParseTree> initialRule) {
@@ -559,7 +570,7 @@ public class XQueryEvaluatingFunctionManager {
         for (var arg : remainingArgs) {
             var argValue = keywordArgs.get(arg);
             if (argValue == null) {
-                argValue = XQueryError.WrongNumberOfArguments;
+                argValue = valueFactory.error(XQueryError.WrongNumberOfArguments, "Argument " + arg + " is missing");
             }
             rearranged.add(argValue);
         }

@@ -103,7 +103,7 @@ public class XQueryRunner {
                     parserAndTree.parser,
                     new XQuerySemanticContextManager(),
                     typeFactory,
-                    new XQueryMemoizedValueFactory(),
+                    new XQueryMemoizedValueFactory(typeFactory),
                     new XQuerySemanticFunctionManager(typeFactory));
             analyzer.visit(xqueryTree);
             final var querySemanticErrors = analyzer.getErrors();
@@ -118,8 +118,10 @@ public class XQueryRunner {
                 final String fileContent = Files.readString(Path.of(file));
                 final XQueryValue results = executeQuery(xqueryTree, lexerClass, parserClass, startingRule, fileContent);
                 outputStream.println("File: " + file);
-                for (final var result : results.atomize()) {
-                    final String printed = result.stringValue();
+                // TODO: atomize
+                // TODO:
+                for (final var result : results.sequence) {
+                    final String printed = result.stringValue;
                     if (printed != null)
                         outputStream.println(printed);
                     else
@@ -138,7 +140,8 @@ public class XQueryRunner {
     {
         try {
             final ParserAndTree parserAndTree = parseTargetFile(input, lexerClass, parserClass, startingRule);
-            final XQueryEvaluatorVisitor evaluator = new XQueryEvaluatorVisitor(parserAndTree.tree, parserAndTree.parser);
+            final XQueryTypeFactory typeFactory = new XQueryEnumTypeFactory(new XQueryNamedTypeSets().all());
+            final XQueryEvaluatorVisitor evaluator = new XQueryEvaluatorVisitor(parserAndTree.tree, parserAndTree.parser, typeFactory);
             return evaluator.visit(query);
         } catch (final Exception e) {
             return null;

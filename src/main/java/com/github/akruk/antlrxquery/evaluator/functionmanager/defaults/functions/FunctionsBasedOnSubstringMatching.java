@@ -28,27 +28,27 @@ public class FunctionsBasedOnSubstringMatching {
 
         // arity check
         if (args.size() < 2 || args.size() > 3) {
-            return XQueryError.WrongNumberOfArguments;
+            return valueFactory.error(XQueryError.WrongNumberOfArguments, "");
         }
 
         // extract and handle empty-sequence for $value
         final XQueryValue valArg = args.get(0);
-        final String value = valArg.isEmptySequence()
+        final String value = valArg.isEmptySequence
             ? ""
-            : valArg.stringValue();
+            : valArg.stringValue;
 
         // extract and handle empty-sequence for $substring
         final XQueryValue subArg = args.get(1);
-        final String substring = subArg.isEmptySequence()
+        final String substring = subArg.isEmptySequence
             ? ""
-            : subArg.stringValue();
+            : subArg.stringValue;
 
         // determine collation URI
         String collationUri = Collations.CODEPOINT_URI;
         if (args.size() == 3) {
             final XQueryValue collArg = args.get(2);
-            if (!collArg.isEmptySequence()) {
-                collationUri = collArg.stringValue();
+            if (!collArg.isEmptySequence) {
+                collationUri = collArg.stringValue;
             }
         }
 
@@ -63,7 +63,7 @@ public class FunctionsBasedOnSubstringMatching {
 
         // only support Unicode‐codepoint collation for now
         if (!Collations.CODEPOINT_URI.equals(collationUri)) {
-            return XQueryError.CollationUnitsNotSupported;
+            return valueFactory.error(XQueryError.CollationUnitsNotSupported, "");
         }
 
         // simple substring search under codepoint collation
@@ -85,27 +85,27 @@ public class FunctionsBasedOnSubstringMatching {
 
         // Arity check: only 2 or 3 arguments allowed
         if (args.size() < 2 || args.size() > 3) {
-            return XQueryError.WrongNumberOfArguments;
+            return valueFactory.error(XQueryError.WrongNumberOfArguments, "");
         }
 
         // Handle $value
         final XQueryValue valArg = args.get(0);
-        final String value = valArg.isEmptySequence()
+        final String value = valArg.isEmptySequence
             ? ""
-            : valArg.stringValue();
+            : valArg.stringValue;
 
         // Handle $substring
         final XQueryValue subArg = args.get(1);
-        final String substring = subArg.isEmptySequence()
+        final String substring = subArg.isEmptySequence
             ? ""
-            : subArg.stringValue();
+            : subArg.stringValue;
 
         // Determine collation URI (default if omitted or empty)
         String collationUri = Collations.CODEPOINT_URI;
         if (args.size() == 3) {
             final XQueryValue collArg = args.get(2);
-            if (!collArg.isEmptySequence()) {
-                collationUri = collArg.stringValue();
+            if (!collArg.isEmptySequence) {
+                collationUri = collArg.stringValue;
             }
         }
 
@@ -120,7 +120,7 @@ public class FunctionsBasedOnSubstringMatching {
 
         // Currently only support codepoint collation
         if (!Collations.CODEPOINT_URI.equals(collationUri)) {
-            return XQueryError.CollationUnitsNotSupported;
+            return valueFactory.error(XQueryError.CollationUnitsNotSupported, "");
         }
 
         // Simple prefix check under codepoint collation
@@ -135,25 +135,25 @@ public class FunctionsBasedOnSubstringMatching {
 
         // Ensure correct arity: must be 2 or 3 arguments
         if (args.size() < 2 || args.size() > 3) {
-            return XQueryError.WrongNumberOfArguments;
+            return valueFactory.error(XQueryError.WrongNumberOfArguments, "");
         }
 
         // Normalize $value to zero-length string if empty sequence
-        final String value = args.get(0).isEmptySequence()
+        final String value = args.get(0).isEmptySequence
             ? ""
-            : args.get(0).stringValue();
+            : args.get(0).stringValue;
 
         // Normalize $substring to zero-length string if empty sequence
-        final String substring = args.get(1).isEmptySequence()
+        final String substring = args.get(1).isEmptySequence
             ? ""
-            : args.get(1).stringValue();
+            : args.get(1).stringValue;
 
         // Determine collation URI, defaulting if omitted or empty
         String collationUri = Collations.CODEPOINT_URI;
         if (args.size() == 3) {
             final XQueryValue collArg = args.get(2);
-            if (!collArg.isEmptySequence()) {
-                collationUri = collArg.stringValue();
+            if (!collArg.isEmptySequence) {
+                collationUri = collArg.stringValue;
             }
         }
 
@@ -169,7 +169,7 @@ public class FunctionsBasedOnSubstringMatching {
 
         // Support only standard codepoint collation
         if (!Collations.CODEPOINT_URI.equals(collationUri)) {
-            return XQueryError.CollationUnitsNotSupported;
+            return valueFactory.error(XQueryError.CollationUnitsNotSupported, "");
         }
 
         // Check if value ends with substring
@@ -190,23 +190,23 @@ public class FunctionsBasedOnSubstringMatching {
 
         // Ensure correct arity: must be 2 or 3 args
         if (args.size() < 2 || args.size() > 3) {
-            return XQueryError.WrongNumberOfArguments;
+            return valueFactory.error(XQueryError.WrongNumberOfArguments, "");
         }
 
         // Normalize $value and $substring to zero-length if empty sequence
-        final String value = args.get(0).isEmptySequence()
+        final String value = args.get(0).isEmptySequence
             ? ""
-            : args.get(0).stringValue();
-        final String substring = args.get(1).isEmptySequence()
+            : args.get(0).stringValue;
+        final String substring = args.get(1).isEmptySequence
             ? ""
-            : args.get(1).stringValue();
+            : args.get(1).stringValue;
 
         // Determine collation URI (default if omitted or empty)
         String collationUri = Collations.CODEPOINT_URI;
         if (args.size() == 3) {
             final XQueryValue collArg = args.get(2);
-            if (!collArg.isEmptySequence()) {
-                collationUri = collArg.stringValue();
+            if (!collArg.isEmptySequence) {
+                collationUri = collArg.stringValue;
             }
         }
 
@@ -220,7 +220,7 @@ public class FunctionsBasedOnSubstringMatching {
 
         // For now, support only codepoint collation
         if (!Collations.CODEPOINT_URI.equals(collationUri)) {
-            return XQueryError.CollationUnitsNotSupported;
+            return valueFactory.error(XQueryError.CollationUnitsNotSupported, "");
         }
 
         // Search for first occurrence
@@ -246,17 +246,17 @@ public class FunctionsBasedOnSubstringMatching {
 
         // must have 2 or 3 args
         if (args.size() < 2 || args.size() > 3) {
-            return XQueryError.WrongNumberOfArguments;
+            return valueFactory.error(XQueryError.WrongNumberOfArguments, "");
         }
 
         // normalize $value and $substring
-        final String value = args.get(0).isEmptySequence() ? "" : args.get(0).stringValue();
-        final String substring = args.get(1).isEmptySequence() ? "" : args.get(1).stringValue();
+        final String value = args.get(0).isEmptySequence ? "" : args.get(0).stringValue;
+        final String substring = args.get(1).isEmptySequence ? "" : args.get(1).stringValue;
 
         // determine collation URI (default if omitted or empty)
         String collationUri = Collations.CODEPOINT_URI;
-        if (args.size() == 3 && !args.get(2).isEmptySequence()) {
-            collationUri = args.get(2).stringValue();
+        if (args.size() == 3 && !args.get(2).isEmptySequence) {
+            collationUri = args.get(2).stringValue;
         }
 
         // if substring is empty → return value
@@ -271,7 +271,7 @@ public class FunctionsBasedOnSubstringMatching {
 
         // for now, only support codepoint collation
         if (!Collations.CODEPOINT_URI.equals(collationUri)) {
-            return XQueryError.CollationUnitsNotSupported;
+            return valueFactory.error(XQueryError.CollationUnitsNotSupported, "");
         }
 
         // locate first match

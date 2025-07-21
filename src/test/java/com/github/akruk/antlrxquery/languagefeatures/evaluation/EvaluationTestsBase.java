@@ -18,16 +18,30 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.xpath.XPath;
 
 import com.github.akruk.antlrxquery.evaluator.XQuery;
-import com.github.akruk.antlrxquery.evaluator.values.XQueryError;
-import com.github.akruk.antlrxquery.evaluator.values.XQuerySequence;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMemoizedValueFactory;
+import com.github.akruk.antlrxquery.evaluator.values.operations.ValueAtomizer;
+import com.github.akruk.antlrxquery.evaluator.values.operations.ValueComparisonOperator;
+import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryEnumTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTypeSets;
 
 public class EvaluationTestsBase {
-    public XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory();
+    public final XQueryTypeFactory typeFactory;
+    public final XQueryValueFactory valueFactory;
+    public final ValueAtomizer atomizer;
+    public final ValueComparisonOperator valueOperator;
 
-    public static boolean deepEquals(XQueryValue sequence1, XQueryValue sequence2) {
+    public EvaluationTestsBase() {
+        typeFactory = new XQueryEnumTypeFactory(new XQueryNamedTypeSets().all());
+        valueFactory = new XQueryMemoizedValueFactory(typeFactory);
+        atomizer = new ValueAtomizer();
+        valueOperator = new ValueComparisonOperator(valueFactory);
+
+    }
+
+    public boolean deepEquals(XQueryValue sequence1, XQueryValue sequence2) {
         if (sequence1 == sequence2) {
             return true;
         }
@@ -36,8 +50,8 @@ public class EvaluationTestsBase {
             return false;
         }
 
-        List<XQueryValue> seq1 = sequence1.atomize();
-        List<XQueryValue> seq2 = sequence2.atomize();
+        List<XQueryValue> seq1 = atomizer.atomize(sequence1);
+        List<XQueryValue> seq2 = atomizer.atomize(sequence2);
 
         if (seq1.size() != seq2.size()) {
             return false;
@@ -47,7 +61,7 @@ public class EvaluationTestsBase {
             XQueryValue element1 = seq1.get(i);
             XQueryValue element2 = seq2.get(i);
 
-            if (!element1.valueEqual(element2).effectiveBooleanValue()) {
+            if (!valueOperator.valueEquals(element1, element2).booleanValue) {
                 return false;
             }
         }
@@ -58,40 +72,40 @@ public class EvaluationTestsBase {
     public void assertResult(String xquery, String result) {
         var value = XQuery.evaluate(null, xquery, null);
         assertNotNull(value);
-        assertEquals(result, value.stringValue());
+        assertEquals(result, value.stringValue);
     }
 
     public void assertResult(String xquery, BigDecimal result) {
         var value = XQuery.evaluate(null, xquery, null);
         assertNotNull(value);
-        assertTrue(result.compareTo(value.numericValue()) == 0);
+        assertTrue(result.compareTo(value.numericValue) == 0);
     }
 
     public void assertResult(String xquery, List<XQueryValue> result) {
         XQueryValue value = XQuery.evaluate(null, xquery, null);
         assertNotNull(value);
-        assertEquals(result.size(), value.sequence().size());
+        assertEquals(result.size(), value.size);
         for (int i = 0; i < result.size(); i++) {
             var expected = result.get(i);
-            var received = value.sequence().get(i);
-            assertTrue(expected.valueEqual(received).effectiveBooleanValue());
+            var received = value.sequence.get(i);
+            assertTrue(valueOperator.valueEquals(expected, received).booleanValue);
         }
     }
 
     public void assertResult(String xquery, XQueryValue result) {
         XQueryValue value = XQuery.evaluate(null, xquery, null);
         assertNotNull(value);
-        assertFalse(value instanceof XQueryError, () -> "Value is error: " + ((XQueryError) value).getDescription());
-        if (result instanceof XQuerySequence)
+        assertFalse(value.isError, () -> "Value is error: " + value.error.getDescription());
+        if (result.size != 1)
             assertTrue(deepEquals(result, value));
         else
-            assertTrue(result == value || result.valueEqual(value).effectiveBooleanValue());
+            assertTrue(result == value || value.equals(result));
     }
 
     public void assertError(String xquery, XQueryValue result) {
         XQueryValue value = XQuery.evaluate(null, xquery, null);
         assertNotNull(value);
-        assertTrue(result == value);
+        assertTrue(result.error == value.error);
     }
 
     private static final java.util.Map<String, Parser> grammarParserCache = new HashMap<>();
@@ -204,7 +218,7 @@ public class EvaluationTestsBase {
         ValueParserAndTree results = executeDynamicGrammarQueryWithTree(grammarname, grammar, startingRule, textualTree, xquery);
         ParseTree[] nodes = XPath.findAll(results.tree(), xquery, results.parser())
                 .toArray(ParseTree[]::new);
-        ParseTree[] xqueryNodes = results.value().sequence().stream().map(val -> val.node())
+        ParseTree[] xqueryNodes = results.value().sequence.stream().map(val -> val.node)
                 .toArray(ParseTree[]::new);
         assertArrayEquals(nodes, xqueryNodes);
     }

@@ -27,15 +27,15 @@ public class FunctionsOnNumericValues {
 
         final XQueryValue v = args.get(0);
         // empty‐sequence → empty‐sequence
-        if (v.isEmptySequence()) {
+        if (v.isEmptySequence) {
             return valueFactory.emptySequence();
         }
-        if (!v.isNumericValue()) {
-            return XQueryError.InvalidArgumentType;
+        if (!v.isNumeric) {
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
         }
 
         // decimal or integer
-        final BigDecimal bd = v.numericValue();
+        final BigDecimal bd = v.numericValue;
         final BigDecimal abs = bd.abs();
         return valueFactory.number(abs);
     }
@@ -48,15 +48,15 @@ public class FunctionsOnNumericValues {
             final List<XQueryValue> args) {
 
         final XQueryValue v = args.get(0);
-        if (v.isEmptySequence()) {
+        if (v.isEmptySequence) {
             return valueFactory.emptySequence();
         }
-        if (!v.isNumericValue()) {
-            return XQueryError.InvalidArgumentType;
+        if (!v.isNumeric) {
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
         }
 
         // decimal or integer
-        final BigDecimal bd = v.numericValue();
+        final BigDecimal bd = v.numericValue;
         // scale to 0 fractional digits, rounding up
         final BigDecimal r = bd.setScale(0, RoundingMode.CEILING);
         return valueFactory.number(r);
@@ -70,14 +70,14 @@ public class FunctionsOnNumericValues {
             final List<XQueryValue> args) {
 
         final XQueryValue v = args.get(0);
-        if (v.isEmptySequence()) {
+        if (v.isEmptySequence) {
             return valueFactory.emptySequence();
         }
-        if (!v.isNumericValue()) {
-            return XQueryError.InvalidArgumentType;
+        if (!v.isNumeric) {
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
         }
 
-        final BigDecimal bd = v.numericValue();
+        final BigDecimal bd = v.numericValue;
         final BigDecimal r = bd.setScale(0, RoundingMode.FLOOR);
         return valueFactory.number(r);
     }
@@ -87,34 +87,34 @@ public class FunctionsOnNumericValues {
             final List<XQueryValue> args) {
 
         final XQueryValue v = args.get(0);
-        if (v.isEmptySequence()) {
+        if (v.isEmptySequence) {
             return valueFactory.emptySequence();
         }
-        if (!v.isNumericValue()) {
-            return XQueryError.InvalidArgumentType;
+        if (!v.isNumeric) {
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
         }
 
         int precision = 0;
         if (args.size() >= 2) {
             final XQueryValue p = args.get(1);
-            if (p.isEmptySequence()) {
+            if (p.isEmptySequence) {
                 precision = 0;
-            } else if (!p.isNumericValue()) {
-                return XQueryError.InvalidArgumentType;
+            } else if (!p.isNumeric) {
+                return valueFactory.error(XQueryError.InvalidArgumentType, "");
             } else {
-                precision = p.numericValue().intValue();
+                precision = p.numericValue.intValue();
             }
         }
 
         String mode = "half-to-ceiling";
         if (args.size() == 3) {
             final XQueryValue m = args.get(2);
-            if (!m.isEmptySequence()) {
-                mode = m.stringValue();
+            if (!m.isEmptySequence) {
+                mode = m.stringValue;
             }
         }
 
-        final BigDecimal bd = v.numericValue();
+        final BigDecimal bd = v.numericValue;
         BigDecimal rounded;
         try {
             if ("half-to-ceiling".equals(mode)) {
@@ -133,13 +133,14 @@ public class FunctionsOnNumericValues {
                     case "half-toward-zero": rm = RoundingMode.HALF_DOWN; break;
                     case "half-away-from-zero": rm = RoundingMode.HALF_UP; break;
                     case "half-to-even": rm = RoundingMode.HALF_EVEN; break;
-                    default: return XQueryError.InvalidArgumentType;
+                    default:
+                        return valueFactory.error(XQueryError.InvalidArgumentType, "");
                 }
                 rounded = bd.setScale(precision, rm);
             }
             return valueFactory.number(rounded);
         } catch (final ArithmeticException ex) {
-            return XQueryError.NumericOverflowUnderflow;
+            return valueFactory.error(XQueryError.NumericOverflowUnderflow, "");
         }
     }
 
@@ -155,38 +156,38 @@ public class FunctionsOnNumericValues {
 
         // arity check
         if (args.size() < 1 || args.size() > 2) {
-            return XQueryError.WrongNumberOfArguments;
+            return valueFactory.error(XQueryError.WrongNumberOfArguments, "");
         }
 
         final XQueryValue v = args.get(0);
         // empty-sequence → empty-sequence
-        if (v.isEmptySequence()) {
+        if (v.isEmptySequence) {
             return valueFactory.emptySequence();
         }
-        if (!v.isNumericValue()) {
-            return XQueryError.InvalidArgumentType;
+        if (!v.isNumeric) {
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
         }
 
         // precision (default 0)
         int precision = 0;
         if (args.size() == 2) {
             final XQueryValue p = args.get(1);
-            if (p.isEmptySequence()) {
+            if (p.isEmptySequence) {
                 precision = 0;
-            } else if (!p.isNumericValue()) {
-                return XQueryError.InvalidArgumentType;
+            } else if (!p.isNumeric) {
+                return valueFactory.error(XQueryError.InvalidArgumentType, "");
             } else {
-                precision = p.numericValue().intValue();
+                precision = p.numericValue.intValue();
             }
         }
 
         // perform half-even rounding via BigDecimal
-        final BigDecimal bd = v.numericValue();
+        final BigDecimal bd = v.numericValue;
         try {
             final BigDecimal rd = bd.setScale(precision, RoundingMode.HALF_EVEN);
             return valueFactory.number(rd);
         } catch (final ArithmeticException ex) {
-            return XQueryError.NumericOverflowUnderflow;
+            return valueFactory.error(XQueryError.NumericOverflowUnderflow, "");
         }
     }
 
@@ -204,29 +205,29 @@ public class FunctionsOnNumericValues {
 
         final XQueryValue v1 = args.get(0), v2 = args.get(1);
         // must be decimals
-        if (v1.isEmptySequence() || v2.isEmptySequence()
-                || !v1.isNumericValue() || !v2.isNumericValue()) {
-            return XQueryError.InvalidArgumentType;
+        if (v1.isEmptySequence || v2.isEmptySequence
+                || !v1.isNumeric || !v2.isNumeric) {
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
         }
 
-        final BigDecimal dividend = v1.numericValue();
-        final BigDecimal divisor  = v2.numericValue();
+        final BigDecimal dividend = v1.numericValue;
+        final BigDecimal divisor  = v2.numericValue;
 
         // division by zero
         if (BigDecimal.ZERO.compareTo(divisor) == 0) {
-            return XQueryError.DivisionByZero;
+            return valueFactory.error(XQueryError.DivisionByZero, "");
         }
 
         // precision (default 0)
         int precision = 0;
         if (args.size() == 3) {
             final XQueryValue p = args.get(2);
-            if (p.isEmptySequence()) {
+            if (p.isEmptySequence) {
                 precision = 0;
-            } else if (!p.isNumericValue()) {
-                return XQueryError.InvalidArgumentType;
+            } else if (!p.isNumeric) {
+                return valueFactory.error(XQueryError.InvalidArgumentType, "");
             } else {
-                precision = p.numericValue().intValue();
+                precision = p.numericValue.intValue();
             }
         }
 

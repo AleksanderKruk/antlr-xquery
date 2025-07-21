@@ -8,12 +8,15 @@ import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryError;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
+import com.github.akruk.antlrxquery.evaluator.values.operations.EffectiveBooleanValue;
 
 public class ProcessingBooleans {
     private final XQueryValueFactory valueFactory;
+    private final EffectiveBooleanValue ebv;
 
-    public ProcessingBooleans(final XQueryValueFactory valueFactory, final Parser targetParser) {
+    public ProcessingBooleans(final XQueryValueFactory valueFactory, final Parser targetParser, final EffectiveBooleanValue ebv) {
         this.valueFactory = valueFactory;
+        this.ebv = ebv;
     }
 
 
@@ -27,67 +30,69 @@ public class ProcessingBooleans {
 
 
     public XQueryValue not(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        Boolean effectiveBooleanValue = args.get(0).effectiveBooleanValue();
+        XQueryValue effectiveBooleanValue = ebv.effectiveBooleanValue(args.get(0));
         if (effectiveBooleanValue == null)
-            return XQueryError.InvalidArgumentType;
-        return valueFactory.bool(!effectiveBooleanValue);
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
+        return valueFactory.bool(!effectiveBooleanValue.booleanValue);
     }
 
     public XQueryValue boolean_(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        Boolean effectiveBooleanValue = args.get(0).effectiveBooleanValue();
-        if (effectiveBooleanValue == null)
-            return XQueryError.InvalidArgumentType;
-        return valueFactory.bool(effectiveBooleanValue);
+        XQueryValue effectiveBooleanValue = ebv.effectiveBooleanValue(args.get(0));
+        if (effectiveBooleanValue.isError)
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
+
+        return effectiveBooleanValue;
     }
 
     public XQueryValue booleanEqual(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        Boolean effectiveBooleanValue1 = args.get(0).effectiveBooleanValue();
-        Boolean effectiveBooleanValue2 = args.get(1).effectiveBooleanValue();
+        XQueryValue effectiveBooleanValue1 = ebv.effectiveBooleanValue(args.get(0));
+        XQueryValue effectiveBooleanValue2 = ebv.effectiveBooleanValue(args.get(1));
 
-        if (effectiveBooleanValue1 == null || effectiveBooleanValue2 == null)
-            return XQueryError.InvalidArgumentType;
+        if (effectiveBooleanValue1.isError || effectiveBooleanValue2.isError)
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
 
         return valueFactory.bool(effectiveBooleanValue1 == effectiveBooleanValue2);
     }
 
     public XQueryValue booleanLessThan(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        Boolean effectiveBooleanValue1 = args.get(0).effectiveBooleanValue();
-        Boolean effectiveBooleanValue2 = args.get(1).effectiveBooleanValue();
+        XQueryValue effectiveBooleanValue1 = ebv.effectiveBooleanValue(args.get(0));
+        XQueryValue effectiveBooleanValue2 = ebv.effectiveBooleanValue(args.get(1));
 
-        if (effectiveBooleanValue1 == null || effectiveBooleanValue2 == null)
-            return XQueryError.InvalidArgumentType;
+        if (effectiveBooleanValue1.isError || effectiveBooleanValue2.isError)
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
 
-        return valueFactory.bool(!effectiveBooleanValue1 && effectiveBooleanValue2);
+        return valueFactory.bool(!effectiveBooleanValue1.booleanValue && effectiveBooleanValue2.booleanValue);
     }
 
     public XQueryValue booleanLessThanOrEqual(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        Boolean effectiveBooleanValue1 = args.get(0).effectiveBooleanValue();
-        Boolean effectiveBooleanValue2 = args.get(1).effectiveBooleanValue();
+        XQueryValue effectiveBooleanValue1 = ebv.effectiveBooleanValue(args.get(0));
+        XQueryValue effectiveBooleanValue2 = ebv.effectiveBooleanValue(args.get(1));
 
-        if (effectiveBooleanValue1 == null || effectiveBooleanValue2 == null)
-            return XQueryError.InvalidArgumentType;
+        if (effectiveBooleanValue1.isError || effectiveBooleanValue2.isError)
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
 
-        return valueFactory.bool(!effectiveBooleanValue1 || effectiveBooleanValue2);
+        return valueFactory.bool(!effectiveBooleanValue1.booleanValue || effectiveBooleanValue2.booleanValue);
     }
 
     public XQueryValue booleanGreaterThan(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        Boolean effectiveBooleanValue1 = args.get(0).effectiveBooleanValue();
-        Boolean effectiveBooleanValue2 = args.get(1).effectiveBooleanValue();
+        XQueryValue effectiveBooleanValue1 = ebv.effectiveBooleanValue(args.get(0));
+        XQueryValue effectiveBooleanValue2 = ebv.effectiveBooleanValue(args.get(1));
 
-        if (effectiveBooleanValue1 == null || effectiveBooleanValue2 == null)
-            return XQueryError.InvalidArgumentType;
+        if (effectiveBooleanValue1.isError || effectiveBooleanValue2.isError)
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
 
-        return valueFactory.bool(effectiveBooleanValue1 && !effectiveBooleanValue2);
+        return valueFactory.bool(effectiveBooleanValue1.booleanValue && !effectiveBooleanValue2.booleanValue);
     }
 
     public XQueryValue booleanGreaterThanOrEqual(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        Boolean effectiveBooleanValue1 = args.get(0).effectiveBooleanValue();
-        Boolean effectiveBooleanValue2 = args.get(1).effectiveBooleanValue();
+        XQueryValue effectiveBooleanValue1 = ebv.effectiveBooleanValue(args.get(0));
+        XQueryValue effectiveBooleanValue2 = ebv.effectiveBooleanValue(args.get(1));
 
-        if (effectiveBooleanValue1 == null || effectiveBooleanValue2 == null)
-            return XQueryError.InvalidArgumentType;
+        if (effectiveBooleanValue1.isError || effectiveBooleanValue2.isError)
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
 
-        return valueFactory.bool(effectiveBooleanValue1 || !effectiveBooleanValue2);
+        return valueFactory.bool(effectiveBooleanValue1.booleanValue
+                                || !effectiveBooleanValue2.booleanValue);
     }
 
 

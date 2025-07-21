@@ -317,7 +317,7 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
 
     @Test
     public void divideByZeroRaisesError() {
-        assertError("divide-decimals(1, 0)", XQueryError.DivisionByZero);
+        assertError("divide-decimals(1, 0)", valueFactory.error(XQueryError.DivisionByZero, ""));
     }
 
 

@@ -5,11 +5,7 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 public class XQueryItemTypeAnyFunction extends XQueryItemType {
 
   public XQueryItemTypeAnyFunction(XQueryTypeFactory factory) {
-    super(XQueryTypes.ANY_FUNCTION, null, null, null, null, null, null, factory, null);
+    super(XQueryTypes.ANY_FUNCTION, null, null, null, null, null, null, factory, null, null);
   }
 
-  @Override
-  public String toString() {
-    return "function(*)";
-  }
 }

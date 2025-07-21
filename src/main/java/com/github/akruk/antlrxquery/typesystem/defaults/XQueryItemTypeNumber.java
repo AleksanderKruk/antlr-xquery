@@ -5,12 +5,7 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 public class XQueryItemTypeNumber extends XQueryItemType {
 
   public XQueryItemTypeNumber(XQueryTypeFactory factory) {
-    super(XQueryTypes.NUMBER, null, null, null,null,null,null, factory, null);
-  }
-
-  @Override
-  public String toString() {
-    return "number";
+    super(XQueryTypes.NUMBER, null, null, null,null,null,null, factory, null, null);
   }
 
 }

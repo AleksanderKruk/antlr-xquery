@@ -4,12 +4,14 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.ItemtypeAlternativeMerger;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.ItemtypeIntersectionMerger;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.ItemtypeStringRepresentation;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.ItemtypeSubtyper;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.ItemtypeUnionMerger;
 
@@ -28,14 +30,15 @@ public class XQueryItemType {
     private final XQueryItemType mapKeyType;
     private final XQuerySequenceType mapValueType;
     private final Set<String> elementNames;
-    private final XQuerySequenceType returnedType_;
+    private final Map<String, XQueryRecordField> recordFields;
 
-    private final XQueryTypeFactory typeFactory;
+    // private final XQueryTypeFactory typeFactory;
     private final Collection<XQueryItemType> itemTypes;
     private final ItemtypeUnionMerger unionMerger;
     private final ItemtypeSubtyper itemtypeSubtyper;
     private final ItemtypeAlternativeMerger alternativeMerger;
     private final ItemtypeIntersectionMerger intersectionMerger;
+    private final Function<XQueryItemType, String> representationOp;
 
     public Collection<XQueryItemType> getItemTypes() {
         return itemTypes;
@@ -49,9 +52,11 @@ public class XQueryItemType {
                                 final XQuerySequenceType mapValueType,
                                 final Set<String> elementNames,
                                 final XQueryTypeFactory typeFactory,
-                                final Collection<XQueryItemType> itemTypes)
+                                final Collection<XQueryItemType> itemTypes,
+                                final Map<String, XQueryRecordField> recordFields)
     {
         this.type = type;
+        this.recordFields = recordFields;
         this.typeOrdinal = type.ordinal();
         this.argumentTypes = argumentTypes;
         this.returnedType = returnedType;
@@ -59,16 +64,16 @@ public class XQueryItemType {
         this.mapKeyType = key;
         this.mapValueType = mapValueType;
         this.elementNames = elementNames;
-        this.typeFactory = typeFactory;
+        // this.typeFactory = typeFactory;
         this.itemTypes = itemTypes;
-        this.returnedType_ = getReturnedType_();
         this.alternativeMerger = new ItemtypeAlternativeMerger(typeOrdinal, typeFactory);
         this.unionMerger = new ItemtypeUnionMerger(typeOrdinal, typeFactory);
         this.intersectionMerger = new ItemtypeIntersectionMerger(typeOrdinal, typeFactory);
         this.itemtypeSubtyper = new ItemtypeSubtyper(this, typeFactory);
+        this.representationOp = representationProvider.getOperation(type);
     }
 
-    public XQueryItemType()
+    protected XQueryItemType()
     {
         this.type = null;
         this.typeOrdinal = 0;
@@ -78,13 +83,14 @@ public class XQueryItemType {
         this.mapKeyType = null;
         this.mapValueType = null;
         this.elementNames = null;
-        this.typeFactory = null;
+        this.recordFields = null;
+        // this.typeFactory = null;
         this.itemTypes = null;
-        this.returnedType_ = null;
         this.alternativeMerger = null;
         this.unionMerger = null;
         this.intersectionMerger = null;
         this.itemtypeSubtyper = null;
+        this.representationOp = null;
     }
 
     public XQueryItemType getMapKeyType() {
@@ -98,11 +104,7 @@ public class XQueryItemType {
     }
 
     public XQuerySequenceType getReturnedType() {
-        return this.returnedType_;
-    }
-
-    private XQuerySequenceType getReturnedType_() {
-        return returnedType;
+        return this.returnedType;
     }
 
     public Set<String> getElementNames() {
@@ -269,7 +271,16 @@ public class XQueryItemType {
         return null;
     }
 
-    public Map<String, XQueryRecordField> getRecordFields() {
-        return null;
+    private static final ItemtypeStringRepresentation representationProvider = new ItemtypeStringRepresentation();
+
+    @Override
+    public String toString() {
+        return representationOp.apply(this);
     }
+
+
+    public Map<String, XQueryRecordField> getRecordFields() {
+        return recordFields;
+    }
+
 }

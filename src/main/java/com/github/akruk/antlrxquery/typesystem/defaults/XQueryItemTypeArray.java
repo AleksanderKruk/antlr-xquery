@@ -6,7 +6,7 @@ public class XQueryItemTypeArray extends XQueryItemType {
 
     private final XQuerySequenceType arrayType;
     public XQueryItemTypeArray(XQuerySequenceType containedType, XQueryTypeFactory factory) {
-        super(XQueryTypes.ARRAY, null, null, null, null, null, null, factory, null);
+        super(XQueryTypes.ARRAY, null, null, null, null, null, null, factory, null, null);
         arrayType = containedType;
     }
 
@@ -15,8 +15,4 @@ public class XQueryItemTypeArray extends XQueryItemType {
         return arrayType;
     }
 
-    @Override
-    public String toString() {
-        return "array(" + getArrayMemberType() + ")";
-    }
 }

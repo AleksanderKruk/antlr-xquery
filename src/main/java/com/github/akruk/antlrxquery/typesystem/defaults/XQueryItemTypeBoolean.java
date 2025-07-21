@@ -5,11 +5,7 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 public class XQueryItemTypeBoolean extends XQueryItemType {
 
   public XQueryItemTypeBoolean(XQueryTypeFactory factory) {
-    super(XQueryTypes.BOOLEAN, null, null, null, null, null, null, factory, null);
+    super(XQueryTypes.BOOLEAN, null, null, null, null, null, null, factory, null, null);
   }
 
-  @Override
-  public String toString() {
-      return "boolean";
-  }
 }

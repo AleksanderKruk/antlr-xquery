@@ -5,12 +5,8 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 public class XQueryItemTypeAnyNode extends XQueryItemType {
 
   public XQueryItemTypeAnyNode(XQueryTypeFactory factory) {
-    super(XQueryTypes.ANY_NODE, null, null, null, null, null, null, factory, null);
+    super(XQueryTypes.ANY_NODE, null, null, null, null, null, null, factory, null, null);
   }
 
-  @Override
-  public String toString() {
-      return "node()";
-  }
 
 }

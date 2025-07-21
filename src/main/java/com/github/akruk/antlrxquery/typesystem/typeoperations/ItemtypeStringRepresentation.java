@@ -8,6 +8,11 @@ import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemTypeEnum;
 
 public class ItemtypeStringRepresentation extends ItemtypeUnaryOperation<String> {
 
+    public String string(XQueryItemType itemtype) {
+        return automaton[itemtype.getType().ordinal()].apply(itemtype);
+    }
+
+
     @Override
     public String errorOperation(XQueryItemType x) {
         return "error()";

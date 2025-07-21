@@ -5,12 +5,6 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 public class XQueryItemTypeAnyArray extends XQueryItemType {
 
     public XQueryItemTypeAnyArray(XQueryTypeFactory factory) {
-        super(XQueryTypes.ANY_ARRAY, null, null, null, null, null, null, factory, null);
+        super(XQueryTypes.ANY_ARRAY, null, null, null, null, null, null, factory, null, null);
     }
-
-    @Override
-    public String toString() {
-        return "array(*)";
-    }
-
 }

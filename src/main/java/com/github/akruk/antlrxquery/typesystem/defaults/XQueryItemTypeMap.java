@@ -8,12 +8,7 @@ public class XQueryItemTypeMap extends XQueryItemType {
                                     XQuerySequenceType value,
                                     XQueryTypeFactory factory)
     {
-        super(XQueryTypes.MAP, null, null, null, key, value, null, factory, null);
-    }
-
-    @Override
-    public String toString() {
-        return "map(" + getMapKeyType() + ", " + getMapValueType() + ")";
+        super(XQueryTypes.MAP, null, null, null, key, value, null, factory, null, null);
     }
 
 

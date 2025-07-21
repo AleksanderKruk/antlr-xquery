@@ -494,11 +494,10 @@ public class XQuerySequenceType {
 
 
     public String toString() {
-        StringBuilder sb = new StringBuilder();
         if (occurence == XQueryOccurence.ZERO) {
-            sb.append("empty-sequence()");
-            return sb.toString();
+            return "empty-sequence()";
         }
+        StringBuilder sb = new StringBuilder();
 
         if (requiresParentheses)
         {

@@ -57,6 +57,10 @@ public abstract class ItemtypeUnaryOperation<Returned>
         return automaton;
     }
 
+    public Function<XQueryItemType, Returned> getOperation(XQueryTypes type) {
+        return automaton[type.ordinal()];
+    }
+
 
     public abstract Returned errorOperation(XQueryItemType x);
     public abstract Returned anyItemOperation(XQueryItemType x);

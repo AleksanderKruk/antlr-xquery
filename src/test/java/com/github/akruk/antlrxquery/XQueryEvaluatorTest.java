@@ -9,7 +9,6 @@ import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.languagefeatures.evaluation.EvaluationTestsBase;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import java.math.BigDecimal;
 import java.util.List;
 
 import static org.junit.Assert.*;

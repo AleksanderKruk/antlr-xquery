@@ -15,7 +15,6 @@ import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.evaluator.values.operations.EffectiveBooleanValue;
 import com.github.akruk.antlrxquery.evaluator.values.operations.ValueAtomizer;
-
 public class ProcessingStrings {
 
     private final XQueryValueFactory valueFactory;

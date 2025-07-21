@@ -6,16 +6,21 @@ import java.util.function.Predicate;
 import org.antlr.v4.runtime.Parser;
 
 import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
-import com.github.akruk.antlrxquery.values.XQueryValue;
-import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
+import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
+import com.github.akruk.antlrxquery.evaluator.values.operations.EffectiveBooleanValue;
 
 public class LogicalFunctions {
 
     private final XQueryValueFactory valueFactory;
+    private final EffectiveBooleanValue ebv;
 
-    public LogicalFunctions(final XQueryValueFactory valueFactory, final Parser targetParser)
+    public LogicalFunctions(final XQueryValueFactory valueFactory,
+                            final Parser targetParser,
+                            final EffectiveBooleanValue ebv)
     {
         this.valueFactory = valueFactory;
+        this.ebv = ebv;
     }
 
     public XQueryValue every(
@@ -23,9 +28,12 @@ public class LogicalFunctions {
             List<XQueryValue> args)
     {
         final var input = args.get(0);
-        final var predicate = args.get(1).functionValue();
-        final var items = input.sequence();
-        final Predicate<XQueryValue> matchesPredicate = item -> predicate.call(context, List.of(item)).effectiveBooleanValue();
+        final var predicate = args.get(1).functionValue;
+        final var items = input.sequence;
+        final Predicate<XQueryValue> matchesPredicate = item -> {
+            XQueryValue predicateResult = predicate.call(context, List.of(item));
+            return ebv.effectiveBooleanValue(predicateResult).booleanValue;
+        };
         final boolean allMatch = items.stream().allMatch(matchesPredicate);
         return valueFactory.bool(allMatch);
     }
@@ -35,9 +43,12 @@ public class LogicalFunctions {
             List<XQueryValue> args)
     {
         final var input = args.get(0);
-        final var predicate = args.get(1).functionValue();
-        final var items = input.sequence();
-        final Predicate<XQueryValue> matchesPredicate = item -> predicate.call(context, List.of(item)).effectiveBooleanValue();
+        final var predicate = args.get(1).functionValue;
+        final var items = input.sequence;
+        final Predicate<XQueryValue> matchesPredicate = item -> {
+            XQueryValue call = predicate.call(context, List.of(item));
+            return ebv.effectiveBooleanValue(call).booleanValue;
+        };
         final boolean allMatch = items.stream().anyMatch(matchesPredicate);
         return valueFactory.bool(allMatch);
     }

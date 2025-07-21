@@ -2,8 +2,8 @@ package com.github.akruk.antlrxquery.languagefeatures.evaluation.simplemapexpres
 
 import org.junit.jupiter.api.Test;
 
+import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.languagefeatures.evaluation.EvaluationTestsBase;
-import com.github.akruk.antlrxquery.values.XQueryValue;
 
 import java.util.List;
 

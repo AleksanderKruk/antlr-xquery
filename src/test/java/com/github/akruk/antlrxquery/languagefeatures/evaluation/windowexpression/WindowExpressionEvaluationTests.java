@@ -8,8 +8,8 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrxquery.evaluator.XQuery;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.languagefeatures.evaluation.EvaluationTestsBase;
-import com.github.akruk.antlrxquery.values.XQueryValue;
 
 public class WindowExpressionEvaluationTests extends EvaluationTestsBase {
 

@@ -4,12 +4,20 @@ package com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.function
 import java.util.List;
 
 import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
-import com.github.akruk.antlrxquery.values.XQueryError;
-import com.github.akruk.antlrxquery.values.XQueryValue;
-import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryError;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
+import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
+import com.github.akruk.antlrxquery.evaluator.values.operations.ValueAtomizer;
 
 public class CardinalityFunctions {
-    public CardinalityFunctions(final XQueryValueFactory valueFactory) {
+
+    final ValueAtomizer atomizer;
+    private final XQueryValueFactory valueFactory;
+
+    public CardinalityFunctions(final XQueryValueFactory valueFactory, final ValueAtomizer atomizer) {
+
+        this.valueFactory = valueFactory;
+        this.atomizer = atomizer;
     }
 
     /**
@@ -22,9 +30,9 @@ public class CardinalityFunctions {
             List<XQueryValue> args) {
 
         XQueryValue input = args.get(0);
-        List<XQueryValue> seq = input.atomize();
+        List<XQueryValue> seq = atomizer.atomize(input);
         if (seq.size() > 1) {
-            return XQueryError.ZeroOrOneWrongArity;
+            return valueFactory.error(XQueryError.ZeroOrOneWrongArity, "");
         }
         // zero-or-one returns the sequence unchanged
         return input;
@@ -40,9 +48,9 @@ public class CardinalityFunctions {
             List<XQueryValue> args) {
 
         XQueryValue input = args.get(0);
-        List<XQueryValue> seq = input.atomize();
+        List<XQueryValue> seq = atomizer.atomize(input);
         if (seq.isEmpty()) {
-            return XQueryError.OneOrMoreEmpty;
+            return valueFactory.error(XQueryError.OneOrMoreEmpty, "");
         }
         // one-or-more returns the sequence unchanged
         return input;
@@ -58,9 +66,9 @@ public class CardinalityFunctions {
             List<XQueryValue> args) {
 
         XQueryValue input = args.get(0);
-        List<XQueryValue> seq = input.atomize();
+        List<XQueryValue> seq = atomizer.atomize(input);
         if (seq.size() != 1) {
-            return XQueryError.ExactlyOneWrongArity;
+            return valueFactory.error(XQueryError.ExactlyOneWrongArity, "");
         }
         // exactly-one returns that single item
         return seq.get(0);

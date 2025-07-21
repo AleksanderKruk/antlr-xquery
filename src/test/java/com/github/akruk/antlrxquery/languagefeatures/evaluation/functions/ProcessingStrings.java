@@ -45,10 +45,10 @@ public class ProcessingStrings extends EvaluationTestsBase {
 
     @Test public void testCodepointEqualEmptyAndNonEmpty() {
         assertResult("codepoint-equal((), 'a')",
-            valueFactory.bool(false)
+            valueFactory.emptySequence()
         );
         assertResult("codepoint-equal('a', ())",
-            valueFactory.bool(false)
+            valueFactory.emptySequence()
         );
     }
 

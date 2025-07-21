@@ -3,8 +3,8 @@ package com.github.akruk.antlrxquery.languagefeatures.evaluation.primary;
 import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrxquery.evaluator.XQuery;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.languagefeatures.evaluation.EvaluationTestsBase;
-import com.github.akruk.antlrxquery.values.XQueryValue;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -79,7 +79,7 @@ public class LiteralsEvaluationTests extends EvaluationTestsBase {
                     "a""b"
                 """;
         var value = XQuery.evaluate(null, xquery, null);
-        assertEquals("a\"b", value.stringValue());
+        assertEquals("a\"b", value.stringValue);
     }
 
     @Test
@@ -181,12 +181,12 @@ public class LiteralsEvaluationTests extends EvaluationTestsBase {
                 valueFactory.number(2),
                 valueFactory.number(3));
         assertNotNull(value);
-        assertNotNull(value.sequence());
-        var sequence = value.sequence();
+        assertNotNull(value.sequence);
+        var sequence = value.sequence;
         assertEquals(expected.size(), sequence.size());
-        assertTrue(expected.get(0).numericValue().equals(sequence.get(0).numericValue()));
-        assertTrue(expected.get(1).numericValue().equals(sequence.get(1).numericValue()));
-        assertTrue(expected.get(2).numericValue().equals(sequence.get(2).numericValue()));
+        assertTrue(expected.get(0).numericValue.equals(sequence.get(0).numericValue));
+        assertTrue(expected.get(1).numericValue.equals(sequence.get(1).numericValue));
+        assertTrue(expected.get(2).numericValue.equals(sequence.get(2).numericValue));
     }
 
 

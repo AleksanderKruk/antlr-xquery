@@ -3,7 +3,7 @@ package com.github.akruk.antlrxquery.languagefeatures.semantics.comparisons;
 import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
-import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 
 public class ComparisonExpressionSemanticTests extends SemanticTestsBase {
     @Test

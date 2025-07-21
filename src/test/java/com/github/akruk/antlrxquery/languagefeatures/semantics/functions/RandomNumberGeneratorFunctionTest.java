@@ -1,7 +1,7 @@
 package com.github.akruk.antlrxquery.languagefeatures.semantics.functions;
 
 import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
-import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 
 import org.junit.jupiter.api.Test;
 

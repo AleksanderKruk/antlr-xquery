@@ -1,6 +1,6 @@
 package com.github.akruk.antlrxquery.evaluator;
 
-import com.github.akruk.antlrxquery.values.XQueryValue;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 
 public class XQueryVisitingContext {
     private XQueryValue value;

@@ -8,15 +8,15 @@ import org.antlr.v4.runtime.tree.xpath.XPath;
 import com.github.akruk.antlrgrammar.ANTLRv4Lexer;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.ParserRuleSpecContext;
-import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.baseimplementation.XQueryBaseSemanticContextManager;
 import com.github.akruk.antlrxquery.evaluator.XQueryEvaluatorVisitor;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
+import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMemoizedValueFactory;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQuerySemanticFunctionManager;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryEnumTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTypeSets;
-import com.github.akruk.antlrxquery.values.XQueryValue;
-import com.github.akruk.antlrxquery.values.factories.defaults.XQueryMemoizedValueFactory;
 
 import javax.tools.*;
 import java.io.*;
@@ -101,9 +101,9 @@ public class XQueryRunner {
             final XQueryTypeFactory typeFactory = new XQueryEnumTypeFactory(new XQueryNamedTypeSets().all());
             final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
                     parserAndTree.parser,
-                    new XQueryBaseSemanticContextManager(),
+                    new XQuerySemanticContextManager(),
                     typeFactory,
-                    new XQueryMemoizedValueFactory(),
+                    new XQueryMemoizedValueFactory(typeFactory),
                     new XQuerySemanticFunctionManager(typeFactory));
             analyzer.visit(xqueryTree);
             final var querySemanticErrors = analyzer.getErrors();
@@ -118,8 +118,10 @@ public class XQueryRunner {
                 final String fileContent = Files.readString(Path.of(file));
                 final XQueryValue results = executeQuery(xqueryTree, lexerClass, parserClass, startingRule, fileContent);
                 outputStream.println("File: " + file);
-                for (final var result : results.atomize()) {
-                    final String printed = result.stringValue();
+                // TODO: atomize
+                // TODO:
+                for (final var result : results.sequence) {
+                    final String printed = result.stringValue;
                     if (printed != null)
                         outputStream.println(printed);
                     else
@@ -138,7 +140,8 @@ public class XQueryRunner {
     {
         try {
             final ParserAndTree parserAndTree = parseTargetFile(input, lexerClass, parserClass, startingRule);
-            final XQueryEvaluatorVisitor evaluator = new XQueryEvaluatorVisitor(parserAndTree.tree, parserAndTree.parser);
+            final XQueryTypeFactory typeFactory = new XQueryEnumTypeFactory(new XQueryNamedTypeSets().all());
+            final XQueryEvaluatorVisitor evaluator = new XQueryEvaluatorVisitor(parserAndTree.tree, parserAndTree.parser, typeFactory);
             return evaluator.visit(query);
         } catch (final Exception e) {
             return null;

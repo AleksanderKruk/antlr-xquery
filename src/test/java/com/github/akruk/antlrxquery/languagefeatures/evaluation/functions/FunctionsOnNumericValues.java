@@ -5,8 +5,8 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import com.github.akruk.antlrxquery.evaluator.values.XQueryError;
 import com.github.akruk.antlrxquery.languagefeatures.evaluation.EvaluationTestsBase;
-import com.github.akruk.antlrxquery.values.XQueryError;
 
 public class FunctionsOnNumericValues extends EvaluationTestsBase {
     @Test
@@ -317,7 +317,7 @@ public class FunctionsOnNumericValues extends EvaluationTestsBase {
 
     @Test
     public void divideByZeroRaisesError() {
-        assertError("divide-decimals(1, 0)", XQueryError.DivisionByZero);
+        assertError("divide-decimals(1, 0)", valueFactory.error(XQueryError.DivisionByZero, ""));
     }
 
 

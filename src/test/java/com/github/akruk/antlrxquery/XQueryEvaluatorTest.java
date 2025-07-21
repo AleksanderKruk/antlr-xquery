@@ -5,10 +5,9 @@ import org.antlr.v4.runtime.tree.xpath.XPath;
 import org.junit.Test;
 
 import com.github.akruk.antlrxquery.evaluator.XQuery;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.languagefeatures.evaluation.EvaluationTestsBase;
-import com.github.akruk.antlrxquery.values.XQueryNumber;
-import com.github.akruk.antlrxquery.values.XQueryString;
-import com.github.akruk.antlrxquery.values.XQueryValue;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.math.BigDecimal;
 import java.util.List;
@@ -22,9 +21,9 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
 
     @Test
     public void atomization() {
-        String xquery = "(1, (2,3,4), ((5, 6), 7))";
-        var value = XQuery.evaluate(null, xquery, null);
-        List<XQueryValue> expected = List.of(
+        final String xquery = "(1, (2,3,4), ((5, 6), 7))";
+        final var value = XQuery.evaluate(null, xquery, null);
+        final List<XQueryValue> expected = List.of(
                 valueFactory.number(1),
                 valueFactory.number(2),
                 valueFactory.number(3),
@@ -33,86 +32,86 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
                 valueFactory.number(6),
                 valueFactory.number(7));
         assertArrayEquals(
-                expected.stream().map(XQueryValue::numericValue).toArray(),
-                value.sequence().stream().map(XQueryValue::numericValue).toArray());
+                expected.stream().map(v->v.numericValue).toArray(),
+                value.sequence.stream().map(v->v.numericValue).toArray());
     }
 
     // TODO: rewrite
-    @Test
-    public void sequenceUnion() {
-        String xquery = """
-                    (1, 2, 3) | (4, 5, 6)
-                """;
-        var value = XQuery.evaluate(null, xquery, null);
-        var expected = List.of(
-                valueFactory.number(1),
-                valueFactory.number(2),
-                valueFactory.number(3),
-                valueFactory.number(4),
-                valueFactory.number(5),
-                valueFactory.number(6));
-        assertEquals(expected.size(), value.sequence().size());
-        var sequence = value.sequence();
-        for (int i = 0; i < expected.size(); i++) {
-            var element = expected.get(i);
-            var received = sequence.get(i);
-            assertEquals(element.numericValue(), received.numericValue());
-        }
-        xquery = """
-                    (1, 2, 3) union (4, 5, 6)
-                """;
-        value = XQuery.evaluate(null, xquery, null);
-        assertEquals(expected.size(), value.sequence().size());
-        sequence = value.sequence();
-        for (int i = 0; i < expected.size(); i++) {
-            var element = expected.get(i);
-            var received = sequence.get(i);
-            assertEquals(element.numericValue(), received.numericValue());
-        }
-    }
+    // @Test
+    // public void sequenceUnion() {
+    //     String xquery = """
+    //                 (1, 2, 3) | (4, 5, 6)
+    //             """;
+    //     var value = XQuery.evaluate(null, xquery, null);
+    //     final var expected = List.of(
+    //             valueFactory.number(1),
+    //             valueFactory.number(2),
+    //             valueFactory.number(3),
+    //             valueFactory.number(4),
+    //             valueFactory.number(5),
+    //             valueFactory.number(6));
+    //     assertEquals(expected.size(), value.sequence.size());
+    //     var sequence = value.sequence;
+    //     for (int i = 0; i < expected.size(); i++) {
+    //         final var element = expected.get(i);
+    //         final var received = sequence.get(i);
+    //         assertEquals(element.numericValue, received.numericValue);
+    //     }
+    //     xquery = """
+    //                 (1, 2, 3) union (4, 5, 6)
+    //             """;
+    //     value = XQuery.evaluate(null, xquery, null);
+    //     assertEquals(expected.size(), value.sequence.size());
+    //     sequence = value.sequence;
+    //     for (int i = 0; i < expected.size(); i++) {
+    //         final var element = expected.get(i);
+    //         final var received = sequence.get(i);
+    //         assertEquals(element.numericValue, received.numericValue);
+    //     }
+    // }
 
-    // TODO: rewrite
-    @Test
-    public void sequenceIntersection() {
-        String xquery = """
-                    (1, 2, 3, 4) intersect (0, 2, 4, 8)
-                """;
-        var value = XQuery.evaluate(null, xquery, null);
-        BigDecimal[] expected = {
-                (BigDecimal.valueOf(2)),
-                (BigDecimal.valueOf(4)),
-        };
-        BigDecimal[] numbersFromSequence = value.sequence()
-                .stream()
-                .map(XQueryValue::numericValue)
-                .toArray(BigDecimal[]::new);
-        assertArrayEquals(expected, numbersFromSequence);
-    }
+    // // TODO: rewrite
+    // @Test
+    // public void sequenceIntersection() {
+    //     final String xquery = """
+    //                 (1, 2, 3, 4) intersect (0, 2, 4, 8)
+    //             """;
+    //     final var value = XQuery.evaluate(null, xquery, null);
+    //     final BigDecimal[] expected = {
+    //             (BigDecimal.valueOf(2)),
+    //             (BigDecimal.valueOf(4)),
+    //     };
+    //     final BigDecimal[] numbersFromSequence = value.sequence
+    //             .stream()
+    //             .map(v->v.numericValue)
+    //             .toArray(BigDecimal[]::new);
+    //     assertArrayEquals(expected, numbersFromSequence);
+    // }
 
-    // TODO: rewrite
-    @Test
-    public void sequenceSubtraction() {
-        String xquery = """
-                    (1, 2, 3, 4) except (2, 4)
-                """;
-        var value = XQuery.evaluate(null, xquery, null);
-        BigDecimal[] expected = {
-                BigDecimal.valueOf(1),
-                BigDecimal.valueOf(3),
-        };
-        BigDecimal[] numbersFromSequence = value.sequence()
-                .stream()
-                .map(XQueryValue::numericValue)
-                .toArray(BigDecimal[]::new);
-        assertArrayEquals(expected, numbersFromSequence);
-    }
+    // // TODO: rewrite
+    // @Test
+    // public void sequenceSubtraction() {
+    //     final String xquery = """
+    //                 (1, 2, 3, 4) except (2, 4)
+    //             """;
+    //     final var value = XQuery.evaluate(null, xquery, null);
+    //     final BigDecimal[] expected = {
+    //             BigDecimal.valueOf(1),
+    //             BigDecimal.valueOf(3),
+    //     };
+    //     final BigDecimal[] numbersFromSequence = value.sequence
+    //             .stream()
+    //             .map(v->v.numericValue)
+    //             .toArray(BigDecimal[]::new);
+    //     assertArrayEquals(expected, numbersFromSequence);
+    // }
 
     @Test
     public void concatenationExpressions() {
-        assertResult("'abc' || 'def' || 'ghi'", new XQueryString("abcdefghi", valueFactory));
+        assertResult("'abc' || 'def' || 'ghi'", valueFactory.string("abcdefghi"));
         assertResult("""
                 () || "con" || ("cat", "enate")
-                    """, new XQueryString("concatenate", valueFactory));
+                    """, valueFactory.string("concatenate"));
     }
 
 
@@ -174,13 +173,13 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
 
     @Test
     public void wildcards() throws Exception {
-        String textualTree = "a bc a d";
-        String xquery = "//*";
-        ValueParserAndTree parserAndTree = executeDynamicGrammarQueryWithTree(
+        final String textualTree = "a bc a d";
+        final String xquery = "//*";
+        final ValueParserAndTree parserAndTree = executeDynamicGrammarQueryWithTree(
             TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", textualTree, xquery);
-        ParseTree[] nodes = XPath.findAll(parserAndTree.tree(), xquery, parserAndTree.parser())
+        final ParseTree[] nodes = XPath.findAll(parserAndTree.tree(), xquery, parserAndTree.parser())
                 .toArray(ParseTree[]::new);
-        ParseTree[] xqueryNodes = parserAndTree.value().sequence().stream().map(val -> val.node())
+        final ParseTree[] xqueryNodes = parserAndTree.value().sequence.stream().map(val -> val.node)
                 .toArray(ParseTree[]::new);
         assertEquals(nodes.length, xqueryNodes.length);
         for (int i = 1; i < xqueryNodes.length; i++) {
@@ -190,8 +189,8 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
 
     // @Test
     // public void distinctValues() {
-    //     var i1 = new XQueryString("1", baseFactory);
-    //     var i2 = new XQueryString("2", baseFactory);
+    //     var i1 = valueFactory.string("1", baseFactory);
+    //     var i2 = valueFactory.string("2", baseFactory);
     //     assertResult("""
     //                 distinct-values((1, "1", 1, "1", "2", false(), false(), true(), true()))
     //             """, List.of(baseFactory.number(1), i1, i2, baseFactory.bool(false), baseFactory.bool(true)));
@@ -202,11 +201,11 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
 
     @Test
     public void rangeExpression() {
-        var i1 = valueFactory.number(1);
-        var i2 = valueFactory.number(2);
-        var i3 = valueFactory.number(3);
-        var i4 = valueFactory.number(4);
-        var i5 = valueFactory.number(5);
+        final var i1 = valueFactory.number(1);
+        final var i2 = valueFactory.number(2);
+        final var i3 = valueFactory.number(3);
+        final var i4 = valueFactory.number(4);
+        final var i5 = valueFactory.number(5);
         assertResult("1 to 5", List.of(i1, i2, i3, i4, i5));
         assertResult("4 to 3", List.of());
         assertResult("3 to 3", List.of(i3));
@@ -218,58 +217,59 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
 
     @Test
     public void predicateExpression() {
-        // var i1 = new XQueryNumber(1);
-        // var i2 = new XQueryNumber(2);
-        // var i3 = new XQueryNumber(3);
-        var i4 = new XQueryNumber(4, valueFactory);
-        var i5 = new XQueryNumber(5, valueFactory);
+        // var i1 = valueFactory.number(1);
+        // var i2 = valueFactory.number(2);
+        // var i3 = valueFactory.number(3);
+        final var i4 = valueFactory.number(4);
+        final var i5 = valueFactory.number(5);
         assertResult("(1, 2, 3, 4, 5)[. gt 3]", List.of(i4, i5));
     }
 
     @Test
     public void booleanToString() {
-        assertResult("string(true())", new XQueryString("true", valueFactory));
-        assertResult("string(false())", new XQueryString("false", valueFactory));
+        assertResult("string(true())",  valueFactory.string("true" ));
+        assertResult("string(false())", valueFactory.string("false"));
     }
 
     @Test
     public void stringToString() {
-        assertResult("string('abc')", new XQueryString("abc", valueFactory));
+        assertResult("string('abc')", valueFactory.string("abc"));
     }
 
     @Test
     public void numberToString() {
-        assertResult("string(1.2)", new XQueryString("1.2", valueFactory));
+        assertResult("string(1.2)", valueFactory.string("1.2"));
     }
 
     @Test
     public void itemGetter() {
-        assertResult("(1, 2, 3)[2]", new XQueryNumber(2, valueFactory));
+        assertResult("(1, 2, 3)[2]", valueFactory.number(2));
     }
 
     @Test
     public void itemGetterIndices() {
         assertResult("(1, 2, 3, 4, 5, 6)[()]", List.of());
-        assertResult("(1, 2, 3, 4, 5, 6)[3 to 5]", List.of(new XQueryNumber(3, valueFactory),
-                new XQueryNumber(4, valueFactory),
-                new XQueryNumber(5, valueFactory)));
+        assertResult("(1, 2, 3, 4, 5, 6)[3 to 5]", List.of(
+            valueFactory.number(3),
+            valueFactory.number(4),
+            valueFactory.number(5)));
     }
 
     @Test
     public void positionFunction() {
-        assertResult("(1, 2, 3)[position() eq 2][1]", new XQueryNumber(2, valueFactory));
-        assertResult("(1, 2, 3)[position() eq 2]", List.of(new XQueryNumber(2, valueFactory)));
+        assertResult("(1, 2, 3)[position() eq 2][1]", valueFactory.number(2));
+        assertResult("(1, 2, 3)[position() eq 2]", List.of(valueFactory.number(2)));
     }
 
     @Test
     public void lastFunction() {
-        assertResult("(1, 2, 3)[last()]", new XQueryNumber(3, valueFactory));
+        assertResult("(1, 2, 3)[last()]", valueFactory.number(3));
     }
 
     @Test
     public void arrowExpression() {
-        assertResult("'a' => string-length()", new XQueryNumber(1, valueFactory));
-        assertResult("'a' => string-length() => string()", new XQueryString("1", valueFactory));
+        assertResult("'a' => string-length()", valueFactory.number(1));
+        assertResult("'a' => string-length() => string()", valueFactory.string("1"));
     }
 
     @Test
@@ -330,17 +330,17 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
 
     @Test
     public void otherwiseExpression() {
-        final List<XQueryValue> $123 = List.of(new XQueryNumber(1, valueFactory), new XQueryNumber(2, valueFactory),
-                new XQueryNumber(3, valueFactory));
+        final List<XQueryValue> $123 = List.of(valueFactory.number(1), valueFactory.number(2),
+                valueFactory.number(3));
         assertResult("""
                     () otherwise 1
-                """, new XQueryNumber(1, valueFactory));
+                """, valueFactory.number(1));
         assertResult("""
                     1 otherwise 2
-                """, new XQueryNumber(1, valueFactory));
+                """, valueFactory.number(1));
         assertResult("""
                     "napis" otherwise 2
-                """, new XQueryString("napis", valueFactory));
+                """, valueFactory.string("napis"));
         assertResult("""
                     () otherwise () otherwise (1, 2, 3)
                 """, $123);

@@ -7,15 +7,15 @@ import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
-import com.github.akruk.antlrxquery.values.XQueryError;
-import com.github.akruk.antlrxquery.values.XQueryValue;
-import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
-import com.github.akruk.nodegetter.INodeGetter;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryError;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
+import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
+import com.github.akruk.nodegetter.NodeGetter;
 
 public class OtherFunctionsOnNodes {
     private final XQueryValueFactory valueFactory;
-    private final INodeGetter nodeGetter;
-    public OtherFunctionsOnNodes(final XQueryValueFactory valueFactory, final INodeGetter nodeGetter, final Parser targetParser) {
+    private final NodeGetter nodeGetter;
+    public OtherFunctionsOnNodes(final XQueryValueFactory valueFactory, final NodeGetter nodeGetter, final Parser targetParser) {
         this.valueFactory = valueFactory;
         this.nodeGetter = nodeGetter;
     }
@@ -28,16 +28,16 @@ public class OtherFunctionsOnNodes {
         XQueryValue node;
         if (args.isEmpty()) {
             if (context.getValue() == null) {
-                return XQueryError.MissingDynamicContextComponent;
+                return valueFactory.error(XQueryError.MissingDynamicContextComponent, "");
             }
             node = context.getValue();
         } else {
             node = args.get(0);
-            if (node.isEmptySequence()) {
+            if (node.isEmptySequence) {
                 return valueFactory.emptyString();
             }
-            if (!node.isNode()) {
-                return XQueryError.InvalidArgumentType;
+            if (!node.isNode) {
+                return valueFactory.error(XQueryError.InvalidArgumentType, "");
             }
         }
         return node;
@@ -51,10 +51,10 @@ public class OtherFunctionsOnNodes {
             List<XQueryValue> args)
     {
         XQueryValue node = getNode(context, args);
-        if (!node.isNode()) {
+        if (!node.isNode) {
             return node;
         }
-        ParseTree nodeTree = node.node();
+        ParseTree nodeTree = node.node;
         var ancestors = nodeGetter.getAncestors(nodeTree);
         if (ancestors.size() == 0)
             return node;
@@ -74,10 +74,10 @@ public class OtherFunctionsOnNodes {
             List<XQueryValue> args)
     {
         XQueryValue node = getNode(context, args);
-        if (!node.isNode()) {
+        if (!node.isNode) {
             return node;
         }
-        ParseTree nodeTree = node.node();
+        ParseTree nodeTree = node.node;
         return valueFactory.bool(nodeTree.getChildCount() != 0);
     }
 
@@ -86,10 +86,10 @@ public class OtherFunctionsOnNodes {
             List<XQueryValue> args)
     {
         XQueryValue node = getNode(context, args);
-        if (!node.isNode()) {
+        if (!node.isNode) {
             return node;
         }
-        ParseTree nodeTree = node.node();
+        ParseTree nodeTree = node.node;
         final var followingSiblings = nodeGetter.getFollowingSiblings(nodeTree);
         final var precedingSiblings = nodeGetter.getPrecedingSiblings(nodeTree);
         final var combined = new ArrayList<XQueryValue>(followingSiblings.size() + precedingSiblings.size());

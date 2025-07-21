@@ -2,8 +2,8 @@ package com.github.akruk.antlrxquery.languagefeatures.evaluation.functions;
 
 import org.junit.jupiter.api.Test;
 
+import com.github.akruk.antlrxquery.evaluator.values.XQueryError;
 import com.github.akruk.antlrxquery.languagefeatures.evaluation.EvaluationTestsBase;
-import com.github.akruk.antlrxquery.values.XQueryError;
 
 public class ProcessingBooleansTests extends EvaluationTestsBase {
     @Test
@@ -30,7 +30,7 @@ public class ProcessingBooleansTests extends EvaluationTestsBase {
         assertResult("not('')", valueFactory.bool(true));
         assertResult("not('text')", valueFactory.bool(false));
 
-        assertError("not()", XQueryError.WrongNumberOfArguments);
+        assertError("not()", valueFactory.error(XQueryError.WrongNumberOfArguments, ""));
 
     }
 
@@ -50,7 +50,7 @@ public class ProcessingBooleansTests extends EvaluationTestsBase {
         assertResult("boolean('text')", valueFactory.bool(true));
         assertResult("boolean('0')", valueFactory.bool(true));
 
-        assertError("boolean()", XQueryError.WrongNumberOfArguments);
+        assertError("boolean()", valueFactory.error(XQueryError.WrongNumberOfArguments, ""));
     }
 
 
@@ -63,7 +63,7 @@ public class ProcessingBooleansTests extends EvaluationTestsBase {
         assertResult("op:boolean-equal(boolean(1), boolean(2))", valueFactory.bool(true));
         assertResult("op:boolean-equal(boolean(0), boolean(()))", valueFactory.bool(true));
         assertResult("op:boolean-equal(boolean('text'), boolean(42))", valueFactory.bool(true));
-        assertError("op:boolean-equal(boolean(), boolean())", XQueryError.InvalidArgumentType);
+        assertError("op:boolean-equal(boolean(), boolean())", valueFactory.error(XQueryError.InvalidArgumentType, ""));
     }
 
     @Test

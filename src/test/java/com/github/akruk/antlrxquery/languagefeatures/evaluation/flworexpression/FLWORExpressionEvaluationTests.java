@@ -5,16 +5,14 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrxquery.languagefeatures.evaluation.EvaluationTestsBase;
-import com.github.akruk.antlrxquery.values.XQueryNumber;
-import com.github.akruk.antlrxquery.values.XQueryString;
 
 public class FLWORExpressionEvaluationTests extends EvaluationTestsBase {
 
     @Test
     public void variableBinding() {
-        assertResult("let $x := 1 return $x", new XQueryNumber(1, valueFactory));
+        assertResult("let $x := 1 return $x", valueFactory.number(1));
         assertResult("let $x := 'abc', $y := 1 return ($x, $y)",
-                List.of(new XQueryString("abc", valueFactory), new XQueryNumber(1, valueFactory)));
+                List.of(valueFactory.string("abc"), valueFactory.number(1)));
     }
 
     @Test

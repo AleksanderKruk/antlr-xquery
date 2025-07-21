@@ -13,26 +13,45 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
-import com.github.akruk.antlrxquery.values.XQueryError;
-import com.github.akruk.antlrxquery.values.XQuerySequence;
-import com.github.akruk.antlrxquery.values.XQueryString;
-import com.github.akruk.antlrxquery.values.XQueryValue;
-import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.htmlentities.HTMLEntities;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryError;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
+import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
+import com.github.akruk.antlrxquery.evaluator.values.operations.Stringifier;
+import com.github.akruk.antlrxquery.evaluator.values.operations.ValueAtomizer;
 
 public class FunctionsOnStringValues {
     private final XQueryValueFactory valueFactory;
+    private final ValueAtomizer atomizer;
+    // private final EffectiveBooleanValue ebv;
+    private final Stringifier stringifier;
 
-    public FunctionsOnStringValues(final XQueryValueFactory valueFactory) {
+    public FunctionsOnStringValues(final XQueryValueFactory valueFactory, final ValueAtomizer atomizer, final Stringifier stringifier) {
         this.valueFactory = valueFactory;
+        this.atomizer = atomizer;
+        // this.ebv = new EffectiveBooleanValue(valueFactory);
+        this.stringifier = stringifier;
     }
 
     public XQueryValue concat(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        final String joined = args.stream()
-            .flatMap(arg->arg.atomize().stream())
-            .map(XQueryValue::stringValue).collect(Collectors.joining());
-        return valueFactory.string(joined);
+        StringBuilder builder = new StringBuilder();
+
+        for (XQueryValue arg : args) {
+            List<XQueryValue> atomized = atomizer.atomize(arg);
+            for (XQueryValue value : atomized) {
+                if (value.isError) {
+                    return value;
+                }
+                var stringified = stringifier.stringify(value);
+                if (stringified.isError)
+                    return stringified;
+                builder.append(stringified.stringValue);
+            }
+        }
+
+        return valueFactory.string(builder.toString());
     }
+
 
     /**
      * fn:substring(
@@ -47,42 +66,38 @@ public class FunctionsOnStringValues {
 
         // must have 2 or 3 args
         if (args.size() != 2 && args.size() != 3) {
-            return XQueryError.WrongNumberOfArguments;
+            return valueFactory.error(XQueryError.WrongNumberOfArguments, "");
         }
 
         // get input string (empty‐sequence → "")
         XQueryValue targetString = args.get(0);
-        String input = isEmptySequence(targetString)
+        String input = targetString.isEmptySequence
             ? ""
-            : targetString.stringValue();
+            : targetString.stringValue;
 
         // parse and round start
         XQueryValue startArg = args.get(1);
-        if (!startArg.isNumericValue()) {
-            return XQueryError.InvalidArgumentType;
+        if (!startArg.isNumeric) {
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
         }
-        double startD = startArg.numericValue().doubleValue();
+        double startD = startArg.numericValue.doubleValue();
         long startPos = roundXQ(startD);
 
         // two‐arg or length omitted/empty
         boolean omitLength = args.size() == 2
-            || isEmptySequence(args.get(2));
+            || args.get(2).isEmptySequence;
         if (omitLength) {
             return substring_(input, startPos, /* length=∞ */ Long.MAX_VALUE);
         }
 
         // parse and round length
         XQueryValue lenArg = args.get(2);
-        if (!lenArg.isNumericValue()) {
-            return XQueryError.InvalidArgumentType;
+        if (!lenArg.isNumeric) {
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
         }
-        double lenD = lenArg.numericValue().doubleValue();
+        double lenD = lenArg.numericValue.doubleValue();
         long length = roundXQ(lenD);
         return substring_(input, startPos, length);
-    }
-
-    private boolean isEmptySequence(XQueryValue targetString) {
-        return targetString instanceof XQuerySequence && targetString.empty().effectiveBooleanValue();
     }
 
     /** Round per XQuery fn:round: ties away from zero. */
@@ -158,13 +173,7 @@ public class FunctionsOnStringValues {
     {
 
         // Determine the sequence of values to join
-        List<XQueryValue> atomized;
-        if (args.isEmpty()) {
-            // No explicit $values: use context item sequence
-            atomized = context.getValue().atomize();
-        } else {
-            atomized = args.get(0).atomize();
-        }
+        List<XQueryValue> atomized = atomizer.atomize(args.get(0));
 
         // If the sequence is empty, return the zero‐length string
         if (atomized.isEmpty()) {
@@ -176,14 +185,15 @@ public class FunctionsOnStringValues {
         if (args.size() == 2) {
             XQueryValue sepArg = args.get(1);
             // Empty sequence or omitted => zero‐length string
-            if (!sepArg.isEmptySequence()) {
-                sep = sepArg.stringValue();
+            if (!sepArg.isEmptySequence) {
+                sep = sepArg.stringValue;
             }
         }
 
         // Concatenate the atomized strings with the separator
         String result = atomized.stream()
-            .map(XQueryValue::stringValue)
+            .map(stringifier::stringify)
+            .map(v->v.stringValue)
             .collect(Collectors.joining(sep));
 
         return valueFactory.string(result);
@@ -202,26 +212,26 @@ public class FunctionsOnStringValues {
     {
 
         if (args.size() > 1) {
-            return XQueryError.WrongNumberOfArguments;
+            return valueFactory.error(XQueryError.WrongNumberOfArguments, "");
         }
 
         String input;
         if (args.isEmpty()) {
             XQueryValue ctxItem = context.getValue();
             if (ctxItem == null) {
-                return XQueryError.MissingDynamicContextComponent;
+                return valueFactory.error(XQueryError.MissingDynamicContextComponent, "");
             }
-            List<XQueryValue> atoms = ctxItem.atomize();
+            List<XQueryValue> atoms = atomizer.atomize(ctxItem);
             if (atoms.size() != 1) {
-                return XQueryError.InvalidArgumentType;
+                return valueFactory.error(XQueryError.InvalidArgumentType, "");
             }
-            input = atoms.get(0).stringValue();
+            input = atoms.get(0).stringValue;
         } else {
             XQueryValue arg = args.get(0);
-            if (arg.isEmptySequence()) {
+            if (arg.isEmptySequence) {
                 return valueFactory.string("");
             }
-            input = arg.stringValue();
+            input = arg.stringValue;
         }
 
         // replace any run of whitespace (\s) with a single space, then trim ends
@@ -238,14 +248,14 @@ public class FunctionsOnStringValues {
             List<XQueryValue> args) {
 
         final XQueryValue input = args.get(0);
-        if (input.isEmptySequence()) {
+        if (input.isEmptySequence) {
             return valueFactory.emptyString();
         }
-        if (!input.isStringValue()) {
-            return XQueryError.InvalidArgumentType;
+        if (!input.isString) {
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
         }
 
-        String original = input.stringValue();
+        String original = input.stringValue;
         String transformed = original.toUpperCase(Locale.ROOT);
         return valueFactory.string(transformed);
     }
@@ -255,14 +265,14 @@ public class FunctionsOnStringValues {
             List<XQueryValue> args) {
 
         final XQueryValue input = args.get(0);
-        if (input.isEmptySequence()) {
+        if (input.isEmptySequence) {
             return valueFactory.emptyString();
         }
-        if (!input.isStringValue()) {
-            return XQueryError.InvalidArgumentType;
+        if (!input.isString) {
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
         }
 
-        String original = input.stringValue();
+        String original = input.stringValue;
         String transformed = original.toLowerCase(Locale.ROOT);
         return valueFactory.string(transformed);
     }
@@ -288,28 +298,31 @@ public class FunctionsOnStringValues {
         final XQueryValue arg = args.get(0);
         // A Unicode codepoint, supplied as an integer. For example fn:char(9) returns
         // the tab character.
-        if (arg.isNumericValue()) {
-            final BigDecimal dec = arg.numericValue();
+        if (arg.isNumeric) {
+            final BigDecimal dec = arg.numericValue;
             try {
                 final int cp = dec.intValueExact();
                 // Unicode range and surrogates
                 if (cp < 0
                         || cp > Character.MAX_CODE_POINT
                         || (cp >= 0xD800 && cp <= 0xDFFF)) {
-                    return XQueryError.UnrecognizedOrInvalidCharacterName;
+                    return valueFactory.error(XQueryError.UnrecognizedOrInvalidCharacterName, "");
                 }
                 final String s = new String(Character.toChars(cp));
                 return valueFactory.string(s);
 
             } catch (final ArithmeticException ex) {
-                return XQueryError.InvalidArgumentType;
+                return valueFactory.error(XQueryError.InvalidArgumentType, "");
             }
         }
 
         // A backslash-escape sequence from the set \n (U+000A (NEWLINE) ), \r (U+000D
         // (CARRIAGE RETURN) ), or \t (U+0009 (TAB) ).
-        final String s = arg.stringValue();
-        switch (s) {
+        final XQueryValue stringified = stringifier.stringify(arg);
+        if (stringified.isError)
+            return stringified;
+
+        switch (stringified.stringValue) {
             case "\\n":
                 return valueFactory.string("\n");
             case "\\r":
@@ -328,12 +341,13 @@ public class FunctionsOnStringValues {
         // In the event that the HTML5 character reference name identifies a string
         // comprising multiple codepoints, that string is returned.
 
-        if (getEntities().containsKey(s)) {
-            return valueFactory.string(HTML5_ENTITIES.get(s));
+        if (getEntities().containsKey(stringified.stringValue)) {
+            return valueFactory.string(HTML5_ENTITIES.get(stringified.stringValue));
         }
 
-        return XQueryError.UnrecognizedOrInvalidCharacterName;
+        return valueFactory.error(XQueryError.UnrecognizedOrInvalidCharacterName, "");
     }
+
 
     /**
      * fn:characters($value as xs:string?) as xs:string*
@@ -344,24 +358,17 @@ public class FunctionsOnStringValues {
     {
 
         // obtain the string: either argument or context item
-        final XQueryValue inputValue;
-        if (args.isEmpty()) {
-            inputValue = context.getValue();
-        } else {
-            inputValue = args.get(0);
-        }
-        final var empty = inputValue.empty();
-        if (empty == null) {
-            return XQueryError.InvalidArgumentType;
-        }
-
-        // empty‐string or empty‐sequence → empty sequence
-        if (empty.effectiveBooleanValue()) {
+        final XQueryValue inputValue = args.get(0);
+        // empty‐string or empty‐sequence -> empty sequence
+        if (inputValue.isEmptySequence) {
             return valueFactory.emptySequence();
         }
-        final String input = inputValue.stringValue();
+        if (inputValue.isString && inputValue.stringValue.isEmpty()) {
+            return valueFactory.emptySequence();
+        }
+        final String input = stringifier.stringify_(inputValue);
 
-        // split into codepoints → single‐char strings
+        // split into codepoints -> single‐char strings
         final List<XQueryValue> parts = input
                 .codePoints()
                 .mapToObj(cp -> new String(Character.toChars(cp)))
@@ -377,12 +384,8 @@ public class FunctionsOnStringValues {
      */
     public XQueryValue graphemes(
             XQueryVisitingContext context,
-            List<XQueryValue> args) {
-
-        // wrong arity?
-        if (args.size() > 1) {
-            return XQueryError.WrongNumberOfArguments;
-        }
+            List<XQueryValue> args)
+    {
 
         // obtain the input string (argument or context item)
         final XQueryValue inputValue;
@@ -391,23 +394,19 @@ public class FunctionsOnStringValues {
         } else {
             inputValue = args.get(0);
         }
-        final var empty = inputValue.empty();
-        if (empty == null) {
-            return XQueryError.InvalidArgumentType;
-        }
-        if (inputValue.empty().effectiveBooleanValue())
+        if (inputValue.isEmptySequence)
             return valueFactory.emptySequence();
 
-        if (!(inputValue instanceof XQueryString)) {
-            return XQueryError.InvalidArgumentType;
+        if (!inputValue.isString) {
+            return valueFactory.error(XQueryError.InvalidArgumentType, "");
         }
-        final String input = inputValue.stringValue();
+        final String input = inputValue.stringValue;
 
         // BreakIterator for extended grapheme clusters
-        BreakIterator iter = BreakIterator.getCharacterInstance(Locale.ROOT);
+        final BreakIterator iter = BreakIterator.getCharacterInstance(Locale.ROOT);
         iter.setText(input);
 
-        List<XQueryValue> clusters = new ArrayList<>();
+        final List<XQueryValue> clusters = new ArrayList<>();
         int start = iter.first();
         for (int end = iter.next(); end != BreakIterator.DONE; start = end, end = iter.next()) {
             String cluster = input.substring(start, end);
@@ -428,7 +427,7 @@ public class FunctionsOnStringValues {
 
         // arity check
         if (args.size() > 2) {
-            return XQueryError.WrongNumberOfArguments;
+            return valueFactory.error(XQueryError.WrongNumberOfArguments, "");
         }
 
         // determine input string (arg0 or context item)
@@ -436,16 +435,16 @@ public class FunctionsOnStringValues {
         if (args.isEmpty()) {
             XQueryValue ctxItem = context.getValue();
             if (ctxItem == null) {
-                return XQueryError.MissingDynamicContextComponent;
+                return valueFactory.error(XQueryError.MissingDynamicContextComponent, "");
             }
-            input = ctxItem.stringValue();
+            input = ctxItem.stringValue;
         } else {
             XQueryValue arg0 = args.get(0);
-            if (arg0.isEmptySequence()) {
+            if (arg0.isEmptySequence) {
                 // empty-sequence => zero-length string
                 input = "";
             } else {
-                input = arg0.stringValue();
+                input = arg0.stringValue;
             }
         }
 
@@ -453,10 +452,10 @@ public class FunctionsOnStringValues {
         String rawForm = "NFC";
         if (args.size() == 2) {
             XQueryValue formArg = args.get(1);
-            if (!formArg.isEmptySequence()) {
+            if (!formArg.isEmptySequence) {
                 // normalize-space on raw form, then upper-case
                 String tmp = WHITESPACE_RE
-                    .matcher(formArg.stringValue())
+                    .matcher(formArg.stringValue)
                     .replaceAll(" ")
                     .trim();
                 rawForm = tmp.toUpperCase(Locale.ROOT);
@@ -497,7 +496,7 @@ public class FunctionsOnStringValues {
                 result = Normalizer.normalize(input, Form.NFC);
                 break;
             default:
-                return XQueryError.UnsupportedNormalizationForm;
+                return valueFactory.error(XQueryError.UnsupportedNormalizationForm, "");
         }
 
         return valueFactory.string(result);
@@ -517,18 +516,18 @@ public class FunctionsOnStringValues {
         XQueryValue valArg = args.get(0);
 
         // If $value is the empty sequence, the function returns the zero-length string.
-        if (valArg.isEmptySequence())
+        if (valArg.isEmptySequence)
             return valueFactory.string("");
 
         // Otherwise, the function returns a result string constructed by processing each character in $value, in order, according to the following rules:
-        String input = valArg.stringValue();
+        String input = valArg.stringValue;
 
         // obtain replace and with strings
         XQueryValue repArg = args.get(1);
         XQueryValue withArg = args.get(2);
 
-        String replace = repArg.stringValue();
-        String with = withArg.stringValue();
+        String replace = repArg.stringValue;
+        String with = withArg.stringValue;
 
         // build codepoint arrays
         int[] inCps = input.codePoints().toArray();
@@ -572,24 +571,24 @@ public class FunctionsOnStringValues {
 
         if (args.isEmpty()) {
             // zero‐arg form: use context item
-            XQueryValue ctxItem = context.getValue();
+            final XQueryValue ctxItem = context.getValue();
             if (ctxItem == null) {
-                return XQueryError.MissingDynamicContextComponent;
+                return valueFactory.error(XQueryError.MissingDynamicContextComponent, "");
             }
             // atomize
-            List<XQueryValue> atoms = ctxItem.atomize();
+            final List<XQueryValue> atoms = atomizer.atomize(ctxItem);
             if (atoms.size() != 1) {
-                return XQueryError.InvalidArgumentType;
+                return valueFactory.error(XQueryError.InvalidArgumentType, "");
             }
-            input = atoms.get(0).stringValue();
+            input = atoms.get(0).stringValue;
         } else {
             // one‐arg form
             XQueryValue arg = args.get(0);
             // empty‐sequence => length 0
-            if (arg.isEmptySequence()) {
+            if (arg.isEmptySequence) {
                 return valueFactory.number(0);
             }
-            input = arg.stringValue();
+            input = arg.stringValue;
         }
 
         // count codepoints (each surrogate pair counts as one)

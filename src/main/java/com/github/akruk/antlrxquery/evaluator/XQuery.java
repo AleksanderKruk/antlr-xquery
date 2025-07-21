@@ -11,7 +11,9 @@ import java.util.List;
 import org.antlr.v4.runtime.CharStream;
 import com.github.akruk.antlrxquery.AntlrXqueryLexer;
 import com.github.akruk.antlrxquery.AntlrXqueryParser;
-import com.github.akruk.antlrxquery.values.XQueryValue;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
+import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryEnumTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTypeSets;
 
 public final class XQuery {
   public static XQueryValue evaluate(ParseTree tree, String xquery, Parser parser) {
@@ -25,7 +27,8 @@ public final class XQuery {
         root.children = List.of(tree);
         tree.setParent(root);
     }
-    XQueryEvaluatorVisitor visitor = new XQueryEvaluatorVisitor(root, parser);
+    XQueryEnumTypeFactory typeFactory = new XQueryEnumTypeFactory(new XQueryNamedTypeSets().all());
+    XQueryEvaluatorVisitor visitor = new XQueryEvaluatorVisitor(root, parser, typeFactory);
     XQueryValue evaluated = visitor.visit(xqueryTree);
     if (tree != null) {
         tree.setParent(null);

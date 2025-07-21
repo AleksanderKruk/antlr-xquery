@@ -19,23 +19,22 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import com.github.akruk.antlrxquery.AntlrXqueryParser.*;
-import com.github.akruk.antlrxquery.contextmanagement.semanticcontext.XQuerySemanticContextManager;
-import com.github.akruk.antlrxquery.namespaceresolver.INamespaceResolver;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.ResolvedName;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager.ArgumentSpecification;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.IXQuerySemanticFunctionManager.AnalysisResult;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQuerySemanticFunctionManager;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQuerySemanticFunctionManager.AnalysisResult;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQuerySemanticFunctionManager.ArgumentSpecification;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper.XQuerySemanticCharEscaperResult;
-import com.github.akruk.antlrxquery.typesystem.XQueryItemType;
+import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
-import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType;
-import com.github.akruk.antlrxquery.typesystem.XQuerySequenceType.RelativeCoercability;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryEnumItemTypeEnum;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemTypeEnum;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType.RelativeCoercability;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
-import com.github.akruk.antlrxquery.values.factories.XQueryValueFactory;
 
 public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQuerySequenceType> {
     final XQuerySemanticContextManager contextManager;
@@ -43,7 +42,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     final List<String> warnings;
     final XQueryTypeFactory typeFactory;
     final XQueryValueFactory valueFactory;
-    final IXQuerySemanticFunctionManager functionManager;
+    final XQuerySemanticFunctionManager functionManager;
     final Parser parser;
     XQueryVisitingSemanticContext context;
     List<XQuerySequenceType> visitedPositionalArguments;
@@ -63,7 +62,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         final XQuerySemanticContextManager contextManager,
         final XQueryTypeFactory typeFactory,
         final XQueryValueFactory valueFactory,
-        final IXQuerySemanticFunctionManager functionCaller) {
+        final XQuerySemanticFunctionManager functionCaller) {
         this.context = new XQueryVisitingSemanticContext();
         this.parser = parser;
         this.typeFactory = typeFactory;
@@ -325,7 +324,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     @Override
     public XQuerySequenceType visitElementTest(final ElementTestContext ctx)
     {
-        final Set<String> elementNames = ctx.nameTestUnion().nameTest().stream().map(e -> e.toString())
+        final Set<String> elementNames = ctx.nameTestUnion().nameTest().stream().map(e -> e.getText())
             .collect(Collectors.toSet());
         return typeFactory.element(elementNames);
     }
@@ -423,9 +422,6 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     {
         final String variableName = ctx.varName().getText();
         final XQuerySequenceType variableType = contextManager.getVariable(variableName);
-        if (variableType == null) {
-            visitedPlaceholder = variableName;
-        }
         return variableType;
     }
 
@@ -591,7 +587,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         return result.unescaped();
     }
 
-    private final INamespaceResolver namespaceResolver = new NamespaceResolver("fn");
+    private final NamespaceResolver namespaceResolver = new NamespaceResolver("fn");
 
     @Override
     public XQuerySequenceType visitFunctionCall(final FunctionCallContext ctx)
@@ -790,28 +786,16 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         return saved;
     }
 
+
     @Override
-    public XQuerySequenceType visitPostfixExpr(final PostfixExprContext ctx)
-    {
-        if (ctx.postfix().isEmpty()) {
-            return ctx.primaryExpr().accept(this);
-        }
-
-        final var savedArgs = saveVisitedArguments();
+    public XQuerySequenceType visitFilterExpr(FilterExprContext ctx) {
+        final XQuerySequenceType expr = ctx.postfixExpr().accept(this);
         final var savedContext = saveContext();
-        context.setType(savedContext.getType());
-        context.setPositionType(typeFactory.number());
-        context.setSizeType(typeFactory.number());
-        var value = ctx.primaryExpr().accept(this);
-        for (final var postfix : ctx.postfix()) {
-            context.setType(value);
-            value = postfix.accept(this);
-        }
-        visitedPositionalArguments = savedArgs;
+        context.setType(expr);
+        var filtered = ctx.predicate().accept(this);
         context = savedContext;
-        return value;
+        return filtered;
     }
-
     @Override
     public XQuerySequenceType visitPredicate(final PredicateContext ctx)
     {
@@ -825,14 +809,14 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             return typeFactory.emptySequence();
         if (predicateExpression.isSubtypeOf(typeFactory.zeroOrOne(typeFactory.itemNumber()))) {
             final var item = contextType.getItemType();
-            final var decucedType = typeFactory.zeroOrOne(item);
-            return decucedType;
+            final var deducedType = typeFactory.zeroOrOne(item);
+            return deducedType;
         }
         if (predicateExpression.isSubtypeOf(typeFactory.zeroOrMore(typeFactory.itemNumber()))) {
             final var item = contextType.getItemType();
-            final var decucedType = typeFactory.zeroOrMore(item);
-            context.setType(decucedType);
-            return decucedType;
+            final var deducedType = typeFactory.zeroOrMore(item);
+            context.setType(deducedType);
+            return deducedType;
         }
         if (!predicateExpression.hasEffectiveBooleanValue()) {
             final var msg = String.format(
@@ -844,11 +828,52 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         return contextType.addOptionality();
     }
 
-    // private XQueryVisitingSemanticContext saveContext() {
-    // var saved = context;
-    // context = new XQueryVisitingSemanticContext();
-    // return saved;
-    // }
+    @Override
+    public XQuerySequenceType visitDynamicFunctionCall(DynamicFunctionCallContext ctx) {
+        final var savedArgs = saveVisitedArguments();
+        final var savedContext = saveContext();
+        context.setType(savedContext.getType());
+        context.setPositionType(typeFactory.number());
+        context.setSizeType(typeFactory.number());
+        final XQuerySequenceType value = ctx.postfixExpr().accept(this);
+        boolean isCallable = value.isSubtypeOf(typeFactory.anyFunction());
+        if (!isCallable) {
+            addError(ctx.postfixExpr(),
+                "Expected function in dynamic function call expression, received: " + value);
+        }
+        ctx.positionalArgumentList().accept(this);
+        visitedPositionalArguments = savedArgs;
+
+
+        context = savedContext;
+
+        if (isCallable)
+            return value.getReturnedType();
+        else
+            return typeFactory.zeroOrMore(typeFactory.itemAnyItem());
+    }
+
+
+
+    @Override
+    public XQuerySequenceType visitLookupExpr(LookupExprContext ctx) {
+        var targetType = ctx.postfixExpr().accept(this);
+        KeySpecifierContext keySpecifier = ctx.lookup().keySpecifier();
+        var keySpecifierType = keySpecifier.accept(this);
+        // TODO: rewrite
+        XQuerySequenceType result = null;
+        if (keySpecifierType == null) {
+            // direct key access
+            var literalName= keySpecifier.qname();
+            if (literalName != null) {
+                result = targetType.lookup(typeFactory.string());
+            } else { // wildcard
+                result = targetType.lookupWildcard();
+            }
+        }
+        return result;
+        // return targetType.lookup(keySpecifierType);
+    }
 
     @Override
     public XQuerySequenceType visitContextItemExpr(final ContextItemExprContext ctx)
@@ -1156,8 +1181,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             .map(e -> e.mapKeyExpr().accept(this).getItemType())
             .reduce((t1, t2) -> t1.alternativeMerge(t2))
             .get();
-        if (keyType instanceof XQueryEnumItemTypeEnum) {
-            final var enum_ = (XQueryEnumItemTypeEnum) keyType;
+        if (keyType instanceof XQueryItemTypeEnum enum_) {
             final var enumMembers = enum_.getEnumMembers();
             final List<Entry<String, XQueryRecordField>> recordEntries = new ArrayList<>(enumMembers.size());
             int i = 0;
@@ -1205,23 +1229,6 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             i++;
         }
         return boolean_;
-    }
-
-    private String visitedPlaceholder = null;
-
-    public void requireSubtypeOrRestraint(
-        final XQuerySequenceType type,
-        final XQuerySequenceType requiredType,
-        final String message,
-        final ParserRuleContext ctx)
-    {
-        if (!type.isSubtypeOf(requiredType)) {
-            if (visitedPlaceholder != null)
-                contextManager.restrainVariable(visitedPlaceholder, requiredType);
-            else
-                addError(ctx, message);
-        }
-
     }
 
     @Override

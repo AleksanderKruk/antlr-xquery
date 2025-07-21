@@ -156,8 +156,7 @@ nodeTest: nameTest;
 wildcard: STAR
         | (ID COLONSTAR)
         | (STARCOLON ID);
-postfixExpr: primaryExpr (postfix)*;
-postfix: predicate | argumentList;
+// postfix: predicate | argumentList;
 argumentList: LPAREN (positionalArguments (COMMA keywordArguments)? | keywordArguments)? RPAREN;
 positionalArguments: argument (COMMA argument)*;
 keywordArguments: keywordArgument (COMMA keywordArgument)* ;
@@ -194,13 +193,20 @@ arrowFunctionSpecifier: ID | varRef | parenthesizedExpr;
 primaryExpr: literal
         | varRef
         | parenthesizedExpr
-        | contextItemExpr
+        | contextItemExpr // contextValueRef
         | functionCall
+        // | orderedExpr
+        // | unorderedExpr
+        // | nodeConstructor
+        // | nodeConstructor
         // | stringInterpolation
-        | stringConstructor
+        | functionItemExpr
         | mapConstructor
         | arrayConstructor
-        | functionItemExpr;
+        // | stringTemplate
+        | stringConstructor
+        | unaryLookup
+        ;
 
 functionItemExpr    :	namedFunctionRef
     | inlineFunctionExpr
@@ -277,13 +283,54 @@ typedArrayType	:	ARRAY LPAREN sequenceType RPAREN;
 
 enumerationType	:	ENUM LPAREN STRING (COMMA STRING)* RPAREN;
 
-choiceItemType	:	LPAREN itemType ('|' itemType)* RPAREN;
+choiceItemType	:	LPAREN itemType (UNION_OP itemType)* RPAREN;
 
 anyItemTest	:	ITEM LPAREN RPAREN;
 anyKindTest	:	NODE LPAREN RPAREN;
 
 functionName: qname;
 typeName: qname;
+
+
+
+postfixExpr
+    : primaryExpr                         # postfixPrimary
+    | postfixExpr predicate               # filterExpr
+    | postfixExpr positionalArgumentList  # dynamicFunctionCall
+    | postfixExpr lookup                  # lookupExpr
+    | postfixExpr LOOKUP expr RBRACKET    # filterExprAMLookup
+    ;
+
+positionalArgumentList:	LPAREN positionalArguments? RPAREN;
+
+lookup
+    : QUESTION_MARK keySpecifier
+    ;
+
+keySpecifier
+    : qname
+    | IntegerLiteral
+    | STRING
+    | varRef
+    | parenthesizedExpr
+    | lookupWildcard
+    ;
+
+
+lookupWildcard: STAR;
+
+unaryLookup
+    : lookup
+    ;
+
+
+
+
+
+
+
+
+
 
 qname: (namespace COLON)* anyName;
 namespace: anyName;

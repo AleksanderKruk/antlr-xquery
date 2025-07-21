@@ -262,37 +262,37 @@ public class XQueryValue {
     @Override
     public String toString() {
         if (isError) {
-            return "<Error:" + errorMessage + " />";
+            return "<Error:" + errorMessage + "/>";
         }
         if (isNode) {
-            return "<Node:" + node.getText() + " />";
+            return "<Node:" + node.getText() + "/>";
         }
         if (isNumeric) {
-            return "<Number:" + numericValue.toPlainString() + " />";
+            return "<Number:" + numericValue.toPlainString() + "/>";
         }
         if (isString) {
-            return "<String:\"" + stringValue + "\" />";
+            return "<String:\"" + stringValue + "\"/>";
         }
         if (isBoolean) {
-            return "<Boolean:" + booleanValue + " />";
+            return "<Boolean:" + booleanValue + "/>";
         }
         if (isFunction) {
-            return "<Function:" + functionValue + " />"; // lub functionValue.hashCode()
+            return "<Function:" + functionValue + "/>";
         }
         if (isArray) {
-            return "<Array:" + arrayMembers + " />";
+            return "<Array:" + arrayMembers + "/>";
         }
         if (isMap) {
-            return "<Map:" + mapEntries + " />";
+            return "<Map:" + mapEntries + "/>";
         }
         if (sequence != null && sequence.size() > 1) {
-            return "<Sequence:" + sequence + " />";
+            return "<Sequence:" + sequence + "/>";
         }
         if (isEmptySequence) {
-            return "<EmptySequence />";
+            return "<EmptySequence/>";
         }
 
-        return "<Unknown />";
+        return "<Unknown/>";
     }
 
     @Override

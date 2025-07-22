@@ -279,47 +279,35 @@ public class XQuerySequenceType {
         final int occurenceCount = XQueryOccurence.values().length;
         intersectionOccurences = new XQueryOccurence[occurenceCount][occurenceCount];
 
-        final XQueryOccurence zero = XQueryOccurence.ZERO;
-        // final XQueryOccurence one = XQueryOccurence.ONE;
-        final XQueryOccurence zeroOrOne = XQueryOccurence.ZERO_OR_ONE;
-        final XQueryOccurence zeroOrMore = XQueryOccurence.ZERO_OR_MORE;
-        // final XQueryOccurence oneOrMore = XQueryOccurence.ONE_OR_MORE;
+        intersectionOccurences[ZERO][ZERO] = XQueryOccurence.ZERO;
+        intersectionOccurences[ZERO][ONE] = XQueryOccurence.ZERO;
+        intersectionOccurences[ZERO][ZERO_OR_ONE] = XQueryOccurence.ZERO;
+        intersectionOccurences[ZERO][ZERO_OR_MORE] = XQueryOccurence.ZERO;
+        intersectionOccurences[ZERO][ONE_OR_MORE] = XQueryOccurence.ZERO;
 
-        final int zero_ = ZERO;
-        final int one_ = ONE;
-        final int zeroOrOne_ = ZERO_OR_ONE;
-        final int zeroOrMore_ = ZERO_OR_MORE;
-        final int oneOrMore_ = ONE_OR_MORE;
+        intersectionOccurences[ONE][ZERO] = XQueryOccurence.ZERO;
+        intersectionOccurences[ONE][ONE] = XQueryOccurence.ZERO_OR_ONE;
+        intersectionOccurences[ONE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_ONE;
+        intersectionOccurences[ONE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_ONE;
+        intersectionOccurences[ONE][ONE_OR_MORE] = XQueryOccurence.ZERO_OR_ONE;
 
-        intersectionOccurences[zero_][zero_] = zero;
-        intersectionOccurences[zero_][one_] = zero;
-        intersectionOccurences[zero_][zeroOrOne_] = zero;
-        intersectionOccurences[zero_][zeroOrMore_] = zero;
-        intersectionOccurences[zero_][oneOrMore_] = zero;
+        intersectionOccurences[ZERO_OR_ONE][ZERO] = XQueryOccurence.ZERO;
+        intersectionOccurences[ZERO_OR_ONE][ONE] = XQueryOccurence.ZERO_OR_ONE;
+        intersectionOccurences[ZERO_OR_ONE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_ONE;
+        intersectionOccurences[ZERO_OR_ONE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_ONE;
+        intersectionOccurences[ZERO_OR_ONE][ONE_OR_MORE] = XQueryOccurence.ZERO_OR_ONE;
 
-        intersectionOccurences[one_][zero_] = zero;
-        intersectionOccurences[one_][one_] = zeroOrOne;
-        intersectionOccurences[one_][zeroOrOne_] = zeroOrOne;
-        intersectionOccurences[one_][zeroOrMore_] = zeroOrOne;
-        intersectionOccurences[one_][oneOrMore_] = zeroOrOne;
+        intersectionOccurences[ZERO_OR_MORE][ZERO] = XQueryOccurence.ZERO;
+        intersectionOccurences[ZERO_OR_MORE][ONE] = XQueryOccurence.ZERO_OR_ONE;
+        intersectionOccurences[ZERO_OR_MORE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_ONE;
+        intersectionOccurences[ZERO_OR_MORE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
+        intersectionOccurences[ZERO_OR_MORE][ONE_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
 
-        intersectionOccurences[zeroOrOne_][zero_] = zero;
-        intersectionOccurences[zeroOrOne_][one_] = zeroOrOne;
-        intersectionOccurences[zeroOrOne_][zeroOrOne_] = zeroOrOne;
-        intersectionOccurences[zeroOrOne_][zeroOrMore_] = zeroOrOne;
-        intersectionOccurences[zeroOrOne_][oneOrMore_] = zeroOrOne;
-
-        intersectionOccurences[zeroOrMore_][zero_] = zero;
-        intersectionOccurences[zeroOrMore_][one_] = zeroOrOne;
-        intersectionOccurences[zeroOrMore_][zeroOrOne_] = zeroOrOne;
-        intersectionOccurences[zeroOrMore_][zeroOrMore_] = zeroOrMore;
-        intersectionOccurences[zeroOrMore_][oneOrMore_] = zeroOrMore;
-
-        intersectionOccurences[oneOrMore_][zero_] = zero;
-        intersectionOccurences[oneOrMore_][one_] = zeroOrOne;
-        intersectionOccurences[oneOrMore_][zeroOrOne_] = zeroOrOne;
-        intersectionOccurences[oneOrMore_][zeroOrMore_] = zeroOrMore;
-        intersectionOccurences[oneOrMore_][oneOrMore_] = zeroOrMore;
+        intersectionOccurences[ONE_OR_MORE][ZERO] = XQueryOccurence.ZERO;
+        intersectionOccurences[ONE_OR_MORE][ONE] = XQueryOccurence.ZERO_OR_ONE;
+        intersectionOccurences[ONE_OR_MORE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_ONE;
+        intersectionOccurences[ONE_OR_MORE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
+        intersectionOccurences[ONE_OR_MORE][ONE_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
     }
 
 
@@ -350,7 +338,7 @@ public class XQuerySequenceType {
     }
 
 
-    private static XQueryOccurence[][] typeAlternativeOccurence = new XQueryOccurence[XQueryOccurence.values().length][XQueryOccurence.values().length];
+    private static final XQueryOccurence[][] typeAlternativeOccurence = new XQueryOccurence[XQueryOccurence.values().length][XQueryOccurence.values().length];
     static {
         typeAlternativeOccurence[ZERO][ZERO] = XQueryOccurence.ZERO;
         typeAlternativeOccurence[ZERO][ONE] = XQueryOccurence.ZERO_OR_ONE;

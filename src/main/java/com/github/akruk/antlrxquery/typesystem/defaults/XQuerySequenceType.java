@@ -7,6 +7,7 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.AlternativeOccurenceMerger;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.ExceptionOccurenceMerger;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.IntersectionOccurenceMerger;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.IsValueComparableWith;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.UnionOccurenceMerger;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -302,33 +303,14 @@ public class XQuerySequenceType {
     }
 
 
-    private static final boolean[][] isValueComparableWith;
-    static {
-        isValueComparableWith = new boolean[occurenceCount][occurenceCount];
-        for (int i = 0; i < isValueComparableWith.length; i++) {
-            for (int j = 0; j < isValueComparableWith.length; j++) {
-                isValueComparableWith[i][j] = false;
-            }
-        }
-        isValueComparableWith[ZERO][ZERO] = true;
-        isValueComparableWith[ZERO][ONE] = true;
-        isValueComparableWith[ZERO][ZERO_OR_ONE] = true;
 
-        isValueComparableWith[ONE][ZERO] = true;
-        isValueComparableWith[ONE][ONE] = true;
-        isValueComparableWith[ONE][ZERO_OR_ONE] = true;
-
-        isValueComparableWith[ZERO_OR_ONE][ONE] = true;
-        isValueComparableWith[ZERO_OR_ONE][ZERO] = true;
-        isValueComparableWith[ZERO_OR_ONE][ZERO_OR_ONE] = true;
-    }
-
+    private static final IsValueComparableWith isValueComparable = new IsValueComparableWith();
 
     public boolean isValueComparableWith(final XQuerySequenceType other) {
-        final var cast = (XQuerySequenceType) other;
         if (isZero() || other.isZero())
             return true;
-        return isValueComparableWith[occurence_][cast.getOccurence().ordinal()] && itemType.isValueComparableWith(other.getItemType());
+        return (isValueComparable.isValueComparableWith(occurence, other.getOccurence())
+                && itemType.isValueComparableWith(other.getItemType()));
     }
 
 

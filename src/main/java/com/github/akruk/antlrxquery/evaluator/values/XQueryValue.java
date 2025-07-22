@@ -9,6 +9,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 
 public class XQueryValue {
+    public final XQueryValues valueType;
     public final XQuerySequenceType type;
     public final ParseTree node;
     public final BigDecimal numericValue;
@@ -63,6 +64,7 @@ public class XQueryValue {
 
     public static XQueryValue functionReference(XQueryFunction v, XQuerySequenceType type) {
         return new XQueryValue(
+            XQueryValues.FUNCTION_REFERENCE,
             type,
             null,
             null,
@@ -80,6 +82,7 @@ public class XQueryValue {
 
     public static XQueryValue boolean_(boolean v, XQuerySequenceType type) {
         return new XQueryValue(
+            XQueryValues.BOOLEAN,
             type,
             null,
             null,
@@ -96,6 +99,7 @@ public class XQueryValue {
 
     public static XQueryValue string(String v, XQuerySequenceType type) {
         return new XQueryValue(
+            XQueryValues.STRING,
             type,
             null,
             null,
@@ -112,6 +116,7 @@ public class XQueryValue {
 
     public static XQueryValue number(BigDecimal v, XQuerySequenceType type) {
         return new XQueryValue(
+            XQueryValues.NUMBER,
             type,
             null,
             v,
@@ -128,6 +133,7 @@ public class XQueryValue {
 
     public static XQueryValue number(int v, XQuerySequenceType type) {
         return new XQueryValue(
+            XQueryValues.NUMBER,
             type,
             null,
             BigDecimal.valueOf(v),
@@ -144,6 +150,7 @@ public class XQueryValue {
 
     public static XQueryValue node(ParseTree node, XQuerySequenceType type) {
         return new XQueryValue(
+            XQueryValues.NODE,
             type,
             node,
             null,
@@ -160,6 +167,7 @@ public class XQueryValue {
 
     public static XQueryValue sequence(List<XQueryValue> sequence, XQuerySequenceType type) {
         return new XQueryValue(
+            XQueryValues.SEQUENCE,
             type,
             null,
             null,
@@ -174,8 +182,26 @@ public class XQueryValue {
         );
     }
 
+    public static XQueryValue emptySequence(XQuerySequenceType type) {
+        return new XQueryValue(
+            XQueryValues.EMPTY_SEQUENCE,
+            type,
+            null,
+            null,
+            null,
+            null,
+            null,
+            List.of(),
+            null,
+            null,
+            null,
+            null
+        );
+    }
+
     public static XQueryValue array(List<XQueryValue> arrayMembers, XQuerySequenceType type) {
         return new XQueryValue(
+            XQueryValues.ARRAY,
             type,
             null,
             null,
@@ -192,6 +218,7 @@ public class XQueryValue {
 
     public static XQueryValue map(Map<XQueryValue, XQueryValue> mapEntries, XQuerySequenceType type) {
         return new XQueryValue(
+            XQueryValues.MAP,
             type,
             null,
             null,
@@ -208,6 +235,7 @@ public class XQueryValue {
 
     public static XQueryValue error(XQueryError error, String message, XQuerySequenceType type) {
         return new XQueryValue(
+            XQueryValues.ERROR,
             type,
             null,
             null,
@@ -222,7 +250,9 @@ public class XQueryValue {
         );
     }
 
-    private XQueryValue(XQuerySequenceType type,
+    private XQueryValue(
+        XQueryValues valueType,
+        XQuerySequenceType type,
         ParseTree node,
         BigDecimal numericValue,
         String stringValue,
@@ -234,6 +264,7 @@ public class XQueryValue {
         XQueryError error,
         String errorMessage)
     {
+        this.valueType = valueType;
         this.type = type;
         this.node = node;
         this.numericValue = numericValue;
@@ -242,21 +273,22 @@ public class XQueryValue {
         this.functionValue = functionValue;
         this.error = error;
         this.errorMessage = errorMessage;
-        this.sequence = sequence != null ? sequence : List.of(this);
         this.arrayMembers = arrayMembers;
         this.mapEntries = mapEntries;
-        isNode = node != null;
-        isNumeric = numericValue != null;
-        isString = stringValue != null;
-        isFunction = functionValue != null;
-        isBoolean = booleanValue != null;
-        final int size_ = this.sequence.size();
-        isEmptySequence = size_ == 0;
-        size = size_;
-        isArray = arrayMembers != null;
-        isMap = mapEntries != null;
-        isError = error != null;
-        hashCode = hashCode_();
+
+        this.sequence = sequence != null ? sequence : List.of(this);
+        this.size = this.sequence.size();
+
+        this.isEmptySequence = this.valueType == XQueryValues.EMPTY_SEQUENCE;
+        this.isNode = this.valueType == XQueryValues.NODE;
+        this.isNumeric = this.valueType == XQueryValues.NUMBER;
+        this.isString = this.valueType == XQueryValues.STRING;
+        this.isFunction = this.valueType == XQueryValues.FUNCTION_REFERENCE;
+        this.isBoolean = this.valueType == XQueryValues.BOOLEAN;
+        this.isArray = this.valueType == XQueryValues.ARRAY;
+        this.isMap = this.valueType == XQueryValues.MAP;
+        this.isError = this.valueType == XQueryValues.ERROR;
+        this.hashCode = hashCode_();
     }
 
     @Override
@@ -285,14 +317,10 @@ public class XQueryValue {
         if (isMap) {
             return "<Map:" + mapEntries + "/>";
         }
-        if (sequence != null && sequence.size() > 1) {
-            return "<Sequence:" + sequence + "/>";
-        }
         if (isEmptySequence) {
             return "<EmptySequence/>";
         }
-
-        return "<Unknown/>";
+        return "<Sequence:" + sequence + "/>";
     }
 
     @Override

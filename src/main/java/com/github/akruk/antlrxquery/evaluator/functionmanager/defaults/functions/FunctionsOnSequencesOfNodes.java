@@ -77,10 +77,4 @@ public class FunctionsOnSequencesOfNodes {
     }
 
 
-    public XQueryValue data(XQueryVisitingContext ctx, List<XQueryValue> args) {
-        // TODO : fix
-        return null;
-        // return args.get(0).data();
-    }
-
 }

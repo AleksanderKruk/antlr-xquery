@@ -48,6 +48,7 @@ public class XQueryMemoizedValueFactory implements XQueryValueFactory {
         final var booleanType = typeFactory.boolean_();
         this.TRUE = boolean_(true, booleanType);
         this.FALSE = boolean_(false, booleanType);
+        this.EMPTY_SEQUENCE = XQueryValue.emptySequence(typeFactory.emptySequence());
     }
 
 
@@ -84,8 +85,12 @@ public class XQueryMemoizedValueFactory implements XQueryValueFactory {
         return returnedNumber;
     }
 
+    final XQueryValue EMPTY_SEQUENCE;
+
     @Override
     public XQueryValue sequence(List<XQueryValue> v) {
+        if (v.size() == 0)
+            return EMPTY_SEQUENCE;
         if (v.size() == 1)
             return v.get(0);
         XQueryValue returnedSequence = createdSequences.computeIfAbsent(v, _ -> XQueryValue.sequence(v, typeFactory.zeroOrMore(typeFactory.itemAnyItem())));

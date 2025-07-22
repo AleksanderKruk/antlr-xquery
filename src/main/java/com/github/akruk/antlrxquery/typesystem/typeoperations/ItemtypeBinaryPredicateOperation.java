@@ -6,7 +6,7 @@ import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
 
 @SuppressWarnings("unchecked")
-public abstract class ItemtypeBinaryPredicate
+public abstract class ItemtypeBinaryPredicateOperation
 {
     private static final int STRING = XQueryTypes.STRING.ordinal();
     private static final int ELEMENT = XQueryTypes.ELEMENT.ordinal();
@@ -29,7 +29,7 @@ public abstract class ItemtypeBinaryPredicate
 
     protected final BiPredicate<XQueryItemType, XQueryItemType>[][] automaton;
 
-    public ItemtypeBinaryPredicate()
+    public ItemtypeBinaryPredicateOperation()
     {
         this.automaton = getAutomaton();
     }

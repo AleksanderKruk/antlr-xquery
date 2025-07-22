@@ -17,7 +17,7 @@ import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
-public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicate
+public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
 {
     private static final int STRING = XQueryTypes.STRING.ordinal();
     private static final int ELEMENT = XQueryTypes.ELEMENT.ordinal();

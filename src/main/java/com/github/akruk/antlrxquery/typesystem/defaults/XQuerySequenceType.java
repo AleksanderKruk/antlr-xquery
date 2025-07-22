@@ -4,7 +4,9 @@ import java.util.function.BiPredicate;
 import java.util.function.Function;
 
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.ExceptionOccurenceMerger;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.AlternativeOccurenceMerger;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.ExceptionOccurenceMerger;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.UnionOccurenceMerger;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class XQuerySequenceType {
@@ -221,48 +223,13 @@ public class XQuerySequenceType {
         return true;
     }
 
-    private static final XQueryOccurence[][] unionOccurences;
-    static {
-        final int occurenceCount = XQueryOccurence.values().length;
-        unionOccurences = new XQueryOccurence[occurenceCount][occurenceCount];
-
-        unionOccurences[ZERO][ZERO] = XQueryOccurence.ZERO;
-        unionOccurences[ZERO][ONE] = XQueryOccurence.ONE;
-        unionOccurences[ZERO][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_ONE;
-        unionOccurences[ZERO][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
-        unionOccurences[ZERO][ONE_OR_MORE] = XQueryOccurence.ONE_OR_MORE;
-
-        unionOccurences[ONE][ZERO] = XQueryOccurence.ONE;
-        unionOccurences[ONE][ONE] = XQueryOccurence.ONE_OR_MORE;
-        unionOccurences[ONE][ZERO_OR_ONE] = XQueryOccurence.ONE_OR_MORE;
-        unionOccurences[ONE][ZERO_OR_MORE] = XQueryOccurence.ONE_OR_MORE;
-        unionOccurences[ONE][ONE_OR_MORE] = XQueryOccurence.ONE_OR_MORE;
-
-        unionOccurences[ZERO_OR_ONE][ZERO] = XQueryOccurence.ZERO_OR_ONE;
-        unionOccurences[ZERO_OR_ONE][ONE] = XQueryOccurence.ONE_OR_MORE;
-        unionOccurences[ZERO_OR_ONE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_MORE;
-        unionOccurences[ZERO_OR_ONE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
-        unionOccurences[ZERO_OR_ONE][ONE_OR_MORE] = XQueryOccurence.ONE_OR_MORE;
-
-        unionOccurences[ZERO_OR_MORE][ZERO] = XQueryOccurence.ZERO_OR_MORE;
-        unionOccurences[ZERO_OR_MORE][ONE] = XQueryOccurence.ONE_OR_MORE;
-        unionOccurences[ZERO_OR_MORE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_MORE;
-        unionOccurences[ZERO_OR_MORE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
-        unionOccurences[ZERO_OR_MORE][ONE_OR_MORE] = XQueryOccurence.ONE_OR_MORE;
-
-        unionOccurences[ONE_OR_MORE][ZERO] = XQueryOccurence.ONE_OR_MORE;
-        unionOccurences[ONE_OR_MORE][ONE] = XQueryOccurence.ONE_OR_MORE;
-        unionOccurences[ONE_OR_MORE][ZERO_OR_ONE] = XQueryOccurence.ONE_OR_MORE;
-        unionOccurences[ONE_OR_MORE][ZERO_OR_MORE] = XQueryOccurence.ONE_OR_MORE;
-        unionOccurences[ONE_OR_MORE][ONE_OR_MORE] = XQueryOccurence.ONE_OR_MORE;
-    }
+    private static final UnionOccurenceMerger unionOccurences = new UnionOccurenceMerger();
 
 
 
     public XQuerySequenceType unionMerge(final XQuerySequenceType other) {
-        final var other_ = (XQuerySequenceType) other;
-        final XQueryItemType otherItemType = other_.getItemType();
-        final XQueryOccurence mergedOccurence = unionOccurences[this.occurence.ordinal()][other_.getOccurence().ordinal()];
+        final XQueryItemType otherItemType = other.getItemType();
+        final XQueryOccurence mergedOccurence = unionOccurences.merge(occurence, other.getOccurence());
         final int occurence_ = mergedOccurence.ordinal();
         if (itemType == null) {
             return (XQuerySequenceType) factoryByOccurence[occurence_].apply(otherItemType);
@@ -327,7 +294,7 @@ public class XQuerySequenceType {
     }
 
 
-    private static final ExceptionOccurenceMerger exceptOccurences = new ExceptionOccurenceMerger();;
+    private static final ExceptionOccurenceMerger exceptOccurences = new ExceptionOccurenceMerger();
 
     public XQuerySequenceType exceptionMerge(final XQuerySequenceType other) {
         final var other_ = (XQuerySequenceType) other;
@@ -338,46 +305,13 @@ public class XQuerySequenceType {
     }
 
 
-    private static final XQueryOccurence[][] typeAlternativeOccurence = new XQueryOccurence[XQueryOccurence.values().length][XQueryOccurence.values().length];
-    static {
-        typeAlternativeOccurence[ZERO][ZERO] = XQueryOccurence.ZERO;
-        typeAlternativeOccurence[ZERO][ONE] = XQueryOccurence.ZERO_OR_ONE;
-        typeAlternativeOccurence[ZERO][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_ONE;
-        typeAlternativeOccurence[ZERO][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
-        typeAlternativeOccurence[ZERO][ONE_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
-
-        typeAlternativeOccurence[ONE][ZERO] = XQueryOccurence.ZERO_OR_ONE;
-        typeAlternativeOccurence[ONE][ONE] = XQueryOccurence.ONE;
-        typeAlternativeOccurence[ONE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_ONE;
-        typeAlternativeOccurence[ONE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
-        typeAlternativeOccurence[ONE][ONE_OR_MORE] = XQueryOccurence.ONE_OR_MORE;
-
-        typeAlternativeOccurence[ZERO_OR_ONE][ZERO] = XQueryOccurence.ZERO_OR_ONE;
-        typeAlternativeOccurence[ZERO_OR_ONE][ONE] = XQueryOccurence.ZERO_OR_ONE;
-        typeAlternativeOccurence[ZERO_OR_ONE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_ONE;
-        typeAlternativeOccurence[ZERO_OR_ONE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
-        typeAlternativeOccurence[ZERO_OR_ONE][ONE_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
-
-        typeAlternativeOccurence[ZERO_OR_MORE][ZERO] = XQueryOccurence.ZERO_OR_MORE;
-        typeAlternativeOccurence[ZERO_OR_MORE][ONE] = XQueryOccurence.ZERO_OR_MORE;
-        typeAlternativeOccurence[ZERO_OR_MORE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_MORE;
-        typeAlternativeOccurence[ZERO_OR_MORE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
-        typeAlternativeOccurence[ZERO_OR_MORE][ONE_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
-
-        typeAlternativeOccurence[ONE_OR_MORE][ZERO] = XQueryOccurence.ZERO_OR_MORE;
-        typeAlternativeOccurence[ONE_OR_MORE][ONE] = XQueryOccurence.ONE_OR_MORE;
-        typeAlternativeOccurence[ONE_OR_MORE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_MORE;
-        typeAlternativeOccurence[ONE_OR_MORE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
-        typeAlternativeOccurence[ONE_OR_MORE][ONE_OR_MORE] = XQueryOccurence.ONE_OR_MORE;
-    }
-
+    private static final AlternativeOccurenceMerger typeAlternativeOccurence = new AlternativeOccurenceMerger();
 	final Function<XQueryItemType, XQuerySequenceType>[] factoryByOccurence;
 
     public XQuerySequenceType alternativeMerge(final XQuerySequenceType other) {
-        final var other_ = (XQuerySequenceType) other;
-        final var occurence_ = typeAlternativeOccurence[occurence.ordinal()][other_.getOccurence().ordinal()];
+        final var occurence_ = typeAlternativeOccurence.merge(occurence, other.getOccurence());
 		final Function sequenceTypeFactory = factoryByOccurence[occurence_.ordinal()];
-        XQueryItemType otherItemType = other.getItemType();
+        final XQueryItemType otherItemType = other.getItemType();
         if (this.itemType == null)
             return (XQuerySequenceType)sequenceTypeFactory.apply(otherItemType);
         if (otherItemType == null)

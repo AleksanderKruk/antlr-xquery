@@ -1,8 +1,8 @@
-package com.github.akruk.antlrxquery.typesystem.typeoperations;
+package com.github.akruk.antlrxquery.typesystem.typeoperations.occurence;
 
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryOccurence;
 
-public class ExceptionOccurenceMerger
+public class AlternativeOccurenceMerger
 {
     private static final int ZERO         = XQueryOccurence.ZERO.ordinal();
     private static final int ONE          = XQueryOccurence.ONE.ordinal();
@@ -14,7 +14,7 @@ public class ExceptionOccurenceMerger
 
     private final int occurenceCount = XQueryOccurence.values().length;
 
-    public ExceptionOccurenceMerger()
+    public AlternativeOccurenceMerger()
     {
         this.automaton = getAutomaton();
     }
@@ -22,24 +22,23 @@ public class ExceptionOccurenceMerger
 
     private XQueryOccurence[][] getAutomaton() {
         final var automaton = new XQueryOccurence[occurenceCount][occurenceCount];
-
         automaton[ZERO][ZERO] = XQueryOccurence.ZERO;
-        automaton[ZERO][ONE] = XQueryOccurence.ZERO;
-        automaton[ZERO][ZERO_OR_ONE] = XQueryOccurence.ZERO;
-        automaton[ZERO][ZERO_OR_MORE] = XQueryOccurence.ZERO;
-        automaton[ZERO][ONE_OR_MORE] = XQueryOccurence.ZERO;
+        automaton[ZERO][ONE] = XQueryOccurence.ZERO_OR_ONE;
+        automaton[ZERO][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_ONE;
+        automaton[ZERO][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
+        automaton[ZERO][ONE_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
 
-        automaton[ONE][ZERO] = XQueryOccurence.ONE;
-        automaton[ONE][ONE] = XQueryOccurence.ZERO_OR_ONE;
+        automaton[ONE][ZERO] = XQueryOccurence.ZERO_OR_ONE;
+        automaton[ONE][ONE] = XQueryOccurence.ONE;
         automaton[ONE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_ONE;
-        automaton[ONE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_ONE;
-        automaton[ONE][ONE_OR_MORE] = XQueryOccurence.ZERO_OR_ONE;
+        automaton[ONE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
+        automaton[ONE][ONE_OR_MORE] = XQueryOccurence.ONE_OR_MORE;
 
         automaton[ZERO_OR_ONE][ZERO] = XQueryOccurence.ZERO_OR_ONE;
         automaton[ZERO_OR_ONE][ONE] = XQueryOccurence.ZERO_OR_ONE;
         automaton[ZERO_OR_ONE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_ONE;
-        automaton[ZERO_OR_ONE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_ONE;
-        automaton[ZERO_OR_ONE][ONE_OR_MORE] = XQueryOccurence.ZERO_OR_ONE;
+        automaton[ZERO_OR_ONE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
+        automaton[ZERO_OR_ONE][ONE_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
 
         automaton[ZERO_OR_MORE][ZERO] = XQueryOccurence.ZERO_OR_MORE;
         automaton[ZERO_OR_MORE][ONE] = XQueryOccurence.ZERO_OR_MORE;
@@ -47,12 +46,11 @@ public class ExceptionOccurenceMerger
         automaton[ZERO_OR_MORE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
         automaton[ZERO_OR_MORE][ONE_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
 
-        automaton[ONE_OR_MORE][ZERO] = XQueryOccurence.ONE_OR_MORE;
-        automaton[ONE_OR_MORE][ONE] = XQueryOccurence.ZERO_OR_MORE;
+        automaton[ONE_OR_MORE][ZERO] = XQueryOccurence.ZERO_OR_MORE;
+        automaton[ONE_OR_MORE][ONE] = XQueryOccurence.ONE_OR_MORE;
         automaton[ONE_OR_MORE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_MORE;
         automaton[ONE_OR_MORE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
-        automaton[ONE_OR_MORE][ONE_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
-
+        automaton[ONE_OR_MORE][ONE_OR_MORE] = XQueryOccurence.ONE_OR_MORE;
         return automaton;
     }
 

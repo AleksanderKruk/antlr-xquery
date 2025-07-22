@@ -6,6 +6,7 @@ import java.util.function.Function;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.AlternativeOccurenceMerger;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.ExceptionOccurenceMerger;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.IntersectionOccurenceMerger;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.UnionOccurenceMerger;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -45,7 +46,6 @@ public class XQuerySequenceType {
         this.occurenceSuffix = occurence.occurenceSuffix();
         this.requiresParentheses = requiresParentheses();
         this.isSubtypeOf_ = XQuerySequenceType.isSubtypeOf[occurence_];
-        // this.lookup = lookup_();
     }
 
     private static boolean isNullableEquals(final Object one, final Object other) {
@@ -241,47 +241,12 @@ public class XQuerySequenceType {
         return (XQuerySequenceType) factoryByOccurence[occurence_].apply(mergedType);
     }
 
-    private static final XQueryOccurence[][] intersectionOccurences;
-    static {
-        final int occurenceCount = XQueryOccurence.values().length;
-        intersectionOccurences = new XQueryOccurence[occurenceCount][occurenceCount];
-
-        intersectionOccurences[ZERO][ZERO] = XQueryOccurence.ZERO;
-        intersectionOccurences[ZERO][ONE] = XQueryOccurence.ZERO;
-        intersectionOccurences[ZERO][ZERO_OR_ONE] = XQueryOccurence.ZERO;
-        intersectionOccurences[ZERO][ZERO_OR_MORE] = XQueryOccurence.ZERO;
-        intersectionOccurences[ZERO][ONE_OR_MORE] = XQueryOccurence.ZERO;
-
-        intersectionOccurences[ONE][ZERO] = XQueryOccurence.ZERO;
-        intersectionOccurences[ONE][ONE] = XQueryOccurence.ZERO_OR_ONE;
-        intersectionOccurences[ONE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_ONE;
-        intersectionOccurences[ONE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_ONE;
-        intersectionOccurences[ONE][ONE_OR_MORE] = XQueryOccurence.ZERO_OR_ONE;
-
-        intersectionOccurences[ZERO_OR_ONE][ZERO] = XQueryOccurence.ZERO;
-        intersectionOccurences[ZERO_OR_ONE][ONE] = XQueryOccurence.ZERO_OR_ONE;
-        intersectionOccurences[ZERO_OR_ONE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_ONE;
-        intersectionOccurences[ZERO_OR_ONE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_ONE;
-        intersectionOccurences[ZERO_OR_ONE][ONE_OR_MORE] = XQueryOccurence.ZERO_OR_ONE;
-
-        intersectionOccurences[ZERO_OR_MORE][ZERO] = XQueryOccurence.ZERO;
-        intersectionOccurences[ZERO_OR_MORE][ONE] = XQueryOccurence.ZERO_OR_ONE;
-        intersectionOccurences[ZERO_OR_MORE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_ONE;
-        intersectionOccurences[ZERO_OR_MORE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
-        intersectionOccurences[ZERO_OR_MORE][ONE_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
-
-        intersectionOccurences[ONE_OR_MORE][ZERO] = XQueryOccurence.ZERO;
-        intersectionOccurences[ONE_OR_MORE][ONE] = XQueryOccurence.ZERO_OR_ONE;
-        intersectionOccurences[ONE_OR_MORE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_ONE;
-        intersectionOccurences[ONE_OR_MORE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
-        intersectionOccurences[ONE_OR_MORE][ONE_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
-    }
-
+    private static final IntersectionOccurenceMerger intersectionOccurences = new IntersectionOccurenceMerger();
 
     public XQuerySequenceType intersectionMerge(final XQuerySequenceType other) {
         final var other_ = (XQuerySequenceType) other;
         final XQueryItemType otherItemType = other_.getItemType();
-        final XQueryOccurence mergedOccurence = intersectionOccurences[this.occurence.ordinal()][other_.getOccurence().ordinal()];
+        final XQueryOccurence mergedOccurence = intersectionOccurences.merge(occurence, other.getOccurence());
         final int occurence_ = mergedOccurence.ordinal();
         if (itemType == null) {
             return (XQuerySequenceType) factoryByOccurence[occurence_].apply(otherItemType);

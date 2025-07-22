@@ -110,7 +110,7 @@ public class XQueryMemoizedValueFactory implements XQueryValueFactory {
 
     @Override
     public XQueryValue emptySequence() {
-        return sequence(List.of());
+        return EMPTY_SEQUENCE;
     }
 
     @Override

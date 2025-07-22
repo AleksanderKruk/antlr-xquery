@@ -4,6 +4,7 @@ import java.util.function.BiPredicate;
 import java.util.function.Function;
 
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.ExceptionOccurenceMerger;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class XQuerySequenceType {
@@ -338,46 +339,11 @@ public class XQuerySequenceType {
     }
 
 
-    private static final XQueryOccurence[][] exceptOccurences;
-    static {
-        final int occurenceCount = XQueryOccurence.values().length;
-        exceptOccurences = new XQueryOccurence[occurenceCount][occurenceCount];
-
-        exceptOccurences[ZERO][ZERO] = XQueryOccurence.ZERO;
-        exceptOccurences[ZERO][ONE] = XQueryOccurence.ZERO;
-        exceptOccurences[ZERO][ZERO_OR_ONE] = XQueryOccurence.ZERO;
-        exceptOccurences[ZERO][ZERO_OR_MORE] = XQueryOccurence.ZERO;
-        exceptOccurences[ZERO][ONE_OR_MORE] = XQueryOccurence.ZERO;
-
-        exceptOccurences[ONE][ZERO] = XQueryOccurence.ONE;
-        exceptOccurences[ONE][ONE] = XQueryOccurence.ZERO_OR_ONE;
-        exceptOccurences[ONE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_ONE;
-        exceptOccurences[ONE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_ONE;
-        exceptOccurences[ONE][ONE_OR_MORE] = XQueryOccurence.ZERO_OR_ONE;
-
-        exceptOccurences[ZERO_OR_ONE][ZERO] = XQueryOccurence.ZERO_OR_ONE;
-        exceptOccurences[ZERO_OR_ONE][ONE] = XQueryOccurence.ZERO_OR_ONE;
-        exceptOccurences[ZERO_OR_ONE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_ONE;
-        exceptOccurences[ZERO_OR_ONE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_ONE;
-        exceptOccurences[ZERO_OR_ONE][ONE_OR_MORE] = XQueryOccurence.ZERO_OR_ONE;
-
-        exceptOccurences[ZERO_OR_MORE][ZERO] = XQueryOccurence.ZERO_OR_MORE;
-        exceptOccurences[ZERO_OR_MORE][ONE] = XQueryOccurence.ZERO_OR_MORE;
-        exceptOccurences[ZERO_OR_MORE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_MORE;
-        exceptOccurences[ZERO_OR_MORE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
-        exceptOccurences[ZERO_OR_MORE][ONE_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
-
-        exceptOccurences[ONE_OR_MORE][ZERO] = XQueryOccurence.ONE_OR_MORE;
-        exceptOccurences[ONE_OR_MORE][ONE] = XQueryOccurence.ZERO_OR_MORE;
-        exceptOccurences[ONE_OR_MORE][ZERO_OR_ONE] = XQueryOccurence.ZERO_OR_MORE;
-        exceptOccurences[ONE_OR_MORE][ZERO_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
-        exceptOccurences[ONE_OR_MORE][ONE_OR_MORE] = XQueryOccurence.ZERO_OR_MORE;
-    }
-
+    private static final ExceptionOccurenceMerger exceptOccurences = new ExceptionOccurenceMerger();;
 
     public XQuerySequenceType exceptionMerge(final XQuerySequenceType other) {
         final var other_ = (XQuerySequenceType) other;
-        final XQueryOccurence mergedOccurence = exceptOccurences[this.occurence.ordinal()][other_.getOccurence().ordinal()];
+        final XQueryOccurence mergedOccurence = exceptOccurences.merge(this.occurence, other_.getOccurence());
         final Function typeFactoryMethod = factoryByOccurence[mergedOccurence.ordinal()];
         final var usedItemType = occurence == XQueryOccurence.ZERO? typeFactory.itemAnyNode(): itemType;
         return (XQuerySequenceType) typeFactoryMethod.apply(usedItemType);

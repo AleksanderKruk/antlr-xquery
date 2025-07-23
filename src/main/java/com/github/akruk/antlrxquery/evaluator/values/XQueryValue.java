@@ -6,10 +6,12 @@ import java.util.Map;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 
+import com.github.akruk.antlrxquery.evaluator.values.operations.ValueEquality;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 
 public class XQueryValue {
     public final XQueryValues valueType;
+    public final int valueTypeOrdinal;
     public final XQuerySequenceType type;
     public final ParseTree node;
     public final BigDecimal numericValue;
@@ -64,7 +66,7 @@ public class XQueryValue {
 
     public static XQueryValue functionReference(XQueryFunction v, XQuerySequenceType type) {
         return new XQueryValue(
-            XQueryValues.FUNCTION_REFERENCE,
+            XQueryValues.FUNCTION,
             type,
             null,
             null,
@@ -150,7 +152,7 @@ public class XQueryValue {
 
     public static XQueryValue node(ParseTree node, XQuerySequenceType type) {
         return new XQueryValue(
-            XQueryValues.NODE,
+            XQueryValues.ELEMENT,
             type,
             node,
             null,
@@ -265,6 +267,7 @@ public class XQueryValue {
         String errorMessage)
     {
         this.valueType = valueType;
+        this.valueTypeOrdinal = valueType.ordinal();
         this.type = type;
         this.node = node;
         this.numericValue = numericValue;
@@ -280,10 +283,10 @@ public class XQueryValue {
         this.size = this.sequence.size();
 
         this.isEmptySequence = this.valueType == XQueryValues.EMPTY_SEQUENCE;
-        this.isNode = this.valueType == XQueryValues.NODE;
+        this.isNode = this.valueType == XQueryValues.ELEMENT;
         this.isNumeric = this.valueType == XQueryValues.NUMBER;
         this.isString = this.valueType == XQueryValues.STRING;
-        this.isFunction = this.valueType == XQueryValues.FUNCTION_REFERENCE;
+        this.isFunction = this.valueType == XQueryValues.FUNCTION;
         this.isBoolean = this.valueType == XQueryValues.BOOLEAN;
         this.isArray = this.valueType == XQueryValues.ARRAY;
         this.isMap = this.valueType == XQueryValues.MAP;
@@ -323,71 +326,20 @@ public class XQueryValue {
         return "<Sequence:" + sequence + "/>";
     }
 
+    ValueEquality equality = new ValueEquality();
+
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
-
-        XQueryValue other = (XQueryValue) obj;
-        if (this.size != other.size)
+        if (this == obj)
+            return true;
+        if (obj == null || !(obj instanceof final XQueryValue other))
+            return false;
+        if (this.hashCode == other.hashCode)
+            return true;
+        if (this.valueType != other.valueType)
             return false;
 
-        if (this.isEmptySequence || other.isEmptySequence)
-            return true;
-
-
-        if (this.isError || other.isError)
-            return false;
-
-        if (this.isNode && other.isNode)
-            return this.node.getText().equals(other.node.getText());
-
-        if (this.isNumeric && other.isNumeric)
-            return this.numericValue.compareTo(other.numericValue) == 0;
-
-        if (this.isString && other.isString)
-            return this.stringValue.equals(other.stringValue);
-
-        if (this.isBoolean && other.isBoolean)
-            return this.booleanValue.equals(other.booleanValue);
-
-        if (this.isFunction && other.isFunction)
-            return this.functionValue.equals(other.functionValue); // lub referencja, jak wolisz
-
-        if (this.isArray && other.isArray) {
-            if (this.arrayMembers.size() != other.arrayMembers.size()) return false;
-            for (int i = 0; i < this.arrayMembers.size(); i++) {
-                if (!this.arrayMembers.get(i).equals(other.arrayMembers.get(i))) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        if (this.isMap && other.isMap) {
-            if (this.mapEntries.size() != other.mapEntries.size()) return false;
-            for (Map.Entry<XQueryValue, XQueryValue> entry : this.mapEntries.entrySet()) {
-                XQueryValue otherValue = other.mapEntries.get(entry.getKey());
-                if (otherValue == null || !entry.getValue().equals(otherValue)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        if (size == 1) {
-            return false;
-        }
-
-
-        for (int i = 0; i < this.sequence.size(); i++) {
-            XQueryValue v1 = this.sequence.get(i);
-            XQueryValue v2 = other.sequence.get(i);
-            if (!v1.equals(v2.sequence.get(i))) {
-                return false;
-            }
-        }
-        return true;
+        return equality.valueEquals(this, other);
     }
 
 

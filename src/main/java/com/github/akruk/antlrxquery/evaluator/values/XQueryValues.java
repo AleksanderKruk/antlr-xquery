@@ -1,16 +1,16 @@
 package com.github.akruk.antlrxquery.evaluator.values;
 
+
 public enum XQueryValues {
-    FUNCTION_REFERENCE,
+    FUNCTION,
     NUMBER,
     STRING,
     BOOLEAN,
-    NODE,
+    ELEMENT,
     ERROR,
     ARRAY,
     MAP,
     SEQUENCE,
     EMPTY_SEQUENCE,
     ;
-
 }

@@ -270,8 +270,12 @@ public class XQuerySequenceType {
 
     private final boolean requiresParentheses;
     private boolean requiresParentheses() {
-        return occurenceSuffix != "" &&(itemType instanceof XQueryItemTypeFunction
-                                        || itemType instanceof XQueryChoiceItemType);
+        final boolean suffixIsPresent = occurenceSuffix != "";
+        final boolean containsComplexItemtype = switch(itemType.getType()) {
+            case FUNCTION, ANY_FUNCTION, CHOICE -> true;
+            default -> false;
+        };
+        return suffixIsPresent && containsComplexItemtype;
     }
 
 

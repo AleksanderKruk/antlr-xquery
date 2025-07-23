@@ -43,24 +43,19 @@ public class XQueryValue {
         return hashCode;
     }
 
-    private int hashCode_() {
-        if (isError)
-            return error.hashCode();
-        if (isNode)
-            return node.hashCode();
-        if (isNumeric)
-            return numericValue.hashCode();
-        if (isString)
-            return stringValue.hashCode();
-        if (isFunction)
-            return functionValue.hashCode();
-        if (isBoolean)
-            return booleanValue.hashCode();
-        if (isArray)
-            return arrayMembers.hashCode();
-        if (isMap)
-            return mapEntries.hashCode();
-        return sequence.hashCode();
+    public int hashCode_() {
+        return switch (valueType) {
+            case ERROR -> error.hashCode();
+            case ELEMENT -> node.hashCode();
+            case BOOLEAN -> booleanValue.hashCode();
+            case NUMBER -> numericValue.hashCode();
+            case STRING -> stringValue.hashCode();
+            case FUNCTION -> functionValue.hashCode();
+            case ARRAY -> arrayMembers.hashCode();
+            case MAP -> mapEntries.hashCode();
+            case EMPTY_SEQUENCE, SEQUENCE -> sequence.hashCode();
+            default -> throw new IllegalArgumentException("Unexpected value: " + valueType);
+        };
     }
 
 

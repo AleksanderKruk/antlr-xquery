@@ -37,6 +37,7 @@ public class XQueryValue {
     public final String errorMessage;
 
     private final int hashCode;
+    private final String toString;
 
     @Override
     public int hashCode() {
@@ -287,10 +288,15 @@ public class XQueryValue {
         this.isMap = this.valueType == XQueryValues.MAP;
         this.isError = this.valueType == XQueryValues.ERROR;
         this.hashCode = hashCode_();
+        this.toString = toString_();
     }
 
     @Override
     public String toString() {
+        return this.toString;
+    }
+
+    public String toString_() {
         return switch(valueType) {
             case ERROR -> "<Error:" + errorMessage + "/>";
             case ARRAY -> "<Array:" + arrayMembers + "/>";

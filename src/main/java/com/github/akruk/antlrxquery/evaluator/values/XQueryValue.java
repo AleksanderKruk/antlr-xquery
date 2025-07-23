@@ -296,34 +296,19 @@ public class XQueryValue {
 
     @Override
     public String toString() {
-        if (isError) {
-            return "<Error:" + errorMessage + "/>";
-        }
-        if (isNode) {
-            return "<Node:" + node.getText() + "/>";
-        }
-        if (isNumeric) {
-            return "<Number:" + numericValue.toPlainString() + "/>";
-        }
-        if (isString) {
-            return "<String:\"" + stringValue + "\"/>";
-        }
-        if (isBoolean) {
-            return "<Boolean:" + booleanValue + "/>";
-        }
-        if (isFunction) {
-            return "<Function:" + functionValue + "/>";
-        }
-        if (isArray) {
-            return "<Array:" + arrayMembers + "/>";
-        }
-        if (isMap) {
-            return "<Map:" + mapEntries + "/>";
-        }
-        if (isEmptySequence) {
-            return "<EmptySequence/>";
-        }
-        return "<Sequence:" + sequence + "/>";
+        return switch(valueType) {
+            case ERROR -> "<Error:" + errorMessage + "/>";
+            case ARRAY -> "<Array:" + arrayMembers + "/>";
+            case BOOLEAN -> "<Boolean:" + booleanValue + "/>";
+            case ELEMENT -> "<Node:" + node.getText() + "/>";
+            case EMPTY_SEQUENCE -> "<Sequence:" + sequence + "/>";
+            case FUNCTION -> "<Function:" + functionValue + "/>";
+            case MAP -> "<Map:" + mapEntries + "/>";
+            case NUMBER -> "<Number:" + numericValue.toPlainString() + "/>";
+            case SEQUENCE -> "<EmptySequence/>";
+            case STRING -> "<String:\"" + stringValue + "\"/>";
+            default -> throw new IllegalArgumentException("Unexpected value: " + valueType);
+        };
     }
 
     ValueEquality equality = new ValueEquality();
@@ -338,7 +323,6 @@ public class XQueryValue {
             return true;
         if (this.valueType != other.valueType)
             return false;
-
         return equality.valueEquals(this, other);
     }
 

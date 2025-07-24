@@ -84,6 +84,17 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         this.anyArrayOrMap = typeFactory.zeroOrMore(typeFactory.itemChoice(Set.of(typeFactory.itemAnyMap(), typeFactory.itemAnyArray())));
         this.anyItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         this.emptySequence = typeFactory.emptySequence();
+        this.number = typeFactory.number();
+        this.zeroOrMoreNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
+        this.anyArray = typeFactory.anyArray();
+        this.anyItemOptional = typeFactory.zeroOrOne(typeFactory.itemAnyItem());
+        this.anyMap = typeFactory.anyMap();
+        this.boolean_ = typeFactory.boolean_();
+        this.string = typeFactory.string();
+        this.optionalNumber = typeFactory.zeroOrOne(typeFactory.itemNumber());
+        this.anyNumbers = typeFactory.zeroOrMore(typeFactory.itemNumber());
+        this.optionalString = typeFactory.zeroOrOne(typeFactory.itemString());
+        this.anyItem = typeFactory.anyItem();
 
     }
 
@@ -164,7 +175,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
         if (ctx.positionalVar() != null) {
             final String positionalVariableName = ctx.positionalVar().varName().getText();
-            contextManager.entypeVariable(positionalVariableName, typeFactory.number());
+            contextManager.entypeVariable(positionalVariableName, number);
         }
     }
 
@@ -173,7 +184,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         final XQuerySequenceType arrayType = ctx.exprSingle().accept(this);
         returnedOccurrence = arrayMergeFLWOROccurence();
 
-        if (!arrayType.isSubtypeOf(typeFactory.anyArray())) {
+        if (!arrayType.isSubtypeOf(anyArray)) {
             addError(ctx, "XPTY0141: ForMemberBinding requires a single array value; received: " + arrayType);
         }
 
@@ -186,7 +197,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
         if (ctx.positionalVar() != null) {
             final String positionalVariableName = ctx.positionalVar().varName().getText();
-            contextManager.entypeVariable(positionalVariableName, typeFactory.number());
+            contextManager.entypeVariable(positionalVariableName, number);
         }
     }
 
@@ -194,7 +205,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         final XQuerySequenceType mapType = ctx.exprSingle().accept(this);
         returnedOccurrence = arrayMergeFLWOROccurence();
 
-        if (!mapType.isSubtypeOf(typeFactory.anyMap())) {
+        if (!mapType.isSubtypeOf(anyMap)) {
             addError(ctx, "XPTY0141: ForEntryBinding requires a single map value");
             return;
         }
@@ -233,7 +244,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
         if (ctx.positionalVar() != null) {
             final String positionalVariableName = ctx.positionalVar().varName().getText();
-            contextManager.entypeVariable(positionalVariableName, typeFactory.number());
+            contextManager.entypeVariable(positionalVariableName, number);
         }
     }
 
@@ -272,7 +283,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     public XQuerySequenceType visitSequenceType(final SequenceTypeContext ctx)
     {
         if (ctx.EMPTY_SEQUENCE() != null) {
-            return typeFactory.emptySequence();
+            return emptySequence;
         }
         final var itemType = ctx.itemType().accept(this).getItemType();
         if (ctx.occurrenceIndicator() == null) {
@@ -314,13 +325,13 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     {
         // TODO: Add proper type resolution
         return switch (ctx.getText()) {
-            case "number" -> typeFactory.number();
-            case "string" -> typeFactory.string();
-            case "boolean" -> typeFactory.boolean_();
+            case "number" -> number;
+            case "string" -> string;
+            case "boolean" -> boolean_;
             default -> {
                 final String msg = String.format("Type %s is not recognized", ctx.getText());
                 addError(ctx, msg);
-                yield typeFactory.anyItem();
+                yield anyItem;
             }
         };
     }
@@ -410,7 +421,6 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     public XQuerySequenceType visitCountClause(final CountClauseContext ctx)
     {
         final String countVariableName = ctx.varName().getText();
-        final var number = typeFactory.number();
         contextManager.entypeVariable(countVariableName, number);
         return number;
     }
@@ -480,7 +490,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         final var itemType = type.getItemType();
         returnedOccurrence = mergeFLWOROccurrence(type);
         return switch (returnedOccurrence) {
-            case 0 -> typeFactory.emptySequence();
+            case 0 -> emptySequence;
             case 1 -> typeFactory.one(itemType);
             case 2 -> typeFactory.zeroOrOne(itemType);
             case 3 -> typeFactory.zeroOrMore(itemType);
@@ -527,26 +537,26 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             final String raw = numeric.HexIntegerLiteral().getText();
             final String hex = raw.replace("_", "").substring(2);
             valueFactory.number(new BigDecimal(new java.math.BigInteger(hex, 16)));
-            return typeFactory.number();
+            return number;
         }
 
         if (numeric.BinaryIntegerLiteral() != null) {
             final String raw = numeric.BinaryIntegerLiteral().getText();
             final String binary = raw.replace("_", "").substring(2);
             valueFactory.number(new BigDecimal(new java.math.BigInteger(binary, 2)));
-            return typeFactory.number();
+            return number;
         }
 
         if (numeric.DecimalLiteral() != null) {
             final String cleaned = numeric.DecimalLiteral().getText().replace("_", "");
             valueFactory.number(new BigDecimal(cleaned));
-            return typeFactory.number();
+            return number;
         }
 
         if (numeric.DoubleLiteral() != null) {
             final String cleaned = numeric.DoubleLiteral().getText().replace("_", "");
             valueFactory.number(new BigDecimal(cleaned));
-            return typeFactory.number();
+            return number;
         }
         return null;
     }
@@ -554,13 +564,13 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     private XQuerySequenceType handleNumber(final TerminalNode numeric) {
         final String value = numeric.getText().replace("_", "");
         valueFactory.number(new BigDecimal(value));
-        return typeFactory.number();
+        return number;
     }
 
     private XQuerySequenceType handleNumber(final NumericLiteralContext numeric) {
         final String value = numeric.IntegerLiteral().getText().replace("_", "");
         valueFactory.number(new BigDecimal(value));
-        return typeFactory.number();
+        return number;
     }
 
     private XQuerySequenceType handleString(final ParserRuleContext ctx) {
@@ -581,7 +591,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         // Empty parentheses mean an empty sequence '()'
         if (ctx.expr() == null) {
             valueFactory.sequence(List.of());
-            return typeFactory.emptySequence();
+            return emptySequence;
         }
         return ctx.expr().accept(this);
     }
@@ -688,7 +698,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             addError(criterionNode, "Criterion value needs to have effective boolean value");
         }
 
-        return typeFactory.boolean_();
+        return boolean_;
     }
 
     @Override
@@ -697,7 +707,6 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (ctx.OR().isEmpty()) {
             return ctx.andExpr(0).accept(this);
         }
-        final XQuerySequenceType boolean_ = typeFactory.boolean_();
         final var orCount = ctx.OR().size();
         for (int i = 0; i <= orCount; i++) {
             final var visitedType = ctx.andExpr(i).accept(this);
@@ -717,7 +726,6 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         }
         final var fromValue = ctx.additiveExpr(0).accept(this);
         final var toValue = ctx.additiveExpr(1).accept(this);
-        final var optionalNumber = typeFactory.zeroOrOne(typeFactory.itemNumber());
         if (!fromValue.isSubtypeOf(optionalNumber)) {
             addError(ctx.additiveExpr(0),
                 "Wrong type in 'from' operand of 'range expression': '<number?> to <number?>'");
@@ -725,7 +733,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (!toValue.isSubtypeOf(optionalNumber)) {
             addError(ctx.additiveExpr(1), "Wrong type in 'to' operand of range expression: '<number?> to <number?>'");
         }
-        return typeFactory.zeroOrMore(typeFactory.itemNumber());
+        return anyNumbers;
     }
 
     @Override
@@ -790,8 +798,8 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         final var savedArgs = saveVisitedArguments();
         final var savedContext = saveContext();
         context.setType(savedContext.getType());
-        context.setPositionType(typeFactory.number());
-        context.setSizeType(typeFactory.number());
+        context.setPositionType(number);
+        context.setSizeType(number);
         for (final var predicate : ctx.predicateList().predicate()) {
             stepResult = predicate.accept(this);
         }
@@ -799,15 +807,6 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         context = savedContext;
         return stepResult;
     }
-
-    // @Override
-    // public XQuerySequenceType visitPredicateList(PredicateListContext ctx) {
-    // var result = match;
-    // for (var predicate : ctx.predicate()) {
-    // predicate.accept(this);
-    // }
-    // return matchedTreeNodes();
-    // }
 
     private XQueryVisitingSemanticContext saveContext() {
         final var saved = context;
@@ -832,10 +831,10 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         final var predicateExpression = ctx.expr().accept(this);
         final var savedContext = saveContext();
         context.setType(savedContext.getType());
-        context.setPositionType(typeFactory.number());
-        context.setSizeType(typeFactory.number());
-        if (predicateExpression.isSubtypeOf(typeFactory.emptySequence()))
-            return typeFactory.emptySequence();
+        context.setPositionType(number);
+        context.setSizeType(number);
+        if (predicateExpression.isSubtypeOf(emptySequence))
+            return emptySequence;
         if (predicateExpression.isSubtypeOf(typeFactory.zeroOrOne(typeFactory.itemNumber()))) {
             final var item = contextType.getItemType();
             final var deducedType = typeFactory.zeroOrOne(item);
@@ -862,8 +861,8 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         final var savedArgs = saveVisitedArguments();
         final var savedContext = saveContext();
         context.setType(savedContext.getType());
-        context.setPositionType(typeFactory.number());
-        context.setSizeType(typeFactory.number());
+        context.setPositionType(number);
+        context.setSizeType(number);
         final XQuerySequenceType value = ctx.postfixExpr().accept(this);
         final boolean isCallable = value.isSubtypeOf(typeFactory.anyFunction());
         if (!isCallable) {
@@ -1048,7 +1047,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         final Map<String, XQueryRecordField> recordFields = targetType.getItemType().getRecordFields();
         if (recordFields.isEmpty()) {
             warn(target, "Empty record will always return empty sequence...");
-            return typeFactory.emptySequence();
+            return emptySequence;
         }
         final XQuerySequenceType mergedRecordFieldTypes = recordFields
             .values()
@@ -1112,7 +1111,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         final Map<String, XQueryRecordField> recordFields = targetType.getItemType().getRecordFields();
         if (recordFields.isEmpty()) {
             warn(ctx, "Empty record will always return empty sequence...");
-            return typeFactory.emptySequence();
+            return emptySequence;
         }
         final XQuerySequenceType mergedRecordFieldTypes = recordFields
             .values()
@@ -1216,13 +1215,24 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     }
 
     private final Predicate<String> canBeTokenName = Pattern.compile("^[\\p{IsUppercase}].*").asPredicate();
+    private final XQuerySequenceType number;
+    private final XQuerySequenceType zeroOrMoreNodes;
+    private final XQuerySequenceType anyArray;
+    private final XQuerySequenceType anyItemOptional;
+    private final XQuerySequenceType anyMap;
+    private final XQuerySequenceType boolean_;
+    private final XQuerySequenceType string;
+    private final XQuerySequenceType optionalNumber;
+    private final XQuerySequenceType anyNumbers;
+    private final XQuerySequenceType optionalString;
+    private final XQuerySequenceType anyItem;
 
     @Override
     public XQuerySequenceType visitNameTest(final NameTestContext ctx)
     {
         if (ctx.wildcard() != null) {
             return switch (ctx.wildcard().getText()) {
-                case "*" -> typeFactory.zeroOrMore(typeFactory.itemAnyNode());
+                case "*" -> zeroOrMoreNodes;
                 // case "*:" -> ;
                 // case ":*" -> ;
                 default -> throw new AssertionError("Not implemented wildcard");
@@ -1255,14 +1265,13 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (ctx.CONCATENATION().isEmpty()) {
             return ctx.rangeExpr(0).accept(this);
         }
-        final XQuerySequenceType anyItemOptional = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         for (int i = 0; i < ctx.rangeExpr().size(); i++) {
             final var visitedType = ctx.rangeExpr(i).accept(this);
             if (!visitedType.isSubtypeOf(anyItemOptional)) {
                 addError(ctx.rangeExpr(i), "Operands of 'or expression' need to be subtype of item()?");
             }
         }
-        return typeFactory.string();
+        return string;
     }
 
     @Override
@@ -1274,8 +1283,8 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         final XQuerySequenceType iterator = firstExpressionType.iteratedItem();
         final var savedContext = saveContext();
         context.setType(iterator);
-        context.setPositionType(typeFactory.number());
-        context.setSizeType(typeFactory.number());
+        context.setPositionType(number);
+        context.setSizeType(number);
         XQuerySequenceType result = firstExpressionType;
         final var theRest = ctx.pathExpr().subList(1, ctx.pathExpr().size());
         for (final var mappedExpression : theRest) {
@@ -1298,7 +1307,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (expression.isSubtypeOf(testedType)) {
             warn(ctx, "Unnecessary instance of expression is always true");
         }
-        return typeFactory.boolean_();
+        return this.boolean_;
     }
 
     // @Override
@@ -1348,7 +1357,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     public XQuerySequenceType visitSquareArrayConstructor(final SquareArrayConstructorContext ctx)
     {
         if (ctx.exprSingle().isEmpty()) {
-            return typeFactory.anyArray();
+            return anyArray;
         }
         final XQuerySequenceType arrayType = ctx.exprSingle().stream()
             .map(expr -> expr.accept(this))
@@ -1362,7 +1371,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     {
         final var expressions = ctx.enclosedExpr().expr();
         if (expressions == null) {
-            return typeFactory.anyArray();
+            return anyArray;
         }
 
         final XQuerySequenceType arrayType = expressions.exprSingle().stream()
@@ -1424,8 +1433,8 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
                 context.setPositionType(null);
                 context.setSizeType(null);
                 contextManager.enterScope();
-                contextManager.entypeVariable("$err:code", typeFactory.string());
-                contextManager.entypeVariable("$err:description", typeFactory.zeroOrOne(typeFactory.itemString()));
+                contextManager.entypeVariable("$err:code", string);
+                contextManager.entypeVariable("$err:description", optionalString);
                 contextManager.entypeVariable("$err:value", typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
                 contextManager.entypeVariable("$err:module", typeFactory.zeroOrOne(typeFactory.itemString()));
                 contextManager.entypeVariable("$err:line-number", typeFactory.zeroOrOne(typeFactory.itemNumber()));
@@ -1468,7 +1477,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             context = new XQueryVisitingSemanticContext();
             context.setType(typeFactory.anyNode());
             final XQuerySequenceType finallyType = finallyClause.enclosedExpr().accept(this);
-            if (!finallyType.isSubtypeOf(typeFactory.emptySequence())) {
+            if (!finallyType.isSubtypeOf(emptySequence)) {
                 addError(finallyClause,
                     "Finally clause needs to evaluate to empty sequence, currently:" + finallyType.toString());
             }
@@ -1527,7 +1536,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (ctx.AND().isEmpty()) {
             return ctx.comparisonExpr(0).accept(this);
         }
-        final XQuerySequenceType boolean_ = typeFactory.boolean_();
+        final XQuerySequenceType boolean_ = this.boolean_;
         final var operatorCount = ctx.AND().size();
         for (int i = 0; i <= operatorCount; i++) {
             final var visitedType = ctx.comparisonExpr(i).accept(this);
@@ -1545,7 +1554,6 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (ctx.additiveOperator().isEmpty()) {
             return ctx.multiplicativeExpr(0).accept(this);
         }
-        final XQuerySequenceType number = typeFactory.number();
         for (final var operandExpr : ctx.multiplicativeExpr()) {
             final var operand = operandExpr.accept(this);
             if (!operand.isSubtypeOf(number)) {
@@ -1553,7 +1561,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
                     "Operands in additive expression must be numeric, received: " + operand.toString());
             }
         }
-        return typeFactory.number();
+        return number;
     }
 
     @Override
@@ -1635,14 +1643,13 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (ctx.multiplicativeOperator().isEmpty()) {
             return ctx.unionExpr(0).accept(this);
         }
-        final XQuerySequenceType number = typeFactory.number();
         for (final var expr : ctx.unionExpr()) {
             final var visitedType = expr.accept(this);
             if (!visitedType.isSubtypeOf(number)) {
                 addError(ctx, "Multiplicative expression requires a number, received: " + visitedType.toString());
             }
         }
-        return typeFactory.number();
+        return number;
     }
 
     @Override
@@ -1731,10 +1738,10 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             return ctx.simpleMapExpr().accept(this);
         }
         final var type = ctx.simpleMapExpr().accept(this);
-        if (!type.isSubtypeOf(typeFactory.number())) {
+        if (!type.isSubtypeOf(number)) {
             addError(ctx, "Arithmetic unary expression requires a number");
         }
-        return typeFactory.number();
+        return number;
     }
 
     @Override
@@ -1879,7 +1886,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         XQuerySequenceType falseType = null;
         if (ctx.bracedAction() != null) {
             trueType = ctx.bracedAction().enclosedExpr().accept(this);
-            falseType = typeFactory.emptySequence();
+            falseType = emptySequence;
         } else {
             trueType = ctx.unbracedActions().exprSingle(0).accept(this);
             falseType = ctx.unbracedActions().exprSingle(1).accept(this);
@@ -1906,13 +1913,13 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         final List<XQuerySequenceType> args = new ArrayList<>();
         final var functionSignature = ctx.functionSignature();
         final var returnTypeDeclaration = functionSignature.typeDeclaration();
-        final XQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         contextManager.enterScope();
         for (final var parameter : functionSignature.paramList().varNameAndType()) {
             final String parameterName = parameter.qname().getText();
             final TypeDeclarationContext typeDeclaration = parameter.typeDeclaration();
-            final XQuerySequenceType parameterType = typeDeclaration != null ? typeDeclaration.accept(this)
-                : zeroOrMoreItems;
+            final XQuerySequenceType parameterType = typeDeclaration != null
+                ? typeDeclaration.accept(this)
+                : anyItems;
             if (argumentNames.contains(parameterName))
                 addError(parameter, "Duplicate parameter name: " + parameterName);
             argumentNames.add(parameterName);
@@ -1944,7 +1951,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (ctx.expr() != null) {
             return ctx.expr().accept(this);
         }
-        return typeFactory.emptySequence();
+        return emptySequence;
     }
 
 }

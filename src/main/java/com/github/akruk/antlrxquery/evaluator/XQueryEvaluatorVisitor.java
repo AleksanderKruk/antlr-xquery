@@ -67,6 +67,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     private NodeGetter nodeGetter = new NodeGetter();
     private Map<String, XQueryValue> visitedKeywordArguments;
 
+    private XQueryValue emptySequence;
+
     private record VariableCoupling(Variable item, Variable key, Variable value, Variable position) {}
     private record Variable(String name, XQueryValue value){}
 
@@ -104,6 +106,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         this.modulus = functionManager.getFunctionReference("op", "numeric-mod", 2).functionValue;
         this.unaryPlus = functionManager.getFunctionReference("op", "numeric-unary-plus", 1).functionValue;
         this.unaryMinus = functionManager.getFunctionReference("op", "numeric-unary-minus", 1).functionValue;
+        this.emptySequence = emptySequence;
         contextManager.enterContext();
     }
 
@@ -249,7 +252,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         }
 
         if (sequence.isEmpty() && allowingEmpty) {
-            final var emptyVar = new Variable(variableName, valueFactory.emptySequence());
+            final var emptyVar = new Variable(variableName, emptySequence);
             final var element =  new VariableCoupling(emptyVar, null, null, positionalVar);
             return List.of(element);
         }
@@ -564,11 +567,11 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     private XQueryValue handleNodeComp(final ComparisonExprContext ctx) {
         final var visitedLeft = ctx.otherwiseExpr(0).accept(this);
         if (visitedLeft.isEmptySequence)
-            return valueFactory.emptySequence();
+            return emptySequence;
         final ParseTree nodeLeft = getSingleNode(visitedLeft);
         final var visitedRight = ctx.otherwiseExpr(1).accept(this);
         if (visitedRight.isEmptySequence)
-            return valueFactory.emptySequence();
+            return emptySequence;
         final ParseTree nodeRight = getSingleNode(visitedRight);
         final boolean result = switch (ctx.nodeComp().getText()) {
             case "is" -> nodeLeft == nodeRight;
@@ -586,7 +589,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     @Override
     public XQueryValue visitEnclosedExpr(final EnclosedExprContext ctx) {
         if (ctx.expr() == null)
-            return valueFactory.emptySequence();
+            return emptySequence;
         return ctx.expr().accept(this);
     }
 
@@ -597,13 +600,13 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             return fromValue;
         final var toValue = ctx.additiveExpr(1).accept(this);
         if (toValue.isEmptySequence)
-            return valueFactory.emptySequence();
+            return emptySequence;
         if (fromValue.isEmptySequence)
-            return valueFactory.emptySequence();
+            return emptySequence;
         final int fromInt = fromValue.numericValue.intValue();
         final int toInt = toValue.numericValue.intValue();
         if (fromInt > toInt)
-            return valueFactory.emptySequence();
+            return emptySequence;
         final List<XQueryValue> values = IntStream.rangeClosed(fromInt, toInt)
                 .mapToObj(i -> valueFactory.number(i))
                 .collect(Collectors.toList());
@@ -787,11 +790,11 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             final XQueryValue getter)
     {
         if (getter.isEmptySequence)
-            return valueFactory.emptySequence();
+            return emptySequence;
         if (getter.size == 1) {
             final int i = getter.numericValue.intValue() - 1;
             if (i >= sequence.size() || i < 0) {
-                return valueFactory.emptySequence();
+                return emptySequence;
             }
             return sequence.get(i);
         }
@@ -1083,10 +1086,10 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         final var value = ctx.otherwiseExpr(0).accept(this);
         final var visitedExpression = ctx.otherwiseExpr(1).accept(this);
         if (value.isEmptySequence) {
-            return valueFactory.emptySequence();
+            return emptySequence;
         }
         if (visitedExpression.isEmptySequence) {
-            return valueFactory.emptySequence();
+            return emptySequence;
         }
         return switch (ctx.valueComp().getText()) {
             case "eq" -> valueComparisonOperator.valueEquals(value, visitedExpression);
@@ -1355,7 +1358,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             if (effectiveBooleanValue.booleanValue) {
                 return ctx.bracedAction().enclosedExpr().accept(this);
             } else {
-                return valueFactory.emptySequence();
+                return emptySequence;
             }
         } else {
             if (effectiveBooleanValue.booleanValue)
@@ -1566,12 +1569,12 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             windowTupleElements.add(new VariableCoupling(startPosVar, null, null, null));
         }
         if (startPrevVarName != null) {
-            final XQueryValue startPrevValue = startIndex > 0 ? subSequence.get(0) : valueFactory.emptySequence();
+            final XQueryValue startPrevValue = startIndex > 0 ? subSequence.get(0) : emptySequence;
             final Variable startPrevVar = new Variable(startPrevVarName, startPrevValue);
             windowTupleElements.add(new VariableCoupling(startPrevVar, null, null, null));
         }
         if (startNextVarName != null) {
-            final XQueryValue startNextValue = startIndex < subSequence.size() - 1 ? subSequence.get(1) : valueFactory.emptySequence();
+            final XQueryValue startNextValue = startIndex < subSequence.size() - 1 ? subSequence.get(1) : emptySequence;
             final Variable startNextVar = new Variable(startNextVarName, startNextValue);
             windowTupleElements.add(new VariableCoupling(startNextVar, null, null, null));
         }
@@ -1589,12 +1592,12 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             windowTupleElements.add(new VariableCoupling(endPosVar, null, null, null));
         }
         if (endPrevVarName != null) {
-            var vl =subSequence.size() > 1 ? subSequence.get(subSequence.size() - 2) : valueFactory.emptySequence();
+            var vl =subSequence.size() > 1 ? subSequence.get(subSequence.size() - 2) : emptySequence;
             final Variable endPrevVar = new Variable(endPrevVarName, vl);
             windowTupleElements.add(new VariableCoupling(endPrevVar, null, null, null));
         }
         if (endNextVarName != null) {
-            final Variable endNextVar = new Variable(endNextVarName, valueFactory.emptySequence());
+            final Variable endNextVar = new Variable(endNextVarName, emptySequence);
             windowTupleElements.add(new VariableCoupling(endNextVar, null, null, null));
         }
     }
@@ -1670,14 +1673,14 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     private void providePreviousVariable(final WindowVarsContext vars, final int currentIndex, final List<XQueryValue> sequenceList) {
         if (vars.previousVar() != null) {
             final String previousVarName = vars.previousVar().varRef().varName().getText();
-            contextManager.provideVariable(previousVarName, currentIndex > 0 ? sequenceList.get(currentIndex - 1) : valueFactory.emptySequence());
+            contextManager.provideVariable(previousVarName, currentIndex > 0 ? sequenceList.get(currentIndex - 1) : emptySequence);
         }
     }
 
     private void provideNextVariable(final WindowVarsContext vars, final int currentIndex, final List<XQueryValue> sequenceList) {
         if (vars.nextVar() != null) {
             final String nextVarName = vars.nextVar().varRef().varName().getText();
-            contextManager.provideVariable(nextVarName, currentIndex < sequenceList.size() - 1 ? sequenceList.get(currentIndex + 1) : valueFactory.emptySequence());
+            contextManager.provideVariable(nextVarName, currentIndex < sequenceList.size() - 1 ? sequenceList.get(currentIndex + 1) : emptySequence);
         }
     }
 

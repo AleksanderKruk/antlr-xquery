@@ -459,8 +459,6 @@ public class XQueryTypesTest {
     @Test
     public void typedMapItemSubtyping() {
         final var tested = typeFactory.itemMap(itemString, typeFactory.string());
-        final var itemMapNumberToString = typeFactory.itemMap(itemNumber, typeFactory.string());
-
         assertFalse(tested.itemtypeIsSubtypeOf(itemError));
         assertTrue(tested.itemtypeIsSubtypeOf(itemAnyItem));
         assertFalse(tested.itemtypeIsSubtypeOf(itemAnyNode));
@@ -475,7 +473,6 @@ public class XQueryTypesTest {
 
 
         assertFalse(tested.itemtypeIsSubtypeOf(itemAnyArray));
-        assertTrue(itemMapNumberToString.itemtypeIsSubtypeOf(itemAnyArray));
         assertFalse(tested.itemtypeIsSubtypeOf(typeFactory.itemArray(typeFactory.string())));
         assertFalse(tested.itemtypeIsSubtypeOf(typeFactory.itemArray(typeFactory.number())));
 

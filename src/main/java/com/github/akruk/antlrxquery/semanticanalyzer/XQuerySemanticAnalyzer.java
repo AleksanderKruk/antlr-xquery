@@ -50,11 +50,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     private XQueryVisitingSemanticContext context;
     private List<XQuerySequenceType> visitedPositionalArguments;
     private Map<String, XQuerySequenceType> visitedKeywordArguments;
-    private List<TupleElementType> visitedTupleStreamType;
 
     private final XQuerySequenceType anyArrayOrMap;
-    private final XQuerySequenceType anyArrays;
-    private final XQuerySequenceType anyMaps;
     private final XQuerySequenceType anyItems;
     private final XQuerySequenceType emptySequence;
 
@@ -63,8 +60,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         return errors;
     }
 
-    private record TupleElementType(String name, XQuerySequenceType type, String positionalName) {
-    };
+    // private record TupleElementType(String name, XQuerySequenceType type, String positionalName) {
+    // };
 
     public XQuerySemanticAnalyzer(
         final Parser parser,
@@ -85,8 +82,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         this.errors = new ArrayList<>();
         this.warnings = new ArrayList<>();
         this.anyArrayOrMap = typeFactory.zeroOrMore(typeFactory.itemChoice(Set.of(typeFactory.itemAnyMap(), typeFactory.itemAnyArray())));
-        this.anyMaps = typeFactory.zeroOrMore(typeFactory.itemAnyMap());
-        this.anyArrays = typeFactory.zeroOrMore(typeFactory.itemAnyArray());
         this.anyItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         this.emptySequence = typeFactory.emptySequence();
 
@@ -902,96 +897,97 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             warn(ctx, "Empty sequence as key specifier in lookup expression");
             return emptySequence;
         }
+        if (!targetType.isSubtypeOf(anyArrayOrMap)) {
+            addError(ctx.postfixExpr(), "Left side of lookup expression '<left> ? ...' must be map(*)* or array(*)*");
+            return anyItems;
+        }
 
-        if (targetType.isSubtypeOf(anyArrays)) {
-            switch (targetType.getItemType().getType()) {
-                case ARRAY:
-                    final XQuerySequenceType targetItemType = targetType.getArrayMemberType();
-                    if (targetItemType == null)
-                        return anyItems;
-                    final XQuerySequenceType result = targetItemType.sequenceMerge(targetItemType).addOptionality();
-                    if (isWildcard) {
-                        return result;
-                    }
-                    if (!keySpecifierType.itemtypeIsSubtypeOf(typeFactory.zeroOrMore(typeFactory.itemNumber())))
-                    {
-                        addError(ctx.lookup(), "Key type for lookup expression on " + targetType + " must be of type number*");
-                    }
+        switch (targetType.getItemType().getType()) {
+            case ARRAY:
+                final XQuerySequenceType targetItemType = targetType.getArrayMemberType();
+                if (targetItemType == null)
+                    return anyItems;
+                final XQuerySequenceType result = targetItemType.sequenceMerge(targetItemType).addOptionality();
+                if (isWildcard) {
                     return result;
-                default:
-                    if (isWildcard) {
-                        return anyItems;
-                    }
-                    if (!keySpecifierType.isSubtypeOf(typeFactory.zeroOrMore(typeFactory.itemNumber())))
-                    {
-                        addError(ctx.lookup(), "Key type for lookup expression on " + targetType + " must be of type number*");
-                    }
-                    return anyItems;
-            }
-        }
-        else if (targetType.isSubtypeOf(anyMaps)) {
-            switch (targetType.getItemType().getType()) {
-                case MAP:
-                    return getMapLookuptype(ctx, targetType, keySpecifierType, isWildcard);
-                case EXTENSIBLE_RECORD:
-                    return getExtensibleRecordLookupType(ctx, targetType, keySpecifierType, isWildcard);
-                case RECORD:
-                    return getRecordLookupType(ctx, targetType, keySpecifierType, isWildcard);
-                default:
-                    return anyItems;
-            }
-        }
-        else if (targetType.isSubtypeOf(anyArrayOrMap)) {
-            if (isWildcard) {
-                return null;
-            }
-            final XQueryItemType targetItemType = targetType.getItemType();
-            final Collection<XQueryItemType> choiceItemTypes = targetItemType.getItemTypes();
-            XQueryItemType targetKeyItemType = null;
-            XQuerySequenceType resultingType = null;
-            for (final var itemType : choiceItemTypes) {
-                if (resultingType == null) {
-                    if (!isWildcard)
-                        resultingType = switch(keySpecifierType.getOccurence()) {
-                            case ONE -> typeFactory.zeroOrOne(itemType);
-                            default -> typeFactory.zeroOrMore(itemType);
-                        };
-                    else {
-                        resultingType = typeFactory.zeroOrMore(itemType);
-                    }
-                    continue;
                 }
-
-                switch (itemType.getType()) {
-                    case ARRAY:
-                        resultingType = resultingType.alternativeMerge(itemType.getArrayMemberType());
-                        targetKeyItemType = targetItemType.alternativeMerge(typeFactory.itemNumber());
-                        break;
-                    case MAP:
-                        resultingType = resultingType.alternativeMerge(itemType.getMapValueType());
-                        targetKeyItemType = targetItemType.alternativeMerge(itemType.getMapKeyType());
-                        break;
-                    default:
-                        resultingType = anyItems;
-                        targetKeyItemType = typeFactory.itemAnyItem();
+                if (!keySpecifierType.itemtypeIsSubtypeOf(typeFactory.zeroOrMore(typeFactory.itemNumber())))
+                {
+                    addError(ctx.lookup(), "Key type for lookup expression on " + targetType + " must be of type number*");
                 }
-            }
-            resultingType = resultingType.addOptionality();
-            if (isWildcard) {
-                return resultingType;
-            }
-            final XQueryItemType numberOrKey = targetKeyItemType.alternativeMerge(typeFactory.itemNumber());
-
-            final XQuerySequenceType expectedKeyItemtype = typeFactory.zeroOrMore(numberOrKey);
-            if (!keySpecifierType.itemtypeIsSubtypeOf(expectedKeyItemtype)) {
-                addError(ctx.lookup(), "Key type for lookup expression on " + targetType + " must be subtype of type " + expectedKeyItemtype);
-            }
-            return resultingType;
-
+                return result;
+            case ANY_ARRAY:
+                if (isWildcard) {
+                    return anyItems;
+                }
+                if (!keySpecifierType.isSubtypeOf(typeFactory.zeroOrMore(typeFactory.itemNumber())))
+                {
+                    addError(ctx.lookup(), "Key type for lookup expression on " + targetType + " must be of type number*");
+                }
+                return anyItems;
+            case MAP:
+                return getMapLookuptype(ctx, targetType, keySpecifierType, isWildcard);
+            case EXTENSIBLE_RECORD:
+                return getExtensibleRecordLookupType(ctx, targetType, keySpecifierType, isWildcard);
+            case RECORD:
+                return getRecordLookupType(ctx, targetType, keySpecifierType, isWildcard);
+            case ANY_MAP:
+                return anyItems;
+            default:
+                return getAnyArrayOrMapLookupType(ctx, isWildcard, targetType, keySpecifierType);
         }
-        addError(ctx.postfixExpr(), "Left side of lookup expression '<left> ? ...' must be map(*)* or array(*)*");
-        return anyItems;
     }
+
+
+    XQuerySequenceType getAnyArrayOrMapLookupType(LookupExprContext ctx, boolean isWildcard, XQuerySequenceType targetType, XQuerySequenceType keySpecifierType) {
+        if (isWildcard) {
+            return null;
+        }
+        final XQueryItemType targetItemType = targetType.getItemType();
+        final Collection<XQueryItemType> choiceItemTypes = targetItemType.getItemTypes();
+        XQueryItemType targetKeyItemType = null;
+        XQuerySequenceType resultingType = null;
+        for (final var itemType : choiceItemTypes) {
+            if (resultingType == null) {
+                if (!isWildcard)
+                    resultingType = switch(keySpecifierType.getOccurence()) {
+                        case ONE -> typeFactory.zeroOrOne(itemType);
+                        default -> typeFactory.zeroOrMore(itemType);
+                    };
+                else {
+                    resultingType = typeFactory.zeroOrMore(itemType);
+                }
+                continue;
+            }
+
+            switch (itemType.getType()) {
+                case ARRAY:
+                    resultingType = resultingType.alternativeMerge(itemType.getArrayMemberType());
+                    targetKeyItemType = targetItemType.alternativeMerge(typeFactory.itemNumber());
+                    break;
+                case MAP:
+                    resultingType = resultingType.alternativeMerge(itemType.getMapValueType());
+                    targetKeyItemType = targetItemType.alternativeMerge(itemType.getMapKeyType());
+                    break;
+                default:
+                    resultingType = anyItems;
+                    targetKeyItemType = typeFactory.itemAnyItem();
+            }
+        }
+        resultingType = resultingType.addOptionality();
+        if (isWildcard) {
+            return resultingType;
+        }
+        final XQueryItemType numberOrKey = targetKeyItemType.alternativeMerge(typeFactory.itemNumber());
+
+        final XQuerySequenceType expectedKeyItemtype = typeFactory.zeroOrMore(numberOrKey);
+        if (!keySpecifierType.itemtypeIsSubtypeOf(expectedKeyItemtype)) {
+            addError(ctx.lookup(), "Key type for lookup expression on " + targetType + " must be subtype of type " + expectedKeyItemtype);
+        }
+        return resultingType;
+
+    }
+
 
     private XQuerySequenceType getMapLookuptype(final LookupExprContext ctx, final XQuerySequenceType targetType,
             final XQuerySequenceType keySpecifierType, final boolean isWildcard) {

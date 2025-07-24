@@ -7,7 +7,6 @@ import java.util.Map;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemTypeReference;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 
 public final class XQueryNamedTypeSets {

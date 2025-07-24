@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import org.antlr.v4.parse.ANTLRParser.elementEntry_return;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
@@ -1930,7 +1931,9 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
                 case ARRAY:
                     if (!keySpecifier.isNumeric)
                         continue;
-                    element.arrayMembers.get(keySpecifier.numericValue.intValue());
+                    int index = keySpecifier.numericValue.intValue()-1;
+                    if (index < element.arrayMembers.size() || index > 0)
+                        element.arrayMembers.get(index);
                     break;
                 case MAP:
                     element.mapEntries.get(keySpecifier);

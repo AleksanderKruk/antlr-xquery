@@ -1910,44 +1910,63 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     public XQueryValue visitLookupExpr(LookupExprContext ctx) {
         final var target = ctx.postfixExpr().accept(this);
         final var keySpecifier = ctx.lookup().keySpecifier().accept(this);
+        return evaluateLookup(target, keySpecifier);
+
+    }
+
+    private XQueryValue evaluateLookup(final XQueryValue target, final XQueryValue keySpecifier) {
         if (keySpecifier == null) {
-            final int resultsize = target.size;
-            final ArrayList<XQueryValue> results = new ArrayList<>(resultsize*resultsize);
-            for (final XQueryValue element : target.sequence) {
-                switch (element.valueType) {
-                    case ARRAY:
-                        results.addAll(element.arrayMembers);
-                        break;
-                    case MAP:
-                        results.addAll(element.mapEntries.values());
-                        break;
-                    default:
-                        return valueFactory.error(XQueryError.InvalidArgumentType,
-                        "Target of a lookup must be a sequence of arrays and maps, encountered: " + element);
-                }
-            }
-            return valueFactory.sequence(results);
+            return evaluateWildcardLookup(target);
         } else {
-            final int resultsize = target.size * keySpecifier.size;
-            final ArrayList<XQueryValue> results = new ArrayList<>(resultsize);
-            for (final XQueryValue element : target.sequence) {
-                switch (element.valueType) {
-                    case ARRAY:
-                        if (!keySpecifier.isNumeric)
-                            continue;
-                        element.arrayMembers.get(keySpecifier.numericValue.intValue());
-                        break;
-                    case MAP:
-                        element.mapEntries.get(keySpecifier);
-                        break;
-                    default:
-                        break;
-                }
-
-            }
-            return valueFactory.sequence(results);
+            return evaluateKeyLookup(target, keySpecifier);
         }
+    }
 
+    private XQueryValue evaluateKeyLookup(final XQueryValue target, final XQueryValue keySpecifier) {
+        final int resultsize = target.size * keySpecifier.size;
+        final ArrayList<XQueryValue> results = new ArrayList<>(resultsize);
+        for (final XQueryValue element : target.sequence) {
+            switch (element.valueType) {
+                case ARRAY:
+                    if (!keySpecifier.isNumeric)
+                        continue;
+                    element.arrayMembers.get(keySpecifier.numericValue.intValue());
+                    break;
+                case MAP:
+                    element.mapEntries.get(keySpecifier);
+                    break;
+                default:
+                    break;
+            }
+
+        }
+        return valueFactory.sequence(results);
+    }
+
+    private XQueryValue evaluateWildcardLookup(final XQueryValue target) {
+        final int resultsize = target.size;
+        final ArrayList<XQueryValue> results = new ArrayList<>(resultsize*resultsize);
+        for (final XQueryValue element : target.sequence) {
+            switch (element.valueType) {
+                case ARRAY:
+                    results.addAll(element.arrayMembers);
+                    break;
+                case MAP:
+                    results.addAll(element.mapEntries.values());
+                    break;
+                default:
+                    return valueFactory.error(XQueryError.InvalidArgumentType,
+                    "Target of a lookup must be a sequence of arrays and maps, encountered: " + element);
+            }
+        }
+        return valueFactory.sequence(results);
+    }
+
+    @Override
+    public XQueryValue visitUnaryLookup(UnaryLookupContext ctx) {
+        final var target = context.getValue();
+        final var keySpecifier = ctx.lookup().keySpecifier().accept(this);
+        return evaluateLookup(target, keySpecifier);
     }
 
 }

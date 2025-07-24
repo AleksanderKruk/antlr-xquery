@@ -1998,4 +1998,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
 
+    @Override
+    public XQueryValue visitTreatExpr(TreatExprContext ctx) {
+        return ctx.castableExpr().accept(this);
+    }
 }

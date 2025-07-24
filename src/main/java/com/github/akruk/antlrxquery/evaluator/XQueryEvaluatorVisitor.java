@@ -69,7 +69,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     private Map<String, XQueryValue> visitedKeywordArguments;
 
     private XQueryValue emptySequence;
-    private final XQuerySemanticAnalyzer analyzer;
+    private final XQuerySemanticAnalyzer semanticAnalyzer;
 
     private record VariableCoupling(Variable item, Variable key, Variable value, Variable position) {}
     private record Variable(String name, XQueryValue value){}
@@ -89,7 +89,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             final XQuerySemanticAnalyzer analyzer,
             final XQueryTypeFactory typeFactory)
     {
-        this.analyzer = analyzer;
+        this.semanticAnalyzer = analyzer;
         this.root = valueFactory.node(tree);
         this.context = new XQueryVisitingContext();
         this.context.setValue(root);
@@ -1992,7 +1992,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         if (ctx.INSTANCE() == null)
             return ctx.treatExpr().accept(this);
         final var visited = ctx.treatExpr().accept(this);
-        final var expectedType = ctx.sequenceType().accept(this.analyzer);
+        final var expectedType = ctx.sequenceType().accept(this.semanticAnalyzer);
         boolean result = visited.type.isSubtypeOf(expectedType);
         return valueFactory.bool(result);
     }
@@ -2000,6 +2000,12 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
     @Override
     public XQueryValue visitTreatExpr(TreatExprContext ctx) {
-        return ctx.castableExpr().accept(this);
+        final var type = ctx.sequenceType().accept(semanticAnalyzer);
+        final var expr =  ctx.castableExpr().accept(this);
+        if (!expr.type.isSubtypeOf(type)) {
+            return valueFactory.error(XQueryError.TreatAsTypeMismatch,
+            "Type: " + expr.type + " cannot be treated as " + type);
+        }
+        return expr;
     }
 }

@@ -87,7 +87,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         this.number = typeFactory.number();
         this.zeroOrMoreNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
         this.anyArray = typeFactory.anyArray();
-        this.anyItemOptional = typeFactory.zeroOrOne(typeFactory.itemAnyItem());
         this.anyMap = typeFactory.anyMap();
         this.boolean_ = typeFactory.boolean_();
         this.string = typeFactory.string();
@@ -1218,7 +1217,6 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     private final XQuerySequenceType number;
     private final XQuerySequenceType zeroOrMoreNodes;
     private final XQuerySequenceType anyArray;
-    private final XQuerySequenceType anyItemOptional;
     private final XQuerySequenceType anyMap;
     private final XQuerySequenceType boolean_;
     private final XQuerySequenceType string;
@@ -1310,21 +1308,6 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         return this.boolean_;
     }
 
-    // @Override
-    // public XQuerySequenceType visitCastableExpr(CastableExprContext ctx)
-    // {
-    //     XQuerySequenceType expression = ctx.castExpr().accept(this);
-    //     if (ctx.CASTABLE() == null) {
-    //         return expression;
-    //     }
-    //     var testedType = ctx.singleType().accept(this);
-    //     if (expression.isSubtypeOf(testedType)) {
-    //         warn(ctx, "Unnecessary instance of expression is always true");
-    //     }
-    //     return typeFactory.boolean_();
-
-    // }
-
     @Override
     public XQuerySequenceType visitTreatExpr(final TreatExprContext ctx)
     {
@@ -1336,7 +1319,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (!relevantType.isSubtypeOf(expression)
             && !expression.isSubtypeOf(relevantType))
         {
-
+            warn(ctx, "Unlikely treat expression");
         }
         return relevantType;
     }

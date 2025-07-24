@@ -10,6 +10,7 @@ import com.github.akruk.antlrgrammar.ANTLRv4Parser;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.ParserRuleSpecContext;
 import com.github.akruk.antlrxquery.evaluator.XQueryEvaluatorVisitor;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
+import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMemoizedValueFactory;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
@@ -141,7 +142,17 @@ public class XQueryRunner {
         try {
             final ParserAndTree parserAndTree = parseTargetFile(input, lexerClass, parserClass, startingRule);
             final XQueryTypeFactory typeFactory = new XQueryEnumTypeFactory(new XQueryNamedTypeSets().all());
-            final XQueryEvaluatorVisitor evaluator = new XQueryEvaluatorVisitor(parserAndTree.tree, parserAndTree.parser, typeFactory);
+            final XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory(typeFactory);
+            final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(parserAndTree.parser,
+                new XQuerySemanticContextManager(),
+                typeFactory,
+                valueFactory,
+                new XQuerySemanticFunctionManager(typeFactory));
+            final XQueryEvaluatorVisitor evaluator = new XQueryEvaluatorVisitor(
+                parserAndTree.tree,
+                parserAndTree.parser,
+                analyzer,
+                typeFactory);
             return evaluator.visit(query);
         } catch (final Exception e) {
             return null;

@@ -1267,7 +1267,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         }
         for (int i = 0; i < ctx.rangeExpr().size(); i++) {
             final var visitedType = ctx.rangeExpr(i).accept(this);
-            if (!visitedType.isSubtypeOf(anyItemOptional)) {
+            if (!visitedType.isSubtypeOf(anyItems)) {
                 addError(ctx.rangeExpr(i), "Operands of 'or expression' need to be subtype of item()?");
             }
         }

@@ -33,6 +33,7 @@ import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMe
 import com.github.akruk.antlrxquery.evaluator.values.operations.*;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.ResolvedName;
+import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.nodegetter.NodeGetter;
 
@@ -68,6 +69,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     private Map<String, XQueryValue> visitedKeywordArguments;
 
     private XQueryValue emptySequence;
+    private final XQuerySemanticAnalyzer analyzer;
 
     private record VariableCoupling(Variable item, Variable key, Variable value, Variable position) {}
     private record Variable(String name, XQueryValue value){}
@@ -76,11 +78,18 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         CHILD, DESCENDANT, SELF, DESCENDANT_OR_SELF, FOLLOWING_SIBLING, FOLLOWING, PARENT, ANCESTOR, PRECEDING_SIBLING, PRECEDING, ANCESTOR_OR_SELF, FOLLOWING_OR_SELF, FOLLOWING_SIBLING_OR_SELF, PRECEDING_SIBLING_OR_SELF, PRECEDING_OR_SELF,
     }
 
-    public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser, final XQueryTypeFactory typeFactory) {
-        this(tree, parser, new XQueryMemoizedValueFactory(typeFactory), typeFactory);
+    public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser, final XQuerySemanticAnalyzer analyzer, final XQueryTypeFactory typeFactory) {
+        this(tree, parser, new XQueryMemoizedValueFactory(typeFactory), analyzer, typeFactory);
     }
 
-    public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser, final XQueryValueFactory valueFactory, final XQueryTypeFactory typeFactory) {
+    public XQueryEvaluatorVisitor(
+            final ParseTree tree,
+            final Parser parser,
+            final XQueryValueFactory valueFactory,
+            final XQuerySemanticAnalyzer analyzer,
+            final XQueryTypeFactory typeFactory)
+    {
+        this.analyzer = analyzer;
         this.root = valueFactory.node(tree);
         this.context = new XQueryVisitingContext();
         this.context.setValue(root);
@@ -106,43 +115,10 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         this.modulus = functionManager.getFunctionReference("op", "numeric-mod", 2).functionValue;
         this.unaryPlus = functionManager.getFunctionReference("op", "numeric-unary-plus", 1).functionValue;
         this.unaryMinus = functionManager.getFunctionReference("op", "numeric-unary-minus", 1).functionValue;
-        this.emptySequence = emptySequence;
+        this.emptySequence = valueFactory.emptySequence();
         contextManager.enterContext();
     }
 
-    public XQueryEvaluatorVisitor(
-            final ParseTree tree,
-            final Parser parser,
-            final XQueryDynamicContextManager contextManager,
-            final XQueryValueFactory valueFactory,
-            final XQueryEvaluatingFunctionManager functionCaller)
-    {
-        this.root = valueFactory.node(tree);
-        this.context = new XQueryVisitingContext();
-        this.context.setValue(root);
-        this.context.setPosition(0);
-        this.context.setSize(0);
-        this.parser = parser;
-        this.valueFactory = valueFactory;
-        this.functionManager = functionCaller;
-        this.contextManager = contextManager;
-        this.atomizer = new ValueAtomizer();
-        this.concat = functionManager.getFunctionReference("fn", "concat", 2).functionValue;
-        this.string = functionManager.getFunctionReference("fn", "string", 1).functionValue;
-        this.addition = functionManager.getFunctionReference("op", "numeric-add", 2).functionValue;
-        this.subtraction = functionManager.getFunctionReference("op", "numeric-subtract", 2).functionValue;
-        this.multiplication = functionManager.getFunctionReference("op", "numeric-multiply", 2).functionValue;
-        this.division = functionManager.getFunctionReference("op", "numeric-divide", 2).functionValue;
-        this.integerDivision = functionManager.getFunctionReference("op", "numeric-integer-divide", 2).functionValue;
-        this.modulus = functionManager.getFunctionReference("op", "numeric-mod", 2).functionValue;
-        this.unaryPlus = functionManager.getFunctionReference("op", "numeric-unary-plus", 2).functionValue;
-        this.unaryMinus = functionManager.getFunctionReference("op", "numeric-unary-minus", 2).functionValue;
-        this.valueComparisonOperator = new ValueComparisonOperator(valueFactory);
-        this.generalComparisonOperator = null;
-        this.ebv = new EffectiveBooleanValue(valueFactory);
-        this.booleanOperator = new ValueBooleanOperator(this, valueFactory, ebv);
-        this.nodeOperator = new NodeOperator(valueFactory);
-    }
 
     @Override
     public XQueryValue visitFLWORExpr(final FLWORExprContext ctx) {
@@ -2008,6 +1984,17 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         final String content = unescapeString(rawText.substring(1, rawText.length() - 1));
         valueFactory.string(content);
         return content;
+    }
+
+
+    @Override
+    public XQueryValue visitInstanceofExpr(InstanceofExprContext ctx) {
+        if (ctx.INSTANCE() == null)
+            return ctx.treatExpr().accept(this);
+        final var visited = ctx.treatExpr().accept(this);
+        final var expectedType = ctx.sequenceType().accept(this.analyzer);
+        boolean result = visited.type.isSubtypeOf(expectedType);
+        return valueFactory.bool(result);
     }
 
 

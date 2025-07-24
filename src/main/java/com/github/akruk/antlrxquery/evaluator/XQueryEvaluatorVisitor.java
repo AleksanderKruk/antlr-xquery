@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import org.antlr.v4.parse.ANTLRParser.elementEntry_return;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
@@ -404,15 +403,12 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     @Override
     public XQueryValue visitLiteral(final LiteralContext ctx) {
         if (ctx.STRING() != null) {
-            final String rawText = ctx.getText();
-            final String content = unescapeString(rawText.substring(1, rawText.length() - 1));
-            return valueFactory.string(content);
+            return handleString(ctx);
         }
 
         final var numeric = ctx.numericLiteral();
         if (numeric.IntegerLiteral() != null) {
-            final String value = numeric.IntegerLiteral().getText().replace("_", "");
-            return valueFactory.number(new BigDecimal(value));
+            return handleInteger(numeric.IntegerLiteral());
         }
 
         if (numeric.HexIntegerLiteral() != null) {
@@ -437,6 +433,11 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             return valueFactory.number(new BigDecimal(cleaned));
         }
         return null;
+    }
+
+    private XQueryValue handleInteger(final TerminalNode integerLiteral) {
+        final String value = integerLiteral.getText().replace("_", "");
+        return valueFactory.number(new BigDecimal(value));
     }
 
     @Override
@@ -1910,7 +1911,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     @Override
     public XQueryValue visitLookupExpr(LookupExprContext ctx) {
         final var target = ctx.postfixExpr().accept(this);
-        final var keySpecifier = ctx.lookup().keySpecifier().accept(this);
+        final var keySpecifier = getKeySpecifier(ctx);
         return evaluateLookup(target, keySpecifier);
 
     }
@@ -1932,11 +1933,14 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
                     if (!keySpecifier.isNumeric)
                         continue;
                     int index = keySpecifier.numericValue.intValue()-1;
-                    if (index < element.arrayMembers.size() || index > 0)
-                        element.arrayMembers.get(index);
+                    if (index > element.arrayMembers.size() || index < 0)
+                        valueFactory.error(XQueryError.ArrayIndexOutOfBounds, getLookupArrayErrorMessage(keySpecifier, element));
+                    results.add(element.arrayMembers.get(index));
                     break;
                 case MAP:
-                    element.mapEntries.get(keySpecifier);
+                    XQueryValue value = element.mapEntries.get(keySpecifier);
+                    if (value != null)
+                        results.add(value);
                     break;
                 default:
                     break;
@@ -1944,6 +1948,10 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
         }
         return valueFactory.sequence(results);
+    }
+
+    private String getLookupArrayErrorMessage(final XQueryValue keySpecifier, final XQueryValue element) {
+        return "Index: " + keySpecifier.numericValue + " is out of bounds for array " + element + " of size " + element.size;
     }
 
     private XQueryValue evaluateWildcardLookup(final XQueryValue target) {
@@ -1971,5 +1979,33 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         final var keySpecifier = ctx.lookup().keySpecifier().accept(this);
         return evaluateLookup(target, keySpecifier);
     }
+
+
+    XQueryValue getKeySpecifier(final LookupExprContext ctx) {
+        final KeySpecifierContext keySpecifier = ctx.lookup().keySpecifier();
+        if (keySpecifier.qname() != null) {
+            return valueFactory.string(keySpecifier.qname().getText());
+        }
+        if (keySpecifier.STRING() != null ) {
+            return handleString(keySpecifier);
+        }
+        if (keySpecifier.IntegerLiteral() != null) {
+            return handleInteger(keySpecifier.IntegerLiteral());
+        }
+        return keySpecifier.accept(this);
+    }
+
+    private XQueryValue handleString(final ParserRuleContext ctx) {
+        final String content = processStringLiteral(ctx);
+        return valueFactory.string(content);
+    }
+
+    private String processStringLiteral(final ParserRuleContext ctx) {
+        final String rawText = ctx.getText();
+        final String content = unescapeString(rawText.substring(1, rawText.length() - 1));
+        valueFactory.string(content);
+        return content;
+    }
+
 
 }

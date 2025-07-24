@@ -25,16 +25,12 @@ import com.github.akruk.antlrxquery.charescaper.XQueryCharEscaper;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.*;
 import com.github.akruk.antlrxquery.evaluator.dynamiccontext.XQueryDynamicContextManager;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.XQueryEvaluatingFunctionManager;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryError;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryFunction;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMemoizedValueFactory;
-import com.github.akruk.antlrxquery.evaluator.values.operations.EffectiveBooleanValue;
-import com.github.akruk.antlrxquery.evaluator.values.operations.GeneralComparisonOperator;
-import com.github.akruk.antlrxquery.evaluator.values.operations.NodeOperator;
-import com.github.akruk.antlrxquery.evaluator.values.operations.ValueAtomizer;
-import com.github.akruk.antlrxquery.evaluator.values.operations.ValueBooleanOperator;
-import com.github.akruk.antlrxquery.evaluator.values.operations.ValueComparisonOperator;
+import com.github.akruk.antlrxquery.evaluator.values.operations.*;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.ResolvedName;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
@@ -1910,5 +1906,48 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return contextValue;
     }
 
+    @Override
+    public XQueryValue visitLookupExpr(LookupExprContext ctx) {
+        final var target = ctx.postfixExpr().accept(this);
+        final var keySpecifier = ctx.lookup().keySpecifier().accept(this);
+        if (keySpecifier == null) {
+            final int resultsize = target.size;
+            final ArrayList<XQueryValue> results = new ArrayList<>(resultsize*resultsize);
+            for (final XQueryValue element : target.sequence) {
+                switch (element.valueType) {
+                    case ARRAY:
+                        results.addAll(element.arrayMembers);
+                        break;
+                    case MAP:
+                        results.addAll(element.mapEntries.values());
+                        break;
+                    default:
+                        return valueFactory.error(XQueryError.InvalidArgumentType,
+                        "Target of a lookup must be a sequence of arrays and maps, encountered: " + element);
+                }
+            }
+            return valueFactory.sequence(results);
+        } else {
+            final int resultsize = target.size * keySpecifier.size;
+            final ArrayList<XQueryValue> results = new ArrayList<>(resultsize);
+            for (final XQueryValue element : target.sequence) {
+                switch (element.valueType) {
+                    case ARRAY:
+                        if (!keySpecifier.isNumeric)
+                            continue;
+                        element.arrayMembers.get(keySpecifier.numericValue.intValue());
+                        break;
+                    case MAP:
+                        element.mapEntries.get(keySpecifier);
+                        break;
+                    default:
+                        break;
+                }
+
+            }
+            return valueFactory.sequence(results);
+        }
+
+    }
 
 }

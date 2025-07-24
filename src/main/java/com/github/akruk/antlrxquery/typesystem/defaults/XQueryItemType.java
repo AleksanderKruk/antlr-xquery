@@ -9,11 +9,11 @@ import java.util.stream.IntStream;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.ItemtypeAlternativeMerger;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.ItemtypeIntersectionMerger;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.ItemtypeStringRepresentation;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.ItemtypeSubtyper;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.ItemtypeUnionMerger;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.itemtype.ItemtypeAlternativeMerger;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.itemtype.ItemtypeIntersectionMerger;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.itemtype.ItemtypeStringRepresentation;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.itemtype.ItemtypeSubtyper;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.itemtype.ItemtypeUnionMerger;
 
 public class XQueryItemType {
     private static final int ANY_ITEM = XQueryTypes.ANY_ITEM.ordinal();

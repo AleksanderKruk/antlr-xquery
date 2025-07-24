@@ -1,6 +1,7 @@
 package com.github.akruk.antlrxquery.typesystem.factories.defaults;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -41,13 +42,13 @@ public final class XQueryNamedTypeSets {
         // DEFAULT_ALL.put("fn:parsed-csv-structure-record", null);
 
 
-        final XQueryItemType randomRef = new XQueryItemTypeReference(()->typeFactory.itemNamedType("fn:random-number-generator-record"));
-        final var oneRandomRef = typeFactory.one(randomRef);
-        final XQueryItemType randomNumberGeneratorRecord = typeFactory.itemExtensibleRecord(Map.of(
-            "number", new XQueryRecordField(typeFactory.number(), true),
-            "next", new XQueryRecordField(typeFactory.function(oneRandomRef, List.of()), true),
-            "permute", new XQueryRecordField(typeFactory.function(anyItems, List.of(anyItems)), true)
-        ));
+        final Map<String, XQueryRecordField> fields = new LinkedHashMap<>();
+        fields.put("number", new XQueryRecordField(typeFactory.number(), true));
+        fields.put("permute", new XQueryRecordField(typeFactory.function(anyItems, List.of(anyItems)), true));
+        final XQueryItemType randomNumberGeneratorRecord = typeFactory.itemExtensibleRecord(fields);
+        final var oneRandomRef = typeFactory.one(randomNumberGeneratorRecord);
+        fields.put("next", new XQueryRecordField(typeFactory.function(oneRandomRef, List.of()), true));
+
         DEFAULT_ALL.put("fn:random-number-generator-record", randomNumberGeneratorRecord);
 
         // DEFAULT_ALL.put("fn:schema-type-record", null);

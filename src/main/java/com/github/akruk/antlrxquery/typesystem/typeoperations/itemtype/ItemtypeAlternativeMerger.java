@@ -1,5 +1,5 @@
 
-package com.github.akruk.antlrxquery.typesystem.typeoperations;
+package com.github.akruk.antlrxquery.typesystem.typeoperations.itemtype;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -11,10 +11,7 @@ import java.util.stream.Collectors;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryChoiceItemType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemTypeArray;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemTypeElement;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemTypeEnum;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemTypeMap;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemTypeRecord;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
@@ -415,10 +412,8 @@ public class ItemtypeAlternativeMerger
 
     private XQueryItemType mergeArrays(final XQueryTypeFactory typeFactory, XQueryItemType x, XQueryItemType y)
     {
-        final var x_ = (XQueryItemTypeArray) x;
-        final var y_ = (XQueryItemTypeArray) y;
-        final var xArrayType = x_.getArrayMemberType();
-        final var yArrayType = y_.getArrayMemberType();
+        final var xArrayType = x.getArrayMemberType();
+        final var yArrayType = y.getArrayMemberType();
         final var merged = xArrayType.sequenceMerge(yArrayType);
         return typeFactory.itemArray(merged);
     }
@@ -426,21 +421,19 @@ public class ItemtypeAlternativeMerger
 
     private XQueryItemType mergeMaps(final XQueryTypeFactory typeFactory, XQueryItemType x, XQueryItemType y)
     {
-        final var x_ = (XQueryItemTypeMap) x;
-        final var y_ = (XQueryItemTypeMap) y;
-        final var xKey = x_.getMapKeyType();
-        final var yKey = y_.getMapKeyType();
-        final var xValue = x_.getMapValueType();
-        final var yValue = y_.getMapValueType();
+        final var xKey = x.getMapKeyType();
+        final var yKey = y.getMapKeyType();
+        final var xValue = x.getMapValueType();
+        final var yValue = y.getMapValueType();
         final var mergedKeyType = xKey.alternativeMerge(yKey);
-        final var mergedValueType = xValue.sequenceMerge(yValue);
+        final var mergedValueType = xValue.alternativeMerge(yValue);
         return typeFactory.itemMap(mergedKeyType, mergedValueType);
     }
 
 
     private XQueryItemType rightChoiceMerge(final XQueryTypeFactory typeFactory, XQueryItemType x, XQueryItemType y)
     {
-        final var rightItems = ((XQueryChoiceItemType) y).getItemTypes();
+        final var rightItems = y.getItemTypes();
         final Set<XQueryItemType> sum = new HashSet<>(rightItems.size()+1);
         sum.addAll(rightItems);
         sum.add(x);
@@ -449,7 +442,7 @@ public class ItemtypeAlternativeMerger
 
     private XQueryItemType leftChoiceMerge(final XQueryTypeFactory typeFactory, XQueryItemType x, XQueryItemType y)
     {
-        final var leftItems = ((XQueryChoiceItemType) x).getItemTypes();
+        final var leftItems = x.getItemTypes();
         final Set<XQueryItemType> sum = new HashSet<>(leftItems.size()+1);
         sum.addAll(leftItems);
         sum.add(y);
@@ -459,8 +452,8 @@ public class ItemtypeAlternativeMerger
 
     private XQueryItemType mergeElements(final XQueryTypeFactory typeFactory, XQueryItemType x, XQueryItemType y)
     {
-        final var els1 = ((XQueryItemTypeElement) x).getElementNames();
-        final var els2 = ((XQueryItemTypeElement) y).getElementNames();
+        final var els1 = x.getElementNames();
+        final var els2 = y.getElementNames();
         final Set<String> merged = new HashSet<>(els1.size() + els2.size());
         merged.addAll(els1);
         merged.addAll(els2);

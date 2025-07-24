@@ -2,6 +2,7 @@ package com.github.akruk.antlrxquery.semanticanalyzer;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -33,21 +34,29 @@ import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemTypeEnum;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType.RelativeCoercability;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
+
 public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQuerySequenceType> {
-    final XQuerySemanticContextManager contextManager;
-    final List<String> errors;
-    final List<String> warnings;
-    final XQueryTypeFactory typeFactory;
-    final XQueryValueFactory valueFactory;
-    final XQuerySemanticFunctionManager functionManager;
-    final Parser parser;
-    XQueryVisitingSemanticContext context;
-    List<XQuerySequenceType> visitedPositionalArguments;
-    Map<String, XQuerySequenceType> visitedKeywordArguments;
-    List<TupleElementType> visitedTupleStreamType;
+    private final XQuerySemanticContextManager contextManager;
+    private final List<String> errors;
+    private final List<String> warnings;
+    private final XQueryTypeFactory typeFactory;
+    private final XQueryValueFactory valueFactory;
+    private final XQuerySemanticFunctionManager functionManager;
+    private final Parser parser;
+    private XQueryVisitingSemanticContext context;
+    private List<XQuerySequenceType> visitedPositionalArguments;
+    private Map<String, XQuerySequenceType> visitedKeywordArguments;
+    private List<TupleElementType> visitedTupleStreamType;
+
+    private final XQuerySequenceType anyArrayOrMap;
+    private final XQuerySequenceType anyArrays;
+    private final XQuerySequenceType anyMaps;
+    private final XQuerySequenceType anyItems;
+    private final XQuerySequenceType emptySequence;
 
     public List<String> getErrors()
     {
@@ -75,6 +84,12 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         this.context.setSizeType(null);
         this.errors = new ArrayList<>();
         this.warnings = new ArrayList<>();
+        this.anyArrayOrMap = typeFactory.zeroOrMore(typeFactory.itemChoice(Set.of(typeFactory.itemAnyMap(), typeFactory.itemAnyArray())));
+        this.anyMaps = typeFactory.zeroOrMore(typeFactory.itemAnyMap());
+        this.anyArrays = typeFactory.zeroOrMore(typeFactory.itemAnyArray());
+        this.anyItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
+        this.emptySequence = typeFactory.emptySequence();
+
     }
 
     @Override
@@ -505,17 +520,12 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     public XQuerySequenceType visitLiteral(final LiteralContext ctx)
     {
         if (ctx.STRING() != null) {
-            final String rawText = ctx.getText();
-            final String content = unescapeString(ctx, rawText.substring(1, rawText.length() - 1));
-            valueFactory.string(content);
-            return typeFactory.enum_(Set.of(content));
+            return handleString(ctx);
         }
 
         final var numeric = ctx.numericLiteral();
         if (numeric.IntegerLiteral() != null) {
-            final String value = numeric.IntegerLiteral().getText().replace("_", "");
-            valueFactory.number(new BigDecimal(value));
-            return typeFactory.number();
+            return handleNumber(numeric);
         }
 
         if (numeric.HexIntegerLiteral() != null) {
@@ -544,6 +554,30 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             return typeFactory.number();
         }
         return null;
+    }
+
+    private XQuerySequenceType handleNumber(final TerminalNode numeric) {
+        final String value = numeric.getText().replace("_", "");
+        valueFactory.number(new BigDecimal(value));
+        return typeFactory.number();
+    }
+
+    private XQuerySequenceType handleNumber(final NumericLiteralContext numeric) {
+        final String value = numeric.IntegerLiteral().getText().replace("_", "");
+        valueFactory.number(new BigDecimal(value));
+        return typeFactory.number();
+    }
+
+    private XQuerySequenceType handleString(final ParserRuleContext ctx) {
+        final String content = processStringLiteral(ctx);
+        return typeFactory.enum_(Set.of(content));
+    }
+
+    private String processStringLiteral(final ParserRuleContext ctx) {
+        final String rawText = ctx.getText();
+        final String content = unescapeString(ctx, rawText.substring(1, rawText.length() - 1));
+        valueFactory.string(content);
+        return content;
     }
 
     @Override
@@ -631,7 +665,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
 
         final List<XQuerySequenceType> coercedTypes = quantifierBindings.stream()
                 .map(binding -> {
-                    TypeDeclarationContext typeDeclaration = binding.varNameAndType().typeDeclaration();
+                    final TypeDeclarationContext typeDeclaration = binding.varNameAndType().typeDeclaration();
                     return typeDeclaration != null? typeDeclaration.accept(this) : null;
                 })
                 .toList();
@@ -788,11 +822,11 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
 
 
     @Override
-    public XQuerySequenceType visitFilterExpr(FilterExprContext ctx) {
+    public XQuerySequenceType visitFilterExpr(final FilterExprContext ctx) {
         final XQuerySequenceType expr = ctx.postfixExpr().accept(this);
         final var savedContext = saveContext();
         context.setType(expr);
-        var filtered = ctx.predicate().accept(this);
+        final var filtered = ctx.predicate().accept(this);
         context = savedContext;
         return filtered;
     }
@@ -829,14 +863,14 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     }
 
     @Override
-    public XQuerySequenceType visitDynamicFunctionCall(DynamicFunctionCallContext ctx) {
+    public XQuerySequenceType visitDynamicFunctionCall(final DynamicFunctionCallContext ctx) {
         final var savedArgs = saveVisitedArguments();
         final var savedContext = saveContext();
         context.setType(savedContext.getType());
         context.setPositionType(typeFactory.number());
         context.setSizeType(typeFactory.number());
         final XQuerySequenceType value = ctx.postfixExpr().accept(this);
-        boolean isCallable = value.isSubtypeOf(typeFactory.anyFunction());
+        final boolean isCallable = value.isSubtypeOf(typeFactory.anyFunction());
         if (!isCallable) {
             addError(ctx.postfixExpr(),
                 "Expected function in dynamic function call expression, received: " + value);
@@ -856,24 +890,270 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
 
 
     @Override
-    public XQuerySequenceType visitLookupExpr(LookupExprContext ctx) {
-        var targetType = ctx.postfixExpr().accept(this);
-        KeySpecifierContext keySpecifier = ctx.lookup().keySpecifier();
-        var keySpecifierType = keySpecifier.accept(this);
-        // TODO: rewrite
-        XQuerySequenceType result = null;
-        if (keySpecifierType == null) {
-            // direct key access
-            var literalName= keySpecifier.qname();
-            if (literalName != null) {
-                result = targetType.lookup(typeFactory.string());
-            } else { // wildcard
-                result = targetType.lookupWildcard();
+    public XQuerySequenceType visitLookupExpr(final LookupExprContext ctx) {
+        final var targetType = ctx.postfixExpr().accept(this);
+        if (targetType.isZero()) {
+            warn(ctx, "Target type of lookup expression is an empty sequence");
+            return emptySequence;
+        }
+        final XQuerySequenceType keySpecifierType = getKeySpecifier(ctx);
+        final boolean isWildcard = keySpecifierType == null;
+        if (!isWildcard && keySpecifierType.isZero()) {
+            warn(ctx, "Empty sequence as key specifier in lookup expression");
+            return emptySequence;
+        }
+
+        if (targetType.isSubtypeOf(anyArrays)) {
+            switch (targetType.getItemType().getType()) {
+                case ARRAY:
+                    final XQuerySequenceType targetItemType = targetType.getArrayMemberType();
+                    if (targetItemType == null)
+                        return anyItems;
+                    final XQuerySequenceType result = targetItemType.sequenceMerge(targetItemType).addOptionality();
+                    if (isWildcard) {
+                        return result;
+                    }
+                    if (!keySpecifierType.itemtypeIsSubtypeOf(typeFactory.zeroOrMore(typeFactory.itemNumber())))
+                    {
+                        addError(ctx.lookup(), "Key type for lookup expression on " + targetType + " must be of type number*");
+                    }
+                    return result;
+                default:
+                    if (isWildcard) {
+                        return anyItems;
+                    }
+                    if (!keySpecifierType.isSubtypeOf(typeFactory.zeroOrMore(typeFactory.itemNumber())))
+                    {
+                        addError(ctx.lookup(), "Key type for lookup expression on " + targetType + " must be of type number*");
+                    }
+                    return anyItems;
             }
         }
-        return result;
-        // return targetType.lookup(keySpecifierType);
+        else if (targetType.isSubtypeOf(anyMaps)) {
+            switch (targetType.getItemType().getType()) {
+                case MAP:
+                    return getMapLookuptype(ctx, targetType, keySpecifierType, isWildcard);
+                case EXTENSIBLE_RECORD:
+                    return getExtensibleRecordLookupType(ctx, targetType, keySpecifierType, isWildcard);
+                case RECORD:
+                    return getRecordLookupType(ctx, targetType, keySpecifierType, isWildcard);
+                default:
+                    return anyItems;
+            }
+        }
+        else if (targetType.isSubtypeOf(anyArrayOrMap)) {
+            if (isWildcard) {
+                return null;
+            }
+            final XQueryItemType targetItemType = targetType.getItemType();
+            final Collection<XQueryItemType> choiceItemTypes = targetItemType.getItemTypes();
+            XQueryItemType targetKeyItemType = null;
+            XQuerySequenceType resultingType = null;
+            for (final var itemType : choiceItemTypes) {
+                if (resultingType == null) {
+                    if (!isWildcard)
+                        resultingType = switch(keySpecifierType.getOccurence()) {
+                            case ONE -> typeFactory.zeroOrOne(itemType);
+                            default -> typeFactory.zeroOrMore(itemType);
+                        };
+                    else {
+                        resultingType = typeFactory.zeroOrMore(itemType);
+                    }
+                    continue;
+                }
+
+                switch (itemType.getType()) {
+                    case ARRAY:
+                        resultingType = resultingType.alternativeMerge(itemType.getArrayMemberType());
+                        targetKeyItemType = targetItemType.alternativeMerge(typeFactory.itemNumber());
+                        break;
+                    case MAP:
+                        resultingType = resultingType.alternativeMerge(itemType.getMapValueType());
+                        targetKeyItemType = targetItemType.alternativeMerge(itemType.getMapKeyType());
+                        break;
+                    default:
+                        resultingType = anyItems;
+                        targetKeyItemType = typeFactory.itemAnyItem();
+                }
+            }
+            resultingType = resultingType.addOptionality();
+            if (isWildcard) {
+                return resultingType;
+            }
+            final XQueryItemType numberOrKey = targetKeyItemType.alternativeMerge(typeFactory.itemNumber());
+
+            final XQuerySequenceType expectedKeyItemtype = typeFactory.zeroOrMore(numberOrKey);
+            if (!keySpecifierType.itemtypeIsSubtypeOf(expectedKeyItemtype)) {
+                addError(ctx.lookup(), "Key type for lookup expression on " + targetType + " must be subtype of type " + expectedKeyItemtype);
+            }
+            return resultingType;
+
+        }
+        addError(ctx.postfixExpr(), "Left side of lookup expression '<left> ? ...' must be map(*)* or array(*)*");
+        return anyItems;
     }
+
+    private XQuerySequenceType getMapLookuptype(final LookupExprContext ctx, final XQuerySequenceType targetType,
+            final XQuerySequenceType keySpecifierType, final boolean isWildcard) {
+        final XQueryItemType targetKeyItemType = targetType.getMapKeyType();
+        final XQuerySequenceType targetValueType = targetType.getMapValueType();
+        final XQueryItemType targetValueItemtype = targetValueType.getItemType();
+        if (isWildcard) {
+            return typeFactory.zeroOrMore(targetValueItemtype);
+        }
+        final XQuerySequenceType result = switch(keySpecifierType.getOccurence()) {
+                case ONE -> typeFactory.zeroOrOne(targetValueItemtype);
+                default -> typeFactory.zeroOrMore(targetValueItemtype);
+            };
+        final XQuerySequenceType expectedKeyItemtype = typeFactory.zeroOrMore(targetKeyItemType);
+        if (!keySpecifierType.isSubtypeOf(expectedKeyItemtype)) {
+            addError(ctx.lookup(), "Key type for lookup expression on " + targetType + " must be subtype of type " + expectedKeyItemtype);
+        }
+        if (targetValueItemtype.getType() == XQueryTypes.RECORD) {
+            return result;
+        }
+        return result.addOptionality();
+    }
+
+    private XQuerySequenceType getRecordLookupType(final LookupExprContext ctx, final XQuerySequenceType targetType,
+            final XQuerySequenceType keySpecifierType, final boolean isWildcard) {
+        final XQueryItemType targetKeyItemType = typeFactory.itemString();
+        final Map<String, XQueryRecordField> recordFields = targetType.getItemType().getRecordFields();
+        if (recordFields.isEmpty()) {
+            warn(ctx, "Empty record will always return empty sequence...");
+            return typeFactory.emptySequence();
+        }
+        final XQuerySequenceType mergedRecordFieldTypes = recordFields
+            .values()
+            .stream()
+            .map(t -> t.isRequired()? t.type() : t.type().addOptionality())
+            .reduce((x, y)->x.alternativeMerge(y))
+            .get();
+        if (isWildcard) {
+            return mergedRecordFieldTypes;
+        }
+        if (!keySpecifierType.isSubtypeOf(typeFactory.zeroOrMore(typeFactory.itemString()))) {
+            addError(ctx, "Key specifier on a record type should be subtype of string*");
+            return anyItems;
+        }
+        final KeySpecifierContext keySpecifier = ctx.lookup().keySpecifier();
+        final var string = keySpecifier.STRING();
+        if (string != null) {
+            final String key = processStringLiteral(keySpecifier);
+            final var valueType = recordFields.get(key);
+            if (valueType == null) {
+                addError(keySpecifier, "Key specifier: " + key + " does not match record of type " + targetType);
+                return anyItems;
+            }
+            return valueType.type();
+        }
+        final XQuerySequenceType expectedKeyItemtype = typeFactory.zeroOrMore(targetKeyItemType);
+        if (!keySpecifierType.isSubtypeOf(expectedKeyItemtype)) {
+            addError(ctx.lookup(), "Key type for lookup expression on " + targetType + " must be subtype of type " + expectedKeyItemtype);
+        }
+        if (keySpecifierType.getItemType().getType() == XQueryTypes.ENUM) {
+            final var members = ((XQueryItemTypeEnum) keySpecifierType.getItemType()).getEnumMembers();
+            final var firstField = members.stream().findFirst().get();
+            final var firstRecordField = recordFields.get(firstField);
+            XQuerySequenceType merged = firstRecordField.isRequired() ? firstRecordField.type() : firstRecordField.type().addOptionality();
+            for (final var member : members) {
+                if (member.equals(firstField))
+                    continue;
+                final var recordField = recordFields.get(member);
+                if (recordField == null) {
+                    warn(ctx.lookup(), "The following enum member: " + member + "does not match any record field");
+                    return anyItems;
+                }
+                if (recordField.isRequired()) {
+                    merged = merged.sequenceMerge(recordField.type());
+                } else {
+                    merged = merged.sequenceMerge(recordField.type().addOptionality());
+                }
+            }
+            return merged;
+        }
+        return mergedRecordFieldTypes.addOptionality();
+    }
+
+    private XQuerySequenceType getExtensibleRecordLookupType(
+        final LookupExprContext ctx, final XQuerySequenceType targetType,
+            final XQuerySequenceType keySpecifierType, final boolean isWildcard)
+    {
+        final XQueryItemType targetKeyItemType = typeFactory.itemString();
+        final Map<String, XQueryRecordField> recordFields = targetType.getItemType().getRecordFields();
+        if (recordFields.isEmpty()) {
+            warn(ctx, "Empty record will always return empty sequence...");
+            return typeFactory.emptySequence();
+        }
+        final XQuerySequenceType mergedRecordFieldTypes = recordFields
+            .values()
+            .stream()
+            .map(t -> t.isRequired()? t.type() : t.type().addOptionality())
+            .reduce((x, y)->x.alternativeMerge(y))
+            .get();
+        if (isWildcard) {
+            return mergedRecordFieldTypes;
+        }
+        if (!keySpecifierType.isSubtypeOf(typeFactory.zeroOrMore(typeFactory.itemString()))) {
+            addError(ctx, "Key specifier on a record type should be subtype of string*");
+            return anyItems;
+        }
+        final KeySpecifierContext keySpecifier = ctx.lookup().keySpecifier();
+        final var string = keySpecifier.STRING();
+        if (string != null) {
+            final String key = processStringLiteral(keySpecifier);
+            final var valueType = recordFields.get(key);
+            if (valueType == null) {
+                return anyItems;
+            }
+            return valueType.type();
+        }
+        final XQuerySequenceType expectedKeyItemtype = typeFactory.zeroOrMore(targetKeyItemType);
+        if (!keySpecifierType.isSubtypeOf(expectedKeyItemtype)) {
+            addError(ctx.lookup(), "Key type for lookup expression on " + targetType + " must be subtype of type " + expectedKeyItemtype);
+        }
+        if (keySpecifierType.getItemType().getType() == XQueryTypes.ENUM) {
+            final var members = ((XQueryItemTypeEnum) keySpecifierType.getItemType()).getEnumMembers();
+            final var firstField = members.stream().findFirst().get();
+            final var firstRecordField = recordFields.get(firstField);
+            XQuerySequenceType merged = firstRecordField.isRequired() ? firstRecordField.type() : firstRecordField.type().addOptionality();
+            for (final var member : members) {
+                if (member.equals(firstField))
+                    continue;
+                final var recordField = recordFields.get(member);
+                if (recordField == null)  {
+                    return anyItems;
+                }
+                if (recordField.isRequired()) {
+                    merged = merged.alternativeMerge(recordField.type());
+                } else {
+                    merged = merged.alternativeMerge(recordField.type().addOptionality());
+                }
+            }
+            return merged;
+        }
+        return mergedRecordFieldTypes.addOptionality();
+    }
+
+
+
+
+
+    XQuerySequenceType getKeySpecifier(final LookupExprContext ctx) {
+        final KeySpecifierContext keySpecifier = ctx.lookup().keySpecifier();
+        if (keySpecifier.qname() != null) {
+            return typeFactory.enum_(Set.of(keySpecifier.qname().getText()));
+        }
+        if (keySpecifier.STRING() != null ) {
+            return handleString(keySpecifier);
+        }
+        if (keySpecifier.IntegerLiteral() != null) {
+            return handleNumber(keySpecifier.IntegerLiteral());
+        }
+        return keySpecifier.accept(this);
+    }
+
+
 
     @Override
     public XQuerySequenceType visitContextItemExpr(final ContextItemExprContext ctx)
@@ -980,13 +1260,13 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     }
 
     @Override
-    public XQuerySequenceType visitInstanceofExpr(InstanceofExprContext ctx)
+    public XQuerySequenceType visitInstanceofExpr(final InstanceofExprContext ctx)
     {
-        XQuerySequenceType expression = ctx.treatExpr().accept(this);
+        final XQuerySequenceType expression = ctx.treatExpr().accept(this);
         if (ctx.INSTANCE() == null) {
             return expression;
         }
-        var testedType = ctx.sequenceType().accept(this);
+        final var testedType = ctx.sequenceType().accept(this);
         if (expression.isSubtypeOf(testedType)) {
             warn(ctx, "Unnecessary instance of expression is always true");
         }
@@ -1009,7 +1289,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     // }
 
     @Override
-    public XQuerySequenceType visitTreatExpr(TreatExprContext ctx)
+    public XQuerySequenceType visitTreatExpr(final TreatExprContext ctx)
     {
         final XQuerySequenceType expression = ctx.castableExpr().accept(this);
         if (ctx.TREAT() == null) {
@@ -1176,12 +1456,12 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     {
         final var entries = ctx.mapConstructorEntry();
         if (entries.isEmpty())
-            return typeFactory.anyArray();
+            return typeFactory.anyMap();
         final XQueryItemType keyType = entries.stream()
             .map(e -> e.mapKeyExpr().accept(this).getItemType())
             .reduce((t1, t2) -> t1.alternativeMerge(t2))
             .get();
-        if (keyType instanceof XQueryItemTypeEnum enum_) {
+        if (keyType instanceof final XQueryItemTypeEnum enum_) {
             final var enumMembers = enum_.getEnumMembers();
             final List<Entry<String, XQueryRecordField>> recordEntries = new ArrayList<>(enumMembers.size());
             int i = 0;

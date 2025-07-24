@@ -224,12 +224,15 @@ public class XQuerySequenceType {
 
 
 
-    private static final IsValueComparableWith isValueComparable = new IsValueComparableWith();
+    private static final IsValueComparableWith occurenceIsValueComparable = new IsValueComparableWith();
 
     public boolean isValueComparableWith(final XQuerySequenceType other) {
-        if (isZero() || other.isZero())
+        if (occurence == XQueryOccurence.ZERO
+            || other.occurence == XQueryOccurence.ZERO)
+        {
             return true;
-        return (isValueComparable.isValueComparableWith(occurence, other.getOccurence())
+        }
+        return (occurenceIsValueComparable.isValueComparableWith(occurence, other.getOccurence())
                 && itemType.isValueComparableWith(other.getItemType()));
     }
 
@@ -271,6 +274,8 @@ public class XQuerySequenceType {
     private final boolean requiresParentheses;
     private boolean requiresParentheses() {
         final boolean suffixIsPresent = occurenceSuffix != "";
+        if (itemType == null)
+            return false;
         final boolean containsComplexItemtype = switch(itemType.getType()) {
             case FUNCTION, ANY_FUNCTION, CHOICE -> true;
             default -> false;

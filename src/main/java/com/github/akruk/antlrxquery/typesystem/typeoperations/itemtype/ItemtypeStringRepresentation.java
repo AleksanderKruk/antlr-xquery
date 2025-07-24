@@ -1,4 +1,4 @@
-package com.github.akruk.antlrxquery.typesystem.typeoperations;
+package com.github.akruk.antlrxquery.typesystem.typeoperations.itemtype;
 
 import java.util.Map;
 

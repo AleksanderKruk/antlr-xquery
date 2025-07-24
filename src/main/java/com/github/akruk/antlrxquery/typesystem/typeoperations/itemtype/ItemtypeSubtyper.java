@@ -1,5 +1,5 @@
 
-package com.github.akruk.antlrxquery.typesystem.typeoperations;
+package com.github.akruk.antlrxquery.typesystem.typeoperations.itemtype;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -104,23 +104,23 @@ public class ItemtypeSubtyper
 
                 itemtypeIsSubtypeOf[ANY_ITEM] = alwaysTrue;
                 itemtypeIsSubtypeOf[ANY_MAP] = alwaysTrue;
-                itemtypeIsSubtypeOf[ANY_ARRAY] = (_) -> {
-                    final XQueryItemType x_ = (XQueryItemType) x;
-                    // map must have a key that is a number
-                    final var key = (XQueryItemType) x_.getMapKeyType();
-                    return key.getType() == XQueryTypes.NUMBER;
-                };
+                // itemtypeIsSubtypeOf[ANY_ARRAY] = (_) -> {
+                //     final XQueryItemType x_ = (XQueryItemType) x;
+                //     // map must have a key that is a number
+                //     final var key = (XQueryItemType) x_.getMapKeyType();
+                //     return key.getType() == XQueryTypes.NUMBER;
+                // };
                 itemtypeIsSubtypeOf[MAP] = (y) -> {
                     final XQueryItemType y_ = (XQueryItemType) y;
                     return x.getMapKeyType().itemtypeIsSubtypeOf(y_.getMapKeyType())
                             && x.getMapValueType().isSubtypeOf(y_.getMapValueType());
                 };
                 itemtypeIsSubtypeOf[CHOICE] = choicesubtype;
-                itemtypeIsSubtypeOf[ARRAY] = (_) -> {
-                    // map must have a key that is a number
-                    final var key = (XQueryItemType) x.getMapKeyType();
-                    return key.getType() == XQueryTypes.NUMBER;
-                };
+                // itemtypeIsSubtypeOf[ARRAY] = (_) -> {
+                //     // map must have a key that is a number
+                //     final var key = (XQueryItemType) x.getMapKeyType();
+                //     return key.getType() == XQueryTypes.NUMBER;
+                // };
                 itemtypeIsSubtypeOf[ANY_FUNCTION] = alwaysTrue;
                 itemtypeIsSubtypeOf[FUNCTION] = (y) -> {
                     final XQueryItemType x_ = (XQueryItemType) x;

@@ -960,7 +960,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         for (final var itemType : choiceItemTypes) {
             if (resultingType == null) {
                 if (!isWildcard)
-                    resultingType = switch(keySpecifierType.getOccurence()) {
+                    resultingType = switch(keySpecifierType.occurence) {
                         case ONE -> typeFactory.zeroOrOne(itemType);
                         default -> typeFactory.zeroOrMore(itemType);
                     };
@@ -1020,7 +1020,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (isWildcard) {
             return typeFactory.zeroOrMore(targetValueItemtype);
         }
-        final XQuerySequenceType result = switch(keySpecifierType.getOccurence()) {
+        final XQuerySequenceType result = switch(keySpecifierType.occurence) {
                 case ONE -> typeFactory.zeroOrOne(targetValueItemtype);
                 default -> typeFactory.zeroOrMore(targetValueItemtype);
             };
@@ -1278,7 +1278,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (ctx.EXCLAMATION_MARK().isEmpty())
             return ctx.pathExpr(0).accept(this);
         final XQuerySequenceType firstExpressionType = ctx.pathExpr(0).accept(this);
-        final XQuerySequenceType iterator = firstExpressionType.iteratedItem();
+        final XQuerySequenceType iterator = firstExpressionType.iteratorType;
         final var savedContext = saveContext();
         context.setType(iterator);
         context.setPositionType(number);
@@ -1288,7 +1288,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         for (final var mappedExpression : theRest) {
             final XQuerySequenceType type = mappedExpression.accept(this);
             result = result.mapping(type);
-            context.setType(result.iteratedItem());
+            context.setType(result.iteratorType);
         }
         context = savedContext;
         return result;

@@ -30,6 +30,7 @@ public class XQuerySequenceType {
     public final boolean isZeroOrOne;
     public final boolean isZeroOrMore;
     public final boolean isOneOrMore;
+    public final XQuerySequenceType iteratorType;
 
     private final XQueryTypeFactory typeFactory;
     private final String occurenceSuffix;
@@ -54,11 +55,7 @@ public class XQuerySequenceType {
         this.isZeroOrOne = XQueryOccurence.ZERO_OR_ONE == occurence;
         this.isZeroOrMore = XQueryOccurence.ZERO_OR_MORE == occurence;
         this.isOneOrMore = XQueryOccurence.ONE_OR_MORE == occurence;
-
-
-
-
-
+        this.iteratorType = this.iteratedItem_();
     }
 
     private static boolean isNullableEquals(final Object one, final Object other) {
@@ -75,9 +72,9 @@ public class XQuerySequenceType {
             return false;
         if (!(obj instanceof final XQuerySequenceType other))
             return false;
-        if (!isNullableEquals(this.itemType, other.itemType))
+        if (occurence != other.occurence)
             return false;
-        if (occurence != other.getOccurence())
+        if (!isNullableEquals(this.itemType, other.itemType))
             return false;
         return true;
     }
@@ -85,17 +82,12 @@ public class XQuerySequenceType {
     private static final IsSuboccurence isSuboccurence = new IsSuboccurence();
 
     public boolean isSubtypeOf(final XQuerySequenceType other) {
-        final XQueryOccurence otherOccurence = other.getOccurence();
-        if (!isSuboccurence.test(occurenceOrdinal, otherOccurence.ordinal())) {
+        if (!isSuboccurence.test(occurenceOrdinal, other.occurenceOrdinal)) {
             return false;
         }
         if (itemType == null)
             return true;
         return itemType.itemtypeIsSubtypeOf(other.itemType);
-    }
-
-    public XQueryOccurence getOccurence() {
-        return occurence;
     }
 
 
@@ -105,7 +97,7 @@ public class XQuerySequenceType {
     public XQuerySequenceType sequenceMerge(final XQuerySequenceType other) {
         final var itemType1 = this.itemType;
         final var itemType2 = other.itemType;
-        final byte mergedOccurence = sequenceOccurenceMerger.merge(occurenceOrdinal, (byte)other.getOccurence().ordinal());
+        final byte mergedOccurence = sequenceOccurenceMerger.merge(occurenceOrdinal, other.occurenceOrdinal);
         final Function<XQueryItemType, XQuerySequenceType> factory = factoryByOccurence[mergedOccurence];
         if (itemType1 == null && itemType2 == null) {
             return factory.apply(typeFactory.itemAnyItem());
@@ -139,7 +131,7 @@ public class XQuerySequenceType {
 
     public XQuerySequenceType unionMerge(final XQuerySequenceType other) {
         final XQueryItemType otherItemType = other.itemType;
-        final XQueryOccurence mergedOccurence = unionOccurences.merge(occurence, other.getOccurence());
+        final XQueryOccurence mergedOccurence = unionOccurences.merge(occurence, other.occurence);
         final int occurence_ = mergedOccurence.ordinal();
         if (itemType == null) {
             return factoryByOccurence[occurence_].apply(otherItemType);
@@ -156,7 +148,7 @@ public class XQuerySequenceType {
     public XQuerySequenceType intersectionMerge(final XQuerySequenceType other) {
         final var other_ = (XQuerySequenceType) other;
         final XQueryItemType otherItemType = other_.itemType;
-        final XQueryOccurence mergedOccurence = intersectionOccurences.merge(occurence, other.getOccurence());
+        final XQueryOccurence mergedOccurence = intersectionOccurences.merge(occurence, other.occurence);
         final int occurence_ = mergedOccurence.ordinal();
         if (itemType == null) {
             return factoryByOccurence[occurence_].apply(otherItemType);
@@ -173,7 +165,7 @@ public class XQuerySequenceType {
 
     public XQuerySequenceType exceptionMerge(final XQuerySequenceType other) {
         final var other_ = (XQuerySequenceType) other;
-        final XQueryOccurence mergedOccurence = exceptOccurences.merge(this.occurence, other_.getOccurence());
+        final XQueryOccurence mergedOccurence = exceptOccurences.merge(this.occurence, other_.occurence);
         final Function typeFactoryMethod = factoryByOccurence[mergedOccurence.ordinal()];
         final var usedItemType = occurence == XQueryOccurence.ZERO? typeFactory.itemAnyNode(): itemType;
         return (XQuerySequenceType) typeFactoryMethod.apply(usedItemType);
@@ -184,7 +176,7 @@ public class XQuerySequenceType {
 	final Function<XQueryItemType, XQuerySequenceType>[] factoryByOccurence;
 
     public XQuerySequenceType alternativeMerge(final XQuerySequenceType other) {
-        final var occurence_ = typeAlternativeOccurence.merge(occurence, other.getOccurence());
+        final var occurence_ = typeAlternativeOccurence.merge(occurence, other.occurence);
 		final Function sequenceTypeFactory = factoryByOccurence[occurence_.ordinal()];
         final XQueryItemType otherItemType = other.itemType;
         if (this.itemType == null)
@@ -221,13 +213,14 @@ public class XQuerySequenceType {
         {
             return true;
         }
-        return (occurenceIsValueComparable.isValueComparableWith(occurence, other.getOccurence())
+        return (occurenceIsValueComparable.isValueComparableWith(occurence, other.occurence)
                 && itemType.isValueComparableWith(other.itemType));
     }
 
 
 
-    public XQuerySequenceType iteratedItem() {
+    private XQuerySequenceType iteratedItem_()
+    {
         if (occurence != XQueryOccurence.ZERO)
             return typeFactory.one(itemType);
         else
@@ -263,13 +256,15 @@ public class XQuerySequenceType {
     private final boolean requiresParentheses;
     private boolean requiresParentheses() {
         final boolean suffixIsPresent = occurenceSuffix != "";
+        if (!suffixIsPresent)
+            return false;
         if (itemType == null)
             return false;
         final boolean containsComplexItemtype = switch(itemType.getType()) {
             case FUNCTION, ANY_FUNCTION, CHOICE -> true;
             default -> false;
         };
-        return suffixIsPresent && containsComplexItemtype;
+        return containsComplexItemtype;
     }
 
 

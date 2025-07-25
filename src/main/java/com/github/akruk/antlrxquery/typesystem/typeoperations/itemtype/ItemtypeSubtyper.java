@@ -128,7 +128,7 @@ public class ItemtypeSubtyper
                     if (y_.getArgumentTypes().size() != 1)
                         return false;
                     final var onlyArg =  (XQuerySequenceType) y_.getArgumentTypes().get(0);
-                    final var onlyArgItem =  (XQueryItemType) onlyArg.getItemType();
+                    final var onlyArgItem =  (XQueryItemType) onlyArg.itemType;
                     final boolean correctOccurence = onlyArg.isOne();
                     return correctOccurence
                             && x_.getMapKeyType().itemtypeIsSubtypeOf(onlyArgItem);
@@ -153,7 +153,7 @@ public class ItemtypeSubtyper
                     if (argumentTypes.size() != 1)
                         return false;
                     final var onlyArg =  (XQuerySequenceType) argumentTypes.get(0);
-                    final var onlyArgItem =  (XQueryItemType) onlyArg.getItemType();
+                    final var onlyArgItem =  (XQueryItemType) onlyArg.itemType;
                     final boolean correctOccurence = onlyArg.isOne() || onlyArg.isOneOrMore();
                     return correctOccurence
                             && onlyArgItem.getType() == XQueryTypes.NUMBER;
@@ -199,7 +199,7 @@ public class ItemtypeSubtyper
                     if (y_.getArgumentTypes().size() != 1)
                         return false;
                     final var onlyArg =  (XQuerySequenceType) y_.getArgumentTypes().get(0);
-                    final var onlyArgItem = (XQueryItemType) onlyArg.getItemType();
+                    final var onlyArgItem = (XQueryItemType) onlyArg.itemType;
                     if (onlyArgItem.getType() == XQueryTypes.NUMBER) {
 
                     }
@@ -226,7 +226,7 @@ public class ItemtypeSubtyper
                 if (x_.getArgumentTypes().size() != 1)
                     return false;
                 final var onlyArg =  (XQuerySequenceType) x_.getArgumentTypes().get(0);
-                final var onlyArgItem =  (XQueryItemType) onlyArg.getItemType();
+                final var onlyArgItem =  (XQueryItemType) onlyArg.itemType;
                 final boolean correctOccurence = onlyArg.isOne();
                 return correctOccurence
                         && canBeKey[onlyArgItem.getType().ordinal()];
@@ -238,7 +238,7 @@ public class ItemtypeSubtyper
                 final XQueryItemTypeFunction x_ = (XQueryItemTypeFunction) x;
                 final XQueryItemTypeMap y_ = (XQueryItemTypeMap) y;
                 final var onlyArg =  (XQuerySequenceType) x_.getArgumentTypes().get(0);
-                final var onlyArgItem =  (XQueryItemType) onlyArg.getItemType();
+                final var onlyArgItem =  (XQueryItemType) onlyArg.itemType;
                 final boolean argCanBeKey = onlyArgItem.itemtypeIsSubtypeOf(y_.getMapKeyType());
                 final boolean returnedCanBeValue = x_.getReturnedType().isSubtypeOf(y_.getMapValueType());
                 final boolean correctOccurence = onlyArg.isOne();
@@ -254,7 +254,7 @@ public class ItemtypeSubtyper
                 if (x_.getArgumentTypes().size() != 1)
                     return false;
                 final var onlyArg =  (XQuerySequenceType) x_.getArgumentTypes().get(0);
-                final var onlyArgItem =  (XQueryItemType) onlyArg.getItemType();
+                final var onlyArgItem =  (XQueryItemType) onlyArg.itemType;
                 // this one argument must be either number or number+
                 final boolean correctOccurence = onlyArg.isOne() || onlyArg.isOneOrMore();
                 return correctOccurence
@@ -494,7 +494,7 @@ public class ItemtypeSubtyper
         if (yArgumentTypes.size() != 1)
             return false;
         final var yFieldType = (XQuerySequenceType) yArgumentTypes.get(0);
-        final XQueryItemType yFieldItemType = (XQueryItemType) yFieldType.getItemType();
+        final XQueryItemType yFieldItemType = (XQueryItemType) yFieldType.itemType;
         if (yFieldItemType.getType() != XQueryTypes.STRING
             && yFieldItemType.getType() != XQueryTypes.ANY_ITEM)
             return false;

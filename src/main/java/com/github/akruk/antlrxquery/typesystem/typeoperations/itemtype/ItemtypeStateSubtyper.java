@@ -116,7 +116,7 @@ public class ItemtypeStateSubtyper
             if (y.getArgumentTypes().size() != 1)
                 return false;
             final var onlyArg =  (XQuerySequenceType) y.getArgumentTypes().get(0);
-            final var onlyArgItem =  (XQueryItemType) onlyArg.getItemType();
+            final var onlyArgItem =  (XQueryItemType) onlyArg.itemType;
             final boolean correctOccurence = onlyArg.isOne();
             return correctOccurence
                     && x.getMapKeyType().itemtypeIsSubtypeOf(onlyArgItem);
@@ -138,7 +138,7 @@ public class ItemtypeStateSubtyper
             if (argumentTypes.size() != 1)
                 return false;
             final var onlyArg =  (XQuerySequenceType) argumentTypes.get(0);
-            final var onlyArgItem =  (XQueryItemType) onlyArg.getItemType();
+            final var onlyArgItem =  (XQueryItemType) onlyArg.itemType;
             final boolean correctOccurence = onlyArg.isOne() || onlyArg.isOneOrMore();
             return correctOccurence
                     && onlyArgItem.getType() == XQueryTypes.NUMBER;
@@ -177,7 +177,7 @@ public class ItemtypeStateSubtyper
             if (y.getArgumentTypes().size() != 1)
                 return false;
             final var onlyArg =   y.getArgumentTypes().get(0);
-            final var onlyArgItem =  onlyArg.getItemType();
+            final var onlyArgItem =  onlyArg.itemType;
             if (onlyArgItem.getType() == XQueryTypes.NUMBER) {
                 // TODO
 
@@ -202,7 +202,7 @@ public class ItemtypeStateSubtyper
             if (x_.getArgumentTypes().size() != 1)
                 return false;
             final var onlyArg =  (XQuerySequenceType) x_.getArgumentTypes().get(0);
-            final var onlyArgItem =  (XQueryItemType) onlyArg.getItemType();
+            final var onlyArgItem =  (XQueryItemType) onlyArg.itemType;
             final boolean correctOccurence = onlyArg.isOne();
             return correctOccurence
                     && canBeKey[onlyArgItem.getType().ordinal()];
@@ -211,7 +211,7 @@ public class ItemtypeStateSubtyper
             if (!itemtypeIsSubtypeOf[FUNCTION][ANY_MAP].test(x, y))
                 return false;
             final var onlyArg = x.getArgumentTypes().get(0);
-            final var onlyArgItem = onlyArg.getItemType();
+            final var onlyArgItem = onlyArg.itemType;
             final boolean argCanBeKey = onlyArgItem.itemtypeIsSubtypeOf(y.getMapKeyType());
             final boolean returnedCanBeValue = x.getReturnedType().isSubtypeOf(y.getMapValueType());
             final boolean correctOccurence = onlyArg.isOne();
@@ -227,7 +227,7 @@ public class ItemtypeStateSubtyper
             if (x_.getArgumentTypes().size() != 1)
                 return false;
             final var onlyArg =  (XQuerySequenceType) x_.getArgumentTypes().get(0);
-            final var onlyArgItem =  (XQueryItemType) onlyArg.getItemType();
+            final var onlyArgItem =  (XQueryItemType) onlyArg.itemType;
             // this one argument must be either number or number+
             final boolean correctOccurence = onlyArg.isOne() || onlyArg.isOneOrMore();
             return correctOccurence
@@ -440,7 +440,7 @@ public class ItemtypeStateSubtyper
         if (yArgumentTypes.size() != 1)
             return false;
         final var yFieldType = (XQuerySequenceType) yArgumentTypes.get(0);
-        final XQueryItemType yFieldItemType = (XQueryItemType) yFieldType.getItemType();
+        final XQueryItemType yFieldItemType = (XQueryItemType) yFieldType.itemType;
         if (yFieldItemType.getType() != XQueryTypes.STRING
             && yFieldItemType.getType() != XQueryTypes.ANY_ITEM)
             return false;

@@ -119,7 +119,7 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
                 return false;
             final var onlyArg =  (XQuerySequenceType) y.getArgumentTypes().get(0);
             final var onlyArgItem =  (XQueryItemType) onlyArg.itemType;
-            final boolean correctOccurence = onlyArg.isOne();
+            final boolean correctOccurence = onlyArg.isOne;
             return correctOccurence
                     && x.getMapKeyType().itemtypeIsSubtypeOf(onlyArgItem);
         };
@@ -141,7 +141,7 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
                 return false;
             final var onlyArg =  (XQuerySequenceType) argumentTypes.get(0);
             final var onlyArgItem =  (XQueryItemType) onlyArg.itemType;
-            final boolean correctOccurence = onlyArg.isOne() || onlyArg.isOneOrMore();
+            final boolean correctOccurence = onlyArg.isOne || onlyArg.isOneOrMore;
             return correctOccurence
                     && onlyArgItem.getType() == XQueryTypes.NUMBER;
         };
@@ -205,7 +205,7 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
                 return false;
             final var onlyArg =  (XQuerySequenceType) x_.getArgumentTypes().get(0);
             final var onlyArgItem =  (XQueryItemType) onlyArg.itemType;
-            final boolean correctOccurence = onlyArg.isOne();
+            final boolean correctOccurence = onlyArg.isOne;
             return correctOccurence
                     && canBeKey[onlyArgItem.getType().ordinal()];
         };
@@ -216,7 +216,7 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
             final var onlyArgItem = onlyArg.itemType;
             final boolean argCanBeKey = onlyArgItem.itemtypeIsSubtypeOf(y.getMapKeyType());
             final boolean returnedCanBeValue = x.getReturnedType().isSubtypeOf(y.getMapValueType());
-            final boolean correctOccurence = onlyArg.isOne();
+            final boolean correctOccurence = onlyArg.isOne;
             return correctOccurence
                     && argCanBeKey
                     && returnedCanBeValue;
@@ -231,7 +231,7 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
             final var onlyArg =  (XQuerySequenceType) x_.getArgumentTypes().get(0);
             final var onlyArgItem =  (XQueryItemType) onlyArg.itemType;
             // this one argument must be either number or number+
-            final boolean correctOccurence = onlyArg.isOne() || onlyArg.isOneOrMore();
+            final boolean correctOccurence = onlyArg.isOne || onlyArg.isOneOrMore;
             return correctOccurence
                     && onlyArgItem.getType() == XQueryTypes.NUMBER;
         };
@@ -1001,7 +1001,7 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
         }
         XQuerySequenceType onlyArg = (XQuerySequenceType) y.getArgumentTypes().get(0);
         XQueryItemType onlyArgItem = (XQueryItemType) onlyArg.itemType;
-        boolean correctOccurrence = onlyArg.isOne();
+        boolean correctOccurrence = onlyArg.isOne;
         return correctOccurrence && x.getMapKeyType().itemtypeIsSubtypeOf(onlyArgItem);
     }
 
@@ -1101,7 +1101,7 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
         }
         XQuerySequenceType onlyArg = argumentTypes.get(0);
         XQueryItemType onlyArgItem = (XQueryItemType) onlyArg.itemType;
-        boolean correctOccurrence = onlyArg.isOne() || onlyArg.isOneOrMore();
+        boolean correctOccurrence = onlyArg.isOne || onlyArg.isOneOrMore;
         return correctOccurrence && onlyArgItem.getType() == XQueryTypes.NUMBER; // Check if the argument type is a number
     }
 
@@ -1357,7 +1357,7 @@ public boolean functionAnyMapOperation(XQueryItemType x, XQueryItemType y) {
     }
     XQuerySequenceType onlyArg = xFunc.getArgumentTypes().get(0);
     XQueryItemType onlyArgItem = (XQueryItemType) onlyArg.itemType;
-    boolean correctOccurrence = onlyArg.isOne();
+    boolean correctOccurrence = onlyArg.isOne;
     return correctOccurrence && canBeKey[onlyArgItem.getType().ordinal()]; // Check if the argument type can be a key
 }
 
@@ -1371,7 +1371,7 @@ public boolean functionMapOperation(XQueryItemType x, XQueryItemType y) {
     XQueryItemType onlyArgItem = (XQueryItemType) onlyArg.itemType;
     boolean argCanBeKey = onlyArgItem.itemtypeIsSubtypeOf(y.getMapKeyType());
     boolean returnedCanBeValue = xFunc.getReturnedType().isSubtypeOf(y.getMapValueType());
-    boolean correctOccurrence = onlyArg.isOne();
+    boolean correctOccurrence = onlyArg.isOne;
     return correctOccurrence && argCanBeKey && returnedCanBeValue;
 }
 
@@ -1388,7 +1388,7 @@ public boolean functionAnyArrayOperation(XQueryItemType x, XQueryItemType y) {
     }
     XQuerySequenceType onlyArg = xFunc.getArgumentTypes().get(0);
     XQueryItemType onlyArgItem = (XQueryItemType) onlyArg.itemType;
-    boolean correctOccurrence = onlyArg.isOne() || onlyArg.isOneOrMore();
+    boolean correctOccurrence = onlyArg.isOne || onlyArg.isOneOrMore;
     return correctOccurrence && onlyArgItem.getType() == XQueryTypes.NUMBER; // Check if the argument type is a number
 }
 

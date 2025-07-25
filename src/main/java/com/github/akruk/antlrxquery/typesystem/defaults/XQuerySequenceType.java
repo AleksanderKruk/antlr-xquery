@@ -24,9 +24,15 @@ public class XQuerySequenceType {
 
     public final XQueryItemType itemType;
     public final XQueryOccurence occurence;
-    public final int occurence_;
-    public final XQueryTypeFactory typeFactory;
-    public final String occurenceSuffix;
+    public final int occurenceOrdinal;
+    public final boolean isZero;
+    public final boolean isOne;
+    public final boolean isZeroOrOne;
+    public final boolean isZeroOrMore;
+    public final boolean isOneOrMore;
+
+    private final XQueryTypeFactory typeFactory;
+    private final String occurenceSuffix;
 
     private Function<XQuerySequenceType, XQuerySequenceType> lookup;
 
@@ -34,7 +40,7 @@ public class XQuerySequenceType {
         this.typeFactory = typeFactory;
         this.itemType = itemType;
         this.occurence = occurence;
-        this.occurence_ = occurence.ordinal();
+        this.occurenceOrdinal = occurence.ordinal();
         this.factoryByOccurence = new Function[XQueryOccurence.values().length];
         this.factoryByOccurence[ZERO]         = _ -> typeFactory.emptySequence();
         this.factoryByOccurence[ONE]          = i -> typeFactory.one(i);
@@ -43,6 +49,16 @@ public class XQuerySequenceType {
         this.factoryByOccurence[ONE_OR_MORE]  = i -> typeFactory.oneOrMore(i);
         this.occurenceSuffix = occurence.occurenceSuffix();
         this.requiresParentheses = requiresParentheses();
+        this.isZero = XQueryOccurence.ZERO == occurence;
+        this.isOne = XQueryOccurence.ONE == occurence;
+        this.isZeroOrOne = XQueryOccurence.ZERO_OR_ONE == occurence;
+        this.isZeroOrMore = XQueryOccurence.ZERO_OR_MORE == occurence;
+        this.isOneOrMore = XQueryOccurence.ONE_OR_MORE == occurence;
+
+
+
+
+
     }
 
     private static boolean isNullableEquals(final Object one, final Object other) {
@@ -70,7 +86,7 @@ public class XQuerySequenceType {
 
     public boolean isSubtypeOf(final XQuerySequenceType other) {
         final XQueryOccurence otherOccurence = other.getOccurence();
-        if (!isSuboccurence.test(occurence_, otherOccurence.ordinal())) {
+        if (!isSuboccurence.test(occurenceOrdinal, otherOccurence.ordinal())) {
             return false;
         }
         if (itemType == null)
@@ -82,30 +98,6 @@ public class XQuerySequenceType {
         return occurence;
     }
 
-    public boolean isOne() {
-        return occurence == XQueryOccurence.ONE;
-    }
-
-
-    public boolean isOneOrMore() {
-        return occurence == XQueryOccurence.ONE_OR_MORE;
-    }
-
-
-    public boolean isZeroOrMore() {
-        return occurence == XQueryOccurence.ZERO_OR_MORE;
-    }
-
-
-    public boolean isZeroOrOne() {
-        return occurence == XQueryOccurence.ZERO_OR_ONE;
-    }
-
-
-    public boolean isZero() {
-        return occurence == XQueryOccurence.ZERO;
-    }
-
 
     private static final SequenceOccurenceMerger sequenceOccurenceMerger = new SequenceOccurenceMerger();
 
@@ -113,7 +105,7 @@ public class XQuerySequenceType {
     public XQuerySequenceType sequenceMerge(final XQuerySequenceType other) {
         final var itemType1 = this.itemType;
         final var itemType2 = other.itemType;
-        final byte mergedOccurence = sequenceOccurenceMerger.merge(occurence_, (byte)other.getOccurence().ordinal());
+        final byte mergedOccurence = sequenceOccurenceMerger.merge(occurenceOrdinal, (byte)other.getOccurence().ordinal());
         final Function<XQueryItemType, XQuerySequenceType> factory = factoryByOccurence[mergedOccurence];
         if (itemType1 == null && itemType2 == null) {
             return factory.apply(typeFactory.itemAnyItem());
@@ -208,7 +200,7 @@ public class XQuerySequenceType {
         if (!(other instanceof XQuerySequenceType))
             return false;
         final XQuerySequenceType otherEnum = (XQuerySequenceType) other;
-        if (!this.isOne() || !other.isOne()) {
+        if (!this.isOne || !other.isOne) {
             return false;
         }
         return this.itemType.castableAs(otherEnum.itemType);
@@ -244,7 +236,7 @@ public class XQuerySequenceType {
 
 
     public XQuerySequenceType mapping(final XQuerySequenceType mappingExpressionType) {
-        return (XQuerySequenceType) factoryByOccurence[occurence_].apply(mappingExpressionType.itemType);
+        return (XQuerySequenceType) factoryByOccurence[occurenceOrdinal].apply(mappingExpressionType.itemType);
     }
 
 
@@ -321,7 +313,7 @@ public class XQuerySequenceType {
     }
 
     public Function<XQuerySequenceType, XQuerySequenceType> lookup_() {
-        if (occurence_ == ZERO)
+        if (occurenceOrdinal == ZERO)
             return (_)->typeFactory.emptySequence();
         if (itemType == null)
             return (_)->typeFactory.error();
@@ -329,7 +321,7 @@ public class XQuerySequenceType {
         if (itemType.itemtypeIsSubtypeOf(typeFactory.itemAnyArray())) {
             return (keySpecifierType) -> {
                 XQueryItemType lookedUpItem = itemType.lookup(keySpecifierType).itemType;
-                XQuerySequenceType lookedUpSequence = factoryByOccurence[occurence_].apply(lookedUpItem);
+                XQuerySequenceType lookedUpSequence = factoryByOccurence[occurenceOrdinal].apply(lookedUpItem);
                 return lookedUpSequence;
             };
         }
@@ -337,7 +329,7 @@ public class XQuerySequenceType {
         if (itemType.itemtypeIsSubtypeOf(typeFactory.itemAnyMap())) {
             return keySpecifierType -> {
                 XQueryItemType lookedUpItem = itemType.lookup(keySpecifierType).itemType;
-                XQuerySequenceType lookedUpSequence = factoryByOccurence[occurence_].apply(lookedUpItem);
+                XQuerySequenceType lookedUpSequence = factoryByOccurence[occurenceOrdinal].apply(lookedUpItem);
                 return lookedUpSequence.addOptionality();
             };
         }

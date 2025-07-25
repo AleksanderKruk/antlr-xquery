@@ -459,13 +459,13 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
 
     private int occurrence(final XQuerySequenceType type)
     {
-        if (type.isZero())
+        if (type.isZero)
             return 0;
-        if (type.isOne())
+        if (type.isOne)
             return 1;
-        if (type.isZeroOrOne())
+        if (type.isZeroOrOne)
             return 2;
-        if (type.isZeroOrMore())
+        if (type.isZeroOrMore)
             return 3;
         return 4;
     }
@@ -898,12 +898,12 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         final XQuerySequenceType targetType,
         XQuerySequenceType keySpecifierType)
     {
-        if (targetType.isZero()) {
+        if (targetType.isZero) {
             warn(ctx, "Target type of lookup expression is an empty sequence");
             return emptySequence;
         }
         final boolean isWildcard = keySpecifierType == null;
-        if (!isWildcard && keySpecifierType.isZero()) {
+        if (!isWildcard && keySpecifierType.isZero) {
             warn(ctx, "Empty sequence as key specifier in lookup expression");
             return emptySequence;
         }

@@ -11,7 +11,7 @@ import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.defaults.*;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
-public class XQueryEnumTypeFactory implements XQueryTypeFactory {
+public class XQueryMemoizedTypeFactory implements XQueryTypeFactory {
     private final XQueryItemType ERROR_ITEM_TYPE = XQueryItemType.error(this);
     private final XQueryItemType STRING_ITEM_TYPE = XQueryItemType.string(this);
     private final XQueryItemType NUMBER_ITEM_TYPE = XQueryItemType.number(this);
@@ -44,7 +44,7 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
 
 
 
-    public XQueryEnumTypeFactory(final Map<String, XQueryItemType> predefinedNamedTypes) {
+    public XQueryMemoizedTypeFactory(final Map<String, XQueryItemType> predefinedNamedTypes) {
         namedTypes = predefinedNamedTypes;
     }
 

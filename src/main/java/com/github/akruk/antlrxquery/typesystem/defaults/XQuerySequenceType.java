@@ -25,6 +25,7 @@ public class XQuerySequenceType {
     public final XQueryItemType itemType;
     public final XQueryOccurence occurence;
     public final int occurenceOrdinal;
+    public final boolean hasEffectiveBooleanValue;
     public final boolean isZero;
     public final boolean isOne;
     public final boolean isZeroOrOne;
@@ -53,6 +54,7 @@ public class XQuerySequenceType {
         this.isZeroOrOne = XQueryOccurence.ZERO_OR_ONE == occurence;
         this.isZeroOrMore = XQueryOccurence.ZERO_OR_MORE == occurence;
         this.isOneOrMore = XQueryOccurence.ONE_OR_MORE == occurence;
+        this.hasEffectiveBooleanValue = hasEffectiveBooleanValue();
         this.iteratorType = this.iteratedItem_();
     }
 
@@ -117,10 +119,12 @@ public class XQuerySequenceType {
     }
 
 
-    public boolean hasEffectiveBooleanValue() {
-        if (occurence == XQueryOccurence.ONE)
-            return itemType.hasEffectiveBooleanValue();
-        return true;
+    private boolean hasEffectiveBooleanValue() {
+        return switch(occurence) {
+            case ZERO -> true;
+            case ZERO_OR_ONE, ONE -> itemType.hasEffectiveBooleanValue;
+            default -> false;
+        };
     }
 
     private static final UnionOccurenceMerger unionOccurences = new UnionOccurenceMerger();

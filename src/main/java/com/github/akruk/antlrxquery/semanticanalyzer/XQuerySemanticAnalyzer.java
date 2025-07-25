@@ -428,7 +428,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     {
         final var filteringExpression = ctx.exprSingle();
         final var filteringExpressionType = filteringExpression.accept(this);
-        if (!filteringExpressionType.hasEffectiveBooleanValue()) {
+        if (!filteringExpressionType.hasEffectiveBooleanValue) {
             addError(filteringExpression, "Filtering expression must have effective boolean value");
         }
         returnedOccurrence = addOptionality(returnedOccurrence);
@@ -501,7 +501,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     {
         final var filteringExpression = ctx.exprSingle();
         final var filteringExpressionType = filteringExpression.accept(this);
-        if (!filteringExpressionType.hasEffectiveBooleanValue()) {
+        if (!filteringExpressionType.hasEffectiveBooleanValue) {
             addError(filteringExpression, "Filtering expression must have effective boolean value");
         }
         returnedOccurrence = addOptionality(returnedOccurrence);
@@ -692,7 +692,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         }
 
         final XQuerySequenceType queriedType = criterionNode.accept(this);
-        if (!queriedType.hasEffectiveBooleanValue()) {
+        if (!queriedType.hasEffectiveBooleanValue) {
             addError(criterionNode, "Criterion value needs to have effective boolean value");
         }
 
@@ -708,7 +708,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         final var orCount = ctx.OR().size();
         for (int i = 0; i <= orCount; i++) {
             final var visitedType = ctx.andExpr(i).accept(this);
-            if (!visitedType.hasEffectiveBooleanValue()) {
+            if (!visitedType.hasEffectiveBooleanValue) {
                 addError(ctx.andExpr(i), "Operands of 'or expression' need to have effective boolean value");
             }
             i++;
@@ -844,7 +844,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             context.setType(deducedType);
             return deducedType;
         }
-        if (!predicateExpression.hasEffectiveBooleanValue()) {
+        if (!predicateExpression.hasEffectiveBooleanValue) {
             final var msg = String.format(
                 "Predicate requires either number* type (for item by index aquisition) or a value that has effective boolean value, provided type: %s",
                 predicateExpression);
@@ -1523,7 +1523,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         final var operatorCount = ctx.AND().size();
         for (int i = 0; i <= operatorCount; i++) {
             final var visitedType = ctx.comparisonExpr(i).accept(this);
-            if (!visitedType.hasEffectiveBooleanValue()) {
+            if (!visitedType.hasEffectiveBooleanValue) {
                 addError(ctx.comparisonExpr(i), "Operands of 'or expression' need to have effective boolean value");
             }
             i++;
@@ -1859,7 +1859,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     public XQuerySequenceType visitIfExpr(final IfExprContext ctx)
     {
         final var conditionType = ctx.expr().accept(this);
-        if (!conditionType.hasEffectiveBooleanValue()) {
+        if (!conditionType.hasEffectiveBooleanValue) {
             final var msg = String.format(
                 "If condition must have an effective boolean value and the type %s doesn't have one",
                 conditionType.toString());

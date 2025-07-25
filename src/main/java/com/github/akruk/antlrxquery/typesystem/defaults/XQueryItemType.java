@@ -34,6 +34,7 @@ public class XQueryItemType {
     public final Set<String> elementNames;
     public final Map<String, XQueryRecordField> recordFields;
     public final Collection<XQueryItemType> itemTypes;
+    public final boolean hasEffectiveBooleanValue;
 
     // private final XQueryTypeFactory typeFactory;
     private final ItemtypeUnionMerger unionMerger;
@@ -73,6 +74,7 @@ public class XQueryItemType {
         this.itemtypeSubtyper = new ItemtypeSubtyper(this, typeFactory);
         this.representationOp = representationProvider.getOperation(type);
         this.enumMembers = enumMembers;
+        this.hasEffectiveBooleanValue = hasEffectiveBooleanValue();
     }
 
     protected XQueryItemType()
@@ -95,6 +97,7 @@ public class XQueryItemType {
         this.itemtypeSubtyper = null;
         this.representationOp = null;
         this.enumMembers = null;
+        this.hasEffectiveBooleanValue = false;
     }
 
     private static boolean isNullableEquals(final Object one, final Object other) {
@@ -183,7 +186,7 @@ public class XQueryItemType {
                                                                                 XQueryTypes.ANY_MAP,
                                                                                 XQueryTypes.ARRAY,
                                                                                 XQueryTypes.ANY_ARRAY);
-    public boolean hasEffectiveBooleanValue() {
+    private boolean hasEffectiveBooleanValue() {
         if (type == XQueryTypes.CHOICE) {
             return itemTypes.stream().allMatch(itemType->itemType.hasEffectiveBooleanValue());
         }

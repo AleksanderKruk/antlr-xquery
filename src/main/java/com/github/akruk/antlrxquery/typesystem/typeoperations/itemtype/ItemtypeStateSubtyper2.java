@@ -8,11 +8,6 @@ import java.util.Map;
 import java.util.function.BiPredicate;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemTypeArray;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemTypeEnum;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemTypeFunction;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemTypeMap;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemTypeRecord;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
@@ -50,7 +45,7 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
 
         // final Predicate<XQueryItemType> allchoicesSubtyped = (y) -> {
         //     final XQueryEnumItemType y_ = (XQueryEnumItemType) y;
-        //     final var items = y_.getItemTypes();
+        //     final var items = y_.itemTypes;
         //     final boolean anyIsSubtype = items.stream().anyMatch(i-> x.itemtypeIsSubtypeOf(i));
         //     return anyIsSubtype;
         // };
@@ -79,7 +74,7 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
         itemtypeIsSubtypeOf[ELEMENT][ANY_ITEM] = alwaysTrue;
         itemtypeIsSubtypeOf[ELEMENT][ANY_NODE] = alwaysTrue;
         itemtypeIsSubtypeOf[ELEMENT][ELEMENT] = (x, y) -> {
-            return y.getElementNames().containsAll(x.getElementNames());
+            return y.elementNames.containsAll(x.elementNames);
         };
         itemtypeIsSubtypeOf[ELEMENT][CHOICE] = this::rightChoice;
 
@@ -100,28 +95,28 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
         itemtypeIsSubtypeOf[MAP][ANY_MAP] = alwaysTrue;
         itemtypeIsSubtypeOf[MAP][ANY_ARRAY] = (x, _) -> {
             // map must have a key that is a number
-            final var key = x.getMapKeyType();
-            return key.getType() == XQueryTypes.NUMBER;
+            final var key = x.mapKeyType;
+            return key.type == XQueryTypes.NUMBER;
         };
         itemtypeIsSubtypeOf[MAP][MAP] = (x, y) -> {
-            return x.getMapKeyType().itemtypeIsSubtypeOf(y.getMapKeyType())
-                    && x.getMapValueType().isSubtypeOf(y.getMapValueType());
+            return x.mapKeyType.itemtypeIsSubtypeOf(y.mapKeyType)
+                    && x.mapValueType.isSubtypeOf(y.mapValueType);
         };
         itemtypeIsSubtypeOf[MAP][CHOICE] = this::rightChoice;
         itemtypeIsSubtypeOf[MAP][ARRAY] = (x, _) -> {
             // map must have a key that is a number
-            final var key =  x.getMapKeyType();
-            return key.getType() == XQueryTypes.NUMBER;
+            final var key =  x.mapKeyType;
+            return key.type == XQueryTypes.NUMBER;
         };
         itemtypeIsSubtypeOf[MAP][ANY_FUNCTION] = alwaysTrue;
         itemtypeIsSubtypeOf[MAP][FUNCTION] = (x, y) -> {
-            if (y.getArgumentTypes().size() != 1)
+            if (y.argumentTypes.size() != 1)
                 return false;
-            final var onlyArg =  (XQuerySequenceType) y.getArgumentTypes().get(0);
+            final var onlyArg =  (XQuerySequenceType) y.argumentTypes.get(0);
             final var onlyArgItem =  (XQueryItemType) onlyArg.itemType;
             final boolean correctOccurence = onlyArg.isOne;
             return correctOccurence
-                    && x.getMapKeyType().itemtypeIsSubtypeOf(onlyArgItem);
+                    && x.mapKeyType.itemtypeIsSubtypeOf(onlyArgItem);
         };
 
         // ANY_ARRAY
@@ -131,25 +126,25 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
         itemtypeIsSubtypeOf[ANY_ARRAY][CHOICE] = this::rightChoice;
         itemtypeIsSubtypeOf[ANY_ARRAY][ARRAY] = (_, y) -> {
             final XQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
-            return y.getArrayMemberType().equals(zeroOrMoreItems);
+            return y.arrayMemberType.equals(zeroOrMoreItems);
         };
         itemtypeIsSubtypeOf[ANY_ARRAY][ANY_FUNCTION] = alwaysTrue;
         itemtypeIsSubtypeOf[ANY_ARRAY][FUNCTION] = (_, y) -> {
-            final XQueryItemTypeFunction y_ = (XQueryItemTypeFunction) y;
-            final var argumentTypes = y_.getArgumentTypes();
+            final XQueryItemType y_ =  y;
+            final var argumentTypes = y_.argumentTypes;
             if (argumentTypes.size() != 1)
                 return false;
             final var onlyArg =  (XQuerySequenceType) argumentTypes.get(0);
             final var onlyArgItem =  (XQueryItemType) onlyArg.itemType;
             final boolean correctOccurence = onlyArg.isOne || onlyArg.isOneOrMore;
             return correctOccurence
-                    && onlyArgItem.getType() == XQueryTypes.NUMBER;
+                    && onlyArgItem.type == XQueryTypes.NUMBER;
         };
         itemtypeIsSubtypeOf[ANY_ARRAY][ANY_MAP] = alwaysTrue;
         itemtypeIsSubtypeOf[ANY_ARRAY][MAP] = (_, y) -> {
-            final XQueryItemTypeMap y_ = (XQueryItemTypeMap) y;
-            final var mapKeyType = (XQueryItemType) y_.getMapKeyType();
-            final boolean isNumber = mapKeyType.getType() == XQueryTypes.NUMBER;
+            final XQueryItemType y_ = (XQueryItemType) y;
+            final var mapKeyType = (XQueryItemType) y_.mapKeyType;
+            final boolean isNumber = mapKeyType.type == XQueryTypes.NUMBER;
             return isNumber;
         };
 
@@ -158,11 +153,11 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
         itemtypeIsSubtypeOf[ARRAY][ANY_ITEM] = alwaysTrue;
         itemtypeIsSubtypeOf[ARRAY][ANY_MAP] = alwaysTrue;
         itemtypeIsSubtypeOf[ARRAY][MAP] = (x, y) -> {
-            final var mapKeyType =  y.getMapKeyType();
-            final boolean isNumber = mapKeyType.getType() == XQueryTypes.NUMBER;
+            final var mapKeyType =  y.mapKeyType;
+            final boolean isNumber = mapKeyType.type == XQueryTypes.NUMBER;
             if (!isNumber)
                 return false;
-            return x.getArrayMemberType().isSubtypeOf(y.getMapValueType());
+            return x.arrayMemberType.isSubtypeOf(y.mapValueType);
         };
         itemtypeIsSubtypeOf[ARRAY][CHOICE] = this::rightChoice;
         itemtypeIsSubtypeOf[ARRAY][ANY_ARRAY] = alwaysTrue;
@@ -170,22 +165,22 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
             final boolean isSubtypeOfAnyArray = itemtypeIsSubtypeOf[ANY_ARRAY][ARRAY].test(x, y);
             if (!isSubtypeOfAnyArray)
                 return false;
-            final XQuerySequenceType xArrayItemType = x.getArrayMemberType();
-            final XQuerySequenceType yArrayItemType = y.getArrayMemberType();
+            final XQuerySequenceType xArrayItemType = x.arrayMemberType;
+            final XQuerySequenceType yArrayItemType = y.arrayMemberType;
             return xArrayItemType.isSubtypeOf(yArrayItemType);
         };
         itemtypeIsSubtypeOf[ARRAY][ANY_FUNCTION] = alwaysTrue;
         itemtypeIsSubtypeOf[ARRAY][FUNCTION] = (x, y) -> {
-            if (y.getArgumentTypes().size() != 1)
+            if (y.argumentTypes.size() != 1)
                 return false;
-            final var onlyArg =   y.getArgumentTypes().get(0);
+            final var onlyArg =   y.argumentTypes.get(0);
             final var onlyArgItem =  onlyArg.itemType;
-            if (onlyArgItem.getType() == XQueryTypes.NUMBER) {
+            if (onlyArgItem.type == XQueryTypes.NUMBER) {
                 // TODO
 
             }
 
-            return x.getArrayMemberType().isSubtypeOf(y.getReturnedType());
+            return x.arrayMemberType.isSubtypeOf(y.returnedType);
         };
 
         // ANY_FUNCTION
@@ -199,23 +194,23 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
         final var canBeKey = booleanEnumArray(XQueryTypes.NUMBER, XQueryTypes.BOOLEAN, XQueryTypes.STRING, XQueryTypes.ENUM);
         itemtypeIsSubtypeOf[FUNCTION][ANY_ITEM] = alwaysTrue;
         itemtypeIsSubtypeOf[FUNCTION][ANY_MAP] = (x, _) -> {
-            final XQueryItemTypeFunction x_ = (XQueryItemTypeFunction) x;
+            final XQueryItemType x_ = (XQueryItemType) x;
             // function must have one argument
-            if (x_.getArgumentTypes().size() != 1)
+            if (x_.argumentTypes.size() != 1)
                 return false;
-            final var onlyArg =  (XQuerySequenceType) x_.getArgumentTypes().get(0);
+            final var onlyArg =  (XQuerySequenceType) x_.argumentTypes.get(0);
             final var onlyArgItem =  (XQueryItemType) onlyArg.itemType;
             final boolean correctOccurence = onlyArg.isOne;
             return correctOccurence
-                    && canBeKey[onlyArgItem.getType().ordinal()];
+                    && canBeKey[onlyArgItem.type.ordinal()];
         };
         itemtypeIsSubtypeOf[FUNCTION][MAP] = (x, y) -> {
             if (!itemtypeIsSubtypeOf[FUNCTION][ANY_MAP].test(x, y))
                 return false;
-            final var onlyArg = x.getArgumentTypes().get(0);
+            final var onlyArg = x.argumentTypes.get(0);
             final var onlyArgItem = onlyArg.itemType;
-            final boolean argCanBeKey = onlyArgItem.itemtypeIsSubtypeOf(y.getMapKeyType());
-            final boolean returnedCanBeValue = x.getReturnedType().isSubtypeOf(y.getMapValueType());
+            final boolean argCanBeKey = onlyArgItem.itemtypeIsSubtypeOf(y.mapKeyType);
+            final boolean returnedCanBeValue = x.returnedType.isSubtypeOf(y.mapValueType);
             final boolean correctOccurence = onlyArg.isOne;
             return correctOccurence
                     && argCanBeKey
@@ -224,34 +219,34 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
 
         itemtypeIsSubtypeOf[FUNCTION][CHOICE] = this::rightChoice;
         itemtypeIsSubtypeOf[FUNCTION][ANY_ARRAY] = (x, _) -> {
-            final XQueryItemTypeFunction x_ = (XQueryItemTypeFunction) x;
+            final XQueryItemType x_ = (XQueryItemType) x;
             // function must have one argument
-            if (x_.getArgumentTypes().size() != 1)
+            if (x_.argumentTypes.size() != 1)
                 return false;
-            final var onlyArg =  (XQuerySequenceType) x_.getArgumentTypes().get(0);
+            final var onlyArg =  (XQuerySequenceType) x_.argumentTypes.get(0);
             final var onlyArgItem =  (XQueryItemType) onlyArg.itemType;
             // this one argument must be either number or number+
             final boolean correctOccurence = onlyArg.isOne || onlyArg.isOneOrMore;
             return correctOccurence
-                    && onlyArgItem.getType() == XQueryTypes.NUMBER;
+                    && onlyArgItem.type == XQueryTypes.NUMBER;
         };
 
         itemtypeIsSubtypeOf[FUNCTION][ARRAY] = (x, y) -> {
             if (!itemtypeIsSubtypeOf[FUNCTION][ANY_ARRAY].test(x, y))
                 return false;
-            final XQueryItemTypeFunction x_ = (XQueryItemTypeFunction) x;
-            final XQueryItemTypeArray y_ = (XQueryItemTypeArray) y;
-            final var returnedType = x_.getReturnedType();
+            final XQueryItemType x_ = (XQueryItemType) x;
+            final XQueryItemType y_ = (XQueryItemType) y;
+            final var returnedType = x_.returnedType;
 
-            return returnedType.isSubtypeOf(y_.getArrayMemberType());
+            return returnedType.isSubtypeOf(y_.arrayMemberType);
         };
 
         itemtypeIsSubtypeOf[FUNCTION][ANY_FUNCTION] = alwaysTrue;
         itemtypeIsSubtypeOf[FUNCTION][FUNCTION] = (x, y) -> {
-            final XQueryItemTypeFunction a = (XQueryItemTypeFunction) x;
-            final XQueryItemTypeFunction b = (XQueryItemTypeFunction) y;
-            final List<XQuerySequenceType> aArgs = a.getArgumentTypes();
-            final List<XQuerySequenceType> bArgs = b.getArgumentTypes();
+            final XQueryItemType a = (XQueryItemType) x;
+            final XQueryItemType b = (XQueryItemType) y;
+            final List<XQuerySequenceType> aArgs = a.argumentTypes;
+            final List<XQuerySequenceType> bArgs = b.argumentTypes;
             final int aArgCount = aArgs.size();
 
             if (aArgCount > bArgs.size())
@@ -262,7 +257,7 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
                 if (!bArgType.isSubtypeOf(aArgType))
                     return false;
             }
-            return a.getReturnedType().isSubtypeOf(b.getReturnedType());
+            return a.returnedType.isSubtypeOf(b.returnedType);
         };
 
 
@@ -270,9 +265,7 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
         Arrays.fill(itemtypeIsSubtypeOf[ENUM], alwaysFalse);
         itemtypeIsSubtypeOf[ENUM][ANY_ITEM] = alwaysTrue;
         itemtypeIsSubtypeOf[ENUM][ENUM] = (x, y) -> {
-            final var x_ = (XQueryItemTypeEnum) x;
-            final var y_ = (XQueryItemTypeEnum) y;
-            return y_.getEnumMembers().containsAll(x_.getEnumMembers());
+            return y.enumMembers.containsAll(x.enumMembers);
         };
         itemtypeIsSubtypeOf[ENUM][STRING] = alwaysTrue;
         itemtypeIsSubtypeOf[ENUM][CHOICE] = this::rightChoice;
@@ -287,12 +280,12 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
         itemtypeIsSubtypeOf[RECORD][ANY_ITEM] = alwaysTrue;
         itemtypeIsSubtypeOf[RECORD][CHOICE] = this::rightChoice;
         itemtypeIsSubtypeOf[RECORD][RECORD] = (x, y) -> {
-            final boolean allFieldsPresent = y.getRecordFields().keySet().containsAll(x.getRecordFields().keySet());
+            final boolean allFieldsPresent = y.recordFields.keySet().containsAll(x.recordFields.keySet());
             if (!allFieldsPresent)
                 return false;
-            for (final var key : x.getRecordFields().keySet()) {
-                final var xFieldType = x.getRecordFields().get(key);
-                final var yFieldType = y.getRecordFields().get(key);
+            for (final var key : x.recordFields.keySet()) {
+                final var xFieldType = x.recordFields.get(key);
+                final var yFieldType = y.recordFields.get(key);
                 if (!xFieldType.type().isSubtypeOf(yFieldType.type()))
                     return false;
             }
@@ -326,8 +319,8 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
             // All of the following are true:
             // A is an extensible record type
             // B is an extensible record type
-            final var x_ = (XQueryItemTypeRecord) a;
-            final var y_ = (XQueryItemTypeRecord) y;
+            final var x_ = (XQueryItemType) a;
+            final var y_ = (XQueryItemType) y;
             // Every mandatory field in B is also declared as mandatory in A.
             if (!areAllMandatoryFieldsPresent(x_, y_)) {
                 return false;
@@ -361,7 +354,7 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
 
         // CHOICE
         final BiPredicate<XQueryItemType, XQueryItemType> lchoice = (x, y) -> {
-            final var items = x.getItemTypes();
+            final var items = x.itemTypes;
             final boolean anyIsSubtype = items.stream().allMatch(i-> i.itemtypeIsSubtypeOf(y));
             return anyIsSubtype;
         };
@@ -369,8 +362,8 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
         Arrays.fill(itemtypeIsSubtypeOf[CHOICE], lchoice);
         itemtypeIsSubtypeOf[CHOICE][ANY_ITEM] = alwaysTrue;
         itemtypeIsSubtypeOf[CHOICE][CHOICE] = (x, y) -> {
-            final var xItems = x.getItemTypes();
-            final var yItems = y.getItemTypes();
+            final var xItems = x.itemTypes;
+            final var yItems = y.itemTypes;
             final var allPresent = xItems.stream().allMatch(xItem->{
                 final boolean anyIsSubtype = yItems.stream().anyMatch(i-> xItem.itemtypeIsSubtypeOf(i));
                 return anyIsSubtype;
@@ -380,7 +373,7 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
     }
 
     private boolean rightChoice(XQueryItemType x, XQueryItemType y) {
-        final var items = y.getItemTypes();
+        final var items = y.itemTypes;
         final boolean anyIsSubtype = items.stream().anyMatch(i-> x.itemtypeIsSubtypeOf(i));
         return anyIsSubtype;
     }
@@ -397,15 +390,15 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
      * @return boolean predicate
      */
     public boolean itemtypeIsSubtypeOf(XQueryItemType type1, XQueryItemType type2) {
-        final int ordinal1 = type2.getType().ordinal();
-        final int ordinal2 = type2.getType().ordinal();
+        final int ordinal1 = type2.type.ordinal();
+        final int ordinal2 = type2.type.ordinal();
         return this.itemtypeIsSubtypeOf[ordinal1][ordinal2].test(type1, type2);
     }
 
     private static boolean isEveryDeclaredFieldSubtype(final XQueryItemType x_, final XQueryItemType y_) {
-        final Map<String, XQueryRecordField> recordFieldsX = x_.getRecordFields();
+        final Map<String, XQueryRecordField> recordFieldsX = x_.recordFields;
         final var commonFields = new HashSet<String>(recordFieldsX.keySet());
-        final Map<String, XQueryRecordField> recordFieldsY = y_.getRecordFields();
+        final Map<String, XQueryRecordField> recordFieldsY = y_.recordFields;
         commonFields.retainAll(recordFieldsY.keySet());
         for (final String commonField : commonFields) {
             final var xFieldType = recordFieldsX.get(commonField);
@@ -427,8 +420,8 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
     }
 
     private static void getMandatoryFields(final XQueryItemType x_, final HashSet<String> mandatoryFieldsX) {
-        for (var field : x_.getRecordFields().keySet()) {
-            var recordInfo = x_.getRecordFields().get(field);
+        for (var field : x_.recordFields.keySet()) {
+            var recordInfo = x_.recordFields.get(field);
             if (recordInfo.isRequired()) {
                 mandatoryFieldsX.add(field);
             }
@@ -436,19 +429,19 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
     }
 
     private static boolean recordIsSubtypeOfFunction(Object x, Object y) {
-        final var x_ = (XQueryItemTypeRecord) x;
-        final var y_ = (XQueryItemTypeFunction) y;
-        final var yArgumentTypes = y_.getArgumentTypes();
+        final var x_ = (XQueryItemType) x;
+        final var y_ = (XQueryItemType) y;
+        final var yArgumentTypes = y_.argumentTypes;
         if (yArgumentTypes.size() != 1)
             return false;
         final var yFieldType = (XQuerySequenceType) yArgumentTypes.get(0);
         final XQueryItemType yFieldItemType = (XQueryItemType) yFieldType.itemType;
-        if (yFieldItemType.getType() != XQueryTypes.STRING
-            && yFieldItemType.getType() != XQueryTypes.ANY_ITEM)
+        if (yFieldItemType.type != XQueryTypes.STRING
+            && yFieldItemType.type != XQueryTypes.ANY_ITEM)
             return false;
-        final var yReturnedType = y_.getReturnedType();
-        for (final var key : x_.getRecordFields().keySet()) {
-            final var xFieldType = x_.getRecordFields().get(key);
+        final var yReturnedType = y_.returnedType;
+        for (final var key : x_.recordFields.keySet()) {
+            final var xFieldType = x_.recordFields.get(key);
             if (!xFieldType.type().isSubtypeOf(yReturnedType))
                 return false;
         }
@@ -456,15 +449,15 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
     }
 
     private static boolean recordIsSubtypeOfMap(Object x, Object y) {
-        final var x_ = (XQueryItemTypeRecord) x;
-        final var y_ = (XQueryItemTypeMap) y;
-        final XQueryItemType keyItemType = (XQueryItemType) y_.getMapKeyType();
-        if (keyItemType.getType() != XQueryTypes.STRING
-            && keyItemType.getType() != XQueryTypes.ANY_ITEM)
+        final var x_ = (XQueryItemType) x;
+        final var y_ = (XQueryItemType) y;
+        final XQueryItemType keyItemType = (XQueryItemType) y_.mapKeyType;
+        if (keyItemType.type != XQueryTypes.STRING
+            && keyItemType.type != XQueryTypes.ANY_ITEM)
             return false;
-        final var yFieldType = y_.getMapValueType();
-        for (final var key : x_.getRecordFields().keySet()) {
-            final XQueryRecordField xFieldType = x_.getRecordFields().get(key);
+        final var yFieldType = y_.mapValueType;
+        for (final var key : x_.recordFields.keySet()) {
+            final XQueryRecordField xFieldType = x_.recordFields.get(key);
             if (!xFieldType.type().isSubtypeOf(yFieldType))
                 return false;
         }
@@ -762,7 +755,7 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
 
     @Override
     public boolean elementElementOperation(XQueryItemType x, XQueryItemType y) {
-        return y.getElementNames().containsAll(x.getElementNames()); // As per your condition for ELEMENT and ELEMENT
+        return y.elementNames.containsAll(x.elementNames); // As per your condition for ELEMENT and ELEMENT
     }
 
     @Override
@@ -967,8 +960,8 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
     @Override
     public boolean mapMapOperation(XQueryItemType x, XQueryItemType y) {
         // Check if the map key type and map value type of x are subtypes of those in y
-        return x.getMapKeyType().itemtypeIsSubtypeOf(y.getMapKeyType()) &&
-            x.getMapValueType().isSubtypeOf(y.getMapValueType());
+        return x.mapKeyType.itemtypeIsSubtypeOf(y.mapKeyType) &&
+            x.mapValueType.isSubtypeOf(y.mapValueType);
     }
 
     @Override
@@ -979,13 +972,13 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
     @Override
     public boolean mapAnyArrayOperation(XQueryItemType x, XQueryItemType y) {
         // Check if the map key is a number
-        return x.getMapKeyType().getType() == XQueryTypes.NUMBER;
+        return x.mapKeyType.type == XQueryTypes.NUMBER;
     }
 
     @Override
     public boolean mapArrayOperation(XQueryItemType x, XQueryItemType y) {
         // Check if the map key is a number
-        return x.getMapKeyType().getType() == XQueryTypes.NUMBER;
+        return x.mapKeyType.type == XQueryTypes.NUMBER;
     }
 
     @Override
@@ -996,13 +989,13 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
     @Override
     public boolean mapFunctionOperation(XQueryItemType x, XQueryItemType y) {
         // Check if y has exactly one argument type and if the map key type of x is a subtype of that argument type
-        if (y.getArgumentTypes().size() != 1) {
+        if (y.argumentTypes.size() != 1) {
             return false;
         }
-        XQuerySequenceType onlyArg = (XQuerySequenceType) y.getArgumentTypes().get(0);
+        XQuerySequenceType onlyArg = (XQuerySequenceType) y.argumentTypes.get(0);
         XQueryItemType onlyArgItem = (XQueryItemType) onlyArg.itemType;
         boolean correctOccurrence = onlyArg.isOne;
-        return correctOccurrence && x.getMapKeyType().itemtypeIsSubtypeOf(onlyArgItem);
+        return correctOccurrence && x.mapKeyType.itemtypeIsSubtypeOf(onlyArgItem);
     }
 
     @Override
@@ -1065,9 +1058,9 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
 
     @Override
     public boolean anyArrayMapOperation(XQueryItemType x, XQueryItemType y) {
-        XQueryItemTypeMap yMap = (XQueryItemTypeMap) y;
-        XQueryItemType mapKeyType = yMap.getMapKeyType();
-        return mapKeyType.getType() == XQueryTypes.NUMBER; // Check if the map key is a number
+        XQueryItemType yMap = y;
+        XQueryItemType mapKeyType = yMap.mapKeyType;
+        return mapKeyType.type == XQueryTypes.NUMBER; // Check if the map key is a number
     }
 
     @Override
@@ -1084,7 +1077,7 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
     public boolean anyArrayArrayOperation(XQueryItemType x, XQueryItemType y) {
 
         XQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
-        return y.getArrayMemberType().equals(zeroOrMoreItems.itemType); // Check if y's array member type is zero or more items
+        return y.arrayMemberType.equals(zeroOrMoreItems.itemType); // Check if y's array member type is zero or more items
     }
 
     @Override
@@ -1094,15 +1087,15 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
 
     @Override
     public boolean anyArrayFunctionOperation(XQueryItemType x, XQueryItemType y) {
-        XQueryItemTypeFunction yFunc = (XQueryItemTypeFunction) y;
-        List<XQuerySequenceType> argumentTypes = yFunc.getArgumentTypes();
+        XQueryItemType yFunc = (XQueryItemType) y;
+        List<XQuerySequenceType> argumentTypes = yFunc.argumentTypes;
         if (argumentTypes.size() != 1) {
             return false;
         }
         XQuerySequenceType onlyArg = argumentTypes.get(0);
         XQueryItemType onlyArgItem = (XQueryItemType) onlyArg.itemType;
         boolean correctOccurrence = onlyArg.isOne || onlyArg.isOneOrMore;
-        return correctOccurrence && onlyArgItem.getType() == XQueryTypes.NUMBER; // Check if the argument type is a number
+        return correctOccurrence && onlyArgItem.type == XQueryTypes.NUMBER; // Check if the argument type is a number
     }
 
     @Override
@@ -1161,14 +1154,13 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
     }
 
     @Override
-    public boolean arrayMapOperation(XQueryItemType x, XQueryItemType y) {
-        XQueryItemTypeMap yMap = (XQueryItemTypeMap) y;
-        XQueryItemType mapKeyType = yMap.getMapKeyType();
-        boolean isNumber = mapKeyType.getType() == XQueryTypes.NUMBER;
+    public boolean arrayMapOperation(XQueryItemType x, XQueryItemType yMap) {
+        XQueryItemType mapKeyType = yMap.mapKeyType;
+        boolean isNumber = mapKeyType.type == XQueryTypes.NUMBER;
         if (!isNumber) {
             return false;
         }
-        return x.getArrayMemberType().isSubtypeOf(yMap.getMapValueType()); // Check if x's array member type is a subtype of y's map value type
+        return x.arrayMemberType.isSubtypeOf(yMap.mapValueType); // Check if x's array member type is a subtype of y's map value type
     }
 
     @Override
@@ -1187,8 +1179,8 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
         if (!isSubtypeOfAnyArray) {
             return false;
         }
-        XQuerySequenceType xArrayItemType = x.getArrayMemberType();
-        XQuerySequenceType yArrayItemType = y.getArrayMemberType();
+        XQuerySequenceType xArrayItemType = x.arrayMemberType;
+        XQuerySequenceType yArrayItemType = y.arrayMemberType;
         return xArrayItemType.isSubtypeOf(yArrayItemType); // Check if x's array member type is a subtype of y's array member type
     }
 
@@ -1199,15 +1191,15 @@ public class ItemtypeStateSubtyper2 extends ItemtypeBinaryPredicateOperation
 
     @Override
     public boolean arrayFunctionOperation(XQueryItemType x, XQueryItemType y) {
-        XQueryItemTypeFunction yFunc = (XQueryItemTypeFunction) y;
-        if (yFunc.getArgumentTypes().size() != 1) {
+        XQueryItemType yFunc = (XQueryItemType) y;
+        if (yFunc.argumentTypes.size() != 1) {
             return false;
         }
-        XQueryItemType onlyArgItem = yFunc.getArgumentTypes().get(0).itemType;
-        if (onlyArgItem.getType() == XQueryTypes.NUMBER) {
+        XQueryItemType onlyArgItem = yFunc.argumentTypes.get(0).itemType;
+        if (onlyArgItem.type == XQueryTypes.NUMBER) {
             // Additional logic can be added here if needed
         }
-        return x.getArrayMemberType().isSubtypeOf(yFunc.getReturnedType()); // Check if x's array member type is a subtype of y's returned type
+        return x.arrayMemberType.isSubtypeOf(yFunc.returnedType); // Check if x's array member type is a subtype of y's returned type
     }
 
     @Override
@@ -1351,14 +1343,14 @@ public boolean functionStringOperation(XQueryItemType x, XQueryItemType y) {
 final boolean[] canBeKey = booleanEnumArray(XQueryTypes.NUMBER, XQueryTypes.BOOLEAN, XQueryTypes.STRING, XQueryTypes.ENUM);
 @Override
 public boolean functionAnyMapOperation(XQueryItemType x, XQueryItemType y) {
-    XQueryItemTypeFunction xFunc = (XQueryItemTypeFunction) x;
-    if (xFunc.getArgumentTypes().size() != 1) {
+    XQueryItemType xFunc = (XQueryItemType) x;
+    if (xFunc.argumentTypes.size() != 1) {
         return false;
     }
-    XQuerySequenceType onlyArg = xFunc.getArgumentTypes().get(0);
+    XQuerySequenceType onlyArg = xFunc.argumentTypes.get(0);
     XQueryItemType onlyArgItem = (XQueryItemType) onlyArg.itemType;
     boolean correctOccurrence = onlyArg.isOne;
-    return correctOccurrence && canBeKey[onlyArgItem.getType().ordinal()]; // Check if the argument type can be a key
+    return correctOccurrence && canBeKey[onlyArgItem.type.ordinal()]; // Check if the argument type can be a key
 }
 
 @Override
@@ -1366,11 +1358,11 @@ public boolean functionMapOperation(XQueryItemType x, XQueryItemType y) {
     if (!functionAnyMapOperation(x, y)) {
         return false;
     }
-    XQueryItemTypeFunction xFunc = (XQueryItemTypeFunction) x;
-    XQuerySequenceType onlyArg = xFunc.getArgumentTypes().get(0);
+    XQueryItemType xFunc = (XQueryItemType) x;
+    XQuerySequenceType onlyArg = xFunc.argumentTypes.get(0);
     XQueryItemType onlyArgItem = (XQueryItemType) onlyArg.itemType;
-    boolean argCanBeKey = onlyArgItem.itemtypeIsSubtypeOf(y.getMapKeyType());
-    boolean returnedCanBeValue = xFunc.getReturnedType().isSubtypeOf(y.getMapValueType());
+    boolean argCanBeKey = onlyArgItem.itemtypeIsSubtypeOf(y.mapKeyType);
+    boolean returnedCanBeValue = xFunc.returnedType.isSubtypeOf(y.mapValueType);
     boolean correctOccurrence = onlyArg.isOne;
     return correctOccurrence && argCanBeKey && returnedCanBeValue;
 }
@@ -1382,14 +1374,14 @@ public boolean functionChoiceOperation(XQueryItemType x, XQueryItemType y) {
 
 @Override
 public boolean functionAnyArrayOperation(XQueryItemType x, XQueryItemType y) {
-    XQueryItemTypeFunction xFunc = (XQueryItemTypeFunction) x;
-    if (xFunc.getArgumentTypes().size() != 1) {
+    XQueryItemType xFunc = (XQueryItemType) x;
+    if (xFunc.argumentTypes.size() != 1) {
         return false;
     }
-    XQuerySequenceType onlyArg = xFunc.getArgumentTypes().get(0);
+    XQuerySequenceType onlyArg = xFunc.argumentTypes.get(0);
     XQueryItemType onlyArgItem = (XQueryItemType) onlyArg.itemType;
     boolean correctOccurrence = onlyArg.isOne || onlyArg.isOneOrMore;
-    return correctOccurrence && onlyArgItem.getType() == XQueryTypes.NUMBER; // Check if the argument type is a number
+    return correctOccurrence && onlyArgItem.type == XQueryTypes.NUMBER; // Check if the argument type is a number
 }
 
 @Override
@@ -1397,9 +1389,9 @@ public boolean functionArrayOperation(XQueryItemType x, XQueryItemType y) {
     if (!functionAnyArrayOperation(x, y)) {
         return false;
     }
-    XQueryItemTypeFunction xFunc = (XQueryItemTypeFunction) x;
-    XQueryItemTypeArray yArray = (XQueryItemTypeArray) y;
-    return xFunc.getReturnedType().isSubtypeOf(yArray.getArrayMemberType()); // Check if the returned type is a subtype of the array member type
+    XQueryItemType xFunc =  x;
+    XQueryItemType yArray =  y;
+    return xFunc.returnedType.isSubtypeOf(yArray.arrayMemberType); // Check if the returned type is a subtype of the array member type
 }
 
 @Override
@@ -1409,10 +1401,10 @@ public boolean functionAnyFunctionOperation(XQueryItemType x, XQueryItemType y) 
 
 @Override
 public boolean functionFunctionOperation(XQueryItemType x, XQueryItemType y) {
-    XQueryItemTypeFunction xFunc = (XQueryItemTypeFunction) x;
-    XQueryItemTypeFunction yFunc = (XQueryItemTypeFunction) y;
-    List<XQuerySequenceType> xArgs = xFunc.getArgumentTypes();
-    List<XQuerySequenceType> yArgs = yFunc.getArgumentTypes();
+    XQueryItemType xFunc =  x;
+    XQueryItemType yFunc =  y;
+    List<XQuerySequenceType> xArgs = xFunc.argumentTypes;
+    List<XQuerySequenceType> yArgs = yFunc.argumentTypes;
     int xArgCount = xArgs.size();
     if (xArgCount > yArgs.size()) {
         return false;
@@ -1424,7 +1416,7 @@ public boolean functionFunctionOperation(XQueryItemType x, XQueryItemType y) {
             return false;
         }
     }
-    return xFunc.getReturnedType().isSubtypeOf(yFunc.getReturnedType()); // Check if the returned type of x is a subtype of the returned type of y
+    return xFunc.returnedType.isSubtypeOf(yFunc.returnedType); // Check if the returned type of x is a subtype of the returned type of y
 }
 
 @Override
@@ -1464,9 +1456,9 @@ public boolean enumElementOperation(XQueryItemType x, XQueryItemType y) {
 
 @Override
 public boolean enumEnumOperation(XQueryItemType x, XQueryItemType y) {
-    XQueryItemTypeEnum xEnum = (XQueryItemTypeEnum) x;
-    XQueryItemTypeEnum yEnum = (XQueryItemTypeEnum) y;
-    return yEnum.getEnumMembers().containsAll(xEnum.getEnumMembers()); // Check if y's enum members contain all of x's
+    XQueryItemType xEnum =  x;
+    XQueryItemType yEnum =  y;
+    return yEnum.enumMembers.containsAll(xEnum.enumMembers); // Check if y's enum members contain all of x's
 }
 
 @Override

@@ -32,7 +32,6 @@ import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper.XQuery
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemTypeEnum;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType.RelativeCoercability;
@@ -189,7 +188,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
         checkPositionalVariableDistinct(ctx.positionalVar(), variableName, ctx);
 
-        final XQuerySequenceType memberType = arrayType.getArrayMemberType();
+        final XQuerySequenceType memberType = arrayType.itemType.arrayMemberType;
         final XQuerySequenceType iteratorType = memberType.addOptionality();
 
         processVariableTypeDeclaration(ctx.varNameAndType(), iteratorType, variableName, ctx);
@@ -225,7 +224,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         // Process key binding
         if (keyBinding != null) {
             final String keyVariableName = keyBinding.varNameAndType().qname().getText();
-            final XQueryItemType keyType = mapType.getMapKeyType();
+            final XQueryItemType keyType = mapType.itemType.mapKeyType;
             final XQuerySequenceType keyIteratorType = typeFactory.one(keyType);
 
             checkPositionalVariableDistinct(ctx.positionalVar(), keyVariableName, ctx);
@@ -235,7 +234,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         // Process value binding
         if (valueBinding != null) {
             final String valueVariableName = valueBinding.varNameAndType().qname().getText();
-            final XQuerySequenceType valueType = mapType.getMapValueType();
+            final XQuerySequenceType valueType = mapType.itemType.mapValueType;
 
             checkPositionalVariableDistinct(ctx.positionalVar(), valueVariableName, ctx);
             processVariableTypeDeclaration(valueBinding.varNameAndType(), valueType, valueVariableName, ctx);
@@ -875,7 +874,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         context = savedContext;
 
         if (isCallable)
-            return value.getReturnedType();
+            return value.itemType.returnedType;
         else
             return typeFactory.zeroOrMore(typeFactory.itemAnyItem());
     }
@@ -912,9 +911,9 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             return anyItems;
         }
 
-        switch (targetType.itemType.getType()) {
+        switch (targetType.itemType.type) {
             case ARRAY:
-                final XQuerySequenceType targetItemType = targetType.getArrayMemberType();
+                final XQuerySequenceType targetItemType = targetType.itemType.arrayMemberType;
                 if (targetItemType == null)
                     return anyItems;
                 final XQuerySequenceType result = targetItemType.sequenceMerge(targetItemType).addOptionality();
@@ -954,7 +953,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             return null;
         }
         final XQueryItemType targetItemType = targetType.itemType;
-        final Collection<XQueryItemType> choiceItemTypes = targetItemType.getItemTypes();
+        final Collection<XQueryItemType> choiceItemTypes = targetItemType.itemTypes;
         XQueryItemType targetKeyItemType = null;
         XQuerySequenceType resultingType = null;
         for (final var itemType : choiceItemTypes) {
@@ -970,14 +969,14 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
                 continue;
             }
 
-            switch (itemType.getType()) {
+            switch (itemType.type) {
                 case ARRAY:
-                    resultingType = resultingType.alternativeMerge(itemType.getArrayMemberType());
+                    resultingType = resultingType.alternativeMerge(itemType.arrayMemberType);
                     targetKeyItemType = targetItemType.alternativeMerge(typeFactory.itemNumber());
                     break;
                 case MAP:
-                    resultingType = resultingType.alternativeMerge(itemType.getMapValueType());
-                    targetKeyItemType = targetItemType.alternativeMerge(itemType.getMapKeyType());
+                    resultingType = resultingType.alternativeMerge(itemType.mapValueType);
+                    targetKeyItemType = targetItemType.alternativeMerge(itemType.mapKeyType);
                     break;
                 default:
                     resultingType = anyItems;
@@ -1014,8 +1013,8 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             final XQuerySequenceType keySpecifierType,
             final boolean isWildcard)
     {
-        final XQueryItemType targetKeyItemType = targetType.getMapKeyType();
-        final XQuerySequenceType targetValueType = targetType.getMapValueType();
+        final XQueryItemType targetKeyItemType = targetType.itemType.mapKeyType;
+        final XQuerySequenceType targetValueType = targetType.itemType.mapValueType;
         final XQueryItemType targetValueItemtype = targetValueType.itemType;
         if (isWildcard) {
             return typeFactory.zeroOrMore(targetValueItemtype);
@@ -1028,7 +1027,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (!keySpecifierType.isSubtypeOf(expectedKeyItemtype)) {
             addError(lookup, "Key type for lookup expression on " + targetType + " must be subtype of type " + expectedKeyItemtype);
         }
-        if (targetValueItemtype.getType() == XQueryTypes.RECORD) {
+        if (targetValueItemtype.type == XQueryTypes.RECORD) {
             return result;
         }
         return result.addOptionality();
@@ -1043,7 +1042,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         final boolean isWildcard)
     {
         final XQueryItemType targetKeyItemType = typeFactory.itemString();
-        final Map<String, XQueryRecordField> recordFields = targetType.itemType.getRecordFields();
+        final Map<String, XQueryRecordField> recordFields = targetType.itemType.recordFields;
         if (recordFields.isEmpty()) {
             warn(target, "Empty record will always return empty sequence...");
             return emptySequence;
@@ -1075,8 +1074,8 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (!keySpecifierType.isSubtypeOf(expectedKeyItemtype)) {
             addError(lookup, "Key type for lookup expression on " + targetType + " must be subtype of type " + expectedKeyItemtype);
         }
-        if (keySpecifierType.itemType.getType() == XQueryTypes.ENUM) {
-            final var members = ((XQueryItemTypeEnum) keySpecifierType.itemType).getEnumMembers();
+        if (keySpecifierType.itemType.type == XQueryTypes.ENUM) {
+            final var members = keySpecifierType.itemType.enumMembers;
             final var firstField = members.stream().findFirst().get();
             final var firstRecordField = recordFields.get(firstField);
             XQuerySequenceType merged = firstRecordField.isRequired() ? firstRecordField.type() : firstRecordField.type().addOptionality();
@@ -1107,7 +1106,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             final XQuerySequenceType keySpecifierType, final boolean isWildcard)
     {
         final XQueryItemType targetKeyItemType = typeFactory.itemString();
-        final Map<String, XQueryRecordField> recordFields = targetType.itemType.getRecordFields();
+        final Map<String, XQueryRecordField> recordFields = targetType.itemType.recordFields;
         if (recordFields.isEmpty()) {
             warn(ctx, "Empty record will always return empty sequence...");
             return emptySequence;
@@ -1138,8 +1137,8 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (!keySpecifierType.isSubtypeOf(expectedKeyItemtype)) {
             addError(lookup, "Key type for lookup expression on " + targetType + " must be subtype of type " + expectedKeyItemtype);
         }
-        if (keySpecifierType.itemType.getType() == XQueryTypes.ENUM) {
-            final var members = ((XQueryItemTypeEnum) keySpecifierType.itemType).getEnumMembers();
+        if (keySpecifierType.itemType.type == XQueryTypes.ENUM) {
+            final var members = keySpecifierType.itemType.enumMembers;
             final var firstField = members.stream().findFirst().get();
             final var firstRecordField = recordFields.get(firstField);
             XQuerySequenceType merged = firstRecordField.isRequired() ? firstRecordField.type() : firstRecordField.type().addOptionality();
@@ -1481,8 +1480,9 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             .map(e -> e.mapKeyExpr().accept(this).itemType)
             .reduce((t1, t2) -> t1.alternativeMerge(t2))
             .get();
-        if (keyType instanceof final XQueryItemTypeEnum enum_) {
-            final var enumMembers = enum_.getEnumMembers();
+        if (keyType.type == XQueryTypes.ENUM) {
+            final var enum_ = keyType;
+            final var enumMembers = enum_.enumMembers;
             final List<Entry<String, XQueryRecordField>> recordEntries = new ArrayList<>(enumMembers.size());
             int i = 0;
             for (final var enumMember : enumMembers) {

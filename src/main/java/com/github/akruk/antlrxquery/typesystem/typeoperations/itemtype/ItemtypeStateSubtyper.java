@@ -98,28 +98,28 @@ public class ItemtypeStateSubtyper
         itemtypeIsSubtypeOf[MAP][ANY_MAP] = alwaysTrue;
         itemtypeIsSubtypeOf[MAP][ANY_ARRAY] = (x, _) -> {
             // map must have a key that is a number
-            final var key = x.getMapKeyType();
+            final var key = x.mapKeyType;
             return key.getType() == XQueryTypes.NUMBER;
         };
         itemtypeIsSubtypeOf[MAP][MAP] = (x, y) -> {
-            return x.getMapKeyType().itemtypeIsSubtypeOf(y.getMapKeyType())
-                    && x.getMapValueType().isSubtypeOf(y.getMapValueType());
+            return x.mapKeyType.itemtypeIsSubtypeOf(y.mapKeyType)
+                    && x.mapValueType.isSubtypeOf(y.mapValueType);
         };
         itemtypeIsSubtypeOf[MAP][CHOICE] = this::rightChoice;
         itemtypeIsSubtypeOf[MAP][ARRAY] = (x, _) -> {
             // map must have a key that is a number
-            final var key =  x.getMapKeyType();
+            final var key =  x.mapKeyType;
             return key.getType() == XQueryTypes.NUMBER;
         };
         itemtypeIsSubtypeOf[MAP][ANY_FUNCTION] = alwaysTrue;
         itemtypeIsSubtypeOf[MAP][FUNCTION] = (x, y) -> {
-            if (y.getArgumentTypes().size() != 1)
+            if (y.argumentTypes.size() != 1)
                 return false;
-            final var onlyArg =  (XQuerySequenceType) y.getArgumentTypes().get(0);
+            final var onlyArg =  (XQuerySequenceType) y.argumentTypes.get(0);
             final var onlyArgItem =  (XQueryItemType) onlyArg.itemType;
             final boolean correctOccurence = onlyArg.isOne;
             return correctOccurence
-                    && x.getMapKeyType().itemtypeIsSubtypeOf(onlyArgItem);
+                    && x.mapKeyType.itemtypeIsSubtypeOf(onlyArgItem);
         };
 
         // ANY_ARRAY
@@ -129,12 +129,12 @@ public class ItemtypeStateSubtyper
         itemtypeIsSubtypeOf[ANY_ARRAY][CHOICE] = this::rightChoice;
         itemtypeIsSubtypeOf[ANY_ARRAY][ARRAY] = (_, y) -> {
             final XQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
-            return y.getArrayMemberType().equals(zeroOrMoreItems);
+            return y.arrayMemberType.equals(zeroOrMoreItems);
         };
         itemtypeIsSubtypeOf[ANY_ARRAY][ANY_FUNCTION] = alwaysTrue;
         itemtypeIsSubtypeOf[ANY_ARRAY][FUNCTION] = (_, y) -> {
             final XQueryItemTypeFunction y_ = (XQueryItemTypeFunction) y;
-            final var argumentTypes = y_.getArgumentTypes();
+            final var argumentTypes = y_.argumentTypes;
             if (argumentTypes.size() != 1)
                 return false;
             final var onlyArg =  (XQuerySequenceType) argumentTypes.get(0);
@@ -146,7 +146,7 @@ public class ItemtypeStateSubtyper
         itemtypeIsSubtypeOf[ANY_ARRAY][ANY_MAP] = alwaysTrue;
         itemtypeIsSubtypeOf[ANY_ARRAY][MAP] = (_, y) -> {
             final XQueryItemTypeMap y_ = (XQueryItemTypeMap) y;
-            final var mapKeyType = (XQueryItemType) y_.getMapKeyType();
+            final var mapKeyType = (XQueryItemType) y_.mapKeyType;
             final boolean isNumber = mapKeyType.getType() == XQueryTypes.NUMBER;
             return isNumber;
         };
@@ -156,11 +156,11 @@ public class ItemtypeStateSubtyper
         itemtypeIsSubtypeOf[ARRAY][ANY_ITEM] = alwaysTrue;
         itemtypeIsSubtypeOf[ARRAY][ANY_MAP] = alwaysTrue;
         itemtypeIsSubtypeOf[ARRAY][MAP] = (x, y) -> {
-            final var mapKeyType =  y.getMapKeyType();
+            final var mapKeyType =  y.mapKeyType;
             final boolean isNumber = mapKeyType.getType() == XQueryTypes.NUMBER;
             if (!isNumber)
                 return false;
-            return x.getArrayMemberType().isSubtypeOf(y.getMapValueType());
+            return x.arrayMemberType.isSubtypeOf(y.mapValueType);
         };
         itemtypeIsSubtypeOf[ARRAY][CHOICE] = this::rightChoice;
         itemtypeIsSubtypeOf[ARRAY][ANY_ARRAY] = alwaysTrue;
@@ -168,22 +168,22 @@ public class ItemtypeStateSubtyper
             final boolean isSubtypeOfAnyArray = itemtypeIsSubtypeOf[ANY_ARRAY][ARRAY].test(x, y);
             if (!isSubtypeOfAnyArray)
                 return false;
-            final XQuerySequenceType xArrayItemType = x.getArrayMemberType();
-            final XQuerySequenceType yArrayItemType = y.getArrayMemberType();
+            final XQuerySequenceType xArrayItemType = x.arrayMemberType;
+            final XQuerySequenceType yArrayItemType = y.arrayMemberType;
             return xArrayItemType.isSubtypeOf(yArrayItemType);
         };
         itemtypeIsSubtypeOf[ARRAY][ANY_FUNCTION] = alwaysTrue;
         itemtypeIsSubtypeOf[ARRAY][FUNCTION] = (x, y) -> {
-            if (y.getArgumentTypes().size() != 1)
+            if (y.argumentTypes.size() != 1)
                 return false;
-            final var onlyArg =   y.getArgumentTypes().get(0);
+            final var onlyArg =   y.argumentTypes.get(0);
             final var onlyArgItem =  onlyArg.itemType;
             if (onlyArgItem.getType() == XQueryTypes.NUMBER) {
                 // TODO
 
             }
 
-            return x.getArrayMemberType().isSubtypeOf(y.getReturnedType());
+            return x.arrayMemberType.isSubtypeOf(y.returnedType);
         };
 
         // ANY_FUNCTION
@@ -199,9 +199,9 @@ public class ItemtypeStateSubtyper
         itemtypeIsSubtypeOf[FUNCTION][ANY_MAP] = (x, _) -> {
             final XQueryItemTypeFunction x_ = (XQueryItemTypeFunction) x;
             // function must have one argument
-            if (x_.getArgumentTypes().size() != 1)
+            if (x_.argumentTypes.size() != 1)
                 return false;
-            final var onlyArg =  (XQuerySequenceType) x_.getArgumentTypes().get(0);
+            final var onlyArg =  (XQuerySequenceType) x_.argumentTypes.get(0);
             final var onlyArgItem =  (XQueryItemType) onlyArg.itemType;
             final boolean correctOccurence = onlyArg.isOne;
             return correctOccurence
@@ -210,10 +210,10 @@ public class ItemtypeStateSubtyper
         itemtypeIsSubtypeOf[FUNCTION][MAP] = (x, y) -> {
             if (!itemtypeIsSubtypeOf[FUNCTION][ANY_MAP].test(x, y))
                 return false;
-            final var onlyArg = x.getArgumentTypes().get(0);
+            final var onlyArg = x.argumentTypes.get(0);
             final var onlyArgItem = onlyArg.itemType;
-            final boolean argCanBeKey = onlyArgItem.itemtypeIsSubtypeOf(y.getMapKeyType());
-            final boolean returnedCanBeValue = x.getReturnedType().isSubtypeOf(y.getMapValueType());
+            final boolean argCanBeKey = onlyArgItem.itemtypeIsSubtypeOf(y.mapKeyType);
+            final boolean returnedCanBeValue = x.returnedType.isSubtypeOf(y.mapValueType);
             final boolean correctOccurence = onlyArg.isOne;
             return correctOccurence
                     && argCanBeKey
@@ -224,9 +224,9 @@ public class ItemtypeStateSubtyper
         itemtypeIsSubtypeOf[FUNCTION][ANY_ARRAY] = (x, _) -> {
             final XQueryItemTypeFunction x_ = (XQueryItemTypeFunction) x;
             // function must have one argument
-            if (x_.getArgumentTypes().size() != 1)
+            if (x_.argumentTypes.size() != 1)
                 return false;
-            final var onlyArg =  (XQuerySequenceType) x_.getArgumentTypes().get(0);
+            final var onlyArg =  (XQuerySequenceType) x_.argumentTypes.get(0);
             final var onlyArgItem =  (XQueryItemType) onlyArg.itemType;
             // this one argument must be either number or number+
             final boolean correctOccurence = onlyArg.isOne || onlyArg.isOneOrMore;
@@ -239,17 +239,17 @@ public class ItemtypeStateSubtyper
                 return false;
             final XQueryItemTypeFunction x_ = (XQueryItemTypeFunction) x;
             final XQueryItemTypeArray y_ = (XQueryItemTypeArray) y;
-            final var returnedType = x_.getReturnedType();
+            final var returnedType = x_.returnedType;
 
-            return returnedType.isSubtypeOf(y_.getArrayMemberType());
+            return returnedType.isSubtypeOf(y_.arrayMemberType);
         };
 
         itemtypeIsSubtypeOf[FUNCTION][ANY_FUNCTION] = alwaysTrue;
         itemtypeIsSubtypeOf[FUNCTION][FUNCTION] = (x, y) -> {
             final XQueryItemTypeFunction a = (XQueryItemTypeFunction) x;
             final XQueryItemTypeFunction b = (XQueryItemTypeFunction) y;
-            final List<XQuerySequenceType> aArgs = a.getArgumentTypes();
-            final List<XQuerySequenceType> bArgs = b.getArgumentTypes();
+            final List<XQuerySequenceType> aArgs = a.argumentTypes;
+            final List<XQuerySequenceType> bArgs = b.argumentTypes;
             final int aArgCount = aArgs.size();
 
             if (aArgCount > bArgs.size())
@@ -260,7 +260,7 @@ public class ItemtypeStateSubtyper
                 if (!bArgType.isSubtypeOf(aArgType))
                     return false;
             }
-            return a.getReturnedType().isSubtypeOf(b.getReturnedType());
+            return a.returnedType.isSubtypeOf(b.returnedType);
         };
 
 
@@ -436,7 +436,7 @@ public class ItemtypeStateSubtyper
     private static boolean recordIsSubtypeOfFunction(Object x, Object y) {
         final var x_ = (XQueryItemTypeRecord) x;
         final var y_ = (XQueryItemTypeFunction) y;
-        final var yArgumentTypes = y_.getArgumentTypes();
+        final var yArgumentTypes = y_.argumentTypes;
         if (yArgumentTypes.size() != 1)
             return false;
         final var yFieldType = (XQuerySequenceType) yArgumentTypes.get(0);
@@ -444,7 +444,7 @@ public class ItemtypeStateSubtyper
         if (yFieldItemType.getType() != XQueryTypes.STRING
             && yFieldItemType.getType() != XQueryTypes.ANY_ITEM)
             return false;
-        final var yReturnedType = y_.getReturnedType();
+        final var yReturnedType = y_.returnedType;
         for (final var key : x_.getRecordFields().keySet()) {
             final var xFieldType = x_.getRecordFields().get(key);
             if (!xFieldType.type().isSubtypeOf(yReturnedType))
@@ -456,11 +456,11 @@ public class ItemtypeStateSubtyper
     private static boolean recordIsSubtypeOfMap(Object x, Object y) {
         final var x_ = (XQueryItemTypeRecord) x;
         final var y_ = (XQueryItemTypeMap) y;
-        final XQueryItemType keyItemType = (XQueryItemType) y_.getMapKeyType();
+        final XQueryItemType keyItemType = (XQueryItemType) y_.mapKeyType;
         if (keyItemType.getType() != XQueryTypes.STRING
             && keyItemType.getType() != XQueryTypes.ANY_ITEM)
             return false;
-        final var yFieldType = y_.getMapValueType();
+        final var yFieldType = y_.mapValueType;
         for (final var key : x_.getRecordFields().keySet()) {
             final XQueryRecordField xFieldType = x_.getRecordFields().get(key);
             if (!xFieldType.type().isSubtypeOf(yFieldType))

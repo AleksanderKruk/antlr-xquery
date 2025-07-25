@@ -31,22 +31,23 @@ public class XQuerySequenceType {
     public final boolean isZeroOrOne;
     public final boolean isZeroOrMore;
     public final boolean isOneOrMore;
-    public final XQuerySequenceType iteratorType;
+    // public final XQuerySequenceType iteratorType;
 
     private final XQueryTypeFactory typeFactory;
     private final String occurenceSuffix;
 
-    public XQuerySequenceType(final XQueryTypeFactory typeFactory, final XQueryItemType itemType, final XQueryOccurence occurence) {
+    public XQuerySequenceType(final XQueryTypeFactory typeFactory, final XQueryItemType itemType,
+        final XQueryOccurence occurence) {
         this.typeFactory = typeFactory;
         this.itemType = itemType;
         this.occurence = occurence;
         this.occurenceOrdinal = occurence.ordinal();
         this.factoryByOccurence = new Function[XQueryOccurence.values().length];
-        this.factoryByOccurence[ZERO]         = _ -> typeFactory.emptySequence();
-        this.factoryByOccurence[ONE]          = i -> typeFactory.one(i);
-        this.factoryByOccurence[ZERO_OR_ONE]  = i -> typeFactory.zeroOrOne(i);
+        this.factoryByOccurence[ZERO] = _ -> typeFactory.emptySequence();
+        this.factoryByOccurence[ONE] = i -> typeFactory.one(i);
+        this.factoryByOccurence[ZERO_OR_ONE] = i -> typeFactory.zeroOrOne(i);
         this.factoryByOccurence[ZERO_OR_MORE] = i -> typeFactory.zeroOrMore(i);
-        this.factoryByOccurence[ONE_OR_MORE]  = i -> typeFactory.oneOrMore(i);
+        this.factoryByOccurence[ONE_OR_MORE] = i -> typeFactory.oneOrMore(i);
         this.occurenceSuffix = occurence.occurenceSuffix();
         this.requiresParentheses = requiresParentheses();
         this.isZero = XQueryOccurence.ZERO == occurence;
@@ -55,10 +56,10 @@ public class XQuerySequenceType {
         this.isZeroOrMore = XQueryOccurence.ZERO_OR_MORE == occurence;
         this.isOneOrMore = XQueryOccurence.ONE_OR_MORE == occurence;
         this.hasEffectiveBooleanValue = hasEffectiveBooleanValue();
-        this.iteratorType = this.iteratedItem_();
     }
 
-    private static boolean isNullableEquals(final Object one, final Object other) {
+    private static boolean isNullableEquals(final Object one, final Object other)
+    {
         if (one != null)
             return one.equals(other);
         return one == other;
@@ -220,7 +221,7 @@ public class XQuerySequenceType {
 
 
 
-    private XQuerySequenceType iteratedItem_()
+    public XQuerySequenceType iteratorType()
     {
         if (occurence != XQueryOccurence.ZERO)
             return typeFactory.one(itemType);

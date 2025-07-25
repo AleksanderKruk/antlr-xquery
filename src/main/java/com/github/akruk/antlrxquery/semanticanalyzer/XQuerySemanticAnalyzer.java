@@ -1277,7 +1277,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (ctx.EXCLAMATION_MARK().isEmpty())
             return ctx.pathExpr(0).accept(this);
         final XQuerySequenceType firstExpressionType = ctx.pathExpr(0).accept(this);
-        final XQuerySequenceType iterator = firstExpressionType.iteratorType;
+        final XQuerySequenceType iterator = firstExpressionType.iteratorType();
         final var savedContext = saveContext();
         context.setType(iterator);
         context.setPositionType(number);
@@ -1287,7 +1287,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         for (final var mappedExpression : theRest) {
             final XQuerySequenceType type = mappedExpression.accept(this);
             result = result.mapping(type);
-            context.setType(result.iteratorType);
+            context.setType(result.iteratorType());
         }
         context = savedContext;
         return result;

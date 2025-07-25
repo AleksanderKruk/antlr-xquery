@@ -40,7 +40,7 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
     private final XQuerySequenceType ANY_FUNCTION_TYPE = one(ANY_FUNCTION);
     private final XQuerySequenceType ANY_ITEM = one(ANY_ITEM_TYPE);
     private final XQuerySequenceType BOOLEAN_TYPE = one(BOOLEAN_ITEM_TYPE);
-    private final XQuerySequenceType EMPTY_SEQUENCE = new XQueryEmptySequenceType(this);
+    private final XQuerySequenceType EMPTY_SEQUENCE = XQuerySequenceType.emptySequence(this);
 
 
 

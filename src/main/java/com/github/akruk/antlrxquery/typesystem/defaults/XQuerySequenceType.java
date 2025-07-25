@@ -1,7 +1,5 @@
 package com.github.akruk.antlrxquery.typesystem.defaults;
 
-import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
 
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
@@ -146,8 +144,7 @@ public class XQuerySequenceType {
     private static final IntersectionOccurenceMerger intersectionOccurences = new IntersectionOccurenceMerger();
 
     public XQuerySequenceType intersectionMerge(final XQuerySequenceType other) {
-        final var other_ = (XQuerySequenceType) other;
-        final XQueryItemType otherItemType = other_.itemType;
+        final XQueryItemType otherItemType = other.itemType;
         final XQueryOccurence mergedOccurence = intersectionOccurences.merge(occurence, other.occurence);
         final int occurence_ = mergedOccurence.ordinal();
         if (itemType == null) {
@@ -228,9 +225,16 @@ public class XQuerySequenceType {
     }
 
 
-    public XQuerySequenceType mapping(final XQuerySequenceType mappingExpressionType) {
+    public XQuerySequenceType mapping(final XQuerySequenceType mappingExpressionType)
+    {
         return (XQuerySequenceType) factoryByOccurence[occurenceOrdinal].apply(mappingExpressionType.itemType);
     }
+
+
+    public static XQuerySequenceType emptySequence(XQueryTypeFactory typeFactory) {
+        return new XQuerySequenceType(typeFactory, null, XQueryOccurence.ZERO);
+    }
+
 
 
     public String toString() {

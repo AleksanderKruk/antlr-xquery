@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.antlr.v4.runtime.Parser;
@@ -37,6 +38,8 @@ import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType.RelativeCoercability;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypeAtomization;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.itemtype.ItemtypeIsPossiblyCastable;
 
 
 public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQuerySequenceType> {
@@ -94,6 +97,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         this.anyNumbers = typeFactory.zeroOrMore(typeFactory.itemNumber());
         this.optionalString = typeFactory.zeroOrOne(typeFactory.itemString());
         this.anyItem = typeFactory.anyItem();
+
+        this.atomizer = new SequencetypeAtomization(typeFactory);
 
     }
 
@@ -1324,7 +1329,188 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         return relevantType;
     }
 
+    private final SequencetypeAtomization atomizer;
 
+
+    private final static ItemtypeIsPossiblyCastable isValidCastTarget = new ItemtypeIsPossiblyCastable();
+
+    @Override
+    public XQuerySequenceType visitCastableExpr(CastableExprContext ctx) {
+        final var type = this.visitCastTarget(ctx.castTarget());
+        if (!isValidCastTarget.test(type.getItemType())) {
+            addError(ctx, "Type: " + type + "is an invalid cast target");
+            return boolean_;
+        }
+        final var tested = this.visitCastExpr(ctx.castExpr());
+        final var atomized = atomizer.atomize(tested);
+        final boolean emptyAllowed = ctx.castTarget().QUESTION_MARK() != null;
+        switch (atomized.getOccurence()) {
+            case ZERO:
+                if (emptyAllowed) {
+                    addError(ctx, "Empty sequence is not allowed without adding '?' after target type");
+                } else {
+                    warn(ctx, "Empty sequence as input of castable expression");
+                }
+                break;
+            case ZERO_OR_ONE:
+                if (emptyAllowed) {
+                    addError(ctx, "Empty sequence is not allowed without adding '?' after target type");
+                }
+                handleCastable(ctx, atomized, tested, type, typeFactory.zeroOrOne(atomized.getItemType()));
+                break;
+            case ONE:
+                handleCastable(ctx, atomized, tested, type, typeFactory.one(atomized.getItemType()));
+                break;
+            default:
+                addError(ctx, "Sequences cannot be the target of casting unless they are of type item() or item()? when '?' is specified");
+        };
+        return boolean_;
+    }
+
+    // @Override
+    // public XQuerySequenceType visitCastableExpr(CastableExprContext ctx) {
+    //     final var type = this.visitCastTarget(ctx.castTarget());
+    //     if (!isValidCastTarget.test(type.getItemType())) {
+    //         addError(ctx, "Type: " + type + "is an invalid cast target for type");
+    //         return anyItems;
+    //     }
+    //     final var tested = this.visitCastExpr(ctx.castExpr());
+    //     final var atomized = atomizer.atomize(tested);
+    //     return switch (atomized.getOccurence()) {
+    //         case ZERO -> {
+    //             warn(ctx, "Empty sequence as input of castable expression");
+    //             yield atomized;
+    //         }
+    //         case ZERO_OR_ONE ->  {
+    //             if (ctx.castTarget().QUESTION_MARK() != null) {
+    //                 addError(ctx, "Empty sequence is not allowed without adding '?' after target type");
+    //                 yield anyItems;
+    //             }
+    //             yield handleZeroOrOne(ctx, atomized, tested, type, typeFactory.zeroOrOne(atomized.getItemType()));
+    //         }
+    //         case ONE -> null;
+    //         default->{
+    //             addError(ctx, "Sequences cannot be the target of casting unless they are of type item() or item()? when '?' is specified");
+    //             yield anyItems;
+    //         }
+    //     };
+    // }
+
+
+
+    XQuerySequenceType handleCastable(
+            CastableExprContext ctx,
+            XQuerySequenceType atomized,
+            XQuerySequenceType tested,
+            XQuerySequenceType type,
+            XQuerySequenceType result)
+    {
+        if (atomized.itemtypeIsSubtypeOf(tested)) {
+            warn(ctx, "Unnecessary castability test");
+            return type;
+        }
+        final XQueryItemType atomizedItemtype = atomized.getItemType();
+        final XQueryTypes atomizedItemtypeType = atomizedItemtype.getType();
+        final XQueryTypes castTargetType = type.getItemType().getType();
+        if (atomizedItemtypeType == XQueryTypes.CHOICE)
+        {
+            final var itemtypes = atomizedItemtype.getItemTypes();
+            for (final var itemtype : itemtypes) {
+                testCastingZeroOrOne(ctx, castTargetType, errorMessageOnChoiceFailedCasting(atomized, tested, type, itemtype));
+            }
+            return result;
+        }
+        testCastingZeroOrOne(ctx, castTargetType, errorMessageOnFailedCasting(atomized, tested, type, atomizedItemtype));
+        return result;
+    }
+
+    private Supplier<String> errorMessageOnFailedCasting(
+            final XQuerySequenceType atomized,
+            final XQuerySequenceType tested,
+            final XQuerySequenceType type,
+            final XQueryItemType itemtype)
+    {
+        final StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("Type ");
+        stringBuilder.append(tested);
+        stringBuilder.append(" atomized as type ");
+        stringBuilder.append(atomized);
+        stringBuilder.append(" cannot be cast to ");
+        stringBuilder.append(type);
+        return ()-> stringBuilder.toString();
+    }
+
+
+    private Supplier<String> errorMessageOnChoiceFailedCasting(XQuerySequenceType atomized, XQuerySequenceType tested, XQuerySequenceType type,
+            final XQueryItemType itemtype) {
+        return ()->"Itemtype " + itemtype
+                                                  + " that is a member of itemtype of type "
+                                                  + tested
+                                                  + " atomized as type "
+                                                  + atomized
+                                                  + " cannot be cast to "
+                                                  + type;
+    }
+
+
+    void testCastingZeroOrOne(CastableExprContext ctx, XQueryTypes castTargetType, Supplier<String> errorMessageSupplier)
+    {
+        switch (castTargetType) {
+            case STRING, NUMBER, ENUM, BOOLEAN:
+                break;
+            default:
+                addError(ctx, errorMessageSupplier.get());
+        };
+    }
+
+    XQuerySequenceType handleOne(
+            CastableExprContext ctx,
+            XQuerySequenceType atomized,
+            XQuerySequenceType tested,
+            XQuerySequenceType type,
+            XQuerySequenceType result)
+    {
+        if (atomized.itemtypeIsSubtypeOf(tested)) {
+            warn(ctx, "Unnecessary castability test");
+            return type;
+        }
+        final XQueryItemType atomizedItemtype = atomized.getItemType();
+        final XQueryTypes atomizedItemtypeType = atomizedItemtype.getType();
+        final XQueryTypes castTargetType = type.getItemType().getType();
+        if (atomizedItemtypeType == XQueryTypes.CHOICE)
+        {
+            final var itemtypes = atomizedItemtype.getItemTypes();
+            for (final var itemtype : itemtypes) {
+                testCastingOne(ctx, castTargetType, errorMessageOnChoiceFailedCasting(atomized, tested, type, itemtype));
+            }
+            return result;
+        }
+        testCastingOne(ctx, castTargetType, errorMessageOnFailedCasting(atomized, tested, type, atomizedItemtype));
+        return result;
+    }
+
+
+    void testCastingOne(CastableExprContext ctx, XQueryTypes castTargetType, Supplier<String> errorMessageSupplier)
+    {
+        switch (castTargetType) {
+            case STRING, NUMBER, ENUM, BOOLEAN:
+                break;
+            default:
+                addError(ctx, errorMessageSupplier.get());
+        };
+    }
+
+
+
+
+
+    @Override
+    public XQuerySequenceType visitCastTarget(CastTargetContext ctx) {
+        var type = super.visitCastTarget(ctx);
+        if (ctx.QUESTION_MARK() != null)
+            type = type.addOptionality();
+        return type;
+    }
 
     @Override
     public XQuerySequenceType visitNamedFunctionRef(final NamedFunctionRefContext ctx)

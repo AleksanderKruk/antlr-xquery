@@ -2008,4 +2008,18 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         }
         return expr;
     }
+
+
+
+    @Override
+    public XQueryValue visitCastableExpr(CastableExprContext ctx) {
+        // isPossiblyCastable.au
+        // var expr = ctx.castExpr().accept(this);
+        // var target = ctx.cast().accept(semanticAnalyzer);
+        return null;
+
+    }
+
+
+
 }

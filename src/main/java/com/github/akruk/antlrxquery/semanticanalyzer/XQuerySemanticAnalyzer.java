@@ -39,7 +39,10 @@ import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType.RelativeCoercability;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypeAtomization;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.itemtype.ItemtypeIsPossiblyCastable;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypeCastable;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypeCastable.Castability;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypeCastable.IsCastableResult;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.itemtype.ItemtypeIsValidCastTarget;
 
 
 public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQuerySequenceType> {
@@ -99,6 +102,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         this.anyItem = typeFactory.anyItem();
 
         this.atomizer = new SequencetypeAtomization(typeFactory);
+        this.castability = new SequencetypeCastable(typeFactory, atomizer);
 
     }
 
@@ -141,7 +145,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             if (!assignedValue.isSubtypeOf(type)) {
                 final String msg = String.format("Type of variable %s is not compatible with the assigned value",
                     variableName);
-                addError(letBinding, msg);
+                error(letBinding, msg);
             }
             contextManager.entypeVariable(variableName, type);
         }
@@ -189,7 +193,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         returnedOccurrence = arrayMergeFLWOROccurence();
 
         if (!arrayType.isSubtypeOf(anyArray)) {
-            addError(ctx, "XPTY0141: ForMemberBinding requires a single array value; received: " + arrayType);
+            error(ctx, "XPTY0141: ForMemberBinding requires a single array value; received: " + arrayType);
         }
 
         checkPositionalVariableDistinct(ctx.positionalVar(), variableName, ctx);
@@ -210,7 +214,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         returnedOccurrence = arrayMergeFLWOROccurence();
 
         if (!mapType.isSubtypeOf(anyMap)) {
-            addError(ctx, "XPTY0141: ForEntryBinding requires a single map value");
+            error(ctx, "XPTY0141: ForEntryBinding requires a single map value");
             return;
         }
 
@@ -222,7 +226,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             final String keyVarName = keyBinding.varNameAndType().qname().getText();
             final String valueVarName = valueBinding.varNameAndType().qname().getText();
             if (keyVarName.equals(valueVarName)) {
-                addError(ctx, "XQST0089: Key and value variable names must be distinct");
+                error(ctx, "XQST0089: Key and value variable names must be distinct");
                 return;
             }
         }
@@ -259,7 +263,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         if (positionalVar != null) {
             final String positionalVariableName = positionalVar.varName().getText();
             if (mainVariableName.equals(positionalVariableName)) {
-                addError(context, "XQST0089: Positional variable name must be distinct from main variable name");
+                error(context, "XQST0089: Positional variable name must be distinct from main variable name");
             }
         }
     }
@@ -279,7 +283,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         final String msg = String.format(
                 "Type of variable %s is not compatible with the assigned value: %s is not subtype of %s",
                 variableName, inferredType, declaredType);
-        addError((ParserRuleContext)context, msg);
+        error((ParserRuleContext)context, msg);
     }
     contextManager.entypeVariable(variableName, declaredType);
 }
@@ -316,7 +320,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         }
         final var choiceItemNames = itemTypes.stream().map(i -> i.getText()).collect(Collectors.toSet());
         if (choiceItemNames.size() != itemTypes.size()) {
-            addError(ctx, "Duplicated type signatures in choice item type declaration");
+            error(ctx, "Duplicated type signatures in choice item type declaration");
         }
         final var choiceItems = itemTypes.stream().map(i -> i.accept(this))
             .map(sequenceType -> sequenceType.getItemType())
@@ -334,7 +338,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             case "boolean" -> boolean_;
             default -> {
                 final String msg = String.format("Type %s is not recognized", ctx.getText());
-                addError(ctx, msg);
+                error(ctx, msg);
                 yield anyItem;
             }
         };
@@ -435,7 +439,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         final var filteringExpression = ctx.exprSingle();
         final var filteringExpressionType = filteringExpression.accept(this);
         if (!filteringExpressionType.hasEffectiveBooleanValue()) {
-            addError(filteringExpression, "Filtering expression must have effective boolean value");
+            error(filteringExpression, "Filtering expression must have effective boolean value");
         }
         returnedOccurrence = addOptionality(returnedOccurrence);
         return null;
@@ -508,7 +512,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         final var filteringExpression = ctx.exprSingle();
         final var filteringExpressionType = filteringExpression.accept(this);
         if (!filteringExpressionType.hasEffectiveBooleanValue()) {
-            addError(filteringExpression, "Filtering expression must have effective boolean value");
+            error(filteringExpression, "Filtering expression must have effective boolean value");
         }
         returnedOccurrence = addOptionality(returnedOccurrence);
         return null;
@@ -625,7 +629,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         final var charEscaper = new XQuerySemanticCharEscaper();
         final XQuerySemanticCharEscaperResult result = charEscaper.escapeWithDiagnostics(str);
         for (final var e : result.errors()) {
-            addError(where, e.message());
+            error(where, e.message());
         }
         return result.unescaped();
     }
@@ -652,7 +656,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             final var expectedType = defaultArg.type();
             final var receivedType = defaultArg.defaultArgument().accept(this);
             if (!receivedType.isSubtypeOf(expectedType)) {
-                addError(ctx, String.format(
+                error(ctx, String.format(
                     "Type mismatch for default argument '%s': expected '%s', but got '%s'.",
                     defaultArg.name(),
                     expectedType,
@@ -691,7 +695,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             if (desiredType !=null
                 && assignedType.coerceableTo(desiredType) == RelativeCoercability.NEVER)
             {
-                addError(ctx.quantifierBinding(i).varNameAndType(), String.format("Type: %s is not coercable to %s", assignedType, desiredType));
+                error(ctx.quantifierBinding(i).varNameAndType(), String.format("Type: %s is not coercable to %s", assignedType, desiredType));
             }
 
             contextManager.entypeVariable(variableNames.get(i), variableTypes.get(i));
@@ -699,7 +703,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
 
         final XQuerySequenceType queriedType = criterionNode.accept(this);
         if (!queriedType.hasEffectiveBooleanValue()) {
-            addError(criterionNode, "Criterion value needs to have effective boolean value");
+            error(criterionNode, "Criterion value needs to have effective boolean value");
         }
 
         return boolean_;
@@ -715,7 +719,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         for (int i = 0; i <= orCount; i++) {
             final var visitedType = ctx.andExpr(i).accept(this);
             if (!visitedType.hasEffectiveBooleanValue()) {
-                addError(ctx.andExpr(i), "Operands of 'or expression' need to have effective boolean value");
+                error(ctx.andExpr(i), "Operands of 'or expression' need to have effective boolean value");
             }
             i++;
         }
@@ -731,11 +735,11 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         final var fromValue = ctx.additiveExpr(0).accept(this);
         final var toValue = ctx.additiveExpr(1).accept(this);
         if (!fromValue.isSubtypeOf(optionalNumber)) {
-            addError(ctx.additiveExpr(0),
+            error(ctx.additiveExpr(0),
                 "Wrong type in 'from' operand of 'range expression': '<number?> to <number?>'");
         }
         if (!toValue.isSubtypeOf(optionalNumber)) {
-            addError(ctx.additiveExpr(1), "Wrong type in 'to' operand of range expression: '<number?> to <number?>'");
+            error(ctx.additiveExpr(1), "Wrong type in 'to' operand of range expression: '<number?> to <number?>'");
         }
         return anyNumbers;
     }
@@ -854,7 +858,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             final var msg = String.format(
                 "Predicate requires either number* type (for item by index aquisition) or a value that has effective boolean value, provided type: %s",
                 predicateExpression);
-            addError(ctx.expr(), msg);
+            error(ctx.expr(), msg);
         }
         context = savedContext;
         return contextType.addOptionality();
@@ -870,7 +874,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         final XQuerySequenceType value = ctx.postfixExpr().accept(this);
         final boolean isCallable = value.isSubtypeOf(typeFactory.anyFunction());
         if (!isCallable) {
-            addError(ctx.postfixExpr(),
+            error(ctx.postfixExpr(),
                 "Expected function in dynamic function call expression, received: " + value);
         }
         ctx.positionalArgumentList().accept(this);
@@ -913,7 +917,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             return emptySequence;
         }
         if (!targetType.isSubtypeOf(anyArrayOrMap)) {
-            addError(ctx, "Left side of lookup expression '<left> ? ...' must be map(*)* or array(*)*");
+            error(ctx, "Left side of lookup expression '<left> ? ...' must be map(*)* or array(*)*");
             return anyItems;
         }
 
@@ -928,7 +932,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
                 }
                 if (!keySpecifierType.itemtypeIsSubtypeOf(typeFactory.zeroOrMore(typeFactory.itemNumber())))
                 {
-                    addError(lookup, "Key type for lookup expression on " + targetType + " must be of type number*");
+                    error(lookup, "Key type for lookup expression on " + targetType + " must be of type number*");
                 }
                 return result;
             case ANY_ARRAY:
@@ -937,7 +941,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
                 }
                 if (!keySpecifierType.isSubtypeOf(typeFactory.zeroOrMore(typeFactory.itemNumber())))
                 {
-                    addError(lookup, "Key type for lookup expression on " + targetType + " must be of type number*");
+                    error(lookup, "Key type for lookup expression on " + targetType + " must be of type number*");
                 }
                 return anyItems;
             case MAP:
@@ -997,7 +1001,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
 
         final XQuerySequenceType expectedKeyItemtype = typeFactory.zeroOrMore(numberOrKey);
         if (!keySpecifierType.itemtypeIsSubtypeOf(expectedKeyItemtype)) {
-            addError(ctx, "Key type for lookup expression on " + targetType + " must be subtype of type " + expectedKeyItemtype);
+            error(ctx, "Key type for lookup expression on " + targetType + " must be subtype of type " + expectedKeyItemtype);
         }
         return resultingType;
     }
@@ -1031,7 +1035,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             };
         final XQuerySequenceType expectedKeyItemtype = typeFactory.zeroOrMore(targetKeyItemType);
         if (!keySpecifierType.isSubtypeOf(expectedKeyItemtype)) {
-            addError(lookup, "Key type for lookup expression on " + targetType + " must be subtype of type " + expectedKeyItemtype);
+            error(lookup, "Key type for lookup expression on " + targetType + " must be subtype of type " + expectedKeyItemtype);
         }
         if (targetValueItemtype.getType() == XQueryTypes.RECORD) {
             return result;
@@ -1063,7 +1067,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             return mergedRecordFieldTypes;
         }
         if (!keySpecifierType.isSubtypeOf(typeFactory.zeroOrMore(typeFactory.itemString()))) {
-            addError(keySpecifier, "Key specifier on a record type should be subtype of string*");
+            error(keySpecifier, "Key specifier on a record type should be subtype of string*");
             return anyItems;
         }
         final var string = keySpecifier.STRING();
@@ -1071,14 +1075,14 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             final String key = processStringLiteral(keySpecifier);
             final var valueType = recordFields.get(key);
             if (valueType == null) {
-                addError(keySpecifier, "Key specifier: " + key + " does not match record of type " + targetType);
+                error(keySpecifier, "Key specifier: " + key + " does not match record of type " + targetType);
                 return anyItems;
             }
             return valueType.type();
         }
         final XQuerySequenceType expectedKeyItemtype = typeFactory.zeroOrMore(targetKeyItemType);
         if (!keySpecifierType.isSubtypeOf(expectedKeyItemtype)) {
-            addError(lookup, "Key type for lookup expression on " + targetType + " must be subtype of type " + expectedKeyItemtype);
+            error(lookup, "Key type for lookup expression on " + targetType + " must be subtype of type " + expectedKeyItemtype);
         }
         if (keySpecifierType.getItemType().getType() == XQueryTypes.ENUM) {
             final var members = ((XQueryItemTypeEnum) keySpecifierType.getItemType()).getEnumMembers();
@@ -1127,7 +1131,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             return mergedRecordFieldTypes;
         }
         if (!keySpecifierType.isSubtypeOf(typeFactory.zeroOrMore(typeFactory.itemString()))) {
-            addError(ctx, "Key specifier on a record type should be subtype of string*");
+            error(ctx, "Key specifier on a record type should be subtype of string*");
             return anyItems;
         }
         final var string = keySpecifier.STRING();
@@ -1141,7 +1145,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         }
         final XQuerySequenceType expectedKeyItemtype = typeFactory.zeroOrMore(targetKeyItemType);
         if (!keySpecifierType.isSubtypeOf(expectedKeyItemtype)) {
-            addError(lookup, "Key type for lookup expression on " + targetType + " must be subtype of type " + expectedKeyItemtype);
+            error(lookup, "Key type for lookup expression on " + targetType + " must be subtype of type " + expectedKeyItemtype);
         }
         if (keySpecifierType.getItemType().getType() == XQueryTypes.ENUM) {
             final var members = ((XQueryItemTypeEnum) keySpecifierType.getItemType()).getEnumMembers();
@@ -1248,7 +1252,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             if (tokenType == Token.INVALID_TYPE) {
                 final String msg = String.format("Token name: %s is not recognized by parser %s", name,
                     parser.toString());
-                addError(ctx.qname(), msg);
+                error(ctx.qname(), msg);
             }
             return typeFactory.zeroOrMore(typeFactory.itemElement(Set.of(name)));
         } else { // test for rule
@@ -1256,7 +1260,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             if (ruleIndex == -1) {
                 final String msg = String.format("Rule name: %s is not recognized by parser %s", name,
                     parser.getClass().toString());
-                addError(ctx.qname(), msg);
+                error(ctx.qname(), msg);
             }
             return typeFactory.zeroOrMore(typeFactory.itemElement(Set.of(name)));
         }
@@ -1271,7 +1275,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         for (int i = 0; i < ctx.rangeExpr().size(); i++) {
             final var visitedType = ctx.rangeExpr(i).accept(this);
             if (!visitedType.isSubtypeOf(anyItems)) {
-                addError(ctx.rangeExpr(i), "Operands of 'or expression' need to be subtype of item()?");
+                error(ctx.rangeExpr(i), "Operands of 'or expression' need to be subtype of item()?");
             }
         }
         return string;
@@ -1332,71 +1336,66 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     private final SequencetypeAtomization atomizer;
 
 
-    private final static ItemtypeIsPossiblyCastable isValidCastTarget = new ItemtypeIsPossiblyCastable();
+
+    final SequencetypeCastable castability;
 
     @Override
     public XQuerySequenceType visitCastableExpr(CastableExprContext ctx) {
         final var type = this.visitCastTarget(ctx.castTarget());
-        if (!isValidCastTarget.test(type.getItemType())) {
-            addError(ctx, "Type: " + type + "is an invalid cast target");
-            return boolean_;
-        }
         final var tested = this.visitCastExpr(ctx.castExpr());
+        final boolean emptyAllowed = ctx.castTarget().QUESTION_MARK() != null;
+        IsCastableResult result = castability.isCastable(type, tested, emptyAllowed);
+        switch(result.castability()) {
+            case UNNECESSARY:
+                warn(ctx, "Unnecessary castability test");
+                break;
+            case OK:
+                break;
+            case WRONG_TARGET_TYPE:
+                error(ctx, "Type: " + type + " is invalid casting target");
+            case TESTED_EXPRESSION_IS_EMPTY_SEQUENCE:
+                error(ctx, "Tested expression is an empty sequence");
+            case TESTED_EXPRESSION_CAN_BE_EMPTY_SEQUENCE_WITHOUT_FLAG:
+                error(ctx, "Tested expression of type " + tested + " can be an empty sequence without flag '?'");
+            case TESTED_EXPRESSION_IS_ZERO_OR_MORE:
+                error(ctx, "Tested expression of type " + tested + " can be a sequence of cardinality greater than one (or '?')");
+        }
+        return result.resultingType();
+    }
+
+
+    @Override
+    public com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType visitCastExpr(CastExprContext ctx) {
+        final var type = this.visitCastTarget(ctx.castTarget());
+        if (!isValidCastTarget.test(type.getItemType())) {
+            error(ctx, "Type: " + type + "is an invalid cast target for type");
+            return anyItems;
+        }
+        final var tested = this.visitPipelineExpr(ctx.pipelineExpr());
         final var atomized = atomizer.atomize(tested);
         final boolean emptyAllowed = ctx.castTarget().QUESTION_MARK() != null;
         switch (atomized.getOccurence()) {
             case ZERO:
                 if (emptyAllowed) {
-                    addError(ctx, "Empty sequence is not allowed without adding '?' after target type");
+                    error(ctx, "Empty sequence is not allowed without adding '?' after target type");
                 } else {
-                    warn(ctx, "Empty sequence as input of castable expression");
+                    warn(ctx, "Empty sequence as input of cast expression");
                 }
                 break;
             case ZERO_OR_ONE:
                 if (emptyAllowed) {
-                    addError(ctx, "Empty sequence is not allowed without adding '?' after target type");
+                    error(ctx, "Empty sequence is not allowed without adding '?' after target type");
                 }
-                handleCastable(ctx, atomized, tested, type, typeFactory.zeroOrOne(atomized.getItemType()));
+                handleCast(ctx, atomized, tested, type, typeFactory.zeroOrOne(atomized.getItemType()));
                 break;
             case ONE:
-                handleCastable(ctx, atomized, tested, type, typeFactory.one(atomized.getItemType()));
+                handleCast(ctx, atomized, tested, type, typeFactory.one(atomized.getItemType()));
                 break;
             default:
-                addError(ctx, "Sequences cannot be the target of casting unless they are of type item() or item()? when '?' is specified");
+                error(ctx, "Sequences cannot be the target of casting unless they are of type item() or item()? when '?' is specified");
         };
         return boolean_;
     }
-
-    // @Override
-    // public XQuerySequenceType visitCastableExpr(CastableExprContext ctx) {
-    //     final var type = this.visitCastTarget(ctx.castTarget());
-    //     if (!isValidCastTarget.test(type.getItemType())) {
-    //         addError(ctx, "Type: " + type + "is an invalid cast target for type");
-    //         return anyItems;
-    //     }
-    //     final var tested = this.visitCastExpr(ctx.castExpr());
-    //     final var atomized = atomizer.atomize(tested);
-    //     return switch (atomized.getOccurence()) {
-    //         case ZERO -> {
-    //             warn(ctx, "Empty sequence as input of castable expression");
-    //             yield atomized;
-    //         }
-    //         case ZERO_OR_ONE ->  {
-    //             if (ctx.castTarget().QUESTION_MARK() != null) {
-    //                 addError(ctx, "Empty sequence is not allowed without adding '?' after target type");
-    //                 yield anyItems;
-    //             }
-    //             yield handleZeroOrOne(ctx, atomized, tested, type, typeFactory.zeroOrOne(atomized.getItemType()));
-    //         }
-    //         case ONE -> null;
-    //         default->{
-    //             addError(ctx, "Sequences cannot be the target of casting unless they are of type item() or item()? when '?' is specified");
-    //             yield anyItems;
-    //         }
-    //     };
-    // }
-
-
 
     XQuerySequenceType handleCastable(
             CastableExprContext ctx,
@@ -1416,11 +1415,37 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         {
             final var itemtypes = atomizedItemtype.getItemTypes();
             for (final var itemtype : itemtypes) {
-                testCastingZeroOrOne(ctx, castTargetType, errorMessageOnChoiceFailedCasting(atomized, tested, type, itemtype));
+                testCastable(ctx, castTargetType, errorMessageOnChoiceFailedCasting(atomized, tested, type, itemtype));
             }
             return result;
         }
-        testCastingZeroOrOne(ctx, castTargetType, errorMessageOnFailedCasting(atomized, tested, type, atomizedItemtype));
+        testCastable(ctx, castTargetType, errorMessageOnFailedCasting(atomized, tested, type, atomizedItemtype));
+        return result;
+    }
+
+    XQuerySequenceType handleCast(
+            CastExprContext ctx,
+            XQuerySequenceType atomized,
+            XQuerySequenceType tested,
+            XQuerySequenceType type,
+            XQuerySequenceType result)
+    {
+        if (atomized.itemtypeIsSubtypeOf(tested)) {
+            warn(ctx, "Unnecessary castability test");
+            return type;
+        }
+        final XQueryItemType atomizedItemtype = atomized.getItemType();
+        final XQueryTypes atomizedItemtypeType = atomizedItemtype.getType();
+        final XQueryTypes castTargetType = type.getItemType().getType();
+        if (atomizedItemtypeType == XQueryTypes.CHOICE)
+        {
+            final var itemtypes = atomizedItemtype.getItemTypes();
+            for (final var itemtype : itemtypes) {
+                testCasting(ctx, castTargetType, errorMessageOnChoiceFailedCasting(atomized, tested, type, itemtype));
+            }
+            return result;
+        }
+        testCasting(ctx, castTargetType, errorMessageOnFailedCasting(atomized, tested, type, atomizedItemtype));
         return result;
     }
 
@@ -1452,14 +1477,24 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
                                                   + type;
     }
 
-
-    void testCastingZeroOrOne(CastableExprContext ctx, XQueryTypes castTargetType, Supplier<String> errorMessageSupplier)
+    void testCastable(ParserRuleContext ctx, XQueryTypes castTargetType, Supplier<String> errorMessageSupplier)
     {
         switch (castTargetType) {
             case STRING, NUMBER, ENUM, BOOLEAN:
                 break;
             default:
-                addError(ctx, errorMessageSupplier.get());
+                error(ctx, errorMessageSupplier.get());
+        };
+    }
+
+
+    void testCasting(ParserRuleContext ctx, XQueryTypes castTargetType, Supplier<String> errorMessageSupplier)
+    {
+        switch (castTargetType) {
+            case STRING, NUMBER, ENUM, BOOLEAN:
+                break;
+            default:
+                error(ctx, errorMessageSupplier.get());
         };
     }
 
@@ -1496,7 +1531,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             case STRING, NUMBER, ENUM, BOOLEAN:
                 break;
             default:
-                addError(ctx, errorMessageSupplier.get());
+                error(ctx, errorMessageSupplier.get());
         };
     }
 
@@ -1585,11 +1620,11 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
                         var typeRef = typeFactory.itemNamedType(error.getText());
                         if (typeRef == null) {
                             typeRef = errorType;
-                            addError(c, "Unknown error in try/catch: " + error.getText());
+                            error(c, "Unknown error in try/catch: " + error.getText());
                         }
                         if (!typeRef.itemtypeIsSubtypeOf(errorType)) {
                             typeRef = errorType;
-                            addError(c,
+                            error(c,
                                 "Type " + typeRef.toString() + " is not an error in try/catch: " + error.getText());
                         }
                         foundErrors.add(typeRef);
@@ -1624,7 +1659,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
                 for (final var qname : catchClause.pureNameTestUnion().nameTest()) {
                     final String name = qname.getText();
                     if (errors.contains(name)) {
-                        addError(qname, "Error: " + name + "already used in catch clause");
+                        error(qname, "Error: " + name + "already used in catch clause");
                     } else {
                         errors.add(name);
                     }
@@ -1637,7 +1672,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         int wildcardCount = 0;
         for (final var catchClause : ctx.catchClause()) {
             if (catchClause.wildcard() != null && wildcardCount++ > 1) {
-                addError(catchClause, "Unnecessary catch clause, wildcard already used");
+                error(catchClause, "Unnecessary catch clause, wildcard already used");
             }
         }
 
@@ -1647,7 +1682,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             context.setType(typeFactory.anyNode());
             final XQuerySequenceType finallyType = finallyClause.enclosedExpr().accept(this);
             if (!finallyType.isSubtypeOf(emptySequence)) {
-                addError(finallyClause,
+                error(finallyClause,
                     "Finally clause needs to evaluate to empty sequence, currently:" + finallyType.toString());
             }
         }
@@ -1710,7 +1745,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         for (int i = 0; i <= operatorCount; i++) {
             final var visitedType = ctx.comparisonExpr(i).accept(this);
             if (!visitedType.hasEffectiveBooleanValue()) {
-                addError(ctx.comparisonExpr(i), "Operands of 'or expression' need to have effective boolean value");
+                error(ctx.comparisonExpr(i), "Operands of 'or expression' need to have effective boolean value");
             }
             i++;
         }
@@ -1726,7 +1761,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         for (final var operandExpr : ctx.multiplicativeExpr()) {
             final var operand = operandExpr.accept(this);
             if (!operand.isSubtypeOf(number)) {
-                addError(operandExpr,
+                error(operandExpr,
                     "Operands in additive expression must be numeric, received: " + operand.toString());
             }
         }
@@ -1755,7 +1790,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (!leftHandSide.isSubtypeOf(rightHandSide)) {
             final String msg = String.format("The types: %s and %s in general comparison are not comparable",
                 leftHandSide.toString(), rightHandSide.toString());
-            addError(ctx, msg);
+            error(ctx, msg);
         }
         return typeFactory.boolean_();
     }
@@ -1767,19 +1802,19 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         final var optionalItem = typeFactory.zeroOrOne(typeFactory.itemAnyItem());
         final var optionalBoolean = typeFactory.zeroOrOne(typeFactory.itemBoolean());
         if (!leftHandSide.isSubtypeOf(optionalItem)) {
-            addError(ctx.otherwiseExpr(0),
+            error(ctx.otherwiseExpr(0),
                 "Left hand side of 'or expression' must be of type 'item()?', received: "
                     + leftHandSide.toString());
         }
         if (!rightHandSide.isSubtypeOf(optionalItem)) {
-            addError(ctx.otherwiseExpr(1),
+            error(ctx.otherwiseExpr(1),
                 "Right hand side of 'or expression' must be of type 'item()?', received: "
                     + leftHandSide.toString());
         }
         if (!leftHandSide.isValueComparableWith(rightHandSide)) {
             final String msg = String.format("The types: %s and %s in value comparison are not comparable",
                 leftHandSide.toString(), rightHandSide.toString());
-            addError(ctx, msg);
+            error(ctx, msg);
         }
         if (leftHandSide.isSubtypeOf(typeFactory.anyItem())
             && rightHandSide.isSubtypeOf(typeFactory.anyItem())) {
@@ -1794,12 +1829,12 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         final var optionalBoolean = typeFactory.zeroOrOne(typeFactory.itemBoolean());
         final var visitedLeft = ctx.otherwiseExpr(0).accept(this);
         if (!visitedLeft.isSubtypeOf(anyNode)) {
-            addError(ctx.otherwiseExpr(0),
+            error(ctx.otherwiseExpr(0),
                 "Operands of node comparison must be of type 'node()?', received: " + visitedLeft.toString());
         }
         final var visitedRight = ctx.otherwiseExpr(1).accept(this);
         if (!visitedRight.isSubtypeOf(anyNode)) {
-            addError(ctx.otherwiseExpr(1),
+            error(ctx.otherwiseExpr(1),
                 "Operands of node comparison must be of type 'node()?', received: " + visitedRight.toString());
         }
         return optionalBoolean;
@@ -1815,7 +1850,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         for (final var expr : ctx.unionExpr()) {
             final var visitedType = expr.accept(this);
             if (!visitedType.isSubtypeOf(number)) {
-                addError(ctx, "Multiplicative expression requires a number, received: " + visitedType.toString());
+                error(ctx, "Multiplicative expression requires a number, received: " + visitedType.toString());
             }
         }
         return number;
@@ -1846,7 +1881,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         var expressionNode = ctx.intersectExpr(0);
         var expressionType = expressionNode.accept(this);
         if (!expressionType.isSubtypeOf(zeroOrMoreNodes)) {
-            addError(expressionNode,
+            error(expressionNode,
                 "Expression of union operator node()* | node()* does match the type 'node()', received type: "
                     + expressionType.toString());
             expressionType = zeroOrMoreNodes;
@@ -1856,7 +1891,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             expressionNode = ctx.intersectExpr(i);
             final var visitedType = expressionNode.accept(this);
             if (!visitedType.isSubtypeOf(zeroOrMoreNodes)) {
-                addError(expressionNode,
+                error(expressionNode,
                     "Expression of union operator node()* | node()* does match the type 'node()', received type: "
                         + expressionType.toString());
                 expressionType = zeroOrMoreNodes;
@@ -1876,7 +1911,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         var expressionType = ctx.instanceofExpr(0).accept(this);
         final var zeroOrMoreNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
         if (!expressionType.isSubtypeOf(zeroOrMoreNodes)) {
-            addError(ctx.instanceofExpr(0),
+            error(ctx.instanceofExpr(0),
                 "Expression of operator node()* except/intersect node()* does match the type 'node()', received type: "
                     + expressionType.toString());
             expressionType = zeroOrMoreNodes;
@@ -1886,7 +1921,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             final var instanceofExpr = ctx.instanceofExpr(i);
             final var visitedType = instanceofExpr.accept(this);
             if (!visitedType.isSubtypeOf(zeroOrMoreNodes)) {
-                addError(ctx.instanceofExpr(i),
+                error(ctx.instanceofExpr(i),
                     "Expression of operator node()* except/intersect node()* does match the type 'node()', received type: "
                         + expressionType.toString());
                 expressionType = zeroOrMoreNodes;
@@ -1908,7 +1943,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         }
         final var type = ctx.simpleMapExpr().accept(this);
         if (!type.isSubtypeOf(number)) {
-            addError(ctx, "Arithmetic unary expression requires a number");
+            error(ctx, "Arithmetic unary expression requires a number");
         }
         return number;
     }
@@ -1983,7 +2018,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         return saved;
     }
 
-    void addError(final ParserRuleContext where, final String message)
+    void error(final ParserRuleContext where, final String message)
     {
         final Token start = where.getStart();
         final Token stop = where.getStop();
@@ -2049,7 +2084,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             final var msg = String.format(
                 "If condition must have an effective boolean value and the type %s doesn't have one",
                 conditionType.toString());
-            addError(ctx, msg);
+            error(ctx, msg);
         }
         XQuerySequenceType trueType = null;
         XQuerySequenceType falseType = null;
@@ -2090,7 +2125,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
                 ? typeDeclaration.accept(this)
                 : anyItems;
             if (argumentNames.contains(parameterName))
-                addError(parameter, "Duplicate parameter name: " + parameterName);
+                error(parameter, "Duplicate parameter name: " + parameterName);
             argumentNames.add(parameterName);
             args.add(parameterType);
             contextManager.entypeVariable(parameterName, parameterType);
@@ -2104,7 +2139,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
                 final String msg = String.format(
                     "Function body type %s is not a subtype of the declared return type %s",
                     inlineType.toString(), returnedType.toString());
-                addError(ctx.functionBody(), msg);
+                error(ctx.functionBody(), msg);
             }
         } else {
             returnedType = inlineType;

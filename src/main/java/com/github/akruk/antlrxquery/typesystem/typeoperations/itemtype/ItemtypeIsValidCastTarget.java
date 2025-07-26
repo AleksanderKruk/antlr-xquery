@@ -2,7 +2,7 @@ package com.github.akruk.antlrxquery.typesystem.typeoperations.itemtype;
 
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
 
-public class ItemtypeIsPossiblyCastable extends ItemtypeUnaryDirectPredicate
+public class ItemtypeIsValidCastTarget extends ItemtypeUnaryDirectPredicate
 {
     public boolean test(XQueryItemType x) {
         return automaton[x.getType().ordinal()];

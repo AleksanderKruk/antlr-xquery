@@ -6,7 +6,7 @@ import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
-import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryEnumTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -17,7 +17,7 @@ import static org.junit.Assert.*;
 
 public class XQueryTypesTest {
 
-    final XQueryTypeFactory typeFactory = new XQueryEnumTypeFactory(new HashMap<>());
+    final XQueryTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new HashMap<>());
     final XQuerySequenceType error = typeFactory.error();
     final XQuerySequenceType boolean_ = typeFactory.boolean_();
     final XQuerySequenceType string = typeFactory.string();

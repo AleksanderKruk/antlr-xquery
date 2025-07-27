@@ -14,11 +14,11 @@ import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySeman
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQuerySemanticFunctionManager;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
-import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryEnumTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTypeSets;
 
 public class SemanticTestsBase {
-    final protected XQueryTypeFactory typeFactory = new XQueryEnumTypeFactory(new XQueryNamedTypeSets().all());
+    final protected XQueryTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
 
     record AnalysisResult(XQuerySemanticAnalyzer analyzer, XQuerySequenceType expressionType) {
     };

@@ -24,7 +24,7 @@ import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMe
 import com.github.akruk.antlrxquery.evaluator.values.operations.ValueAtomizer;
 import com.github.akruk.antlrxquery.evaluator.values.operations.ValueComparisonOperator;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
-import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryEnumTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTypeSets;
 
 public class EvaluationTestsBase {
@@ -34,7 +34,7 @@ public class EvaluationTestsBase {
     public final ValueComparisonOperator valueOperator;
 
     public EvaluationTestsBase() {
-        typeFactory = new XQueryEnumTypeFactory(new XQueryNamedTypeSets().all());
+        typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
         valueFactory = new XQueryMemoizedValueFactory(typeFactory);
         atomizer = new ValueAtomizer();
         valueOperator = new ValueComparisonOperator(valueFactory);

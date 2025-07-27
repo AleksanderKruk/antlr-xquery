@@ -5,7 +5,7 @@ import org.junit.Test;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
-import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryEnumTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTypeSets;
 
 import static org.junit.Assert.assertEquals;
@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class TypeStringRepresentationTests {
-    final XQueryTypeFactory typeFactory = new XQueryEnumTypeFactory(new XQueryNamedTypeSets().all());
+    final XQueryTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
     @Test
     public void testItemNumber() {
         assertEquals("number", typeFactory.one(typeFactory.itemNumber()).toString());

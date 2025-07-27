@@ -11,16 +11,16 @@ import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.defaults.*;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
-public class XQueryEnumTypeFactory implements XQueryTypeFactory {
-    private final XQueryItemTypeError ERROR_ITEM_TYPE = new XQueryItemTypeError(this);
-    private final XQueryItemTypeString STRING_ITEM_TYPE = new XQueryItemTypeString(this);
-    private final XQueryItemTypeNumber NUMBER_ITEM_TYPE = new XQueryItemTypeNumber(this);
-    private final XQueryItemTypeAnyNode ANY_NODE_TYPE = new XQueryItemTypeAnyNode(this);
-    private final XQueryItemTypeAnyArray ANY_ARRAY = new XQueryItemTypeAnyArray(this);
-    private final XQueryItemTypeBoolean BOOLEAN_ITEM_TYPE = new XQueryItemTypeBoolean(this);
-    private final XQueryItemTypeAnyItem ANY_ITEM_TYPE = new XQueryItemTypeAnyItem(this);
-    private final XQueryItemTypeAnyFunction ANY_FUNCTION = new XQueryItemTypeAnyFunction(this);
-    private final XQueryItemTypeAnyMap ANY_MAP = new XQueryItemTypeAnyMap(this);
+public class XQueryMemoizedTypeFactory implements XQueryTypeFactory {
+    private final XQueryItemType ERROR_ITEM_TYPE = XQueryItemType.error(this);
+    private final XQueryItemType STRING_ITEM_TYPE = XQueryItemType.string(this);
+    private final XQueryItemType NUMBER_ITEM_TYPE = XQueryItemType.number(this);
+    private final XQueryItemType ANY_NODE_TYPE = XQueryItemType.anyNode(this);
+    private final XQueryItemType ANY_ARRAY = XQueryItemType.anyArray(this);
+    private final XQueryItemType BOOLEAN_ITEM_TYPE = XQueryItemType.boolean_(this);
+    private final XQueryItemType ANY_ITEM_TYPE = XQueryItemType.anyItem(this);
+    private final XQueryItemType ANY_FUNCTION = XQueryItemType.anyFunction(this);
+    private final XQueryItemType ANY_MAP = XQueryItemType.anyMap(this);
 
     private final Map<XQuerySequenceType, XQuerySequenceType> arrays = new HashMap<>();
     private final Map<XQueryItemType, Map<XQuerySequenceType, XQuerySequenceType>> maps=new HashMap<>();
@@ -40,22 +40,22 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
     private final XQuerySequenceType ANY_FUNCTION_TYPE = one(ANY_FUNCTION);
     private final XQuerySequenceType ANY_ITEM = one(ANY_ITEM_TYPE);
     private final XQuerySequenceType BOOLEAN_TYPE = one(BOOLEAN_ITEM_TYPE);
-    private final XQuerySequenceType EMPTY_SEQUENCE = new XQueryEmptySequenceType(this);
+    private final XQuerySequenceType EMPTY_SEQUENCE = XQuerySequenceType.emptySequence(this);
 
 
 
-    public XQueryEnumTypeFactory(final Map<String, XQueryItemType> predefinedNamedTypes) {
+    public XQueryMemoizedTypeFactory(final Map<String, XQueryItemType> predefinedNamedTypes) {
         namedTypes = predefinedNamedTypes;
     }
 
     @Override
     public XQueryItemType itemRecord(final Map<String, XQueryRecordField> fields) {
-        return new XQueryItemTypeRecord(fields, this);
+        return XQueryItemType.contrainedRecord(fields, this);
     }
 
     @Override
     public XQueryItemType itemExtensibleRecord(final Map<String, XQueryRecordField> fields) {
-        return new XQueryItemTypeExtensibleRecord(fields, this);
+        return XQueryItemType.extensibleRecord(fields, this);
     }
 
     @Override
@@ -91,7 +91,7 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
 
     @Override
     public XQueryItemType itemElement(final Set<String> elementName) {
-        return elementTypes.computeIfAbsent(elementName, k -> new XQueryItemTypeElement(k, this));
+        return elementTypes.computeIfAbsent(elementName, k -> XQueryItemType.element(k, this));
     }
 
     @Override
@@ -121,7 +121,7 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
 
     @Override
     public XQueryItemType itemEnum(final Set<String> memberNames) {
-        return enums.computeIfAbsent(memberNames, k -> new XQueryItemTypeEnum(k, this));
+        return enums.computeIfAbsent(memberNames, k -> XQueryItemType.enum_(k, this));
     }
 
     @Override
@@ -156,7 +156,7 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
 
     @Override
     public XQueryItemType itemArray(final XQuerySequenceType itemType) {
-        return new XQueryItemTypeArray((XQuerySequenceType) itemType, this);
+        return XQueryItemType.array(itemType, this);
     }
 
     @Override
@@ -164,11 +164,11 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
         final List<XQuerySequenceType> argumentTypesEnum = argumentTypes.stream()
                 .map(t -> (XQuerySequenceType) t)
                 .collect(Collectors.toList());
-        return new XQueryItemTypeFunction(returnType, argumentTypesEnum, this);
+        return XQueryItemType.function(returnType, argumentTypesEnum, this);
     }
     @Override
     public XQueryItemType itemMap(final XQueryItemType keyType, final XQuerySequenceType valueType) {
-        return new XQueryItemTypeMap((XQueryItemType) keyType, (XQuerySequenceType) valueType, this);
+        return XQueryItemType.map((XQueryItemType) keyType, (XQuerySequenceType) valueType, this);
     }
 
     @Override
@@ -243,7 +243,7 @@ public class XQueryEnumTypeFactory implements XQueryTypeFactory {
 
     @Override
     public XQueryItemType itemChoice(final Collection<XQueryItemType> items) {
-        return new XQueryChoiceItemType(items, this);
+        return XQueryItemType.choice(this, items);
     }
 
     @Override

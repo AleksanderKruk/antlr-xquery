@@ -17,7 +17,7 @@ import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMe
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQuerySemanticFunctionManager;
-import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryEnumTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTypeSets;
 
 public final class XQuery {
@@ -32,7 +32,7 @@ public final class XQuery {
         root.children = List.of(tree);
         tree.setParent(root);
     }
-    final XQueryEnumTypeFactory typeFactory = new XQueryEnumTypeFactory(new XQueryNamedTypeSets().all());
+    final XQueryMemoizedTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
     final XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory(typeFactory);
     final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(parser,
         new XQuerySemanticContextManager(),

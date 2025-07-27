@@ -16,7 +16,7 @@ import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQuerySemanticFunctionManager;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
-import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryEnumTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTypeSets;
 
 import javax.tools.*;
@@ -99,7 +99,7 @@ public class XQueryRunner {
 
             final String targetFile = Files.readString(Path.of(targetFiles.get(0)));
             final ParserAndTree parserAndTree = parseTargetFile(targetFile, lexerClass, parserClass, startingRule);
-            final XQueryTypeFactory typeFactory = new XQueryEnumTypeFactory(new XQueryNamedTypeSets().all());
+            final XQueryTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
             final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
                     parserAndTree.parser,
                     new XQuerySemanticContextManager(),
@@ -141,7 +141,7 @@ public class XQueryRunner {
     {
         try {
             final ParserAndTree parserAndTree = parseTargetFile(input, lexerClass, parserClass, startingRule);
-            final XQueryTypeFactory typeFactory = new XQueryEnumTypeFactory(new XQueryNamedTypeSets().all());
+            final XQueryTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
             final XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory(typeFactory);
             final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(parserAndTree.parser,
                 new XQuerySemanticContextManager(),

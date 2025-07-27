@@ -14,19 +14,19 @@ public class SequencetypeAtomization {
     }
 
     public XQuerySequenceType atomize(XQuerySequenceType type) {
-        if (type.isZero())
+        if (type.isZero)
             return type;
-        final XQueryItemType itemType = type.getItemType();
-        return switch(itemType.getType()) {
+        final XQueryItemType itemType = type.itemType;
+        return switch(itemType.type) {
             case ANY_ARRAY -> anyItems;
             case ANY_ITEM -> anyItems;
-            case ARRAY -> typeFactory.zeroOrMore(itemType.getArrayMemberType().getItemType());
+            case ARRAY -> typeFactory.zeroOrMore(itemType.arrayMemberType.itemType);
             case CHOICE ->{
                 XQuerySequenceType result = null;
-                for (var membertype : itemType.getItemTypes()) {
-                    result = switch(membertype.getType()) {
+                for (var membertype : itemType.itemTypes) {
+                    result = switch(membertype.type) {
                         case ARRAY -> {
-                            var atomized = typeFactory.zeroOrMore(itemType.getArrayMemberType().getItemType());
+                            var atomized = typeFactory.zeroOrMore(itemType.arrayMemberType.itemType);
                             yield result == null? atomized : result.alternativeMerge(atomized);
                         }
                         case ANY_ITEM -> anyItems;

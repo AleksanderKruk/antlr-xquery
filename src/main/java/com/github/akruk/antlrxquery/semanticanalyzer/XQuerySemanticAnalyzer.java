@@ -33,7 +33,6 @@ import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper.XQuery
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemTypeEnum;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType.RelativeCoercability;
@@ -42,7 +41,6 @@ import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypeAtomiz
 import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypeCastable;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypeCastable.Castability;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypeCastable.IsCastableResult;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.itemtype.ItemtypeIsValidCastTarget;
 
 
 public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQuerySequenceType> {
@@ -174,7 +172,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
         checkPositionalVariableDistinct(ctx.positionalVar(), variableName, ctx);
 
-        final XQueryItemType itemType = sequenceType.getItemType();
+        final XQueryItemType itemType = sequenceType.itemType;
         final XQuerySequenceType iteratorType = (ctx.allowingEmpty() != null)
                 ? typeFactory.zeroOrOne(itemType)
                 : typeFactory.one(itemType);
@@ -198,7 +196,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
         checkPositionalVariableDistinct(ctx.positionalVar(), variableName, ctx);
 
-        final XQuerySequenceType memberType = arrayType.getArrayMemberType();
+        final XQuerySequenceType memberType = arrayType.itemType.arrayMemberType;
         final XQuerySequenceType iteratorType = memberType.addOptionality();
 
         processVariableTypeDeclaration(ctx.varNameAndType(), iteratorType, variableName, ctx);
@@ -234,7 +232,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         // Process key binding
         if (keyBinding != null) {
             final String keyVariableName = keyBinding.varNameAndType().qname().getText();
-            final XQueryItemType keyType = mapType.getMapKeyType();
+            final XQueryItemType keyType = mapType.itemType.mapKeyType;
             final XQuerySequenceType keyIteratorType = typeFactory.one(keyType);
 
             checkPositionalVariableDistinct(ctx.positionalVar(), keyVariableName, ctx);
@@ -244,7 +242,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         // Process value binding
         if (valueBinding != null) {
             final String valueVariableName = valueBinding.varNameAndType().qname().getText();
-            final XQuerySequenceType valueType = mapType.getMapValueType();
+            final XQuerySequenceType valueType = mapType.itemType.mapValueType;
 
             checkPositionalVariableDistinct(ctx.positionalVar(), valueVariableName, ctx);
             processVariableTypeDeclaration(valueBinding.varNameAndType(), valueType, valueVariableName, ctx);
@@ -293,7 +291,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (ctx.EMPTY_SEQUENCE() != null) {
             return emptySequence;
         }
-        final var itemType = ctx.itemType().accept(this).getItemType();
+        final var itemType = ctx.itemType().accept(this).itemType;
         if (ctx.occurrenceIndicator() == null) {
             return typeFactory.one(itemType);
         }
@@ -323,7 +321,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             error(ctx, "Duplicated type signatures in choice item type declaration");
         }
         final var choiceItems = itemTypes.stream().map(i -> i.accept(this))
-            .map(sequenceType -> sequenceType.getItemType())
+            .map(sequenceType -> sequenceType.itemType)
             .toList();
         return typeFactory.choice(choiceItems);
     }
@@ -378,7 +376,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             return typeFactory.anyMap();
         }
         final var map = ctx.typedMapType();
-        final XQueryItemType keyType = map.itemType().accept(this).getItemType();
+        final XQueryItemType keyType = map.itemType().accept(this).itemType;
         final XQuerySequenceType valueType = map.sequenceType().accept(this);
         return typeFactory.map(keyType, valueType);
     }
@@ -438,7 +436,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     {
         final var filteringExpression = ctx.exprSingle();
         final var filteringExpressionType = filteringExpression.accept(this);
-        if (!filteringExpressionType.hasEffectiveBooleanValue()) {
+        if (!filteringExpressionType.hasEffectiveBooleanValue) {
             error(filteringExpression, "Filtering expression must have effective boolean value");
         }
         returnedOccurrence = addOptionality(returnedOccurrence);
@@ -468,13 +466,13 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
 
     private int occurrence(final XQuerySequenceType type)
     {
-        if (type.isZero())
+        if (type.isZero)
             return 0;
-        if (type.isOne())
+        if (type.isOne)
             return 1;
-        if (type.isZeroOrOne())
+        if (type.isZeroOrOne)
             return 2;
-        if (type.isZeroOrMore())
+        if (type.isZeroOrMore)
             return 3;
         return 4;
     }
@@ -495,7 +493,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     public XQuerySequenceType visitReturnClause(final ReturnClauseContext ctx)
     {
         final var type = ctx.exprSingle().accept(this);
-        final var itemType = type.getItemType();
+        final var itemType = type.itemType;
         returnedOccurrence = mergeFLWOROccurrence(type);
         return switch (returnedOccurrence) {
             case 0 -> emptySequence;
@@ -511,7 +509,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     {
         final var filteringExpression = ctx.exprSingle();
         final var filteringExpressionType = filteringExpression.accept(this);
-        if (!filteringExpressionType.hasEffectiveBooleanValue()) {
+        if (!filteringExpressionType.hasEffectiveBooleanValue) {
             error(filteringExpression, "Filtering expression must have effective boolean value");
         }
         returnedOccurrence = addOptionality(returnedOccurrence);
@@ -702,7 +700,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         }
 
         final XQuerySequenceType queriedType = criterionNode.accept(this);
-        if (!queriedType.hasEffectiveBooleanValue()) {
+        if (!queriedType.hasEffectiveBooleanValue) {
             error(criterionNode, "Criterion value needs to have effective boolean value");
         }
 
@@ -718,7 +716,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         final var orCount = ctx.OR().size();
         for (int i = 0; i <= orCount; i++) {
             final var visitedType = ctx.andExpr(i).accept(this);
-            if (!visitedType.hasEffectiveBooleanValue()) {
+            if (!visitedType.hasEffectiveBooleanValue) {
                 error(ctx.andExpr(i), "Operands of 'or expression' need to have effective boolean value");
             }
             i++;
@@ -844,17 +842,17 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (predicateExpression.isSubtypeOf(emptySequence))
             return emptySequence;
         if (predicateExpression.isSubtypeOf(typeFactory.zeroOrOne(typeFactory.itemNumber()))) {
-            final var item = contextType.getItemType();
+            final var item = contextType.itemType;
             final var deducedType = typeFactory.zeroOrOne(item);
             return deducedType;
         }
         if (predicateExpression.isSubtypeOf(typeFactory.zeroOrMore(typeFactory.itemNumber()))) {
-            final var item = contextType.getItemType();
+            final var item = contextType.itemType;
             final var deducedType = typeFactory.zeroOrMore(item);
             context.setType(deducedType);
             return deducedType;
         }
-        if (!predicateExpression.hasEffectiveBooleanValue()) {
+        if (!predicateExpression.hasEffectiveBooleanValue) {
             final var msg = String.format(
                 "Predicate requires either number* type (for item by index aquisition) or a value that has effective boolean value, provided type: %s",
                 predicateExpression);
@@ -884,7 +882,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         context = savedContext;
 
         if (isCallable)
-            return value.getReturnedType();
+            return value.itemType.returnedType;
         else
             return typeFactory.zeroOrMore(typeFactory.itemAnyItem());
     }
@@ -907,12 +905,12 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         final XQuerySequenceType targetType,
         XQuerySequenceType keySpecifierType)
     {
-        if (targetType.isZero()) {
+        if (targetType.isZero) {
             warn(ctx, "Target type of lookup expression is an empty sequence");
             return emptySequence;
         }
         final boolean isWildcard = keySpecifierType == null;
-        if (!isWildcard && keySpecifierType.isZero()) {
+        if (!isWildcard && keySpecifierType.isZero) {
             warn(ctx, "Empty sequence as key specifier in lookup expression");
             return emptySequence;
         }
@@ -921,9 +919,9 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             return anyItems;
         }
 
-        switch (targetType.getItemType().getType()) {
+        switch (targetType.itemType.type) {
             case ARRAY:
-                final XQuerySequenceType targetItemType = targetType.getArrayMemberType();
+                final XQuerySequenceType targetItemType = targetType.itemType.arrayMemberType;
                 if (targetItemType == null)
                     return anyItems;
                 final XQuerySequenceType result = targetItemType.sequenceMerge(targetItemType).addOptionality();
@@ -962,14 +960,14 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (isWildcard) {
             return null;
         }
-        final XQueryItemType targetItemType = targetType.getItemType();
-        final Collection<XQueryItemType> choiceItemTypes = targetItemType.getItemTypes();
+        final XQueryItemType targetItemType = targetType.itemType;
+        final Collection<XQueryItemType> choiceItemTypes = targetItemType.itemTypes;
         XQueryItemType targetKeyItemType = null;
         XQuerySequenceType resultingType = null;
         for (final var itemType : choiceItemTypes) {
             if (resultingType == null) {
                 if (!isWildcard)
-                    resultingType = switch(keySpecifierType.getOccurence()) {
+                    resultingType = switch(keySpecifierType.occurence) {
                         case ONE -> typeFactory.zeroOrOne(itemType);
                         default -> typeFactory.zeroOrMore(itemType);
                     };
@@ -979,14 +977,14 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
                 continue;
             }
 
-            switch (itemType.getType()) {
+            switch (itemType.type) {
                 case ARRAY:
-                    resultingType = resultingType.alternativeMerge(itemType.getArrayMemberType());
+                    resultingType = resultingType.alternativeMerge(itemType.arrayMemberType);
                     targetKeyItemType = targetItemType.alternativeMerge(typeFactory.itemNumber());
                     break;
                 case MAP:
-                    resultingType = resultingType.alternativeMerge(itemType.getMapValueType());
-                    targetKeyItemType = targetItemType.alternativeMerge(itemType.getMapKeyType());
+                    resultingType = resultingType.alternativeMerge(itemType.mapValueType);
+                    targetKeyItemType = targetItemType.alternativeMerge(itemType.mapKeyType);
                     break;
                 default:
                     resultingType = anyItems;
@@ -1023,13 +1021,13 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             final XQuerySequenceType keySpecifierType,
             final boolean isWildcard)
     {
-        final XQueryItemType targetKeyItemType = targetType.getMapKeyType();
-        final XQuerySequenceType targetValueType = targetType.getMapValueType();
-        final XQueryItemType targetValueItemtype = targetValueType.getItemType();
+        final XQueryItemType targetKeyItemType = targetType.itemType.mapKeyType;
+        final XQuerySequenceType targetValueType = targetType.itemType.mapValueType;
+        final XQueryItemType targetValueItemtype = targetValueType.itemType;
         if (isWildcard) {
             return typeFactory.zeroOrMore(targetValueItemtype);
         }
-        final XQuerySequenceType result = switch(keySpecifierType.getOccurence()) {
+        final XQuerySequenceType result = switch(keySpecifierType.occurence) {
                 case ONE -> typeFactory.zeroOrOne(targetValueItemtype);
                 default -> typeFactory.zeroOrMore(targetValueItemtype);
             };
@@ -1037,7 +1035,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (!keySpecifierType.isSubtypeOf(expectedKeyItemtype)) {
             error(lookup, "Key type for lookup expression on " + targetType + " must be subtype of type " + expectedKeyItemtype);
         }
-        if (targetValueItemtype.getType() == XQueryTypes.RECORD) {
+        if (targetValueItemtype.type == XQueryTypes.RECORD) {
             return result;
         }
         return result.addOptionality();
@@ -1052,7 +1050,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         final boolean isWildcard)
     {
         final XQueryItemType targetKeyItemType = typeFactory.itemString();
-        final Map<String, XQueryRecordField> recordFields = targetType.getItemType().getRecordFields();
+        final Map<String, XQueryRecordField> recordFields = targetType.itemType.recordFields;
         if (recordFields.isEmpty()) {
             warn(target, "Empty record will always return empty sequence...");
             return emptySequence;
@@ -1084,8 +1082,8 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (!keySpecifierType.isSubtypeOf(expectedKeyItemtype)) {
             error(lookup, "Key type for lookup expression on " + targetType + " must be subtype of type " + expectedKeyItemtype);
         }
-        if (keySpecifierType.getItemType().getType() == XQueryTypes.ENUM) {
-            final var members = ((XQueryItemTypeEnum) keySpecifierType.getItemType()).getEnumMembers();
+        if (keySpecifierType.itemType.type == XQueryTypes.ENUM) {
+            final var members = keySpecifierType.itemType.enumMembers;
             final var firstField = members.stream().findFirst().get();
             final var firstRecordField = recordFields.get(firstField);
             XQuerySequenceType merged = firstRecordField.isRequired() ? firstRecordField.type() : firstRecordField.type().addOptionality();
@@ -1116,7 +1114,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             final XQuerySequenceType keySpecifierType, final boolean isWildcard)
     {
         final XQueryItemType targetKeyItemType = typeFactory.itemString();
-        final Map<String, XQueryRecordField> recordFields = targetType.getItemType().getRecordFields();
+        final Map<String, XQueryRecordField> recordFields = targetType.itemType.recordFields;
         if (recordFields.isEmpty()) {
             warn(ctx, "Empty record will always return empty sequence...");
             return emptySequence;
@@ -1147,8 +1145,8 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (!keySpecifierType.isSubtypeOf(expectedKeyItemtype)) {
             error(lookup, "Key type for lookup expression on " + targetType + " must be subtype of type " + expectedKeyItemtype);
         }
-        if (keySpecifierType.getItemType().getType() == XQueryTypes.ENUM) {
-            final var members = ((XQueryItemTypeEnum) keySpecifierType.getItemType()).getEnumMembers();
+        if (keySpecifierType.itemType.type == XQueryTypes.ENUM) {
+            final var members = keySpecifierType.itemType.enumMembers;
             final var firstField = members.stream().findFirst().get();
             final var firstRecordField = recordFields.get(firstField);
             XQuerySequenceType merged = firstRecordField.isRequired() ? firstRecordField.type() : firstRecordField.type().addOptionality();
@@ -1287,7 +1285,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (ctx.EXCLAMATION_MARK().isEmpty())
             return ctx.pathExpr(0).accept(this);
         final XQuerySequenceType firstExpressionType = ctx.pathExpr(0).accept(this);
-        final XQuerySequenceType iterator = firstExpressionType.iteratedItem();
+        final XQuerySequenceType iterator = firstExpressionType.iteratorType();
         final var savedContext = saveContext();
         context.setType(iterator);
         context.setPositionType(number);
@@ -1297,7 +1295,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         for (final var mappedExpression : theRest) {
             final XQuerySequenceType type = mappedExpression.accept(this);
             result = result.mapping(type);
-            context.setType(result.iteratedItem());
+            context.setType(result.iteratorType());
         }
         context = savedContext;
         return result;
@@ -1345,56 +1343,62 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         final var tested = this.visitCastExpr(ctx.castExpr());
         final boolean emptyAllowed = ctx.castTarget().QUESTION_MARK() != null;
         IsCastableResult result = castability.isCastable(type, tested, emptyAllowed);
-        switch(result.castability()) {
-            case UNNECESSARY:
-                warn(ctx, "Unnecessary castability test");
-                break;
-            case POSSIBLE:
-                break;
-            case WRONG_TARGET_TYPE:
-                error(ctx, "Type: " + type + " is invalid casting target");
-            case TESTED_EXPRESSION_IS_EMPTY_SEQUENCE:
-                error(ctx, "Tested expression is an empty sequence");
-            case TESTED_EXPRESSION_CAN_BE_EMPTY_SEQUENCE_WITHOUT_FLAG:
-                error(ctx, "Tested expression of type " + tested + " can be an empty sequence without flag '?'");
-            case TESTED_EXPRESSION_IS_ZERO_OR_MORE:
-                error(ctx, "Tested expression of type " + tested + " can be a sequence of cardinality greater than one (or '?')");
-        }
+        verifyCastability(ctx, type, tested, result.castability(), result);
         return result.resultingType();
+    }
+
+    private <T> void  verifyCastability(ParserRuleContext ctx, final T type, final XQuerySequenceType tested,
+            Castability castability, IsCastableResult result) {
+        switch(castability) {
+        case POSSIBLE:
+            break;
+        case ALWAYS_POSSIBLE_CASTING_TO_SAME:
+            warn(ctx, "Casting from " + tested + " to type " + type + " is a selfcast");
+            break;
+        case ALWAYS_POSSIBLE_CASTING_TO_SUBTYPE:
+            warn(ctx, "Casting from subtype " + tested + " supertype " + type + " will always succeed");
+            break;
+        case ALWAYS_POSSIBLE_CASTING_TO_TARGET:
+            warn(ctx, "Casting from type " + tested + " to type " + type + " will always succeed");
+            break;
+        case ALWAYS_POSSIBLE_MANY_ITEMTYPES:
+            warn(ctx, "Casting from type " + tested + " to type " + type + " will always succeed");
+            final XQueryItemType[] wrongItemtypes = result.wrongItemtypes();
+            final int itemtypeCount = wrongItemtypes.length;
+            for (int i = 0; i < itemtypeCount; i++) {
+                verifyCastability(ctx, wrongItemtypes[i], tested, result.problems()[i], null);
+            }
+            break;
+        case ALWAYS_POSSIBLE_MANY_SEQUENCETYPES:
+            warn(ctx, "Casting from type " + tested + " to type " + type + " will always succeed");
+            break;
+        case IMPOSSIBLE:
+            warn(ctx, "Casting from type " + tested + " to type " + type + " will never succeed");
+            break;
+        case TESTED_EXPRESSION_CAN_BE_EMPTY_SEQUENCE_WITHOUT_FLAG:
+            error(ctx, "Tested expression of type " + tested + " can be an empty sequence without flag '?'");
+            break;
+        case TESTED_EXPRESSION_IS_EMPTY_SEQUENCE:
+            error(ctx, "Tested expression is an empty sequence");
+            break;
+        case TESTED_EXPRESSION_IS_ZERO_OR_MORE:
+            error(ctx, "Tested expression of type " + tested + " can be a sequence of cardinality greater than one (or '?')");
+            break;
+        case WRONG_TARGET_TYPE:
+            error(ctx, "Type: " + type + " is invalid casting target");
+            break;
+        }
     }
 
 
     @Override
     public XQuerySequenceType visitCastExpr(CastExprContext ctx) {
         final var type = this.visitCastTarget(ctx.castTarget());
-        if (!isValidCastTarget.test(type.getItemType())) {
-            error(ctx, "Type: " + type + "is an invalid cast target for type");
-            return anyItems;
-        }
         final var tested = this.visitPipelineExpr(ctx.pipelineExpr());
-        final var atomized = atomizer.atomize(tested);
         final boolean emptyAllowed = ctx.castTarget().QUESTION_MARK() != null;
-        switch (atomized.getOccurence()) {
-            case ZERO:
-                if (emptyAllowed) {
-                    error(ctx, "Empty sequence is not allowed without adding '?' after target type");
-                } else {
-                    warn(ctx, "Empty sequence as input of cast expression");
-                }
-                break;
-            case ZERO_OR_ONE:
-                if (emptyAllowed) {
-                    error(ctx, "Empty sequence is not allowed without adding '?' after target type");
-                }
-                handleCast(ctx, atomized, tested, type, typeFactory.zeroOrOne(atomized.getItemType()));
-                break;
-            case ONE:
-                handleCast(ctx, atomized, tested, type, typeFactory.one(atomized.getItemType()));
-                break;
-            default:
-                error(ctx, "Sequences cannot be the target of casting unless they are of type item() or item()? when '?' is specified");
-        };
-        return boolean_;
+        IsCastableResult result = castability.isCastable(type, tested, emptyAllowed);
+        verifyCastability(ctx, type, tested, result.castability(), result);
+        return result.resultingType();
     }
 
     XQuerySequenceType handleCastable(
@@ -1408,44 +1412,18 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             warn(ctx, "Unnecessary castability test");
             return type;
         }
-        final XQueryItemType atomizedItemtype = atomized.getItemType();
-        final XQueryTypes atomizedItemtypeType = atomizedItemtype.getType();
-        final XQueryTypes castTargetType = type.getItemType().getType();
+        final XQueryItemType atomizedItemtype = atomized.itemType;
+        final XQueryTypes atomizedItemtypeType = atomizedItemtype.type;
+        final XQueryTypes castTargetType = type.itemType.type;
         if (atomizedItemtypeType == XQueryTypes.CHOICE)
         {
-            final var itemtypes = atomizedItemtype.getItemTypes();
+            final var itemtypes = atomizedItemtype.itemTypes;
             for (final var itemtype : itemtypes) {
                 testCastable(ctx, castTargetType, errorMessageOnChoiceFailedCasting(atomized, tested, type, itemtype));
             }
             return result;
         }
         testCastable(ctx, castTargetType, errorMessageOnFailedCasting(atomized, tested, type, atomizedItemtype));
-        return result;
-    }
-
-    XQuerySequenceType handleCast(
-            CastExprContext ctx,
-            XQuerySequenceType atomized,
-            XQuerySequenceType tested,
-            XQuerySequenceType type,
-            XQuerySequenceType result)
-    {
-        if (atomized.itemtypeIsSubtypeOf(tested)) {
-            warn(ctx, "Unnecessary castability test");
-            return type;
-        }
-        final XQueryItemType atomizedItemtype = atomized.getItemType();
-        final XQueryTypes atomizedItemtypeType = atomizedItemtype.getType();
-        final XQueryTypes castTargetType = type.getItemType().getType();
-        if (atomizedItemtypeType == XQueryTypes.CHOICE)
-        {
-            final var itemtypes = atomizedItemtype.getItemTypes();
-            for (final var itemtype : itemtypes) {
-                testCasting(ctx, castTargetType, errorMessageOnChoiceFailedCasting(atomized, tested, type, itemtype));
-            }
-            return result;
-        }
-        testCasting(ctx, castTargetType, errorMessageOnFailedCasting(atomized, tested, type, atomizedItemtype));
         return result;
     }
 
@@ -1499,12 +1477,12 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             warn(ctx, "Unnecessary castability test");
             return type;
         }
-        final XQueryItemType atomizedItemtype = atomized.getItemType();
-        final XQueryTypes atomizedItemtypeType = atomizedItemtype.getType();
-        final XQueryTypes castTargetType = type.getItemType().getType();
+        final XQueryItemType atomizedItemtype = atomized.itemType;
+        final XQueryTypes atomizedItemtypeType = atomizedItemtype.type;
+        final XQueryTypes castTargetType = type.itemType.type;
         if (atomizedItemtypeType == XQueryTypes.CHOICE)
         {
-            final var itemtypes = atomizedItemtype.getItemTypes();
+            final var itemtypes = atomizedItemtype.itemTypes;
             for (final var itemtype : itemtypes) {
                 testCastingOne(ctx, castTargetType, errorMessageOnChoiceFailedCasting(atomized, tested, type, itemtype));
             }
@@ -1689,11 +1667,12 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (entries.isEmpty())
             return typeFactory.anyMap();
         final XQueryItemType keyType = entries.stream()
-            .map(e -> e.mapKeyExpr().accept(this).getItemType())
+            .map(e -> e.mapKeyExpr().accept(this).itemType)
             .reduce((t1, t2) -> t1.alternativeMerge(t2))
             .get();
-        if (keyType instanceof final XQueryItemTypeEnum enum_) {
-            final var enumMembers = enum_.getEnumMembers();
+        if (keyType.type == XQueryTypes.ENUM) {
+            final var enum_ = keyType;
+            final var enumMembers = enum_.enumMembers;
             final List<Entry<String, XQueryRecordField>> recordEntries = new ArrayList<>(enumMembers.size());
             int i = 0;
             for (final var enumMember : enumMembers) {
@@ -1734,7 +1713,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         final var operatorCount = ctx.AND().size();
         for (int i = 0; i <= operatorCount; i++) {
             final var visitedType = ctx.comparisonExpr(i).accept(this);
-            if (!visitedType.hasEffectiveBooleanValue()) {
+            if (!visitedType.hasEffectiveBooleanValue) {
                 error(ctx.comparisonExpr(i), "Operands of 'or expression' need to have effective boolean value");
             }
             i++;
@@ -2070,7 +2049,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     public XQuerySequenceType visitIfExpr(final IfExprContext ctx)
     {
         final var conditionType = ctx.expr().accept(this);
-        if (!conditionType.hasEffectiveBooleanValue()) {
+        if (!conditionType.hasEffectiveBooleanValue) {
             final var msg = String.format(
                 "If condition must have an effective boolean value and the type %s doesn't have one",
                 conditionType.toString());

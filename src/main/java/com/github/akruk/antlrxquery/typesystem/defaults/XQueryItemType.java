@@ -21,28 +21,27 @@ public class XQueryItemType {
     private static final int ENUM = XQueryTypes.ENUM.ordinal();
     private static final int BOOLEAN = XQueryTypes.BOOLEAN.ordinal();
     private static final int NUMBER = XQueryTypes.NUMBER.ordinal();
-    private final XQueryTypes type;
-    private final int typeOrdinal;
+
+    public final XQueryTypes type;
+    public final int typeOrdinal;
 
 
-    private final List<XQuerySequenceType> argumentTypes;
-    private final XQuerySequenceType returnedType;
-    private final XQueryItemType mapKeyType;
-    private final XQuerySequenceType mapValueType;
-    private final Set<String> elementNames;
-    private final Map<String, XQueryRecordField> recordFields;
+    public final List<XQuerySequenceType> argumentTypes;
+    public final XQuerySequenceType returnedType;
+    public final XQuerySequenceType arrayMemberType;
+    public final XQueryItemType mapKeyType;
+    public final XQuerySequenceType mapValueType;
+    public final Set<String> elementNames;
+    public final Map<String, XQueryRecordField> recordFields;
+    public final Collection<XQueryItemType> itemTypes;
+    public final boolean hasEffectiveBooleanValue;
 
     // private final XQueryTypeFactory typeFactory;
-    private final Collection<XQueryItemType> itemTypes;
     private final ItemtypeUnionMerger unionMerger;
     private final ItemtypeSubtyper itemtypeSubtyper;
     private final ItemtypeAlternativeMerger alternativeMerger;
     private final ItemtypeIntersectionMerger intersectionMerger;
     private final Function<XQueryItemType, String> representationOp;
-
-    public Collection<XQueryItemType> getItemTypes() {
-        return itemTypes;
-    }
 
     public XQueryItemType(final XQueryTypes type,
                                 final List<XQuerySequenceType> argumentTypes,
@@ -53,9 +52,12 @@ public class XQueryItemType {
                                 final Set<String> elementNames,
                                 final XQueryTypeFactory typeFactory,
                                 final Collection<XQueryItemType> itemTypes,
-                                final Map<String, XQueryRecordField> recordFields)
+                                final Map<String, XQueryRecordField> recordFields,
+                                final XQuerySequenceType arrayMemberType,
+                                final Set<String> enumMembers)
     {
         this.type = type;
+        this.arrayMemberType = arrayMemberType;
         this.recordFields = recordFields;
         this.typeOrdinal = type.ordinal();
         this.argumentTypes = argumentTypes;
@@ -71,6 +73,8 @@ public class XQueryItemType {
         this.intersectionMerger = new ItemtypeIntersectionMerger(typeOrdinal, typeFactory);
         this.itemtypeSubtyper = new ItemtypeSubtyper(this, typeFactory);
         this.representationOp = representationProvider.getOperation(type);
+        this.enumMembers = enumMembers;
+        this.hasEffectiveBooleanValue = hasEffectiveBooleanValue();
     }
 
     protected XQueryItemType()
@@ -79,6 +83,7 @@ public class XQueryItemType {
         this.typeOrdinal = 0;
         this.argumentTypes = null;
         this.returnedType = null;
+        this.arrayMemberType = null;
         // this.arrayType = arrayType;
         this.mapKeyType = null;
         this.mapValueType = null;
@@ -91,28 +96,8 @@ public class XQueryItemType {
         this.intersectionMerger = null;
         this.itemtypeSubtyper = null;
         this.representationOp = null;
-    }
-
-    public XQueryItemType getMapKeyType() {
-        return mapKeyType;
-    }
-    public XQuerySequenceType getMapValueType() {
-        return mapValueType;
-    }
-    public List<XQuerySequenceType> getArgumentTypes() {
-        return argumentTypes;
-    }
-
-    public XQuerySequenceType getReturnedType() {
-        return this.returnedType;
-    }
-
-    public Set<String> getElementNames() {
-        return elementNames;
-    }
-
-    public XQueryTypes getType() {
-        return type;
+        this.enumMembers = null;
+        this.hasEffectiveBooleanValue = false;
     }
 
     private static boolean isNullableEquals(final Object one, final Object other) {
@@ -128,9 +113,9 @@ public class XQueryItemType {
             return false;
         if (!(obj instanceof XQueryItemType other))
             return false;
-        if (type != other.getType())
+        if (type != other.type)
             return false;
-        final var otherArgumentTypes = other.getArgumentTypes();
+        final var otherArgumentTypes = other.argumentTypes;
         if (this.argumentTypes == null && otherArgumentTypes != null)
             return false;
         if (this.argumentTypes != null) {
@@ -144,22 +129,22 @@ public class XQueryItemType {
                 }
             }
         }
-        final XQuerySequenceType otherReturnedType = other.getReturnedType();
+        final XQuerySequenceType otherReturnedType = other.returnedType;
         if (!isNullableEquals(this.returnedType, otherReturnedType))
             return false;
 
-        final var names = other.getElementNames();
+        final var names = other.elementNames;
         if (names != null &&elementNames != null && !this.elementNames.containsAll(names)) {
             return false;
         }
 
-        if (!isNullableEquals(getArrayMemberType(), other.getArrayMemberType()))
+        if (!isNullableEquals(arrayMemberType, other.arrayMemberType))
             return false;
 
-        if (!isNullableEquals(mapKeyType, other.getMapKeyType()))
+        if (!isNullableEquals(mapKeyType, other.mapKeyType))
             return false;
 
-        if (!isNullableEquals(mapValueType, other.getMapValueType()))
+        if (!isNullableEquals(mapValueType, other.mapValueType))
             return false;
 
         final var otherTypes = other.itemTypes;
@@ -201,7 +186,7 @@ public class XQueryItemType {
                                                                                 XQueryTypes.ANY_MAP,
                                                                                 XQueryTypes.ARRAY,
                                                                                 XQueryTypes.ANY_ARRAY);
-    public boolean hasEffectiveBooleanValue() {
+    private boolean hasEffectiveBooleanValue() {
         if (type == XQueryTypes.CHOICE) {
             return itemTypes.stream().allMatch(itemType->itemType.hasEffectiveBooleanValue());
         }
@@ -228,7 +213,7 @@ public class XQueryItemType {
     public boolean castableAs(final XQueryItemType itemType) {
         if (!(itemType instanceof final XQueryItemType typed))
             return false;
-        return castableAs[typeOrdinal][typed.getType().ordinal()];
+        return castableAs[typeOrdinal][typed.type.ordinal()];
     }
 
     public XQueryItemType unionMerge(final XQueryItemType other) {
@@ -257,7 +242,7 @@ public class XQueryItemType {
 
     public boolean isValueComparableWith(final XQueryItemType other) {
         final XQueryItemType other_ = (XQueryItemType) other;
-        return isValueComparableWith[typeOrdinal][other_.getType().ordinal()];
+        return isValueComparableWith[typeOrdinal][other_.type.ordinal()];
     }
 
     public XQueryItemType alternativeMerge(XQueryItemType other) {
@@ -267,10 +252,6 @@ public class XQueryItemType {
     public XQuerySequenceType lookup(XQuerySequenceType keySpecifierType) {
         return null;
     }
-    public XQuerySequenceType getArrayMemberType() {
-        return null;
-    }
-
     private static final ItemtypeStringRepresentation representationProvider = new ItemtypeStringRepresentation();
 
     @Override
@@ -279,8 +260,108 @@ public class XQueryItemType {
     }
 
 
-    public Map<String, XQueryRecordField> getRecordFields() {
-        return recordFields;
+
+    public static XQueryItemType choice(XQueryTypeFactory factory, Collection<XQueryItemType> itemTypes)
+    {
+        return new XQueryItemType(XQueryTypes.CHOICE,
+            null, null, null, null, null, null, factory, itemTypes, null, null, null);
     }
+
+    public static XQueryItemType anyArray(XQueryTypeFactory factory)
+    {
+        return new XQueryItemType(XQueryTypes.ANY_ARRAY, null, null, null, null, null, null, factory, null, null, null, null);
+    }
+
+    public static XQueryItemType anyFunction(XQueryTypeFactory factory)
+    {
+        return new XQueryItemType(XQueryTypes.ANY_FUNCTION, null, null, null, null, null, null, factory, null, null,
+            null, null);
+    }
+
+    public static XQueryItemType anyItem(XQueryTypeFactory factory) {
+        return new XQueryItemType(XQueryTypes.ANY_ITEM, null, null, null, null, null, null, factory, null, null, null, null);
+    }
+
+    public static XQueryItemType anyMap(XQueryTypeFactory factory) {
+        return new XQueryItemType(XQueryTypes.ANY_MAP, null, null, null, null, null, null, factory, null, null, null, null);
+    }
+
+    public static XQueryItemType anyNode(XQueryTypeFactory factory) {
+        return new XQueryItemType(XQueryTypes.ANY_NODE, null, null, null, null, null, null, factory, null, null, null, null);
+    }
+
+
+    public static XQueryItemType error(XQueryTypeFactory factory)
+    {
+        return new XQueryItemType(XQueryTypes.ERROR, null, null, null, null, null, null, factory, null, null, null, null);
+    }
+
+
+    public static XQueryItemType string(XQueryTypeFactory factory)
+    {
+        return new XQueryItemType(XQueryTypes.STRING, null, null, null, null, null, null, factory, null, null, null, null);
+    }
+
+    public static XQueryItemType boolean_(XQueryTypeFactory factory)
+    {
+        return new XQueryItemType(XQueryTypes.BOOLEAN, null, null, null, null, null, null, factory, null, null, null, null);
+    }
+
+
+    public static XQueryItemType number(XQueryTypeFactory factory) {
+        return new XQueryItemType(XQueryTypes.NUMBER, null, null,
+            null, null, null,
+            null, factory, null,
+                     null, null, null);
+    }
+
+    public static XQueryItemType element(Set<String> elementName, XQueryTypeFactory factory) {
+        return new XQueryItemType(XQueryTypes.ELEMENT, null, null, null, null, null, elementName, factory, null, null, null, null);
+    }
+
+
+
+    public static XQueryItemType function(XQuerySequenceType returnedType, List<XQuerySequenceType> argumentType,
+        XQueryTypeFactory factory)
+    {
+        return new XQueryItemType(XQueryTypes.FUNCTION, argumentType, returnedType, null, null, null, null, factory,
+            null, null, null, null);
+    }
+
+
+
+
+
+    public static XQueryItemType map(XQueryItemType key,
+                                    XQuerySequenceType value,
+                                    XQueryTypeFactory factory)
+    {
+        return new XQueryItemType(XQueryTypes.MAP, null, null, null, key, value, null, factory, null, null, null, null);
+    }
+
+
+
+    public static XQueryItemType array(XQuerySequenceType containedType, XQueryTypeFactory factory) {
+        return new XQueryItemType(XQueryTypes.ARRAY, null, null, null, null,
+            null, null, factory,
+                null, null, containedType, null);
+    }
+
+    public static XQueryItemType extensibleRecord(Map<String, XQueryRecordField> keyValuePairs, XQueryTypeFactory factory ) {
+        return new XQueryItemType(XQueryTypes.EXTENSIBLE_RECORD, null, null, null, null, null, null, factory, null, keyValuePairs, null, null);
+    }
+
+    public static XQueryItemType contrainedRecord(Map<String, XQueryRecordField> keyValuePairs, XQueryTypeFactory factory ) {
+        return new XQueryItemType(XQueryTypes.RECORD, null, null, null, null, null, null, factory, null, keyValuePairs, null, null);
+    }
+
+    final public Set<String> enumMembers;
+
+    public static XQueryItemType enum_(Set<String> enumMembers, XQueryTypeFactory factory) {
+        return new XQueryItemType(XQueryTypes.ENUM, null, null, null, null, null, null, factory, null, null, null, enumMembers);
+    }
+
+
+
 
 }

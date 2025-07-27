@@ -4,12 +4,11 @@ import java.util.Map;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemTypeEnum;
 
 public class ItemtypeStringRepresentation extends ItemtypeUnaryOperation<String> {
 
     public String string(XQueryItemType itemtype) {
-        return automaton[itemtype.getType().ordinal()].apply(itemtype);
+        return automaton[itemtype.typeOrdinal].apply(itemtype);
     }
 
 
@@ -30,7 +29,7 @@ public class ItemtypeStringRepresentation extends ItemtypeUnaryOperation<String>
 
     @Override
     public String elementOperation(XQueryItemType x) {
-        return "element(" + String.join(" | ", x.getElementNames()) + ")";
+        return "element(" + String.join(" | ", x.elementNames) + ")";
     }
 
     @Override
@@ -40,7 +39,7 @@ public class ItemtypeStringRepresentation extends ItemtypeUnaryOperation<String>
 
     @Override
     public String mapOperation(XQueryItemType x) {
-        return "map(" + x.getMapKeyType() + ", " + x.getMapValueType() + ")";
+        return "map(" + x.mapKeyType + ", " + x.mapValueType + ")";
     }
 
     @Override
@@ -50,7 +49,7 @@ public class ItemtypeStringRepresentation extends ItemtypeUnaryOperation<String>
 
     @Override
     public String arrayOperation(XQueryItemType x) {
-        return "array(" + x.getArrayMemberType() + ")";
+        return "array(" + x.arrayMemberType + ")";
     }
 
     @Override
@@ -61,8 +60,8 @@ public class ItemtypeStringRepresentation extends ItemtypeUnaryOperation<String>
     @Override
     public String functionOperation(XQueryItemType x) {
         StringBuilder sb = new StringBuilder();
-        var returnedType = x.getReturnedType();
-        var argumentType = x.getArgumentTypes();
+        var returnedType = x.returnedType;
+        var argumentType = x.argumentTypes;
         sb.append("fn(");
         for (int i = 0; i < argumentType.size(); i++) {
                 sb.append(argumentType.get(i));
@@ -77,8 +76,8 @@ public class ItemtypeStringRepresentation extends ItemtypeUnaryOperation<String>
 
     @Override
     public String enumOperation(XQueryItemType x) {
-        final XQueryItemTypeEnum enums = (XQueryItemTypeEnum) x;
-        return "enum(" + enums.getEnumMembers().stream()
+        final XQueryItemType enums = (XQueryItemType) x;
+        return "enum(" + enums.enumMembers.stream()
                 .map(s -> "'" + s + "'")
                 .reduce((a, b) -> a + ", " + b)
                 .orElse("") + ")";
@@ -96,7 +95,7 @@ public class ItemtypeStringRepresentation extends ItemtypeUnaryOperation<String>
 
     @Override
     public String choiceOperation(XQueryItemType x) {
-        return String.join(" | ", x.getItemTypes().stream().map(Object::toString).toArray(String[]::new));
+        return String.join(" | ", x.itemTypes.stream().map(Object::toString).toArray(String[]::new));
     }
 
     @Override
@@ -104,7 +103,7 @@ public class ItemtypeStringRepresentation extends ItemtypeUnaryOperation<String>
         StringBuilder sb = new StringBuilder();
         sb.append("record(");
         boolean first = true;
-        for (Map.Entry<String, XQueryRecordField> entry : x.getRecordFields().entrySet()) {
+        for (Map.Entry<String, XQueryRecordField> entry : x.recordFields.entrySet()) {
             if (!first) {
                 sb.append(", ");
             }
@@ -123,7 +122,7 @@ public class ItemtypeStringRepresentation extends ItemtypeUnaryOperation<String>
     public String extensibleRecordOperation(XQueryItemType x) {
         StringBuilder sb = new StringBuilder("record(");
         boolean first = true;
-        for (Map.Entry<String, XQueryRecordField> entry : x.getRecordFields().entrySet()) {
+        for (Map.Entry<String, XQueryRecordField> entry : x.recordFields.entrySet()) {
             if (!first) {
                 sb.append(", ");
             }

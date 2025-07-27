@@ -5,7 +5,7 @@ import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
 public class ItemtypeIsValidCastTarget extends ItemtypeUnaryDirectPredicate
 {
     public boolean test(XQueryItemType x) {
-        return automaton[x.getType().ordinal()];
+        return automaton[x.typeOrdinal];
     }
 
     @Override

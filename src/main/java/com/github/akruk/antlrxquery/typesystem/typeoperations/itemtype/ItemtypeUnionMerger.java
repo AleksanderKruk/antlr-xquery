@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.BinaryOperator;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemTypeElement;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
@@ -48,8 +47,8 @@ public class ItemtypeUnionMerger
 
     private XQueryItemType mergeElements(XQueryItemType x, XQueryItemType y)
     {
-        final var els1 = ((XQueryItemTypeElement) x).getElementNames();
-        final var els2 = ((XQueryItemTypeElement) y).getElementNames();
+        final var els1 = x.elementNames;
+        final var els2 = y.elementNames;
         final Set<String> merged = new HashSet<>(els1.size() + els2.size());
         merged.addAll(els1);
         merged.addAll(els2);
@@ -58,7 +57,7 @@ public class ItemtypeUnionMerger
 
     public XQueryItemType unionMerge(final XQueryItemType type1, final XQueryItemType type2)
     {
-        final int otherOrdinal = ((XQueryItemType) type2).getType().ordinal();
+        final int otherOrdinal = ((XQueryItemType) type2).type.ordinal();
         return this.unionItemMerger[otherOrdinal].apply(type1, type2);
     }
 

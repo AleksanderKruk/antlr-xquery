@@ -51,8 +51,8 @@ public class ItemtypeIntersectionMerger
     {
             final var i1_ = (XQueryItemType) x;
             final var i2_ = (XQueryItemType) y;
-            final var i1Elements = i1_.getElementNames();
-            final var i2ELements = i2_.getElementNames();
+            final var i1Elements = i1_.elementNames;
+            final var i2ELements = i2_.elementNames;
             final Set<String> mergedElements = new HashSet<>(i1Elements.size());
             mergedElements.addAll(i1Elements);
             mergedElements.retainAll(i2ELements);
@@ -61,7 +61,7 @@ public class ItemtypeIntersectionMerger
 
     public XQueryItemType intersectionMerge(final XQueryItemType type1, final XQueryItemType type2)
     {
-        final int otherOrdinal = ((XQueryItemType) type2).getType().ordinal();
+        final int otherOrdinal = ((XQueryItemType) type2).type.ordinal();
         return this.intersectionItemMerger[otherOrdinal].apply(type1, type2);
     }
 

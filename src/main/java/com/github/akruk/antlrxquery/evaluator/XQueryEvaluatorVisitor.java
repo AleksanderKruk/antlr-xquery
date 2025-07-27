@@ -2000,6 +2000,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
     @Override
     public XQueryValue visitTreatExpr(TreatExprContext ctx) {
+        if (ctx.TREAT() == null)
+            return visitCastableExpr(ctx.castableExpr());
         final var type = ctx.sequenceType().accept(semanticAnalyzer);
         final var expr =  ctx.castableExpr().accept(this);
         if (!expr.type.isSubtypeOf(type)) {

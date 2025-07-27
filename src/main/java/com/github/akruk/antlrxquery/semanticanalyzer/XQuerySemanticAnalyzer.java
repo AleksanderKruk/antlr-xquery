@@ -329,12 +329,14 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     @Override
     public XQuerySequenceType visitTypeName(final TypeNameContext ctx)
     {
-        // TODO: Add proper type resolution
         return switch (ctx.getText()) {
             case "number" -> number;
             case "string" -> string;
             case "boolean" -> boolean_;
             default -> {
+                var type = typeFactory.namedType(ctx.getText());
+                if (type != null)
+                    yield type;
                 final String msg = String.format("Type %s is not recognized", ctx.getText());
                 error(ctx, msg);
                 yield anyItem;

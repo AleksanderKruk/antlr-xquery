@@ -16,17 +16,16 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.itemtype.ItemtypeIsValidCastTarget;
 
 public class SequencetypeCastable {
-    // private final XQuerySequenceType anyItems;
+    private final XQuerySequenceType anyItems;
     private final XQueryTypeFactory typeFactory;
 
     public SequencetypeCastable(XQueryTypeFactory typeFactory, SequencetypeAtomization atomizer) {
         this.typeFactory = typeFactory;
-        // this.anyItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
+        this.anyItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         this.atomizer = atomizer;
-        boolean_ = typeFactory.boolean_();
-        wrongTargetType = new IsCastableResult(boolean_, null, Castability.WRONG_TARGET_TYPE, null, null, null);
     }
 
+    // TODO: simplyfy by adding unified list of errors for both itemtypes and sequence types
     public static record IsCastableResult(
         XQuerySequenceType resultingType,
         XQuerySequenceType atomizedType,
@@ -51,17 +50,11 @@ public class SequencetypeCastable {
     }
 
     private final static ItemtypeIsValidCastTarget isValidCastTarget = new ItemtypeIsValidCastTarget();
-    private final IsCastableResult wrongTargetType;
     private final SequencetypeAtomization atomizer;
-
-    // private final IsCastableResult zeroOrMore;
-    // private final IsCastableResult canBeEmptyWithoutFlag;
-    // private final IsCastableResult castingToSubtype;
-    private final XQuerySequenceType boolean_;
 
     public IsCastableResult isCastable(XQuerySequenceType targetType, XQuerySequenceType tested, boolean emptyAllowed) {
         if (!isValidCastTarget.test(targetType.itemType)) {
-            return wrongTargetType;
+            return new IsCastableResult(anyItems, tested, null, null, null, null);
         }
         final var atomized = atomizer.atomize(tested);
         return switch (atomized.occurence) {
@@ -115,7 +108,7 @@ public class SequencetypeCastable {
         case CHOICE: // casting should be precise
         case ANY_ARRAY, ARRAY: // unreachable due to atomization
         case ANY_FUNCTION, ANY_ITEM, ANY_MAP, ANY_NODE: // impossible due to being abstract types
-            return wrongTargetType;
+            return new IsCastableResult(result, atomized, Castability.WRONG_TARGET_TYPE, null, null, null);
         };
         return null; // unreachable
     }

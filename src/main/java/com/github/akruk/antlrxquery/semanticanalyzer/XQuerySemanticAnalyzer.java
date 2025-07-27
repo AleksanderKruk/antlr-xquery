@@ -1696,6 +1696,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     public XQuerySequenceType visitArrowFunctionSpecifier(final ArrowFunctionSpecifierContext ctx)
     {
         if (ctx.ID() != null) {
+            // TODO:
             // final CallAnalysisResult call =
             // functionCaller.getFunctionReference(ctx.ID().getText(), typeFactory);
         }

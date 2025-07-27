@@ -1349,6 +1349,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
 
     private <T> void  verifyCastability(ParserRuleContext ctx, final T type, final XQuerySequenceType tested,
             Castability castability, IsCastableResult result) {
+                // TODO: add atomized info
         switch(castability) {
         case POSSIBLE:
             break;

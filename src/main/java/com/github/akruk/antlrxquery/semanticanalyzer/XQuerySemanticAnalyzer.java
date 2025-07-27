@@ -1349,7 +1349,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             case UNNECESSARY:
                 warn(ctx, "Unnecessary castability test");
                 break;
-            case OK:
+            case POSSIBLE:
                 break;
             case WRONG_TARGET_TYPE:
                 error(ctx, "Type: " + type + " is invalid casting target");
@@ -1365,7 +1365,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
 
 
     @Override
-    public com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType visitCastExpr(CastExprContext ctx) {
+    public XQuerySequenceType visitCastExpr(CastExprContext ctx) {
         final var type = this.visitCastTarget(ctx.castTarget());
         if (!isValidCastTarget.test(type.getItemType())) {
             error(ctx, "Type: " + type + "is an invalid cast target for type");
@@ -1487,16 +1487,6 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         };
     }
 
-
-    void testCasting(ParserRuleContext ctx, XQueryTypes castTargetType, Supplier<String> errorMessageSupplier)
-    {
-        switch (castTargetType) {
-            case STRING, NUMBER, ENUM, BOOLEAN:
-                break;
-            default:
-                error(ctx, errorMessageSupplier.get());
-        };
-    }
 
     XQuerySequenceType handleOne(
             CastableExprContext ctx,

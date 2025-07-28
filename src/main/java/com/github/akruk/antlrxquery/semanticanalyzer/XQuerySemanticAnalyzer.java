@@ -101,6 +101,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
         this.atomizer = new SequencetypeAtomization(typeFactory);
         this.castability = new SequencetypeCastable(typeFactory, atomizer);
+        this.anyNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
 
     }
 
@@ -749,16 +750,35 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     {
         final boolean pathExpressionFromRoot = ctx.SLASH() != null;
         if (pathExpressionFromRoot) {
-            // TODO: Context nodes
+            contextTypeMustBeAnyNodes(ctx);
             final var resultingNodeSequence = ctx.relativePathExpr().accept(this);
             return resultingNodeSequence;
         }
         final boolean useDescendantOrSelfAxis = ctx.SLASHES() != null;
         if (useDescendantOrSelfAxis) {
+            contextTypeMustBeAnyNodes(ctx);
             final var resultingNodeSequence = ctx.relativePathExpr().accept(this);
             return resultingNodeSequence;
         }
         return ctx.relativePathExpr().accept(this);
+    }
+
+    /**
+     * Makes sure that context type is subtype of node()*
+     * If it is not, error is recorded and the value is corrected to node()*
+     * @param ctx rule where the error potentially has occured
+     */
+    private void contextTypeMustBeAnyNodes(final PathExprContext ctx)
+    {
+        XQuerySequenceType contexttype = context.getType();
+        if (contexttype == null) {
+            error(ctx, "Path expression starting from root requires context to be present and of type node()*");
+            context.setType(anyNodes);
+        } else if (!contexttype.isSubtypeOf(anyNodes)) {
+            error(ctx,
+                "Path expression starting from root requires context to be of type node()*; found " + contexttype);
+            context.setType(anyNodes);
+        }
     }
 
     @Override
@@ -1237,6 +1257,12 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     @Override
     public XQuerySequenceType visitNameTest(final NameTestContext ctx)
     {
+        XQuerySequenceType nodeType = context.getType();
+        if (!nodeType.isSubtypeOf(anyNodes)) {
+            error(ctx, "Path expression requires left hand side argument to be of type node()*, found: " + nodeType);
+        }
+
+
         if (ctx.wildcard() != null) {
             return switch (ctx.wildcard().getText()) {
                 case "*" -> zeroOrMoreNodes;
@@ -1337,7 +1363,8 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
 
 
 
-    final SequencetypeCastable castability;
+    private final SequencetypeCastable castability;
+    private final XQuerySequenceType anyNodes;
 
     @Override
     public XQuerySequenceType visitCastableExpr(CastableExprContext ctx) {

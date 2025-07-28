@@ -81,6 +81,7 @@ FINALLY: 'finally' ;
 
 PIPE_ARROW: '->';
 CASTABLE: 'castable';
+MAPPING_ARROW : '=!>' ;
 
 COMMENT: '(:' .*? ':)'-> channel(HIDDEN);
 WS: [\p{White_Space}]+ -> channel(HIDDEN);

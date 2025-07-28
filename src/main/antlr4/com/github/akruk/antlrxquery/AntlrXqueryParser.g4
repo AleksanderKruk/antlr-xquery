@@ -113,7 +113,34 @@ castableExpr: castExpr ((CASTABLE AS) castTarget)?;
   castTarget: (typeName | choiceItemType | enumerationType) QUESTION_MARK?;
 castExpr: pipelineExpr ((CAST AS) castTarget)?;
 pipelineExpr:	arrowExpr (PIPE_ARROW arrowExpr)*;
-arrowExpr: unaryExpr (ARROW arrowFunctionSpecifier argumentList)*;
+// arrowExpr: unaryExpr (ARROW arrowFunctionSpecifier argumentList)*;
+
+arrowExpr
+    : unaryExpr (sequenceArrowTarget | mappingArrowTarget)*
+    ;
+
+sequenceArrowTarget
+    : ARROW arrowTarget
+    ;
+
+arrowTarget
+    : functionCall
+    | restrictedDynamicCall
+    ;
+
+restrictedDynamicCall
+    : (varRef | parenthesizedExpr | functionItemExpr | mapConstructor | arrayConstructor) positionalArgumentList
+    ;
+
+functionItemExpr
+    : namedFunctionRef
+    | inlineFunctionExpr
+    ;
+
+mappingArrowTarget
+    : MAPPING_ARROW arrowTarget
+    ;
+
 unaryExpr: (MINUS | PLUS)? simpleMapExpr;
 simpleMapExpr: pathExpr (EXCLAMATION_MARK pathExpr)*;
 pathExpr: (SLASH relativePathExpr?) // TODO: verify optionality
@@ -209,9 +236,7 @@ primaryExpr: literal
         | unaryLookup
         ;
 
-functionItemExpr    :	namedFunctionRef
-    | inlineFunctionExpr
-    ;
+
 namedFunctionRef	:	qname HASH IntegerLiteral;
 
 literal:

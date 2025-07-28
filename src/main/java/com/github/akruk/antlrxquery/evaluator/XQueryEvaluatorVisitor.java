@@ -463,18 +463,19 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         final List<XQueryValue> savedArgs = saveVisitedArguments();
         final Map<String, XQueryValue> savedKwargs = saveVisitedKeywordArguments();
         ctx.argumentList().accept(this);
-        final XQueryValue callResult = callFunction(ctx, visitedArgumentList, visitedKeywordArguments);
+        final String functionQname = ctx.functionName().getText();
+        final XQueryValue callResult = callFunction(functionQname, visitedArgumentList, visitedKeywordArguments);
         visitedArgumentList = savedArgs;
         visitedKeywordArguments = savedKwargs;
         return callResult;
     }
 
     private XQueryValue callFunction(
-            final FunctionCallContext ctx,
+            final String qname,
             final List<XQueryValue> args,
             final Map<String, XQueryValue> kwargs)
     {
-        final String[] parts = resolveNamespace(ctx.functionName().getText());
+        final String[] parts = resolveNamespace(qname);
         final String namespace = parts.length == 2 ? parts[0] : "fn";
         final String functionName = parts.length == 2 ? parts[1] : parts[0];
         // TODO: error handling missing function
@@ -727,6 +728,16 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         }
         context = savedContext;
         return valueFactory.sequence(filteredValues);
+    }
+
+    @Override
+    public XQueryValue visitArrowTarget(ArrowTargetContext ctx) {
+        if (ctx.functionCall() != null) {
+            ctx.functionCall().argumentList().accept(this);
+            final String functionQname = ctx.functionCall().functionName().getText();
+            return callFunction(functionQname, visitedArgumentList, visitedKeywordArguments);
+        }
+        return ctx.restrictedDynamicCall().accept(this);
     }
 
     @Override

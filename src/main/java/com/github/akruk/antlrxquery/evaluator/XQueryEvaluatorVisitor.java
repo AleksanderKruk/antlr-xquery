@@ -1,21 +1,8 @@
 package com.github.akruk.antlrxquery.evaluator;
 
-import java.lang.annotation.Target;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Map.Entry;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.*;
+import java.util.function.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -31,23 +18,15 @@ import com.github.akruk.antlrxquery.charescaper.XQueryCharEscaper;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.*;
 import com.github.akruk.antlrxquery.evaluator.dynamiccontext.XQueryDynamicContextManager;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.XQueryEvaluatingFunctionManager;
-import com.github.akruk.antlrxquery.evaluator.values.XQueryError;
-import com.github.akruk.antlrxquery.evaluator.values.XQueryFunction;
-import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
-import com.github.akruk.antlrxquery.evaluator.values.XQueryValues;
+import com.github.akruk.antlrxquery.evaluator.values.*;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMemoizedValueFactory;
 import com.github.akruk.antlrxquery.evaluator.values.operations.*;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.ResolvedName;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
-import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryOccurence;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.XQueryRecordField;
 import com.github.akruk.nodegetter.NodeGetter;
 
 public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
@@ -84,7 +63,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     private XQueryValue emptySequence;
     private final XQuerySemanticAnalyzer semanticAnalyzer;
     private final Stringifier stringifier;
-    private final XQueryTypeFactory typeFactory;
+    private final Caster caster;
+    // private final XQueryTypeFactory typeFactory;
 
     private record VariableCoupling(Variable item, Variable key, Variable value, Variable position) {}
     private record Variable(String name, XQueryValue value){}
@@ -95,7 +75,6 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser, final XQuerySemanticAnalyzer analyzer, final XQueryTypeFactory typeFactory) {
         this(tree, parser, new XQueryMemoizedValueFactory(typeFactory), analyzer, typeFactory);
-        this.typeFactory = typeFactory;
     }
 
     public XQueryEvaluatorVisitor(
@@ -113,11 +92,12 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         this.context.setSize(0);
         this.parser = parser;
         this.valueFactory = valueFactory;
+        // this.typeFactory = typeFactory;
+        this.ebv = new EffectiveBooleanValue(valueFactory);
         this.stringifier = new Stringifier(valueFactory, ebv);
         this.valueComparisonOperator = new ValueComparisonOperator(valueFactory);
         this.atomizer = new ValueAtomizer();
         this.generalComparisonOperator = new GeneralComparisonOperator(valueFactory, atomizer, valueComparisonOperator);
-        this.ebv = new EffectiveBooleanValue(valueFactory);
         this.booleanOperator = new ValueBooleanOperator(this, valueFactory, ebv);
         this.nodeOperator = new NodeOperator(valueFactory);
         this.functionManager = new XQueryEvaluatingFunctionManager(this, parser, valueFactory, nodeGetter, typeFactory, ebv, atomizer, valueComparisonOperator);
@@ -133,6 +113,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         this.unaryPlus = functionManager.getFunctionReference("op", "numeric-unary-plus", 1).functionValue;
         this.unaryMinus = functionManager.getFunctionReference("op", "numeric-unary-minus", 1).functionValue;
         this.emptySequence = valueFactory.emptySequence();
+        this.caster = new Caster(typeFactory, valueFactory, stringifier, ebv);
         contextManager.enterContext();
     }
 
@@ -2028,335 +2009,6 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return expr;
     }
 
-    enum IsCastable {
-        YES, NO, MAYBE
-    }
-
-    IsCastable[][] isCastable = new IsCastable[XQueryTypes.values().length][XQueryValues.values().length];
-    {
-        Arrays.fill(isCastable, IsCastable.NO);
-        final int FUNCTION_V = XQueryValues.FUNCTION.ordinal();
-        final int NUMBER_V = XQueryValues.NUMBER.ordinal();
-        final int STRING_V = XQueryValues.STRING.ordinal();
-        final int BOOLEAN_V = XQueryValues.BOOLEAN.ordinal();
-        final int ELEMENT_V = XQueryValues.ELEMENT.ordinal();
-        final int ERROR_V = XQueryValues.ERROR.ordinal();
-        final int ARRAY_V = XQueryValues.ARRAY.ordinal();
-        final int MAP_V = XQueryValues.MAP.ordinal();
-        final int SEQUENCE_V = XQueryValues.SEQUENCE.ordinal();
-        final int EMPTY_SEQUENCE_V = XQueryValues.EMPTY_SEQUENCE.ordinal();
-        // final int ERROR_T = XQueryTypes.ERROR.ordinal();
-        // final int ANY_ITEM_T = XQueryTypes.ANY_ITEM.ordinal();
-        // final int ANY_NODE_T = XQueryTypes.ANY_NODE.ordinal();
-        // final int ELEMENT_T = XQueryTypes.ELEMENT.ordinal();
-        // final int ANY_MAP_T = XQueryTypes.ANY_MAP.ordinal();
-        final int MAP_T = XQueryTypes.MAP.ordinal();
-        // final int ANY_ARRAY_T = XQueryTypes.ANY_ARRAY.ordinal();
-        final int ARRAY_T = XQueryTypes.ARRAY.ordinal();
-        // final int ANY_FUNCTION_T = XQueryTypes.ANY_FUNCTION.ordinal();
-        // final int FUNCTION_T = XQueryTypes.FUNCTION.ordinal();
-        final int ENUM_T = XQueryTypes.ENUM.ordinal();
-        final int RECORD_T = XQueryTypes.RECORD.ordinal();
-        final int EXTENSIBLE_RECORD_T = XQueryTypes.EXTENSIBLE_RECORD.ordinal();
-        final int BOOLEAN_T = XQueryTypes.BOOLEAN.ordinal();
-        final int STRING_T = XQueryTypes.STRING.ordinal();
-        final int NUMBER_T = XQueryTypes.NUMBER.ordinal();
-        // final int CHOICE_T = XQueryTypes.CHOICE.ordinal();
-
-        isCastable[MAP_T][FUNCTION_V] = IsCastable.NO;
-        isCastable[MAP_T][NUMBER_V] = IsCastable.NO;
-        isCastable[MAP_T][STRING_V] = IsCastable.NO;
-        isCastable[MAP_T][BOOLEAN_V] = IsCastable.NO;
-        isCastable[MAP_T][ELEMENT_V] = IsCastable.NO;
-        isCastable[MAP_T][ERROR_V] = IsCastable.NO;
-        isCastable[MAP_T][ARRAY_V] = IsCastable.YES;
-        isCastable[MAP_T][MAP_V] = IsCastable.MAYBE;
-        isCastable[MAP_T][SEQUENCE_V] = IsCastable.NO;
-        isCastable[MAP_T][EMPTY_SEQUENCE_V] = IsCastable.NO;
-
-        isCastable[ARRAY_T][FUNCTION_V] = IsCastable.NO;
-        isCastable[ARRAY_T][NUMBER_V] = IsCastable.NO;
-        isCastable[ARRAY_T][STRING_V] = IsCastable.NO;
-        isCastable[ARRAY_T][BOOLEAN_V] = IsCastable.NO;
-        isCastable[ARRAY_T][ELEMENT_V] = IsCastable.NO;
-        isCastable[ARRAY_T][ERROR_V] = IsCastable.NO;
-        isCastable[ARRAY_T][ARRAY_V] = IsCastable.MAYBE;
-        isCastable[ARRAY_T][MAP_V] = IsCastable.NO;
-        isCastable[ARRAY_T][SEQUENCE_V] = IsCastable.YES;
-        isCastable[ARRAY_T][EMPTY_SEQUENCE_V] = IsCastable.YES;
-
-        isCastable[RECORD_T][FUNCTION_V] = IsCastable.NO;
-        isCastable[RECORD_T][NUMBER_V] = IsCastable.NO;
-        isCastable[RECORD_T][STRING_V] = IsCastable.NO;
-        isCastable[RECORD_T][BOOLEAN_V] = IsCastable.NO;
-        isCastable[RECORD_T][ELEMENT_V] = IsCastable.NO;
-        isCastable[RECORD_T][ERROR_V] = IsCastable.NO;
-        isCastable[RECORD_T][ARRAY_V] = IsCastable.NO;
-        isCastable[RECORD_T][MAP_V] = IsCastable.MAYBE;
-        isCastable[RECORD_T][SEQUENCE_V] = IsCastable.NO;
-        isCastable[RECORD_T][EMPTY_SEQUENCE_V] = IsCastable.NO;
-
-        isCastable[EXTENSIBLE_RECORD_T][FUNCTION_V] = IsCastable.NO;
-        isCastable[EXTENSIBLE_RECORD_T][NUMBER_V] = IsCastable.NO;
-        isCastable[EXTENSIBLE_RECORD_T][STRING_V] = IsCastable.NO;
-        isCastable[EXTENSIBLE_RECORD_T][BOOLEAN_V] = IsCastable.NO;
-        isCastable[EXTENSIBLE_RECORD_T][ELEMENT_V] = IsCastable.NO;
-        isCastable[EXTENSIBLE_RECORD_T][ERROR_V] = IsCastable.NO;
-        isCastable[EXTENSIBLE_RECORD_T][ARRAY_V] = IsCastable.NO;
-        isCastable[EXTENSIBLE_RECORD_T][MAP_V] = IsCastable.MAYBE;
-        isCastable[EXTENSIBLE_RECORD_T][SEQUENCE_V] = IsCastable.NO;
-        isCastable[EXTENSIBLE_RECORD_T][EMPTY_SEQUENCE_V] = IsCastable.NO;
-
-        isCastable[BOOLEAN_T][FUNCTION_V] = IsCastable.NO;
-        isCastable[BOOLEAN_T][NUMBER_V] = IsCastable.YES;
-        isCastable[BOOLEAN_T][STRING_V] = IsCastable.MAYBE;
-        isCastable[BOOLEAN_T][BOOLEAN_V] = IsCastable.YES;
-        isCastable[BOOLEAN_T][ELEMENT_V] = IsCastable.NO;
-        isCastable[BOOLEAN_T][ERROR_V] = IsCastable.NO;
-        isCastable[BOOLEAN_T][ARRAY_V] = IsCastable.YES;
-        isCastable[BOOLEAN_T][MAP_V] = IsCastable.YES;
-        isCastable[BOOLEAN_T][SEQUENCE_V] = IsCastable.NO;
-        isCastable[BOOLEAN_T][EMPTY_SEQUENCE_V] = IsCastable.NO;
-
-        isCastable[ENUM_T][FUNCTION_V] = IsCastable.MAYBE;
-        isCastable[ENUM_T][NUMBER_V] = IsCastable.MAYBE;
-        isCastable[ENUM_T][STRING_V] = IsCastable.MAYBE;
-        isCastable[ENUM_T][BOOLEAN_V] = IsCastable.MAYBE;
-        isCastable[ENUM_T][ELEMENT_V] = IsCastable.MAYBE;
-        isCastable[ENUM_T][ERROR_V] = IsCastable.MAYBE;
-        isCastable[ENUM_T][ARRAY_V] = IsCastable.MAYBE;
-        isCastable[ENUM_T][MAP_V] = IsCastable.MAYBE;
-        isCastable[ENUM_T][SEQUENCE_V] = IsCastable.NO;
-        isCastable[ENUM_T][EMPTY_SEQUENCE_V] = IsCastable.NO;
-
-        isCastable[STRING_T][FUNCTION_V] = IsCastable.YES;
-        isCastable[STRING_T][NUMBER_V] = IsCastable.YES;
-        isCastable[STRING_T][STRING_V] = IsCastable.YES;
-        isCastable[STRING_T][BOOLEAN_V] = IsCastable.YES;
-        isCastable[STRING_T][ELEMENT_V] = IsCastable.YES;
-        isCastable[STRING_T][ERROR_V] = IsCastable.YES;
-        isCastable[STRING_T][ARRAY_V] = IsCastable.YES;
-        isCastable[STRING_T][MAP_V] = IsCastable.YES;
-        isCastable[STRING_T][SEQUENCE_V] = IsCastable.NO;
-        isCastable[STRING_T][EMPTY_SEQUENCE_V] = IsCastable.NO;
-
-        isCastable[NUMBER_T][FUNCTION_V] = IsCastable.NO;
-        isCastable[NUMBER_T][NUMBER_V] = IsCastable.YES;
-        isCastable[NUMBER_T][STRING_V] = IsCastable.MAYBE;
-        isCastable[NUMBER_T][BOOLEAN_V] = IsCastable.YES;
-        isCastable[NUMBER_T][ELEMENT_V] = IsCastable.MAYBE;
-        isCastable[NUMBER_T][ERROR_V] = IsCastable.NO;
-        isCastable[NUMBER_T][ARRAY_V] = IsCastable.NO;
-        isCastable[NUMBER_T][MAP_V] = IsCastable.NO;
-        isCastable[NUMBER_T][SEQUENCE_V] = IsCastable.NO;
-        isCastable[NUMBER_T][EMPTY_SEQUENCE_V] = IsCastable.NO;
-
-    }
-
-    @SuppressWarnings("unchecked")
-    private final BiFunction<XQueryItemType, XQueryValue, XQueryValue>[][] cast = new BiFunction[XQueryTypes.values().length][XQueryValues.values().length];
-    {
-        Arrays.fill(isCastable, IsCastable.NO);
-        final int FUNCTION_V = XQueryValues.FUNCTION.ordinal();
-        final int NUMBER_V = XQueryValues.NUMBER.ordinal();
-        final int STRING_V = XQueryValues.STRING.ordinal();
-        final int BOOLEAN_V = XQueryValues.BOOLEAN.ordinal();
-        final int ELEMENT_V = XQueryValues.ELEMENT.ordinal();
-        final int ERROR_V = XQueryValues.ERROR.ordinal();
-        final int ARRAY_V = XQueryValues.ARRAY.ordinal();
-        final int MAP_V = XQueryValues.MAP.ordinal();
-        final int SEQUENCE_V = XQueryValues.SEQUENCE.ordinal();
-        final int EMPTY_SEQUENCE_V = XQueryValues.EMPTY_SEQUENCE.ordinal();
-
-        final int MAP_T = XQueryTypes.MAP.ordinal();
-        final int ARRAY_T = XQueryTypes.ARRAY.ordinal();
-        final int ENUM_T = XQueryTypes.ENUM.ordinal();
-        final int RECORD_T = XQueryTypes.RECORD.ordinal();
-        final int EXTENSIBLE_RECORD_T = XQueryTypes.EXTENSIBLE_RECORD.ordinal();
-        final int BOOLEAN_T = XQueryTypes.BOOLEAN.ordinal();
-        final int STRING_T = XQueryTypes.STRING.ordinal();
-        final int NUMBER_T = XQueryTypes.NUMBER.ordinal();
-
-        cast[MAP_T][ARRAY_V] = (t, v) -> {
-            Map<XQueryValue, XQueryValue> map = new HashMap<>(v.arrayMembers.size(), 1.0f);
-            int i = 0;
-            for (var el : v.arrayMembers) {
-                var keyCast = cast(typeFactory.one(t.mapKeyType), valueFactory.number(i));
-                if (keyCast.isError)
-                    return keyCast;
-                var valueCast = cast(t.mapValueType, el);
-                if (valueCast.isError)
-                    return valueCast;
-                map.put(keyCast, valueCast);
-                i++;
-            }
-            return valueFactory.map(map);
-        };
-        cast[MAP_T][MAP_V] = (XQueryItemType t, XQueryValue v) -> {
-            Map<XQueryValue, XQueryValue> map = new HashMap<>(v.arrayMembers.size(), 1.0f);
-            for (var entry : v.mapEntries.entrySet()) {
-                var keyCast = cast(typeFactory.one(t.mapKeyType), entry.getKey());
-                if (keyCast.isError)
-                    return keyCast;
-                var valueCast = cast(t.mapValueType, entry.getValue());
-                if (valueCast.isError)
-                    return valueCast;
-                map.put(keyCast, valueCast);
-            }
-            return valueFactory.map(map);
-        };
-
-        cast[ARRAY_T][ARRAY_T] = (XQueryItemType t, XQueryValue v) -> {
-            List<XQueryValue> list = new ArrayList<>(v.arrayMembers.size());
-            for (var member : v.arrayMembers) {
-                var valueCast = cast(t.arrayMemberType, member);
-                if (valueCast.isError)
-                    return valueCast;
-                list.add(valueCast);
-            }
-            return valueFactory.array(list);
-        };
-
-        cast[ARRAY_T][SEQUENCE_V] = (t, v) -> {
-            return valueFactory.array(v.sequence);
-        };
-        cast[ARRAY_T][EMPTY_SEQUENCE_V] = (t, v) -> valueFactory.array(List.of());
-
-        cast[EXTENSIBLE_RECORD_T][MAP_V] = (t, v) -> {
-            // Same as constrained record but without new record creation
-            var recordFields = t.recordFields.entrySet().stream()
-                .collect(Collectors.partitioningBy(entry -> entry.getValue().isRequired()));
-            var requiredRecordFields = recordFields.get(true);
-            for (Entry<String, XQueryRecordField>
-                    entry : requiredRecordFields)
-            {
-                String fieldname = entry.getKey();
-                XQueryRecordField semanticRecordField = entry.getValue();
-                XQueryValue mapEntry = v.mapEntries.get(valueFactory.string(fieldname));
-                if (mapEntry == null) {
-                    return valueFactory.error(XQueryError.InvalidCastValue,
-                        "At casting value: " + v + " to type " + t + " -> missing required field: " + fieldname);
-                }
-                var result = cast(semanticRecordField.type(), mapEntry);
-                if (result.isError)
-                    return result;
-            }
-
-            var optionalRecordFields = recordFields.get(false);
-            for (Entry<String, XQueryRecordField>
-                    entry : optionalRecordFields)
-            {
-                String fieldname = entry.getKey();
-                XQueryRecordField semanticRecordField = entry.getValue();
-                XQueryValue mapEntry = v.mapEntries.get(valueFactory.string(fieldname));
-                if (mapEntry == null) {
-                    continue;
-                }
-                var result = cast(semanticRecordField.type(), mapEntry);
-                if (result.isError)
-                    return result;
-            }
-            return v;
-        };
-        cast[RECORD_T][MAP_V] = (t, v) -> {
-            var recordFields = t.recordFields.entrySet().stream()
-                .collect(Collectors.partitioningBy(entry -> entry.getValue().isRequired()));
-            var requiredRecordFields = recordFields.get(true);
-            Map<String, XQueryValue> record = new HashMap<>(recordFields.size());
-
-            for (Entry<String, XQueryRecordField>
-                    entry : requiredRecordFields)
-            {
-                String fieldname = entry.getKey();
-                XQueryRecordField semanticRecordField = entry.getValue();
-                XQueryValue mapEntry = v.mapEntries.get(valueFactory.string(fieldname));
-                if (mapEntry == null) {
-                    return valueFactory.error(XQueryError.InvalidCastValue,
-                        "At casting value: " + v + " to type " + t + " -> missing required field: " + fieldname);
-                }
-                var result = cast(semanticRecordField.type(), mapEntry);
-                if (result.isError)
-                    return result;
-                record.put(fieldname, result);
-            }
-
-            var optionalRecordFields = recordFields.get(false);
-            for (Entry<String, XQueryRecordField>
-                    entry : optionalRecordFields)
-            {
-                String fieldname = entry.getKey();
-                XQueryRecordField semanticRecordField = entry.getValue();
-                XQueryValue mapEntry = v.mapEntries.get(valueFactory.string(fieldname));
-                if (mapEntry == null) {
-                    continue;
-                }
-                var result = cast(semanticRecordField.type(), mapEntry);
-                if (result.isError)
-                    return result;
-                record.put(fieldname, result);
-            }
-            return valueFactory.record(record);
-        };
-
-        BiFunction<XQueryItemType, XQueryValue, XQueryValue> identity = (t, v) -> v;
-        cast[BOOLEAN_T][NUMBER_V] = (t, v) -> ebv.effectiveBooleanValue(v);
-        cast[BOOLEAN_T][STRING_V] = (t, v) -> ebv.effectiveBooleanValue(v);
-        cast[BOOLEAN_T][BOOLEAN_V] = identity;
-        cast[BOOLEAN_T][ARRAY_V] = (t, v) -> ebv.effectiveBooleanValue(v);
-        cast[BOOLEAN_T][MAP_V] = (t, v) -> ebv.effectiveBooleanValue(v);
-
-        cast[ENUM_T][FUNCTION_V] = castToEnum();
-        cast[ENUM_T][NUMBER_V] = castToEnum();
-        cast[ENUM_T][STRING_V] = castToEnum();
-        cast[ENUM_T][BOOLEAN_V] = castToEnum();
-        cast[ENUM_T][ELEMENT_V] = castToEnum();
-        cast[ENUM_T][ERROR_V] = castToEnum();
-        cast[ENUM_T][ARRAY_V] = castToEnum();
-        cast[ENUM_T][MAP_V] = castToEnum();
-
-        BiFunction<XQueryItemType, XQueryValue, XQueryValue> stringify = (t, v) -> stringifier.stringify(v);
-        cast[STRING_T][FUNCTION_V] = stringify;
-        cast[STRING_T][NUMBER_V]   = stringify;
-        cast[STRING_T][STRING_V]   = stringify;
-        cast[STRING_T][BOOLEAN_V]  = stringify;
-        cast[STRING_T][ELEMENT_V]  = stringify;
-        cast[STRING_T][ERROR_V]    = stringify;
-        cast[STRING_T][ARRAY_V]    = stringify;
-        cast[STRING_T][MAP_V]      = stringify;
-
-        cast[NUMBER_T][NUMBER_V] = identity;
-        cast[NUMBER_T][STRING_V] = (t, v) -> {
-            try {
-                return valueFactory.number(new BigDecimal(v.stringValue));
-            } catch (NumberFormatException e) {
-                return valueFactory.error(XQueryError.InvalidCastValue, "Failed to cast string: " + v.stringValue + " to number");
-            }
-        };
-        cast[NUMBER_T][BOOLEAN_V] = (t, v) -> valueFactory.number(v.booleanValue? 1 : 0);
-        cast[NUMBER_T][ELEMENT_V] = (t, v) -> {
-            try {
-                return valueFactory.number(new BigDecimal(v.node.getText()));
-            } catch (NumberFormatException e) {
-                return valueFactory.error(XQueryError.InvalidArgumentType, "Failed to cast string: " + v.stringValue + " to number");
-            }
-        };
-
-    }
-
-
-
-    private BiFunction<XQueryItemType, XQueryValue, XQueryValue> castToEnum()
-    {
-        return (t, v) -> {
-            final var str = stringifier.stringify(v);
-            if (t.enumMembers.contains(str.stringValue))
-                return valueFactory.string(str.stringValue);
-            return valueFactory.error(XQueryError.InvalidCastValue, "Failed to cast string: " + v.stringValue + " to number");
-        };
-    }
-
-
-
     @Override
     public XQueryValue visitCastableExpr(CastableExprContext ctx)
     {
@@ -2364,36 +2016,19 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             return ctx.castExpr().accept(this);
         final XQuerySequenceType targetType = semanticAnalyzer.visitCastTarget(ctx.castTarget());
         final XQueryValue testedValue = visitCastExpr(ctx.castExpr());
-        return cast(targetType, testedValue);
-
-    }
-
-    // @Target()
-    // public @interface Unreachable {
-
-    // }
-
-    XQueryValue cast(XQuerySequenceType targetType, XQueryValue testedValue)
-    {
-        if (testedValue.type.isSubtypeOf(targetType))
-            return valueFactory.bool(true);
-        if (testedValue.isEmptySequence) {
-            return testedValue;
-        }
-        final var isCastable_ = isCastable[targetType.itemType.typeOrdinal][testedValue.valueTypeOrdinal];
-        switch (isCastable_) {
-            case NO:
-                return valueFactory.bool(false);
-            case YES:
-                return valueFactory.bool(true);
-            case MAYBE:
-                final var castFunction = cast[targetType.itemType.typeOrdinal][testedValue.valueTypeOrdinal];
-                final XQueryValue castingResult = castFunction.apply(targetType.itemType, testedValue);
-                return valueFactory.bool(!castingResult.isError);
-        }
-        return null; // unreachable
+        boolean isCastable = !caster.cast(targetType, testedValue).isError;
+        return valueFactory.bool(isCastable);
     }
 
 
+    @Override
+    public XQueryValue visitCastExpr(CastExprContext ctx) {
+        if (ctx.CAST() == null)
+            return ctx.pipelineExpr().accept(this);
+        final XQuerySequenceType targetType = semanticAnalyzer.visitCastTarget(ctx.castTarget());
+        final XQueryValue testedValue = visitPipelineExpr(ctx.pipelineExpr());
+        final XQueryValue cast = caster.cast(targetType, testedValue);
+        return cast;
+    }
 
 }

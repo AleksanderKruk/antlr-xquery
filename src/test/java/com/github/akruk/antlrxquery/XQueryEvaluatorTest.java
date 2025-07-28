@@ -272,6 +272,12 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
     }
 
     @Test
+    public void arrowMappingExpression() {
+        XQueryValue one = valueFactory.number(1);
+        assertResult("('a', 'b', 'c') =!> string-length()", List.of(one, one, one));
+    }
+
+    @Test
     public void quantifiedExpression() {
         assertResult("some $v in (1, 2, 3, 4) satisfies $v eq 3", valueFactory.bool(true));
         assertResult("some $v in (1, 2, 3, 4) satisfies $v eq -1", valueFactory.bool(false));

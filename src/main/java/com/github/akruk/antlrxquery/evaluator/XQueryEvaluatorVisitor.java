@@ -460,16 +460,25 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
     @Override
     public XQueryValue visitFunctionCall(final FunctionCallContext ctx) {
+        final List<XQueryValue> savedArgs = saveVisitedArguments();
+        final Map<String, XQueryValue> savedKwargs = saveVisitedKeywordArguments();
+        ctx.argumentList().accept(this);
+        final XQueryValue callResult = callFunction(ctx, visitedArgumentList, visitedKeywordArguments);
+        visitedArgumentList = savedArgs;
+        visitedKeywordArguments = savedKwargs;
+        return callResult;
+    }
+
+    private XQueryValue callFunction(
+            final FunctionCallContext ctx,
+            final List<XQueryValue> args,
+            final Map<String, XQueryValue> kwargs)
+    {
         final String[] parts = resolveNamespace(ctx.functionName().getText());
         final String namespace = parts.length == 2 ? parts[0] : "fn";
         final String functionName = parts.length == 2 ? parts[1] : parts[0];
         // TODO: error handling missing function
-        final var savedArgs = saveVisitedArguments();
-        final var savedKwargs = saveVisitedKeywordArguments();
-        ctx.argumentList().accept(this);
-        final var value = functionManager.call(namespace, functionName, context, visitedArgumentList, visitedKeywordArguments);
-        visitedArgumentList = savedArgs;
-        visitedKeywordArguments = savedKwargs;
+        final var value = functionManager.call(namespace, functionName, context, args, kwargs);
         return value;
     }
 
@@ -952,43 +961,58 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
     @Override
     public XQueryValue visitArrowExpr(final ArrowExprContext ctx) {
-        if (ctx.ARROW().isEmpty())
+        final boolean notSequenceArrow = ctx.sequenceArrowTarget().isEmpty();
+        final boolean notMappingArrow = ctx.mappingArrowTarget().isEmpty();
+        if (notSequenceArrow && notMappingArrow) {
             return ctx.unaryExpr().accept(this);
+        }
         final var savedArgs = saveVisitedArguments();
+        final var savedKwargs = saveVisitedKeywordArguments();
+
         var contextArgument = ctx.unaryExpr().accept(this);
         visitedArgumentList.add(contextArgument);
-        // var isString = !value.isStringValue();
-        // var isFunction = !func
-        final var arrowCount = ctx.ARROW().size();
-        for (int i = 0; i < arrowCount; i++) {
-            ctx.argumentList(i).accept(this); // visitedArgumentList is set to function's args
-                                              // it has to be called before visiting arrowFunctionSpecifier
-                                              // because arity of arguments is needed for function lookup
-            final var visitedFunction = ctx.arrowFunctionSpecifier(i).accept(this);
-            // TODO: add semantic check for no keyword args
-            contextArgument = visitedFunction.functionValue.call(context, visitedArgumentList);
+        for (var arrowexpr : ctx.children.subList(1, ctx.children.size())) {
+            contextArgument = arrowexpr.accept(this);
             visitedArgumentList = new ArrayList<>();
             visitedArgumentList.add(contextArgument);
+            visitedKeywordArguments = new HashMap<>();
         }
+
         visitedArgumentList = savedArgs;
+        visitedKeywordArguments = savedKwargs;
         return contextArgument;
     }
 
-    final NamespaceResolver namespaceResolver = new NamespaceResolver("fn");
+    @Override
+    public XQueryValue visitMappingArrowTarget(MappingArrowTargetContext ctx) {
+        XQueryValue mappedSequence = visitedArgumentList.get(visitedArgumentList.size()-1);
+        ArrayList<XQueryValue> resultingSequence = new ArrayList<>(mappedSequence.size);
+        for (XQueryValue el : mappedSequence.sequence) {
+            visitedArgumentList = new ArrayList<>();
+            visitedArgumentList.add(el);
+            var call = ctx.arrowTarget().accept(this);
+            if (call.isError)
+                return call;
+            resultingSequence.add(call);
+        }
+        return valueFactory.sequence(resultingSequence);
+    }
 
     @Override
-    public XQueryValue visitArrowFunctionSpecifier(final ArrowFunctionSpecifierContext ctx) {
-        if (ctx.ID() != null) {
-            final ResolvedName parts = namespaceResolver.resolve(ctx.ID().getText());
-            final String namespace = parts.namespace();
-            final String localName = parts.name();
-            return functionManager.getFunctionReference(namespace, localName, visitedArgumentList.size());
-        }
-        if (ctx.varRef() != null)
-            return ctx.varRef().accept(this);
-        return ctx.parenthesizedExpr().accept(this);
-
+    public XQueryValue visitRestrictedDynamicCall(RestrictedDynamicCallContext ctx) {
+        var function = ctx.children.get(0).accept(this);
+        if (function.isError)
+            return function;
+        ctx.positionalArgumentList().accept(this);
+        return function.functionValue.call(context, visitedArgumentList);
     }
+
+
+
+
+
+
+    final NamespaceResolver namespaceResolver = new NamespaceResolver("fn");
 
     private String[] resolveNamespace(final String functionName) {
         final String[] parts = functionName.split(":", 2);

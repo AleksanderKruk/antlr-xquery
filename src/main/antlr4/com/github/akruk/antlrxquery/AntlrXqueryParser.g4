@@ -113,7 +113,6 @@ castableExpr: castExpr ((CASTABLE AS) castTarget)?;
   castTarget: (typeName | choiceItemType | enumerationType) QUESTION_MARK?;
 castExpr: pipelineExpr ((CAST AS) castTarget)?;
 pipelineExpr:	arrowExpr (PIPE_ARROW arrowExpr)*;
-// arrowExpr: unaryExpr (ARROW arrowFunctionSpecifier argumentList)*;
 
 arrowExpr
     : unaryExpr (sequenceArrowTarget | mappingArrowTarget)*
@@ -217,7 +216,6 @@ curlyArrayConstructor
 
 predicateList: predicate*;
 predicate: LBRACKET expr RBRACKET;
-arrowFunctionSpecifier: ID | varRef | parenthesizedExpr;
 primaryExpr: literal
         | varRef
         | parenthesizedExpr

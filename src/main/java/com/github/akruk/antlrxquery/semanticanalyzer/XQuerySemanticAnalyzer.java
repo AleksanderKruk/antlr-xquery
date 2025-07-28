@@ -1692,20 +1692,23 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         return typeFactory.map(keyType, valueType);
     }
 
-    @Override
-    public XQuerySequenceType visitArrowFunctionSpecifier(final ArrowFunctionSpecifierContext ctx)
-    {
-        if (ctx.ID() != null) {
-            // TODO:
-            // final CallAnalysisResult call =
-            // functionCaller.getFunctionReference(ctx.ID().getText(), typeFactory);
-        }
 
-        if (ctx.varRef() != null)
-            return ctx.varRef().accept(this);
-        return ctx.parenthesizedExpr().accept(this);
 
-    }
+
+    // @Override
+    // public XQuerySequenceType visitArrowFunctionSpecifier(final ArrowFunctionSpecifierContext ctx)
+    // {
+    //     if (ctx.ID() != null) {
+    //         // TODO:
+    //         // final CallAnalysisResult call =
+    //         // functionCaller.getFunctionReference(ctx.ID().getText(), typeFactory);
+    //     }
+
+    //     if (ctx.varRef() != null)
+    //         return ctx.varRef().accept(this);
+    //     return ctx.parenthesizedExpr().accept(this);
+
+    // }
 
     @Override
     public XQuerySequenceType visitAndExpr(final AndExprContext ctx)

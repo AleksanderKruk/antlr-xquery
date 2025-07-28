@@ -639,18 +639,26 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     @Override
     public XQuerySequenceType visitFunctionCall(final FunctionCallContext ctx)
     {
-        final String fullName = ctx.functionName().getText();
-        final var resolution = namespaceResolver.resolve(fullName);
-        final String namespace = resolution.namespace();
-        final String functionName = resolution.name();
-
         final var savedArgs = saveVisitedArguments();
         final var savedKwargs = saveVisitedKeywordArguments();
 
         ctx.argumentList().accept(this);
 
+        final XQuerySequenceType callAnalysisResult = callFunction(ctx, ctx.functionName().getText(), visitedPositionalArguments, visitedKeywordArguments);
+
+        visitedPositionalArguments = savedArgs;
+        visitedKeywordArguments = savedKwargs;
+        return callAnalysisResult;
+    }
+
+    private XQuerySequenceType callFunction(ParserRuleContext ctx, String functionQname, List<XQuerySequenceType> args, Map<String, XQuerySequenceType> kwargs) {
+        final String fullName = functionQname;
+        final var resolution = namespaceResolver.resolve(fullName);
+        final String namespace = resolution.namespace();
+        final String functionName = resolution.name();
+
         final AnalysisResult callAnalysisResult = functionManager.call(
-            namespace, functionName, visitedPositionalArguments, visitedKeywordArguments, context);
+            namespace, functionName, args, kwargs, context);
         errors.addAll(callAnalysisResult.errors());
         for (final ArgumentSpecification defaultArg : callAnalysisResult.requiredDefaultArguments()) {
             final var expectedType = defaultArg.type();
@@ -663,8 +671,6 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
                     receivedType));
             }
         }
-        visitedPositionalArguments = savedArgs;
-        visitedKeywordArguments = savedKwargs;
         return callAnalysisResult.result();
     }
 
@@ -1403,7 +1409,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         final var type = this.visitCastTarget(ctx.castTarget());
         final var tested = this.visitPipelineExpr(ctx.pipelineExpr());
         final boolean emptyAllowed = ctx.castTarget().QUESTION_MARK() != null;
-        IsCastableResult result = castability.isCastable(type, tested, emptyAllowed);
+        final IsCastableResult result = castability.isCastable(type, tested, emptyAllowed);
         verifyCastability(ctx, type, tested, result.castability(), result);
         return result.resultingType();
     }
@@ -1713,6 +1719,91 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     //     return ctx.parenthesizedExpr().accept(this);
 
     // }
+
+
+    @Override
+    public XQuerySequenceType visitArrowExpr(ArrowExprContext ctx) {
+        final boolean notSequenceArrow = ctx.sequenceArrowTarget().isEmpty();
+        final boolean notMappingArrow = ctx.mappingArrowTarget().isEmpty();
+        if (notSequenceArrow && notMappingArrow) {
+            return ctx.unaryExpr().accept(this);
+        }
+        final var savedArgs = saveVisitedArguments();
+        final var savedKwargs = saveVisitedKeywordArguments();
+
+        var contextArgument = ctx.unaryExpr().accept(this);
+        visitedPositionalArguments.add(contextArgument);
+        for (var arrowexpr : ctx.children.subList(1, ctx.children.size())) {
+            contextArgument = arrowexpr.accept(this);
+            visitedPositionalArguments = new ArrayList<>();
+            visitedPositionalArguments.add(contextArgument);
+            visitedKeywordArguments = new HashMap<>();
+        }
+
+        visitedPositionalArguments = savedArgs;
+        visitedKeywordArguments = savedKwargs;
+        return contextArgument;
+    }
+
+    @Override
+    public XQuerySequenceType visitArrowTarget(ArrowTargetContext ctx) {
+        if (ctx.functionCall() != null) {
+            ctx.functionCall().argumentList().accept(this);
+            final String functionQname = ctx.functionCall().functionName().getText();
+            return callFunction(ctx.functionCall(), functionQname, visitedPositionalArguments, visitedKeywordArguments);
+        }
+        return ctx.restrictedDynamicCall().accept(this);
+    }
+
+
+    @Override
+    public XQuerySequenceType visitMappingArrowTarget(MappingArrowTargetContext ctx) {
+        final XQuerySequenceType mappedSequence = visitedPositionalArguments.get(visitedPositionalArguments.size()-1);
+        if (mappedSequence.isZero) {
+            ;
+            return mappedSequence;
+        }
+        final XQuerySequenceType iterator = mappedSequence.iteratorType();
+        visitedPositionalArguments = new ArrayList<>();
+        visitedPositionalArguments.add(iterator);
+        var call = ctx.arrowTarget().accept(this);
+        return switch(mappedSequence.occurence) {
+            case ONE -> call;
+            case ONE_OR_MORE -> call.sequenceMerge(call);
+            case ZERO_OR_MORE -> call.sequenceMerge(call).addOptionality();
+            case ZERO_OR_ONE -> call.addOptionality();
+            case ZERO -> {
+                error(ctx, "Mapping empty sequence");
+                yield emptySequence;
+            }
+        };
+    }
+
+    @Override
+    public XQuerySequenceType visitRestrictedDynamicCall(RestrictedDynamicCallContext ctx) {
+        final var value = ctx.children.get(0).accept(this);
+        final boolean isCallable = value.isSubtypeOf(typeFactory.anyFunction());
+        if (!isCallable) {
+            error(ctx,
+                "Expected function in dynamic function call expression, received: " + value);
+        }
+        ctx.positionalArgumentList().accept(this);
+
+        final var expectedFunction = typeFactory.itemFunction(anyItems, visitedPositionalArguments);
+        if (!value.itemType.itemtypeIsSubtypeOf(expectedFunction)){
+            error(ctx, "Dynamic function call expects: " + expectedFunction + " received: " + value);
+        }
+
+        if (isCallable)
+            return value.itemType.returnedType;
+        else
+            return anyItems;
+    }
+
+
+
+
+
 
     @Override
     public XQuerySequenceType visitAndExpr(final AndExprContext ctx)

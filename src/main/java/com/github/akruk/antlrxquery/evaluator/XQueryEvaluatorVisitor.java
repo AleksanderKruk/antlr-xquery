@@ -54,7 +54,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     private XQueryValue matchedNodes;
     private Stream<List<VariableCoupling>> visitedTupleStream;
     private XQueryAxis currentAxis;
-    private List<XQueryValue> visitedArgumentList;
+    private List<XQueryValue> visitedPositionalArguments;
     private XQueryVisitingContext context;
     private NodeGetter nodeGetter = new NodeGetter();
     private Map<String, XQueryValue> visitedKeywordArguments;
@@ -463,8 +463,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         final Map<String, XQueryValue> savedKwargs = saveVisitedKeywordArguments();
         ctx.argumentList().accept(this);
         final String functionQname = ctx.functionName().getText();
-        final XQueryValue callResult = callFunction(functionQname, visitedArgumentList, visitedKeywordArguments);
-        visitedArgumentList = savedArgs;
+        final XQueryValue callResult = callFunction(functionQname, visitedPositionalArguments, visitedKeywordArguments);
+        visitedPositionalArguments = savedArgs;
         visitedKeywordArguments = savedKwargs;
         return callResult;
     }
@@ -685,7 +685,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             index++;
         }
         context = savedContext;
-        visitedArgumentList = savedArgs;
+        visitedPositionalArguments = savedArgs;
         return stepResult;
     }
 
@@ -697,7 +697,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         context.setValue(value);
         final var filtered = ctx.predicate().accept(this);
         context = savedContext;
-        visitedArgumentList = savedArgs;
+        visitedPositionalArguments = savedArgs;
         return filtered;
     }
 
@@ -734,7 +734,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         if (ctx.functionCall() != null) {
             ctx.functionCall().argumentList().accept(this);
             final String functionQname = ctx.functionCall().functionName().getText();
-            return callFunction(functionQname, visitedArgumentList, visitedKeywordArguments);
+            return callFunction(functionQname, visitedPositionalArguments, visitedKeywordArguments);
         }
         return ctx.restrictedDynamicCall().accept(this);
     }
@@ -744,7 +744,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         // TODO: verify logic
         final var contextItem = context.getValue();
         final var function = contextItem.functionValue;
-        final var value = function.call(context, visitedArgumentList);
+        final var value = function.call(context, visitedPositionalArguments);
         return value;
     }
 
@@ -980,26 +980,26 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         final var savedKwargs = saveVisitedKeywordArguments();
 
         var contextArgument = ctx.unaryExpr().accept(this);
-        visitedArgumentList.add(contextArgument);
+        visitedPositionalArguments.add(contextArgument);
         for (var arrowexpr : ctx.children.subList(1, ctx.children.size())) {
             contextArgument = arrowexpr.accept(this);
-            visitedArgumentList = new ArrayList<>();
-            visitedArgumentList.add(contextArgument);
+            visitedPositionalArguments = new ArrayList<>();
+            visitedPositionalArguments.add(contextArgument);
             visitedKeywordArguments = new HashMap<>();
         }
 
-        visitedArgumentList = savedArgs;
+        visitedPositionalArguments = savedArgs;
         visitedKeywordArguments = savedKwargs;
         return contextArgument;
     }
 
     @Override
     public XQueryValue visitMappingArrowTarget(MappingArrowTargetContext ctx) {
-        XQueryValue mappedSequence = visitedArgumentList.get(visitedArgumentList.size()-1);
+        XQueryValue mappedSequence = visitedPositionalArguments.get(visitedPositionalArguments.size()-1);
         ArrayList<XQueryValue> resultingSequence = new ArrayList<>(mappedSequence.size);
         for (XQueryValue el : mappedSequence.sequence) {
-            visitedArgumentList = new ArrayList<>();
-            visitedArgumentList.add(el);
+            visitedPositionalArguments = new ArrayList<>();
+            visitedPositionalArguments.add(el);
             var call = ctx.arrowTarget().accept(this);
             if (call.isError)
                 return call;
@@ -1014,7 +1014,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         if (function.isError)
             return function;
         ctx.positionalArgumentList().accept(this);
-        return function.functionValue.call(context, visitedArgumentList);
+        return function.functionValue.call(context, visitedPositionalArguments);
     }
 
 
@@ -1241,13 +1241,13 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     @Override
     public XQueryValue visitArgument(final ArgumentContext ctx) {
         final var value = super.visitArgument(ctx);
-        visitedArgumentList.add(value);
+        visitedPositionalArguments.add(value);
         return value;
     }
 
     private List<XQueryValue> saveVisitedArguments() {
-        final var saved = visitedArgumentList;
-        visitedArgumentList = new ArrayList<>();
+        final var saved = visitedPositionalArguments;
+        visitedPositionalArguments = new ArrayList<>();
         return saved;
     }
 

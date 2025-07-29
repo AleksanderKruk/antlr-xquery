@@ -14,6 +14,7 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
+import com.github.akruk.antlrxquery.XQueryAxis;
 import com.github.akruk.antlrxquery.charescaper.XQueryCharEscaper;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.*;
 import com.github.akruk.antlrxquery.evaluator.dynamiccontext.XQueryDynamicContextManager;
@@ -68,10 +69,6 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
     private record VariableCoupling(Variable item, Variable key, Variable value, Variable position) {}
     private record Variable(String name, XQueryValue value){}
-
-    private enum XQueryAxis {
-        CHILD, DESCENDANT, SELF, DESCENDANT_OR_SELF, FOLLOWING_SIBLING, FOLLOWING, PARENT, ANCESTOR, PRECEDING_SIBLING, PRECEDING, ANCESTOR_OR_SELF, FOLLOWING_OR_SELF, FOLLOWING_SIBLING_OR_SELF, PRECEDING_SIBLING_OR_SELF, PRECEDING_OR_SELF,
-    }
 
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser, final XQuerySemanticAnalyzer analyzer, final XQueryTypeFactory typeFactory) {
         this(tree, parser, new XQueryMemoizedValueFactory(typeFactory), analyzer, typeFactory);

@@ -108,7 +108,7 @@ public class XQueryRunner {
                     new XQueryMemoizedValueFactory(typeFactory),
                     new XQuerySemanticFunctionManager(typeFactory),
                     // TODO:
-                    GrammarAnalysisResult.empty());
+                    null);
             analyzer.visit(xqueryTree);
             final var querySemanticErrors = analyzer.getErrors();
             for (final var error : querySemanticErrors) {

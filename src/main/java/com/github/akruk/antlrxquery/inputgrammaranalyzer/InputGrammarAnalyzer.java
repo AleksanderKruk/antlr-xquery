@@ -37,7 +37,12 @@ public class InputGrammarAnalyzer {
                                         Map<String, Set<String>> precedingSiblingOrSelf,
                                         Set<String> simpleTokens,
                                         Set<String> simpleRules)
-    {}
+    {
+        public static final GrammarAnalysisResult empty() {
+            return new GrammarAnalysisResult(Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of());
+        }
+
+    }
 
     Set<String> toSet(final Collection<ParseTree> els) {
         return els.stream()

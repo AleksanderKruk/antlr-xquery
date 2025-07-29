@@ -31,6 +31,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper.XQuerySemanticCharEscaperResult;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
+import com.github.akruk.antlrxquery.inputgrammaranalyzer.InputGrammarAnalyzer.GrammarAnalysisResult;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
@@ -58,6 +59,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     private final XQuerySequenceType anyArrayOrMap;
     private final XQuerySequenceType anyItems;
     private final XQuerySequenceType emptySequence;
+    private final GrammarAnalysisResult grammarAnalysisResult;
 
     public List<String> getErrors()
     {
@@ -72,7 +74,10 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         final XQuerySemanticContextManager contextManager,
         final XQueryTypeFactory typeFactory,
         final XQueryValueFactory valueFactory,
-        final XQuerySemanticFunctionManager functionCaller) {
+        final XQuerySemanticFunctionManager functionCaller,
+        final GrammarAnalysisResult grammarAnalysisResult)
+    {
+        this.grammarAnalysisResult = grammarAnalysisResult != null? grammarAnalysisResult : new GrammarAnalysisResult();
         this.context = new XQueryVisitingSemanticContext();
         this.parser = parser;
         this.typeFactory = typeFactory;
@@ -787,22 +792,46 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (ctx.pathOperator().isEmpty()) {
             return ctx.stepExpr(0).accept(this);
         }
-        // final XQuerySequenceType visitedNodeSequence = ctx.stepExpr(0).accept(this);
+        final var savedContext = saveContext();
+        XQuerySequenceType result = ctx.stepExpr(0).accept(this);
         final var operationCount = ctx.pathOperator().size();
         for (int i = 1; i <= operationCount; i++) {
-            // matchedNodes = switch (ctx.pathOperator(i-1).getText()) {
-            // case "//" -> {
-            // List<ParseTree> descendantsOrSelf =
-            // getAllDescendantsOrSelf(matchedTreeNodes());
-            // yield ctx.stepExpr(i).accept(this);
-            // }
-            // case "/" -> ctx.stepExpr(i).accept(this);
-            // default -> null;
-            // };
+            result = switch (ctx.pathOperator(i-1).getText()) {
+                case "//" -> {
+                    if (result.isZero) {
+                        warn(ctx, "Zero nodes at expr " + i);
+                        yield result;
+                    }
+                    if (!result.isSubtypeOf(zeroOrMoreNodes)) {
+                        error(ctx, "Invalid type at " + i);
+                        yield zeroOrMoreNodes;
+                    }
+                    if (result.itemType.type == XQueryTypes.ELEMENT) {
+                        final var ancestorsOrSelf = grammarAnalysisResult.ancestorsOrSelf();
+                        final Set<String> allPossibleNames = result.itemType.elementNames.stream()
+                            .flatMap(elementName->ancestorsOrSelf.get(elementName).stream())
+                            .collect(Collectors.toSet());
+                        // if (allPossibleNames.isEmpty()) {
+                        //     warn(ctx, "Unlikely path expression, no descendants possible");
+                        // }
+                        final XQuerySequenceType type = typeFactory.element(allPossibleNames);
+                        context.setType(type);
+                    } else {
+                        context.setType(anyNodes);
+                    }
+                    yield ctx.stepExpr(i).accept(this);
+                }
+                case "/" -> ctx.stepExpr(i).accept(this);
+                default -> null;
+            };
             i++;
         }
-        return null;
+        context = savedContext;
+        return result;
     }
+
+
+
 
     @Override
     public XQuerySequenceType visitStepExpr(final StepExprContext ctx)

@@ -9,23 +9,18 @@ import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.Token;
 import com.github.akruk.antlrxquery.XQueryAxis;
 import com.github.akruk.antlrxquery.inputgrammaranalyzer.InputGrammarAnalyzer.GrammarAnalysisResult;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 public class SequencetypePathOperator {
-    private final XQuerySequenceType anyItems;
     private final XQueryTypeFactory typeFactory;
     private final XQuerySequenceType anyNodes;
-    private final XQueryItemType itemAnyItem;
     private final XQuerySequenceType emptySequence;
     private final Parser parser;
 
     public SequencetypePathOperator(XQueryTypeFactory typeFactory, Parser parser) {
         this.typeFactory = typeFactory;
-        this.anyItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         this.anyNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
-        itemAnyItem = typeFactory.itemAnyItem();
         emptySequence = typeFactory.emptySequence();
         empty = new PathOperatorResult(emptySequence, true, Set.of(), Set.of());
         this.parser = parser;
@@ -46,7 +41,6 @@ public class SequencetypePathOperator {
     {
         boolean hasProvidedAnalysis = analysis == null;
         boolean usesWildcard = names == null;
-        final XQueryItemType itemType = type.itemType;
         switch(axis) {
         case ANCESTOR:
         case CHILD:

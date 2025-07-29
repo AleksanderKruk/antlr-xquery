@@ -882,8 +882,6 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         if (ctx.wildcard() != null) {
             return switch (ctx.wildcard().getText()) {
                 case "*" -> nodeSequence(stepNodes);
-                // case "*:" -> ;
-                // case ":*" -> ;
                 default -> throw new AssertionError("Invalid wildcard");
             };
         }
@@ -895,9 +893,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             for (final ParseTree node : stepNodes) {
                 // We skip nodes that are not terminal
                 // i.e. are not tokens
-                if (!(node instanceof TerminalNode))
+                if (!(node instanceof final TerminalNode tokenNode))
                     continue;
-                final TerminalNode tokenNode = (TerminalNode) node;
                 final Token token = tokenNode.getSymbol();
                 if (token.getType() == tokenType) {
                     matchedTreeNodes.add(tokenNode);
@@ -907,9 +904,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             final int ruleIndex = parser.getRuleIndex(name);
             for (final ParseTree node : stepNodes) {
                 // Token nodes are being skipped
-                if (!(node instanceof ParserRuleContext))
+                if (!(node instanceof final ParserRuleContext testedRule))
                     continue;
-                final ParserRuleContext testedRule = (ParserRuleContext) node;
                 if (testedRule.getRuleIndex() == ruleIndex) {
                     matchedTreeNodes.add(testedRule);
                 }

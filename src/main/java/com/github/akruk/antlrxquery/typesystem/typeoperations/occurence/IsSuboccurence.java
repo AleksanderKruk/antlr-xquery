@@ -1,18 +1,18 @@
 package com.github.akruk.antlrxquery.typesystem.typeoperations.occurence;
 
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryOccurence;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryCardinality;
 
 public class IsSuboccurence
 {
-    private static final int ZERO         =  XQueryOccurence.ZERO.ordinal();
-    private static final int ONE          =  XQueryOccurence.ONE.ordinal();
-    private static final int ZERO_OR_ONE  =  XQueryOccurence.ZERO_OR_ONE.ordinal();
-    private static final int ONE_OR_MORE  =  XQueryOccurence.ONE_OR_MORE.ordinal();
-    private static final int ZERO_OR_MORE =  XQueryOccurence.ZERO_OR_MORE.ordinal();
+    private static final int ZERO         =  XQueryCardinality.ZERO.ordinal();
+    private static final int ONE          =  XQueryCardinality.ONE.ordinal();
+    private static final int ZERO_OR_ONE  =  XQueryCardinality.ZERO_OR_ONE.ordinal();
+    private static final int ONE_OR_MORE  =  XQueryCardinality.ONE_OR_MORE.ordinal();
+    private static final int ZERO_OR_MORE =  XQueryCardinality.ZERO_OR_MORE.ordinal();
 
     protected final boolean[][] automaton;
 
-    private final int occurenceCount = XQueryOccurence.values().length;
+    private final int occurenceCount = XQueryCardinality.values().length;
 
     public IsSuboccurence()
     {

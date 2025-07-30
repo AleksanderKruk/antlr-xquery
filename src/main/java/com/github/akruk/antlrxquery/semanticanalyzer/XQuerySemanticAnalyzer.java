@@ -845,15 +845,16 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
                         yield zeroOrMoreNodes;
                     }
                     if (grammarAnalysisResult != null && result.itemType.type == XQueryTypes.ELEMENT) {
-                        final var ancestorsOrSelf = grammarAnalysisResult.ancestorsOrSelf();
-                        final Set<String> allPossibleNames = result.itemType.elementNames.stream()
-                            .flatMap(elementName->ancestorsOrSelf.get(elementName).stream())
-                            .collect(Collectors.toSet());
+                        // TODO: FIX
+                        // final var ancestorsOrSelf = grammarAnalysisResult.ancestorsOrSelf();
+                        // final Set<String> allPossibleNames = result.itemType.elementNames.stream()
+                        //     .flatMap(elementName->ancestorsOrSelf.get(elementName).stream())
+                        //     .collect(Collectors.toSet());
                         // if (allPossibleNames.isEmpty()) {
                         //     warn(ctx, "Unlikely path expression, no descendants possible");
                         // }
-                        final XQuerySequenceType type = typeFactory.element(allPossibleNames);
-                        context.setType(type);
+                        // final XQuerySequenceType type = typeFactory.element(allPossibleNames);
+                        // context.setType(type);
                     } else {
                         context.setType(anyNodes);
                     }

@@ -3,12 +3,12 @@ package com.github.akruk.antlrxquery.typesystem.defaults;
 import java.util.function.Function;
 
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.AlternativeOccurenceMerger;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.AlternativeCardinalityMerger;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.ExceptionOccurenceMerger;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.IntersectionOccurenceMerger;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.IsSuboccurence;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.IsValueComparableWith;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.SequenceOccurenceMerger;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.SequenceCardinalityMerger;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.UnionOccurenceMerger;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -16,14 +16,14 @@ public class XQuerySequenceType {
     public enum RelativeCoercability {
         ALWAYS, POSSIBLE, NEVER
     }
-    private static final int ONE_OR_MORE = XQueryOccurence.ONE_OR_MORE.ordinal();
-    private static final int ZERO_OR_MORE = XQueryOccurence.ZERO_OR_MORE.ordinal();
-    private static final int ZERO_OR_ONE = XQueryOccurence.ZERO_OR_ONE.ordinal();
-    private static final int ONE = XQueryOccurence.ONE.ordinal();
-    private static final int ZERO = XQueryOccurence.ZERO.ordinal();
+    private static final int ONE_OR_MORE = XQueryCardinality.ONE_OR_MORE.ordinal();
+    private static final int ZERO_OR_MORE = XQueryCardinality.ZERO_OR_MORE.ordinal();
+    private static final int ZERO_OR_ONE = XQueryCardinality.ZERO_OR_ONE.ordinal();
+    private static final int ONE = XQueryCardinality.ONE.ordinal();
+    private static final int ZERO = XQueryCardinality.ZERO.ordinal();
 
     public final XQueryItemType itemType;
-    public final XQueryOccurence occurence;
+    public final XQueryCardinality occurence;
     public final int occurenceOrdinal;
     public final boolean hasEffectiveBooleanValue;
     public final boolean isZero;
@@ -37,12 +37,12 @@ public class XQuerySequenceType {
     private final String occurenceSuffix;
 
     public XQuerySequenceType(final XQueryTypeFactory typeFactory, final XQueryItemType itemType,
-        final XQueryOccurence occurence) {
+        final XQueryCardinality occurence) {
         this.typeFactory = typeFactory;
         this.itemType = itemType;
         this.occurence = occurence;
         this.occurenceOrdinal = occurence.ordinal();
-        this.factoryByOccurence = new Function[XQueryOccurence.values().length];
+        this.factoryByOccurence = new Function[XQueryCardinality.values().length];
         this.factoryByOccurence[ZERO] = _ -> typeFactory.emptySequence();
         this.factoryByOccurence[ONE] = i -> typeFactory.one(i);
         this.factoryByOccurence[ZERO_OR_ONE] = i -> typeFactory.zeroOrOne(i);
@@ -50,11 +50,11 @@ public class XQuerySequenceType {
         this.factoryByOccurence[ONE_OR_MORE] = i -> typeFactory.oneOrMore(i);
         this.occurenceSuffix = occurence.occurenceSuffix();
         this.requiresParentheses = requiresParentheses();
-        this.isZero = XQueryOccurence.ZERO == occurence;
-        this.isOne = XQueryOccurence.ONE == occurence;
-        this.isZeroOrOne = XQueryOccurence.ZERO_OR_ONE == occurence;
-        this.isZeroOrMore = XQueryOccurence.ZERO_OR_MORE == occurence;
-        this.isOneOrMore = XQueryOccurence.ONE_OR_MORE == occurence;
+        this.isZero = XQueryCardinality.ZERO == occurence;
+        this.isOne = XQueryCardinality.ONE == occurence;
+        this.isZeroOrOne = XQueryCardinality.ZERO_OR_ONE == occurence;
+        this.isZeroOrMore = XQueryCardinality.ZERO_OR_MORE == occurence;
+        this.isOneOrMore = XQueryCardinality.ONE_OR_MORE == occurence;
         this.hasEffectiveBooleanValue = hasEffectiveBooleanValue();
     }
 
@@ -92,7 +92,7 @@ public class XQuerySequenceType {
     }
 
 
-    private static final SequenceOccurenceMerger sequenceOccurenceMerger = new SequenceOccurenceMerger();
+    private static final SequenceCardinalityMerger sequenceOccurenceMerger = new SequenceCardinalityMerger();
 
 
     public XQuerySequenceType sequenceMerge(final XQuerySequenceType other) {
@@ -134,7 +134,7 @@ public class XQuerySequenceType {
 
     public XQuerySequenceType unionMerge(final XQuerySequenceType other) {
         final XQueryItemType otherItemType = other.itemType;
-        final XQueryOccurence mergedOccurence = unionOccurences.merge(occurence, other.occurence);
+        final XQueryCardinality mergedOccurence = unionOccurences.merge(occurence, other.occurence);
         final int occurence_ = mergedOccurence.ordinal();
         if (itemType == null) {
             return factoryByOccurence[occurence_].apply(otherItemType);
@@ -150,7 +150,7 @@ public class XQuerySequenceType {
 
     public XQuerySequenceType intersectionMerge(final XQuerySequenceType other) {
         final XQueryItemType otherItemType = other.itemType;
-        final XQueryOccurence mergedOccurence = intersectionOccurences.merge(occurence, other.occurence);
+        final XQueryCardinality mergedOccurence = intersectionOccurences.merge(occurence, other.occurence);
         final int occurence_ = mergedOccurence.ordinal();
         if (itemType == null) {
             return factoryByOccurence[occurence_].apply(otherItemType);
@@ -167,14 +167,14 @@ public class XQuerySequenceType {
 
     public XQuerySequenceType exceptionMerge(final XQuerySequenceType other) {
         final var other_ = (XQuerySequenceType) other;
-        final XQueryOccurence mergedOccurence = exceptOccurences.merge(this.occurence, other_.occurence);
+        final XQueryCardinality mergedOccurence = exceptOccurences.merge(this.occurence, other_.occurence);
         final Function typeFactoryMethod = factoryByOccurence[mergedOccurence.ordinal()];
-        final var usedItemType = occurence == XQueryOccurence.ZERO? typeFactory.itemAnyNode(): itemType;
+        final var usedItemType = occurence == XQueryCardinality.ZERO? typeFactory.itemAnyNode(): itemType;
         return (XQuerySequenceType) typeFactoryMethod.apply(usedItemType);
     }
 
 
-    private static final AlternativeOccurenceMerger typeAlternativeOccurence = new AlternativeOccurenceMerger();
+    private static final AlternativeCardinalityMerger typeAlternativeOccurence = new AlternativeCardinalityMerger();
 	final Function<XQueryItemType, XQuerySequenceType>[] factoryByOccurence;
 
     public XQuerySequenceType alternativeMerge(final XQuerySequenceType other) {
@@ -210,8 +210,8 @@ public class XQuerySequenceType {
     private static final IsValueComparableWith occurenceIsValueComparable = new IsValueComparableWith();
 
     public boolean isValueComparableWith(final XQuerySequenceType other) {
-        if (occurence == XQueryOccurence.ZERO
-            || other.occurence == XQueryOccurence.ZERO)
+        if (occurence == XQueryCardinality.ZERO
+            || other.occurence == XQueryCardinality.ZERO)
         {
             return true;
         }
@@ -223,7 +223,7 @@ public class XQuerySequenceType {
 
     public XQuerySequenceType iteratorType()
     {
-        if (occurence != XQueryOccurence.ZERO)
+        if (occurence != XQueryCardinality.ZERO)
             return typeFactory.one(itemType);
         else
             return typeFactory.emptySequence();
@@ -237,13 +237,13 @@ public class XQuerySequenceType {
 
 
     public static XQuerySequenceType emptySequence(XQueryTypeFactory typeFactory) {
-        return new XQuerySequenceType(typeFactory, null, XQueryOccurence.ZERO);
+        return new XQuerySequenceType(typeFactory, null, XQueryCardinality.ZERO);
     }
 
 
 
     public String toString() {
-        if (occurence == XQueryOccurence.ZERO) {
+        if (occurence == XQueryCardinality.ZERO) {
             return "empty-sequence()";
         }
         StringBuilder sb = new StringBuilder();

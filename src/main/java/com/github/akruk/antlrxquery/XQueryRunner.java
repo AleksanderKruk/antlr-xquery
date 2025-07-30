@@ -12,7 +12,6 @@ import com.github.akruk.antlrxquery.evaluator.XQueryEvaluatorVisitor;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMemoizedValueFactory;
-import com.github.akruk.antlrxquery.inputgrammaranalyzer.InputGrammarAnalyzer.GrammarAnalysisResult;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQuerySemanticFunctionManager;
@@ -150,8 +149,7 @@ public class XQueryRunner {
                 new XQuerySemanticContextManager(),
                 typeFactory,
                 valueFactory,
-                new XQuerySemanticFunctionManager(typeFactory),
-                GrammarAnalysisResult.empty());
+                new XQuerySemanticFunctionManager(typeFactory), null);
             final XQueryEvaluatorVisitor evaluator = new XQueryEvaluatorVisitor(
                 parserAndTree.tree,
                 parserAndTree.parser,

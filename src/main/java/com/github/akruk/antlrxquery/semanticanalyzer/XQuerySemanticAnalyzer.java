@@ -1440,6 +1440,8 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
 
     @Override
     public XQuerySequenceType visitCastableExpr(CastableExprContext ctx) {
+        if (ctx.CASTABLE() == null)
+            return ctx.castExpr().accept(this);
         final var type = this.visitCastTarget(ctx.castTarget());
         final var tested = this.visitCastExpr(ctx.castExpr());
         final boolean emptyAllowed = ctx.castTarget().QUESTION_MARK() != null;
@@ -1500,6 +1502,8 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
 
     @Override
     public XQuerySequenceType visitCastExpr(CastExprContext ctx) {
+        if (ctx.CAST() == null)
+            return ctx.pipelineExpr().accept(this);
         final var type = this.visitCastTarget(ctx.castTarget());
         final var tested = this.visitPipelineExpr(ctx.pipelineExpr());
         final boolean emptyAllowed = ctx.castTarget().QUESTION_MARK() != null;

@@ -1979,24 +1979,19 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
 
     @Override
     public XQuerySequenceType visitSwitchExpr(final SwitchExprContext ctx) {
-        // Wyekstrahuj switchComparand aby uniknąć powtórnych wywołań
         final SwitchComparandContext switchComparand = ctx.switchComparand();
 
-        // Obsługa opcjonalnego wyrażenia przełączającego
         final XQuerySequenceType switchedValue = switchComparand.switchedExpr != null
             ? switchComparand.switchedExpr.accept(this)
             : null;
 
-        // Wybór między zwykłymi przypadkami a przypadkami w klamrach
         final SwitchCasesContext switchCasesCtx = ctx.switchCases();
         final SwitchCasesContext switchCases = switchCasesCtx != null
             ? switchCasesCtx
             : ctx.bracedSwitchCases().switchCases();
 
-        // Wyekstrahuj listę klauzul case aby uniknąć powtórnych wywołań
         final List<SwitchCaseClauseContext> caseClauseList = switchCases.switchCaseClause();
 
-        // Mapowanie typów wartości do wyrażeń dla przypadków switch
         final Map<XQuerySequenceType, ParseTree> valueToExpression = caseClauseList.stream()
                 .flatMap(clause -> {
                     final ExprSingleContext exprSingle = clause.exprSingle();
@@ -2005,7 +2000,6 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
                 })
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-        // Znajdź odpowiedni przypadek lub użyj domyślnego
         final ParseTree toBeExecuted = valueToExpression.getOrDefault(switchedValue, switchCases.defaultExpr);
 
         return toBeExecuted.accept(this);

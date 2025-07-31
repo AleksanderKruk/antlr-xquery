@@ -139,19 +139,16 @@ public class InputGrammarAnalyzer {
         final Map<String, Set<String>> childrenMapping)
     {
         final Map<String, Map<String, XQueryCardinality>> parentCardinalityMapping
-            = new HashMap<>(childrenMapping.size());
+            = getMapping(allNodeNames);
         for (var entry : childrenMapping.entrySet()) {
-            final String rulename = entry.getKey();
-            final Map<String, XQueryCardinality> maps
-                = new HashMap<>(allNodeNames.size(), 1);
-            Set<String> values = entry.getValue();
-            for (var e : allNodeNames) {
-                if (values.contains(e))
-                    maps.put(e, XQueryCardinality.ZERO_OR_ONE);
-                else
-                    maps.put(e, XQueryCardinality.ZERO);
+            final String parentRuleName = entry.getKey();
+            final Set<String> childrenNames = entry.getValue();
+            for (String child : childrenNames) {
+                if (childrenNames.contains(child)) {
+                    var parents = parentCardinalityMapping.get(child);
+                    parents.put(parentRuleName, XQueryCardinality.ZERO_OR_ONE);
+                }
             }
-            parentCardinalityMapping.put(rulename, maps);
         }
         return parentCardinalityMapping;
     }
@@ -572,4 +569,19 @@ getDescendantMapping(final Map<String, Map<String, XQueryCardinality>> childrenM
         }
         return precedingMapping;
     }
+
+
+    private Map<String, Map<String, XQueryCardinality>> getMapping(final Set<String> nodeNames) {
+        final var map = new HashMap<String, Map<String, XQueryCardinality>>(nodeNames.size(), 1);
+        for (final var nodename : nodeNames) {
+            final var subhashmap =  new HashMap<String, XQueryCardinality>(nodeNames.size(), 1);
+            for (final var sub : nodeNames) {
+                subhashmap.put(sub, XQueryCardinality.ZERO);
+            }
+            map.put(nodename, subhashmap);
+        }
+        return map;
+    }
+
+
 }

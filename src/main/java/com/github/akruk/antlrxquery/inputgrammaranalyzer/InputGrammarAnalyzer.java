@@ -32,7 +32,7 @@ public class InputGrammarAnalyzer {
                                         // Map<String, Map<String, XQueryCardinality>> followingSibling,
                                         // Map<String, Map<String, XQueryCardinality>> followingSiblingOrSelf,
                                         Map<String, Map<String, XQueryCardinality>> ancestors,
-                                        // Map<String, Map<String, XQueryCardinality>> ancestorsOrSelf,
+                                        Map<String, Map<String, XQueryCardinality>> ancestorsOrSelf,
                                         Map<String, Map<String, XQueryCardinality>> parent,
                                         // Map<String, Map<String, XQueryCardinality>> preceding,
                                         // Map<String, Map<String, XQueryCardinality>> precedingOrSelf,
@@ -89,7 +89,8 @@ public class InputGrammarAnalyzer {
             = getParentCardinalityMapping(childrenMapping);
         final Map<String, Map<String, XQueryCardinality>> ancestorCardinalityMapping
             = getAncestorCardinalityMapping(parentCardinalityMapping);
-        // final var ancestorOrSelfMapping = addSelf(ancestorCardinalityMapping);
+        final Map<String, Map<String, XQueryCardinality>> ancestorOrSelfCardinalityMapping
+            = addSelf(ancestorCardinalityMapping);
         // final var descendantMapping = getDescendantMapping(cardinalityAnalyzer.childrenMapping);
         // final var descendantOrSelfMapping = addSelf(descendantMapping);
         // final ElementSequenceAnalyzer analyzer = new ElementSequenceAnalyzer(allNodeNames);
@@ -120,7 +121,7 @@ public class InputGrammarAnalyzer {
                 // followingSiblingCardinalityMapping,
                 // followingSiblingOrSelfCardinalityMapping,
                 ancestorCardinalityMapping,
-                // ancestorOrSelfCardinalityMapping,
+                ancestorOrSelfCardinalityMapping,
                 parentCardinalityMapping,
                 // precedingCardinalityMapping,
                 // precedingOrSelfCardinalityMapping,
@@ -400,7 +401,9 @@ public class InputGrammarAnalyzer {
         for (final var node : mapping.keySet()) {
             final Map<String, XQueryCardinality> mapped = mapping.get(node);
             final Map<String, XQueryCardinality> cloned = new HashMap<>(mapped);
-            cloned.put(node, XQueryCardinality.ONE);
+            var currentCardinality = cloned.get(node);
+            var merged = sequenceCardinalityMerger.merge(XQueryCardinality.ONE.ordinal(), currentCardinality.ordinal());
+            cloned.put(node, XQueryCardinality.values()[merged]);
             selfMapping.put(node, cloned);
         }
         return selfMapping;

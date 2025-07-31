@@ -15,7 +15,7 @@ import com.github.akruk.antlrgrammar.ANTLRv4Parser.TerminalDefContext;
 
 
 
-public class ElementSequenceAnalyzer extends ANTLRv4ParserBaseVisitor<Boolean> {
+class ElementSequenceAnalyzer extends ANTLRv4ParserBaseVisitor<Boolean> {
 
     final Map<String, Set<String>> followingSiblingMapping;
     final Map<String, Set<String>> precedingSiblingMapping;
@@ -29,18 +29,7 @@ public class ElementSequenceAnalyzer extends ANTLRv4ParserBaseVisitor<Boolean> {
         }
     }
 
-    public Map<String, Set<String>> getFollowingSiblingMapping() {
-        return followingSiblingMapping;
-    }
-
-
-
-    public Map<String, Set<String>> getPrecedingSiblingMapping() {
-        return precedingSiblingMapping;
-    }
-
-
-    String currentRule;
+    private String currentRule;
     @Override
     public Boolean visitParserRuleSpec(ParserRuleSpecContext ctx) {
         currentRule = ctx.RULE_REF().getText();

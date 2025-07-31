@@ -2029,28 +2029,33 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     public XQuerySequenceType visitSwitchExpr(final SwitchExprContext ctx) {
         final SwitchComparandContext switchComparand = ctx.switchComparand();
 
-        final XQuerySequenceType switchedValue = switchComparand.switchedExpr != null
-            ? switchComparand.switchedExpr.accept(this)
-            : null;
+        final var comparand = switchComparand.switchedExpr.accept(this);
+        final SwitchCasesContext switchCases = ctx.switchCases();
+        final boolean notBraced = switchCases != null;
+        final var defaultExpr = notBraced
+            ? switchCases.defaultExpr
+            : ctx.bracedSwitchCases().switchCases().defaultExpr;
+        final var clauses = notBraced
+            ? switchCases.switchCaseClause()
+            : ctx.bracedSwitchCases().switchCases().switchCaseClause();
 
-        final SwitchCasesContext switchCasesCtx = ctx.switchCases();
-        final SwitchCasesContext switchCases = switchCasesCtx != null
-            ? switchCasesCtx
-            : ctx.bracedSwitchCases().switchCases();
-
-        final List<SwitchCaseClauseContext> caseClauseList = switchCases.switchCaseClause();
-
-        final Map<XQuerySequenceType, ParseTree> valueToExpression = caseClauseList.stream()
-                .flatMap(clause -> {
-                    final ExprSingleContext exprSingle = clause.exprSingle();
-                    return clause.switchCaseOperand().stream()
-                            .map(operand -> Map.entry(operand.expr().accept(this), exprSingle));
-                })
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-        final ParseTree toBeExecuted = valueToExpression.getOrDefault(switchedValue, switchCases.defaultExpr);
-
-        return toBeExecuted.accept(this);
+        XQuerySequenceType merged = null;
+        for (final var clause : clauses) {
+            final var operandType = clause.switchCaseOperand().stream()
+                .map(this::visit)
+                .reduce(XQuerySequenceType::alternativeMerge)
+                .get();
+            if (!operandType.isSubtypeOf(comparand)) {
+                error(clause, "Invalid operand type; " + operandType + " is not a subtype of " + comparand);
+            }
+            final var returned = clause.exprSingle().accept(this);
+            if (merged == null) {
+                merged = returned;
+                continue;
+            }
+            merged = merged.alternativeMerge(returned);
+        }
+        return merged.alternativeMerge(defaultExpr.accept(this));
     }
 
     @Override

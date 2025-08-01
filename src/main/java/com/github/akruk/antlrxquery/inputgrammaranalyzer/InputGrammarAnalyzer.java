@@ -26,7 +26,7 @@ import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.Sequence
 public class InputGrammarAnalyzer {
     public record GrammarAnalysisResult(Map<String, Map<String, XQueryCardinality>> children,
                                         Map<String, Map<String, XQueryCardinality>> descendants,
-                                        // Map<String, Map<String, XQueryCardinality>> descendantsOrSelf,
+                                        Map<String, Map<String, XQueryCardinality>> descendantsOrSelf,
                                         // Map<String, Map<String, XQueryCardinality>> following,
                                         // Map<String, Map<String, XQueryCardinality>> followingOrSelf,
                                         // Map<String, Map<String, XQueryCardinality>> followingSibling,
@@ -92,7 +92,7 @@ public class InputGrammarAnalyzer {
         final Map<String, Map<String, XQueryCardinality>> ancestorOrSelfCardinalityMapping
             = addSelf(ancestorCardinalityMapping);
         final var descendantCardinalityMapping = getDescendantCardinalityMapping(cardinalityAnalyzer.childrenMapping);
-        // final var descendantOrSelfMapping = addSelf(descendantMapping);
+        final var descendantOrSelfCardinalityMapping = addSelf(descendantCardinalityMapping);
         // final ElementSequenceAnalyzer analyzer = new ElementSequenceAnalyzer(allNodeNames);
         // tree.accept(analyzer);
 
@@ -115,7 +115,7 @@ public class InputGrammarAnalyzer {
         final var gatheredData = new GrammarAnalysisResult(
                 cardinalityAnalyzer.childrenMapping,
                 descendantCardinalityMapping,
-                // descendantOrSelfCardinalityMapping,
+                descendantOrSelfCardinalityMapping,
                 // followingCardinalityMapping,
                 // followingOrSelfCardinalityMapping,
                 // followingSiblingCardinalityMapping,

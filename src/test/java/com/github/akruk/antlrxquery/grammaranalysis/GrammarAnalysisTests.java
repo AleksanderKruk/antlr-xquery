@@ -89,7 +89,7 @@ public class GrammarAnalysisTests {
         final var results = relationshipGrammar();
         final var children = results.children();
 
-        assertTrue(children.get("x").equals(Map.ofEntries(
+        assertEquals(Map.ofEntries(
             Map.entry("x", XQueryCardinality.ZERO),
             Map.entry("a", XQueryCardinality.ONE),
             Map.entry("b", XQueryCardinality.ONE),
@@ -98,9 +98,9 @@ public class GrammarAnalysisTests {
             Map.entry("B", XQueryCardinality.ZERO),
             Map.entry("'c'", XQueryCardinality.ZERO),
             Map.entry("'b'", XQueryCardinality.ZERO)
-        )));
+        ), children.get("x"));
 
-        assertTrue(children.get("a").equals(Map.ofEntries(
+        assertEquals(Map.ofEntries(
             Map.entry("x", XQueryCardinality.ZERO),
             Map.entry("a", XQueryCardinality.ZERO),
             Map.entry("b", XQueryCardinality.ZERO),
@@ -109,9 +109,9 @@ public class GrammarAnalysisTests {
             Map.entry("B", XQueryCardinality.ZERO),
             Map.entry("'c'", XQueryCardinality.ZERO),
             Map.entry("'b'", XQueryCardinality.ZERO)
-        )));
+        ), children.get("a"));
 
-        assertTrue(children.get("b").equals(Map.ofEntries(
+        assertEquals(Map.ofEntries(
             Map.entry("x", XQueryCardinality.ZERO),
             Map.entry("a", XQueryCardinality.ZERO),
             Map.entry("b", XQueryCardinality.ZERO),
@@ -120,9 +120,9 @@ public class GrammarAnalysisTests {
             Map.entry("B", XQueryCardinality.ONE),
             Map.entry("'c'", XQueryCardinality.ZERO),
             Map.entry("'b'", XQueryCardinality.ZERO)
-        )));
+        ), children.get("b"));
 
-        assertTrue(children.get("c").equals(Map.ofEntries(
+        assertEquals(Map.ofEntries(
             Map.entry("x", XQueryCardinality.ZERO),
             Map.entry("a", XQueryCardinality.ZERO),
             Map.entry("b", XQueryCardinality.ZERO),
@@ -131,7 +131,8 @@ public class GrammarAnalysisTests {
             Map.entry("B", XQueryCardinality.ZERO),
             Map.entry("'c'", XQueryCardinality.ONE),
             Map.entry("'b'", XQueryCardinality.ZERO)
-        )));
+        ), children.get("c"));
+
     }
 
     @Test

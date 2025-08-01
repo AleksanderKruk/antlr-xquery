@@ -445,7 +445,10 @@ private Map<String, Map<String, XQueryCardinality>>
     getDescendantCardinalityMapping(final Map<String, Map<String, XQueryCardinality>> childrenMapping)
 {
     final var allNodes = childrenMapping.keySet();
-    final Map<String, Map<String, XQueryCardinality>> descendantMapping = new HashMap<>(childrenMapping);
+    final Map<String, Map<String, XQueryCardinality>> descendantMapping = new HashMap<>(childrenMapping.size());
+    for (var name : allNodes) {
+        descendantMapping.put(name, new HashMap<>(childrenMapping.get(name)));
+    }
 
     for (final String node : allNodes) {
         final Map<String, XQueryCardinality> children = childrenMapping.get(node);

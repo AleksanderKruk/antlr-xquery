@@ -105,7 +105,9 @@ public class XQueryRunner {
                     new XQuerySemanticContextManager(),
                     typeFactory,
                     new XQueryMemoizedValueFactory(typeFactory),
-                    new XQuerySemanticFunctionManager(typeFactory));
+                    new XQuerySemanticFunctionManager(typeFactory),
+                    // TODO:
+                    null);
             analyzer.visit(xqueryTree);
             final var querySemanticErrors = analyzer.getErrors();
             for (final var error : querySemanticErrors) {
@@ -147,7 +149,7 @@ public class XQueryRunner {
                 new XQuerySemanticContextManager(),
                 typeFactory,
                 valueFactory,
-                new XQuerySemanticFunctionManager(typeFactory));
+                new XQuerySemanticFunctionManager(typeFactory), null);
             final XQueryEvaluatorVisitor evaluator = new XQueryEvaluatorVisitor(
                 parserAndTree.tree,
                 parserAndTree.parser,

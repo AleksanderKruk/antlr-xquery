@@ -2,17 +2,17 @@ package com.github.akruk.antlrxquery.typesystem.typeoperations;
 
 import java.util.function.Function;
 
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryOccurence;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryCardinality;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
 
 public abstract class SequencetypeUnaryOperation<Returned>
 {
-    private static final int ZERO         = XQueryOccurence.ZERO.ordinal();
-    private static final int ONE          = XQueryOccurence.ONE.ordinal();
-    private static final int ZERO_OR_ONE  = XQueryOccurence.ZERO_OR_ONE.ordinal();
-    private static final int ONE_OR_MORE  = XQueryOccurence.ONE_OR_MORE.ordinal();
-    private static final int ZERO_OR_MORE = XQueryOccurence.ZERO_OR_MORE.ordinal();
+    private static final int ZERO         = XQueryCardinality.ZERO.ordinal();
+    private static final int ONE          = XQueryCardinality.ONE.ordinal();
+    private static final int ZERO_OR_ONE  = XQueryCardinality.ZERO_OR_ONE.ordinal();
+    private static final int ONE_OR_MORE  = XQueryCardinality.ONE_OR_MORE.ordinal();
+    private static final int ZERO_OR_MORE = XQueryCardinality.ZERO_OR_MORE.ordinal();
 
     private static final int STRING = XQueryTypes.STRING.ordinal();
     private static final int ELEMENT = XQueryTypes.ELEMENT.ordinal();

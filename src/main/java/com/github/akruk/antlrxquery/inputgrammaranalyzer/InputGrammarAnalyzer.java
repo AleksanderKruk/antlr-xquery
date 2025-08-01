@@ -19,22 +19,25 @@ import com.github.akruk.antlrgrammar.ANTLRv4Parser;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.GrammarSpecContext;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.ParserRuleSpecContext;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.TerminalDefContext;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryCardinality;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.BlockCardinalityMerger;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.SequenceCardinalityMerger;
 
 public class InputGrammarAnalyzer {
-    public record GrammarAnalysisResult(Map<String, Set<String>> children,
-                                        Map<String, Set<String>> descendants,
-                                        Map<String, Set<String>> descendantsOrSelf,
-                                        Map<String, Set<String>> following,
-                                        Map<String, Set<String>> followingOrSelf,
-                                        Map<String, Set<String>> followingSibling,
-                                        Map<String, Set<String>> followingSiblingOrSelf,
-                                        Map<String, Set<String>> ancestors,
-                                        Map<String, Set<String>> ancestorsOrSelf,
-                                        Map<String, Set<String>> parent,
-                                        Map<String, Set<String>> preceding,
-                                        Map<String, Set<String>> precedingOrSelf,
-                                        Map<String, Set<String>> precedingSibling,
-                                        Map<String, Set<String>> precedingSiblingOrSelf,
+    public record GrammarAnalysisResult(Map<String, Map<String, XQueryCardinality>> children,
+                                        Map<String, Map<String, XQueryCardinality>> descendants,
+                                        Map<String, Map<String, XQueryCardinality>> descendantsOrSelf,
+                                        // Map<String, Map<String, XQueryCardinality>> following,
+                                        // Map<String, Map<String, XQueryCardinality>> followingOrSelf,
+                                        // Map<String, Map<String, XQueryCardinality>> followingSibling,
+                                        // Map<String, Map<String, XQueryCardinality>> followingSiblingOrSelf,
+                                        Map<String, Map<String, XQueryCardinality>> ancestors,
+                                        Map<String, Map<String, XQueryCardinality>> ancestorsOrSelf,
+                                        Map<String, Map<String, XQueryCardinality>> parent,
+                                        // Map<String, Map<String, XQueryCardinality>> preceding,
+                                        // Map<String, Map<String, XQueryCardinality>> precedingOrSelf,
+                                        // Map<String, Map<String, XQueryCardinality>> precedingSibling,
+                                        // Map<String, Map<String, XQueryCardinality>> precedingSiblingOrSelf,
                                         Set<String> simpleTokens,
                                         Set<String> simpleRules)
     {}
@@ -69,52 +72,98 @@ public class InputGrammarAnalyzer {
         final var definedNodes = XPath.findAll(tree, "//parserRuleSpec/RULE_REF", antlrParser);
         final var terminalTokens = XPath.findAll(tree, "//parserRuleSpec//TOKEN_REF", antlrParser);
         final var terminalTokenLiterals = XPath.findAll(tree, "//parserRuleSpec//STRING_LITERAL", antlrParser);
+        final var definedNodes_ = XPath.findAll(tree, "//lexerRuleSpec/RULE_REF", antlrParser);
+        final var terminalTokens_ = XPath.findAll(tree, "//lexerRuleSpec//TOKEN_REF", antlrParser);
+        final var terminalTokenLiterals_ = XPath.findAll(tree, "//lexerRuleSpec//STRING_LITERAL", antlrParser);
         final Set<String> allNodeNames = toSet(definedNodes);
         allNodeNames.addAll(toSet(terminalTokens));
         allNodeNames.addAll(toSet(terminalTokenLiterals));
+        allNodeNames.addAll(toSet(definedNodes_));
+        allNodeNames.addAll(toSet(terminalTokens_));
+        allNodeNames.addAll(toSet(terminalTokenLiterals_));
 
         final var childrenMapping = getChildrenMapping(antlrParser, tree, allNodeNames);
-        final var parentMapping = getParentMapping(antlrParser, childrenMapping, tree);
-        final var ancestorMapping = getAncestorMapping(parentMapping);
-        final var ancestorOrSelfMapping = addSelf(ancestorMapping);
-        final var descendantMapping = getDescendantMapping(childrenMapping);
-        final var descendantOrSelfMapping = addSelf(descendantMapping);
-        final ElementSequenceAnalyzer analyzer = new ElementSequenceAnalyzer(allNodeNames);
-        tree.accept(analyzer);
+        final CardinalityAnalyzer cardinalityAnalyzer = new CardinalityAnalyzer(allNodeNames, antlrParser);
+        tree.accept(cardinalityAnalyzer);
+        final Map<String, Map<String, XQueryCardinality>> parentCardinalityMapping
+            = getParentCardinalityMapping(childrenMapping);
+        final Map<String, Map<String, XQueryCardinality>> ancestorCardinalityMapping
+            = getAncestorCardinalityMapping(parentCardinalityMapping);
+        final Map<String, Map<String, XQueryCardinality>> ancestorOrSelfCardinalityMapping
+            = addSelf(ancestorCardinalityMapping);
+        final var descendantCardinalityMapping = getDescendantCardinalityMapping(cardinalityAnalyzer.childrenMapping);
+        final var descendantOrSelfCardinalityMapping = addSelf(descendantCardinalityMapping);
+        // final ElementSequenceAnalyzer analyzer = new ElementSequenceAnalyzer(allNodeNames);
+        // tree.accept(analyzer);
 
-        final var followingSiblingMapping = analyzer.getFollowingSiblingMapping();
-        final var followingSiblingOrSelfMapping = addSelf(followingSiblingMapping);
-        final var precedingSiblingMapping = analyzer.getPrecedingSiblingMapping();
-        final var precedingSiblingOrSelfMapping = addSelf(precedingSiblingMapping);
-        final var followingMapping = getFollowing(ancestorOrSelfMapping,
-                followingSiblingMapping,
-                descendantOrSelfMapping);
-        final var followingOrSelfMapping = addSelf(followingMapping);
-        final var precedingMapping = getPreceding(ancestorOrSelfMapping,
-                precedingSiblingMapping,
-                descendantOrSelfMapping);
-        final var precedingOrSelfMapping = addSelf(precedingMapping);
+        // final var followingSiblingMapping = analyzer.followingSiblingMapping;
+        // final var followingSiblingOrSelfMapping = addSelf(followingSiblingMapping);
+        // final var precedingSiblingMapping = analyzer.precedingSiblingMapping;
+        // final var precedingSiblingOrSelfMapping = addSelf(precedingSiblingMapping);
+        // final var followingMapping = getFollowing(ancestorOrSelfMapping,
+        //         followingSiblingMapping,
+        //         descendantOrSelfMapping);
+        // final var followingOrSelfMapping = addSelf(followingMapping);
+        // final var precedingMapping = getPreceding(ancestorOrSelfMapping,
+        //         precedingSiblingMapping,
+        //         descendantOrSelfMapping);
+        // final var precedingOrSelfMapping = addSelf(precedingMapping);
 
         final Set<String> simpleTokens = getSimpleTokens(antlrParser, tree);
         final Set<String> simpleRules = getSimpleRules(tree, antlrParser, simpleTokens);
 
-        final var gatheredData = new GrammarAnalysisResult(childrenMapping,
-                descendantMapping,
-                descendantOrSelfMapping,
-                followingMapping,
-                followingOrSelfMapping,
-                followingSiblingMapping,
-                followingSiblingOrSelfMapping,
-                ancestorMapping,
-                ancestorOrSelfMapping,
-                parentMapping,
-                precedingMapping,
-                precedingOrSelfMapping,
-                precedingSiblingMapping,
-                precedingSiblingOrSelfMapping,
+        final var gatheredData = new GrammarAnalysisResult(
+                cardinalityAnalyzer.childrenMapping,
+                descendantCardinalityMapping,
+                descendantOrSelfCardinalityMapping,
+                // followingCardinalityMapping,
+                // followingOrSelfCardinalityMapping,
+                // followingSiblingCardinalityMapping,
+                // followingSiblingOrSelfCardinalityMapping,
+                ancestorCardinalityMapping,
+                ancestorOrSelfCardinalityMapping,
+                parentCardinalityMapping,
+                // precedingCardinalityMapping,
+                // precedingOrSelfCardinalityMapping,
+                // precedingSiblingCardinalityMapping,
+                // precedingSiblingOrSelfCardinalityMapping,
                 simpleTokens,
-                simpleRules);
+                simpleRules
+        );
         return gatheredData;
+    }
+
+    private Map<String, Map<String, XQueryCardinality>> getAncestorCardinalityMapping(final Map<String, Map<String, XQueryCardinality>> parentMapping)
+    {
+        final Set<String> allNodes = parentMapping.keySet();
+        final  Map<String, Map<String, XQueryCardinality>> ancestorMapping = new HashMap<>(parentMapping);
+        for (final String node: allNodes) {
+            final Map<String, XQueryCardinality> ancestors = ancestorMapping.get(node);
+            final Map<String, XQueryCardinality> parents = parentMapping.get(node);
+            final Set<String> presentKeys = getPresentKeys(parents);
+            final Set<String> nodesToProcess = new HashSet<>(presentKeys);
+            while (!nodesToProcess.isEmpty()) {
+                final String currentNode = nodesToProcess.stream().findFirst().get();
+                final Map<String, XQueryCardinality> currentNodeParents = parentMapping.get(currentNode);
+                final var processedParents = getPresentKeys(currentNodeParents);
+                for (var parent : processedParents) {
+                    XQueryCardinality currentCardinality = ancestors.get(parent);
+                    XQueryCardinality other = currentNodeParents.get(parent);
+                    byte mergedOrdinal = sequenceCardinalityMerger.merge(currentCardinality.ordinal(), other.ordinal());
+                    XQueryCardinality merged = XQueryCardinality.values()[mergedOrdinal];
+                    ancestors.put(parent, merged);
+                }
+                nodesToProcess.addAll(processedParents);
+                nodesToProcess.remove(currentNode);
+            }
+        }
+        return ancestorMapping;
+    }
+
+    private Set<String> getPresentKeys(final Map<String, XQueryCardinality> x) {
+        final Set<String> presentKeys = new HashSet<>(x.keySet());
+        presentKeys.removeIf(k->x.get(k) == XQueryCardinality.ZERO);
+        return presentKeys;
     }
 
 
@@ -347,85 +396,69 @@ public class InputGrammarAnalyzer {
     }
 
 
-    private Map<String, Set<String>> addSelf(final Map<String, Set<String>> mapping) {
-        final Map<String, Set<String>> selfMapping = new HashMap<>(mapping.size(), 1);
+    private Map<String, Map<String, XQueryCardinality>> addSelf(final Map<String, Map<String, XQueryCardinality>> mapping) {
+        final Map<String, Map<String, XQueryCardinality>> selfMapping = new HashMap<>(mapping.size(), 1);
         for (final var node : mapping.keySet()) {
-            final var mapped = mapping.get(node);
-            final var cloned = new HashSet<>(mapped);
-            cloned.add(node);
+            final Map<String, XQueryCardinality> mapped = mapping.get(node);
+            final Map<String, XQueryCardinality> cloned = new HashMap<>(mapped);
+            var currentCardinality = cloned.get(node);
+            var merged = sequenceCardinalityMerger.merge(XQueryCardinality.ONE.ordinal(), currentCardinality.ordinal());
+            cloned.put(node, XQueryCardinality.values()[merged]);
             selfMapping.put(node, cloned);
         }
         return selfMapping;
     }
 
-    private Map<String, Set<String>> getParentMapping(final ANTLRv4Parser antlrParser,
-                                                        final Map<String, Set<String>> childrenMapping,
-                                                        final GrammarSpecContext tree)
+    final SequenceCardinalityMerger sequenceCardinalityMerger = new SequenceCardinalityMerger();
+
+    private Map<String, Map<String, XQueryCardinality>>
+    getParentCardinalityMapping(final Map<String, Set<String>> childrenMapping)
     {
-        final var allNodes = childrenMapping.keySet();
-        final  Map<String, Set<String>> parentMapping = new HashMap<>(allNodes.size());
-        for (final var node: allNodes) {
-            parentMapping.put(node, new HashSet<>());
-        }
-        final var ruleSpecs = XPath.findAll(tree, "//parserRuleSpec", antlrParser);
-        for (final ParseTree spec :ruleSpecs) {
-            final ParserRuleSpecContext spec_ = (ParserRuleSpecContext) spec;
-            final String ruleRef = spec_.RULE_REF().getText();
-            final Set<String> children = childrenMapping.get(ruleRef);
+        final  Map<String, Map<String, XQueryCardinality>> parentMapping = getMapping(childrenMapping.keySet());
+        for (String parentName : parentMapping.keySet()) {
+            final Set<String> children = childrenMapping.get(parentName);
             for (final var child : children) {
-                parentMapping.get(child).add(ruleRef);
+                final var parents = parentMapping.get(child);
+                parents.put(parentName, XQueryCardinality.ZERO_OR_ONE);
             }
         }
         return parentMapping;
     }
 
-    private Map<String, Set<String>> getAncestorMapping(final Map<String, Set<String>> parentMapping)
-    {
-        final var allNodes = parentMapping.keySet();
-        final  Map<String, Set<String>> ancestorMapping = new HashMap<>(allNodes.size(), 1);
-        for (final var node: allNodes) {
-            final Set<String> parents = parentMapping.get(node);
 
-            final Set<String> ancestors = new HashSet<>(parentMapping.size());
-            ancestors.addAll(parents);
-            final Set<String> nodesToProcess = new HashSet<>(parents);
-            while (!nodesToProcess.isEmpty()) {
-                final String processedNode = nodesToProcess.stream().findFirst().get();
-                final var processedParents = new HashSet<>(parentMapping.get(processedNode));
-                processedParents.removeAll(ancestors);
-                ancestors.addAll(processedParents);
-                nodesToProcess.addAll(processedParents);
-                nodesToProcess.remove(processedNode);
+final BlockCardinalityMerger blockCardinalityMerger = new BlockCardinalityMerger();
+
+private Map<String, Map<String, XQueryCardinality>>
+    getDescendantCardinalityMapping(final Map<String, Map<String, XQueryCardinality>> childrenMapping)
+{
+    final var allNodes = childrenMapping.keySet();
+    final Map<String, Map<String, XQueryCardinality>> descendantMapping = new HashMap<>(childrenMapping);
+
+    for (final String node : allNodes) {
+        final Map<String, XQueryCardinality> children = childrenMapping.get(node);
+        final Map<String, XQueryCardinality> descendants = descendantMapping.get(node);
+        final Set<String> nodesToProcess = getPresentKeys(children);
+
+        while (!nodesToProcess.isEmpty()) {
+            final String processedNode = nodesToProcess.stream().findFirst().get();
+            nodesToProcess.remove(processedNode);
+
+            final Map<String, XQueryCardinality> processedNodeChildren = childrenMapping.get(processedNode);
+            final Set<String> presentChildren = getPresentKeys(processedNodeChildren);
+            for (final var childName : presentChildren) {
+                final XQueryCardinality childCardinality = processedNodeChildren.get(childName);
+                final XQueryCardinality parentCardinality = descendants.get(processedNode);
+                final XQueryCardinality mergedCardinality = blockCardinalityMerger.merge(parentCardinality, childCardinality);
+
+                final XQueryCardinality existingCardinality = descendants.get(childName);
+                final XQueryCardinality updatedCardinality = sequenceCardinalityMerger.merge(existingCardinality, mergedCardinality);
+                descendants.put(childName, updatedCardinality);
+                nodesToProcess.add(childName);
             }
-            ancestorMapping.put(node, ancestors);
         }
-        return ancestorMapping;
     }
-
-
-    private Map<String, Set<String>> getDescendantMapping(final Map<String, Set<String>> childrenMapping)
-    {
-        final var allNodes = childrenMapping.keySet();
-        final  Map<String, Set<String>> ancestorMapping = new HashMap<>(childrenMapping.size());
-        for (final var node: allNodes) {
-            final Set<String> children = childrenMapping.get(node);
-
-            final Set<String> descendants = new HashSet<>(childrenMapping.size());
-            descendants.addAll(children);
-            final Set<String> nodesToProcess = new HashSet<>(children);
-            while (!nodesToProcess.isEmpty()) {
-                final String processedNode = nodesToProcess.stream().findFirst().get();
-                final var processedParents = new HashSet<>(childrenMapping.get(processedNode));
-                processedParents.removeAll(descendants);
-                nodesToProcess.addAll(processedParents);
-                descendants.addAll(processedParents);
-                nodesToProcess.remove(processedNode);
-            }
-            ancestorMapping.put(node, descendants);
-        }
-        return ancestorMapping;
-    }
-
+    return descendantMapping;
+}
 
     private Map<String, Set<String>> getChildrenMapping(final ANTLRv4Parser antlrParser,
                                                         final GrammarSpecContext tree,
@@ -499,4 +532,19 @@ public class InputGrammarAnalyzer {
         }
         return precedingMapping;
     }
+
+
+    private Map<String, Map<String, XQueryCardinality>> getMapping(final Set<String> nodeNames) {
+        final var map = new HashMap<String, Map<String, XQueryCardinality>>(nodeNames.size(), 1);
+        for (final var nodename : nodeNames) {
+            final var subhashmap =  new HashMap<String, XQueryCardinality>(nodeNames.size(), 1);
+            for (final var sub : nodeNames) {
+                subhashmap.put(sub, XQueryCardinality.ZERO);
+            }
+            map.put(nodename, subhashmap);
+        }
+        return map;
+    }
+
+
 }

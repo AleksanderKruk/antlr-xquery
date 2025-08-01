@@ -38,7 +38,9 @@ public final class XQuery {
         new XQuerySemanticContextManager(),
         typeFactory,
         valueFactory,
-        new XQuerySemanticFunctionManager(typeFactory));
+        new XQuerySemanticFunctionManager(typeFactory),
+        null
+        );
     final XQueryEvaluatorVisitor visitor = new XQueryEvaluatorVisitor(root, parser, analyzer, typeFactory);
     final XQueryValue evaluated = visitor.visit(xqueryTree);
     if (tree != null) {

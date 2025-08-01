@@ -10,9 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -28,9 +26,11 @@ import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defa
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQuerySemanticFunctionManager.AnalysisResult;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQuerySemanticFunctionManager.ArgumentSpecification;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
+import com.github.akruk.antlrxquery.XQueryAxis;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper.XQuerySemanticCharEscaperResult;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
+import com.github.akruk.antlrxquery.inputgrammaranalyzer.InputGrammarAnalyzer.GrammarAnalysisResult;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
@@ -39,8 +39,10 @@ import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType.Relat
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypeAtomization;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypeCastable;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypePathOperator;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypeCastable.Castability;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypeCastable.IsCastableResult;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypePathOperator.PathOperatorResult;
 
 
 public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQuerySequenceType> {
@@ -58,6 +60,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     private final XQuerySequenceType anyArrayOrMap;
     private final XQuerySequenceType anyItems;
     private final XQuerySequenceType emptySequence;
+    private final GrammarAnalysisResult grammarAnalysisResult;
+    private final SequencetypePathOperator pathOperator;
 
     public List<String> getErrors()
     {
@@ -72,14 +76,17 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         final XQuerySemanticContextManager contextManager,
         final XQueryTypeFactory typeFactory,
         final XQueryValueFactory valueFactory,
-        final XQuerySemanticFunctionManager functionCaller) {
-        this.context = new XQueryVisitingSemanticContext();
+        final XQuerySemanticFunctionManager functionCaller,
+        final GrammarAnalysisResult grammarAnalysisResult)
+    {
+        this.grammarAnalysisResult = grammarAnalysisResult;
         this.parser = parser;
         this.typeFactory = typeFactory;
         this.valueFactory = valueFactory;
         this.functionManager = functionCaller;
         this.contextManager = contextManager;
         this.contextManager.enterContext();
+        this.context = new XQueryVisitingSemanticContext();
         this.context.setType(typeFactory.anyNode());
         this.context.setPositionType(null);
         this.context.setSizeType(null);
@@ -101,7 +108,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
         this.atomizer = new SequencetypeAtomization(typeFactory);
         this.castability = new SequencetypeCastable(typeFactory, atomizer);
-
+        this.anyNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
+        this.pathOperator = new SequencetypePathOperator(typeFactory, parser);
     }
 
     @Override
@@ -749,16 +757,71 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     {
         final boolean pathExpressionFromRoot = ctx.SLASH() != null;
         if (pathExpressionFromRoot) {
-            // TODO: Context nodes
+            final var savedAxis = saveAxis();
+            contextTypeMustBeAnyNodes(ctx);
+            currentAxis = XQueryAxis.CHILD;
             final var resultingNodeSequence = ctx.relativePathExpr().accept(this);
+            currentAxis = savedAxis;
             return resultingNodeSequence;
         }
         final boolean useDescendantOrSelfAxis = ctx.SLASHES() != null;
         if (useDescendantOrSelfAxis) {
+            final var savedAxis = saveAxis();
+            contextTypeMustBeAnyNodes(ctx);
+            currentAxis = XQueryAxis.DESCENDANT_OR_SELF;
             final var resultingNodeSequence = ctx.relativePathExpr().accept(this);
+            currentAxis = savedAxis;
             return resultingNodeSequence;
         }
         return ctx.relativePathExpr().accept(this);
+    }
+
+    @Override
+    public XQuerySequenceType visitNodeTest(final NodeTestContext ctx)
+    {
+        XQuerySequenceType nodeType = context.getType();
+        if (!nodeType.isSubtypeOf(anyNodes)) {
+            error(ctx, "Path expression requires left hand side argument to be of type node()*, found: " + nodeType);
+        }
+        PathOperatorResult result;
+        if (ctx.wildcard() != null) {
+            result = pathOperator.pathOperator(nodeType, currentAxis, null, grammarAnalysisResult);
+        } else {
+            Set<String> names = ctx.pathNameTestUnion().qname().stream()
+                .map(t->t.getText())
+                .collect(Collectors.toSet());
+            result = pathOperator.pathOperator(nodeType, currentAxis, names, grammarAnalysisResult);
+        }
+        if (result.isEmptyTarget()) {
+            warn(ctx, "Empty sequence as target of path operator");
+        }
+        if (!result.invalidNames().isEmpty()) {
+            String joinedNames = result.invalidNames().stream().collect(Collectors.joining(", "));
+            error(ctx, "Path expression references unrecognized rule names: " + joinedNames);
+        }
+        if (!result.duplicateNames().isEmpty()) {
+            String joinedNames = result.invalidNames().stream().collect(Collectors.joining(", "));
+            warn(ctx, "Step expression contains duplicated names: " + joinedNames);
+        }
+        return result.result();
+    }
+
+    /**
+     * Makes sure that context type is subtype of node()*
+     * If it is not, error is recorded and the value is corrected to node()*
+     * @param ctx rule where the error potentially has occured
+     */
+    private void contextTypeMustBeAnyNodes(final PathExprContext ctx)
+    {
+        XQuerySequenceType contexttype = context.getType();
+        if (contexttype == null) {
+            error(ctx, "Path expression starting from root requires context to be present and of type node()*");
+            context.setType(anyNodes);
+        } else if (!contexttype.isSubtypeOf(anyNodes)) {
+            error(ctx,
+                "Path expression starting from root requires context to be of type node()*; found " + contexttype);
+            context.setType(anyNodes);
+        }
     }
 
     @Override
@@ -767,22 +830,47 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (ctx.pathOperator().isEmpty()) {
             return ctx.stepExpr(0).accept(this);
         }
-        // final XQuerySequenceType visitedNodeSequence = ctx.stepExpr(0).accept(this);
+        final var savedContext = saveContext();
+        XQuerySequenceType result = ctx.stepExpr(0).accept(this);
         final var operationCount = ctx.pathOperator().size();
         for (int i = 1; i <= operationCount; i++) {
-            // matchedNodes = switch (ctx.pathOperator(i-1).getText()) {
-            // case "//" -> {
-            // List<ParseTree> descendantsOrSelf =
-            // getAllDescendantsOrSelf(matchedTreeNodes());
-            // yield ctx.stepExpr(i).accept(this);
-            // }
-            // case "/" -> ctx.stepExpr(i).accept(this);
-            // default -> null;
-            // };
+            result = switch (ctx.pathOperator(i-1).getText()) {
+                case "//" -> {
+                    if (result.isZero) {
+                        warn(ctx, "Zero nodes at expr " + i);
+                        yield result;
+                    }
+                    if (!result.isSubtypeOf(zeroOrMoreNodes)) {
+                        error(ctx, "Invalid type at " + i);
+                        yield zeroOrMoreNodes;
+                    }
+                    if (grammarAnalysisResult != null && result.itemType.type == XQueryTypes.ELEMENT) {
+                        // TODO: FIX
+                        // final var ancestorsOrSelf = grammarAnalysisResult.ancestorsOrSelf();
+                        // final Set<String> allPossibleNames = result.itemType.elementNames.stream()
+                        //     .flatMap(elementName->ancestorsOrSelf.get(elementName).stream())
+                        //     .collect(Collectors.toSet());
+                        // if (allPossibleNames.isEmpty()) {
+                        //     warn(ctx, "Unlikely path expression, no descendants possible");
+                        // }
+                        // final XQuerySequenceType type = typeFactory.element(allPossibleNames);
+                        // context.setType(type);
+                    } else {
+                        context.setType(anyNodes);
+                    }
+                    yield ctx.stepExpr(i).accept(this);
+                }
+                case "/" -> ctx.stepExpr(i).accept(this);
+                default -> null;
+            };
             i++;
         }
-        return null;
+        context = savedContext;
+        return result;
     }
+
+
+
 
     @Override
     public XQuerySequenceType visitStepExpr(final StepExprContext ctx)
@@ -1196,12 +1284,58 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         return context.getType();
     }
 
+
+    @Override
+    public XQuerySequenceType visitForwardAxis(final ForwardAxisContext ctx) {
+        if (ctx.CHILD() != null)
+            currentAxis = XQueryAxis.CHILD;
+        if (ctx.DESCENDANT() != null)
+            currentAxis = XQueryAxis.DESCENDANT;
+        if (ctx.SELF() != null)
+            currentAxis = XQueryAxis.SELF;
+        if (ctx.DESCENDANT_OR_SELF() != null)
+            currentAxis = XQueryAxis.DESCENDANT_OR_SELF;
+        if (ctx.FOLLOWING_SIBLING() != null)
+            currentAxis = XQueryAxis.FOLLOWING_SIBLING;
+        if (ctx.FOLLOWING() != null)
+            currentAxis = XQueryAxis.FOLLOWING;
+        if (ctx.FOLLOWING_SIBLING_OR_SELF() != null)
+            currentAxis = XQueryAxis.FOLLOWING_SIBLING_OR_SELF;
+        if (ctx.FOLLOWING_OR_SELF() != null)
+            currentAxis = XQueryAxis.FOLLOWING_OR_SELF;
+        return null;
+    }
+
+    @Override
+    public XQuerySequenceType visitReverseAxis(final ReverseAxisContext ctx) {
+        if (ctx.PARENT() != null)
+            currentAxis = XQueryAxis.PARENT;
+        if (ctx.ANCESTOR() != null)
+            currentAxis = XQueryAxis.ANCESTOR;
+        if (ctx.PRECEDING_SIBLING_OR_SELF() != null)
+            currentAxis = XQueryAxis.PRECEDING_SIBLING_OR_SELF;
+        if (ctx.PRECEDING_OR_SELF() != null)
+            currentAxis = XQueryAxis.PRECEDING_OR_SELF;
+        if (ctx.PRECEDING_SIBLING() != null)
+            currentAxis = XQueryAxis.PRECEDING_SIBLING;
+        if (ctx.PRECEDING() != null)
+            currentAxis = XQueryAxis.PRECEDING;
+        if (ctx.ANCESTOR_OR_SELF() != null)
+            currentAxis = XQueryAxis.ANCESTOR_OR_SELF;
+        return null;
+    }
+
+
+
     @Override
     public XQuerySequenceType visitForwardStep(final ForwardStepContext ctx)
     {
         if (ctx.forwardAxis() != null) {
             ctx.forwardAxis().accept(this);
         } else {
+            if (currentAxis == null) {
+                currentAxis = XQueryAxis.CHILD;
+            }
         }
         return ctx.nodeTest().accept(this);
     }
@@ -1216,13 +1350,6 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         return ctx.nodeTest().accept(this);
     }
 
-    @Override
-    public XQuerySequenceType visitNodeTest(final NodeTestContext ctx)
-    {
-        return ctx.nameTest().accept(this);
-    }
-
-    private final Predicate<String> canBeTokenName = Pattern.compile("^[\\p{IsUppercase}].*").asPredicate();
     private final XQuerySequenceType number;
     private final XQuerySequenceType zeroOrMoreNodes;
     private final XQuerySequenceType anyArray;
@@ -1234,37 +1361,9 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     private final XQuerySequenceType optionalString;
     private final XQuerySequenceType anyItem;
 
-    @Override
-    public XQuerySequenceType visitNameTest(final NameTestContext ctx)
-    {
-        if (ctx.wildcard() != null) {
-            return switch (ctx.wildcard().getText()) {
-                case "*" -> zeroOrMoreNodes;
-                // case "*:" -> ;
-                // case ":*" -> ;
-                default -> throw new AssertionError("Not implemented wildcard");
-            };
-        }
-        final String name = ctx.qname().getText();
-        if (canBeTokenName.test(name)) {
-            // test for token type
-            final int tokenType = parser.getTokenType(name);
-            if (tokenType == Token.INVALID_TYPE) {
-                final String msg = String.format("Token name: %s is not recognized by parser %s", name,
-                    parser.toString());
-                error(ctx.qname(), msg);
-            }
-            return typeFactory.zeroOrMore(typeFactory.itemElement(Set.of(name)));
-        } else { // test for rule
-            final int ruleIndex = parser.getRuleIndex(name);
-            if (ruleIndex == -1) {
-                final String msg = String.format("Rule name: %s is not recognized by parser %s", name,
-                    parser.getClass().toString());
-                error(ctx.qname(), msg);
-            }
-            return typeFactory.zeroOrMore(typeFactory.itemElement(Set.of(name)));
-        }
-    }
+
+
+
 
     @Override
     public XQuerySequenceType visitStringConcatExpr(final StringConcatExprContext ctx)
@@ -1337,10 +1436,13 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
 
 
 
-    final SequencetypeCastable castability;
+    private final SequencetypeCastable castability;
+    private final XQuerySequenceType anyNodes;
 
     @Override
     public XQuerySequenceType visitCastableExpr(CastableExprContext ctx) {
+        if (ctx.CASTABLE() == null)
+            return ctx.castExpr().accept(this);
         final var type = this.visitCastTarget(ctx.castTarget());
         final var tested = this.visitCastExpr(ctx.castExpr());
         final boolean emptyAllowed = ctx.castTarget().QUESTION_MARK() != null;
@@ -1349,9 +1451,14 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         return result.resultingType();
     }
 
-    private <T> void  verifyCastability(ParserRuleContext ctx, final T type, final XQuerySequenceType tested,
-            Castability castability, IsCastableResult result) {
-                // TODO: add atomized info
+    private <T> void  verifyCastability(
+            final ParserRuleContext ctx,
+            final T type,
+            final XQuerySequenceType tested,
+            final Castability castability,
+            final IsCastableResult result)
+    {
+        // TODO: add atomized info
         switch(castability) {
         case POSSIBLE:
             break;
@@ -1396,6 +1503,8 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
 
     @Override
     public XQuerySequenceType visitCastExpr(CastExprContext ctx) {
+        if (ctx.CAST() == null)
+            return ctx.pipelineExpr().accept(this);
         final var type = this.visitCastTarget(ctx.castTarget());
         final var tested = this.visitPipelineExpr(ctx.pipelineExpr());
         final boolean emptyAllowed = ctx.castTarget().QUESTION_MARK() != null;
@@ -1495,7 +1604,6 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         return result;
     }
 
-
     void testCastingOne(CastableExprContext ctx, XQueryTypes castTargetType, Supplier<String> errorMessageSupplier)
     {
         switch (castTargetType) {
@@ -1505,10 +1613,6 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
                 error(ctx, errorMessageSupplier.get());
         };
     }
-
-
-
-
 
     @Override
     public XQuerySequenceType visitCastTarget(CastTargetContext ctx) {
@@ -1923,36 +2027,35 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
 
     @Override
     public XQuerySequenceType visitSwitchExpr(final SwitchExprContext ctx) {
-        // Wyekstrahuj switchComparand aby uniknąć powtórnych wywołań
         final SwitchComparandContext switchComparand = ctx.switchComparand();
 
-        // Obsługa opcjonalnego wyrażenia przełączającego
-        final XQuerySequenceType switchedValue = switchComparand.switchedExpr != null
-            ? switchComparand.switchedExpr.accept(this)
-            : null;
+        final var comparand = switchComparand.switchedExpr.accept(this);
+        final SwitchCasesContext switchCases = ctx.switchCases();
+        final boolean notBraced = switchCases != null;
+        final var defaultExpr = notBraced
+            ? switchCases.defaultExpr
+            : ctx.bracedSwitchCases().switchCases().defaultExpr;
+        final var clauses = notBraced
+            ? switchCases.switchCaseClause()
+            : ctx.bracedSwitchCases().switchCases().switchCaseClause();
 
-        // Wybór między zwykłymi przypadkami a przypadkami w klamrach
-        final SwitchCasesContext switchCasesCtx = ctx.switchCases();
-        final SwitchCasesContext switchCases = switchCasesCtx != null
-            ? switchCasesCtx
-            : ctx.bracedSwitchCases().switchCases();
-
-        // Wyekstrahuj listę klauzul case aby uniknąć powtórnych wywołań
-        final List<SwitchCaseClauseContext> caseClauseList = switchCases.switchCaseClause();
-
-        // Mapowanie typów wartości do wyrażeń dla przypadków switch
-        final Map<XQuerySequenceType, ParseTree> valueToExpression = caseClauseList.stream()
-                .flatMap(clause -> {
-                    final ExprSingleContext exprSingle = clause.exprSingle();
-                    return clause.switchCaseOperand().stream()
-                            .map(operand -> Map.entry(operand.expr().accept(this), exprSingle));
-                })
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-        // Znajdź odpowiedni przypadek lub użyj domyślnego
-        final ParseTree toBeExecuted = valueToExpression.getOrDefault(switchedValue, switchCases.defaultExpr);
-
-        return toBeExecuted.accept(this);
+        XQuerySequenceType merged = null;
+        for (final var clause : clauses) {
+            final var operandType = clause.switchCaseOperand().stream()
+                .map(this::visit)
+                .reduce(XQuerySequenceType::alternativeMerge)
+                .get();
+            if (!operandType.isSubtypeOf(comparand)) {
+                error(clause, "Invalid operand type; " + operandType + " is not a subtype of " + comparand);
+            }
+            final var returned = clause.exprSingle().accept(this);
+            if (merged == null) {
+                merged = returned;
+                continue;
+            }
+            merged = merged.alternativeMerge(returned);
+        }
+        return merged.alternativeMerge(defaultExpr.accept(this));
     }
 
     @Override
@@ -2130,5 +2233,15 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         }
         return emptySequence;
     }
+
+
+    XQueryAxis currentAxis;
+
+    private XQueryAxis saveAxis() {
+        final var saved = currentAxis;
+        currentAxis = null;
+        return saved;
+    }
+
 
 }

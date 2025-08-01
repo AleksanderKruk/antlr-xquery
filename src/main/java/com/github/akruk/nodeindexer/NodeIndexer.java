@@ -10,7 +10,7 @@ import org.antlr.v4.runtime.tree.Trees;
 
 
 public class NodeIndexer {
-    Map<ParseTree, Integer> indexNodes(final ParseTree tree) {
+    public Map<ParseTree, Integer> indexNodes(final ParseTree tree) {
         // Trees.getDescendants actually returns descendants-or-self
         final List<ParseTree> descendants = Trees.getDescendants(tree);
         final Map<ParseTree, Integer> indexedNodes = new HashMap<>(descendants.size(), 1);

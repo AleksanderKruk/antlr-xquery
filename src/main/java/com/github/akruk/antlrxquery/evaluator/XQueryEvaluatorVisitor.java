@@ -39,6 +39,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     // Implementations of operators and other evaluation logic
     private final ValueComparisonOperator valueComparisonOperator;
     private final GeneralComparisonOperator generalComparisonOperator;
+    private final NodeComparisonOperator nodeComparisonOperator;
     private final ValueBooleanOperator booleanOperator;
     private final NodeOperator nodeOperator;
     private final EffectiveBooleanValue effectiveBooleanValue;
@@ -106,6 +107,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         this.atomizer = new ValueAtomizer();
         this.nodeGetter = new NodeGetter();
         this.generalComparisonOperator = new GeneralComparisonOperator(valueFactory, atomizer, valueComparisonOperator);
+        this.nodeComparisonOperator = new NodeComparisonOperator(valueFactory, root.node);
         this.booleanOperator = new ValueBooleanOperator(this, valueFactory, effectiveBooleanValue);
         this.nodeOperator = new NodeOperator(valueFactory);
         this.functionManager = new XQueryEvaluatingFunctionManager(this, parser, valueFactory, nodeGetter, typeFactory, effectiveBooleanValue, atomizer, valueComparisonOperator);
@@ -548,24 +550,16 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
     private XQueryValue handleNodeComp(final ComparisonExprContext ctx) {
         final var visitedLeft = ctx.otherwiseExpr(0).accept(this);
-        if (visitedLeft.isEmptySequence)
-            return emptySequence;
-        final ParseTree nodeLeft = getSingleNode(visitedLeft);
         final var visitedRight = ctx.otherwiseExpr(1).accept(this);
-        if (visitedRight.isEmptySequence)
-            return emptySequence;
-        final ParseTree nodeRight = getSingleNode(visitedRight);
-        final boolean result = switch (ctx.nodeComp().getText()) {
-            case "is" -> nodeLeft == nodeRight;
-            case "<<" -> nodeGetter.getFollowing(nodeLeft).contains(nodeRight);
-            case ">>" -> nodeGetter.getPreceding(nodeLeft).contains(nodeRight);
-            default -> false;
+        return switch (ctx.nodeComp().getText()) {
+            case "is" -> nodeComparisonOperator.is(visitedLeft, visitedRight);
+            case "is-not" -> nodeComparisonOperator.isNot(visitedLeft, visitedRight);
+            case "precedes" -> nodeComparisonOperator.precedes(visitedLeft, visitedRight);
+            case "<<" -> nodeComparisonOperator.precedes(visitedLeft, visitedRight);
+            case "follows" -> nodeComparisonOperator.follows(visitedLeft, visitedRight);
+            case ">>" -> nodeComparisonOperator.follows(visitedLeft, visitedRight);
+            default -> null; // shouldn't be reachable
         };
-        return valueFactory.bool(result);
-    }
-
-    private ParseTree getSingleNode(final XQueryValue visitedLeft) {
-        return visitedLeft.sequence.get(0).node;
     }
 
     @Override
@@ -1335,7 +1329,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     @Override
     public XQueryValue visitIfExpr(final IfExprContext ctx) {
         final var condition = ctx.expr().accept(this);
-        final var effectiveBooleanValue = effectiveBooleanValue.effectiveBooleanValue(condition);
+        final var effectiveBooleanValue = this.effectiveBooleanValue.effectiveBooleanValue(condition);
         final var isBraced = ctx.bracedAction() != null;
         if (isBraced) {
             if (effectiveBooleanValue.booleanValue) {

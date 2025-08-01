@@ -10,8 +10,8 @@ import org.antlr.v4.runtime.tree.Trees;
 
 public class NodeIndexer {
     Map<ParseTree, Integer> indexNodes(ParseTree tree) {
-        Map<ParseTree, Integer> indexedNodes = new HashMap<>();
         var descendants = Trees.getDescendants(tree);
+        Map<ParseTree, Integer> indexedNodes = new HashMap<>(descendants.size());
         int i = 0;
         for (var descendant : descendants) {
             indexedNodes.put(descendant, i++);

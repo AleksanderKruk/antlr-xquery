@@ -13,7 +13,7 @@ public class NodeIndexer {
     Map<ParseTree, Integer> indexNodes(final ParseTree tree) {
         // Trees.getDescendants actually returns descendants-or-self
         final List<ParseTree> descendants = Trees.getDescendants(tree);
-        final Map<ParseTree, Integer> indexedNodes = new HashMap<>(descendants.size());
+        final Map<ParseTree, Integer> indexedNodes = new HashMap<>(descendants.size(), 1);
         int i = 0;
         for (final ParseTree descendant : descendants) {
             indexedNodes.put(descendant, i++);

@@ -184,20 +184,89 @@ public class GrammarAnalysisTests {
         )));
     }
 
-    // @Test
-    // public void descendants() {
-    //     final var results = relationshipGrammar();
-    //     final var allExpectedNodes = Set.of("x", "a", "b", "c", "'a'", "B", "'c'");
-    //     final var descendantsOrSelf = results.descendantsOrSelf();
-    //     assertTrue(descendantsOrSelf.keySet().equals(allExpectedNodes));
-    //     assertTrue(descendantsOrSelf.get("x").equals(Set.of("x", "a", "b", "c", "B", "'a'", "'c'")));
-    //     assertTrue(descendantsOrSelf.get("a").equals(Set.of("a", "'a'")));
-    //     assertTrue(descendantsOrSelf.get("'a'").equals(Set.of("'a'")));
-    //     assertTrue(descendantsOrSelf.get("b").equals(Set.of("b", "B")));
-    //     assertTrue(descendantsOrSelf.get("B").equals(Set.of("B")));
-    //     assertTrue(descendantsOrSelf.get("c").equals(Set.of("c", "'c'")));
-    //     assertTrue(descendantsOrSelf.get("'c'").equals(Set.of("'c'")));
-    // }
+    @Test
+    public void descendants() {
+        final var results = relationshipGrammar();
+        final var descendants = results.descendants();
+        assertEquals(Map.ofEntries(
+            Map.entry("x", XQueryCardinality.ZERO),
+            Map.entry("a", XQueryCardinality.ONE),
+            Map.entry("b", XQueryCardinality.ONE),
+            Map.entry("c", XQueryCardinality.ONE),
+            Map.entry("'a'", XQueryCardinality.ONE),
+            Map.entry("B", XQueryCardinality.ONE),
+            Map.entry("'c'", XQueryCardinality.ONE),
+            Map.entry("'b'", XQueryCardinality.ONE)
+            ), descendants.get("x"));
+
+        assertTrue(descendants.get("a").equals(Map.ofEntries(
+            Map.entry("x", XQueryCardinality.ZERO),
+            Map.entry("a", XQueryCardinality.ZERO),
+            Map.entry("b", XQueryCardinality.ZERO),
+            Map.entry("c", XQueryCardinality.ZERO),
+            Map.entry("'a'", XQueryCardinality.ONE),
+            Map.entry("B", XQueryCardinality.ZERO),
+            Map.entry("'c'", XQueryCardinality.ZERO),
+            Map.entry("'b'", XQueryCardinality.ZERO)
+        )));
+
+        assertTrue(descendants.get("'a'").equals(Map.ofEntries(
+            Map.entry("x", XQueryCardinality.ZERO),
+            Map.entry("a", XQueryCardinality.ZERO),
+            Map.entry("b", XQueryCardinality.ZERO),
+            Map.entry("c", XQueryCardinality.ZERO),
+            Map.entry("'a'", XQueryCardinality.ZERO),
+            Map.entry("B", XQueryCardinality.ZERO),
+            Map.entry("'c'", XQueryCardinality.ZERO),
+            Map.entry("'b'", XQueryCardinality.ZERO)
+        )));
+
+
+        assertEquals(Map.ofEntries(
+            Map.entry("x", XQueryCardinality.ZERO),
+            Map.entry("a", XQueryCardinality.ZERO),
+            Map.entry("b", XQueryCardinality.ZERO),
+            Map.entry("c", XQueryCardinality.ZERO),
+            Map.entry("'a'", XQueryCardinality.ZERO),
+            Map.entry("B", XQueryCardinality.ONE),
+            Map.entry("'c'", XQueryCardinality.ZERO),
+            Map.entry("'b'", XQueryCardinality.ONE)
+        ), descendants.get("b"));
+
+        assertEquals(Map.ofEntries(
+            Map.entry("x", XQueryCardinality.ZERO),
+            Map.entry("a", XQueryCardinality.ZERO),
+            Map.entry("b", XQueryCardinality.ZERO),
+            Map.entry("c", XQueryCardinality.ZERO),
+            Map.entry("'a'", XQueryCardinality.ZERO),
+            Map.entry("B", XQueryCardinality.ZERO),
+            Map.entry("'c'", XQueryCardinality.ZERO),
+            Map.entry("'b'", XQueryCardinality.ONE)
+        ), descendants.get("B"));
+
+        assertEquals(Map.ofEntries(
+            Map.entry("x", XQueryCardinality.ZERO),
+            Map.entry("a", XQueryCardinality.ZERO),
+            Map.entry("b", XQueryCardinality.ZERO),
+            Map.entry("c", XQueryCardinality.ZERO),
+            Map.entry("'a'", XQueryCardinality.ZERO),
+            Map.entry("B", XQueryCardinality.ZERO),
+            Map.entry("'c'", XQueryCardinality.ONE),
+            Map.entry("'b'", XQueryCardinality.ZERO)
+        ), descendants.get("c"));
+
+        assertEquals(Map.ofEntries(
+            Map.entry("x", XQueryCardinality.ZERO),
+            Map.entry("a", XQueryCardinality.ZERO),
+            Map.entry("b", XQueryCardinality.ZERO),
+            Map.entry("c", XQueryCardinality.ZERO),
+            Map.entry("'a'", XQueryCardinality.ZERO),
+            Map.entry("B", XQueryCardinality.ZERO),
+            Map.entry("'c'", XQueryCardinality.ZERO),
+            Map.entry("'b'", XQueryCardinality.ZERO)
+        ), descendants.get("'c'"));
+
+    }
 
 
     // @Test

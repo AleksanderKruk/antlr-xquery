@@ -55,9 +55,14 @@ public class SequenceCardinalityMerger
         return automaton;
     }
 
-    public byte merge(int o1, int  o2) {
+    public byte merge(int o1, int o2)
+    {
         return automaton[o1][o2];
     }
 
+    private final XQueryCardinality[] values = XQueryCardinality.values();
+    public XQueryCardinality merge(XQueryCardinality o1, XQueryCardinality  o2) {
+        return values[automaton[o1.ordinal()][o2.ordinal()]];
+    }
 
 }

@@ -80,13 +80,13 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         final GrammarAnalysisResult grammarAnalysisResult)
     {
         this.grammarAnalysisResult = grammarAnalysisResult;
-        this.context = new XQueryVisitingSemanticContext();
         this.parser = parser;
         this.typeFactory = typeFactory;
         this.valueFactory = valueFactory;
         this.functionManager = functionCaller;
         this.contextManager = contextManager;
         this.contextManager.enterContext();
+        this.context = new XQueryVisitingSemanticContext();
         this.context.setType(typeFactory.anyNode());
         this.context.setPositionType(null);
         this.context.setSizeType(null);

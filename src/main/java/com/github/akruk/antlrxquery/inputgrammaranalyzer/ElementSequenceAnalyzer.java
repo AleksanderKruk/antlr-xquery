@@ -8,6 +8,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+
+import org.apache.commons.codec.language.bm.Rule;
+
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.AlternativeContext;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.ParserRuleSpecContext;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.RulerefContext;
@@ -16,9 +21,9 @@ import com.github.akruk.antlrgrammar.ANTLRv4Parser.TerminalDefContext;
 
 
 class ElementSequenceAnalyzer extends ANTLRv4ParserBaseVisitor<Boolean> {
-
-    final Map<String, Set<String>> followingSiblingMapping;
-    final Map<String, Set<String>> precedingSiblingMapping;
+    record RuleParent(String rule, String Parent) {};
+    final Map<String, Set<RuleParent>> followingSiblingMapping;
+    final Map<String, Set<RuleParent>> precedingSiblingMapping;
 
     public ElementSequenceAnalyzer(Set<String> nodeNames) {
         followingSiblingMapping = new HashMap<>(nodeNames.size(), 1);
@@ -47,12 +52,16 @@ class ElementSequenceAnalyzer extends ANTLRv4ParserBaseVisitor<Boolean> {
             .toList();
         for (int i = 0; i < size; i++) {
             final String element = allElementNames.get(i);
-            final Set<String> followingSiblings = followingSiblingMapping.get(element);
-            final Set<String> precedingSiblings = precedingSiblingMapping.get(element);
+            final Set<RuleParent> followingSiblings = followingSiblingMapping.get(element);
+            final Set<RuleParent> precedingSiblings = precedingSiblingMapping.get(element);
             final List<String> followingSiblingElements = allElementNames.subList(i+1, size);
             final List<String> precedingSiblingElements = allElementNames.subList(0, i);
-            followingSiblings.addAll(followingSiblingElements);
-            precedingSiblings.addAll(precedingSiblingElements);
+            followingSiblingElements.stream()
+                .map(e->new RuleParent(element, currentRule))
+                .forEach(r->followingSiblings.add(r));
+            precedingSiblingElements.stream()
+                .map(e->new RuleParent(element, currentRule))
+                .forEach(r->precedingSiblings.add(r));
         }
         return null;
     }

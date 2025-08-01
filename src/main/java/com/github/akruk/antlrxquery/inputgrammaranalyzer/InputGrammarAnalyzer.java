@@ -19,6 +19,7 @@ import com.github.akruk.antlrgrammar.ANTLRv4Parser;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.GrammarSpecContext;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.ParserRuleSpecContext;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.TerminalDefContext;
+import com.github.akruk.antlrxquery.inputgrammaranalyzer.ElementSequenceAnalyzer.RuleParent;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryCardinality;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.BlockCardinalityMerger;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.SequenceCardinalityMerger;
@@ -93,10 +94,10 @@ public class InputGrammarAnalyzer {
             = addSelf(ancestorCardinalityMapping);
         final var descendantCardinalityMapping = getDescendantCardinalityMapping(cardinalityAnalyzer.childrenMapping);
         final var descendantOrSelfCardinalityMapping = addSelf(descendantCardinalityMapping);
-        // final ElementSequenceAnalyzer analyzer = new ElementSequenceAnalyzer(allNodeNames);
-        // tree.accept(analyzer);
+        final ElementSequenceAnalyzer analyzer = new ElementSequenceAnalyzer(allNodeNames);
+        tree.accept(analyzer);
 
-        // final var followingSiblingMapping = analyzer.followingSiblingMapping;
+        final var followingSiblingCardinalityMapping = getFollowingSiblingCardinalityMapping(descendantCardinalityMapping, analyzer.followingSiblingMapping);
         // final var followingSiblingOrSelfMapping = addSelf(followingSiblingMapping);
         // final var precedingSiblingMapping = analyzer.precedingSiblingMapping;
         // final var precedingSiblingOrSelfMapping = addSelf(precedingSiblingMapping);
@@ -131,6 +132,18 @@ public class InputGrammarAnalyzer {
                 simpleRules
         );
         return gatheredData;
+    }
+
+    private Map<String, Map<String, XQueryCardinality>>
+        getFollowingSiblingCardinalityMapping(
+            Map<String, Map<String, XQueryCardinality>> descendantCardinalityMapping,
+            Map<String, Set<String>> followingSiblingMapping)
+    {
+
+        for (String rulename : followingSiblingMapping.keySet()) {
+            Map<String, XQueryCardinality> descendants = descendantCardinalityMapping.get(rulename);
+
+        }
     }
 
     private Map<String, Map<String, XQueryCardinality>> getAncestorCardinalityMapping(final Map<String, Map<String, XQueryCardinality>> parentMapping)

@@ -115,6 +115,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     @Override
     public XQuerySequenceType visitFLWORExpr(final FLWORExprContext ctx)
     {
+        visitedVariable = null;
         final var saveReturnedOccurence = saveReturnedOccurence();
         contextManager.enterScope();
         ctx.initialClause().accept(this);
@@ -140,6 +141,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     @Override
     public XQuerySequenceType visitLetClause(final LetClauseContext ctx)
     {
+        visitedVariable = null;
         for (final var letBinding : ctx.letBinding()) {
             final String variableName = letBinding.varName().getText();
             final XQuerySequenceType assignedValue = letBinding.exprSingle().accept(this);
@@ -160,6 +162,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
     @Override
     public XQuerySequenceType visitForClause(final ForClauseContext ctx) {
+        visitedVariable = null;
         // TODO: add coercion
         for (final ForBindingContext forBinding : ctx.forBinding()) {
             if (forBinding.forItemBinding() != null) {
@@ -453,11 +456,12 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         return null;
     }
 
+    String visitedVariable = null;
+
     @Override
-    public XQuerySequenceType visitVarRef(final VarRefContext ctx)
-    {
-        final String variableName = ctx.varName().getText();
-        final XQuerySequenceType variableType = contextManager.getVariable(variableName);
+    public XQuerySequenceType visitVarRef(final VarRefContext ctx) {
+        visitedVariable  = ctx.varName().getText();
+        final XQuerySequenceType variableType = contextManager.getVariable(visitedVariable);
         return variableType;
     }
 
@@ -540,6 +544,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     @Override
     public XQuerySequenceType visitLiteral(final LiteralContext ctx)
     {
+        visitedVariable = null;
         if (ctx.STRING() != null) {
             return handleString(ctx);
         }
@@ -604,6 +609,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     @Override
     public XQuerySequenceType visitParenthesizedExpr(final ParenthesizedExprContext ctx)
     {
+        visitedVariable = null;
         // Empty parentheses mean an empty sequence '()'
         if (ctx.expr() == null) {
             valueFactory.sequence(List.of());
@@ -678,6 +684,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
 
     @Override
     public XQuerySequenceType visitQuantifiedExpr(final QuantifiedExprContext ctx) {
+        visitedVariable = null;
         final List<QuantifierBindingContext> quantifierBindings = ctx.quantifierBinding();
 
         final List<String> variableNames = quantifierBindings.stream()
@@ -720,6 +727,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     @Override
     public XQuerySequenceType visitOrExpr(final OrExprContext ctx)
     {
+        visitedVariable = null;
         if (ctx.OR().isEmpty()) {
             return ctx.andExpr(0).accept(this);
         }
@@ -737,6 +745,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     @Override
     public XQuerySequenceType visitRangeExpr(final RangeExprContext ctx)
     {
+        visitedVariable = null;
         if (ctx.TO() == null) {
             return ctx.additiveExpr(0).accept(this);
         }
@@ -755,6 +764,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     @Override
     public XQuerySequenceType visitPathExpr(final PathExprContext ctx)
     {
+        visitedVariable = null;
         final boolean pathExpressionFromRoot = ctx.SLASH() != null;
         if (pathExpressionFromRoot) {
             final var savedAxis = saveAxis();
@@ -827,6 +837,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     @Override
     public XQuerySequenceType visitRelativePathExpr(final RelativePathExprContext ctx)
     {
+        visitedVariable = null;
         if (ctx.pathOperator().isEmpty()) {
             return ctx.stepExpr(0).accept(this);
         }
@@ -875,6 +886,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     @Override
     public XQuerySequenceType visitStepExpr(final StepExprContext ctx)
     {
+        visitedVariable = null;
         if (ctx.postfixExpr() != null)
             return ctx.postfixExpr().accept(this);
         return ctx.axisStep().accept(this);
@@ -913,6 +925,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
 
     @Override
     public XQuerySequenceType visitFilterExpr(final FilterExprContext ctx) {
+        visitedVariable = null;
         final XQuerySequenceType expr = ctx.postfixExpr().accept(this);
         final var savedContext = saveContext();
         context.setType(expr);
@@ -981,6 +994,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
 
     @Override
     public XQuerySequenceType visitLookupExpr(final LookupExprContext ctx) {
+        visitedVariable = null;
         final var targetType = ctx.postfixExpr().accept(this);
         final XQuerySequenceType keySpecifierType = getKeySpecifier(ctx);
         final LookupContext lookup = ctx.lookup();
@@ -1368,6 +1382,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     @Override
     public XQuerySequenceType visitStringConcatExpr(final StringConcatExprContext ctx)
     {
+        visitedVariable = null;
         if (ctx.CONCATENATION().isEmpty()) {
             return ctx.rangeExpr(0).accept(this);
         }
@@ -1383,6 +1398,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     @Override
     public XQuerySequenceType visitSimpleMapExpr(final SimpleMapExprContext ctx)
     {
+        visitedVariable = null;
         if (ctx.EXCLAMATION_MARK().isEmpty())
             return ctx.pathExpr(0).accept(this);
         final XQuerySequenceType firstExpressionType = ctx.pathExpr(0).accept(this);
@@ -1402,15 +1418,22 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         return result;
     }
 
+    XQuerySequenceType instancedType;
     @Override
     public XQuerySequenceType visitInstanceofExpr(final InstanceofExprContext ctx)
     {
+        visitedVariable = null;
         final XQuerySequenceType expression = ctx.treatExpr().accept(this);
         if (ctx.INSTANCE() == null) {
             return expression;
         }
-        final var testedType = ctx.sequenceType().accept(this);
-        if (expression.isSubtypeOf(testedType)) {
+        // Variables are saved for granular block entyping
+        // e.g.
+        // if ($x instance of number) {
+        //    (: Here $x should be entyped as number  :)
+        // }
+        instancedType = ctx.sequenceType().accept(this);
+        if (expression.isSubtypeOf(instancedType)) {
             warn(ctx, "Unnecessary instance of expression is always true");
         }
         return this.boolean_;
@@ -1419,6 +1442,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     @Override
     public XQuerySequenceType visitTreatExpr(final TreatExprContext ctx)
     {
+        visitedVariable = null;
         final XQuerySequenceType expression = ctx.castableExpr().accept(this);
         if (ctx.TREAT() == null) {
             return expression;
@@ -1666,6 +1690,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     {
         if (ctx.PIPE_ARROW().isEmpty())
             return ctx.arrowExpr(0).accept(this);
+        visitedVariable = null;
         final var saved = saveContext();
         final int size = ctx.arrowExpr().size();
         XQuerySequenceType contextType = ctx.arrowExpr(0).accept(this);
@@ -1683,6 +1708,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     @Override
     public XQuerySequenceType visitTryCatchExpr(final TryCatchExprContext ctx)
     {
+        visitedVariable = null;
         final var savedContext = saveContext();
         final XQueryItemType errorType = typeFactory.itemError();
         final var testedExprType = ctx.tryClause().enclosedExpr().accept(this);
@@ -1799,6 +1825,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     @Override
     public XQuerySequenceType visitArrowFunctionSpecifier(final ArrowFunctionSpecifierContext ctx)
     {
+        visitedVariable = null;
         if (ctx.ID() != null) {
             // TODO:
             // final CallAnalysisResult call =
@@ -1817,6 +1844,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (ctx.AND().isEmpty()) {
             return ctx.comparisonExpr(0).accept(this);
         }
+        visitedVariable = null;
         final XQuerySequenceType boolean_ = this.boolean_;
         final var operatorCount = ctx.AND().size();
         for (int i = 0; i <= operatorCount; i++) {
@@ -1835,6 +1863,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (ctx.additiveOperator().isEmpty()) {
             return ctx.multiplicativeExpr(0).accept(this);
         }
+        visitedVariable = null;
         for (final var operandExpr : ctx.multiplicativeExpr()) {
             final var operand = operandExpr.accept(this);
             if (!operand.isSubtypeOf(number)) {
@@ -1848,6 +1877,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     @Override
     public XQuerySequenceType visitComparisonExpr(final ComparisonExprContext ctx)
     {
+        visitedVariable = null;
         if (ctx.generalComp() != null) {
             return handleGeneralComparison(ctx);
         }
@@ -1924,6 +1954,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (ctx.multiplicativeOperator().isEmpty()) {
             return ctx.unionExpr(0).accept(this);
         }
+        visitedVariable = null;
         for (final var expr : ctx.unionExpr()) {
             final var visitedType = expr.accept(this);
             if (!visitedType.isSubtypeOf(number)) {
@@ -1938,6 +1969,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     {
         if (ctx.OTHERWISE().isEmpty())
             return ctx.stringConcatExpr(0).accept(this);
+        visitedVariable = null;
         final int length = ctx.stringConcatExpr().size();
         XQuerySequenceType merged = ctx.stringConcatExpr(0).accept(this);
         for (int i = 1; i < length; i++) {
@@ -1954,6 +1986,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (ctx.unionOperator().isEmpty()) {
             return ctx.intersectExpr(0).accept(this);
         }
+        visitedVariable = null;
         final var zeroOrMoreNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
         var expressionNode = ctx.intersectExpr(0);
         var expressionType = expressionNode.accept(this);
@@ -1985,6 +2018,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (ctx.exceptOrIntersect().isEmpty()) {
             return ctx.instanceofExpr(0).accept(this);
         }
+        visitedVariable = null;
         var expressionType = ctx.instanceofExpr(0).accept(this);
         final var zeroOrMoreNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
         if (!expressionType.isSubtypeOf(zeroOrMoreNodes)) {
@@ -2018,6 +2052,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         if (ctx.MINUS() == null && ctx.PLUS() == null) {
             return ctx.simpleMapExpr().accept(this);
         }
+        visitedVariable = null;
         final var type = ctx.simpleMapExpr().accept(this);
         if (!type.isSubtypeOf(number)) {
             error(ctx, "Arithmetic unary expression requires a number");
@@ -2027,6 +2062,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
 
     @Override
     public XQuerySequenceType visitSwitchExpr(final SwitchExprContext ctx) {
+        visitedVariable = null;
         final SwitchComparandContext switchComparand = ctx.switchComparand();
 
         final var comparand = switchComparand.switchedExpr.accept(this);
@@ -2165,13 +2201,24 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         XQuerySequenceType trueType = null;
         XQuerySequenceType falseType = null;
         if (ctx.bracedAction() != null) {
+            contextManager.enterScope();
+            if (visitedVariable != null && instancedType != null) {
+                contextManager.entypeVariable(visitedVariable, instancedType);
+            }
+            trueType = ctx.bracedAction().enclosedExpr().accept(this);
+            contextManager.leaveScope();
             trueType = ctx.bracedAction().enclosedExpr().accept(this);
             falseType = emptySequence;
+
         } else {
+            contextManager.enterScope();
+            if (visitedVariable != null && instancedType != null) {
+                contextManager.entypeVariable(visitedVariable, instancedType);
+            }
             trueType = ctx.unbracedActions().exprSingle(0).accept(this);
+            contextManager.leaveScope();
             falseType = ctx.unbracedActions().exprSingle(1).accept(this);
         }
-        // TODO: Add union types
         return trueType.alternativeMerge(falseType);
     }
 

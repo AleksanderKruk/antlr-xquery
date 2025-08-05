@@ -412,7 +412,7 @@ public class InputGrammarAnalyzer {
     final SequenceCardinalityMerger sequenceCardinalityMerger = new SequenceCardinalityMerger();
 
     private Map<String, Map<String, XQueryCardinality>>
-    getParentCardinalityMapping(final Map<String, Set<String>> childrenMapping)
+        getParentCardinalityMapping(final Map<String, Set<String>> childrenMapping)
     {
         final  Map<String, Map<String, XQueryCardinality>> parentMapping = getMapping(childrenMapping.keySet());
         for (String parentName : parentMapping.keySet()) {

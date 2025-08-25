@@ -29,6 +29,7 @@ import com.github.akruk.antlrgrammar.ANTLRv4Parser.WildcardContext;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryCardinality;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.AlternativeCardinalityMerger;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.BlockCardinalityMerger;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.RecursiveCardinalityMerger;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.SequenceCardinalityMerger;
 
 
@@ -38,6 +39,7 @@ class CardinalityAnalyzer extends ANTLRv4ParserBaseVisitor<Map<String, Map<Strin
     final AlternativeCardinalityMerger alternativeCardinalityMerger;
     final SequenceCardinalityMerger sequenceCardinalityMerger;
     final BlockCardinalityMerger blockCardinalityMerger;
+    final RecursiveCardinalityMerger recursiveCardinalityMerger;
     final Set<String> nodeNames;
     private final Parser antlrParser;
 
@@ -51,6 +53,7 @@ class CardinalityAnalyzer extends ANTLRv4ParserBaseVisitor<Map<String, Map<Strin
         alternativeCardinalityMerger = new AlternativeCardinalityMerger();
         sequenceCardinalityMerger = new SequenceCardinalityMerger();
         blockCardinalityMerger = new BlockCardinalityMerger();
+        recursiveCardinalityMerger = new RecursiveCardinalityMerger();
     }
 
 
@@ -80,18 +83,20 @@ class CardinalityAnalyzer extends ANTLRv4ParserBaseVisitor<Map<String, Map<Strin
     public Map<String, Map<String, XQueryCardinality>> visitEbnfSuffix(final EbnfSuffixContext ctx) {
         if (ctx.STAR() != null)
             visitedCardinality = XQueryCardinality.ZERO_OR_MORE;
-        if (ctx.PLUS() != null)
+        else if (ctx.PLUS() != null)
             visitedCardinality = XQueryCardinality.ONE_OR_MORE;
-        if (ctx.QUESTION().size() == 1)
-            visitedCardinality = XQueryCardinality.ONE_OR_MORE;
-        visitedCardinality = XQueryCardinality.ONE;
+        else if (ctx.QUESTION().size() == 1)
+            visitedCardinality = XQueryCardinality.ZERO_OR_ONE;
+        else
+            visitedCardinality = XQueryCardinality.ONE;
         return null;
     }
 
 
+    String currentRuleRef;
     @Override
     public Map<String, Map<String, XQueryCardinality>> visitLexerRuleSpec(LexerRuleSpecContext ctx) {
-        final String currentRuleRef = ctx.TOKEN_REF().getText();
+        currentRuleRef = ctx.TOKEN_REF().getText();
         super.visitLexerRuleSpec(ctx);
         childrenMapping.put(currentRuleRef, currentSubMapping);
         return null;
@@ -99,7 +104,7 @@ class CardinalityAnalyzer extends ANTLRv4ParserBaseVisitor<Map<String, Map<Strin
 
     @Override
     public Map<String, Map<String, XQueryCardinality>> visitParserRuleSpec(final ParserRuleSpecContext ctx) {
-        final String currentRuleRef = ctx.RULE_REF().getText();
+        currentRuleRef = ctx.RULE_REF().getText();
         super.visitParserRuleSpec(ctx);
         childrenMapping.put(currentRuleRef, currentSubMapping);
         return null;
@@ -130,6 +135,7 @@ class CardinalityAnalyzer extends ANTLRv4ParserBaseVisitor<Map<String, Map<Strin
         // if no ref visited then skipping
         if (visitedRef == null)
             return null;
+        // if (visitedRef == currentRu)
         XQueryCardinality current = currentSubMapping.get(visitedRef);
         byte mergedOrdinal = sequenceCardinalityMerger.merge(declaredCardinality.ordinal(), current.ordinal());
         XQueryCardinality merged = XQueryCardinality.values()[mergedOrdinal];
@@ -167,10 +173,17 @@ class CardinalityAnalyzer extends ANTLRv4ParserBaseVisitor<Map<String, Map<Strin
         // if no ref visited then skipping
         if (visitedRef == null)
             return null;
-        XQueryCardinality current = currentSubMapping.get(visitedRef);
-        byte mergedOrdinal = sequenceCardinalityMerger.merge(declaredCardinality.ordinal(), current.ordinal());
-        XQueryCardinality merged = XQueryCardinality.values()[mergedOrdinal];
-        currentSubMapping.put(visitedRef, merged);
+        if (visitedRef.equals(currentRuleRef)) {
+            XQueryCardinality current = currentSubMapping.get(visitedRef);
+            // XQueryCardinality blockMerged = sequenceCardinalityMerger.merge(currentSubMapping.get(visitedRef), declaredCardinality);
+            XQueryCardinality merged = recursiveCardinalityMerger.merge(current, declaredCardinality);
+            currentSubMapping.put(visitedRef, merged);
+        } else {
+            XQueryCardinality current = currentSubMapping.get(visitedRef);
+            byte mergedOrdinal = sequenceCardinalityMerger.merge(declaredCardinality.ordinal(), current.ordinal());
+            XQueryCardinality merged = XQueryCardinality.values()[mergedOrdinal];
+            currentSubMapping.put(visitedRef, merged);
+        }
         return null;
     }
 

@@ -492,49 +492,49 @@ private Map<String, Map<String, XQueryCardinality>>
     }
 
 
-    private Map<String, Set<String>> getFollowing(final Map<String, Set<String>> ancestorOrSelfMapping,
-                                                    final Map<String, Set<String>> followingSiblingMapping,
-                                                    final Map<String, Set<String>> descendantsOrSelfMapping)
-    {
-        final  Map<String, Set<String>> followingMapping = new HashMap<>(ancestorOrSelfMapping.size());
-        for (final var node : ancestorOrSelfMapping.keySet()) {
-            followingMapping.put(node, new HashSet<>());
-        }
-        for (final var node  : followingMapping.keySet()) {
-            final var result = followingMapping.get(node);
-            final var ancestors = ancestorOrSelfMapping.get(node);
-            for (final var ancestor: ancestors) {
-                final var followingSibling = followingSiblingMapping.get(ancestor);
-                for (final var fs: followingSibling) {
-                    final var descendantOrSelfs = descendantsOrSelfMapping.get(fs);
-                    result.addAll(descendantOrSelfs);
-                }
-            }
-        }
-        return followingMapping;
-    }
+    // private Map<String, Set<String>> getFollowing(final Map<String, Set<String>> ancestorOrSelfMapping,
+    //                                                 final Map<String, Set<String>> followingSiblingMapping,
+    //                                                 final Map<String, Set<String>> descendantsOrSelfMapping)
+    // {
+    //     final  Map<String, Set<String>> followingMapping = new HashMap<>(ancestorOrSelfMapping.size());
+    //     for (final var node : ancestorOrSelfMapping.keySet()) {
+    //         followingMapping.put(node, new HashSet<>());
+    //     }
+    //     for (final var node  : followingMapping.keySet()) {
+    //         final var result = followingMapping.get(node);
+    //         final var ancestors = ancestorOrSelfMapping.get(node);
+    //         for (final var ancestor: ancestors) {
+    //             final var followingSibling = followingSiblingMapping.get(ancestor);
+    //             for (final var fs: followingSibling) {
+    //                 final var descendantOrSelfs = descendantsOrSelfMapping.get(fs);
+    //                 result.addAll(descendantOrSelfs);
+    //             }
+    //         }
+    //     }
+    //     return followingMapping;
+    // }
 
-    private Map<String, Set<String>> getPreceding(final Map<String, Set<String>> ancestorOrSelfMapping,
-                                                    final Map<String, Set<String>> precedingSiblingMapping,
-                                                    final Map<String, Set<String>> descendantsOrSelfMapping)
-    {
-        final  Map<String, Set<String>> precedingMapping = new HashMap<>(ancestorOrSelfMapping.size(), 1);
-        for (final var node : ancestorOrSelfMapping.keySet()) {
-            precedingMapping.put(node, new HashSet<>());
-        }
-        for (final var node  : precedingMapping.keySet()) {
-            final var result = precedingMapping.get(node);
-            final var ancestors = ancestorOrSelfMapping.get(node);
-            for (final var ancestor: ancestors) {
-                final var precedingSibling = precedingSiblingMapping.get(ancestor);
-                for (final var ps: precedingSibling) {
-                    final var descendantOrSelfs = descendantsOrSelfMapping.get(ps);
-                    result.addAll(descendantOrSelfs);
-                }
-            }
-        }
-        return precedingMapping;
-    }
+    // private Map<String, Set<String>> getPreceding(final Map<String, Set<String>> ancestorOrSelfMapping,
+    //                                                 final Map<String, Set<String>> precedingSiblingMapping,
+    //                                                 final Map<String, Set<String>> descendantsOrSelfMapping)
+    // {
+    //     final  Map<String, Set<String>> precedingMapping = new HashMap<>(ancestorOrSelfMapping.size(), 1);
+    //     for (final var node : ancestorOrSelfMapping.keySet()) {
+    //         precedingMapping.put(node, new HashSet<>());
+    //     }
+    //     for (final var node  : precedingMapping.keySet()) {
+    //         final var result = precedingMapping.get(node);
+    //         final var ancestors = ancestorOrSelfMapping.get(node);
+    //         for (final var ancestor: ancestors) {
+    //             final var precedingSibling = precedingSiblingMapping.get(ancestor);
+    //             for (final var ps: precedingSibling) {
+    //                 final var descendantOrSelfs = descendantsOrSelfMapping.get(ps);
+    //                 result.addAll(descendantOrSelfs);
+    //             }
+    //         }
+    //     }
+    //     return precedingMapping;
+    // }
 
 
     private Map<String, Map<String, XQueryCardinality>> getMapping(final Set<String> nodeNames) {

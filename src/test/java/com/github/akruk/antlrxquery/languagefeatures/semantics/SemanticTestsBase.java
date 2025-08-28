@@ -1,5 +1,8 @@
 package com.github.akruk.antlrxquery.languagefeatures.semantics;
 import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.stream.Collectors;
+
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -9,6 +12,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import com.github.akruk.antlrxquery.AntlrXqueryLexer;
 import com.github.akruk.antlrxquery.AntlrXqueryParser;
 import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMemoizedValueFactory;
+import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQuerySemanticFunctionManager;
@@ -42,7 +46,9 @@ public class SemanticTestsBase {
     }
 
     protected void assertNoErrors(final AnalysisResult analyzer) {
-        assertTrue(analyzer.analyzer.getErrors().size() == 0, String.join(System.lineSeparator(), analyzer.analyzer.getErrors()));
+        boolean noErrors = analyzer.analyzer.getErrors().size() == 0;
+        String concatenatedInNewlinesMessages = analyzer.analyzer.getErrors().stream().map(DiagnosticError::message).collect(Collectors.joining(System.lineSeparator()));
+        assertTrue(noErrors, concatenatedInNewlinesMessages);
     }
 
     protected void assertErrors(final String xquery) {

@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.tree.ParseTree;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.AltListContext;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.AlternativeContext;
@@ -39,7 +38,6 @@ class CardinalityAnalyzer extends ANTLRv4ParserBaseVisitor<Map<String, Map<Strin
     final SequenceCardinalityMerger sequenceCardinalityMerger;
     final BlockCardinalityMerger blockCardinalityMerger;
     final Set<String> nodeNames;
-    private final Parser antlrParser;
 
     Map<String, Map<String, XQueryCardinality>> currentMapping;
     Map<String, XQueryCardinality> currentSubMapping;
@@ -47,7 +45,6 @@ class CardinalityAnalyzer extends ANTLRv4ParserBaseVisitor<Map<String, Map<Strin
     public CardinalityAnalyzer(final Set<String> nodeNames, final ANTLRv4Parser antlrParser) {
         this.nodeNames = nodeNames;
         this.childrenMapping = getMapping(nodeNames);
-        this.antlrParser = antlrParser;
         alternativeCardinalityMerger = new AlternativeCardinalityMerger();
         sequenceCardinalityMerger = new SequenceCardinalityMerger();
         blockCardinalityMerger = new BlockCardinalityMerger();

@@ -65,7 +65,7 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
 
     @Override
     public TextDocumentService getTextDocumentService() {
-        return new AntlrQueryTextDocumentService();
+        return new AntlrQueryTextDocumentService(client);
     }
 
     @Override
@@ -96,6 +96,11 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
 
     // Custom TextDocumentService implementation
     private static class AntlrQueryTextDocumentService implements TextDocumentService {
+        private LanguageClient client;
+        AntlrQueryTextDocumentService(LanguageClient client)
+        {
+            this.client = client;
+        }
         @Override
         public void didOpen(DidOpenTextDocumentParams params) {
             String uri = params.getTextDocument().getUri();

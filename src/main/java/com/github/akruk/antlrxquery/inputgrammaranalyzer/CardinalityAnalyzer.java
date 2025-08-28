@@ -41,7 +41,6 @@ class CardinalityAnalyzer extends ANTLRv4ParserBaseVisitor<Map<String, Map<Strin
     final BlockCardinalityMerger blockCardinalityMerger;
     final RecursiveCardinalityMerger recursiveCardinalityMerger;
     final Set<String> nodeNames;
-    private final Parser antlrParser;
 
     Map<String, Map<String, XQueryCardinality>> currentMapping;
     Map<String, XQueryCardinality> currentSubMapping;

@@ -52,7 +52,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     private final XQueryTypeFactory typeFactory;
     private final XQueryValueFactory valueFactory;
     private final XQuerySemanticFunctionManager functionManager;
-    private final Parser parser;
     private XQueryVisitingSemanticContext context;
     private List<XQuerySequenceType> visitedPositionalArguments;
     private Map<String, XQuerySequenceType> visitedKeywordArguments;
@@ -80,7 +79,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         final GrammarAnalysisResult grammarAnalysisResult)
     {
         this.grammarAnalysisResult = grammarAnalysisResult;
-        this.parser = parser;
         this.typeFactory = typeFactory;
         this.valueFactory = valueFactory;
         this.functionManager = functionCaller;

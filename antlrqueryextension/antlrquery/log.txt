@@ -1,0 +1,11 @@
+[2025-08-26 10:08:23] === LSP Server Started ===
+[2025-08-26 10:08:23] Connected to LSP client
+[2025-08-26 10:08:23] Initializing LSP server
+[2025-08-26 10:08:26] Document opened: file:///d%3A/Programowanie/PoligonAnek/test.antlrquery
+[2025-08-26 10:12:34] === LSP Server Started ===
+[2025-08-26 10:12:34] Connected to LSP client
+[2025-08-26 10:12:34] Initializing LSP server
+[2025-08-26 10:12:38] Document opened: file:///d%3A/Programowanie/PoligonAnek/test.antlrquery
+[2025-08-26 10:16:41] Document opened: file:///d%3A/Programowanie/PoligonAnek/d.antlrquery
+[2025-08-26 10:17:56] Shutdown requested
+[2025-08-26 10:17:56] Exit requested

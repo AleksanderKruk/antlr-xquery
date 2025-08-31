@@ -1,6 +1,6 @@
 package com.github.akruk.antlrxquery.typesystem.defaults;
 
-public enum XQueryOccurence {
+public enum XQueryCardinality {
     ONE,
     ZERO,
     ZERO_OR_ONE,

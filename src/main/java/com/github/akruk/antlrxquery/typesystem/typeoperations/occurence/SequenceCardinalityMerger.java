@@ -1,20 +1,20 @@
 package com.github.akruk.antlrxquery.typesystem.typeoperations.occurence;
 
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryOccurence;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryCardinality;
 
-public class SequenceOccurenceMerger
+public class SequenceCardinalityMerger
 {
-    private static final byte ZERO         = (byte) XQueryOccurence.ZERO.ordinal();
-    private static final byte ONE          = (byte) XQueryOccurence.ONE.ordinal();
-    private static final byte ZERO_OR_ONE  = (byte) XQueryOccurence.ZERO_OR_ONE.ordinal();
-    private static final byte ONE_OR_MORE  = (byte) XQueryOccurence.ONE_OR_MORE.ordinal();
-    private static final byte ZERO_OR_MORE = (byte) XQueryOccurence.ZERO_OR_MORE.ordinal();
+    private static final byte ZERO         = (byte) XQueryCardinality.ZERO.ordinal();
+    private static final byte ONE          = (byte) XQueryCardinality.ONE.ordinal();
+    private static final byte ZERO_OR_ONE  = (byte) XQueryCardinality.ZERO_OR_ONE.ordinal();
+    private static final byte ONE_OR_MORE  = (byte) XQueryCardinality.ONE_OR_MORE.ordinal();
+    private static final byte ZERO_OR_MORE = (byte) XQueryCardinality.ZERO_OR_MORE.ordinal();
 
     protected final byte[][] automaton;
 
-    private final int occurenceCount = XQueryOccurence.values().length;
+    private final int occurenceCount = XQueryCardinality.values().length;
 
-    public SequenceOccurenceMerger()
+    public SequenceCardinalityMerger()
     {
         this.automaton = getAutomaton();
     }
@@ -55,9 +55,14 @@ public class SequenceOccurenceMerger
         return automaton;
     }
 
-    public byte merge(int o1, int  o2) {
+    public byte merge(int o1, int o2)
+    {
         return automaton[o1][o2];
     }
 
+    private final XQueryCardinality[] values = XQueryCardinality.values();
+    public XQueryCardinality merge(XQueryCardinality o1, XQueryCardinality  o2) {
+        return values[automaton[o1.ordinal()][o2.ordinal()]];
+    }
 
 }

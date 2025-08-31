@@ -220,25 +220,25 @@ public class XQueryMemoizedTypeFactory implements XQueryTypeFactory {
     @Override
     public XQuerySequenceType one(final XQueryItemType itemType) {
         return oneTypes.computeIfAbsent(itemType,
-                _ -> new XQuerySequenceType(this, itemType, XQueryOccurence.ONE));
+                _ -> new XQuerySequenceType(this, itemType, XQueryCardinality.ONE));
     }
 
     @Override
     public XQuerySequenceType zeroOrOne(final XQueryItemType itemType) {
         return zeroOrOneTypes.computeIfAbsent(itemType,
-                _ -> new XQuerySequenceType(this, (XQueryItemType) itemType, XQueryOccurence.ZERO_OR_ONE));
+                _ -> new XQuerySequenceType(this, (XQueryItemType) itemType, XQueryCardinality.ZERO_OR_ONE));
     }
 
     @Override
     public XQuerySequenceType zeroOrMore(final XQueryItemType itemType) {
         return zeroOrMoreTypes.computeIfAbsent(itemType,
-                _ -> new XQuerySequenceType(this, (XQueryItemType) itemType, XQueryOccurence.ZERO_OR_MORE));
+                _ -> new XQuerySequenceType(this, (XQueryItemType) itemType, XQueryCardinality.ZERO_OR_MORE));
     }
 
     @Override
     public XQuerySequenceType oneOrMore(final XQueryItemType itemType) {
         return oneOrMoreTypes.computeIfAbsent(itemType,
-                _ -> new XQuerySequenceType(this, (XQueryItemType) itemType, XQueryOccurence.ONE_OR_MORE));
+                _ -> new XQuerySequenceType(this, (XQueryItemType) itemType, XQueryCardinality.ONE_OR_MORE));
     }
 
     @Override

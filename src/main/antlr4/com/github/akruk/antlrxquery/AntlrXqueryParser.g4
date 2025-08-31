@@ -179,7 +179,7 @@ reverseAxis: PARENT COLONS
         | PRECEDING COLONS
         | ANCESTOR_OR_SELF COLONS;
 abbrevReverseStep: DOTS;
-nodeTest: nameTest;
+nodeTest: pathNameTestUnion | wildcard;
 wildcard: STAR
         | (ID COLONSTAR)
         | (STARCOLON ID);
@@ -255,7 +255,6 @@ parenthesizedExpr: LPAREN expr? RPAREN;
 contextItemExpr: DOT;
 functionCall: functionName argumentList;
 typeDeclaration: AS sequenceType;
-// sequenceType: qname occurrenceIndicator?;
 occurrenceIndicator: QUESTION_MARK | STAR | PLUS;
 sequenceTypeUnion: sequenceType (UNION_OP sequenceType)*;
 
@@ -277,6 +276,8 @@ kindTest:	elementTest
 
 elementTest	:	ELEMENT LPAREN nameTestUnion? RPAREN;
 
+
+pathNameTestUnion	:	qname ('|' qname)*;
 
 nameTestUnion	:	nameTest ('|' nameTest)*;
 nameTest	:	qname | wildcard;

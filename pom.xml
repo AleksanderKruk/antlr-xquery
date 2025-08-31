@@ -66,6 +66,13 @@
       <version>3.24.2</version>
       <scope>test</scope>
     </dependency>
+
+    <dependency>
+      <groupId>org.eclipse.lsp4j</groupId>
+      <artifactId>org.eclipse.lsp4j</artifactId>
+      <version>0.24.0</version> <!-- lub najnowsza -->
+    </dependency>
+
   </dependencies>
 
   <build>

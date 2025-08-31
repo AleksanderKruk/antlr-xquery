@@ -2,7 +2,7 @@ parser grammar AntlrXqueryParser;
 options {
     tokenVocab = AntlrXqueryLexer;
 }
-xquery: expr;
+xquery: expr?;
 expr: exprSingle (COMMA exprSingle)*;
 exprSingle: fLWORExpr
         | quantifiedExpr
@@ -258,8 +258,10 @@ typeDeclaration: AS sequenceType;
 occurrenceIndicator: QUESTION_MARK | STAR | PLUS;
 sequenceTypeUnion: sequenceType (UNION_OP sequenceType)*;
 
-sequenceType	:	EMPTY_SEQUENCE LPAREN RPAREN
+sequenceType: emptySequence
               | itemType occurrenceIndicator?;
+
+emptySequence: EMPTY_SEQUENCE LPAREN RPAREN;
 
 itemType: anyItemTest
         | typeName

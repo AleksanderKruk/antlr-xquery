@@ -11,12 +11,14 @@ import java.util.stream.Stream;
 
 
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import com.github.akruk.antlrxquery.AntlrXqueryLexer;
 import com.github.akruk.antlrxquery.AntlrXqueryParser;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
+import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQueryVisitingSemanticContext;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
@@ -26,8 +28,8 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 public class XQuerySemanticFunctionManager {
     public static record AnalysisResult(XQuerySequenceType result,
-                                            List<ArgumentSpecification> requiredDefaultArguments,
-                                            List<String> errors)
+                                        List<ArgumentSpecification> requiredDefaultArguments,
+                                        List<DiagnosticError> errors)
                                             {}
     public static record ArgumentSpecification(String name, XQuerySequenceType type, ParseTree defaultArgument) {}
 
@@ -2705,28 +2707,30 @@ public class XQuerySemanticFunctionManager {
 
     final Map<String, Map<String, List<FunctionSpecification>>> namespaces;
 
-    private AnalysisResult handleUnknownNamespace(final String namespace, final String errorMessageSupplier,
+    private AnalysisResult handleUnknownNamespace(final String namespace, final DiagnosticError errorMessageSupplier,
             final XQuerySequenceType fallbackType) {
-        final List<String> errors = List.of(errorMessageSupplier);
+        final List<DiagnosticError> errors = List.of(errorMessageSupplier);
         return new AnalysisResult(fallbackType, List.of(), errors);
     }
 
     private AnalysisResult handleUnknownFunction(final String namespace, final String name,
-            final String errorMessageSupplier, final XQuerySequenceType fallbackType) {
-        final List<String> errors = List.of(errorMessageSupplier);
+            final DiagnosticError errorMessageSupplier, final XQuerySequenceType fallbackType) {
+        final List<DiagnosticError> errors = List.of(errorMessageSupplier);
         return new AnalysisResult(fallbackType, List.of(), errors);
     }
 
-    private AnalysisResult handleNoMatchingFunction(final String errorMessageSupplier,
-            final XQuerySequenceType fallbackType) {
-        final List<String> errors = List.of(errorMessageSupplier);
+    private AnalysisResult handleNoMatchingFunction(
+            final DiagnosticError errorMessageSupplier,
+            final XQuerySequenceType fallbackType)
+    {
+        final List<DiagnosticError> errors = List.of(errorMessageSupplier);
         return new AnalysisResult(fallbackType, List.of(), errors);
     }
 
-    record SpecAndErrors(FunctionSpecification spec, List<String> errors) {
+    record SpecAndErrors(FunctionSpecification spec, List<DiagnosticError> errors) {
     }
 
-    SpecAndErrors getFunctionSpecification(final String namespace, final String name,
+    SpecAndErrors getFunctionSpecification(final ParserRuleContext location, final String namespace, final String name,
             final List<FunctionSpecification> namedFunctions, final long requiredArity) {
         final List<String> mismatchReasons = new ArrayList<>();
         for (final FunctionSpecification spec : namedFunctions) {
@@ -2743,10 +2747,13 @@ public class XQuerySemanticFunctionManager {
         // If no spec matched, return all mismatch reasons
         final String errorMessage = "No matching function " + namespace + ":" + name + " for arity " + requiredArity +
                 (mismatchReasons.isEmpty() ? "" : ". Reasons:\n" + String.join("\n", mismatchReasons));
-        return new SpecAndErrors(null, List.of(errorMessage));
+
+        DiagnosticError error = DiagnosticError.of(location, errorMessage);
+        return new SpecAndErrors(null, List.of(error));
     }
 
     public AnalysisResult call(
+            final ParserRuleContext location,
             final String namespace,
             final String name,
             final List<XQuerySequenceType> positionalargs,
@@ -2755,12 +2762,14 @@ public class XQuerySemanticFunctionManager {
     {
         final var anyItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         if (!namespaces.containsKey(namespace)) {
-            return handleUnknownNamespace(namespace, "Unknown function namespace: " + namespace, anyItems);
+            DiagnosticError error = DiagnosticError.of(location, "Unknown function namespace: " + namespace);
+            return handleUnknownNamespace(namespace, error, anyItems);
         }
 
         final var namespaceFunctions = namespaces.get(namespace);
         if (!namespaceFunctions.containsKey(name)) {
-            return handleUnknownFunction(namespace, name, "Unknown function: " + namespace + ":" + name, anyItems);
+            DiagnosticError error = DiagnosticError.of(location, "Unknown function: " + namespace + ":" + name);
+            return handleUnknownFunction(namespace, name, error, anyItems);
         }
         final var namedFunctions = namespaceFunctions.get(name);
         final int positionalArgsCount = positionalargs.size();
@@ -2768,7 +2777,7 @@ public class XQuerySemanticFunctionManager {
 
         final List<String> mismatchReasons = new ArrayList<>();
 
-        final SpecAndErrors specAndErrors = getFunctionSpecification(namespace, name, namedFunctions, requiredArity);
+        final SpecAndErrors specAndErrors = getFunctionSpecification(location, namespace, name, namedFunctions, requiredArity);
         if (specAndErrors.spec == null) {
             return new AnalysisResult(anyItems, List.of(), specAndErrors.errors);
         }
@@ -2814,7 +2823,8 @@ public class XQuerySemanticFunctionManager {
             return new AnalysisResult(spec.returnedType, defaultArgs.toList(), List.of());
         }
         final String message = getNoMatchingFunctionMessage(namespace, name, requiredArity, mismatchReasons);
-        return handleNoMatchingFunction(message, spec.returnedType);
+        final DiagnosticError error = DiagnosticError.of(location, message);
+        return handleNoMatchingFunction(error, spec.returnedType);
     }
 
     private void checkIfCorrectContext(FunctionSpecification spec, XQueryVisitingSemanticContext context, List<String> mismatchReasons)
@@ -2927,20 +2937,26 @@ public class XQuerySemanticFunctionManager {
         return positionalTypeMismatch;
     }
 
-    public AnalysisResult getFunctionReference(final String namespace, final String functionName, final int arity) {
+    public AnalysisResult getFunctionReference(final ParserRuleContext location,
+                                                final String namespace,
+                                                final String functionName,
+                                                final int arity)
+    {
         // TODO: Verify logic
         final var fallback = typeFactory.anyFunction();
         if (!namespaces.containsKey(namespace)) {
-            return handleUnknownNamespace(namespace, "Unknown function namespace: " + namespace, fallback);
+            DiagnosticError error = DiagnosticError.of(location, "Unknown function namespace: " + namespace);
+            return handleUnknownNamespace(namespace, error, fallback);
         }
         final var namespaceFunctions = namespaces.get(namespace);
         if (!namespaceFunctions.containsKey(functionName)) {
-            return handleUnknownFunction(namespace, functionName, "Unknown function: " + namespace + ":" + functionName,
-                    fallback);
+            DiagnosticError error = DiagnosticError.of(location, "Unknown function: " + namespace + ":" + functionName);
+            return handleUnknownFunction(namespace, functionName, error, fallback);
         }
 
         final var namedFunctions = namespaceFunctions.get(functionName);
-        final SpecAndErrors specAndErrors = getFunctionSpecification(namespace, functionName, namedFunctions, arity);
+        final SpecAndErrors specAndErrors = getFunctionSpecification(
+            location, namespace, functionName, namedFunctions, arity);
         if (specAndErrors.spec == null) {
             final StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.append("Unknown function reference: ");
@@ -2949,7 +2965,8 @@ public class XQuerySemanticFunctionManager {
             stringBuilder.append(functionName);
             stringBuilder.append("#");
             stringBuilder.append(arity);
-            return new AnalysisResult(fallback, List.of(), List.of(stringBuilder.toString()));
+            DiagnosticError error = DiagnosticError.of(location, stringBuilder.toString());
+            return new AnalysisResult(fallback, List.of(), List.of(error));
         }
         XQuerySequenceType returnedType = specAndErrors.spec.returnedType;
         List<XQuerySequenceType> argTypes = specAndErrors.spec.args.stream().map(arg->arg.type()).toList().subList(0, arity);
@@ -2958,18 +2975,9 @@ public class XQuerySemanticFunctionManager {
 
     }
 
-    private String wrongNumberOfArguments(final String functionName, final int expected, final int actual) {
-        return "Wrong number of arguments for function" + functionName + " : expected " + expected + ", got " + actual;
-    }
-
-    public AnalysisResult not(final XQueryTypeFactory typeFactory, final XQueryVisitingSemanticContext context,
-            final List<XQuerySequenceType> args) {
-        if (args.size() != 1) {
-            final String message = wrongNumberOfArguments("fn:not()", 1, args.size());
-            return new AnalysisResult(typeFactory.boolean_(), List.of(), List.of(message));
-        }
-        return new AnalysisResult(typeFactory.boolean_(), List.of(), List.of());
-    }
+    // private String wrongNumberOfArguments(final String functionName, final int expected, final int actual) {
+    //     return "Wrong number of arguments for function" + functionName + " : expected " + expected + ", got " + actual;
+    // }
 
     public XQuerySemanticError register(
             final String namespace,

@@ -46,9 +46,9 @@ class ElementSequenceAnalyzer extends ANTLRv4ParserBaseVisitor<Boolean> {
     private String currentRule;
     @Override
     public Boolean visitParserRuleSpec(ParserRuleSpecContext ctx) {
-        currentRule = ctx.RULE_REF().getText();
+        // currentRule = ctx.RULE_REF().getText();
         var visited = super.visitParserRuleSpec(ctx);
-        currentRule = null;
+        // currentRule = null;
         return visited;
     }
 

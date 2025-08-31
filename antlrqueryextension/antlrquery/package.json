@@ -1,0 +1,39 @@
+{
+  "name": "antlrquery",
+  "displayName": "ANTLRQuery",
+  "description": "",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.103.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "main": "./src/extention.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "antlrquery",
+        "aliases": [
+          "ANTLRQuery",
+          "antlrquery"
+        ],
+        "extensions": [
+          ".antlrquery"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "antlrquery",
+        "scopeName": "source.antlrquery",
+        "path": "./syntaxes/antlrquery.tmLanguage.json"
+      }
+    ]
+  },
+  "dependencies": {
+    "vscode": "^1.1.34",
+    "vscode-languageclient": "^8.0.0"
+  }
+}

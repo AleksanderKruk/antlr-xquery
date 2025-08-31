@@ -46,12 +46,14 @@ import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypePathOp
 
 
 public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQuerySequenceType> {
+
     private final XQuerySemanticContextManager contextManager;
-    private final List<String> errors;
-    private final List<String> warnings;
+    private final List<DiagnosticError> errors;
+    private final List<DiagnosticWarning> warnings;
     private final XQueryTypeFactory typeFactory;
     private final XQueryValueFactory valueFactory;
     private final XQuerySemanticFunctionManager functionManager;
+    // private final Parser parser;
     private XQueryVisitingSemanticContext context;
     private List<XQuerySequenceType> visitedPositionalArguments;
     private Map<String, XQuerySequenceType> visitedKeywordArguments;
@@ -62,10 +64,19 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     private final GrammarAnalysisResult grammarAnalysisResult;
     private final SequencetypePathOperator pathOperator;
 
-    public List<String> getErrors()
+    public List<DiagnosticError> getErrors()
     {
         return errors;
     }
+
+    public List<DiagnosticWarning> getWarnings()
+    {
+        return warnings;
+    }
+
+
+    // private record TupleElementType(String name, XQuerySequenceType type, String positionalName) {
+    // };
 
     public XQuerySemanticAnalyzer(
         final Parser parser,
@@ -76,6 +87,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         final GrammarAnalysisResult grammarAnalysisResult)
     {
         this.grammarAnalysisResult = grammarAnalysisResult;
+        // this.parser = parser;
         this.typeFactory = typeFactory;
         this.valueFactory = valueFactory;
         this.functionManager = functionCaller;
@@ -291,7 +303,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     @Override
     public XQuerySequenceType visitSequenceType(final SequenceTypeContext ctx)
     {
-        if (ctx.EMPTY_SEQUENCE() != null) {
+        if (ctx.emptySequence() != null) {
             return emptySequence;
         }
         final var itemType = ctx.itemType().accept(this).itemType;
@@ -661,7 +673,8 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         final String functionName = resolution.name();
 
         final AnalysisResult callAnalysisResult = functionManager.call(
-            namespace, functionName, args, kwargs, context);
+            ctx, namespace, functionName, visitedPositionalArguments,
+            visitedKeywordArguments, context);
         errors.addAll(callAnalysisResult.errors());
         for (final ArgumentSpecification defaultArg : callAnalysisResult.requiredDefaultArguments()) {
             final var expectedType = defaultArg.type();
@@ -1628,7 +1641,8 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
     {
         final int arity = Integer.parseInt(ctx.IntegerLiteral().getText());
         final ResolvedName resolvedName = namespaceResolver.resolve(ctx.qname().getText());
-        final var analysis = functionManager.getFunctionReference(resolvedName.namespace(), resolvedName.name(), arity);
+        final var analysis = functionManager.getFunctionReference(
+            ctx, resolvedName.namespace(), resolvedName.name(), arity);
         errors.addAll(analysis.errors());
         return analysis.result();
     }
@@ -2165,24 +2179,34 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         return saved;
     }
 
+
+    String stringifyDiagnostic(DiagnosticError error)
+    {
+        return (String.format("[line:%s, column:%s] %s [/line:%s, column:%s]",
+            error.startLine(), error.charPositionInLine(),
+            error.message(),
+            error.endLine(), error.endCharPositionInLine()));
+    }
+
     void error(final ParserRuleContext where, final String message)
     {
         final Token start = where.getStart();
         final Token stop = where.getStop();
-        errors.add(String.format("[line:%s, column:%s] %s [/line:%s, column:%s]",
-            start.getLine(), start.getCharPositionInLine(),
+        final DiagnosticError error = new DiagnosticError(
             message,
-            stop.getLine(), stop.getCharPositionInLine()));
+            start.getLine(),
+            start.getCharPositionInLine(),
+            stop.getLine(),
+            stop.getCharPositionInLine());
+
+        errors.add(error);
     }
 
     void warn(final ParserRuleContext where, final String message)
     {
         final Token start = where.getStart();
         final Token stop = where.getStop();
-        warnings.add(String.format("[line:%s, column:%s] %s [/line:%s, column:%s]",
-            start.getLine(), start.getCharPositionInLine(),
-            message,
-            stop.getLine(), stop.getCharPositionInLine()));
+        warnings.add(DiagnosticWarning.of(start, stop, message));
     }
 
     record LineEndCharPosEnd(int lineEnd, int charPosEnd) {
@@ -2217,10 +2241,15 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         final LineEndCharPosEnd lineEndCharPosEnd = getLineEndCharPosEnd(stop);
         final int lineEnd = lineEndCharPosEnd.lineEnd();
         final int charPositionInLineEnd = lineEndCharPosEnd.charPosEnd();
-        errors.add(String.format("[line:%s, column:%s] %s [/line:%s, column:%s]",
-            line, charPositionInLine,
-            message,
-            lineEnd, charPositionInLineEnd));
+
+
+        final DiagnosticError error = new DiagnosticError( message.apply(where),
+                                        line,
+                                        charPositionInLine,
+                                        lineEnd,
+                                        charPositionInLineEnd);
+
+        errors.add(error);
     }
 
     @Override
@@ -2242,7 +2271,6 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
             trueType = ctx.unbracedActions().exprSingle(0).accept(this);
             falseType = ctx.unbracedActions().exprSingle(1).accept(this);
         }
-        // TODO: Add union types
         return trueType.alternativeMerge(falseType);
     }
 

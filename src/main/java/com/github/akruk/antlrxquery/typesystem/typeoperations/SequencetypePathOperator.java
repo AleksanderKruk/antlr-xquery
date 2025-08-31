@@ -39,8 +39,8 @@ public class SequencetypePathOperator {
             Set<String> names,
             GrammarAnalysisResult analysis)
     {
-        boolean hasProvidedAnalysis = analysis == null;
-        boolean usesWildcard = names == null;
+        final boolean hasProvidedAnalysis = analysis != null;
+        final boolean usesWildcard = names == null;
         switch(axis) {
         case ANCESTOR:
         case CHILD:

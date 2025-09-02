@@ -1,6 +1,5 @@
 package com.github.akruk.antlrxquery.languageserver;
 
-import org.antlr.runtime.Parser;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -35,19 +34,19 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientAware {
-    public static void main(String[] args)
+    public static void main(final String[] args)
     {
         System.err.println("[main] Starting BasicLanguageServer...");
 
-        AntlrQueryLanguageServer server = new AntlrQueryLanguageServer();
+        final AntlrQueryLanguageServer server = new AntlrQueryLanguageServer();
 
-        Launcher<LanguageClient> launcher = Launcher.createLauncher(
+        final Launcher<LanguageClient> launcher = Launcher.createLauncher(
             server,
             LanguageClient.class,
             System.in,
             System.out);
 
-        LanguageClient client = launcher.getRemoteProxy();
+        final LanguageClient client = launcher.getRemoteProxy();
         server.connect(client);
 
         System.err.println("[main] Launcher created. Listening...");
@@ -58,8 +57,14 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
     private final BasicTextDocumentService textDocumentService = new BasicTextDocumentService();
     private final com.github.akruk.antlrxquery.languageserver.AntlrQueryLanguageServer.BasicTextDocumentService.BasicWorkspaceService workspaceService = new com.github.akruk.antlrxquery.languageserver.AntlrQueryLanguageServer.BasicTextDocumentService.BasicWorkspaceService();
 
+    private static final List<String> tokenLegend = List.of("variable", "parameter", "function", "type");
+    private static final int variableIndex = tokenLegend.indexOf("variable");
+    private static final int parameterIndex = tokenLegend.indexOf("parameter");
+    private static final int functionIndex = tokenLegend.indexOf("function");
+    private static final int typeIndex = tokenLegend.indexOf("type");
+
     @Override
-    public void connect(LanguageClient client)
+    public void connect(final LanguageClient client)
     {
         this.client = client;
         textDocumentService.setClient(client);
@@ -68,26 +73,25 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
     }
 
     @Override
-    public CompletableFuture<InitializeResult> initialize(InitializeParams params)
+    public CompletableFuture<InitializeResult> initialize(final InitializeParams params)
     {
         System.err.println("[initialize] Server initialized");
-        ServerCapabilities capabilities = new ServerCapabilities();
+        final ServerCapabilities capabilities = new ServerCapabilities();
 
-        TextDocumentSyncOptions syncOptions = new TextDocumentSyncOptions();
+        final TextDocumentSyncOptions syncOptions = new TextDocumentSyncOptions();
         syncOptions.setSave(new SaveOptions(true));
         syncOptions.setChange(TextDocumentSyncKind.Full);
         syncOptions.setOpenClose(true);
         capabilities.setTextDocumentSync(syncOptions);
 
-        SemanticTokensWithRegistrationOptions semanticTokensOptions = new SemanticTokensWithRegistrationOptions();
-        SemanticTokensLegend legend = new SemanticTokensLegend();
-        legend.setTokenTypes(List.of("variable", "parameter", "function", "type", "class", "property"));
+        final SemanticTokensWithRegistrationOptions semanticTokensOptions = new SemanticTokensWithRegistrationOptions();
+        final SemanticTokensLegend legend = new SemanticTokensLegend();
+        legend.setTokenTypes(tokenLegend);
         legend.setTokenModifiers(List.of("declaration", "readonly", "static", "deprecated"));
         semanticTokensOptions.setLegend(legend);
         semanticTokensOptions.setFull(true);
         semanticTokensOptions.setRange(false);
         capabilities.setSemanticTokensProvider(semanticTokensOptions);
-
 
         return CompletableFuture.completedFuture(new InitializeResult(capabilities));
     }
@@ -122,16 +126,16 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
         private LanguageClient client;
         private final Map<String, ParseTree> parseTreeStore = new HashMap<>();
 
-        public void setClient(LanguageClient client)
+        public void setClient(final LanguageClient client)
         {
             this.client = client;
         }
 
         @Override
-        public void didOpen(DidOpenTextDocumentParams params)
+        public void didOpen(final DidOpenTextDocumentParams params)
         {
-            String uri = params.getTextDocument().getUri();
-            String text = params.getTextDocument().getText();
+            final String uri = params.getTextDocument().getUri();
+            final String text = params.getTextDocument().getText();
             System.err.println("[didOpen] " + uri);
             if (parseTreeStore.containsKey(uri)) {
                 return;
@@ -140,59 +144,59 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
         }
 
         @Override
-        public void didChange(DidChangeTextDocumentParams params)
+        public void didChange(final DidChangeTextDocumentParams params)
         {
-            String uri = params.getTextDocument().getUri();
+            final String uri = params.getTextDocument().getUri();
             if (params.getContentChanges().isEmpty()) {
                 System.err.println("[didChange] No content changes for: " + uri);
                 return;
             }
-            String text = params.getContentChanges().get(0).getText();
+            final String text = params.getContentChanges().get(0).getText();
             System.err.println("[didChange] Document changed: " + uri + ", new length: " + text.length());
             parseAndAnalyze(uri, text);
         }
 
         @Override
-        public void didClose(DidCloseTextDocumentParams params)
+        public void didClose(final DidCloseTextDocumentParams params)
         {
-            String uri = params.getTextDocument().getUri();
+            final String uri = params.getTextDocument().getUri();
             parseTreeStore.remove(uri);
             System.err.println("[didClose] Document closed: " + uri);
         }
 
         @Override
-        public void didSave(DidSaveTextDocumentParams params)
+        public void didSave(final DidSaveTextDocumentParams params)
         {
-            String uri = params.getTextDocument().getUri();
+            final String uri = params.getTextDocument().getUri();
             System.err.println("[didSave] Document saved: " + uri);
             parseAndAnalyze(uri, params.getText());
         }
 
-        private void parseAndAnalyze(String uri, String text)
+        private void parseAndAnalyze(final String uri, final String text)
         {
             System.err.println("[parseAndAnalyze] Starting for: " + uri);
             System.err.println("[parseAndAnalyze] Text length: " + text.length());
 
             try {
-                AntlrXqueryLexer lexer = new AntlrXqueryLexer(CharStreams.fromString(text));
-                CommonTokenStream tokens = new CommonTokenStream(lexer);
-                AntlrXqueryParser parser = new AntlrXqueryParser(tokens);
+                final AntlrXqueryLexer lexer = new AntlrXqueryLexer(CharStreams.fromString(text));
+                final CommonTokenStream tokens = new CommonTokenStream(lexer);
+                final AntlrXqueryParser parser = new AntlrXqueryParser(tokens);
 
                 // Custom syntax error listener
-                List<Diagnostic> diagnostics = new ArrayList<>();
+                final List<Diagnostic> diagnostics = new ArrayList<>();
                 parser.removeErrorListeners();
                 parser.addErrorListener(new BaseErrorListener() {
                     @Override
                     public void syntaxError(
-                        Recognizer<?, ?> recognizer,
-                        Object offendingSymbol,
-                        int line,
-                        int charPositionInLine,
-                        String msg,
-                        RecognitionException e)
+                        final Recognizer<?, ?> recognizer,
+                        final Object offendingSymbol,
+                        final int line,
+                        final int charPositionInLine,
+                        final String msg,
+                        final RecognitionException e)
                     {
                         System.err.println("[syntaxError] Line " + line + ":" + charPositionInLine + " " + msg);
-                        Diagnostic diagnostic = new Diagnostic(
+                        final Diagnostic diagnostic = new Diagnostic(
                             new Range(
                                 new Position(line - 1, charPositionInLine),
                                 new Position(line - 1, charPositionInLine + 1)),
@@ -203,7 +207,7 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
                     }
                 });
 
-                ParseTree tree = parser.xquery();
+                final ParseTree tree = parser.xquery();
                 parseTreeStore.put(uri, tree);
 
                 // Skip semantic analysis if syntax errors exist
@@ -225,12 +229,12 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
                     null);
                 analyzer.visit(tree);
 
-                List<DiagnosticError> errors = analyzer.getErrors();
-                List<DiagnosticWarning> warnings = analyzer.getWarnings();
+                final List<DiagnosticError> errors = analyzer.getErrors();
+                final List<DiagnosticWarning> warnings = analyzer.getWarnings();
                 System.err
                     .println("[parseAndAnalyze] Semantic Errors: " + errors.size() + ", Warnings: " + warnings.size());
 
-                for (var error : errors) {
+                for (final var error : errors) {
                     diagnostics.add(new Diagnostic(
                         new Range(
                             new Position(error.startLine() - 1, error.charPositionInLine()),
@@ -240,7 +244,7 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
                         "antlr-xquery"));
                 }
 
-                for (var warning : warnings) {
+                for (final var warning : warnings) {
                     diagnostics.add(new Diagnostic(
                         new Range(
                             new Position(warning.startLine() - 1, warning.charPositionInLine()),
@@ -256,111 +260,88 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
                     System.err.println("[parseAndAnalyze] LanguageClient is null. Cannot publish diagnostics.");
                 }
 
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 System.err.println("[parseAndAnalyze] Exception: " + e.getClass().getName() + " - " + e.getMessage());
-                for (StackTraceElement el : e.getStackTrace()) {
+                for (final StackTraceElement el : e.getStackTrace()) {
                     System.err.println("    at " + el.toString());
                 }
             }
         }
 
-        private AntlrXqueryLexer _lexer = new AntlrXqueryLexer(CharStreams.fromString(""));
-        private CommonTokenStream _tokens = new CommonTokenStream(_lexer);
-        private AntlrXqueryParser _parser = new AntlrXqueryParser(_tokens);
+        private final AntlrXqueryLexer _lexer = new AntlrXqueryLexer(CharStreams.fromString(""));
+        private final CommonTokenStream _tokens = new CommonTokenStream(_lexer);
+        private final AntlrXqueryParser _parser = new AntlrXqueryParser(_tokens);
 
         @Override
-        public CompletableFuture<SemanticTokens> semanticTokensFull(SemanticTokensParams params) {
-            String uri = params.getTextDocument().getUri();
-            ParseTree tree = parseTreeStore.get(uri);
+        public CompletableFuture<SemanticTokens> semanticTokensFull(final SemanticTokensParams params) {
+            final String uri = params.getTextDocument().getUri();
+            final ParseTree tree = parseTreeStore.get(uri);
 
             if (tree == null) {
                 System.err.println("[semanticTokensFull] No parse tree for URI: " + uri);
                 return CompletableFuture.completedFuture(new SemanticTokens(List.of()));
             }
 
-            class SemanticToken {
-                int line;
-                int charPos;
-                int length;
-                int typeIndex;
-                int modifierBitmask;
+            record SemanticToken(int line, int charPos, int length, int typeIndex, int modifierBitmask) {}
 
-                SemanticToken(int line, int charPos, int length, int typeIndex, int modifierBitmask) {
-                    this.line = line;
-                    this.charPos = charPos;
-                    this.length = length;
-                    this.typeIndex = typeIndex;
-                    this.modifierBitmask = modifierBitmask;
-                }
+            final List<SemanticToken> tokens = new ArrayList<>();
+
+            final List<XQueryValue> typeValues = XQuery.evaluate(tree, "//(sequenceType|castTarget)", _parser).sequence;
+            for (final XQueryValue val : typeValues) {
+                final ParseTree node = val.node;
+                if (!(node instanceof final ParserRuleContext ctx)) continue;
+                final Token start = ctx.getStart();
+                final Token stop = ctx.getStop();
+                final int line = start.getLine() - 1;
+                final int charPos = start.getCharPositionInLine();
+                final int length = stop.getStopIndex() - start.getStartIndex() + 1;
+                tokens.add(new SemanticToken(line, charPos, length, typeIndex, 0));
             }
 
-            List<SemanticToken> tokens = new ArrayList<>();
+            final List<XQueryValue> variableValues = XQuery.evaluate(tree, "//varRef", _parser).sequence;
+            for (final XQueryValue val : variableValues) {
+                final ParseTree node = val.node;
+                if (!(node instanceof final ParserRuleContext ctx)) continue;
+                final Token start = ctx.getStart();
+                final Token stop = ctx.getStop();
+                final int line = start.getLine() - 1;
+                final int charPos = start.getCharPositionInLine();
+                final int length = stop.getStopIndex() - start.getStartIndex() + 1;
+                tokens.add(new SemanticToken(line, charPos, length, variableIndex, 0));
+            }
 
-            Map<String, Integer> tokenTypes = Map.of(
-                "type", 3,
-                "variable", 0,
-                "number", 1,
-                "string", 2,
-                "function", 4
-            );
-
-            Map<XQueryValue, String> sources = Map.ofEntries(
-                Map.entry(XQuery.evaluate(tree, """
-                    //(typeName
-                        | anyItemTest
-                        | typeName
-                        | kindTest
-                        | functionType
-                        | mapType
-                        | arrayType
-                        | recordType
-                        | enumerationType
-                        | choiceItemType
-                        | emptySequence)
-                    """, _parser), "type"),
-                Map.entry(XQuery.evaluate(tree, "//varRef", _parser), "variable"),
-                Map.entry(XQuery.evaluate(tree, "//numericLiteral", _parser), "number"),
-                Map.entry(XQuery.evaluate(tree, "//STRING", _parser), "string"),
-                Map.entry(XQuery.evaluate(tree, "//functionName", _parser), "function")
-            );
-
-            for (var entry : sources.entrySet()) {
-                XQueryValue valueSet = entry.getKey();
-                String typeName = entry.getValue();
-                int typeIndex = tokenTypes.get(typeName);
-
-                for (XQueryValue val : valueSet.sequence) {
-                    ParseTree node = val.node;
-                    if (!(node instanceof ParserRuleContext ctx)) continue;
-                    Token start = ctx.getStart();
-                    int line = start.getLine() - 1;
-                    int charPos = start.getCharPositionInLine();
-                    int length = start.getText().length();
-
-                    tokens.add(new SemanticToken(line, charPos, length, typeIndex, 0));
-                }
+            final List<XQueryValue> functionValues = XQuery.evaluate(tree, "//(functionName|namedFunctionRef)", _parser).sequence;
+            for (final XQueryValue val : functionValues) {
+                final ParseTree node = val.node;
+                if (!(node instanceof final ParserRuleContext ctx)) continue;
+                final Token start = ctx.getStart();
+                final Token stop = ctx.getStop();
+                final int line = start.getLine() - 1;
+                final int charPos = start.getCharPositionInLine();
+                final int length = stop.getStopIndex() - start.getStartIndex() + 1;
+                tokens.add(new SemanticToken(line, charPos, length, functionIndex, 0));
             }
 
             tokens.sort(Comparator
-                .comparingInt((SemanticToken t) -> t.line)
-                .thenComparingInt(t -> t.charPos));
+                .comparingInt(SemanticToken::line)
+                .thenComparingInt(SemanticToken::charPos));
 
-            List<Integer> data = new ArrayList<>();
+            final List<Integer> data = new ArrayList<>();
             int lastLine = 0;
             int lastChar = 0;
 
-            for (SemanticToken token : tokens) {
-                int deltaLine = token.line - lastLine;
-                int deltaChar = (deltaLine == 0) ? (token.charPos - lastChar) : token.charPos;
+            for (final SemanticToken token : tokens) {
+                final int deltaLine = token.line() - lastLine;
+                final int deltaChar = (deltaLine == 0) ? (token.charPos() - lastChar) : token.charPos();
 
                 data.add(deltaLine);
                 data.add(deltaChar);
-                data.add(token.length);
-                data.add(token.typeIndex);
-                data.add(token.modifierBitmask);
+                data.add(token.length());
+                data.add(token.typeIndex());
+                data.add(token.modifierBitmask());
 
-                lastLine = token.line;
-                lastChar = token.charPos;
+                lastLine = token.line();
+                lastChar = token.charPos();
             }
 
             return CompletableFuture.completedFuture(new SemanticTokens(data));
@@ -370,32 +351,33 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
 
 
 
+
         public static class BasicWorkspaceService implements WorkspaceService {
             private LanguageClient client;
 
-            public void setClient(LanguageClient client)
+            public void setClient(final LanguageClient client)
             {
                 this.client = client;
             }
 
             @Override
-            public void didChangeConfiguration(DidChangeConfigurationParams params)
+            public void didChangeConfiguration(final DidChangeConfigurationParams params)
             {
                 System.err.println("[didChangeConfiguration]");
                 showMessage("Configuration changed");
             }
 
             @Override
-            public void didChangeWatchedFiles(DidChangeWatchedFilesParams params)
+            public void didChangeWatchedFiles(final DidChangeWatchedFilesParams params)
             {
                 System.err.println("[didChangeWatchedFiles]");
                 showMessage("Watched files changed");
             }
 
-            private void showMessage(String message)
+            private void showMessage(final String message)
             {
                 if (client != null) {
-                    MessageParams msg = new MessageParams(MessageType.Log, message);
+                    final MessageParams msg = new MessageParams(MessageType.Log, message);
                     client.showMessage(msg);
                 }
             }

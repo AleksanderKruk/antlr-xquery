@@ -74,9 +74,11 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         return warnings;
     }
 
+    public XQuerySemanticFunctionManager getFunctionManager() {
+        return functionManager;
+    }
 
-    // private record TupleElementType(String name, XQuerySequenceType type, String positionalName) {
-    // };
+
 
     public XQuerySemanticAnalyzer(
         final Parser parser,

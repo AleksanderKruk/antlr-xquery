@@ -2695,15 +2695,15 @@ public class XQuerySemanticFunctionManager {
         return initialRule.apply(parser);
     }
 
-    record FunctionSpecification(
+    public record FunctionSpecification(
             long minArity,
             long maxArity,
             List<ArgumentSpecification> args,
             XQuerySequenceType returnedType,
             XQuerySequenceType requiredContextValueType,
             boolean requiresPosition,
-            boolean requiresSize) {
-    }
+            boolean requiresSize)
+    { }
 
     final Map<String, Map<String, List<FunctionSpecification>>> namespaces;
 
@@ -2730,8 +2730,10 @@ public class XQuerySemanticFunctionManager {
     record SpecAndErrors(FunctionSpecification spec, List<DiagnosticError> errors) {
     }
 
-    SpecAndErrors getFunctionSpecification(final ParserRuleContext location, final String namespace, final String name,
-            final List<FunctionSpecification> namedFunctions, final long requiredArity) {
+    SpecAndErrors getFunctionSpecification(
+        final ParserRuleContext location, final String namespace, final String name,
+        final List<FunctionSpecification> namedFunctions, final long requiredArity)
+    {
         final List<String> mismatchReasons = new ArrayList<>();
         for (final FunctionSpecification spec : namedFunctions) {
             final List<String> reasons = new ArrayList<>();
@@ -2975,9 +2977,24 @@ public class XQuerySemanticFunctionManager {
 
     }
 
-    // private String wrongNumberOfArguments(final String functionName, final int expected, final int actual) {
-    //     return "Wrong number of arguments for function" + functionName + " : expected " + expected + ", got " + actual;
-    // }
+    public FunctionSpecification getNamedFunctionSpecification(final ParserRuleContext location,
+                                                final String namespace,
+                                                final String functionName,
+                                                final int arity)
+    {
+        if (!namespaces.containsKey(namespace)) {
+            return null;
+        }
+        final var namespaceFunctions = namespaces.get(namespace);
+        if (!namespaceFunctions.containsKey(functionName)) {
+            return null;
+        }
+
+        final var namedFunctions = namespaceFunctions.get(functionName);
+        final SpecAndErrors specAndErrors = getFunctionSpecification(
+            location, namespace, functionName, namedFunctions, arity);
+        return specAndErrors.spec;
+    }
 
     public XQuerySemanticError register(
             final String namespace,

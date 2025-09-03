@@ -22,4 +22,12 @@ public final class ListTokenStream extends CommonTokenStream {
         }
         return fetched;
     }
+
+    @Override
+    protected int nextTokenOnChannel(int i, int channel) {
+        var tokenIndex = super.nextTokenOnChannel(i, channel);
+        var token = get(tokenIndex);
+        tokens.add(token);
+        return tokenIndex;
+    }
 }

@@ -1,6 +1,5 @@
 package com.github.akruk.antlrxquery.languageserver;
 
-import org.antlr.runtime.Parser;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.services.*;
@@ -28,20 +27,16 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
         launcher.startListening();
     }
 
-    private LanguageClient client;
-    private final BasicTextDocumentService textDocumentService = new BasicTextDocumentService(tokenLegend);
-    private final com.github.akruk.antlrxquery.languageserver.BasicWorkspaceService workspaceService = new com.github.akruk.antlrxquery.languageserver.BasicWorkspaceService();
-
-
     private static final List<String> tokenLegend = List.of("variable", "parameter", "function", "type");
 
+    private final BasicTextDocumentService textDocumentService = new BasicTextDocumentService(tokenLegend);
+    private final com.github.akruk.antlrxquery.languageserver.BasicWorkspaceService workspaceService = new com.github.akruk.antlrxquery.languageserver.BasicWorkspaceService();
 
 
 
     @Override
     public void connect(final LanguageClient client)
     {
-        this.client = client;
         textDocumentService.setClient(client);
         workspaceService.setClient(client);
         System.err.println("[connect] LanguageClient connected");
@@ -68,7 +63,7 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
         semanticTokensOptions.setRange(false);
         capabilities.setSemanticTokensProvider(semanticTokensOptions);
 
-        capabilities.setHoverProvider(true);
+        // capabilities.setHoverProvider(true);
 
         return CompletableFuture.completedFuture(new InitializeResult(capabilities));
     }

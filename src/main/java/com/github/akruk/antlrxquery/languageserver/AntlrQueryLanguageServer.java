@@ -29,8 +29,14 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
     }
 
     private LanguageClient client;
-    private final BasicTextDocumentService textDocumentService = new BasicTextDocumentService();
+    private final BasicTextDocumentService textDocumentService = new BasicTextDocumentService(tokenLegend);
     private final com.github.akruk.antlrxquery.languageserver.BasicWorkspaceService workspaceService = new com.github.akruk.antlrxquery.languageserver.BasicWorkspaceService();
+
+
+    private static final List<String> tokenLegend = List.of("variable", "parameter", "function", "type");
+
+
+
 
     @Override
     public void connect(final LanguageClient client)
@@ -55,7 +61,7 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
 
         final SemanticTokensWithRegistrationOptions semanticTokensOptions = new SemanticTokensWithRegistrationOptions();
         final SemanticTokensLegend legend = new SemanticTokensLegend();
-        legend.setTokenTypes(List.of("variable", "parameter", "function", "type", "class", "property"));
+        legend.setTokenTypes(tokenLegend);
         legend.setTokenModifiers(List.of("declaration", "readonly", "static", "deprecated"));
         semanticTokensOptions.setLegend(legend);
         semanticTokensOptions.setFull(true);

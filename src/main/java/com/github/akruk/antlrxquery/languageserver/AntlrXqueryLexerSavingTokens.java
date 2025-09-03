@@ -19,7 +19,8 @@ public class AntlrXqueryLexerSavingTokens extends AntlrXqueryLexer {
     public Token getToken()
     {
         final Token token = super.getToken();
-        tokens.add(token);
+        if (token != null)
+            tokens.add(token);
         return token;
     }
 

@@ -123,7 +123,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         System.err.println("[parseAndAnalyze] Text length: " + text.length());
 
         try {
-            final AntlrXqueryLexer lexer = new AntlrXqueryLexer(CharStreams.fromString(text));
+            final AntlrXqueryLexerSavingTokens lexer = new AntlrXqueryLexerSavingTokens(CharStreams.fromString(text));
             final CommonTokenStream tokenStream = new CommonTokenStream(lexer);
             final AntlrXqueryParser parser = new AntlrXqueryParser(tokenStream);
 
@@ -154,7 +154,7 @@ public class BasicTextDocumentService implements TextDocumentService {
 
             final ParseTree tree = parser.xquery();
             parseTreeStore.put(uri, tree);
-            // tokenStore.put(uri, tokenStream.tokens);
+            tokenStore.put(uri, lexer.tokens);
 
             // Skip semantic analysis if syntax errors exist
             if (!diagnostics.isEmpty()) {
@@ -174,7 +174,7 @@ public class BasicTextDocumentService implements TextDocumentService {
                 new XQuerySemanticFunctionManager(typeFactory),
                 null);
             analyzer.visit(tree);
-            // semanticAnalyzers.put(uri, analyzer);
+            semanticAnalyzers.put(uri, analyzer);
 
             final List<DiagnosticError> errors = analyzer.getErrors();
             final List<DiagnosticWarning> warnings = analyzer.getWarnings();
@@ -245,7 +245,7 @@ public class BasicTextDocumentService implements TextDocumentService {
             final int length = stop.getStopIndex() - start.getStartIndex() + 1;
             tokens.add(new SemanticToken(line, charPos, length, typeIndex, 0));
         }
-        // types.put(uri, typeValues.stream().map(v->(ParserRuleContext) v.node).toList());
+        types.put(uri, typeValues.stream().map(v->(ParserRuleContext) v.node).toList());
 
 
         final List<XQueryValue> variableValues = XQuery.evaluate(tree, "//varRef", _parser).sequence;
@@ -259,7 +259,7 @@ public class BasicTextDocumentService implements TextDocumentService {
             final int length = stop.getStopIndex() - start.getStartIndex() + 1;
             tokens.add(new SemanticToken(line, charPos, length, variableIndex, 0));
         }
-        // variables.put(uri, variableValues.stream().map(v->(ParserRuleContext) v.node).toList());
+        variables.put(uri, variableValues.stream().map(v->(ParserRuleContext) v.node).toList());
 
         final List<XQueryValue> functionValues = XQuery.evaluate(tree, "//(functionName|namedFunctionRef)", _parser).sequence;
         for (final XQueryValue val : functionValues) {
@@ -272,7 +272,7 @@ public class BasicTextDocumentService implements TextDocumentService {
             final int length = stop.getStopIndex() - start.getStartIndex() + 1;
             tokens.add(new SemanticToken(line, charPos, length, functionIndex, 0));
         }
-        // functionCalls.put(uri, functionValues.stream().map(v->(ParserRuleContext) v.node).toList());
+        functionCalls.put(uri, functionValues.stream().map(v->(ParserRuleContext) v.node).toList());
 
         tokens.sort(Comparator
             .comparingInt(SemanticToken::line)
@@ -300,60 +300,59 @@ public class BasicTextDocumentService implements TextDocumentService {
     }
 
 
-    // @Override
-    // public CompletableFuture<Hover> hover(HoverParams params) {
-    //     String uri = params.getTextDocument().getUri();
-    //     Position position = params.getPosition();
+    @Override
+    public CompletableFuture<Hover> hover(HoverParams params) {
+        String uri = params.getTextDocument().getUri();
+        Position position = params.getPosition();
 
-    //     ParseTree tree = parseTreeStore.get(uri);
-    //     // List<Token> tokens = tokenStore.get(uri);
+        ParseTree tree = parseTreeStore.get(uri);
 
-    //     if (tree == null) {
-    //         return CompletableFuture.completedFuture(null);
-    //     }
+        if (tree == null) {
+            return CompletableFuture.completedFuture(null);
+        }
 
-    //     List<ParserRuleContext> calls = functionCalls.get(uri);
-    //     if (calls.isEmpty()) {
-    //         return CompletableFuture.completedFuture(null);
-    //     }
+        List<ParserRuleContext> calls = functionCalls.get(uri);
+        if (calls.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
 
-    //     int low = 0;
-    //     int high = calls.size() - 1;
-    //     ParserRuleContext foundCtx = null;
+        int low = 0;
+        int high = calls.size() - 1;
+        ParserRuleContext foundCtx = null;
 
-    //     while (low <= high) {
-    //         int mid = low + (high - low) / 2;
-    //         ParserRuleContext candidateCtx = calls.get(mid);
+        while (low <= high) {
+            int mid = low + (high - low) / 2;
+            ParserRuleContext candidateCtx = calls.get(mid);
 
-    //         if (isPositionInsideContext(position, candidateCtx)) {
-    //             foundCtx = candidateCtx;
-    //             break;
-    //         }
+            if (isPositionInsideContext(position, candidateCtx)) {
+                foundCtx = candidateCtx;
+                break;
+            }
 
-    //         if (position.getLine() + 1 < candidateCtx.getStart().getLine() ||
-    //            (position.getLine() + 1 == candidateCtx.getStart().getLine() &&
-    //             position.getCharacter() < candidateCtx.getStart().getCharPositionInLine()))
-    //         {
-    //             high = mid - 1;
-    //         }
-    //         else {
-    //             low = mid + 1;
-    //         }
-    //     }
+            if (position.getLine() + 1 < candidateCtx.getStart().getLine() ||
+               (position.getLine() + 1 == candidateCtx.getStart().getLine() &&
+                position.getCharacter() < candidateCtx.getStart().getCharPositionInLine()))
+            {
+                high = mid - 1;
+            }
+            else {
+                low = mid + 1;
+            }
+        }
 
-    //     if (foundCtx != null) {
-    //         String hoverText = "Znaleziono wywołanie: `" + foundCtx.getText() + "`";
+        if (foundCtx != null) {
+            String hoverText = "Znaleziono wywołanie: `" + foundCtx.getText() + "`";
 
-    //         MarkupContent content = new MarkupContent(MarkupKind.MARKDOWN, hoverText);
-    //         Hover hover = new Hover(content);
+            MarkupContent content = new MarkupContent(MarkupKind.MARKDOWN, hoverText);
+            Hover hover = new Hover(content);
 
-    //         hover.setRange(getContextRange(foundCtx));
+            hover.setRange(getContextRange(foundCtx));
 
-    //         return CompletableFuture.completedFuture(hover);
-    //     }
+            return CompletableFuture.completedFuture(hover);
+        }
 
-    //     return CompletableFuture.completedFuture(null);
-    // }
+        return CompletableFuture.completedFuture(null);
+    }
 
     private boolean isPositionInsideContext(Position position, ParserRuleContext ctx) {
         Token startToken = ctx.getStart();

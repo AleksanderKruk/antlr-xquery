@@ -63,7 +63,7 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
         semanticTokensOptions.setRange(false);
         capabilities.setSemanticTokensProvider(semanticTokensOptions);
 
-        // capabilities.setHoverProvider(true);
+        capabilities.setHoverProvider(true);
 
         return CompletableFuture.completedFuture(new InitializeResult(capabilities));
     }

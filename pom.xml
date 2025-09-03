@@ -11,7 +11,6 @@
     <junit.version>5.10.0</junit.version>
     <maven.surefire.version>3.1.2</maven.surefire.version>
   </properties>
-
   <dependencies>
     <dependency>
       <groupId>org.antlr</groupId>
@@ -58,7 +57,6 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-
   <build>
     <plugins>
       <plugin>
@@ -73,7 +71,6 @@
           </execution>
         </executions>
       </plugin>
-
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.11.0</version>
@@ -82,33 +79,37 @@
           <target>22</target>
         </configuration>
       </plugin>
-
+      <!-- Uber-jar dla 'antlrxquery-tool' -->
       <plugin>
-        <artifactId>maven-jar-plugin</artifactId>
-        <version>3.3.0</version>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>3.7.1</version>
         <executions>
           <execution>
             <id>antlrxquery-tool-jar</id>
             <phase>package</phase>
             <goals>
-              <goal>jar</goal>
+              <goal>single</goal>
             </goals>
             <configuration>
+              <appendAssemblyId>false</appendAssemblyId>
               <finalName>antlrxquery-tool</finalName>
-              <classifier>tool</classifier>
+              <archive>
+                <manifest>
+                  <mainClass>com.github.akruk.antlrxquery.XQueryRunner</mainClass>
+                </manifest>
+              </archive>
+              <descriptorRefs>
+                <descriptorRef>jar-with-dependencies</descriptorRef>
+              </descriptorRefs>
               <includes>
                 <include>com/github/akruk/antlrxquery/tool/**</include>
               </includes>
-              <archive>
-                <manifest>
-                  <mainClass>com.github.akruk.antlrxquery.tool.AntlrXQueryTool</mainClass>
-                </manifest>
-              </archive>
             </configuration>
           </execution>
         </executions>
       </plugin>
-
+      <!-- Uber-jar dla 'antlrxquery-language-server' -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
@@ -131,11 +132,13 @@
               <descriptorRefs>
                 <descriptorRef>jar-with-dependencies</descriptorRef>
               </descriptorRefs>
+              <includes>
+                <include>com/github/akruk/antlrxquery/languageserver/**</include>
+              </includes>
             </configuration>
           </execution>
         </executions>
       </plugin>
-
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>${maven.surefire.version}</version>

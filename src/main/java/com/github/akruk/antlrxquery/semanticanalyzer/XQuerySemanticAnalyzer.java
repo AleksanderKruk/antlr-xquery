@@ -53,16 +53,26 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     private final XQueryTypeFactory typeFactory;
     private final XQueryValueFactory valueFactory;
     private final XQuerySemanticFunctionManager functionManager;
+    private final GrammarAnalysisResult grammarAnalysisResult;
+    private final SequencetypePathOperator pathOperator;
     // private final Parser parser;
     private XQueryVisitingSemanticContext context;
     private List<XQuerySequenceType> visitedPositionalArguments;
     private Map<String, XQuerySequenceType> visitedKeywordArguments;
 
-    private final XQuerySequenceType anyArrayOrMap;
-    private final XQuerySequenceType anyItems;
-    private final XQuerySequenceType emptySequence;
-    private final GrammarAnalysisResult grammarAnalysisResult;
-    private final SequencetypePathOperator pathOperator;
+    protected final XQuerySequenceType number;
+    protected final XQuerySequenceType zeroOrMoreNodes;
+    protected final XQuerySequenceType anyArray;
+    protected final XQuerySequenceType anyMap;
+    protected final XQuerySequenceType boolean_;
+    protected final XQuerySequenceType string;
+    protected final XQuerySequenceType optionalNumber;
+    protected final XQuerySequenceType anyNumbers;
+    protected final XQuerySequenceType optionalString;
+    protected final XQuerySequenceType anyItem;
+    protected final XQuerySequenceType anyArrayOrMap;
+    protected final XQuerySequenceType anyItems;
+    protected final XQuerySequenceType emptySequence;
 
     public List<DiagnosticError> getErrors()
     {
@@ -182,7 +192,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         return null;
     }
 
-    private void processForItemBinding(final ForItemBindingContext ctx) {
+    public void processForItemBinding(final ForItemBindingContext ctx) {
         final String variableName = ctx.varNameAndType().qname().getText();
         final XQuerySequenceType sequenceType = ctx.exprSingle().accept(this);
         returnedOccurrence = mergeFLWOROccurrence(sequenceType);
@@ -202,7 +212,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         }
     }
 
-    private void processForMemberBinding(final ForMemberBindingContext ctx) {
+    public void processForMemberBinding(final ForMemberBindingContext ctx) {
         final String variableName = ctx.varNameAndType().qname().getText();
         final XQuerySequenceType arrayType = ctx.exprSingle().accept(this);
         returnedOccurrence = arrayMergeFLWOROccurence();
@@ -224,7 +234,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         }
     }
 
-    private void processForEntryBinding(final ForEntryBindingContext ctx) {
+    public void processForEntryBinding(final ForEntryBindingContext ctx) {
         final XQuerySequenceType mapType = ctx.exprSingle().accept(this);
         returnedOccurrence = arrayMergeFLWOROccurence();
 
@@ -283,25 +293,27 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         }
     }
 
-private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameAndType,
-                                          final XQuerySequenceType inferredType,
-                                          final String variableName,
-                                          final ParseTree context)
-{
-    if (varNameAndType.typeDeclaration() == null) {
-        contextManager.entypeVariable(variableName, inferredType);
-        return;
+    protected void processVariableTypeDeclaration(final VarNameAndTypeContext varNameAndType,
+                                            final XQuerySequenceType inferredType,
+                                            final String variableName,
+                                            final ParseTree context)
+    {
+        if (varNameAndType.typeDeclaration() == null) {
+            contextManager.entypeVariable(variableName, inferredType);
+            return;
+        }
+
+        final XQuerySequenceType declaredType = varNameAndType.typeDeclaration().accept(this);
+        if (!inferredType.isSubtypeOf(declaredType)) {
+            final String msg = String.format(
+                    "Type of variable %s is not compatible with the assigned value: %s is not subtype of %s",
+                    variableName, inferredType, declaredType);
+            error((ParserRuleContext)context, msg);
+        }
+        contextManager.entypeVariable(variableName, declaredType);
     }
 
-    final XQuerySequenceType declaredType = varNameAndType.typeDeclaration().accept(this);
-    if (!inferredType.isSubtypeOf(declaredType)) {
-        final String msg = String.format(
-                "Type of variable %s is not compatible with the assigned value: %s is not subtype of %s",
-                variableName, inferredType, declaredType);
-        error((ParserRuleContext)context, msg);
-    }
-    contextManager.entypeVariable(variableName, declaredType);
-}
+
     @Override
     public XQuerySequenceType visitSequenceType(final SequenceTypeContext ctx)
     {
@@ -716,13 +728,15 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         for (int i = 0; i < variableNames.size(); i++) {
             final var assignedType = variableTypes.get(i);
             final var desiredType = coercedTypes.get(i);
-            if (desiredType !=null
-                && assignedType.coerceableTo(desiredType) == RelativeCoercability.NEVER)
-            {
-                error(ctx.quantifierBinding(i).varNameAndType(), String.format("Type: %s is not coercable to %s", assignedType, desiredType));
+            if (desiredType !=null) {
+                if (assignedType.coerceableTo(desiredType) == RelativeCoercability.NEVER){
+                    error(ctx.quantifierBinding(i).varNameAndType(),
+                        String.format("Type: %s is not coercable to %s", assignedType, desiredType));
+                }
+                contextManager.entypeVariable(variableNames.get(i), desiredType);
+                continue;
             }
-
-            contextManager.entypeVariable(variableNames.get(i), variableTypes.get(i));
+            contextManager.entypeVariable(variableNames.get(i), assignedType);
         }
 
         final XQuerySequenceType queriedType = criterionNode.accept(this);
@@ -1366,16 +1380,7 @@ private void processVariableTypeDeclaration(final VarNameAndTypeContext varNameA
         return ctx.nodeTest().accept(this);
     }
 
-    private final XQuerySequenceType number;
-    private final XQuerySequenceType zeroOrMoreNodes;
-    private final XQuerySequenceType anyArray;
-    private final XQuerySequenceType anyMap;
-    private final XQuerySequenceType boolean_;
-    private final XQuerySequenceType string;
-    private final XQuerySequenceType optionalNumber;
-    private final XQuerySequenceType anyNumbers;
-    private final XQuerySequenceType optionalString;
-    private final XQuerySequenceType anyItem;
+
 
 
 

@@ -460,14 +460,12 @@ public class BasicTextDocumentService implements TextDocumentService {
         try {
             final StringBuilder sb = new StringBuilder();
 
-            // Add function signature with color
             sb.append("```antlrquery\n")
                 .append(namespace)
                 .append(":")
                 .append(name)
                 .append("(\n");
 
-            // Add arguments with color
             final List<ArgumentSpecification> args = specification.args().subList(0, arity);
             for (int i = 0; i < args.size(); i++) {
                 final ArgumentSpecification arg = args.get(i);

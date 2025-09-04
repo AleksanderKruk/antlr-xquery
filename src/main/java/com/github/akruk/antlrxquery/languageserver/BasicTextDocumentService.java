@@ -63,12 +63,13 @@ public class BasicTextDocumentService implements TextDocumentService {
     private final int functionIndex;
     private final int typeIndex;
 
-    BasicTextDocumentService(List<String> tokenLegend)
+    BasicTextDocumentService(final List<String> tokenLegend)
     {
         variableIndex = tokenLegend.indexOf("variable");
         parameterIndex = tokenLegend.indexOf("parameter");
         functionIndex = tokenLegend.indexOf("function");
         typeIndex = tokenLegend.indexOf("type");
+        resolver = new NamespaceResolver("fn");
     }
 
     public void setClient(final LanguageClient client)
@@ -218,6 +219,7 @@ public class BasicTextDocumentService implements TextDocumentService {
     private final AntlrXqueryLexer _lexer = new AntlrXqueryLexer(CharStreams.fromString(""));
     private final CommonTokenStream _tokens = new CommonTokenStream(_lexer);
     private final AntlrXqueryParser _parser = new AntlrXqueryParser(_tokens);
+    private final NamespaceResolver resolver;
 
 
     @Override
@@ -301,17 +303,17 @@ public class BasicTextDocumentService implements TextDocumentService {
 
 
     @Override
-    public CompletableFuture<Hover> hover(HoverParams params) {
-        String uri = params.getTextDocument().getUri();
-        Position position = params.getPosition();
+    public CompletableFuture<Hover> hover(final HoverParams params) {
+        final String uri = params.getTextDocument().getUri();
+        final Position position = params.getPosition();
 
-        ParseTree tree = parseTreeStore.get(uri);
+        final ParseTree tree = parseTreeStore.get(uri);
 
         if (tree == null) {
             return CompletableFuture.completedFuture(null);
         }
 
-        List<ParserRuleContext> calls = functionCalls.get(uri);
+        final List<ParserRuleContext> calls = functionCalls.get(uri);
         if (calls.isEmpty()) {
             return CompletableFuture.completedFuture(null);
         }
@@ -321,17 +323,17 @@ public class BasicTextDocumentService implements TextDocumentService {
         ParserRuleContext foundCtx = null;
 
         while (low <= high) {
-            int mid = low + (high - low) / 2;
-            ParserRuleContext candidateCtx = calls.get(mid);
+            final int mid = low + (high - low) / 2;
+            final ParserRuleContext candidateCtx = calls.get(mid);
 
             if (isPositionInsideContext(position, candidateCtx)) {
                 foundCtx = candidateCtx;
                 break;
             }
 
-            if (position.getLine() + 1 < candidateCtx.getStart().getLine() ||
-               (position.getLine() + 1 == candidateCtx.getStart().getLine() &&
-                position.getCharacter() < candidateCtx.getStart().getCharPositionInLine()))
+            if (position.getLine() + 1 < candidateCtx.getStart().getLine()
+                || (position.getLine() + 1 == candidateCtx.getStart().getLine()
+                && position.getCharacter() < candidateCtx.getStart().getCharPositionInLine()))
             {
                 high = mid - 1;
             }
@@ -340,11 +342,20 @@ public class BasicTextDocumentService implements TextDocumentService {
             }
         }
 
-        if (foundCtx != null) {
-            String hoverText = "Znaleziono wywołanie: `" + foundCtx.getText() + "`";
+        final var analyzer = semanticAnalyzers.get(uri);
 
-            MarkupContent content = new MarkupContent(MarkupKind.MARKDOWN, hoverText);
-            Hover hover = new Hover(content);
+        if (foundCtx != null) {
+            if (!(foundCtx instanceof final NamedFunctionRefContext ctx))
+                return CompletableFuture.completedFuture(null);
+            final ResolvedName qname = resolver.resolve(ctx.qname().getText());
+            final int arity = Integer.parseInt(ctx.IntegerLiteral().getText());
+            final FunctionSpecification specification = analyzer.getFunctionManager().getNamedFunctionSpecification(
+                foundCtx, qname.namespace(), qname.name(), arity);
+            if (specification == null)
+                return CompletableFuture.completedFuture(null);
+            final String hoverText = createFunctionSpecificationMarkdown(qname.namespace(), qname.name(), arity, specification);
+            final MarkupContent content = new MarkupContent(MarkupKind.MARKDOWN, hoverText);
+            final Hover hover = new Hover(content);
 
             hover.setRange(getContextRange(foundCtx));
 
@@ -354,12 +365,12 @@ public class BasicTextDocumentService implements TextDocumentService {
         return CompletableFuture.completedFuture(null);
     }
 
-    private boolean isPositionInsideContext(Position position, ParserRuleContext ctx) {
-        Token startToken = ctx.getStart();
-        Token stopToken = ctx.getStop();
+    private boolean isPositionInsideContext(final Position position, final ParserRuleContext ctx) {
+        final Token startToken = ctx.getStart();
+        final Token stopToken = ctx.getStop();
 
-        int cursorLine = position.getLine() + 1;
-        int cursorChar = position.getCharacter();
+        final int cursorLine = position.getLine() + 1;
+        final int cursorChar = position.getCharacter();
 
         if (cursorLine < startToken.getLine()) return false;
         if (cursorLine > stopToken.getLine()) return false;
@@ -368,7 +379,7 @@ public class BasicTextDocumentService implements TextDocumentService {
             return false;
         }
 
-        int stopTokenEndChar = stopToken.getCharPositionInLine() + stopToken.getText().length();
+        final int stopTokenEndChar = stopToken.getCharPositionInLine() + stopToken.getText().length();
         if (cursorLine == stopToken.getLine() && cursorChar > stopTokenEndChar) {
             return false;
         }
@@ -376,12 +387,12 @@ public class BasicTextDocumentService implements TextDocumentService {
         return true;
     }
 
-    private Range getContextRange(ParserRuleContext ctx) {
-        Token startToken = ctx.getStart();
-        Token stopToken = ctx.getStop();
+    private Range getContextRange(final ParserRuleContext ctx) {
+        final Token startToken = ctx.getStart();
+        final Token stopToken = ctx.getStop();
 
-        Position start = new Position(startToken.getLine() - 1, startToken.getCharPositionInLine());
-        Position end = new Position(stopToken.getLine() - 1, stopToken.getCharPositionInLine() + stopToken.getText().length());
+        final Position start = new Position(startToken.getLine() - 1, startToken.getCharPositionInLine());
+        final Position end = new Position(stopToken.getLine() - 1, stopToken.getCharPositionInLine() + stopToken.getText().length());
 
         return new Range(start, end);
     }
@@ -393,23 +404,6 @@ public class BasicTextDocumentService implements TextDocumentService {
     // public CompletableFuture<Hover> hover(HoverParams params) {
     //     String uri = params.getTextDocument().getUri();
     //     Position position = params.getPosition();
-
-    //     ParseTree tree = parseTreeStore.get(uri);
-    //     List<Token> tokens = tokenStore.get(uri);
-    //     if (tree == null) {
-    //         return CompletableFuture.completedFuture(null);
-    //     }
-
-    //     var calls = functionCalls.get(uri);
-    //     if (!calls.isEmpty()) {
-    //         int middle = calls.size()/2;
-    //         var middleCtx =  calls.get(middle);
-    //         var start = middleCtx.getStart();
-    //         var stop = middle
-    //         if (middleCtx)
-
-    //     }
-
 
 
     //     HoverInfo hoverInfo = HoverLogic.getHoverKind(tree, position.getLine(), position.getCharacter());
@@ -461,40 +455,35 @@ public class BasicTextDocumentService implements TextDocumentService {
 
 
     private static String createFunctionSpecificationMarkdown(
-        String namespace, String name, int arity, FunctionSpecification specification)
+        final String namespace, final String name, final int arity, final FunctionSpecification specification)
     {
         try {
-            StringBuilder sb = new StringBuilder();
+            final StringBuilder sb = new StringBuilder();
 
             // Add function signature with color
-            sb.append("```xquery\n");
-            sb.append("<span style=\"color:blue\">").append(namespace).append(":</span>");
-            sb.append("<span style=\"color:purple\">").append(name).append("</span>(");
+            sb.append("```antlrquery\n")
+                .append(namespace)
+                .append(":")
+                .append(name)
+                .append("(\n");
 
             // Add arguments with color
-            List<ArgumentSpecification> args = specification.args().subList(0, arity);
+            final List<ArgumentSpecification> args = specification.args().subList(0, arity);
             for (int i = 0; i < args.size(); i++) {
-                ArgumentSpecification arg = args.get(i);
-                sb.append("<span style=\"color:green\">").append(arg.name()).append("</span> as ");
-                sb.append("<span style=\"color:red\">").append(arg.type()).append("</span>");
+                final ArgumentSpecification arg = args.get(i);
+                sb.append("    ")
+                    .append("$")
+                    .append(arg.name())
+                    .append(" as ")
+                    .append(arg.type());
                 if (i < args.size() - 1) {
-                    sb.append(", ");
+                    sb.append(",\n");
                 }
             }
-            sb.append(") as <span style=\"color:red\">").append(specification.returnedType()).append("</span>\n```");
-
-            sb.append("\n\n");
-            sb.append("- <span style=\"color:black\">Returned Type:</span> <span style=\"color:red\">")
-              .append(specification.returnedType()).append("</span>\n");
-            sb.append("- <span style=\"color:black\">Required Context Value Type:</span> <span style=\"color:red\">")
-              .append(specification.requiredContextValueType()).append("</span>\n");
-            sb.append("- <span style=\"color:black\">Requires Position:</span> <span style=\"color:red\">")
-              .append(specification.requiresPosition()).append("</span>\n");
-            sb.append("- <span style=\"color:black\">Requires Size:</span> <span style=\"color:red\">")
-              .append(specification.requiresSize()).append("</span>\n");
-
+            sb.append("\n) as ")
+                .append(specification.returnedType());
             return sb.toString();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             return null;
         }
     }

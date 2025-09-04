@@ -11,30 +11,20 @@ import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
-import org.eclipse.lsp4j.DidChangeTextDocumentParams;
-import org.eclipse.lsp4j.DidCloseTextDocumentParams;
-import org.eclipse.lsp4j.DidOpenTextDocumentParams;
-import org.eclipse.lsp4j.DidSaveTextDocumentParams;
-import org.eclipse.lsp4j.Hover;
-import org.eclipse.lsp4j.HoverParams;
-import org.eclipse.lsp4j.MarkupContent;
-import org.eclipse.lsp4j.MarkupKind;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.PublishDiagnosticsParams;
-import org.eclipse.lsp4j.Range;
-import org.eclipse.lsp4j.SemanticTokens;
-import org.eclipse.lsp4j.SemanticTokensParams;
-import org.eclipse.lsp4j.services.LanguageClient;
-import org.eclipse.lsp4j.services.TextDocumentService;
+import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.services.*;
 
 import com.github.akruk.antlrxquery.AntlrXqueryLexer;
 import com.github.akruk.antlrxquery.AntlrXqueryParser;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.ArrowTargetContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionCallContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionNameContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.KeywordArgumentsContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.NamedFunctionRefContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.PositionalArgumentsContext;
 import com.github.akruk.antlrxquery.evaluator.XQuery;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMemoizedValueFactory;
-import com.github.akruk.antlrxquery.languageserver.HoverLogic.HoverInfo;
-import com.github.akruk.antlrxquery.languageserver.HoverLogic.HoverKind;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.ResolvedName;
 import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticError;
@@ -320,6 +310,49 @@ public class BasicTextDocumentService implements TextDocumentService {
 
         int low = 0;
         int high = calls.size() - 1;
+        ParserRuleContext foundCtx = findRuleUsingPosition(position, calls, low, high);
+        final var analyzer = semanticAnalyzers.get(uri);
+        if (foundCtx != null) {
+            if (foundCtx instanceof final NamedFunctionRefContext ctx) {
+                final ResolvedName qname = resolver.resolve(ctx.qname().getText());
+                final int arity = Integer.parseInt(ctx.IntegerLiteral().getText());
+
+                return getFunctionHover(foundCtx, analyzer, qname, arity);
+
+            } else if (foundCtx instanceof final FunctionNameContext ctx) {
+                FunctionCallContext functionCall = (FunctionCallContext) foundCtx.getParent();
+                boolean isArrowCall = (functionCall.getParent() instanceof ArrowTargetContext);
+                PositionalArgumentsContext positionalArguments = functionCall.argumentList().positionalArguments();
+                int positionalArgCount = positionalArguments==null? 0 : positionalArguments.argument().size();
+                KeywordArgumentsContext keywordArguments = functionCall.argumentList().keywordArguments();
+                int kewordArgCount = keywordArguments==null? 0 : keywordArguments.keywordArgument().size();
+                int arity = positionalArgCount + kewordArgCount + (isArrowCall ? 1 : 0);
+                final ResolvedName qname = resolver.resolve(ctx.getText());
+
+                return getFunctionHover(foundCtx, analyzer, qname, arity);
+            }
+
+        }
+
+        return CompletableFuture.completedFuture(null);
+    }
+
+    private CompletableFuture<Hover> getFunctionHover(ParserRuleContext foundCtx, final XQuerySemanticAnalyzer analyzer,
+            final ResolvedName qname, final int arity) {
+        final FunctionSpecification specification = analyzer.getFunctionManager().getNamedFunctionSpecification(
+            foundCtx, qname.namespace(), qname.name(), arity);
+        if (specification == null)
+            return CompletableFuture.completedFuture(null);
+        final String hoverText = createFunctionSpecificationMarkdown(qname.namespace(), qname.name(), arity, specification);
+        final MarkupContent content = new MarkupContent(MarkupKind.MARKDOWN, hoverText);
+        final Hover hover = new Hover(content);
+
+        hover.setRange(getContextRange(foundCtx));
+        return CompletableFuture.completedFuture(hover);
+    }
+
+    private ParserRuleContext findRuleUsingPosition(final Position position, final List<ParserRuleContext> calls, int low,
+            int high) {
         ParserRuleContext foundCtx = null;
 
         while (low <= high) {
@@ -341,28 +374,7 @@ public class BasicTextDocumentService implements TextDocumentService {
                 low = mid + 1;
             }
         }
-
-        final var analyzer = semanticAnalyzers.get(uri);
-
-        if (foundCtx != null) {
-            if (!(foundCtx instanceof final NamedFunctionRefContext ctx))
-                return CompletableFuture.completedFuture(null);
-            final ResolvedName qname = resolver.resolve(ctx.qname().getText());
-            final int arity = Integer.parseInt(ctx.IntegerLiteral().getText());
-            final FunctionSpecification specification = analyzer.getFunctionManager().getNamedFunctionSpecification(
-                foundCtx, qname.namespace(), qname.name(), arity);
-            if (specification == null)
-                return CompletableFuture.completedFuture(null);
-            final String hoverText = createFunctionSpecificationMarkdown(qname.namespace(), qname.name(), arity, specification);
-            final MarkupContent content = new MarkupContent(MarkupKind.MARKDOWN, hoverText);
-            final Hover hover = new Hover(content);
-
-            hover.setRange(getContextRange(foundCtx));
-
-            return CompletableFuture.completedFuture(hover);
-        }
-
-        return CompletableFuture.completedFuture(null);
+        return foundCtx;
     }
 
     private boolean isPositionInsideContext(final Position position, final ParserRuleContext ctx) {

@@ -10,9 +10,8 @@ import java.util.concurrent.CompletableFuture;
 
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.eclipse.lsp4j.Diagnostic;
-import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.jsonrpc.messages.Either3;
 import org.eclipse.lsp4j.services.*;
 
 import com.github.akruk.antlrxquery.AntlrXqueryLexer;
@@ -23,6 +22,8 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionNameContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.KeywordArgumentsContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.NamedFunctionRefContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PositionalArgumentsContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameAndTypeContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.VarRefContext;
 import com.github.akruk.antlrxquery.evaluator.XQuery;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMemoizedValueFactory;
@@ -243,18 +244,28 @@ public class BasicTextDocumentService implements TextDocumentService {
         types.put(uri, typeValues.stream().map(v->(ParserRuleContext) v.node).toList());
 
 
-        final List<XQueryValue> variableValues = XQuery.evaluate(tree, "//varRef", _parser).sequence;
-        for (final XQueryValue val : variableValues) {
+        final List<XQueryValue> variableRefs = XQuery.evaluate(tree, "//(varRef|varNameAndType)", _parser).sequence;
+        for (final XQueryValue val : variableRefs) {
             final ParseTree node = val.node;
-            if (!(node instanceof final ParserRuleContext ctx)) continue;
-            final Token start = ctx.getStart();
-            final Token stop = ctx.getStop();
-            final int line = start.getLine() - 1;
-            final int charPos = start.getCharPositionInLine();
-            final int length = stop.getStopIndex() - start.getStartIndex() + 1;
-            tokens.add(new SemanticToken(line, charPos, length, variableIndex, 0));
+            if (node instanceof final VarNameAndTypeContext ctx) {
+                final Token start = ctx.getStart();
+                final Token stop = ctx.getStop();
+                final int line = start.getLine() - 1;
+                final int charPos = start.getCharPositionInLine();
+                final int length = stop.getStopIndex() - start.getStartIndex() + 1;
+                SemanticToken semTok = new SemanticToken(line, charPos, length, variableIndex, 0);
+                tokens.add(semTok);
+            } else if (node instanceof final VarRefContext ctx) {
+                final Token start = ctx.DOLLAR().getSymbol();
+                final Token stop = ctx.varName().getStop();
+                final int line = start.getLine() - 1;
+                final int charPos = start.getCharPositionInLine();
+                final int length = stop.getStopIndex() - start.getStartIndex() + 1;
+                SemanticToken semTok = new SemanticToken(line, charPos, length, variableIndex, 0);
+                tokens.add(semTok);
+            }
         }
-        variables.put(uri, variableValues.stream().map(v->(ParserRuleContext) v.node).toList());
+        variables.put(uri, variableRefs.stream().map(v -> (ParserRuleContext) v.node).toList());
 
         final List<XQueryValue> functionValues = XQuery.evaluate(tree, "//(functionName|namedFunctionRef)", _parser).sequence;
         for (final XQueryValue val : functionValues) {
@@ -296,7 +307,8 @@ public class BasicTextDocumentService implements TextDocumentService {
 
 
     @Override
-    public CompletableFuture<Hover> hover(final HoverParams params) {
+    public CompletableFuture<Hover> hover(final HoverParams params)
+    {
         final String uri = params.getTextDocument().getUri();
         final Position position = params.getPosition();
 
@@ -349,7 +361,8 @@ public class BasicTextDocumentService implements TextDocumentService {
             int cmpStart = (s1.getLine() != s2.getLine())
                 ? Integer.compare(s1.getLine(), s2.getLine())
                 : Integer.compare(s1.getCharacter(), s2.getCharacter());
-            if (cmpStart != 0) return cmpStart;
+            if (cmpStart != 0)
+                return cmpStart;
 
             Position e1 = v1.range().getEnd();
             Position e2 = v2.range().getEnd();
@@ -385,14 +398,22 @@ public class BasicTextDocumentService implements TextDocumentService {
             return CompletableFuture.completedFuture(hover);
         }
 
-        // final List<ParserRuleContext> types = functionCalls.get(uri);
-        // if (calls.isEmpty()) {
-        //     return CompletableFuture.completedFuture(null);
-        // }
+        final List<ParserRuleContext> types = functionCalls.get(uri);
+        if (types.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
 
-        // ParserRuleContext foundCtx = findRuleUsingPosition(position, , low, high);
+        ParserRuleContext foundCtx = findRuleUsingPosition(position, types);
 
         return CompletableFuture.completedFuture(null);
+    }
+
+    @Override
+    public CompletableFuture<Either3<Range, PrepareRenameResult, PrepareRenameDefaultBehavior>> prepareRename(
+        PrepareRenameParams params)
+    {
+        // TODO Auto-generated method stub
+        return TextDocumentService.super.prepareRename(params);
     }
 
     private CompletableFuture<Hover> getFunctionHover(ParserRuleContext foundCtx, final XQuerySemanticAnalyzer analyzer,

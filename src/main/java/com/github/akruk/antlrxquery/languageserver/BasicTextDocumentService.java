@@ -410,62 +410,6 @@ public class BasicTextDocumentService implements TextDocumentService {
     }
 
 
-
-
-    // @Override
-    // public CompletableFuture<Hover> hover(HoverParams params) {
-    //     String uri = params.getTextDocument().getUri();
-    //     Position position = params.getPosition();
-
-
-    //     HoverInfo hoverInfo = HoverLogic.getHoverKind(tree, position.getLine(), position.getCharacter());
-    //     XQuerySemanticAnalyzer analyzer = semanticAnalyzers.get(uri);
-    //     // switch (hoverInfo.hoverKind()) {
-    //     //     case VARIABLE:
-    //     //         break;
-    //     //     case FUNCTION_CALL:
-    //     //     case FUNCTION_REF:
-    //     //         NamespaceResolver resolver = new NamespaceResolver("fn");
-    //     //         NamedFunctionRefContext ctx = (NamedFunctionRefContext) hoverInfo.rule();
-    //     //         ResolvedName qname = resolver.resolve(ctx.qname().getText());
-    //     //         int arity = Integer.parseInt(ctx.IntegerLiteral().getText());
-    //     //         FunctionSpecification specification = analyzer.getFunctionManager().getNamedFunctionSpecification(
-    //     //             hoverInfo.rule(), qname.namespace(), qname.name(), arity);
-    //     //         if (specification == null)
-    //     //             return CompletableFuture.completedFuture(null);
-    //     //         var rt = specification.returnedType();
-    //     //         var args = specification.args().subList(0, arity);
-    //     //         StringBuilder sb = new StringBuilder();
-    //     //         sb.append(qname.namespace());
-    //     //         sb.append(":");
-    //     //         sb.append(qname.name());
-    //     //         sb.append("(");
-    //     //         sb.append(")");
-
-    //     //         break;
-    //     //     case OTHER:
-    //     //         break;
-    //     //     case TYPE:
-    //     //         break;
-    //     // }
-    //     // if (wordAtPosition != null) {
-    //     //     // Generate hover content based on the word/symbol
-    //     //     String hoverMessage = generateHoverMessage(wordAtPosition);
-
-    //     //     // Create a range that highlights the word/symbol
-    //     //     Range hoverRange = findRangeOfWord(text, wordAtPosition, position.getLine());
-
-    //     //     // Construct the hover response
-    //     //     Hover hover = new Hover();
-    //     //     hover.setContents(new MarkupContent("markdown", hoverMessage));
-    //     //     hover.setRange(hoverRange);
-    //     //     return CompletableFuture.completedFuture(hover);
-    //     // }
-
-    //     // return CompletableFuture.completedFuture(null);
-    // }
-
-
     private static String createFunctionSpecificationMarkdown(
         final String namespace, final String name, final int arity, final FunctionSpecification specification)
     {

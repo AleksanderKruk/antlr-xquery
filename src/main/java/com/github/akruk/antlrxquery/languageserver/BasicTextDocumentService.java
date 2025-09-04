@@ -313,9 +313,7 @@ public class BasicTextDocumentService implements TextDocumentService {
             return CompletableFuture.completedFuture(null);
         }
 
-        int low = 0;
-        int high = calls.size() - 1;
-        ParserRuleContext foundCtx = findRuleUsingPosition(position, calls, low, high);
+        ParserRuleContext foundCtx = findRuleUsingPosition(position, calls);
         if (foundCtx != null) {
             if (foundCtx instanceof final NamedFunctionRefContext ctx) {
                 final ResolvedName qname = resolver.resolve(ctx.qname().getText());
@@ -385,12 +383,25 @@ public class BasicTextDocumentService implements TextDocumentService {
             return CompletableFuture.completedFuture(hover);
         }
 
-        // final List<ParserRuleContext> types = functionCalls.get(uri);
-        // if (calls.isEmpty()) {
-        //     return CompletableFuture.completedFuture(null);
+        final List<ParserRuleContext> ts = types.get(uri);
+        if (ts.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+        // System.err.println("Looking for type at position: " + position.getLine() + ":" + position.getCharacter());
+        ParserRuleContext foundType = findRuleUsingPosition(position, ts);
+        // System.err.println("Found: " + foundType);
+        // for (var e : ts) {
+        //     System.err.println(getContextRange(foundCtx) + ":::"e.accept(analyzer));
         // }
+        if (foundType != null) {
+            String hoverText = "```antlrquery\n" + foundType.accept(analyzer) + "\n```";
 
-        // ParserRuleContext foundCtx = findRuleUsingPosition(position, , low, high);
+            MarkupContent content = new MarkupContent(MarkupKind.MARKDOWN, hoverText);
+            Hover hover = new Hover(content);
+            hover.setRange(getContextRange(foundType));
+            return CompletableFuture.completedFuture(hover);
+        }
+
 
         return CompletableFuture.completedFuture(null);
     }
@@ -407,6 +418,12 @@ public class BasicTextDocumentService implements TextDocumentService {
 
         hover.setRange(getContextRange(foundCtx));
         return CompletableFuture.completedFuture(hover);
+    }
+
+    private ParserRuleContext findRuleUsingPosition(final Position position, final List<ParserRuleContext> calls) {
+        int low = 0;
+        int high = calls.size() - 1;
+        return findRuleUsingPosition(position, calls, low, high);
     }
 
     private ParserRuleContext findRuleUsingPosition(final Position position, final List<ParserRuleContext> calls, int low,

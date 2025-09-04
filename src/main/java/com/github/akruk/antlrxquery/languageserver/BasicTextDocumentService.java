@@ -1,6 +1,7 @@
 package com.github.akruk.antlrxquery.languageserver;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +26,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.PositionalArgumentsContext
 import com.github.akruk.antlrxquery.evaluator.XQuery;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMemoizedValueFactory;
+import com.github.akruk.antlrxquery.languageserver.VariableAnalyzer.TypedVariable;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.ResolvedName;
 import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticError;
@@ -42,10 +44,11 @@ public class BasicTextDocumentService implements TextDocumentService {
     private LanguageClient client;
     private final Map<String, List<Token>> tokenStore = new HashMap<>();
     private final Map<String, ParseTree> parseTreeStore = new HashMap<>();
-    private final Map<String, XQuerySemanticAnalyzer> semanticAnalyzers = new HashMap<>();
+    private final Map<String, VariableAnalyzer> semanticAnalyzers = new HashMap<>();
     private final Map<String, List<ParserRuleContext>> functionCalls = new HashMap<>();
     private final Map<String, List<ParserRuleContext>> types = new HashMap<>();
     private final Map<String, List<ParserRuleContext>> variables = new HashMap<>();
+    private final Map<String, List<TypedVariable>> typedVariables = new HashMap<>();
 
 
     private final int variableIndex;
@@ -157,7 +160,7 @@ public class BasicTextDocumentService implements TextDocumentService {
             }
 
             final XQueryTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
-            final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
+            final VariableAnalyzer analyzer = new VariableAnalyzer(
                 null,
                 new XQuerySemanticContextManager(),
                 typeFactory,
@@ -303,6 +306,8 @@ public class BasicTextDocumentService implements TextDocumentService {
             return CompletableFuture.completedFuture(null);
         }
 
+        final var analyzer = semanticAnalyzers.get(uri);
+
         final List<ParserRuleContext> calls = functionCalls.get(uri);
         if (calls.isEmpty()) {
             return CompletableFuture.completedFuture(null);
@@ -311,7 +316,6 @@ public class BasicTextDocumentService implements TextDocumentService {
         int low = 0;
         int high = calls.size() - 1;
         ParserRuleContext foundCtx = findRuleUsingPosition(position, calls, low, high);
-        final var analyzer = semanticAnalyzers.get(uri);
         if (foundCtx != null) {
             if (foundCtx instanceof final NamedFunctionRefContext ctx) {
                 final ResolvedName qname = resolver.resolve(ctx.qname().getText());
@@ -323,9 +327,9 @@ public class BasicTextDocumentService implements TextDocumentService {
                 FunctionCallContext functionCall = (FunctionCallContext) foundCtx.getParent();
                 boolean isArrowCall = (functionCall.getParent() instanceof ArrowTargetContext);
                 PositionalArgumentsContext positionalArguments = functionCall.argumentList().positionalArguments();
-                int positionalArgCount = positionalArguments==null? 0 : positionalArguments.argument().size();
+                int positionalArgCount = positionalArguments == null ? 0 : positionalArguments.argument().size();
                 KeywordArgumentsContext keywordArguments = functionCall.argumentList().keywordArguments();
-                int kewordArgCount = keywordArguments==null? 0 : keywordArguments.keywordArgument().size();
+                int kewordArgCount = keywordArguments == null ? 0 : keywordArguments.keywordArgument().size();
                 int arity = positionalArgCount + kewordArgCount + (isArrowCall ? 1 : 0);
                 final ResolvedName qname = resolver.resolve(ctx.getText());
 
@@ -333,6 +337,60 @@ public class BasicTextDocumentService implements TextDocumentService {
             }
 
         }
+
+        final List<TypedVariable> variablesMappedToTypes = analyzer.variablesMappedToTypes;
+        if (variablesMappedToTypes == null || variablesMappedToTypes.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        Comparator<TypedVariable> comparator = (v1, v2) -> {
+            Position s1 = v1.range().getStart();
+            Position s2 = v2.range().getStart();
+            int cmpStart = (s1.getLine() != s2.getLine())
+                ? Integer.compare(s1.getLine(), s2.getLine())
+                : Integer.compare(s1.getCharacter(), s2.getCharacter());
+            if (cmpStart != 0) return cmpStart;
+
+            Position e1 = v1.range().getEnd();
+            Position e2 = v2.range().getEnd();
+            return (e1.getLine() != e2.getLine())
+                ? Integer.compare(e1.getLine(), e2.getLine())
+                : Integer.compare(e1.getCharacter(), e2.getCharacter());
+        };
+
+        variablesMappedToTypes.sort(comparator);
+
+        // Find variable at position
+        TypedVariable foundVar = variablesMappedToTypes.stream()
+            .filter(v -> {
+                Range r = v.range();
+                Position start = r.getStart();
+                Position end = r.getEnd();
+                int line = position.getLine();
+                int charPos = position.getCharacter();
+                boolean afterStart = (line > start.getLine()) ||
+                    (line == start.getLine() && charPos >= start.getCharacter());
+                boolean beforeEnd = (line < end.getLine()) ||
+                    (line == end.getLine() && charPos <= end.getCharacter());
+                return afterStart && beforeEnd;
+            })
+            .findFirst()
+            .orElse(null);
+
+        if (foundVar != null) {
+            String hoverText = "```antlrquery\n" + foundVar.type() + "\n```";
+            MarkupContent content = new MarkupContent(MarkupKind.MARKDOWN, hoverText);
+            Hover hover = new Hover(content);
+            hover.setRange(foundVar.range());
+            return CompletableFuture.completedFuture(hover);
+        }
+
+        // final List<ParserRuleContext> types = functionCalls.get(uri);
+        // if (calls.isEmpty()) {
+        //     return CompletableFuture.completedFuture(null);
+        // }
+
+        // ParserRuleContext foundCtx = findRuleUsingPosition(position, , low, high);
 
         return CompletableFuture.completedFuture(null);
     }

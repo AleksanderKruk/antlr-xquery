@@ -24,7 +24,7 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 public class VariableAnalyzer extends XQuerySemanticAnalyzer {
 
     public record TypedVariable(Range range, String name, XQuerySequenceType type) {}
-    public static final List<TypedVariable> variablesMappedToTypes = new ArrayList<>();
+    public final List<TypedVariable> variablesMappedToTypes = new ArrayList<>();
     private final XQueryTypeFactory typeFactory;
     private final XQuerySemanticContextManager contextManager;
 

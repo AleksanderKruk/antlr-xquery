@@ -147,7 +147,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             final var newTuple = new ArrayList<VariableCoupling>(tuple.size() + newVariableCount);
             newTuple.addAll(tuple);
             for (final LetBindingContext streamVariable : ctx.letBinding()) {
-                final String variableName = streamVariable.varRef().qname().getText();
+                final String variableName = streamVariable.varNameAndType().varRef().qname().getText();
                 final XQueryValue assignedValue = streamVariable.exprSingle().accept(this);
                 final var element = new VariableCoupling(new Variable(variableName, assignedValue), null, null, null);
                 newTuple.add(element);

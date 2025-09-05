@@ -24,7 +24,7 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 //  var ref has been standardised as variable '$varname' part so adding tokens can be greatly simplified
 public class VariableAnalyzer extends XQuerySemanticAnalyzer {
 
-    public record TypedVariable(Range range, String name, XQuerySequenceType type) {}
+    public record TypedVariable(Range range, String name, VarRefContext varRef, XQuerySequenceType type) {}
     public final List<TypedVariable> variablesMappedToTypes = new ArrayList<>();
     private final XQueryTypeFactory typeFactory;
     private final XQuerySemanticContextManager contextManager;
@@ -48,15 +48,16 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
     {
         var og = super.visitLetClause(ctx);
         for (final var letBinding : ctx.letBinding()) {
-            final String variableName = letBinding.varRef().qname().getText();
+            final VarRefContext varRef = letBinding.varNameAndType().varRef();
+            final String variableName = varRef.qname().getText();
             final XQuerySequenceType assignedType = letBinding.exprSingle().accept(this);
-            final var range = getRange(letBinding.varRef());
-            if (letBinding.typeDeclaration() == null) {
-                variablesMappedToTypes.add(new TypedVariable(range, variableName, assignedType));
+            final var range = getRange(varRef);
+            if (letBinding.varNameAndType().typeDeclaration() == null) {
+                variablesMappedToTypes.add(new TypedVariable(range, variableName, varRef, assignedType));
                 continue;
             }
-            final XQuerySequenceType type = letBinding.typeDeclaration().accept(this);
-            variablesMappedToTypes.add(new TypedVariable(range, variableName, type));
+            final XQuerySequenceType type = letBinding.varNameAndType().typeDeclaration().accept(this);
+            variablesMappedToTypes.add(new TypedVariable(range, variableName, varRef, type));
         }
         return og;
     }
@@ -96,7 +97,7 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
         if (ctx != null) {
             final String positionalVariableName = ctx.varRef().qname().getText();
             var range = getRange(ctx.varRef());
-            variablesMappedToTypes.add(new TypedVariable(range, positionalVariableName, number));
+            variablesMappedToTypes.add(new TypedVariable(range, positionalVariableName, ctx.varRef(), number));
         }
     }
 
@@ -153,12 +154,12 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
         super.processVariableTypeDeclaration(varNameAndType, inferredType, variableName, context);
         final var range = getRange(varNameAndType.varRef());
         if (varNameAndType.typeDeclaration() == null) {
-            variablesMappedToTypes.add(new TypedVariable(range, variableName, inferredType));
+            variablesMappedToTypes.add(new TypedVariable(range, variableName, varNameAndType.varRef(), inferredType));
             return;
         }
 
         final XQuerySequenceType declaredType = varNameAndType.typeDeclaration().accept(this);
-        variablesMappedToTypes.add(new TypedVariable(range, variableName, declaredType));
+        variablesMappedToTypes.add(new TypedVariable(range, variableName, varNameAndType.varRef(), declaredType));
     }
 
     @Override
@@ -167,7 +168,7 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
         var og = super.visitCountClause(ctx);
         final String countVariableName = ctx.varRef().getText();
         final var range = getRange(ctx.varRef());
-        variablesMappedToTypes.add(new TypedVariable(range, countVariableName, number));
+        variablesMappedToTypes.add(new TypedVariable(range, countVariableName, ctx.varRef(), number));
         return og;
     }
 
@@ -178,7 +179,7 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
         final String variableName = ctx.qname().getText();
         final XQuerySequenceType variableType = contextManager.getVariable(variableName);
         final var range = getRange(ctx);
-        variablesMappedToTypes.add(new TypedVariable(range, variableName, variableType));
+        variablesMappedToTypes.add(new TypedVariable(range, variableName, ctx, variableType));
         return og;
     }
 
@@ -211,11 +212,11 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
             final String varname = varNameAndTypeContext.varRef().qname().getText();
             if (desiredType != null) {
                 variablesMappedToTypes.add(
-                    new TypedVariable(range, varname, desiredType));
+                    new TypedVariable(range, varname, varNameAndTypeContext.varRef(), desiredType));
 
             } else {
                 variablesMappedToTypes.add(
-                    new TypedVariable(range, varname, assignedType));
+                    new TypedVariable(range, varname, varNameAndTypeContext.varRef(), assignedType));
             }
         }
         return og;
@@ -233,7 +234,7 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
                 ? typeDeclaration.accept(this)
                 : anyItems;
             var range = getRange(parameter.varRef());
-            variablesMappedToTypes.add(new TypedVariable(range, parameterName, parameterType));
+            variablesMappedToTypes.add(new TypedVariable(range, parameterName, parameter.varRef(), parameterType));
         }
         return og;
     }

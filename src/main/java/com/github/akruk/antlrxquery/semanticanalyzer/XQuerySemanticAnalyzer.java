@@ -160,13 +160,14 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     public XQuerySequenceType visitLetClause(final LetClauseContext ctx)
     {
         for (final var letBinding : ctx.letBinding()) {
-            final String variableName = letBinding.varRef().qname().getText();
+            final VarNameAndTypeContext varNameAndType = letBinding.varNameAndType();
+            final String variableName = varNameAndType.varRef().qname().getText();
             final XQuerySequenceType assignedValue = letBinding.exprSingle().accept(this);
-            if (letBinding.typeDeclaration() == null) {
+            if (varNameAndType.typeDeclaration() == null) {
                 contextManager.entypeVariable(variableName, assignedValue);
                 continue;
             }
-            final XQuerySequenceType type = letBinding.typeDeclaration().accept(this);
+            final XQuerySequenceType type = varNameAndType.typeDeclaration().accept(this);
             if (!assignedValue.isSubtypeOf(type)) {
                 final String msg = String.format("Type of variable %s is not compatible with the assigned value",
                     variableName);

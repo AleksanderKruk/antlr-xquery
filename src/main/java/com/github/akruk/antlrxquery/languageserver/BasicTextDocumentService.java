@@ -11,6 +11,7 @@ import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.jsonrpc.messages.Either3;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode;
@@ -51,6 +52,7 @@ public class BasicTextDocumentService implements TextDocumentService {
     private final Map<String, List<ParserRuleContext>> functionCalls = new HashMap<>();
     private final Map<String, List<ParserRuleContext>> types = new HashMap<>();
     private final Map<String, List<VarRefContext>> variables = new HashMap<>();
+    private final Map<String, List<VarNameAndTypeContext>> variableDeclarationsWithoutType = new HashMap<>();
     private final Map<String, List<TypedVariable>> typedVariables = new HashMap<>();
 
 
@@ -204,6 +206,13 @@ public class BasicTextDocumentService implements TextDocumentService {
                 System.err.println("[parseAndAnalyze] LanguageClient is null. Cannot publish diagnostics.");
             }
 
+            final var declarations = XQuery.evaluate(tree, "//varNameAndType", _parser).sequence;
+            final List<VarNameAndTypeContext> declarationContexts = declarations.stream()
+                .map(x->(VarNameAndTypeContext) x.node)
+                .filter(x->x.typeDeclaration() == null)
+                .toList();
+            variableDeclarationsWithoutType.put(uri, declarationContexts);
+
         } catch (final Exception e) {
             System.err.println("[parseAndAnalyze] Exception: " + e.getClass().getName() + " - " + e.getMessage());
             for (final StackTraceElement el : e.getStackTrace()) {
@@ -345,6 +354,35 @@ public class BasicTextDocumentService implements TextDocumentService {
             return CompletableFuture.completedFuture(null);
         }
 
+        TypedVariable foundVar = findTypedVar(position, variablesMappedToTypes);
+
+        if (foundVar != null) {
+            String hoverText = "```antlrquery\n" + foundVar.type() + "\n```";
+            MarkupContent content = new MarkupContent(MarkupKind.MARKDOWN, hoverText);
+            Hover hover = new Hover(content);
+            hover.setRange(foundVar.range());
+            return CompletableFuture.completedFuture(hover);
+        }
+
+        final List<ParserRuleContext> ts = types.get(uri);
+        if (ts.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+        ParserRuleContext foundType = findRuleUsingPosition(position, ts);
+        if (foundType != null) {
+            String hoverText = "```antlrquery\n" + foundType.accept(analyzer) + "\n```";
+
+            MarkupContent content = new MarkupContent(MarkupKind.MARKDOWN, hoverText);
+            Hover hover = new Hover(content);
+            hover.setRange(getContextRange(foundType));
+            return CompletableFuture.completedFuture(hover);
+        }
+
+
+        return CompletableFuture.completedFuture(null);
+    }
+
+    private TypedVariable findTypedVar(final Position position, final List<TypedVariable> variablesMappedToTypes) {
         Comparator<TypedVariable> comparator = (v1, v2) -> {
             Position s1 = v1.range().getStart();
             Position s2 = v2.range().getStart();
@@ -379,31 +417,7 @@ public class BasicTextDocumentService implements TextDocumentService {
             })
             .findFirst()
             .orElse(null);
-
-        if (foundVar != null) {
-            String hoverText = "```antlrquery\n" + foundVar.type() + "\n```";
-            MarkupContent content = new MarkupContent(MarkupKind.MARKDOWN, hoverText);
-            Hover hover = new Hover(content);
-            hover.setRange(foundVar.range());
-            return CompletableFuture.completedFuture(hover);
-        }
-
-        final List<ParserRuleContext> ts = types.get(uri);
-        if (ts.isEmpty()) {
-            return CompletableFuture.completedFuture(null);
-        }
-        ParserRuleContext foundType = findRuleUsingPosition(position, ts);
-        if (foundType != null) {
-            String hoverText = "```antlrquery\n" + foundType.accept(analyzer) + "\n```";
-
-            MarkupContent content = new MarkupContent(MarkupKind.MARKDOWN, hoverText);
-            Hover hover = new Hover(content);
-            hover.setRange(getContextRange(foundType));
-            return CompletableFuture.completedFuture(hover);
-        }
-
-
-        return CompletableFuture.completedFuture(null);
+        return foundVar;
     }
 
 
@@ -455,6 +469,7 @@ public class BasicTextDocumentService implements TextDocumentService {
 
         return CompletableFuture.completedFuture(new WorkspaceEdit(edits));
     }
+
 
 
 
@@ -570,6 +585,33 @@ public class BasicTextDocumentService implements TextDocumentService {
         } catch (final Exception e) {
             return null;
         }
+    }
+
+    @Override
+    public CompletableFuture<List<InlayHint>> inlayHint(InlayHintParams params) {
+        String uri = params.getTextDocument().getUri();
+        List<InlayHint> hints = new ArrayList<>();
+        var analyzer = semanticAnalyzers.get(uri);
+        List<TypedVariable> varsToTypes = analyzer.variablesMappedToTypes;
+        for (var variable : variableDeclarationsWithoutType.get(uri)) {
+            TypedVariable typedVariable = varsToTypes.stream()
+                .filter(typedVar->typedVar.varRef() == variable.varRef())
+                .findFirst()
+                .get();
+            Token stop = typedVariable.varRef().getStop();
+            Position hintPosition = new Position(stop.getLine() - 1, stop.getCharPositionInLine() + stop.getText().length());
+            System.err.println(hintPosition);
+
+            InlayHint hint = new InlayHint();
+            hint.setPosition(hintPosition);
+            hint.setLabel(Either.forLeft(typedVariable.type().toString()));
+            hint.setKind(InlayHintKind.Type);
+            hint.setPaddingLeft(true);
+
+            hints.add(hint);
+        }
+
+        return CompletableFuture.completedFuture(hints);
     }
 
 }

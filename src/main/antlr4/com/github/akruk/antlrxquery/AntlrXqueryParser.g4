@@ -59,7 +59,7 @@ forEntryValueBinding
 positionalVar: AT varRef;
 
 letClause: LET letBinding (COMMA letBinding)*;
-letBinding: varRef typeDeclaration? ASSIGNMENT_OP exprSingle;
+letBinding: varNameAndType ASSIGNMENT_OP exprSingle;
 countClause: COUNT varRef;
 whereClause: WHERE exprSingle;
 whileClause: WHILE exprSingle;

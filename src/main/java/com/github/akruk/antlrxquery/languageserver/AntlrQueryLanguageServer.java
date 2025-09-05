@@ -73,6 +73,8 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
         inlayHintOptions.setResolveProvider(false);
         capabilities.setInlayHintProvider(inlayHintOptions);
 
+        capabilities.setDefinitionProvider(true);
+
         return CompletableFuture.completedFuture(new InitializeResult(capabilities));
     }
 

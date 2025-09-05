@@ -51,7 +51,8 @@ public class BasicTextDocumentService implements TextDocumentService {
     private final Map<String, VariableAnalyzer> semanticAnalyzers = new HashMap<>();
     private final Map<String, List<ParserRuleContext>> functionCalls = new HashMap<>();
     private final Map<String, List<ParserRuleContext>> types = new HashMap<>();
-    private final Map<String, List<VarRefContext>> variables = new HashMap<>();
+    private final Map<String, List<VarRefContext>> variableReferences = new HashMap<>();
+    private final Map<String, List<VarNameAndTypeContext>> variableDeclarations = new HashMap<>();
     private final Map<String, List<VarNameAndTypeContext>> variableDeclarationsWithoutType = new HashMap<>();
     private final Map<String, List<TypedVariable>> typedVariables = new HashMap<>();
 
@@ -209,9 +210,12 @@ public class BasicTextDocumentService implements TextDocumentService {
             final var declarations = XQuery.evaluate(tree, "//varNameAndType", _parser).sequence;
             final List<VarNameAndTypeContext> declarationContexts = declarations.stream()
                 .map(x->(VarNameAndTypeContext) x.node)
+                .toList();
+            final List<VarNameAndTypeContext> declarationWithoutTypeContexts = declarationContexts.stream()
                 .filter(x->x.typeDeclaration() == null)
                 .toList();
-            variableDeclarationsWithoutType.put(uri, declarationContexts);
+            variableDeclarations.put(uri, declarationContexts);
+            variableDeclarationsWithoutType.put(uri, declarationWithoutTypeContexts);
 
         } catch (final Exception e) {
             System.err.println("[parseAndAnalyze] Exception: " + e.getClass().getName() + " - " + e.getMessage());
@@ -266,7 +270,7 @@ public class BasicTextDocumentService implements TextDocumentService {
             SemanticToken semTok = new SemanticToken(line, charPos, length, variableIndex, 0);
             tokens.add(semTok);
         }
-        variables.put(uri, variableRefContexts);
+        variableReferences.put(uri, variableRefContexts);
 
         final List<XQueryValue> functionValues = XQuery.evaluate(tree, "//(functionName|namedFunctionRef)", _parser).sequence;
         for (final XQueryValue val : functionValues) {
@@ -434,7 +438,7 @@ public class BasicTextDocumentService implements TextDocumentService {
             ))
         );
         final String uri = params.getTextDocument().getUri();
-        final var vars = variables.get(uri);
+        final var vars = variableReferences.get(uri);
         if (vars.isEmpty()) {
             return failedFuture;
         }
@@ -456,7 +460,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         Map<String, List<TextEdit>> edits = new HashMap<>();
 
         List<TextEdit> fileEdits = new ArrayList<>();
-        for (var variable : variables.getOrDefault(uri, List.of())) {
+        for (var variable : variableReferences.getOrDefault(uri, List.of())) {
             if (variable.qname().getText().equals(varBeingRenamed)) {
                 Range range = getContextRange(variable.qname());
                 fileEdits.add(new TextEdit(range, newName));
@@ -600,7 +604,6 @@ public class BasicTextDocumentService implements TextDocumentService {
                 .get();
             Token stop = typedVariable.varRef().getStop();
             Position hintPosition = new Position(stop.getLine() - 1, stop.getCharPositionInLine() + stop.getText().length());
-            System.err.println(hintPosition);
 
             InlayHint hint = new InlayHint();
             hint.setPosition(hintPosition);
@@ -613,5 +616,54 @@ public class BasicTextDocumentService implements TextDocumentService {
 
         return CompletableFuture.completedFuture(hints);
     }
+
+
+    @Override
+    public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(
+            DefinitionParams params)
+    {
+        var position = params.getPosition();
+        var document = params.getTextDocument().getUri();
+        var varRefs = variableReferences.get(document);
+        var found = findRuleUsingPosition(position, varRefs);
+        if (found == null) {
+            return CompletableFuture.completedFuture(Either.forLeft(List.of()));
+        }
+
+        String varname = found.getText();
+        int foundOffset = found.getStart().getStartIndex();
+        VarNameAndTypeContext previousDecl = null;
+
+        for (var vdef : variableDeclarations.getOrDefault(document, List.of())) {
+            int declOffset = vdef.varRef().getStart().getStartIndex();
+            if (declOffset > foundOffset) {
+                break;
+            }
+            if (vdef.varRef().getText().equals(varname)) {
+                previousDecl = vdef;
+            }
+        }
+
+        if (previousDecl == null) {
+            return CompletableFuture.completedFuture(Either.forLeft(List.of()));
+        }
+
+        var declaringVarRef = (VarRefContext) previousDecl.varRef();
+        Location location = new Location(document, getContextRange(declaringVarRef));
+        return CompletableFuture.completedFuture(Either.forLeft(List.of(location)));
+    }
+
+        // System.err.println("==========================");
+        // String p = "/preceding-or-self::varNameAndType";
+        // var vars = XQuery.evaluate(found, p, _parser);
+        // for (var v : vars.sequence)
+        //     System.err.println(v.node.getText());
+
+        // String xquery = "/preceding::varNameAndType/varRef/qname[text() eq '" + found.qname().getText() + "']";
+        // System.err.println(xquery);
+        // var previousDecl = XQuery.evaluate(found, xquery, _parser);
+
+        // if (previousDecl.isEmptySequence)
+        //     return CompletableFuture.completedFuture(Either.forLeft(List.of()));
 
 }

@@ -1,7 +1,6 @@
 package com.github.akruk.antlrxquery.languageserver;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -11,7 +10,10 @@ import java.util.concurrent.CompletableFuture;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
 import org.eclipse.lsp4j.jsonrpc.messages.Either3;
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode;
 import org.eclipse.lsp4j.services.*;
 
 import com.github.akruk.antlrxquery.AntlrXqueryLexer;
@@ -48,7 +50,7 @@ public class BasicTextDocumentService implements TextDocumentService {
     private final Map<String, VariableAnalyzer> semanticAnalyzers = new HashMap<>();
     private final Map<String, List<ParserRuleContext>> functionCalls = new HashMap<>();
     private final Map<String, List<ParserRuleContext>> types = new HashMap<>();
-    private final Map<String, List<ParserRuleContext>> variables = new HashMap<>();
+    private final Map<String, List<VarRefContext>> variables = new HashMap<>();
     private final Map<String, List<TypedVariable>> typedVariables = new HashMap<>();
 
 
@@ -244,28 +246,18 @@ public class BasicTextDocumentService implements TextDocumentService {
         types.put(uri, typeValues.stream().map(v->(ParserRuleContext) v.node).toList());
 
 
-        final List<XQueryValue> variableRefs = XQuery.evaluate(tree, "//(varRef|varNameAndType)", _parser).sequence;
-        for (final XQueryValue val : variableRefs) {
-            final ParseTree node = val.node;
-            if (node instanceof final VarNameAndTypeContext ctx) {
-                final Token start = ctx.getStart();
-                final Token stop = ctx.getStop();
-                final int line = start.getLine() - 1;
-                final int charPos = start.getCharPositionInLine();
-                final int length = stop.getStopIndex() - start.getStartIndex() + 1;
-                SemanticToken semTok = new SemanticToken(line, charPos, length, variableIndex, 0);
-                tokens.add(semTok);
-            } else if (node instanceof final VarRefContext ctx) {
-                final Token start = ctx.DOLLAR().getSymbol();
-                final Token stop = ctx.varName().getStop();
-                final int line = start.getLine() - 1;
-                final int charPos = start.getCharPositionInLine();
-                final int length = stop.getStopIndex() - start.getStartIndex() + 1;
-                SemanticToken semTok = new SemanticToken(line, charPos, length, variableIndex, 0);
-                tokens.add(semTok);
-            }
+        final List<XQueryValue> variableRefs = XQuery.evaluate(tree, "//(varRef)", _parser).sequence;
+        final List<VarRefContext> variableRefContexts = variableRefs.stream().map(v->(VarRefContext)v.node).toList();
+        for (final var ctx : variableRefContexts) {
+            final Token start = ctx.DOLLAR().getSymbol();
+            final Token stop = ctx.qname().getStop();
+            final int line = start.getLine() - 1;
+            final int charPos = start.getCharPositionInLine();
+            final int length = stop.getStopIndex() - start.getStartIndex() + 1;
+            SemanticToken semTok = new SemanticToken(line, charPos, length, variableIndex, 0);
+            tokens.add(semTok);
         }
-        variables.put(uri, variableRefs.stream().map(v -> (ParserRuleContext) v.node).toList());
+        variables.put(uri, variableRefContexts);
 
         final List<XQueryValue> functionValues = XQuery.evaluate(tree, "//(functionName|namedFunctionRef)", _parser).sequence;
         for (final XQueryValue val : functionValues) {
@@ -400,12 +392,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         if (ts.isEmpty()) {
             return CompletableFuture.completedFuture(null);
         }
-        // System.err.println("Looking for type at position: " + position.getLine() + ":" + position.getCharacter());
         ParserRuleContext foundType = findRuleUsingPosition(position, ts);
-        // System.err.println("Found: " + foundType);
-        // for (var e : ts) {
-        //     System.err.println(getContextRange(foundCtx) + ":::"e.accept(analyzer));
-        // }
         if (foundType != null) {
             String hoverText = "```antlrquery\n" + foundType.accept(analyzer) + "\n```";
 
@@ -419,13 +406,57 @@ public class BasicTextDocumentService implements TextDocumentService {
         return CompletableFuture.completedFuture(null);
     }
 
+
+    private String varBeingRenamed = null;
     @Override
-    public CompletableFuture<Either3<Range, PrepareRenameResult, PrepareRenameDefaultBehavior>> prepareRename(
-        PrepareRenameParams params)
+    public CompletableFuture<Either3<Range, PrepareRenameResult, PrepareRenameDefaultBehavior>>
+        prepareRename(PrepareRenameParams params)
     {
-        // TODO Auto-generated method stub
-        return TextDocumentService.super.prepareRename(params);
+        CompletableFuture<Either3<Range, PrepareRenameResult, PrepareRenameDefaultBehavior>> failedFuture = CompletableFuture.failedFuture(
+            new ResponseErrorException(new ResponseError(
+                ResponseErrorCode.InvalidRequest,
+                "This element cannot be renamed",
+                null
+            ))
+        );
+        final String uri = params.getTextDocument().getUri();
+        final var vars = variables.get(uri);
+        if (vars.isEmpty()) {
+            return failedFuture;
+        }
+        final var foundVar = findRuleUsingPosition(params.getPosition(), vars);
+        if (foundVar == null) {
+            return failedFuture;
+        }
+        var range = getContextRange(foundVar.qname());
+        varBeingRenamed = foundVar.qname().getText();
+        return CompletableFuture.completedFuture(Either3.forFirst(range));
+
     }
+
+    @Override
+    public CompletableFuture<WorkspaceEdit> rename(RenameParams params) {
+        String uri = params.getTextDocument().getUri();
+        String newName = params.getNewName();
+
+        Map<String, List<TextEdit>> edits = new HashMap<>();
+
+        List<TextEdit> fileEdits = new ArrayList<>();
+        for (var variable : variables.getOrDefault(uri, List.of())) {
+            if (variable.qname().getText().equals(varBeingRenamed)) {
+                Range range = getContextRange(variable.qname());
+                fileEdits.add(new TextEdit(range, newName));
+            }
+        }
+
+        if (!fileEdits.isEmpty()) {
+            edits.put(uri, fileEdits);
+        }
+
+        return CompletableFuture.completedFuture(new WorkspaceEdit(edits));
+    }
+
+
 
     private CompletableFuture<Hover> getFunctionHover(ParserRuleContext foundCtx, final XQuerySemanticAnalyzer analyzer,
             final ResolvedName qname, final int arity) {
@@ -441,19 +472,22 @@ public class BasicTextDocumentService implements TextDocumentService {
         return CompletableFuture.completedFuture(hover);
     }
 
-    private ParserRuleContext findRuleUsingPosition(final Position position, final List<ParserRuleContext> calls) {
+    private <Rule extends ParserRuleContext>
+        Rule findRuleUsingPosition(final Position position, final List<Rule> calls)
+    {
         int low = 0;
         int high = calls.size() - 1;
         return findRuleUsingPosition(position, calls, low, high);
     }
 
-    private ParserRuleContext findRuleUsingPosition(final Position position, final List<ParserRuleContext> calls, int low,
-            int high) {
-        ParserRuleContext foundCtx = null;
+    private <Rule extends ParserRuleContext>
+        Rule findRuleUsingPosition(final Position position, final List<Rule> calls, int low, int high)
+    {
+        Rule foundCtx = null;
 
         while (low <= high) {
             final int mid = low + (high - low) / 2;
-            final ParserRuleContext candidateCtx = calls.get(mid);
+            final Rule candidateCtx = calls.get(mid);
 
             if (isPositionInsideContext(position, candidateCtx)) {
                 foundCtx = candidateCtx;

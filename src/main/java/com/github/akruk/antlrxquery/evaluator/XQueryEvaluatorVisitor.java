@@ -147,7 +147,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             final var newTuple = new ArrayList<VariableCoupling>(tuple.size() + newVariableCount);
             newTuple.addAll(tuple);
             for (final LetBindingContext streamVariable : ctx.letBinding()) {
-                final String variableName = streamVariable.varName().getText();
+                final String variableName = streamVariable.varRef().qname().getText();
                 final XQueryValue assignedValue = streamVariable.exprSingle().accept(this);
                 final var element = new VariableCoupling(new Variable(variableName, assignedValue), null, null, null);
                 newTuple.add(element);
@@ -220,14 +220,14 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     private List<VariableCoupling> processForItemBinding(final ForItemBindingContext ctx) {
-        final String variableName = ctx.varNameAndType().qname().getText();
+        final String variableName = ctx.varNameAndType().varRef().qname().getText();
         final List<XQueryValue> sequence = visitExprSingle(ctx.exprSingle()).sequence;
         final PositionalVarContext positional = ctx.positionalVar();
         final boolean allowingEmpty = ctx.allowingEmpty() != null;
         String positionalName = null;
         Variable positionalVar = null;
         if (positional != null) {
-            positionalName = positional.varName().getText();
+            positionalName = positional.varRef().qname().getText();
             positionalVar = new Variable(positionalName, valueFactory.number(0));
         }
 
@@ -256,14 +256,14 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     private List<VariableCoupling> processForMemberBinding(final ForMemberBindingContext ctx) {
-        final String variableName = ctx.varNameAndType().qname().getText();
+        final String variableName = ctx.varNameAndType().varRef().qname().getText();
         final XQueryValue arrayValue = visitExprSingle(ctx.exprSingle());
         final PositionalVarContext positional = ctx.positionalVar();
 
         final List<XQueryValue> arrayMembers = arrayValue.arrayMembers;
 
         if (positional != null) {
-            final String positionalName = positional.varName().getText();
+            final String positionalName = positional.varRef().qname().getText();
             final List<VariableCoupling> elementsWithIndex = new ArrayList<>();
             for (int i = 0; i < arrayMembers.size(); i++) {
                 final XQueryValue member = arrayMembers.get(i);
@@ -295,21 +295,21 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         for (final Map.Entry<XQueryValue, XQueryValue> entry : mapEntries.entrySet()) {
             Variable positionVar = null;
             if (positional != null) {
-                final String positionalName = positional.varName().getText();
+                final String positionalName = positional.varRef().qname().getText();
                 final XQueryValue position = valueFactory.number(index);
                 positionVar = new Variable(positionalName, position);
             }
 
             Variable keyVar = null;
             if (keyBinding != null) {
-                final String keyName = keyBinding.varNameAndType().qname().getText();
+                final String keyName = keyBinding.varNameAndType().varRef().qname().getText();
                 final XQueryValue keyValue = entry.getKey();
                 keyVar = new Variable(keyName, keyValue);
             }
 
             Variable valueVar = null;
             if (valueBinding != null) {
-                final String valueName = valueBinding.varNameAndType().qname().getText();
+                final String valueName = valueBinding.varNameAndType().varRef().qname().getText();
                 final XQueryValue valueValue = entry.getValue();
                 valueVar = new Variable(valueName, valueValue);
             }
@@ -327,7 +327,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
     @Override
     public XQueryValue visitCountClause(final CountClauseContext ctx) {
-        final String countVariableName = ctx.varName().getText();
+        final String countVariableName = ctx.varRef().qname().getText();
         final MutableInt index = new MutableInt();
         index.i = 1;
         visitedTupleStream = visitedTupleStream.map(tuple -> {
@@ -378,7 +378,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
     @Override
     public XQueryValue visitVarRef(final VarRefContext ctx) {
-        final String variableName = ctx.varName().getText();
+        final String variableName = ctx.qname().getText();
         final XQueryValue variableValue = contextManager.getVariable(variableName);
         return variableValue;
     }
@@ -517,7 +517,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         final List<QuantifierBindingContext> quantifierBindings = ctx.quantifierBinding();
 
         final List<String> variableNames = quantifierBindings.stream()
-                .map(binding -> binding.varNameAndType().qname().getText())
+                .map(binding -> binding.varNameAndType().varRef().qname().getText())
                 .toList();
 
         final List<List<XQueryValue>> sequences = quantifierBindings.stream()
@@ -1409,7 +1409,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
 
     public XQueryValue visitTumblingWindowClause(final TumblingWindowClauseContext ctx) {
-        final String windowVarName = ctx.varNameAndType().qname().getText();
+        final String windowVarName = ctx.varNameAndType().varRef().qname().getText();
         final XQueryValue sequence = visitExprSingle(ctx.exprSingle());
 
         final String startVarName = getStartCurrentVarName(ctx.windowStartCondition());
@@ -1433,7 +1433,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     public XQueryValue visitSlidingWindowClause(final SlidingWindowClauseContext ctx) {
-        final String windowVarName = ctx.varNameAndType().qname().getText();
+        final String windowVarName = ctx.varNameAndType().varRef().qname().getText();
         final XQueryValue sequence = visitExprSingle(ctx.exprSingle());
 
         final String startVarName = getStartCurrentVarName(ctx.windowStartCondition());
@@ -1458,42 +1458,42 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
     private String getStartCurrentVarName(final WindowStartConditionContext condition) {
         return condition != null && condition.windowVars() != null && condition.windowVars().currentVar() != null ?
-            condition.windowVars().currentVar().varRef().varName().getText() : null;
+            condition.windowVars().currentVar().varRef().qname().getText() : null;
     }
 
     private String getStartPositionalVarName(final WindowStartConditionContext condition) {
         return condition != null && condition.windowVars() != null && condition.windowVars().positionalVar() != null ?
-            condition.windowVars().positionalVar().varName().getText() : null;
+            condition.windowVars().positionalVar().varRef().qname().getText() : null;
     }
 
     private String getStartPreviousVarName(final WindowStartConditionContext condition) {
         return condition != null && condition.windowVars() != null && condition.windowVars().previousVar() != null ?
-            condition.windowVars().previousVar().varRef().varName().getText() : null;
+            condition.windowVars().previousVar().varRef().qname().getText() : null;
     }
 
     private String getStartNextVarName(final WindowStartConditionContext condition) {
         return condition != null && condition.windowVars() != null && condition.windowVars().nextVar() != null ?
-            condition.windowVars().nextVar().varRef().varName().getText() : null;
+            condition.windowVars().nextVar().varRef().qname().getText() : null;
     }
 
     private String getEndCurrentVarName(final WindowEndConditionContext condition) {
         return condition != null && condition.windowVars() != null && condition.windowVars().currentVar() != null ?
-            condition.windowVars().currentVar().varRef().varName().getText() : null;
+            condition.windowVars().currentVar().varRef().qname().getText() : null;
     }
 
     private String getEndPositionalVarName(final WindowEndConditionContext condition) {
         return condition != null && condition.windowVars() != null && condition.windowVars().positionalVar() != null ?
-            condition.windowVars().positionalVar().varName().getText() : null;
+            condition.windowVars().positionalVar().varRef().qname().getText() : null;
     }
 
     private String getEndPreviousVarName(final WindowEndConditionContext condition) {
         return condition != null && condition.windowVars() != null && condition.windowVars().previousVar() != null ?
-            condition.windowVars().previousVar().varRef().varName().getText() : null;
+            condition.windowVars().previousVar().varRef().qname().getText() : null;
     }
 
     private String getEndNextVarName(final WindowEndConditionContext condition) {
         return condition != null && condition.windowVars() != null && condition.windowVars().nextVar() != null ?
-            condition.windowVars().nextVar().varRef().varName().getText() : null;
+            condition.windowVars().nextVar().varRef().qname().getText() : null;
     }
 
     private Stream<List<VariableCoupling>> processTumblingWindowSubSequences(final XQueryValue sequence, final TumblingWindowClauseContext ctx,
@@ -1685,28 +1685,28 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
     private void provideCurrentVariable(final WindowVarsContext vars, final int currentIndex, final List<XQueryValue> sequenceList) {
         if (vars.currentVar() != null) {
-            final String currentVarName = vars.currentVar().varRef().varName().getText();
+            final String currentVarName = vars.currentVar().varRef().qname().getText();
             contextManager.provideVariable(currentVarName, sequenceList.get(currentIndex));
         }
     }
 
     private void providePositionalVariable(final WindowVarsContext vars, final int currentIndex) {
         if (vars.positionalVar() != null) {
-            final String positionalVarName = vars.positionalVar().varName().getText();
+            final String positionalVarName = vars.positionalVar().varRef().qname().getText();
             contextManager.provideVariable(positionalVarName, valueFactory.number(currentIndex + 1));
         }
     }
 
     private void providePreviousVariable(final WindowVarsContext vars, final int currentIndex, final List<XQueryValue> sequenceList) {
         if (vars.previousVar() != null) {
-            final String previousVarName = vars.previousVar().varRef().varName().getText();
+            final String previousVarName = vars.previousVar().varRef().qname().getText();
             contextManager.provideVariable(previousVarName, currentIndex > 0 ? sequenceList.get(currentIndex - 1) : emptySequence);
         }
     }
 
     private void provideNextVariable(final WindowVarsContext vars, final int currentIndex, final List<XQueryValue> sequenceList) {
         if (vars.nextVar() != null) {
-            final String nextVarName = vars.nextVar().varRef().varName().getText();
+            final String nextVarName = vars.nextVar().varRef().qname().getText();
             contextManager.provideVariable(nextVarName, currentIndex < sequenceList.size() - 1 ? sequenceList.get(currentIndex + 1) : emptySequence);
         }
     }

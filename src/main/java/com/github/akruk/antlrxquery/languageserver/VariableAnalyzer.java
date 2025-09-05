@@ -6,7 +6,6 @@ import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.TerminalNode;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 
@@ -21,6 +20,8 @@ import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 
+// Major refactoring idea:
+//  var ref has been standardised as variable '$varname' part so adding tokens can be greatly simplified
 public class VariableAnalyzer extends XQuerySemanticAnalyzer {
 
     public record TypedVariable(Range range, String name, XQuerySequenceType type) {}
@@ -47,9 +48,9 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
     {
         var og = super.visitLetClause(ctx);
         for (final var letBinding : ctx.letBinding()) {
-            final String variableName = letBinding.varName().getText();
+            final String variableName = letBinding.varRef().qname().getText();
             final XQuerySequenceType assignedType = letBinding.exprSingle().accept(this);
-            final var range = getRange(letBinding.DOLLAR(), letBinding.varName());
+            final var range = getRange(letBinding.varRef());
             if (letBinding.typeDeclaration() == null) {
                 variablesMappedToTypes.add(new TypedVariable(range, variableName, assignedType));
                 continue;
@@ -61,16 +62,16 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
     }
 
 
-    private Range getRange(final TerminalNode startRule, final ParserRuleContext endRule) {
-        Token dollarSymbol = startRule.getSymbol();
+    private Range getRange(final ParserRuleContext rule) {
+        Token dollarSymbol = rule.getStart();
         var startPosition = new Position(
             dollarSymbol.getLine()-1,
             dollarSymbol.getCharPositionInLine()
         );
-        Token stopSymbol = endRule.getStop();
+        Token stopSymbol = rule.getStop();
         var endPosition = new Position(
             stopSymbol.getLine()-1,
-            stopSymbol.getCharPositionInLine() + endRule.getText().length()
+            stopSymbol.getCharPositionInLine() + rule.getText().length() - 1 // verify -1
         );
         var range = new Range(startPosition, endPosition);
         return range;
@@ -79,7 +80,7 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
     @Override
     public void processForItemBinding(final ForItemBindingContext ctx) {
         super.processForItemBinding(ctx);
-        final String variableName = ctx.varNameAndType().qname().getText();
+        final String variableName = ctx.varNameAndType().varRef().qname().getText();
         final XQuerySequenceType sequenceType = ctx.exprSingle().accept(this);
         final XQueryItemType itemType = sequenceType.itemType;
         final XQuerySequenceType iteratorType = (ctx.allowingEmpty() != null)
@@ -93,8 +94,8 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
 
     private void handlePositionalVariable(final PositionalVarContext ctx) {
         if (ctx != null) {
-            final String positionalVariableName = ctx.varName().getText();
-            var range = getRange(ctx.DOLLAR(), ctx.varName());
+            final String positionalVariableName = ctx.varRef().qname().getText();
+            var range = getRange(ctx.varRef());
             variablesMappedToTypes.add(new TypedVariable(range, positionalVariableName, number));
         }
     }
@@ -103,7 +104,7 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
     public void processForMemberBinding(final ForMemberBindingContext ctx) {
         super.processForMemberBinding(ctx);
 
-        final String variableName = ctx.varNameAndType().qname().getText();
+        final String variableName = ctx.varNameAndType().varRef().qname().getText();
         final XQuerySequenceType arrayType = ctx.exprSingle().accept(this);
 
         final XQuerySequenceType memberType = arrayType.itemType.arrayMemberType;
@@ -125,7 +126,7 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
 
         // Process key binding
         if (keyBinding != null) {
-            final String keyVariableName = keyBinding.varNameAndType().qname().getText();
+            final String keyVariableName = keyBinding.varNameAndType().varRef().qname().getText();
             final XQueryItemType keyType = mapType.itemType.mapKeyType;
             final XQuerySequenceType keyIteratorType = typeFactory.one(keyType);
 
@@ -134,7 +135,7 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
 
         // Process value binding
         if (valueBinding != null) {
-            final String valueVariableName = valueBinding.varNameAndType().qname().getText();
+            final String valueVariableName = valueBinding.varNameAndType().varRef().qname().getText();
             final XQuerySequenceType valueType = mapType.itemType.mapValueType;
 
             processVariableTypeDeclaration(valueBinding.varNameAndType(), valueType, valueVariableName, ctx);
@@ -150,7 +151,7 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
                                             final ParseTree context)
     {
         super.processVariableTypeDeclaration(varNameAndType, inferredType, variableName, context);
-        final var range = getRange(varNameAndType.DOLLAR(), varNameAndType.qname());
+        final var range = getRange(varNameAndType.varRef());
         if (varNameAndType.typeDeclaration() == null) {
             variablesMappedToTypes.add(new TypedVariable(range, variableName, inferredType));
             return;
@@ -164,8 +165,8 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
     public XQuerySequenceType visitCountClause(final CountClauseContext ctx)
     {
         var og = super.visitCountClause(ctx);
-        final String countVariableName = ctx.varName().getText();
-        final var range = getRange(ctx.DOLLAR(), ctx.varName());
+        final String countVariableName = ctx.varRef().getText();
+        final var range = getRange(ctx.varRef());
         variablesMappedToTypes.add(new TypedVariable(range, countVariableName, number));
         return og;
     }
@@ -174,9 +175,9 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
     public XQuerySequenceType visitVarRef(final VarRefContext ctx)
     {
         var og = super.visitVarRef(ctx);
-        final String variableName = ctx.varName().getText();
+        final String variableName = ctx.qname().getText();
         final XQuerySequenceType variableType = contextManager.getVariable(variableName);
-        final var range = getRange(ctx.DOLLAR(), ctx.varName());
+        final var range = getRange(ctx);
         variablesMappedToTypes.add(new TypedVariable(range, variableName, variableType));
         return og;
     }
@@ -206,8 +207,8 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
             final var assignedType = variableTypes.get(i);
             final var desiredType = coercedTypes.get(i);
             final VarNameAndTypeContext varNameAndTypeContext = variables.get(i);
-            final var range = getRange(varNameAndTypeContext.DOLLAR(), varNameAndTypeContext.qname());
-            final String varname = varNameAndTypeContext.qname().getText();
+            final var range = getRange(varNameAndTypeContext.varRef());
+            final String varname = varNameAndTypeContext.varRef().qname().getText();
             if (desiredType != null) {
                 variablesMappedToTypes.add(
                     new TypedVariable(range, varname, desiredType));
@@ -226,12 +227,12 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
         final var og = super.visitInlineFunctionExpr(ctx);
         final var functionSignature = ctx.functionSignature();
         for (final var parameter : functionSignature.paramList().varNameAndType()) {
-            final String parameterName = parameter.qname().getText();
+            final String parameterName = parameter.varRef().qname().getText();
             final TypeDeclarationContext typeDeclaration = parameter.typeDeclaration();
             final XQuerySequenceType parameterType = typeDeclaration != null
                 ? typeDeclaration.accept(this)
                 : anyItems;
-            var range = getRange(parameter.DOLLAR(), parameter.qname());
+            var range = getRange(parameter.varRef());
             variablesMappedToTypes.add(new TypedVariable(range, parameterName, parameterType));
         }
         return og;

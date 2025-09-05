@@ -160,7 +160,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     public XQuerySequenceType visitLetClause(final LetClauseContext ctx)
     {
         for (final var letBinding : ctx.letBinding()) {
-            final String variableName = letBinding.varName().getText();
+            final String variableName = letBinding.varRef().qname().getText();
             final XQuerySequenceType assignedValue = letBinding.exprSingle().accept(this);
             if (letBinding.typeDeclaration() == null) {
                 contextManager.entypeVariable(variableName, assignedValue);
@@ -193,7 +193,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     }
 
     public void processForItemBinding(final ForItemBindingContext ctx) {
-        final String variableName = ctx.varNameAndType().qname().getText();
+        final String variableName = ctx.varNameAndType().varRef().qname().getText();
         final XQuerySequenceType sequenceType = ctx.exprSingle().accept(this);
         returnedOccurrence = mergeFLWOROccurrence(sequenceType);
 
@@ -207,13 +207,13 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         processVariableTypeDeclaration(ctx.varNameAndType(), iteratorType, variableName, ctx);
 
         if (ctx.positionalVar() != null) {
-            final String positionalVariableName = ctx.positionalVar().varName().getText();
+            final String positionalVariableName = ctx.positionalVar().varRef().qname().getText();
             contextManager.entypeVariable(positionalVariableName, number);
         }
     }
 
     public void processForMemberBinding(final ForMemberBindingContext ctx) {
-        final String variableName = ctx.varNameAndType().qname().getText();
+        final String variableName = ctx.varNameAndType().varRef().qname().getText();
         final XQuerySequenceType arrayType = ctx.exprSingle().accept(this);
         returnedOccurrence = arrayMergeFLWOROccurence();
 
@@ -229,7 +229,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         processVariableTypeDeclaration(ctx.varNameAndType(), iteratorType, variableName, ctx);
 
         if (ctx.positionalVar() != null) {
-            final String positionalVariableName = ctx.positionalVar().varName().getText();
+            final String positionalVariableName = ctx.positionalVar().varRef().qname().getText();
             contextManager.entypeVariable(positionalVariableName, number);
         }
     }
@@ -248,8 +248,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
         // Check for duplicate key and value variable names
         if (keyBinding != null && valueBinding != null) {
-            final String keyVarName = keyBinding.varNameAndType().qname().getText();
-            final String valueVarName = valueBinding.varNameAndType().qname().getText();
+            final String keyVarName = keyBinding.varNameAndType().varRef().qname().getText();
+            final String valueVarName = valueBinding.varNameAndType().varRef().qname().getText();
             if (keyVarName.equals(valueVarName)) {
                 error(ctx, "XQST0089: Key and value variable names must be distinct");
                 return;
@@ -258,7 +258,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
         // Process key binding
         if (keyBinding != null) {
-            final String keyVariableName = keyBinding.varNameAndType().qname().getText();
+            final String keyVariableName = keyBinding.varNameAndType().varRef().qname().getText();
             final XQueryItemType keyType = mapType.itemType.mapKeyType;
             final XQuerySequenceType keyIteratorType = typeFactory.one(keyType);
 
@@ -268,7 +268,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
         // Process value binding
         if (valueBinding != null) {
-            final String valueVariableName = valueBinding.varNameAndType().qname().getText();
+            final String valueVariableName = valueBinding.varNameAndType().varRef().qname().getText();
             final XQuerySequenceType valueType = mapType.itemType.mapValueType;
 
             checkPositionalVariableDistinct(ctx.positionalVar(), valueVariableName, ctx);
@@ -276,7 +276,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         }
 
         if (ctx.positionalVar() != null) {
-            final String positionalVariableName = ctx.positionalVar().varName().getText();
+            final String positionalVariableName = ctx.positionalVar().varRef().qname().getText();
             contextManager.entypeVariable(positionalVariableName, number);
         }
     }
@@ -286,7 +286,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
                                             final ParserRuleContext context)
     {
         if (positionalVar != null) {
-            final String positionalVariableName = positionalVar.varName().getText();
+            final String positionalVariableName = positionalVar.varRef().qname().getText();
             if (mainVariableName.equals(positionalVariableName)) {
                 error(context, "XQST0089: Positional variable name must be distinct from main variable name");
             }
@@ -457,7 +457,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     @Override
     public XQuerySequenceType visitCountClause(final CountClauseContext ctx)
     {
-        final String countVariableName = ctx.varName().getText();
+        final String countVariableName = ctx.varRef().qname().getText();
         contextManager.entypeVariable(countVariableName, number);
         return number;
     }
@@ -477,7 +477,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     @Override
     public XQuerySequenceType visitVarRef(final VarRefContext ctx)
     {
-        final String variableName = ctx.varName().getText();
+        final String variableName = ctx.qname().getText();
         final XQuerySequenceType variableType = contextManager.getVariable(variableName);
         return variableType;
     }
@@ -709,7 +709,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         final List<QuantifierBindingContext> quantifierBindings = ctx.quantifierBinding();
 
         final List<String> variableNames = quantifierBindings.stream()
-                .map(binding -> binding.varNameAndType().qname().getText())
+                .map(binding -> binding.varNameAndType().varRef().qname().getText())
                 .toList();
 
         final List<XQuerySequenceType> coercedTypes = quantifierBindings.stream()
@@ -2301,7 +2301,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         final var returnTypeDeclaration = functionSignature.typeDeclaration();
         contextManager.enterScope();
         for (final var parameter : functionSignature.paramList().varNameAndType()) {
-            final String parameterName = parameter.qname().getText();
+            final String parameterName = parameter.varRef().qname().getText();
             final TypeDeclarationContext typeDeclaration = parameter.typeDeclaration();
             final XQuerySequenceType parameterType = typeDeclaration != null
                 ? typeDeclaration.accept(this)

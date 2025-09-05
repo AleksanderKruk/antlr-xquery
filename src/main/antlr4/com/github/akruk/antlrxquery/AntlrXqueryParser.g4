@@ -56,11 +56,11 @@ forEntryValueBinding
     ;
 
 
-positionalVar: AT DOLLAR varName;
+positionalVar: AT varRef;
 
 letClause: LET letBinding (COMMA letBinding)*;
-letBinding: DOLLAR varName typeDeclaration? ASSIGNMENT_OP exprSingle;
-countClause: COUNT DOLLAR varName;
+letBinding: varRef typeDeclaration? ASSIGNMENT_OP exprSingle;
+countClause: COUNT varRef;
 whereClause: WHERE exprSingle;
 whileClause: WHILE exprSingle;
 orderByClause: ((ORDER BY) | (STABLE ORDER BY)) orderSpecList;
@@ -249,8 +249,7 @@ numericLiteral
     |  DoubleLiteral
     ;
 
-varRef: DOLLAR varName;
-varName: qname;
+varRef: DOLLAR qname;
 parenthesizedExpr: LPAREN expr? RPAREN;
 contextItemExpr: DOT;
 functionCall: functionName argumentList;
@@ -289,7 +288,7 @@ annotation	:	PERCENTAGE qname (LPAREN annotationValue (COMMA annotationValue)* R
 annotationValue:	STRING | ('-'? numericLiteral) | (qname LPAREN RPAREN);
 anyFunctionType	:	FUNCTION LPAREN STAR RPAREN;
 typedFunctionType	:	FUNCTION LPAREN (typedFunctionParam (COMMA typedFunctionParam)*)? RPAREN 'as' sequenceType;
-typedFunctionParam	:	(DOLLAR qname AS)? sequenceType;
+typedFunctionParam	:	(varRef AS)? sequenceType;
 
 mapType	:	anyMapType | typedMapType;
 anyMapType	:	MAP LPAREN STAR RPAREN;
@@ -502,7 +501,7 @@ slidingWindowClause
     ;
 
 varNameAndType
-    : DOLLAR qname typeDeclaration?
+    : varRef typeDeclaration?
     ;
 
 windowStartCondition

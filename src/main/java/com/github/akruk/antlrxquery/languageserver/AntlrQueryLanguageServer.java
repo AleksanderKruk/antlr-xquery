@@ -65,6 +65,10 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
 
         capabilities.setHoverProvider(true);
 
+        final RenameOptions renameOptions = new RenameOptions();
+        renameOptions.setPrepareProvider(true);
+        capabilities.setRenameProvider(renameOptions);
+
         return CompletableFuture.completedFuture(new InitializeResult(capabilities));
     }
 

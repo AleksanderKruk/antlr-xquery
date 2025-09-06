@@ -69,6 +69,11 @@ public class XQueryRunner {
         Files.createDirectories(sourceDir);
         Files.createDirectories(outputDir);
 
+
+
+
+
+        // XQuery.evaluate(null, query, new AntlrXqueryParser(null));
         final String baseName = getBaseGrammarName(grammarFiles.get(0));
         final String grammarPackage = "generated." + baseName.toLowerCase();
 
@@ -491,8 +496,8 @@ private static ValidationResult validateStartingRule(final Map<String, List<Stri
 
     static ExtractionResult extractInput(final Map<String, List<String>> args, final InputStream defaultIn,
                                     final PrintStream defaultOut, final PrintStream defaultErr) throws IOException {
-        final List<String> grammars = args.get(GRAMMARS_ARG);
-        final List<String> targetFiles = args.get(TARGET_FILES_ARG);
+        final List<String> grammars = args.get(GRAMMARS_ARG).stream().map(g->new File(g).getAbsolutePath()).toList();
+        final List<String> targetFiles = args.get(TARGET_FILES_ARG).stream().map(g->new File(g).getAbsolutePath()).toList();
         final String startingRule = getFirstArg(args, STARTING_RULE_ARG, getFirstRule(grammars));
         final String lexerName = getFirstArg(args, LEXER_NAME_ARG, "");
         final String parserName = getFirstArg(args, PARSER_NAME_ARG, "");

@@ -21,31 +21,26 @@ import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoized
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTypeSets;
 
 public final class XQuery {
-  public static XQueryValue evaluate(final ParseTree tree, final String xquery, final Parser parser) {
-    final CharStream characters = CharStreams.fromString(xquery);
-    final var xqueryLexer = new AntlrXqueryLexer(characters);
-    final var xqueryTokens = new CommonTokenStream(xqueryLexer);
-    final var xqueryParser = new AntlrXqueryParser(xqueryTokens);
-    final var xqueryTree = xqueryParser.xquery();
-    final ParserRuleContext root = new ParserRuleContext();
-    if (tree != null) {
-        root.children = List.of(tree);
-        tree.setParent(root);
+    public static XQueryValue evaluate(final ParseTree tree, final String xquery, final Parser parser) {
+        final CharStream characters = CharStreams.fromString(xquery);
+        final var xqueryLexer = new AntlrXqueryLexer(characters);
+        final var xqueryTokens = new CommonTokenStream(xqueryLexer);
+        final var xqueryParser = new AntlrXqueryParser(xqueryTokens);
+        final var xqueryTree = xqueryParser.xquery();
+        final ParserRuleContext root = new ParserRuleContext();
+        if (tree != null) {
+            root.children = List.of(tree);
+            tree.setParent(root);
+        }
+        final XQueryMemoizedTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
+        final XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory(typeFactory);
+        final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(parser, new XQuerySemanticContextManager(),
+                typeFactory, valueFactory, new XQuerySemanticFunctionManager(typeFactory), null);
+        final XQueryEvaluatorVisitor visitor = new XQueryEvaluatorVisitor(root, parser, analyzer, typeFactory);
+        final XQueryValue evaluated = visitor.visit(xqueryTree);
+        if (tree != null) {
+            tree.setParent(null);
+        }
+        return evaluated;
     }
-    final XQueryMemoizedTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
-    final XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory(typeFactory);
-    final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(parser,
-        new XQuerySemanticContextManager(),
-        typeFactory,
-        valueFactory,
-        new XQuerySemanticFunctionManager(typeFactory),
-        null
-        );
-    final XQueryEvaluatorVisitor visitor = new XQueryEvaluatorVisitor(root, parser, analyzer, typeFactory);
-    final XQueryValue evaluated = visitor.visit(xqueryTree);
-    if (tree != null) {
-        tree.setParent(null);
-    }
-    return evaluated;
-  }
 }

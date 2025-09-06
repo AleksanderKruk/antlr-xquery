@@ -54,7 +54,6 @@ public class BasicTextDocumentService implements TextDocumentService {
     private final Map<String, List<VarRefContext>> variableReferences = new HashMap<>();
     private final Map<String, List<VarNameAndTypeContext>> variableDeclarations = new HashMap<>();
     private final Map<String, List<VarNameAndTypeContext>> variableDeclarationsWithoutType = new HashMap<>();
-    private final Map<String, List<TypedVariable>> typedVariables = new HashMap<>();
 
 
     private final int variableIndex;

@@ -136,12 +136,12 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     {
         final var saveReturnedOccurence = saveReturnedOccurence();
         contextManager.enterScope();
-        ctx.initialClause().accept(this);
+        visitInitialClause(ctx.initialClause());
         for (final var clause : ctx.intermediateClause()) {
             clause.accept(this);
         }
         // at this point visitedTupleStream should contain all tuples
-        final var expressionValue = ctx.returnClause().accept(this);
+        final var expressionValue = visitReturnClause(ctx.returnClause());
         contextManager.leaveScope();
         returnedOccurrence = saveReturnedOccurence;
         return expressionValue;
@@ -304,7 +304,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             return;
         }
 
-        final XQuerySequenceType declaredType = varNameAndType.typeDeclaration().accept(this);
+        final XQuerySequenceType declaredType = visitTypeDeclaration(varNameAndType.typeDeclaration());
         if (!inferredType.isSubtypeOf(declaredType)) {
             final String msg = String.format(
                     "Type of variable %s is not compatible with the assigned value: %s is not subtype of %s",
@@ -862,38 +862,18 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             return ctx.stepExpr(0).accept(this);
         }
         final var savedContext = saveContext();
+        context.setType(savedContext.getType());
+        context.setPositionType(savedContext.getPositionType());
+        context.setSizeType(savedContext.getSizeType());
         XQuerySequenceType result = ctx.stepExpr(0).accept(this);
+        context.setType(result);
         final var operationCount = ctx.pathOperator().size();
         for (int i = 1; i <= operationCount; i++) {
-            result = switch (ctx.pathOperator(i-1).getText()) {
-                case "//" -> {
-                    if (result.isZero) {
-                        warn(ctx, "Zero nodes at expr " + i);
-                        yield result;
-                    }
-                    if (!result.isSubtypeOf(zeroOrMoreNodes)) {
-                        error(ctx, "Invalid type at " + i);
-                        yield zeroOrMoreNodes;
-                    }
-                    if (grammarAnalysisResult != null && result.itemType.type == XQueryTypes.ELEMENT) {
-                        // TODO: FIX
-                        // final var ancestorsOrSelf = grammarAnalysisResult.ancestorsOrSelf();
-                        // final Set<String> allPossibleNames = result.itemType.elementNames.stream()
-                        //     .flatMap(elementName->ancestorsOrSelf.get(elementName).stream())
-                        //     .collect(Collectors.toSet());
-                        // if (allPossibleNames.isEmpty()) {
-                        //     warn(ctx, "Unlikely path expression, no descendants possible");
-                        // }
-                        // final XQuerySequenceType type = typeFactory.element(allPossibleNames);
-                        // context.setType(type);
-                    } else {
-                        context.setType(anyNodes);
-                    }
-                    yield ctx.stepExpr(i).accept(this);
-                }
-                case "/" -> ctx.stepExpr(i).accept(this);
-                default -> null;
-            };
+            currentAxis = (ctx.pathOperator(i-1).SLASH() != null)
+                ? XQueryAxis.DESCENDANT_OR_SELF
+                : XQueryAxis.CHILD;
+            result = ctx.stepExpr(i).accept(this);
+            context.setType(result);
             i++;
         }
         context = savedContext;
@@ -924,7 +904,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         }
         final var savedArgs = saveVisitedArguments();
         final var savedContext = saveContext();
-        context.setType(savedContext.getType());
+        context.setType(savedContext.getType().iteratorType());
         context.setPositionType(number);
         context.setSizeType(number);
         for (final var predicate : ctx.predicateList().predicate()) {
@@ -946,7 +926,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     public XQuerySequenceType visitFilterExpr(final FilterExprContext ctx) {
         final XQuerySequenceType expr = ctx.postfixExpr().accept(this);
         final var savedContext = saveContext();
-        context.setType(expr);
+        context.setType(expr.iteratorType());
         final var filtered = ctx.predicate().accept(this);
         context = savedContext;
         return filtered;
@@ -957,7 +937,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         final var contextType = context.getType();
         final var predicateExpression = ctx.expr().accept(this);
         final var savedContext = saveContext();
-        context.setType(savedContext.getType());
+        context.setType(savedContext.getType().iteratorType());
         context.setPositionType(number);
         context.setSizeType(number);
         if (predicateExpression.isSubtypeOf(emptySequence))
@@ -1368,7 +1348,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
                 currentAxis = XQueryAxis.CHILD;
             }
         }
-        return ctx.nodeTest().accept(this);
+        return visitNodeTest(ctx.nodeTest());
     }
 
     @Override
@@ -1378,11 +1358,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             return ctx.abbrevReverseStep().accept(this);
         }
         ctx.reverseAxis().accept(this);
-        return ctx.nodeTest().accept(this);
+        return visitNodeTest(ctx.nodeTest());
     }
-
-
-
 
 
 
@@ -1391,10 +1368,10 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     public XQuerySequenceType visitStringConcatExpr(final StringConcatExprContext ctx)
     {
         if (ctx.CONCATENATION().isEmpty()) {
-            return ctx.rangeExpr(0).accept(this);
+            return visitRangeExpr(ctx.rangeExpr(0));
         }
         for (int i = 0; i < ctx.rangeExpr().size(); i++) {
-            final var visitedType = ctx.rangeExpr(i).accept(this);
+            final var visitedType = visitRangeExpr(ctx.rangeExpr(i));
             if (!visitedType.isSubtypeOf(anyItems)) {
                 error(ctx.rangeExpr(i), "Operands of 'or expression' need to be subtype of item()?");
             }
@@ -1406,8 +1383,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     public XQuerySequenceType visitSimpleMapExpr(final SimpleMapExprContext ctx)
     {
         if (ctx.EXCLAMATION_MARK().isEmpty())
-            return ctx.pathExpr(0).accept(this);
-        final XQuerySequenceType firstExpressionType = ctx.pathExpr(0).accept(this);
+            return visitPathExpr(ctx.pathExpr(0));
+        final XQuerySequenceType firstExpressionType = visitPathExpr(ctx.pathExpr(0));
         final XQuerySequenceType iterator = firstExpressionType.iteratorType();
         final var savedContext = saveContext();
         context.setType(iterator);
@@ -1427,7 +1404,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     @Override
     public XQuerySequenceType visitInstanceofExpr(final InstanceofExprContext ctx)
     {
-        final XQuerySequenceType expression = ctx.treatExpr().accept(this);
+        final XQuerySequenceType expression = visitTreatExpr(ctx.treatExpr());
         if (ctx.INSTANCE() == null) {
             return expression;
         }
@@ -1441,11 +1418,11 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     @Override
     public XQuerySequenceType visitTreatExpr(final TreatExprContext ctx)
     {
-        final XQuerySequenceType expression = ctx.castableExpr().accept(this);
+        final XQuerySequenceType expression = visitCastableExpr(ctx.castableExpr());
         if (ctx.TREAT() == null) {
             return expression;
         }
-        final var relevantType = ctx.sequenceType().accept(this);
+        final var relevantType = visitSequenceType(ctx.sequenceType());
         if (!relevantType.isSubtypeOf(expression)
             && !expression.isSubtypeOf(relevantType))
         {
@@ -1957,7 +1934,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     {
         final var leftHandSide = ctx.otherwiseExpr(0).accept(this);
         final var rightHandSide = ctx.otherwiseExpr(1).accept(this);
-        if (!leftHandSide.isSubtypeOf(rightHandSide)) {
+        if (!leftHandSide.isSubtypeOf(rightHandSide) && !rightHandSide.isSubtypeOf(leftHandSide)) {
             final String msg = String.format("The types: %s and %s in general comparison are not comparable",
                 leftHandSide.toString(), rightHandSide.toString());
             error(ctx, msg);

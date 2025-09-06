@@ -301,7 +301,7 @@ public class XQueryValue {
             case ERROR -> "<Error:" + errorMessage + "/>";
             case ARRAY -> "<Array:" + arrayMembers + "/>";
             case BOOLEAN -> "<Boolean:" + booleanValue + "/>";
-            case ELEMENT -> "<Node:" + node.getText() + "/>";
+            case ELEMENT -> "<Node:" + node.getClass().getSimpleName() + ":" + node.getText() + "/>";
             case EMPTY_SEQUENCE -> "<Sequence:" + sequence + "/>";
             case FUNCTION -> "<Function:" + functionValue + "/>";
             case MAP -> "<Map:" + mapEntries + "/>";

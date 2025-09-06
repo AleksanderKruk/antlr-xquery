@@ -25,6 +25,7 @@ public class SequencetypePathOperator {
         empty = new PathOperatorResult(emptySequence, true, Set.of(), Set.of());
         this.parser = parser;
         wildcard = new PathOperatorResult(anyNodes, false, Set.of(), Set.of());
+        emptyAnyNodes = new PathOperatorResult(anyNodes, false, Set.of(), Set.of());
     }
 
     public record PathOperatorResult(
@@ -83,6 +84,7 @@ public class SequencetypePathOperator {
     private final Predicate<String> canBeTokenName = Pattern.compile("^[\\p{IsUppercase}].*").asPredicate();
     private final PathOperatorResult empty;
     private final PathOperatorResult wildcard;
+    private final PathOperatorResult emptyAnyNodes;
 
     private PathOperatorResult zeroOrMore(Set<String> names, boolean usesWildcard, boolean hasProvidedAnalysis) {
         if (hasProvidedAnalysis)
@@ -114,7 +116,8 @@ public class SequencetypePathOperator {
         } else {
             final Set<String> invalidNames = new HashSet<>(names.size());
             final Set<String> duplicateNames = new HashSet<>(names.size());
-            validateNames(names, invalidNames, duplicateNames);
+            if (parser != null)
+                validateNames(names, invalidNames, duplicateNames);
             final var elements = typeFactory.zeroOrMore(typeFactory.itemElement(names));
             return new PathOperatorResult(elements, false, invalidNames, duplicateNames);
         }
@@ -126,8 +129,11 @@ public class SequencetypePathOperator {
         } else {
             final Set<String> invalidNames = new HashSet<>(names.size());
             final Set<String> duplicateNames = new HashSet<>(names.size());
-            validateNames(names, invalidNames, duplicateNames);
-            final var elements = typeFactory.oneOrMore(typeFactory.itemElement(names));
+            if (parser != null)
+                validateNames(names, invalidNames, duplicateNames);
+            final var elements = names.size() > 0
+                ?  typeFactory.zeroOrMore(typeFactory.itemElement(names))
+                :  typeFactory.oneOrMore(typeFactory.itemElement(names));
             return new PathOperatorResult(elements, false, invalidNames, duplicateNames);
         }
     }
@@ -138,7 +144,8 @@ public class SequencetypePathOperator {
         } else {
             final Set<String> invalidNames = new HashSet<>(names.size());
             final Set<String> duplicateNames = new HashSet<>(names.size());
-            validateNames(names, invalidNames, duplicateNames);
+            if (parser != null)
+                validateNames(names, invalidNames, duplicateNames);
             final var elements = typeFactory.zeroOrOne(typeFactory.itemElement(names));
             return new PathOperatorResult(elements, false, invalidNames, duplicateNames);
         }
@@ -149,11 +156,12 @@ public class SequencetypePathOperator {
     private PathOperatorResult zeroOrMoreAnalyzed(Set<String> names, boolean usesWildcard) {
         // TODO :
         if (usesWildcard) {
-            return new PathOperatorResult(anyNodes, false, Set.of(), Set.of());
+            return emptyAnyNodes;
         } else {
             final Set<String> invalidNames = new HashSet<>(names.size());
             final Set<String> duplicateNames = new HashSet<>(names.size());
-            validateNames(names, invalidNames, duplicateNames);
+            if (parser != null)
+                validateNames(names, invalidNames, duplicateNames);
             final var elements = typeFactory.zeroOrMore(typeFactory.itemElement(names));
             return new PathOperatorResult(elements, false, invalidNames, duplicateNames);
         }
@@ -166,8 +174,11 @@ public class SequencetypePathOperator {
         } else {
             final Set<String> invalidNames = new HashSet<>(names.size());
             final Set<String> duplicateNames = new HashSet<>(names.size());
-            validateNames(names, invalidNames, duplicateNames);
-            final var elements = typeFactory.oneOrMore(typeFactory.itemElement(names));
+            if (parser != null)
+                validateNames(names, invalidNames, duplicateNames);
+            final var elements = names.size() > 0
+                ?  typeFactory.zeroOrMore(typeFactory.itemElement(names))
+                :  typeFactory.oneOrMore(typeFactory.itemElement(names));
             return new PathOperatorResult(elements, false, invalidNames, duplicateNames);
         }
     }
@@ -175,11 +186,12 @@ public class SequencetypePathOperator {
     private PathOperatorResult zeroOrOneAnalyzed(Set<String> names, boolean usesWildcard) {
         // TODO :
         if (usesWildcard) {
-            return new PathOperatorResult(anyNodes, false, Set.of(), Set.of());
+            return emptyAnyNodes;
         } else {
             final Set<String> invalidNames = new HashSet<>(names.size());
             final Set<String> duplicateNames = new HashSet<>(names.size());
-            validateNames(names, invalidNames, duplicateNames);
+            if (parser != null)
+                validateNames(names, invalidNames, duplicateNames);
             final var elements = typeFactory.zeroOrOne(typeFactory.itemElement(names));
             return new PathOperatorResult(elements, false, invalidNames, duplicateNames);
         }

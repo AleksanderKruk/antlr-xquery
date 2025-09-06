@@ -760,7 +760,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             if (!visitedType.hasEffectiveBooleanValue) {
                 error(ctx.andExpr(i), "Operands of 'or expression' need to have effective boolean value");
             }
-            i++;
         }
         return boolean_;
     }
@@ -874,7 +873,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
                 : XQueryAxis.CHILD;
             result = ctx.stepExpr(i).accept(this);
             context.setType(result);
-            i++;
         }
         context = savedContext;
         return result;
@@ -927,7 +925,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         final XQuerySequenceType expr = ctx.postfixExpr().accept(this);
         final var savedContext = saveContext();
         context.setType(expr.iteratorType());
-        final var filtered = ctx.predicate().accept(this);
+        final var filtered = visitPredicate(ctx.predicate());
         context = savedContext;
         return filtered;
     }
@@ -1894,7 +1892,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             if (!visitedType.hasEffectiveBooleanValue) {
                 error(ctx.comparisonExpr(i), "Operands of 'or expression' need to have effective boolean value");
             }
-            i++;
         }
         return boolean_;
     }

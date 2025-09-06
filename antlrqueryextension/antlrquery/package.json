@@ -33,7 +33,7 @@
     ]
   },
   "dependencies": {
-    "vscode": "^1.1.34",
+    "vscode": "^1.1.37",
     "vscode-languageclient": "^8.0.0"
   }
 }

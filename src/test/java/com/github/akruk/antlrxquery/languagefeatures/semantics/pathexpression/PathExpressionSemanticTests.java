@@ -1,4 +1,4 @@
-package com.github.akruk.antlrxquery.languagefeatures.semantics.otherwiseexpression;
+package com.github.akruk.antlrxquery.languagefeatures.semantics.pathexpression;
 
 import java.util.Set;
 
@@ -8,24 +8,23 @@ import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase
 
 public class PathExpressionSemanticTests extends SemanticTestsBase {
     @Test
-    public void predicate() {
-        final var number = typeFactory.number();
-        final var optionalNumber = typeFactory.zeroOrOne(typeFactory.itemNumber());
-        assertType("""
-                    //x[]
-                """, optionalNumber);
-        assertType("""
-                    1 otherwise 2
-                """, number);
-        assertType("""
-                    "napis" otherwise 2
-                """, typeFactory.choice(Set.of(typeFactory.itemEnum(Set.of("napis")), typeFactory.itemNumber())));
-        assertType("""
-                    (1, 2, 3) otherwise () otherwise (1, 2, 3)
-                """, typeFactory.zeroOrMore(typeFactory.itemNumber()));
-        assertType("""
-                    (1, 2, 3) otherwise (1, 2, 3) otherwise (1, 2, 3)
-                """, typeFactory.oneOrMore(typeFactory.itemNumber()));
+    public void pathNamedDescendantsOrSelf() {
+        final var xs = typeFactory.zeroOrMore(typeFactory.itemElement(Set.of("x")));
+        final var xys = typeFactory.zeroOrMore(typeFactory.itemElement(Set.of("x", "y")));
+        final var oneOrMoreNodes = typeFactory.oneOrMore(typeFactory.itemAnyNode());
+        assertType("//x", xs);
+        assertType("//(x|y)", xys);
+        assertType("//*", oneOrMoreNodes);
+    }
+
+    @Test
+    public void pathChild() {
+        final var xs = typeFactory.zeroOrMore(typeFactory.itemElement(Set.of("x")));
+        final var xys = typeFactory.zeroOrMore(typeFactory.itemElement(Set.of("x", "y")));
+        final var zeroOrMoreNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
+        assertType("/x", xs);
+        assertType("/(x|y)", xys);
+        assertType("/*", zeroOrMoreNodes);
     }
 
 }

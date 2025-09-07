@@ -35,7 +35,7 @@ public class SemanticTestsBase {
         final ParseTree xqueryTree = xqueryParser.xquery();
         final XQuerySemanticFunctionManager caller = new XQuerySemanticFunctionManager(typeFactory);
         final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
-                xqueryParser,
+                null,
                 new XQuerySemanticContextManager(),
                 typeFactory,
                 new XQueryMemoizedValueFactory(typeFactory),

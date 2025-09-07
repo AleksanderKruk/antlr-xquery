@@ -14,18 +14,20 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 public class SequencetypePathOperator {
     private final XQueryTypeFactory typeFactory;
-    private final XQuerySequenceType anyNodes;
+    private final XQuerySequenceType zeroOrMoreNodes;
+    private final XQuerySequenceType oneOrMoreNodes;
     private final XQuerySequenceType emptySequence;
     private final Parser parser;
 
     public SequencetypePathOperator(XQueryTypeFactory typeFactory, Parser parser) {
         this.typeFactory = typeFactory;
-        this.anyNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
-        emptySequence = typeFactory.emptySequence();
-        empty = new PathOperatorResult(emptySequence, true, Set.of(), Set.of());
+        this.zeroOrMoreNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
+        this.oneOrMoreNodes = typeFactory.oneOrMore(typeFactory.itemAnyNode());
+        this.emptySequence = typeFactory.emptySequence();
+        this.empty = new PathOperatorResult(emptySequence, true, Set.of(), Set.of());
         this.parser = parser;
-        wildcard = new PathOperatorResult(anyNodes, false, Set.of(), Set.of());
-        emptyAnyNodes = new PathOperatorResult(anyNodes, false, Set.of(), Set.of());
+        this.wildcard = new PathOperatorResult(zeroOrMoreNodes, false, Set.of(), Set.of());
+        this.emptyAnyNodes = new PathOperatorResult(zeroOrMoreNodes, false, Set.of(), Set.of());
     }
 
     public record PathOperatorResult(
@@ -112,7 +114,7 @@ public class SequencetypePathOperator {
 
     private PathOperatorResult zeroOrMoreSimple(Set<String> names, boolean usesWildcard) {
         if (usesWildcard) {
-            return new PathOperatorResult(anyNodes, false, Set.of(), Set.of());
+            return new PathOperatorResult(zeroOrMoreNodes, false, Set.of(), Set.of());
         } else {
             final Set<String> invalidNames = new HashSet<>(names.size());
             final Set<String> duplicateNames = new HashSet<>(names.size());
@@ -125,7 +127,7 @@ public class SequencetypePathOperator {
 
     private PathOperatorResult oneOrMoreSimple(Set<String> names, boolean usesWildcard) {
         if (usesWildcard) {
-            return new PathOperatorResult(anyNodes, false, Set.of(), Set.of());
+            return new PathOperatorResult(oneOrMoreNodes, false, Set.of(), Set.of());
         } else {
             final Set<String> invalidNames = new HashSet<>(names.size());
             final Set<String> duplicateNames = new HashSet<>(names.size());
@@ -140,7 +142,7 @@ public class SequencetypePathOperator {
 
     private PathOperatorResult zeroOrOneSimple(Set<String> names, boolean usesWildcard) {
         if (usesWildcard) {
-            return new PathOperatorResult(anyNodes, false, Set.of(), Set.of());
+            return new PathOperatorResult(zeroOrMoreNodes, false, Set.of(), Set.of());
         } else {
             final Set<String> invalidNames = new HashSet<>(names.size());
             final Set<String> duplicateNames = new HashSet<>(names.size());

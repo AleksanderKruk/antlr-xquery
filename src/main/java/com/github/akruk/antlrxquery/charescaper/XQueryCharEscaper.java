@@ -50,6 +50,8 @@ public class XQueryCharEscaper {
                         i = semi; // skip past the semicolon
                         continue;
                     } catch (NumberFormatException ignored) {
+                        // error(XQueryError.UnrecognizedOrInvalidCharacterName, "Invalid character code: '" + code + "'",
+                        //     null);
                         // TODO: ERROR
                         // fallback: treat as literal
                     }

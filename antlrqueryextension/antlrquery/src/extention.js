@@ -1,29 +1,26 @@
 const vscode = require('vscode');
 const { LanguageClient, TransportKind } = require('vscode-languageclient/node');
 
-let client; // Language client instance
+let client;
 
 function activate(context) {
     console.log('Activating AntlrQuery extension...');
 
-    // Server configuration
     const serverOptions = {
         command: 'java',
         args: ['-jar', context.asAbsolutePath('./server/antlrxquery-language-server.jar')],
         transport: TransportKind.stdout,
-        options: { cwd: process.cwd() } // Set working directory
+        options: { cwd: process.cwd() }
     };
 
-    // Client configuration
     const clientOptions = {
-        documentSelector: [{ scheme: 'file', language: 'antlrquery' }], // File types to handle
+        documentSelector: [{ scheme: 'file', language: 'antlrquery' }],
         synchronize: {
-            fileEvents: vscode.workspace.createFileSystemWatcher('**/.antlrquery') // Watch for file changes
+            fileEvents: vscode.workspace.createFileSystemWatcher('**/.antlrquery')
         },
-        outputChannel: vscode.window.createOutputChannel('AntlrQuery Language Server') // Log channel
+        outputChannel: vscode.window.createOutputChannel('AntlrQuery Language Server')
     };
 
-    // Create language client
     client = new LanguageClient(
         'antlrQueryLanguageServer',
         'AntlrQuery Language Server',
@@ -31,13 +28,12 @@ function activate(context) {
         clientOptions
     );
 
-    // Handle state changes
     client.onDidChangeState(event => {
         console.log(`LSP server state: ${event.newState}`);
     });
 
     try {
-        client.start(); // Start the language client
+        client.start();
         console.log('LSP server started');
     } catch (err) {
         console.error('Error starting LSP server:', err);
@@ -51,7 +47,7 @@ function deactivate() {
     if (!client) {
         return undefined;
     }
-    return client.stop(); // Stop the language client on deactivation
+    return client.stop();
 }
 
 module.exports = {

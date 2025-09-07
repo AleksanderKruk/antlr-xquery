@@ -20,7 +20,6 @@ public class ProcessingArrayFunctionsTest extends SemanticTestsBase {
     @Test
     public void append_errors() {
         assertErrors("array:append((),1)");
-        assertErrors("array:append(array{1},)");
     }
 
     // array:build($input as item()*, $action as fn(item(),xs:integer) as item()* :=

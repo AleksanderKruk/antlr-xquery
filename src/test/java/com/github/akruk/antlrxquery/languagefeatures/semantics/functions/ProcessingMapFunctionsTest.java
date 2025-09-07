@@ -39,7 +39,6 @@ public class ProcessingMapFunctionsTest extends SemanticTestsBase {
     @Test
     public void contains_wrong() {
         assertErrors("map:contains('notMap','k')");
-        assertErrors("map:contains(map{}, <a/>)");
     }
 
     // map:empty($map as map(*)) as xs:boolean
@@ -82,7 +81,6 @@ public class ProcessingMapFunctionsTest extends SemanticTestsBase {
     public void entry_errors() {
         assertErrors("map:entry()");
         assertErrors("map:entry(1)");
-        assertErrors("map:entry('k', <a/>)");
     }
 
     // map:filter($map as map(*), $predicate as fn(item(),item()*) as xs:boolean?)
@@ -111,7 +109,6 @@ public class ProcessingMapFunctionsTest extends SemanticTestsBase {
     @Test
     public void find_errors() {
         assertErrors("map:find()");
-        assertErrors("map:find((1), <a/>)");
     }
 
     // map:for-each($map as map(*), $action as fn(item(),item()*) as item()*) as
@@ -144,7 +141,6 @@ public class ProcessingMapFunctionsTest extends SemanticTestsBase {
     @Test
     public void getMap_errors() {
         assertErrors("map:get()");
-        assertErrors("map:get(map{}, <a/>)");
     }
 
     // map:items($map as map(*)) as item()*

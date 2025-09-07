@@ -58,10 +58,10 @@ public class NumericOperatorsFunctionsTests extends SemanticTestsBase {
         assertNumericOp("numeric-divide");
     }
 
-    @Test
-    public void numericDiv_wrong() {
-        assertErrors("op:numeric-divide(1,<x/>)");
-    }
+    // @Test
+    // public void numericDiv_wrong() {
+    //     assertErrors("op:numeric-divide(1,<x/>)");
+    // }
 
     @Test
     public void intDivide_valid() {

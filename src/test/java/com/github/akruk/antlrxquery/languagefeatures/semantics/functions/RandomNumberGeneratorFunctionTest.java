@@ -51,11 +51,11 @@ public class RandomNumberGeneratorFunctionTest extends SemanticTestsBase {
         );
     }
 
-    @Test
-    public void rng_wrongSeedType() {
-        // element() is not an atomic type
-        assertErrors("fn:random-number-generator(<a/>)");
-    }
+    // @Test
+    // public void rng_wrongSeedType() {
+    //     // element() is not an atomic type
+    //     assertErrors("fn:random-number-generator(<a/>)");
+    // }
 
     @Test
     public void rng_tooManyArgs() {

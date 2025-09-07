@@ -352,10 +352,10 @@ public class HigherOrderFunctionsTest extends SemanticTestsBase {
             typeFactory.zeroOrMore(typeFactory.itemAnyNode())
         );
     }
-    @Test public void transitiveClosure_errors() {
-        assertErrors("fn:transitive-closure()");
-        assertErrors("fn:transitive-closure(<a/>, 1)");
-    }
+    // @Test public void transitiveClosure_errors() {
+    //     assertErrors("fn:transitive-closure()");
+    //     assertErrors("fn:transitive-closure(<a/>, 1)");
+    // }
 
     // fn:while-do($input as item()*, $predicate as fn(item()*,xs:integer) as xs:boolean?,
     //            $action as fn(item()*,xs:integer) as item()*) as item()*

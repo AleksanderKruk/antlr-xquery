@@ -27,4 +27,10 @@ public class PathExpressionSemanticTests extends SemanticTestsBase {
         assertType("/*", zeroOrMoreNodes);
     }
 
+    // @Test
+    // public void predicates() {
+    //     final var xs = typeFactory.zeroOrMore(typeFactory.itemElement(Set.of("x")));
+    //     assertType("/x[true()]", xs);
+    // }
+
 }

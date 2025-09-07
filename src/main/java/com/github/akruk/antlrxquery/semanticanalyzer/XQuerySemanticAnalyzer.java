@@ -886,7 +886,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     {
         if (ctx.postfixExpr() != null)
             return ctx.postfixExpr().accept(this);
-        return ctx.axisStep().accept(this);
+        return visitAxisStep(ctx.axisStep());
     }
 
     @Override
@@ -902,7 +902,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         }
         final var savedArgs = saveVisitedArguments();
         final var savedContext = saveContext();
-        context.setType(savedContext.getType().iteratorType());
+        context.setType(stepResult.iteratorType());
         context.setPositionType(number);
         context.setSizeType(number);
         for (final var predicate : ctx.predicateList().predicate()) {

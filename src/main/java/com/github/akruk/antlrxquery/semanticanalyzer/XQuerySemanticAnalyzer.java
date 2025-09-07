@@ -906,7 +906,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         context.setPositionType(number);
         context.setSizeType(number);
         for (final var predicate : ctx.predicateList().predicate()) {
-            stepResult = predicate.accept(this);
+            predicate.accept(this);
         }
         visitedPositionalArguments = savedArgs;
         context = savedContext;

@@ -34,9 +34,6 @@ function activate(context) {
     // Handle state changes
     client.onDidChangeState(event => {
         console.log(`LSP server state: ${event.newState}`);
-        if (event.newState === 2) { // 2 means "Stopped"
-            vscode.window.showErrorMessage('LSP server stopped');
-        }
     });
 
     try {

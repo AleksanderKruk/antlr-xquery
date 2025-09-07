@@ -57,14 +57,14 @@ public class BasicTextDocumentService implements TextDocumentService {
 
 
     private final int variableIndex;
-    private final int parameterIndex;
+    // private final int parameterIndex;
     private final int functionIndex;
     private final int typeIndex;
 
     BasicTextDocumentService(final List<String> tokenLegend)
     {
         variableIndex = tokenLegend.indexOf("variable");
-        parameterIndex = tokenLegend.indexOf("parameter");
+        // parameterIndex = tokenLegend.indexOf("parameter");
         functionIndex = tokenLegend.indexOf("function");
         typeIndex = tokenLegend.indexOf("type");
         resolver = new NamespaceResolver("fn");
@@ -568,21 +568,25 @@ public class BasicTextDocumentService implements TextDocumentService {
                 .append(namespace)
                 .append(":")
                 .append(name)
-                .append("(\n");
+                .append("(");
 
             final List<ArgumentSpecification> args = specification.args().subList(0, arity);
-            for (int i = 0; i < args.size(); i++) {
-                final ArgumentSpecification arg = args.get(i);
-                sb.append("    ")
-                    .append("$")
-                    .append(arg.name())
-                    .append(" as ")
-                    .append(arg.type());
-                if (i < args.size() - 1) {
-                    sb.append(",\n");
+            if (args.size() > 0) {
+                sb.append("\n");
+                for (int i = 0; i < args.size(); i++) {
+                    final ArgumentSpecification arg = args.get(i);
+                    sb.append("    ")
+                        .append("$")
+                        .append(arg.name())
+                        .append(" as ")
+                        .append(arg.type());
+                    if (i < args.size() - 1) {
+                        sb.append(",\n");
+                    }
                 }
+                sb.append("\n");
             }
-            sb.append("\n) as ")
+            sb.append(") as ")
                 .append(specification.returnedType());
             return sb.toString();
         } catch (final Exception e) {

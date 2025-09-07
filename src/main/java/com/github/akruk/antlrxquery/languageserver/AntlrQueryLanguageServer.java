@@ -32,11 +32,19 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
     private final BasicTextDocumentService textDocumentService = new BasicTextDocumentService(tokenLegend);
     private final com.github.akruk.antlrxquery.languageserver.BasicWorkspaceService workspaceService = new com.github.akruk.antlrxquery.languageserver.BasicWorkspaceService();
 
+    private LanguageClient client;
 
+    @Override
+    public void initialized(InitializedParams params)
+    {
+        client.logMessage(new MessageParams(MessageType.Info, "AntlrQuery LSP initialized"));
+        return;
+    }
 
     @Override
     public void connect(final LanguageClient client)
     {
+        this.client = client;
         textDocumentService.setClient(client);
         workspaceService.setClient(client);
         System.err.println("[connect] LanguageClient connected");
@@ -75,21 +83,28 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
 
         capabilities.setDefinitionProvider(true);
 
+        capabilities.setCompletionProvider(new CompletionOptions());
+
         return CompletableFuture.completedFuture(new InitializeResult(capabilities));
     }
 
+    private boolean shutdownRequested = false;
+
     @Override
-    public CompletableFuture<Object> shutdown()
-    {
-        System.err.println("[shutdown] Server shutting down");
-        return CompletableFuture.completedFuture(new Object());
+    public CompletableFuture<Object> shutdown() {
+        shutdownRequested = true;
+        return CompletableFuture.completedFuture(null);
     }
 
     @Override
-    public void exit()
-    {
-        System.err.println("[exit] Server exiting");
-        System.exit(0);
+    public void exit() {
+        if (shutdownRequested) {
+            System.err.println("[exit] Server exiting");
+            System.exit(0);
+        } else {
+            System.err.println("[exit] Exit called before shutdown");
+            System.exit(1);
+        }
     }
 
     @Override

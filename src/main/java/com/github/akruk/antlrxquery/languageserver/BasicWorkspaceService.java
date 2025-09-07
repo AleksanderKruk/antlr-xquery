@@ -15,6 +15,7 @@ public class BasicWorkspaceService implements WorkspaceService {
         this.client = client;
     }
 
+
     @Override
     public void didChangeConfiguration(final DidChangeConfigurationParams params)
     {
@@ -36,4 +37,5 @@ public class BasicWorkspaceService implements WorkspaceService {
             client.showMessage(msg);
         }
     }
+
 }

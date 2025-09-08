@@ -178,6 +178,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         return null;
     }
 
+
     @Override
     public XQuerySequenceType visitForClause(final ForClauseContext ctx) {
         // TODO: add coercion
@@ -480,7 +481,12 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     {
         final String variableName = ctx.qname().getText();
         final XQuerySequenceType variableType = contextManager.getVariable(variableName);
-        return variableType;
+        if (variableType == null) {
+            error(ctx, "Undeclared variable referenced: " + variableName);
+            return anyItems;
+        } else {
+            return variableType;
+        }
     }
 
     private static final int[][] OCCURRENCE_MERGE_AUTOMATA = {
@@ -2179,7 +2185,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             start.getLine(),
             start.getCharPositionInLine(),
             stop.getLine(),
-            stop.getCharPositionInLine());
+            stop.getCharPositionInLine() + stop.getText().length());
 
         errors.add(error);
     }
@@ -2314,6 +2320,80 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         }
         return emptySequence;
     }
+
+    @Override
+    public XQuerySequenceType visitFunctionDecl(FunctionDeclContext ctx)
+    {
+        String qname = ctx.qname().getText();
+        ResolvedName resolved = namespaceResolver.resolve(qname);
+        int i = 0;
+        var args = new ArrayList<ArgumentSpecification>();
+        contextManager.enterScope();
+        if (ctx.paramListWithDefaults() != null) {
+            Set<String> argNames = new HashSet<>();
+            var params = ctx.paramListWithDefaults().paramWithDefault();
+            for (var param : params) {
+                var defaultValue = param.exprSingle();
+                if (defaultValue != null)
+                    break;
+                var argName = getArgName(param);
+                var paramType = param.varNameAndType().typeDeclaration().accept(this);
+                var argDecl = new ArgumentSpecification(argName, paramType, null);
+                boolean added = argNames.add(argName);
+                if (!added) {
+                    error(param, "Duplicated parameter name");
+                }
+                args.add(argDecl);
+                i++;
+            }
+            for (ParamWithDefaultContext param : params.subList(i, params.size())) {
+                var argName = getArgName(param);
+                var paramType = param.varNameAndType().typeDeclaration().accept(this);
+                var defaultValue = param.exprSingle();
+                if (defaultValue == null) {
+                    error(param, "Positional arguments must be located before default arguments");
+                    continue;
+                } else {
+                    var dvt = defaultValue.accept(this);
+                    if (!dvt.isSubtypeOf(paramType)) {
+                        error(defaultValue, "Invalid default value: " + dvt + " is not subtype of " + paramType);
+                    }
+                }
+                var argDecl = new ArgumentSpecification(argName, paramType, defaultValue);
+                boolean added = argNames.add(argName);
+                if (!added) {
+                    error(param.getParent(), "Duplicated parameter name");
+                }
+                args.add(argDecl);
+            }
+            for (var arg : args) {
+                contextManager.entypeVariable(arg.name(), arg.type());
+            }
+        }
+        var returned = visitTypeDeclaration(ctx.typeDeclaration());
+        var bodyType = visitEnclosedExpr(ctx.functionBody().enclosedExpr());
+        if (!bodyType.isSubtypeOf(returned)) {
+            error(ctx.functionBody(), "Invalid returned type: " + bodyType + " is not subtype of " + returned);
+        }
+        functionManager.register(
+            resolved.namespace(), resolved.name(),
+            args, returned);
+
+        contextManager.leaveScope();
+        return null;
+    }
+
+    private String getArgName(ParamWithDefaultContext param)
+    {
+        var paramName = param.varNameAndType().varRef().qname();
+        if (paramName.namespace().size() != 0)
+        {
+            error(param, "Parameter " + paramName.anyName().getText() + " cannot have a namespace");
+        }
+        return paramName.anyName().getText();
+    }
+
+
 
 
     XQueryAxis currentAxis;

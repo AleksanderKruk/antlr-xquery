@@ -83,7 +83,7 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
 
         capabilities.setDefinitionProvider(true);
 
-        capabilities.setCompletionProvider(new CompletionOptions());
+        // capabilities.setCompletionProvider(new CompletionOptions());
 
         return CompletableFuture.completedFuture(new InitializeResult(capabilities));
     }

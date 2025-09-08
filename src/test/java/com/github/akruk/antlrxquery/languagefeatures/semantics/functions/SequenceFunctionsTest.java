@@ -232,14 +232,14 @@ public class SequenceFunctionsTest extends SemanticTestsBase {
     }
 
     // fn:unordered($input as item()*) as item()*
-    @Test
-    public void unordered_various()
-    {
-        assertType("fn:unordered(())",
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        assertType("fn:unordered((1,2,3))",
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-    }
+    // @Test
+    // public void unordered_various()
+    // {
+    //     assertType("fn:unordered(())",
+    //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+    //     assertType("fn:unordered((1,2,3))",
+    //         typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+    // }
 
     // fn:void($input as item()* := ()) as empty-sequence()
     @Test

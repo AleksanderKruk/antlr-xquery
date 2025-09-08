@@ -30,7 +30,7 @@ public record DiagnosticWarning(String message,
         start.getLine(),
         start.getCharPositionInLine(),
         stop.getLine(),
-        stop.getCharPositionInLine());
+        stop.getCharPositionInLine() + stop.getText().length());
   }
 
 

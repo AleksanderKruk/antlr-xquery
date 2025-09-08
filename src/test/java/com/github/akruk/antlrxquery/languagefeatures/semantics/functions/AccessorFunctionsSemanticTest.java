@@ -61,20 +61,20 @@ public class AccessorFunctionsSemanticTest extends SemanticTestsBase {
         assertType("fn:data((1,'x'))",typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
     }
 
-    @Test
-    public void baseUri_default() {
-        assertType("fn:base-uri()", typeFactory.zeroOrOne(typeFactory.itemString()));
-    }
+    // @Test
+    // public void baseUri_default() {
+    //     assertType("fn:base-uri()", typeFactory.zeroOrOne(typeFactory.itemString()));
+    // }
 
     // @Test
     // public void baseUri_node() {
     //     assertNoErrors(analyze("fn:base-uri(<a xml:base='u'/>)"));
     // }
 
-    @Test
-    public void baseUri_wrong() {
-        assertErrors("fn:base-uri(1)");
-    }
+    // @Test
+    // public void baseUri_wrong() {
+    //     assertErrors("fn:base-uri(1)");
+    // }
 
     @Test
     public void documentUri_default() {

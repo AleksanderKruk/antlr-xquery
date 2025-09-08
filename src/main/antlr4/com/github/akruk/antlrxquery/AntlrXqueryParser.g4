@@ -2,7 +2,12 @@ parser grammar AntlrXqueryParser;
 options {
     tokenVocab = AntlrXqueryLexer;
 }
-xquery: expr?;
+
+
+xquery
+    : versionDecl? (libraryModule | mainModule)
+    ;
+
 expr: exprSingle (COMMA exprSingle)*;
 exprSingle: fLWORExpr
         | quantifiedExpr
@@ -354,6 +359,174 @@ unaryLookup
 
 
 
+functionDecl
+    : DECLARE annotation* FUNCTION qname LPAREN paramListWithDefaults? RPAREN typeDeclaration? (functionBody | EXTERNAL)
+    ;
+
+
+paramListWithDefaults
+    : paramWithDefault (COMMA paramWithDefault)*
+    ;
+
+paramWithDefault
+    : varNameAndType (EQ_OP exprSingle)?
+    ;
+
+functionBody
+    : enclosedExpr
+    ;
+
+
+versionDecl
+    : XQUERY ((ENCODING STRING) | (VERSION STRING (ENCODING STRING)?)) SEPARATOR
+    ;
+
+libraryModule
+    : moduleDecl prolog
+    ;
+
+moduleDecl
+    : MODULE NAMESPACE qname EQ_OP STRING SEPARATOR
+    ;
+
+prolog
+    : ((defaultNamespaceDecl | setter | namespaceDecl | importDecl) SEPARATOR)*
+      ((contextValueDecl | varDecl | functionDecl | itemTypeDecl | namedRecordTypeDecl | optionDecl) SEPARATOR)*
+    ;
+
+defaultNamespaceDecl
+    : DECLARE FIXED? DEFAULT (ELEMENT | FUNCTION) NAMESPACE STRING
+    ;
+
+setter
+    : boundarySpaceDecl
+    | defaultCollationDecl
+    | baseURIDecl
+    | constructionDecl
+    | orderingModeDecl
+    | emptyOrderDecl
+    | decimalFormatDecl
+    ;
+
+boundarySpaceDecl
+    : DECLARE BOUNDARY_SPACE (PRESERVE | STRIP)
+    ;
+
+defaultCollationDecl
+    : DECLARE DEFAULT COLLATION STRING
+    ;
+
+baseURIDecl
+    : DECLARE BASE_URI STRING
+    ;
+
+constructionDecl
+    : DECLARE CONSTRUCTION (STRIP | PRESERVE)
+    ;
+
+orderingModeDecl
+    : DECLARE ORDERING (ORDERED | UNORDERED)
+    ;
+
+emptyOrderDecl
+    : DECLARE DEFAULT ORDER EMPTY (GREATEST | LEAST)
+    ;
+
+
+decimalFormatDecl
+    : DECLARE ((DECIMAL_FORMAT qname) | (DEFAULT DECIMAL_FORMAT)) (dfPropertyName EQ_OP STRING)*
+    ;
+
+dfPropertyName
+    : DECIMAL_SEPARATOR
+    | GROUPING_SEPARATOR
+    | INFINITY
+    | MINUS_SIGN
+    | NAN
+    | PERCENT
+    | PER_MILLE
+    | ZERO_DIGIT
+    | DIGIT
+    | PATTERN_SEPARATOR
+    | EXPONENT_SEPARATOR
+    ;
+
+
+
+namespaceDecl
+    : DECLARE NAMESPACE qname EQ_OP STRING
+    ;
+
+importDecl
+    : schemaImport
+    | moduleImport
+    ;
+
+schemaImport
+    : IMPORT SCHEMA schemaPrefix? STRING (AT (STRING (COMMA STRING)*))?
+    ;
+
+schemaPrefix
+    : NAMESPACE qname EQ_OP
+    | FIXED? DEFAULT ELEMENT NAMESPACE
+    ;
+
+
+
+moduleImport
+    : IMPORT MODULE (NAMESPACE qname EQ_OP)? STRING (AT (STRING (COMMA STRING)*))?
+    ;
+
+contextValueDecl
+    : DECLARE CONTEXT ((VALUE (AS sequenceType)?) | (ITEM (AS itemType)?)) ((EQ_OP varValue) | (EXTERNAL (EQ_OP varDefaultValue)?))
+    ;
+
+varValue: exprSingle;
+
+varDefaultValue: exprSingle;
+
+varDecl
+    : DECLARE annotation* VARIABLE varNameAndType ((EQ_OP varValue) | (EXTERNAL (EQ_OP varDefaultValue)?))
+    ;
+
+itemTypeDecl
+    : DECLARE annotation* TYPE qname AS itemType
+    ;
+
+namedRecordTypeDecl
+    : DECLARE annotation* RECORD qname LPAREN (extendedFieldDeclaration (COMMA extendedFieldDeclaration)*)? extensibleFlag? RPAREN
+    ;
+
+extendedFieldDeclaration
+    : fieldDeclaration (EQ_OP exprSingle)?
+    ;
+
+
+
+optionDecl
+    : DECLARE OPTION qname STRING
+    ;
+
+mainModule
+    : prolog queryBody
+    ;
+
+queryBody
+    : expr?
+    ;
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -540,8 +713,4 @@ functionSignature
 
 paramList
     : (varNameAndType (',' varNameAndType)*)?
-    ;
-
-functionBody
-    : enclosedExpr
     ;

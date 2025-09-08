@@ -198,6 +198,54 @@ KEY : 'key' ;
 VALUE : 'value' ;
 
 
+
+
+NAMESPACE: 'namespace';
+FIXED: 'fixed';
+DECIMAL_SEPARATOR: 'decimal-separator';
+GROUPING_SEPARATOR: 'grouping-separator';
+INFINITY: 'infinity';
+MINUS_SIGN: 'minus-sign';
+NAN: 'NaN';
+PERCENT: 'percent';
+PER_MILLE: 'per-mille';
+ZERO_DIGIT: 'zero-digit';
+DIGIT: 'digit';
+PATTERN_SEPARATOR: 'pattern-separator';
+EXPONENT_SEPARATOR: 'exponent-separator';
+XQUERY: 'xquery';
+ENCODING: 'encoding';
+VERSION: 'version';
+SEPARATOR: ';';
+DECLARE: 'declare';
+MODULE: 'module';
+IMPORT: 'import';
+SCHEMA: 'schema';
+CONTEXT: 'context';
+EXTERNAL: 'external';
+VARIABLE: 'variable';
+TYPE: 'type';
+OPTION: 'option';
+BOUNDARY_SPACE: 'boundary-space';
+PRESERVE: 'preserve';
+STRIP: 'strip';
+BASE_URI: 'base-uri';
+CONSTRUCTION: 'construction';
+ORDERING: 'ordering';
+COPY_NAMESPACES: 'copy-namespaces';
+DECIMAL_FORMAT: 'decimal-format';
+
+
+ORDERED: 'ordered';
+UNORDERED: 'unordered';
+
+
+
+
+
+
+
+
 ID: NAME_START (DASH NAME_MIDDLE)*
     ; /* Replace with antlr compatible */
 

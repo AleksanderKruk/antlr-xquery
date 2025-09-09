@@ -24,6 +24,7 @@ import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactor
 import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMemoizedValueFactory;
 import com.github.akruk.antlrxquery.evaluator.values.operations.*;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
+import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.ResolvedName;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
@@ -746,36 +747,49 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return value;
     }
 
-    // @Override
-    // public XQueryValue visitLookupExpr(LookupExprContext ctx) {
-    //     var map = visitpostfixExpr(ctx.postfixExpr());
-    //     if (map.mapEntries() == null)
-    //         return XQueryError.Map;
-    //     return matchedNodes;
-    // }
 
+    @Override
+    public XQueryValue visitFunctionDecl(FunctionDeclContext ctx)
+    {
+        String qname = ctx.qname().getText();
+        ResolvedName resolved = namespaceResolver.resolve(qname);
+        var argNames = new ArrayList<String>();
+        Map<String, ParseTree> defaults = new HashMap<String, ParseTree>();
+        contextManager.enterScope();
+        if (ctx.paramListWithDefaults() != null) {
+            var params = ctx.paramListWithDefaults().paramWithDefault();
+            for (ParamWithDefaultContext param : params) {
+                var argName = param.varNameAndType().varRef().qname().anyName().getText();
+                var defaultValue = param.exprSingle();
+                if (defaultValue != null) {
+                    defaults.put(argName, defaultValue);
+                }
+                argNames.add(argName);
+            }
+        }
+        var body = ctx.functionBody().enclosedExpr();
+        functionManager.registerFunction(
+            resolved.namespace(), resolved.name(),
+            (context, positionalArguments) -> {
+                var saved = saveContext();
+                contextManager.enterContext();
+                this.context = context;
+                for (int i = 0; i < positionalArguments.size(); i++) {
+                    var arg = positionalArguments.get(i);
+                    var argname = argNames.get(i);
+                    contextManager.provideVariable(argname, arg);
+                }
+                var result = visitEnclosedExpr(body);
+                contextManager.leaveContext();
+                context = saved;
+                return result;
+            },
+            argNames, defaults);
 
-    // @Override
-    // public XQueryValue visitPostfixExpr(final PostfixExprContext ctx) {
-    //     if (ctx.) {
-    //         return visitprimaryExpr(ctx.primaryExpr());
-    //     }
+        contextManager.leaveScope();
+        return null;
+    }
 
-    //     final var savedContext = saveContext();
-    //     final var savedArgs = saveVisitedArguments();
-    //     var value = visitprimaryExpr(ctx.primaryExpr());
-    //     int index = 1;
-    //     context.setSize(ctx.postfix().size());
-    //     for (final var postfix : ctx.postfix()) {
-    //         context.setValue(value);
-    //         context.setPosition(index);
-    //         value = postfix.accept(this);
-    //         index++;
-    //     }
-    //     context = savedContext;
-    //     visitedArgumentList = savedArgs;
-    //     return value;
-    // }
 
     XQueryValue handleAsItemGetter(final List<XQueryValue> sequence,
             final XQueryValue getter)

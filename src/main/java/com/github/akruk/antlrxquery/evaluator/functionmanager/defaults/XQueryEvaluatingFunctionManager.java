@@ -461,7 +461,7 @@ public class XQueryEvaluatingFunctionManager {
         }
     }
 
-    private void registerFunction(final String namespace, final String localName, final XQueryFunction function,
+    public void registerFunction(final String namespace, final String localName, final XQueryFunction function,
             final List<String> argNames, final Map<String, ParseTree> defaultArguments) {
         final var maxArity = argNames.size();
         final var minArity = maxArity - defaultArguments.size();
@@ -474,7 +474,7 @@ public class XQueryEvaluatingFunctionManager {
         functionsWithDesiredName.add(functionEntry);
     }
 
-    private void registerVariadicFunction(final String namespace, final String localName, final XQueryFunction function,
+    public void registerVariadicFunction(final String namespace, final String localName, final XQueryFunction function,
             final String variadicArg) {
         final var maxArity = Long.MAX_VALUE;
         final var minArity = 0;

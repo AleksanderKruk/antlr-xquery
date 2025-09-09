@@ -2404,12 +2404,34 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         if (ctx.EXTERNAL() == null) {
             var assignedType = visitVarValue(ctx.varValue());
             if (assignedType.coerceableTo(declaredType) == RelativeCoercability.NEVER) {
-                error(ctx, "Variable " + name + " of type " + declaredType + " cannot be assigned value of type " + assignedType );
+                error(ctx, "Variable " + name + " of type " + declaredType + " cannot be assigned value of type "
+                    + assignedType);
             }
         }
         contextManager.entypeVariable(name, declaredType);
         return null;
     }
+
+    @Override
+    public XQuerySequenceType visitItemTypeDecl(ItemTypeDeclContext ctx)
+    {
+        var typeName = ctx.qname().getText();
+        var itemType = ctx.itemType().accept(this).itemType;
+        var status = typeFactory.registerItemNamedType(typeName, itemType);
+        switch (status) {
+            case ALREADY_REGISTERED_DIFFERENT:
+                error(ctx, typeName + " has already been registered as type: " + typeFactory.namedType(typeName));
+                break;
+            case ALREADY_REGISTERED_SAME:
+                error(ctx, typeName + " has already been registered");
+                break;
+            case OK:
+                break;
+        }
+        return null;
+
+    }
+
 
 
     XQueryAxis currentAxis;

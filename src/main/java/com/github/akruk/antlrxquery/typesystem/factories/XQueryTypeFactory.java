@@ -8,6 +8,7 @@ import java.util.Set;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory.RegistrationStatus;
 
 public interface XQueryTypeFactory {
     public XQueryItemType itemError();
@@ -28,7 +29,10 @@ public interface XQueryTypeFactory {
     public XQueryItemType itemExtensibleRecord(Map<String, XQueryRecordField> fields);
     public XQueryItemType itemChoice(Collection<XQueryItemType> items);
     public XQueryItemType itemNamedType(String name);
-    // public XQueryItemType itemNamedTypeRef(String string);
+    enum RegistrationStatus {
+        OK, ALREADY_REGISTERED_SAME, ALREADY_REGISTERED_DIFFERENT
+    }
+    public RegistrationStatus registerItemNamedType(String name, XQueryItemType itemType);
 
     public XQuerySequenceType error();
     public XQuerySequenceType string();

@@ -263,8 +263,24 @@ public class XQueryMemoizedTypeFactory implements XQueryTypeFactory {
 
 
     @Override
-    public XQueryItemType itemNamedType(final String name) {
+    public XQueryItemType itemNamedType(final String name)
+    {
         return namedTypes.get(name);
+    }
+
+
+
+    @Override
+    public RegistrationStatus registerItemNamedType(String name, XQueryItemType itemType)
+    {
+        var existing = namedTypes.get(name);
+        if (existing == null) {
+            namedTypes.put(name, itemType);
+            return RegistrationStatus.OK;
+        }
+        if (existing.equals(itemType))
+            return RegistrationStatus.ALREADY_REGISTERED_SAME;
+        return RegistrationStatus.ALREADY_REGISTERED_DIFFERENT;
     }
 
     @Override

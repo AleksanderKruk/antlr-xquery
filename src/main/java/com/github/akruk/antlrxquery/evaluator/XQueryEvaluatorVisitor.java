@@ -729,7 +729,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitArrowTarget(ArrowTargetContext ctx) {
+    public XQueryValue visitArrowTarget(ArrowTargetContext ctx)
+    {
         if (ctx.functionCall() != null) {
             ctx.functionCall().argumentList().accept(this);
             final String functionQname = ctx.functionCall().functionName().getText();
@@ -738,14 +739,30 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return ctx.restrictedDynamicCall().accept(this);
     }
 
+
     @Override
-    public XQueryValue visitDynamicFunctionCall(final DynamicFunctionCallContext ctx) {
+    public XQueryValue visitVarDecl(VarDeclContext ctx)
+    {
+        if (ctx.EXTERNAL() != null)
+            return null;
+        var name = ctx.varNameAndType().varRef().qname().getText();
+        var value = visitVarValue(ctx.varValue());
+        contextManager.provideVariable(name, value);
+        return null;
+    }
+
+
+    @Override
+    public XQueryValue visitDynamicFunctionCall(final DynamicFunctionCallContext ctx)
+    {
         // TODO: verify logic
         final var contextItem = context.getValue();
         final var function = contextItem.functionValue;
         final var value = function.call(context, visitedPositionalArguments);
         return value;
     }
+
+
 
 
     @Override

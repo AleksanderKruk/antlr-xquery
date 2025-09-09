@@ -2396,6 +2396,20 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     }
 
 
+    @Override
+    public XQuerySequenceType visitVarDecl(VarDeclContext ctx)
+    {
+        var name = ctx.varNameAndType().varRef().qname().getText();
+        var declaredType = visitTypeDeclaration(ctx.varNameAndType().typeDeclaration());
+        if (ctx.EXTERNAL() == null) {
+            var assignedType = visitVarValue(ctx.varValue());
+            if (assignedType.coerceableTo(declaredType) == RelativeCoercability.NEVER) {
+                error(ctx, "Variable " + name + " of type " + declaredType + " cannot be assigned value of type " + assignedType );
+            }
+        }
+        contextManager.entypeVariable(name, declaredType);
+        return null;
+    }
 
 
     XQueryAxis currentAxis;

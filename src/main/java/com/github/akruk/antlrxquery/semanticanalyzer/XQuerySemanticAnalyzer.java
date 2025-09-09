@@ -2337,7 +2337,12 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
                 if (defaultValue != null)
                     break;
                 var argName = getArgName(param);
-                var paramType = param.varNameAndType().typeDeclaration().accept(this);
+                XQuerySequenceType paramType = null;
+                if (param.varNameAndType().typeDeclaration() == null) {
+                    paramType = anyItems;
+                } else {
+                    paramType = param.varNameAndType().typeDeclaration().accept(this);
+                }
                 var argDecl = new ArgumentSpecification(argName, paramType, null);
                 boolean added = argNames.add(argName);
                 if (!added) {
@@ -2430,6 +2435,58 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         }
         return null;
 
+    }
+
+
+    @Override
+    public XQuerySequenceType visitNamedRecordTypeDecl(NamedRecordTypeDeclContext ctx)
+    {
+        var typeName = ctx.qname().getText();
+        ResolvedName qName = namespaceResolver.resolve(typeName);
+        List<ExtendedFieldDeclarationContext> extendedFieldDeclaration = ctx.extendedFieldDeclaration();
+        int size = extendedFieldDeclaration.size();
+        Map<String, XQueryRecordField> fields = new HashMap<>(size);
+        List<ArgumentSpecification> mandatoryArgs = new ArrayList<>(size);
+        List<ArgumentSpecification> optionalArgs = new ArrayList<>(size);
+        for (ExtendedFieldDeclarationContext field : extendedFieldDeclaration) {
+            var fieldName = field.fieldDeclaration().fieldName().getText();
+            var fieldTypeCtx = field.fieldDeclaration().sequenceType();
+            XQuerySequenceType fieldType = anyItems;
+            if (fieldTypeCtx != null) {
+                fieldType = fieldTypeCtx.accept(this);
+            }
+            boolean isRequired = field.fieldDeclaration().QUESTION_MARK() == null;
+            ExprSingleContext defaultExpr = field.exprSingle();
+            fields.put(fieldName, new XQueryRecordField(fieldType, isRequired));
+            if (isRequired) {
+                if (defaultExpr == null) {
+                    mandatoryArgs.add(new ArgumentSpecification(fieldName, fieldType, null));
+                }
+                else {
+                    optionalArgs.add(new ArgumentSpecification(fieldName, fieldType, defaultExpr));
+                }
+            } else {
+                optionalArgs
+                    .add(new ArgumentSpecification(fieldName, fieldType, XQuerySemanticFunctionManager.EMPTY_SEQUENCE));
+            }
+        }
+        mandatoryArgs.addAll(optionalArgs);
+        var itemRecordType = ctx.extensibleFlag() == null
+            ? typeFactory.itemRecord(fields)
+            : typeFactory.itemExtensibleRecord(fields);
+        functionManager.register(qName.namespace(), qName.name(), mandatoryArgs, typeFactory.one(itemRecordType));
+        var status = typeFactory.registerItemNamedType(typeName, itemRecordType);
+        switch (status) {
+            case ALREADY_REGISTERED_DIFFERENT:
+                error(ctx, typeName + " has already been registered as type: " + typeFactory.namedType(typeName));
+                break;
+            case ALREADY_REGISTERED_SAME:
+                error(ctx, typeName + " has already been registered");
+                break;
+            case OK:
+                break;
+        }
+        return null;
     }
 
 

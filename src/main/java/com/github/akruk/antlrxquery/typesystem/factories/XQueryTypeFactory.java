@@ -8,7 +8,6 @@ import java.util.Set;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
-import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory.RegistrationStatus;
 
 public interface XQueryTypeFactory {
     public XQueryItemType itemError();

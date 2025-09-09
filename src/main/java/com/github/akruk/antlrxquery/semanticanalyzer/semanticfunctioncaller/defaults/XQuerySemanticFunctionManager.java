@@ -35,7 +35,7 @@ public class XQuerySemanticFunctionManager {
 
     private static final ParseTree CONTEXT_ITEM = getTree(".", parser -> parser.contextItemExpr());
     private static final ParseTree DEFAULT_COLLATION = getTree("fn:default-collation()", parser->parser.functionCall());
-    private static final ParseTree EMPTY_SEQUENCE = getTree("()", p->p.parenthesizedExpr());
+    public static final ParseTree EMPTY_SEQUENCE = getTree("()", p->p.parenthesizedExpr());
     private static final ParseTree DEFAULT_ROUNDING_MODE = getTree("'half-to-ceiling'", parser->parser.literal());
     private static final ParseTree ZERO_LITERAL = getTree("0", parser->parser.literal());
     private static final ParseTree NFC = XQuerySemanticFunctionManager.getTree("\"NFC\"", parser -> parser.literal());

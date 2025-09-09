@@ -244,7 +244,8 @@ public class BasicTextDocumentService implements TextDocumentService {
 
         final List<SemanticToken> tokens = new ArrayList<>();
 
-        final List<XQueryValue> typeValues = XQuery.evaluate(tree, "//(sequenceType|castTarget)", _parser).sequence;
+        final List<XQueryValue> typeValues = XQuery.evaluate(
+            tree, "//(sequenceType|castTarget)|//itemTypeDecl/(qname|itemType)|//namedRecordTypeDecl/qname", _parser).sequence;
         for (final XQueryValue val : typeValues) {
             final ParseTree node = val.node;
             if (!(node instanceof final ParserRuleContext ctx)) continue;

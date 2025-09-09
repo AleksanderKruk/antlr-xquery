@@ -2371,13 +2371,15 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             }
         }
         var returned = visitTypeDeclaration(ctx.typeDeclaration());
-        var bodyType = visitEnclosedExpr(ctx.functionBody().enclosedExpr());
-        if (!bodyType.isSubtypeOf(returned)) {
-            error(ctx.functionBody(), "Invalid returned type: " + bodyType + " is not subtype of " + returned);
+        FunctionBodyContext functionBody = ctx.functionBody();
+        if (functionBody != null) {
+            var bodyType = visitEnclosedExpr(functionBody.enclosedExpr());
+            if (!bodyType.isSubtypeOf(returned)) {
+                error(functionBody, "Invalid returned type: " + bodyType + " is not subtype of " + returned);
+            }
         }
         functionManager.register(
-            resolved.namespace(), resolved.name(),
-            args, returned);
+            resolved.namespace(), resolved.name(), args, returned);
 
         contextManager.leaveScope();
         return null;

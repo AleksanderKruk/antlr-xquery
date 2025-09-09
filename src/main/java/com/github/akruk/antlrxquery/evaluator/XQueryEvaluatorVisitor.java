@@ -751,6 +751,9 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     @Override
     public XQueryValue visitFunctionDecl(FunctionDeclContext ctx)
     {
+        if (ctx.EXTERNAL() != null) {
+            return null;
+        }
         String qname = ctx.qname().getText();
         ResolvedName resolved = namespaceResolver.resolve(qname);
         var argNames = new ArrayList<String>();

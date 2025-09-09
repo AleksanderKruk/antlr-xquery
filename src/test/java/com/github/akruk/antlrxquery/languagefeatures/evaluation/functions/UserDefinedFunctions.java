@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrxquery.languagefeatures.evaluation.EvaluationTestsBase;
 
-public class UserDefined extends EvaluationTestsBase {
+public class UserDefinedFunctions extends EvaluationTestsBase {
     @Test
     public void nodeName() throws Exception {
         String query = """

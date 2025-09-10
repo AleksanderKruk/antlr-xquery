@@ -21,6 +21,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryLexer;
 import com.github.akruk.antlrxquery.AntlrXqueryParser;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ArrowTargetContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionCallContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionDeclContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionNameContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.KeywordArgumentsContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.NamedFunctionRefContext;
@@ -54,6 +55,7 @@ public class BasicTextDocumentService implements TextDocumentService {
     private final Map<String, List<VarRefContext>> variableReferences = new HashMap<>();
     private final Map<String, List<VarNameAndTypeContext>> variableDeclarations = new HashMap<>();
     private final Map<String, List<VarNameAndTypeContext>> variableDeclarationsWithoutType = new HashMap<>();
+    private final Map<String, List<FunctionDeclContext>> functionDecls = new HashMap<>();
 
 
     private final int variableIndex;
@@ -245,7 +247,11 @@ public class BasicTextDocumentService implements TextDocumentService {
         final List<SemanticToken> tokens = new ArrayList<>();
 
         final List<XQueryValue> typeValues = XQuery.evaluate(
-            tree, "//(sequenceType|castTarget)|//itemTypeDecl/(qname|itemType)|//namedRecordTypeDecl/qname", _parser).sequence;
+            tree, """
+                    //(sequenceType|castTarget)
+                    | //itemTypeDecl/(qname|itemType)
+                    | //namedRecordTypeDecl/qname
+            """, _parser).sequence;
         for (final XQueryValue val : typeValues) {
             final ParseTree node = val.node;
             if (!(node instanceof final ParserRuleContext ctx)) continue;
@@ -283,6 +289,11 @@ public class BasicTextDocumentService implements TextDocumentService {
             final int length = stop.getStopIndex() - start.getStartIndex() + 1;
             tokens.add(new SemanticToken(line, charPos, length, functionIndex, 0));
         }
+        functionCalls.put(uri, functionValues.stream().map(v->(ParserRuleContext) v.node).toList());
+
+        final List<XQueryValue> fDecls = XQuery.evaluate(tree, "//functionDecl", _parser).sequence;
+        functionDecls.put(uri, fDecls.stream().map(t -> (FunctionDeclContext)t.node).toList());
+
         functionCalls.put(uri, functionValues.stream().map(v->(ParserRuleContext) v.node).toList());
 
         tokens.sort(Comparator
@@ -334,18 +345,12 @@ public class BasicTextDocumentService implements TextDocumentService {
         if (foundCtx != null) {
             if (foundCtx instanceof final NamedFunctionRefContext ctx) {
                 final ResolvedName qname = resolver.resolve(ctx.qname().getText());
-                final int arity = Integer.parseInt(ctx.IntegerLiteral().getText());
+                final int arity = getArity(ctx);
 
                 return getFunctionHover(foundCtx, analyzer, qname, arity);
 
             } else if (foundCtx instanceof final FunctionNameContext ctx) {
-                FunctionCallContext functionCall = (FunctionCallContext) foundCtx.getParent();
-                boolean isArrowCall = (functionCall.getParent() instanceof ArrowTargetContext);
-                PositionalArgumentsContext positionalArguments = functionCall.argumentList().positionalArguments();
-                int positionalArgCount = positionalArguments == null ? 0 : positionalArguments.argument().size();
-                KeywordArgumentsContext keywordArguments = functionCall.argumentList().keywordArguments();
-                int kewordArgCount = keywordArguments == null ? 0 : keywordArguments.keywordArgument().size();
-                int arity = positionalArgCount + kewordArgCount + (isArrowCall ? 1 : 0);
+                int arity = getArity(foundCtx);
                 final ResolvedName qname = resolver.resolve(ctx.getText());
 
                 return getFunctionHover(foundCtx, analyzer, qname, arity);
@@ -384,6 +389,23 @@ public class BasicTextDocumentService implements TextDocumentService {
 
 
         return CompletableFuture.completedFuture(null);
+    }
+
+    private int getArity(ParserRuleContext foundCtx)
+    {
+        FunctionCallContext functionCall = (FunctionCallContext) foundCtx.getParent();
+        boolean isArrowCall = (functionCall.getParent() instanceof ArrowTargetContext);
+        PositionalArgumentsContext positionalArguments = functionCall.argumentList().positionalArguments();
+        int positionalArgCount = positionalArguments == null ? 0 : positionalArguments.argument().size();
+        KeywordArgumentsContext keywordArguments = functionCall.argumentList().keywordArguments();
+        int kewordArgCount = keywordArguments == null ? 0 : keywordArguments.keywordArgument().size();
+        int arity = positionalArgCount + kewordArgCount + (isArrowCall ? 1 : 0);
+        return arity;
+    }
+
+    private int getArity(NamedFunctionRefContext ctx)
+    {
+        return Integer.parseInt(ctx.IntegerLiteral().getText());
     }
 
     private TypedVariable findTypedVar(final Position position, final List<TypedVariable> variablesMappedToTypes) {
@@ -631,7 +653,54 @@ public class BasicTextDocumentService implements TextDocumentService {
         var varRefs = variableReferences.get(document);
         var found = findRuleUsingPosition(position, varRefs);
         if (found == null) {
-            return CompletableFuture.completedFuture(Either.forLeft(List.of()));
+            var foundCall = findRuleUsingPosition(position, functionCalls.get(document));
+            if (foundCall == null) {
+                return CompletableFuture.completedFuture(Either.forLeft(List.of()));
+            }
+            if (foundCall instanceof NamedFunctionRefContext namedFunctionRef) {
+                var analyzer = semanticAnalyzers.get(document);
+                var qname = resolver.resolve(namedFunctionRef.qname().getText());
+                int arity = getArity(namedFunctionRef);
+                for (var fDeclUri : functionDecls.keySet()) {
+                    for (var fDecl : functionDecls.get(fDeclUri)) {
+                        var qname2 = resolver.resolve(fDecl.qname().getText());
+                        if (!qname.equals(qname2)) {
+                            continue;
+                        }
+                        FunctionSpecification spec = analyzer.getFunctionManager().getNamedFunctionSpecification(
+                            namedFunctionRef, qname.namespace(), qname.name(), arity);
+                        if (spec == null) {
+                            continue;
+                        }
+                        return CompletableFuture.completedFuture(Either.forLeft(List.of(
+                            new Location(fDeclUri, getContextRange(fDecl.qname()))
+                        )));
+                    }
+                }
+            } else if (foundCall instanceof FunctionNameContext functionName) {
+                int arity = getArity(functionName);
+                var analyzer = semanticAnalyzers.get(document);
+                var qname = resolver.resolve(functionName.getText());
+                for (var fDeclUri : functionDecls.keySet()) {
+                    for (var fDecl : functionDecls.get(fDeclUri)) {
+                        var qname2 = resolver.resolve(fDecl.qname().getText());
+                        if (!qname.equals(qname2)) {
+                            continue;
+                        }
+                        FunctionSpecification spec = analyzer.getFunctionManager().getNamedFunctionSpecification(
+                            functionName, qname.namespace(), qname.name(), arity);
+                        if (spec == null) {
+                            continue;
+                        }
+                        return CompletableFuture.completedFuture(Either.forLeft(List.of(
+                            new Location(fDeclUri, getContextRange(fDecl.qname()))
+                        )));
+                    }
+                }
+                return CompletableFuture.completedFuture(Either.forLeft(List.of()));
+            } else {
+                return CompletableFuture.completedFuture(Either.forLeft(List.of()));
+            }
         }
 
         String varname = found.getText();

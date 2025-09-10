@@ -169,8 +169,9 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             }
             final XQuerySequenceType type = varNameAndType.typeDeclaration().accept(this);
             if (!assignedValue.isSubtypeOf(type)) {
-                final String msg = String.format("Type of variable %s is not compatible with the assigned value",
-                    variableName);
+                final String msg = String.format(
+                    "Type of variable %s is not compatible with the assigned value: %s is not subtype of %s",
+                    variableName, assignedValue, type);
                 error(letBinding, msg);
             }
             contextManager.entypeVariable(variableName, type);
@@ -452,6 +453,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     {
         final Set<String> enumMembers = ctx.STRING().stream()
             .map(TerminalNode::getText)
+            .map(s->s.substring(1, s.length()-1))
             .collect(Collectors.toSet());
         return typeFactory.enum_(enumMembers);
     }

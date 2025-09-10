@@ -62,6 +62,12 @@ public class XQueryTypesTest {
 
 
     @Test
+    public void a() {
+        assertTrue(itemABenum.itemtypeIsSubtypeOf(itemABenum));
+    }
+
+
+    @Test
     public void stringDirectEquality() {
         assertEquals(string, string);
         assertNotEquals(string, number);

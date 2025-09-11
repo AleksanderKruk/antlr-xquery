@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -17,7 +18,9 @@ import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import com.github.akruk.antlrxquery.AntlrXqueryLexer;
 import com.github.akruk.antlrxquery.AntlrXqueryParser;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionBodyContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQueryVisitingSemanticContext;
@@ -32,6 +35,23 @@ public class XQuerySemanticFunctionManager {
                                         List<DiagnosticError> errors)
                                             {}
     public static record ArgumentSpecification(String name, XQuerySequenceType type, ParseTree defaultArgument) {}
+    public static record UsedArg(XQuerySequenceType type, XQueryValue value) {}
+    public interface GrainedAnalysis {
+        XQuerySequenceType analyze(List<UsedArg> args, XQueryVisitingSemanticContext context, ParseTree functionBody);
+
+    }
+    public static record FunctionSpecification(
+            long minArity,
+            long maxArity,
+            List<ArgumentSpecification> args,
+            XQuerySequenceType returnedType,
+            XQuerySequenceType requiredContextValueType,
+            boolean requiresPosition,
+            boolean requiresSize,
+            ParseTree body,
+            GrainedAnalysis grainedAnalysis)
+    { }
+
 
     private static final ParseTree CONTEXT_ITEM = getTree(".", parser -> parser.contextItemExpr());
     private static final ParseTree DEFAULT_COLLATION = getTree("fn:default-collation()", parser->parser.functionCall());
@@ -1305,10 +1325,10 @@ public class XQuerySemanticFunctionManager {
             List.of(), typeFactory.number(),
             null,
             true,
-            false);
+            false, null, null);
 
         // fn:last() as xs:integer
-        register("fn", "last", List.of(), typeFactory.number(), null, false, true);
+        register("fn", "last", List.of(), typeFactory.number(), null, false, true, null, null);
 
         // fn:current-dateTime() as xs:dateTimeStamp
         register(
@@ -2695,16 +2715,6 @@ public class XQuerySemanticFunctionManager {
         return initialRule.apply(parser);
     }
 
-    public record FunctionSpecification(
-            long minArity,
-            long maxArity,
-            List<ArgumentSpecification> args,
-            XQuerySequenceType returnedType,
-            XQuerySequenceType requiredContextValueType,
-            boolean requiresPosition,
-            boolean requiresSize)
-    { }
-
     final Map<String, Map<String, List<FunctionSpecification>>> namespaces;
 
     private AnalysisResult handleUnknownNamespace(final String namespace, final DiagnosticError errorMessageSupplier,
@@ -2996,12 +3006,32 @@ public class XQuerySemanticFunctionManager {
         return specAndErrors.spec;
     }
 
+
     public XQuerySemanticError register(
             final String namespace,
             final String functionName,
             final List<ArgumentSpecification> args,
             final XQuerySequenceType returnedType) {
-        return register(namespace, functionName, args, returnedType, null, false, false);
+        return register(namespace, functionName, args, returnedType, null, false, false, null, ((_, _, _) -> returnedType));
+    }
+
+    public XQuerySemanticError register(
+            final String namespace,
+            final String functionName,
+            final List<ArgumentSpecification> args,
+            final XQuerySequenceType returnedType,
+            final ParseTree body) {
+        return register(namespace, functionName, args, returnedType, null, false, false, body, null);
+    }
+
+    public XQuerySemanticError register(
+            final String namespace,
+            final String functionName,
+            final List<ArgumentSpecification> args,
+            final XQuerySequenceType returnedType,
+            final ParseTree body,
+            final GrainedAnalysis analysis) {
+        return register(namespace, functionName, args, returnedType, null, false, false, body, analysis);
     }
 
     public XQuerySemanticError register(
@@ -3011,7 +3041,9 @@ public class XQuerySemanticFunctionManager {
             final XQuerySequenceType returnedType,
             final XQuerySequenceType requiredContextValueType,
             final boolean requiresPosition,
-            final boolean requiresLength)
+            final boolean requiresLength,
+            final ParseTree body,
+            final GrainedAnalysis analysis)
     {
         final long minArity = args.stream().filter(arg -> arg.defaultArgument() == null).collect(Collectors.counting());
         final long maxArity = args.size();
@@ -3019,7 +3051,7 @@ public class XQuerySemanticFunctionManager {
             final Map<String, List<FunctionSpecification>> functions = new HashMap<>();
             final List<FunctionSpecification> functionList = new ArrayList<>();
             functionList.add(new FunctionSpecification(minArity, maxArity, args, returnedType, requiredContextValueType,
-                    requiresPosition, requiresLength));
+                    requiresPosition, requiresLength, body, analysis));
             functions.put(functionName, functionList);
             namespaces.put(namespace, functions);
             return null;
@@ -3028,7 +3060,7 @@ public class XQuerySemanticFunctionManager {
         if (!namespaceMapping.containsKey(functionName)) {
             final List<FunctionSpecification> functionList = new ArrayList<>();
             functionList.add(new FunctionSpecification(minArity, maxArity, args, returnedType, requiredContextValueType,
-                    requiresPosition, requiresLength));
+                    requiresPosition, requiresLength, body, analysis));
             namespaceMapping.put(functionName, functionList);
             return null;
         }
@@ -3041,7 +3073,7 @@ public class XQuerySemanticFunctionManager {
             return XQuerySemanticError.FunctionNameArityConflict;
         }
         alreadyRegistered.add(new FunctionSpecification(minArity, maxArity, args, returnedType, requiredContextValueType,
-                requiresPosition, requiresLength));
+                requiresPosition, requiresLength, body, analysis));
         return null;
     }
 }

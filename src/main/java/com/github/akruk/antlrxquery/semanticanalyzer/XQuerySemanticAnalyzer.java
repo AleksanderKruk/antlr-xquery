@@ -2378,6 +2378,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             }
         }
         var returned = visitTypeDeclaration(ctx.typeDeclaration());
+        functionManager.register(
+            resolved.namespace(), resolved.name(), args, returned);
         FunctionBodyContext functionBody = ctx.functionBody();
         if (functionBody != null) {
             var bodyType = visitEnclosedExpr(functionBody.enclosedExpr());
@@ -2385,8 +2387,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
                 error(functionBody, "Invalid returned type: " + bodyType + " is not subtype of " + returned);
             }
         }
-        functionManager.register(
-            resolved.namespace(), resolved.name(), args, returned);
 
         contextManager.leaveScope();
         return null;

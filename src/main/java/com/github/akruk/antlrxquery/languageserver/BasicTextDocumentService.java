@@ -19,6 +19,7 @@ import org.eclipse.lsp4j.services.*;
 
 import com.github.akruk.antlrxquery.AntlrXqueryLexer;
 import com.github.akruk.antlrxquery.AntlrXqueryParser;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.ArgumentListContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ArrowTargetContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionCallContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionDeclContext;
@@ -52,7 +53,8 @@ public class BasicTextDocumentService implements TextDocumentService {
     private final Map<String, List<Token>> tokenStore = new HashMap<>();
     private final Map<String, ParseTree> parseTreeStore = new HashMap<>();
     private final Map<String, VariableAnalyzer> semanticAnalyzers = new HashMap<>();
-    private final Map<String, List<ParserRuleContext>> functionCalls = new HashMap<>();
+    private final Map<String, List<NamedFunctionRefContext>> namedFunctionRefs = new HashMap<>();
+    private final Map<String, List<FunctionNameContext>> functionNames = new HashMap<>();
     private final Map<String, List<ParserRuleContext>> types = new HashMap<>();
     private final Map<String, List<TypeNameContext>> namedTypes = new HashMap<>();
     private final Map<String, List<VarRefContext>> variableReferences = new HashMap<>();
@@ -228,6 +230,22 @@ public class BasicTextDocumentService implements TextDocumentService {
                 .toList();
             namedTypes.put(uri, typeNameContexts);
 
+            final List<XQueryValue> recordDecls = XQuery.evaluate(tree, "//namedRecordTypeDecl", _parser).sequence;
+            final List<NamedRecordTypeDeclContext> rdecls = recordDecls.stream().map(v->(NamedRecordTypeDeclContext)v.node).toList();
+            recordDeclarations.put(uri, rdecls);
+
+            final List<XQueryValue> variableRefs = XQuery.evaluate(tree, "//varRef", _parser).sequence;
+            variableReferences.put(uri, variableRefs.stream().map(v->(VarRefContext)v.node).toList());
+
+            final List<XQueryValue> fNames = XQuery.evaluate(tree, "//functionName", _parser).sequence;
+            functionNames.put(uri, fNames.stream().map(v -> (FunctionNameContext) v.node).toList());
+
+            final List<XQueryValue> namedRefs = XQuery.evaluate(tree, "//namedFunctionRef", _parser).sequence;
+            namedFunctionRefs.put(uri, namedRefs.stream().map(v -> (NamedFunctionRefContext) v.node).toList());
+
+            final List<XQueryValue> fDecls = XQuery.evaluate(tree, "//functionDecl", _parser).sequence;
+            functionDecls.put(uri, fDecls.stream().map(t -> (FunctionDeclContext)t.node).toList());
+
         } catch (final Exception e) {
             System.err.println("[parseAndAnalyze] Exception: " + e.getClass().getName() + " - " + e.getMessage());
             for (final StackTraceElement el : e.getStackTrace()) {
@@ -241,6 +259,7 @@ public class BasicTextDocumentService implements TextDocumentService {
     private final AntlrXqueryParser _parser = new AntlrXqueryParser(_tokens);
     private final NamespaceResolver resolver;
 
+    record SemanticToken(int line, int charPos, int length, int typeIndex, int modifierBitmask) {}
 
     @Override
     public CompletableFuture<SemanticTokens> semanticTokensFull(final SemanticTokensParams params) {
@@ -252,7 +271,6 @@ public class BasicTextDocumentService implements TextDocumentService {
             return CompletableFuture.completedFuture(new SemanticTokens(List.of()));
         }
 
-        record SemanticToken(int line, int charPos, int length, int typeIndex, int modifierBitmask) {}
 
         final List<SemanticToken> tokens = new ArrayList<>();
 
@@ -275,13 +293,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         types.put(uri, typeValues.stream().map(v->(ParserRuleContext) v.node).toList());
 
 
-        final List<XQueryValue> recordDecls = XQuery.evaluate(tree, "//namedRecordTypeDecl", _parser).sequence;
-        final List<NamedRecordTypeDeclContext> rdecls = recordDecls.stream().map(v->(NamedRecordTypeDeclContext)v.node).toList();
-        recordDeclarations.put(uri, rdecls);
-
-        final List<XQueryValue> variableRefs = XQuery.evaluate(tree, "//(varRef)", _parser).sequence;
-        final List<VarRefContext> variableRefContexts = variableRefs.stream().map(v->(VarRefContext)v.node).toList();
-        for (final var ctx : variableRefContexts) {
+        for (final var ctx : variableReferences.get(uri)) {
             final Token start = ctx.DOLLAR().getSymbol();
             final Token stop = ctx.qname().getStop();
             final int line = start.getLine() - 1;
@@ -290,25 +302,16 @@ public class BasicTextDocumentService implements TextDocumentService {
             SemanticToken semTok = new SemanticToken(line, charPos, length, variableIndex, 0);
             tokens.add(semTok);
         }
-        variableReferences.put(uri, variableRefContexts);
 
-        final List<XQueryValue> functionValues = XQuery.evaluate(tree, "//(functionName|namedFunctionRef)", _parser).sequence;
-        for (final XQueryValue val : functionValues) {
-            final ParseTree node = val.node;
-            if (!(node instanceof final ParserRuleContext ctx)) continue;
-            final Token start = ctx.getStart();
-            final Token stop = ctx.getStop();
-            final int line = start.getLine() - 1;
-            final int charPos = start.getCharPositionInLine();
-            final int length = stop.getStopIndex() - start.getStartIndex() + 1;
-            tokens.add(new SemanticToken(line, charPos, length, functionIndex, 0));
+        for (final var val : functionNames.get(uri)) {
+            final SemanticToken functionToken = getFunctionSemanticToken(val);
+            tokens.add(functionToken);
         }
-        functionCalls.put(uri, functionValues.stream().map(v->(ParserRuleContext) v.node).toList());
+        for (final var val : namedFunctionRefs.get(uri)) {
+            final SemanticToken functionToken = getFunctionSemanticToken(val);
+            tokens.add(functionToken);
+        }
 
-        final List<XQueryValue> fDecls = XQuery.evaluate(tree, "//functionDecl", _parser).sequence;
-        functionDecls.put(uri, fDecls.stream().map(t -> (FunctionDeclContext)t.node).toList());
-
-        functionCalls.put(uri, functionValues.stream().map(v->(ParserRuleContext) v.node).toList());
 
         tokens.sort(Comparator
             .comparingInt(SemanticToken::line)
@@ -335,6 +338,17 @@ public class BasicTextDocumentService implements TextDocumentService {
         return CompletableFuture.completedFuture(new SemanticTokens(data));
     }
 
+    private SemanticToken getFunctionSemanticToken(ParserRuleContext ctx)
+    {
+        final Token start = ctx.getStart();
+        final Token stop = ctx.getStop();
+        final int line = start.getLine() - 1;
+        final int charPos = start.getCharPositionInLine();
+        final int length = stop.getStopIndex() - start.getStartIndex() + 1;
+        SemanticToken functionToken = new SemanticToken(line, charPos, length, functionIndex, 0);
+        return functionToken;
+    }
+
 
     @Override
     public CompletableFuture<Hover> hover(final HoverParams params)
@@ -350,26 +364,24 @@ public class BasicTextDocumentService implements TextDocumentService {
 
         final var analyzer = semanticAnalyzers.get(uri);
 
-        final List<ParserRuleContext> calls = functionCalls.get(uri);
-        if (calls.isEmpty()) {
+        final List<FunctionNameContext> names = functionNames.get(uri);
+        final List<NamedFunctionRefContext> namedRefs = namedFunctionRefs.get(uri);
+        if (names.isEmpty() && namedRefs.isEmpty()) {
             return CompletableFuture.completedFuture(null);
         }
 
-        ParserRuleContext foundCtx = findRuleUsingPosition(position, calls);
-        if (foundCtx != null) {
-            if (foundCtx instanceof final NamedFunctionRefContext ctx) {
-                final ResolvedName qname = resolver.resolve(ctx.qname().getText());
-                final int arity = getArity(ctx);
+        FunctionNameContext foundName = findRuleUsingPosition(position, names);
+        if (foundName != null) {
+            int arity = getArity(foundName);
+            final ResolvedName qname = resolver.resolve(foundName.getText());
+            return getFunctionHover(foundName, analyzer, qname, arity);
+        }
+        NamedFunctionRefContext foundNamedRef = findRuleUsingPosition(position, namedRefs);
+        if (foundNamedRef != null) {
+            final ResolvedName qname = resolver.resolve(foundNamedRef.qname().getText());
+            final int arity = getArity(foundNamedRef);
 
-                return getFunctionHover(foundCtx, analyzer, qname, arity);
-
-            } else if (foundCtx instanceof final FunctionNameContext ctx) {
-                int arity = getArity(foundCtx);
-                final ResolvedName qname = resolver.resolve(ctx.getText());
-
-                return getFunctionHover(foundCtx, analyzer, qname, arity);
-            }
-
+            return getFunctionHover(foundNamedRef, analyzer, qname, arity);
         }
 
         final List<TypedVariable> variablesMappedToTypes = analyzer.variablesMappedToTypes;
@@ -401,20 +413,24 @@ public class BasicTextDocumentService implements TextDocumentService {
             return CompletableFuture.completedFuture(hover);
         }
 
-
         return CompletableFuture.completedFuture(null);
     }
 
     private int getArity(ParserRuleContext foundCtx)
     {
         FunctionCallContext functionCall = (FunctionCallContext) foundCtx.getParent();
-        boolean isArrowCall = (functionCall.getParent() instanceof ArrowTargetContext);
+        boolean isArrowCall = isArrowCall(functionCall);
         PositionalArgumentsContext positionalArguments = functionCall.argumentList().positionalArguments();
         int positionalArgCount = positionalArguments == null ? 0 : positionalArguments.argument().size();
         KeywordArgumentsContext keywordArguments = functionCall.argumentList().keywordArguments();
         int kewordArgCount = keywordArguments == null ? 0 : keywordArguments.keywordArgument().size();
         int arity = positionalArgCount + kewordArgCount + (isArrowCall ? 1 : 0);
         return arity;
+    }
+
+    private boolean isArrowCall(FunctionCallContext functionCall)
+    {
+        return functionCall.getParent() instanceof ArrowTargetContext;
     }
 
     private int getArity(NamedFunctionRefContext ctx)
@@ -639,11 +655,12 @@ public class BasicTextDocumentService implements TextDocumentService {
         List<TypedVariable> varsToTypes = analyzer.variablesMappedToTypes;
         for (var variable : variableDeclarationsWithoutType.get(uri)) {
             TypedVariable typedVariable = varsToTypes.stream()
-                .filter(typedVar->typedVar.varRef() == variable.varRef())
+                .filter(typedVar -> typedVar.varRef() == variable.varRef())
                 .findFirst()
                 .get();
             Token stop = typedVariable.varRef().getStop();
-            Position hintPosition = new Position(stop.getLine() - 1, stop.getCharPositionInLine() + stop.getText().length());
+            Position hintPosition = new Position(stop.getLine() - 1,
+                stop.getCharPositionInLine() + stop.getText().length());
 
             InlayHint hint = new InlayHint();
             hint.setPosition(hintPosition);
@@ -654,6 +671,39 @@ public class BasicTextDocumentService implements TextDocumentService {
             hints.add(hint);
         }
 
+        for (FunctionNameContext functionName : functionNames.getOrDefault(uri, List.of())) {
+            int arity = getArity(functionName);
+            ResolvedName resolvedName = resolver.resolve(functionName.qname().getText());
+            FunctionSpecification spec = analyzer.getFunctionManager().getNamedFunctionSpecification(
+                functionName, resolvedName.namespace(), resolvedName.name(), arity);
+            FunctionCallContext functionCall = (FunctionCallContext) functionName.getParent();
+            ArgumentListContext argumentList = functionCall.argumentList();
+            if (argumentList == null) {
+                continue;
+            }
+            PositionalArgumentsContext positionalArguments = argumentList.positionalArguments();
+            if (positionalArguments == null) {
+                continue;
+            }
+            int argIndex = isArrowCall(functionCall) ? 1 : 0;
+            for (var positional : positionalArguments.argument()) {
+                Token start = positional.getStart();
+                Position hintPosition = new Position(start.getLine() - 1, start.getCharPositionInLine());
+                if (argIndex >= spec.args().size()) {
+                    continue;
+                }
+                ArgumentSpecification argSpec = spec.args().get(argIndex);
+
+                InlayHint hint = new InlayHint();
+                hint.setPosition(hintPosition);
+                hint.setLabel(Either.forLeft(argSpec.name() + ":"));
+                hint.setKind(InlayHintKind.Parameter);
+                hint.setPaddingLeft(true);
+                hints.add(hint);
+                argIndex++;
+            }
+
+        }
         return CompletableFuture.completedFuture(hints);
     }
 
@@ -733,8 +783,12 @@ public class BasicTextDocumentService implements TextDocumentService {
         if (foundVarRef != null) {
             return handleVariableReferenceDefinition(document, foundVarRef);
         }
-        ParserRuleContext foundCall = findRuleUsingPosition(position, functionCalls.get(document));
+        ParserRuleContext foundCall = findRuleUsingPosition(position, functionNames.get(document));
         if (foundCall != null) {
+            return handleFunctionCallDefinition(foundCall, document);
+        }
+        ParserRuleContext foundNamedRef = findRuleUsingPosition(position, namedFunctionRefs.get(document));
+        if (foundNamedRef != null) {
             return handleFunctionCallDefinition(foundCall, document);
         }
         TypeNameContext foundNamedType = findRuleUsingPosition(position, namedTypes.get(document));

@@ -25,7 +25,9 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionDeclContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionNameContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.KeywordArgumentsContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.NamedFunctionRefContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.NamedRecordTypeDeclContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PositionalArgumentsContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.TypeNameContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameAndTypeContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarRefContext;
 import com.github.akruk.antlrxquery.evaluator.XQuery;
@@ -52,10 +54,12 @@ public class BasicTextDocumentService implements TextDocumentService {
     private final Map<String, VariableAnalyzer> semanticAnalyzers = new HashMap<>();
     private final Map<String, List<ParserRuleContext>> functionCalls = new HashMap<>();
     private final Map<String, List<ParserRuleContext>> types = new HashMap<>();
+    private final Map<String, List<TypeNameContext>> namedTypes = new HashMap<>();
     private final Map<String, List<VarRefContext>> variableReferences = new HashMap<>();
     private final Map<String, List<VarNameAndTypeContext>> variableDeclarations = new HashMap<>();
     private final Map<String, List<VarNameAndTypeContext>> variableDeclarationsWithoutType = new HashMap<>();
     private final Map<String, List<FunctionDeclContext>> functionDecls = new HashMap<>();
+    private final Map<String, List<NamedRecordTypeDeclContext>> recordDeclarations = new HashMap<>();
 
 
     private final int variableIndex;
@@ -218,6 +222,12 @@ public class BasicTextDocumentService implements TextDocumentService {
             variableDeclarations.put(uri, declarationContexts);
             variableDeclarationsWithoutType.put(uri, declarationWithoutTypeContexts);
 
+            final var typeNames = XQuery.evaluate(tree, "//typeName", _parser).sequence;
+            final List<TypeNameContext> typeNameContexts = typeNames.stream()
+                .map(x->(TypeNameContext) x.node)
+                .toList();
+            namedTypes.put(uri, typeNameContexts);
+
         } catch (final Exception e) {
             System.err.println("[parseAndAnalyze] Exception: " + e.getClass().getName() + " - " + e.getMessage());
             for (final StackTraceElement el : e.getStackTrace()) {
@@ -264,6 +274,10 @@ public class BasicTextDocumentService implements TextDocumentService {
         }
         types.put(uri, typeValues.stream().map(v->(ParserRuleContext) v.node).toList());
 
+
+        final List<XQueryValue> recordDecls = XQuery.evaluate(tree, "//namedRecordTypeDecl", _parser).sequence;
+        final List<NamedRecordTypeDeclContext> rdecls = recordDecls.stream().map(v->(NamedRecordTypeDeclContext)v.node).toList();
+        recordDeclarations.put(uri, rdecls);
 
         final List<XQueryValue> variableRefs = XQuery.evaluate(tree, "//(varRef)", _parser).sequence;
         final List<VarRefContext> variableRefContexts = variableRefs.stream().map(v->(VarRefContext)v.node).toList();
@@ -644,6 +658,70 @@ public class BasicTextDocumentService implements TextDocumentService {
     }
 
 
+    CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
+        handleFunctionCallDefinition(ParserRuleContext foundCall, String document)
+    {
+        if (foundCall instanceof NamedFunctionRefContext namedFunctionRef) {
+            var analyzer = semanticAnalyzers.get(document);
+            var qname = resolver.resolve(namedFunctionRef.qname().getText());
+            int arity = getArity(namedFunctionRef);
+            FunctionSpecification spec = analyzer.getFunctionManager().getNamedFunctionSpecification(
+                namedFunctionRef, qname.namespace(), qname.name(), arity);
+            if (spec == null) {
+                return CompletableFuture.completedFuture(Either.forLeft(List.of()));
+            }
+            for (var fDeclUri : functionDecls.keySet()) {
+                for (var fDecl : functionDecls.get(fDeclUri)) {
+                    var qname2 = resolver.resolve(fDecl.qname().getText());
+                    if (!qname.equals(qname2)) {
+                        continue;
+                    }
+                    return CompletableFuture.completedFuture(Either.forLeft(List.of(
+                        new Location(fDeclUri, getContextRange(fDecl.qname()))
+                    )));
+                }
+            }
+        } else if (foundCall instanceof FunctionNameContext functionName) {
+            int arity = getArity(functionName);
+            var analyzer = semanticAnalyzers.get(document);
+            var qname = resolver.resolve(functionName.getText());
+            FunctionSpecification spec = analyzer.getFunctionManager().getNamedFunctionSpecification(
+                functionName, qname.namespace(), qname.name(), arity);
+            if (spec == null) {
+                return CompletableFuture.completedFuture(Either.forLeft(List.of()));
+            }
+            for (var fDeclUri : functionDecls.keySet()) {
+                for (var fDecl : functionDecls.get(fDeclUri)) {
+                    var qname2 = resolver.resolve(fDecl.qname().getText());
+                    if (!qname.equals(qname2)) {
+                        continue;
+                    }
+                    return CompletableFuture.completedFuture(Either.forLeft(List.of(
+                        new Location(fDeclUri, getContextRange(fDecl.qname())))));
+                }
+            }
+
+            for (var recordUrl : recordDeclarations.keySet()) {
+                for (var record : recordDeclarations.get(recordUrl)) {
+                    var name = record.qname().getText();
+                    var resolved = resolver.resolve(name);
+                    if (resolved.equals(qname)) {
+                        return CompletableFuture.completedFuture(Either.forLeft(List.of(
+                            new Location(recordUrl, getContextRange(record.qname())))));
+                    }
+
+                }
+            }
+
+            return CompletableFuture.completedFuture(Either.forLeft(List.of()));
+        } else {
+            return CompletableFuture.completedFuture(Either.forLeft(List.of()));
+        }
+        return CompletableFuture.completedFuture(Either.forLeft(List.of()));
+
+    }
+
+
     @Override
     public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(
             DefinitionParams params)
@@ -651,60 +729,44 @@ public class BasicTextDocumentService implements TextDocumentService {
         var position = params.getPosition();
         var document = params.getTextDocument().getUri();
         var varRefs = variableReferences.get(document);
-        var found = findRuleUsingPosition(position, varRefs);
-        if (found == null) {
-            var foundCall = findRuleUsingPosition(position, functionCalls.get(document));
-            if (foundCall == null) {
-                return CompletableFuture.completedFuture(Either.forLeft(List.of()));
-            }
-            if (foundCall instanceof NamedFunctionRefContext namedFunctionRef) {
-                var analyzer = semanticAnalyzers.get(document);
-                var qname = resolver.resolve(namedFunctionRef.qname().getText());
-                int arity = getArity(namedFunctionRef);
-                for (var fDeclUri : functionDecls.keySet()) {
-                    for (var fDecl : functionDecls.get(fDeclUri)) {
-                        var qname2 = resolver.resolve(fDecl.qname().getText());
-                        if (!qname.equals(qname2)) {
-                            continue;
-                        }
-                        FunctionSpecification spec = analyzer.getFunctionManager().getNamedFunctionSpecification(
-                            namedFunctionRef, qname.namespace(), qname.name(), arity);
-                        if (spec == null) {
-                            continue;
-                        }
-                        return CompletableFuture.completedFuture(Either.forLeft(List.of(
-                            new Location(fDeclUri, getContextRange(fDecl.qname()))
-                        )));
-                    }
-                }
-            } else if (foundCall instanceof FunctionNameContext functionName) {
-                int arity = getArity(functionName);
-                var analyzer = semanticAnalyzers.get(document);
-                var qname = resolver.resolve(functionName.getText());
-                for (var fDeclUri : functionDecls.keySet()) {
-                    for (var fDecl : functionDecls.get(fDeclUri)) {
-                        var qname2 = resolver.resolve(fDecl.qname().getText());
-                        if (!qname.equals(qname2)) {
-                            continue;
-                        }
-                        FunctionSpecification spec = analyzer.getFunctionManager().getNamedFunctionSpecification(
-                            functionName, qname.namespace(), qname.name(), arity);
-                        if (spec == null) {
-                            continue;
-                        }
-                        return CompletableFuture.completedFuture(Either.forLeft(List.of(
-                            new Location(fDeclUri, getContextRange(fDecl.qname()))
-                        )));
-                    }
-                }
-                return CompletableFuture.completedFuture(Either.forLeft(List.of()));
-            } else {
-                return CompletableFuture.completedFuture(Either.forLeft(List.of()));
-            }
+        VarRefContext foundVarRef = findRuleUsingPosition(position, varRefs);
+        if (foundVarRef != null) {
+            return handleVariableReferenceDefinition(document, foundVarRef);
         }
+        ParserRuleContext foundCall = findRuleUsingPosition(position, functionCalls.get(document));
+        if (foundCall != null) {
+            return handleFunctionCallDefinition(foundCall, document);
+        }
+        TypeNameContext foundNamedType = findRuleUsingPosition(position, namedTypes.get(document));
+        if (foundNamedType != null) {
+            return handleTypeName(foundNamedType);
+        }
+        return CompletableFuture.completedFuture(Either.forLeft(List.of()));
+    }
 
-        String varname = found.getText();
-        int foundOffset = found.getStart().getStartIndex();
+    private CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> handleTypeName(
+        TypeNameContext foundNamedType)
+    {
+        var resolvedName = resolver.resolve(foundNamedType.qname().getText());
+        for (var recordDeclUrl : recordDeclarations.keySet()) {
+            for (var recordDecl : recordDeclarations.get(recordDeclUrl)) {
+                var recordName = resolver.resolve(recordDecl.qname().getText());
+                if (recordName.equals(resolvedName)) {
+                    return CompletableFuture.completedFuture(Either.forLeft(List.of(
+                        new Location(recordDeclUrl, getContextRange(recordDecl.qname()))
+                    )));
+                }
+            }
+
+        }
+        return CompletableFuture.completedFuture(Either.forLeft(List.of()));
+    }
+
+    private CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> handleVariableReferenceDefinition(
+        String document, VarRefContext foundVarRef)
+    {
+        String varname = foundVarRef.getText();
+        int foundOffset = foundVarRef.getStart().getStartIndex();
         VarNameAndTypeContext previousDecl = null;
 
         for (var vdef : variableDeclarations.getOrDefault(document, List.of())) {

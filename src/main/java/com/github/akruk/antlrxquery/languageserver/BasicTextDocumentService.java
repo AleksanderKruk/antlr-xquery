@@ -478,6 +478,7 @@ public class BasicTextDocumentService implements TextDocumentService {
 
 
     private String varBeingRenamed = null;
+    private FunctionDeclData functionBeingRenamed = null;
     @Override
     public CompletableFuture<Either3<Range, PrepareRenameResult, PrepareRenameDefaultBehavior>>
         prepareRename(PrepareRenameParams params)
@@ -491,17 +492,55 @@ public class BasicTextDocumentService implements TextDocumentService {
         );
         final String uri = params.getTextDocument().getUri();
         final var vars = variableReferences.get(uri);
-        if (vars.isEmpty()) {
-            return failedFuture;
+        final Position position = params.getPosition();
+        final var foundVar = findRuleUsingPosition(position, vars);
+        if (foundVar != null) {
+            // TODO: Add variable char validation
+            var range = getContextRange(foundVar.qname());
+            varBeingRenamed = foundVar.qname().getText();
+            functionBeingRenamed = null;
+            return CompletableFuture.completedFuture(Either3.forFirst(range));
         }
-        final var foundVar = findRuleUsingPosition(params.getPosition(), vars);
-        if (foundVar == null) {
-            return failedFuture;
-        }
-        var range = getContextRange(foundVar.qname());
-        varBeingRenamed = foundVar.qname().getText();
-        return CompletableFuture.completedFuture(Either3.forFirst(range));
 
+        VariableAnalyzer analyzer = semanticAnalyzers.get(uri);
+        {
+            var foundFunctionName = findRuleUsingPosition(position, functionNames.get(uri));
+            if (foundFunctionName != null) {
+                var fName = resolver.resolve(foundFunctionName.qname().getText());
+                var functionDeclaration = getFunctionDeclaration(foundFunctionName, fName, analyzer);
+                if (functionDeclaration != null) {
+                    functionBeingRenamed = functionDeclaration;
+                    varBeingRenamed = null;
+                    Range contextRange = getContextRange(foundFunctionName.qname());
+                    return CompletableFuture.completedFuture(Either3.forFirst(contextRange));
+                }
+            }
+        }
+        {
+            var foundFunctionRef = findRuleUsingPosition(position, namedFunctionRefs.get(uri));
+            if (foundFunctionRef != null) {
+                var fName = resolver.resolve(foundFunctionRef.qname().getText());
+                var functionDeclaration = getFunctionDeclaration(foundFunctionRef, fName, analyzer);
+                if (functionDeclaration != null) {
+                    functionBeingRenamed = functionDeclaration;
+                    varBeingRenamed = null;
+                    Range contextRange = getContextRange(foundFunctionRef.qname());
+                    return CompletableFuture.completedFuture(Either3.forFirst(contextRange));
+                }
+            }
+        }
+        {
+            for (var fDecl : functionDecls.get(uri)) {
+                if (isPositionInsideContext(position, fDecl.qname())) {
+                    functionBeingRenamed = new FunctionDeclData(uri, fDecl);
+                    Range contextRange = getContextRange(fDecl.qname());
+                    return CompletableFuture.completedFuture(Either3.forFirst(contextRange));
+                }
+            }
+        }
+        varBeingRenamed = null;
+        functionBeingRenamed = null;
+        return failedFuture;
     }
 
     @Override
@@ -511,19 +550,60 @@ public class BasicTextDocumentService implements TextDocumentService {
 
         Map<String, List<TextEdit>> edits = new HashMap<>();
 
-        List<TextEdit> fileEdits = new ArrayList<>();
+        if (varBeingRenamed != null) {
+            handleVarRenamingFileEdits(uri, newName, edits);
+        }
+        if (functionBeingRenamed != null) {
+            handleFunctionRenamingFileEdits(uri, newName, edits);
+            TextEdit fDeclNameEdit = new TextEdit(getContextRange(functionBeingRenamed.context.qname()), newName);
+            edits.get(uri).add(fDeclNameEdit);
+        }
+
+        return CompletableFuture.completedFuture(new WorkspaceEdit(edits));
+    }
+
+    private void handleFunctionRenamingFileEdits(String uri, String newName, Map<String, List<TextEdit>> edits)
+    {
+        for (var functionUri : functionNames.keySet()) {
+            List<TextEdit> fileEdits = edits.computeIfAbsent(functionUri, (_)->new ArrayList<>());
+            for (var functionName : functionNames.get(functionUri)) {
+                var qname = resolver.resolve(functionName.qname().getText());
+                FunctionDeclData functionDeclaration = getFunctionDeclaration(
+                    functionName, qname, semanticAnalyzers.get(functionUri));
+                if (functionDeclaration == null)
+                    continue;
+                if (functionDeclaration.context == functionBeingRenamed.context) {
+                    Range range = getContextRange(functionName.qname());
+                    fileEdits.add(new TextEdit(range, newName));
+                }
+            }
+
+        }
+        for (var namedUri : namedFunctionRefs.keySet()) {
+            List<TextEdit> fileEdits = edits.computeIfAbsent(namedUri, (_)->new ArrayList<>());
+            for (var namedRef : namedFunctionRefs.getOrDefault(namedUri, List.of())) {
+                var qname = resolver.resolve(namedRef.qname().getText());
+                FunctionDeclData functionDeclaration = getFunctionDeclaration(
+                    namedRef, qname, semanticAnalyzers.get(namedUri));
+                if (functionDeclaration == null)
+                    continue;
+                if (functionDeclaration.context == functionBeingRenamed.context) {
+                    Range range = getContextRange(namedRef.qname());
+                    fileEdits.add(new TextEdit(range, newName));
+                }
+            }
+        }
+    }
+
+    private void handleVarRenamingFileEdits(String uri, String newName, Map<String, List<TextEdit>> edits)
+    {
+        List<TextEdit> fileEdits = edits.computeIfAbsent(uri, (_)->new ArrayList<>());
         for (var variable : variableReferences.getOrDefault(uri, List.of())) {
             if (variable.qname().getText().equals(varBeingRenamed)) {
                 Range range = getContextRange(variable.qname());
                 fileEdits.add(new TextEdit(range, newName));
             }
         }
-
-        if (!fileEdits.isEmpty()) {
-            edits.put(uri, fileEdits);
-        }
-
-        return CompletableFuture.completedFuture(new WorkspaceEdit(edits));
     }
 
 
@@ -648,7 +728,8 @@ public class BasicTextDocumentService implements TextDocumentService {
     }
 
     @Override
-    public CompletableFuture<List<InlayHint>> inlayHint(InlayHintParams params) {
+    public CompletableFuture<List<InlayHint>> inlayHint(InlayHintParams params)
+    {
         String uri = params.getTextDocument().getUri();
         List<InlayHint> hints = new ArrayList<>();
         var analyzer = semanticAnalyzers.get(uri);
@@ -676,6 +757,8 @@ public class BasicTextDocumentService implements TextDocumentService {
             ResolvedName resolvedName = resolver.resolve(functionName.qname().getText());
             FunctionSpecification spec = analyzer.getFunctionManager().getNamedFunctionSpecification(
                 functionName, resolvedName.namespace(), resolvedName.name(), arity);
+            if (spec == null)
+                continue;
             FunctionCallContext functionCall = (FunctionCallContext) functionName.getParent();
             ArgumentListContext argumentList = functionCall.argumentList();
             if (argumentList == null) {
@@ -708,73 +791,130 @@ public class BasicTextDocumentService implements TextDocumentService {
     }
 
 
-    CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
-        handleFunctionCallDefinition(ParserRuleContext foundCall, String document)
+    record FunctionDeclData(String uri, FunctionDeclContext context) {
+    }
+
+    FunctionDeclData getFunctionDeclaration(NamedFunctionRefContext namedFunctionRef, ResolvedName qname,
+        XQuerySemanticAnalyzer analyzer)
     {
-        if (foundCall instanceof NamedFunctionRefContext namedFunctionRef) {
-            var analyzer = semanticAnalyzers.get(document);
-            var qname = resolver.resolve(namedFunctionRef.qname().getText());
-            int arity = getArity(namedFunctionRef);
-            FunctionSpecification spec = analyzer.getFunctionManager().getNamedFunctionSpecification(
-                namedFunctionRef, qname.namespace(), qname.name(), arity);
-            if (spec == null) {
-                return CompletableFuture.completedFuture(Either.forLeft(List.of()));
+        int arity = getArity(namedFunctionRef);
+        FunctionSpecification spec = analyzer
+            .getFunctionManager()
+            .getNamedFunctionSpecification(namedFunctionRef, qname.namespace(), qname.name(), arity);
+        if (spec == null) {
+            return null;
+        }
+        for (var fDeclUri : functionDecls.keySet()) {
+            for (var fDecl : functionDecls.get(fDeclUri)) {
+                var qname2 = resolver.resolve(fDecl.qname().getText());
+                if (!qname.equals(qname2)) {
+                    continue;
+                }
+                return new FunctionDeclData(fDeclUri, fDecl);
             }
-            for (var fDeclUri : functionDecls.keySet()) {
-                for (var fDecl : functionDecls.get(fDeclUri)) {
-                    var qname2 = resolver.resolve(fDecl.qname().getText());
-                    if (!qname.equals(qname2)) {
-                        continue;
-                    }
-                    return CompletableFuture.completedFuture(Either.forLeft(List.of(
-                        new Location(fDeclUri, getContextRange(fDecl.qname()))
-                    )));
+        }
+        return null;
+    }
+
+    FunctionDeclData getFunctionDeclaration(FunctionNameContext namedFunctionRef, ResolvedName qname,
+        XQuerySemanticAnalyzer analyzer)
+    {
+        int arity = getArity(namedFunctionRef);
+        FunctionSpecification spec = analyzer
+            .getFunctionManager()
+            .getNamedFunctionSpecification(namedFunctionRef, qname.namespace(), qname.name(), arity);
+        if (spec == null) {
+            return null;
+        }
+        for (var fDeclUri : functionDecls.keySet()) {
+            for (var fDecl : functionDecls.get(fDeclUri)) {
+                var qname2 = resolver.resolve(fDecl.qname().getText());
+                if (!qname.equals(qname2)) {
+                    continue;
+                }
+                return new FunctionDeclData(fDeclUri, fDecl);
+            }
+        }
+        return null;
+    }
+
+    record RecordDeclData(String uri, NamedRecordTypeDeclContext context) {
+    }
+
+    RecordDeclData getRecordDeclaration(ResolvedName qname, XQuerySemanticAnalyzer analyzer) {
+        for (var recordUrl : recordDeclarations.keySet()) {
+            for (var record : recordDeclarations.get(recordUrl)) {
+                var name = record.qname().getText();
+                var resolved = resolver.resolve(name);
+                if (resolved.equals(qname)) {
+                    return new RecordDeclData(recordUrl, record);
                 }
             }
-        } else if (foundCall instanceof FunctionNameContext functionName) {
-            int arity = getArity(functionName);
-            var analyzer = semanticAnalyzers.get(document);
-            var qname = resolver.resolve(functionName.getText());
-            FunctionSpecification spec = analyzer.getFunctionManager().getNamedFunctionSpecification(
-                functionName, qname.namespace(), qname.name(), arity);
-            if (spec == null) {
-                return CompletableFuture.completedFuture(Either.forLeft(List.of()));
-            }
-            for (var fDeclUri : functionDecls.keySet()) {
-                for (var fDecl : functionDecls.get(fDeclUri)) {
-                    var qname2 = resolver.resolve(fDecl.qname().getText());
-                    if (!qname.equals(qname2)) {
-                        continue;
-                    }
-                    return CompletableFuture.completedFuture(Either.forLeft(List.of(
-                        new Location(fDeclUri, getContextRange(fDecl.qname())))));
-                }
-            }
+        }
+        return null;
+    }
 
-            for (var recordUrl : recordDeclarations.keySet()) {
-                for (var record : recordDeclarations.get(recordUrl)) {
-                    var name = record.qname().getText();
-                    var resolved = resolver.resolve(name);
-                    if (resolved.equals(qname)) {
-                        return CompletableFuture.completedFuture(Either.forLeft(List.of(
-                            new Location(recordUrl, getContextRange(record.qname())))));
-                    }
 
-                }
-            }
-
-            return CompletableFuture.completedFuture(Either.forLeft(List.of()));
-        } else {
+    CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
+        handleFunctionCallDefinition(NamedFunctionRefContext namedFunctionRef, String document)
+    {
+        var analyzer = semanticAnalyzers.get(document);
+        var qname = resolver.resolve(namedFunctionRef.qname().getText());
+        int arity = getArity(namedFunctionRef);
+        FunctionSpecification spec = analyzer.getFunctionManager().getNamedFunctionSpecification(
+            namedFunctionRef, qname.namespace(), qname.name(), arity);
+        if (spec == null) {
             return CompletableFuture.completedFuture(Either.forLeft(List.of()));
         }
+        var functionDeclaration = getFunctionDeclaration(namedFunctionRef, qname, analyzer);
+        if (functionDeclaration != null) {
+            return CompletableFuture.completedFuture(Either.forLeft(List.of(
+                new Location(functionDeclaration.uri, getContextRange(functionDeclaration.context.qname())))));
+        }
+
+        var recordDeclaration = getRecordDeclaration(qname, analyzer);
+        if (recordDeclaration != null) {
+            return CompletableFuture.completedFuture(Either.forLeft(List.of(
+                new Location(recordDeclaration.uri, getContextRange(recordDeclaration.context.qname()))
+            )));
+        }
+
+        return CompletableFuture.completedFuture(Either.forLeft(List.of()));
+    }
+
+    CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
+        handleFunctionCallDefinition(FunctionNameContext functionName, String document)
+    {
+        int arity = getArity(functionName);
+        var analyzer = semanticAnalyzers.get(document);
+        var qname = resolver.resolve(functionName.getText());
+        FunctionSpecification spec = analyzer.getFunctionManager().getNamedFunctionSpecification(
+            functionName, qname.namespace(), qname.name(), arity);
+        if (spec == null) {
+            return CompletableFuture.completedFuture(Either.forLeft(List.of()));
+        }
+        var functionDeclaration = getFunctionDeclaration(functionName, qname, analyzer);
+        if (functionDeclaration != null) {
+            return CompletableFuture.completedFuture(Either.forLeft(List.of(
+                new Location(functionDeclaration.uri, getContextRange(functionDeclaration.context.qname())))));
+        }
+
+        var recordDeclaration = getRecordDeclaration(qname, analyzer);
+        if (recordDeclaration != null) {
+            return CompletableFuture.completedFuture(Either.forLeft(List.of(
+                new Location(recordDeclaration.uri, getContextRange(recordDeclaration.context.qname()))
+            )));
+        }
+
         return CompletableFuture.completedFuture(Either.forLeft(List.of()));
 
     }
 
 
+
     @Override
-    public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(
-            DefinitionParams params)
+    public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
+        definition(DefinitionParams params)
     {
         var position = params.getPosition();
         var document = params.getTextDocument().getUri();
@@ -783,11 +923,11 @@ public class BasicTextDocumentService implements TextDocumentService {
         if (foundVarRef != null) {
             return handleVariableReferenceDefinition(document, foundVarRef);
         }
-        ParserRuleContext foundCall = findRuleUsingPosition(position, functionNames.get(document));
+        var foundCall = findRuleUsingPosition(position, functionNames.get(document));
         if (foundCall != null) {
             return handleFunctionCallDefinition(foundCall, document);
         }
-        ParserRuleContext foundNamedRef = findRuleUsingPosition(position, namedFunctionRefs.get(document));
+        var foundNamedRef = findRuleUsingPosition(position, namedFunctionRefs.get(document));
         if (foundNamedRef != null) {
             return handleFunctionCallDefinition(foundCall, document);
         }

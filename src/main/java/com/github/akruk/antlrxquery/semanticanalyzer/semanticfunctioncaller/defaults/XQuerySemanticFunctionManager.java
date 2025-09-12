@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -18,7 +17,6 @@ import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import com.github.akruk.antlrxquery.AntlrXqueryLexer;
 import com.github.akruk.antlrxquery.AntlrXqueryParser;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionBodyContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticError;

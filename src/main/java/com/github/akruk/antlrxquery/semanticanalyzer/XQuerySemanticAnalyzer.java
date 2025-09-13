@@ -1,6 +1,8 @@
 package com.github.akruk.antlrxquery.semanticanalyzer;
 
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -12,6 +14,8 @@ import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
@@ -30,6 +34,7 @@ import com.github.akruk.antlrxquery.XQueryAxis;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper.XQuerySemanticCharEscaperResult;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
+import com.github.akruk.antlrxquery.inputgrammaranalyzer.InputGrammarAnalyzer;
 import com.github.akruk.antlrxquery.inputgrammaranalyzer.InputGrammarAnalyzer.GrammarAnalysisResult;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
@@ -53,12 +58,12 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     private final XQueryTypeFactory typeFactory;
     private final XQueryValueFactory valueFactory;
     private final XQuerySemanticFunctionManager functionManager;
-    private final GrammarAnalysisResult grammarAnalysisResult;
     private final SequencetypePathOperator pathOperator;
     // private final Parser parser;
     private XQueryVisitingSemanticContext context;
     private List<XQuerySequenceType> visitedPositionalArguments;
     private Map<String, XQuerySequenceType> visitedKeywordArguments;
+    private GrammarAnalysisResult grammarAnalysisResult;
 
     protected final XQuerySequenceType number;
     protected final XQuerySequenceType zeroOrMoreNodes;
@@ -2501,5 +2506,26 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         return saved;
     }
 
+
+    @Override
+    public XQuerySequenceType visitSchemaImport(SchemaImportContext ctx)
+    {
+        var strings = ctx.STRING();
+        var grammarAnalysisResult = resolvePath(ctx, strings.get(0).getText());
+        this.grammarAnalysisResult = grammarAnalysisResult;
+        return null;
+    }
+
+    private GrammarAnalysisResult resolvePath(SchemaImportContext ctx, String path)
+    {
+        Path target = Path.of(path);
+        var grammarAnalyzer = new InputGrammarAnalyzer();
+        try {
+            return grammarAnalyzer.analyze(CharStreams.fromPath(target.toAbsolutePath()));
+        } catch (IOException e) {
+            error(ctx, "Invalid grammar import path: " + e.getMessage());
+        }
+        return null;
+    }
 
 }

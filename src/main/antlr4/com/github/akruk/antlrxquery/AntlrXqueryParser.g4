@@ -463,15 +463,12 @@ importDecl
     ;
 
 schemaImport
-    : IMPORT SCHEMA schemaPrefix? STRING (AT (STRING (COMMA STRING)*))?
+    : IMPORT SCHEMA namespaceDeclaration? STRING (COMMA STRING)*
     ;
 
-schemaPrefix
-    : NAMESPACE qname EQ_OP
-    | FIXED? DEFAULT ELEMENT NAMESPACE
+namespaceDeclaration:
+    qname EQ_OP
     ;
-
-
 
 moduleImport
     : IMPORT MODULE (NAMESPACE qname EQ_OP)? STRING (AT (STRING (COMMA STRING)*))?

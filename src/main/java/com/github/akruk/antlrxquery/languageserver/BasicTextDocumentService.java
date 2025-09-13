@@ -981,18 +981,4 @@ public class BasicTextDocumentService implements TextDocumentService {
         Location location = new Location(document, getContextRange(declaringVarRef));
         return CompletableFuture.completedFuture(Either.forLeft(List.of(location)));
     }
-
-        // System.err.println("==========================");
-        // String p = "/preceding-or-self::varNameAndType";
-        // var vars = XQuery.evaluate(found, p, _parser);
-        // for (var v : vars.sequence)
-        //     System.err.println(v.node.getText());
-
-        // String xquery = "/preceding::varNameAndType/varRef/qname[text() eq '" + found.qname().getText() + "']";
-        // System.err.println(xquery);
-        // var previousDecl = XQuery.evaluate(found, xquery, _parser);
-
-        // if (previousDecl.isEmptySequence)
-        //     return CompletableFuture.completedFuture(Either.forLeft(List.of()));
-
 }

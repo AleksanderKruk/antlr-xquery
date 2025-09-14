@@ -24,24 +24,24 @@ import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.BlockCar
 import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.SequenceCardinalityMerger;
 
 public class InputGrammarAnalyzer {
-    public record GrammarAnalysisResult(Map<String, Map<String, XQueryCardinality>> children
-    ,
-            // Map<String, Map<String, XQueryCardinality>> descendants,
-            //                             Map<String, Map<String, XQueryCardinality>> descendantsOrSelf,
-            //                             Map<String, Map<String, XQueryCardinality>> following,
-            //                             Map<String, Map<String, XQueryCardinality>> followingOrSelf,
-            //                             Map<String, Map<String, XQueryCardinality>> followingSibling,
-            //                             Map<String, Map<String, XQueryCardinality>> followingSiblingOrSelf,
-            //                             Map<String, Map<String, XQueryCardinality>> ancestors,
-            //                             Map<String, Map<String, XQueryCardinality>> ancestorsOrSelf,
-                                        Map<String, Map<String, XQueryCardinality>> parent
-                                        // ,
-            //                             Map<String, Map<String, XQueryCardinality>> preceding,
-            //                             Map<String, Map<String, XQueryCardinality>> precedingOrSelf,
-            //                             Map<String, Map<String, XQueryCardinality>> precedingSibling,
-            //                             Map<String, Map<String, XQueryCardinality>> precedingSiblingOrSelf,
-            //                             Set<String> simpleTokens,
-                                        // Set<String> simpleRules
+    public record GrammarAnalysisResult(
+        Map<String, Map<String, XQueryCardinality>> children,
+        // Map<String, Map<String, XQueryCardinality>> descendants,
+        // Map<String, Map<String, XQueryCardinality>> descendantsOrSelf,
+        // Map<String, Map<String, XQueryCardinality>> following,
+        // Map<String, Map<String, XQueryCardinality>> followingOrSelf,
+        // Map<String, Map<String, XQueryCardinality>> followingSibling,
+        // Map<String, Map<String, XQueryCardinality>> followingSiblingOrSelf,
+        // Map<String, Map<String, XQueryCardinality>> ancestors,
+        // Map<String, Map<String, XQueryCardinality>> ancestorsOrSelf,
+        Map<String, Map<String, XQueryCardinality>> parent
+                                    // ,
+        // Map<String, Map<String, XQueryCardinality>> preceding,
+        // Map<String, Map<String, XQueryCardinality>> precedingOrSelf,
+        // Map<String, Map<String, XQueryCardinality>> precedingSibling,
+        // Map<String, Map<String, XQueryCardinality>> precedingSiblingOrSelf,
+        // Set<String> simpleTokens,
+                                    // Set<String> simpleRules
                                         )
     {}
 

@@ -36,8 +36,11 @@ public class XQuerySequenceType {
     private final XQueryTypeFactory typeFactory;
     private final String occurenceSuffix;
 
-    public XQuerySequenceType(final XQueryTypeFactory typeFactory, final XQueryItemType itemType,
-        final XQueryCardinality occurence) {
+    public XQuerySequenceType(
+        final XQueryTypeFactory typeFactory,
+        final XQueryItemType itemType,
+        final XQueryCardinality occurence)
+    {
         this.typeFactory = typeFactory;
         this.itemType = itemType;
         this.occurence = occurence;

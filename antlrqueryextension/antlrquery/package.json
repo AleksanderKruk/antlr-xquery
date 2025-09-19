@@ -30,6 +30,12 @@
         "scopeName": "source.antlrquery",
         "path": "./syntaxes/antlrquery.tmLanguage.json"
       }
+    ],
+    "commands": [
+      {
+        "command": "extension.selectExtractionTarget",
+        "title": "Select value to extract"
+      }
     ]
   },
   "dependencies": {

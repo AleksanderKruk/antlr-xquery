@@ -11,9 +11,49 @@
     { "include": "#types" },
     { "include": "#functions" },
     { "include": "#custom_types" },
+    { "include": "#operators" },
     { "include": "#keywords" }
   ],
   "repository": {
+    "operators": {
+      "patterns": [
+        { "name": "keyword.operator.pipe-arrow.antlrquery", "match": "->" },
+        { "name": "keyword.operator.mapping-arrow.antlrquery", "match": "=!>" },
+        { "name": "keyword.operator.question-mark.antlrquery", "match": "\\?" },
+        { "name": "keyword.operator.eq.antlrquery", "match": "\\beq\\b" },
+        { "name": "keyword.operator.ne.antlrquery", "match": "\\bne\\b" },
+        { "name": "keyword.operator.lt.antlrquery", "match": "\\blt\\b" },
+        { "name": "keyword.operator.le.antlrquery", "match": "\\ble\\b" },
+        { "name": "keyword.operator.gt.antlrquery", "match": "\\bgt\\b" },
+        { "name": "keyword.operator.ge.antlrquery", "match": "\\bge\\b" },
+        { "name": "keyword.operator.concatenation.antlrquery", "match": "\\|\\|" },
+        { "name": "keyword.operator.union.antlrquery", "match": "\\|" },
+        { "name": "keyword.operator.exclamation.antlrquery", "match": "!" },
+        { "name": "keyword.operator.minus.antlrquery", "match": "-" },
+        { "name": "keyword.operator.arrow.antlrquery", "match": "=>" },
+        { "name": "keyword.operator.eq-op.antlrquery", "match": "=" },
+        { "name": "keyword.operator.ne-op.antlrquery", "match": "!=" },
+        { "name": "keyword.operator.lt-op.antlrquery", "match": "<" },
+        { "name": "keyword.operator.gt-op.antlrquery", "match": ">" },
+        { "name": "keyword.operator.ge-op.antlrquery", "match": ">=" },
+        { "name": "keyword.operator.le-op.antlrquery", "match": "<=" },
+        { "name": "keyword.operator.preceding.antlrquery", "match": "<<"},
+        { "name": "keyword.operator.following.antlrquery", "match": ">>"},
+        { "name": "keyword.operator.assignment.antlrquery", "match": ":=" },
+        { "name": "keyword.operator.slashes.antlrquery", "match": "//" },
+        { "name": "keyword.operator.slash.antlrquery", "match": "/" },
+        { "name": "keyword.operator.is.antlrquery", "match": "\\bis\\b" },
+        { "name": "keyword.operator.div.antlrquery", "match": "\\bdiv\\b" },
+        { "name": "keyword.operator.div-op.antlrquery", "match": "÷" },
+        { "name": "keyword.operator.idiv.antlrquery", "match": "\\bidiv\\b" },
+        { "name": "keyword.operator.star.antlrquery", "match": "\\*" },
+        { "name": "keyword.operator.plus.antlrquery", "match": "\\+" },
+        { "name": "keyword.operator.mod.antlrquery", "match": "\\bmod\\b" },
+        { "name": "keyword.operator.multiplication.antlrquery", "match": "\\bx\\b" },
+        { "name": "keyword.operator.comma.antlrquery", "match": "," }
+      ]
+    },
+
     "keywords": {
       "patterns": [
         {

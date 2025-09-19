@@ -6,6 +6,29 @@ let client;
 function activate(context) {
     console.log('Activating AntlrQuery extension...');
 
+    const disposable = vscode.commands.registerCommand('extension.selectExtractionTarget', async (contextStack) => {
+        const selected = await vscode.window.showQuickPick(contextStack, {
+            placeHolder: 'Select value to extract'
+        });
+
+        if (selected) {
+            const editor = vscode.window.activeTextEditor;
+            if (!editor) return;
+
+            const uri = editor.document.uri.toString();
+
+            const edit = await client.sendRequest('custom/extractVariable', {
+                uri,
+                value: selectedValue
+            });
+
+            await vscode.workspace.applyEdit(edit);
+        }
+    });
+
+    context.subscriptions.push(disposable);
+
+
     const serverOptions = {
         command: 'java',
         args: ['-jar', context.asAbsolutePath('./server/antlrxquery-language-server.jar')],

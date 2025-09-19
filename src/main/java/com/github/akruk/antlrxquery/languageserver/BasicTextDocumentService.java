@@ -938,8 +938,8 @@ public class BasicTextDocumentService implements TextDocumentService {
         return CompletableFuture.completedFuture(Either.forLeft(List.of()));
     }
 
-    private CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> handleTypeName(
-        TypeNameContext foundNamedType)
+    private CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
+        handleTypeName(TypeNameContext foundNamedType)
     {
         var resolvedName = resolver.resolve(foundNamedType.qname().getText());
         for (var recordDeclUrl : recordDeclarations.keySet()) {
@@ -980,5 +980,36 @@ public class BasicTextDocumentService implements TextDocumentService {
         var declaringVarRef = (VarRefContext) previousDecl.varRef();
         Location location = new Location(document, getContextRange(declaringVarRef));
         return CompletableFuture.completedFuture(Either.forLeft(List.of(location)));
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public CompletableFuture<CodeAction> resolveCodeAction(CodeAction unresolved) {
+        Map<String, Object> data = (Map<String, Object>) unresolved.getData();
+        List<String> contextStack = (List<String>) data.get("contextStack");
+
+        unresolved.setCommand(new Command(
+            "extension.selectExtractionTarget",
+            "Select value to extract",
+            List.of(contextStack)
+        ));
+        return CompletableFuture.completedFuture(unresolved);
+    }
+
+    @Override
+    public CompletableFuture<List<Either<Command, CodeAction>>> codeAction(CodeActionParams params)
+    {
+        PositionAnalyzer positionAnalyzer = new PositionAnalyzer(params.getRange().getStart());
+        ParseTree tree = parseTreeStore.get(params.getTextDocument().getUri());
+        PositionAnalysis analysis = positionAnalyzer.visit(tree);
+        CodeAction action = new CodeAction();
+        action.setTitle("Extract variable");
+        action.setKind(CodeActionKind.RefactorExtract);
+        action.setData(Map.of(
+            "uri", params.getTextDocument().getUri(),
+            "position", params.getRange().getStart(),
+            "contextStack", analysis.contextStack() // lista dostępnych wartości
+        ));
+        return CompletableFuture.completedFuture(List.of(Either.forRight(action)));
     }
 }

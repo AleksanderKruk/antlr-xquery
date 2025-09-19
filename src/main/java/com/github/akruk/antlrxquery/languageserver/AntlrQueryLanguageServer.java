@@ -2,6 +2,7 @@ package com.github.akruk.antlrxquery.languageserver;
 
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
+import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.*;
 
 import java.util.List;
@@ -19,8 +20,8 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
             LanguageClient.class,
             System.in,
             System.out);
-
         final LanguageClient client = launcher.getRemoteProxy();
+
         server.connect(client);
 
         System.err.println("[main] Launcher created. Listening...");
@@ -41,6 +42,7 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
         return;
     }
 
+
     @Override
     public void connect(final LanguageClient client)
     {
@@ -49,6 +51,16 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
         workspaceService.setClient(client);
         System.err.println("[connect] LanguageClient connected");
     }
+
+    record ExtractVariableParams(TextDocumentIdentifier textDocument, Range range, String variableName)
+    {}
+
+    @JsonRequest("custom/extractVariable")
+    public CompletableFuture<WorkspaceEdit> extractVariable(ExtractVariableParams params) {
+        return null;
+    }
+
+
 
     @Override
     public CompletableFuture<InitializeResult> initialize(final InitializeParams params)
@@ -84,6 +96,9 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
         capabilities.setDefinitionProvider(true);
 
         // capabilities.setCompletionProvider(new CompletionOptions());
+
+        capabilities.setCodeActionProvider(true);
+
 
         return CompletableFuture.completedFuture(new InitializeResult(capabilities));
     }

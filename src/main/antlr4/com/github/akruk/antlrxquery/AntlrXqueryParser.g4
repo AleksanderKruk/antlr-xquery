@@ -512,26 +512,6 @@ queryBody
     : expr?
     ;
 
-
-
-
-
-
-
-
-x:C;
-
-
-
-
-
-
-
-
-
-
-
-
 qname: (namespace COLON)* anyName;
 namespace: anyName;
 anyName: ID

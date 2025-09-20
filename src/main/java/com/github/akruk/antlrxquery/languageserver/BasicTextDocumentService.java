@@ -267,7 +267,6 @@ public class BasicTextDocumentService implements TextDocumentService {
         final ParseTree tree = parseTreeStore.get(uri);
 
         if (tree == null) {
-            System.err.println("[semanticTokensFull] No parse tree for URI: " + uri);
             return CompletableFuture.completedFuture(new SemanticTokens(List.of()));
         }
 
@@ -293,7 +292,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         types.put(uri, typeValues.stream().map(v->(ParserRuleContext) v.node).toList());
 
 
-        for (final var ctx : variableReferences.get(uri)) {
+        for (final var ctx : variableReferences.getOrDefault(uri, List.of())) {
             final Token start = ctx.DOLLAR().getSymbol();
             final Token stop = ctx.qname().getStop();
             final int line = start.getLine() - 1;
@@ -303,11 +302,11 @@ public class BasicTextDocumentService implements TextDocumentService {
             tokens.add(semTok);
         }
 
-        for (final var val : functionNames.get(uri)) {
+        for (final var val : functionNames.getOrDefault(uri, List.of())) {
             final SemanticToken functionToken = getFunctionSemanticToken(val);
             tokens.add(functionToken);
         }
-        for (final var val : namedFunctionRefs.get(uri)) {
+        for (final var val : namedFunctionRefs.getOrDefault(uri, List.of())) {
             final SemanticToken functionToken = getFunctionSemanticToken(val);
             tokens.add(functionToken);
         }
@@ -357,12 +356,12 @@ public class BasicTextDocumentService implements TextDocumentService {
         final Position position = params.getPosition();
 
         final ParseTree tree = parseTreeStore.get(uri);
+        final VariableAnalyzer analyzer = semanticAnalyzers.get(uri);
 
-        if (tree == null) {
+        if (tree == null || analyzer == null) {
             return CompletableFuture.completedFuture(null);
         }
 
-        final var analyzer = semanticAnalyzers.get(uri);
 
         final List<FunctionNameContext> names = functionNames.get(uri);
         final List<NamedFunctionRefContext> namedRefs = namedFunctionRefs.get(uri);
@@ -733,6 +732,9 @@ public class BasicTextDocumentService implements TextDocumentService {
         String uri = params.getTextDocument().getUri();
         List<InlayHint> hints = new ArrayList<>();
         var analyzer = semanticAnalyzers.get(uri);
+        if (analyzer == null) {
+            return CompletableFuture.completedFuture(List.of());
+        }
         List<TypedVariable> varsToTypes = analyzer.variablesMappedToTypes;
         for (var variable : variableDeclarationsWithoutType.get(uri)) {
             TypedVariable typedVariable = varsToTypes.stream()
@@ -983,33 +985,60 @@ public class BasicTextDocumentService implements TextDocumentService {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public CompletableFuture<CodeAction> resolveCodeAction(CodeAction unresolved) {
-        Map<String, Object> data = (Map<String, Object>) unresolved.getData();
-        List<String> contextStack = (List<String>) data.get("contextStack");
-
+        int actionId = (int) unresolved.getData();
+        System.err.println("[resolveCodeAction] Resolution of id: " + actionId);
+        VarExtractionInfo extractionInfo = codeActionData.get(actionId);
+        if (extractionInfo == null) {
+            return CompletableFuture.completedFuture(unresolved);
+        }
+        List<String> values = extractionInfo.contextStack.stream()
+            .map(ctx->ctx.toString()).toList();
         unresolved.setCommand(new Command(
             "extension.selectExtractionTarget",
             "Select value to extract",
-            List.of(contextStack)
+            List.of(values)
         ));
         return CompletableFuture.completedFuture(unresolved);
+    }
+
+    record VarExtractionInfo(
+        String uri,
+        Position position,
+        List<ParserRuleContext> contextStack
+    ) {}
+
+    private int codeActionId = 0;
+    private final Map<Integer, VarExtractionInfo> codeActionData = new HashMap<>();
+
+    synchronized int codeActionId() {
+        if (codeActionId == Integer.MAX_VALUE) {
+            codeActionId = 0;
+        } else {
+            codeActionId++;
+        }
+        return codeActionId;
     }
 
     @Override
     public CompletableFuture<List<Either<Command, CodeAction>>> codeAction(CodeActionParams params)
     {
-        PositionAnalyzer positionAnalyzer = new PositionAnalyzer(params.getRange().getStart());
-        ParseTree tree = parseTreeStore.get(params.getTextDocument().getUri());
-        PositionAnalysis analysis = positionAnalyzer.visit(tree);
-        CodeAction action = new CodeAction();
+        final Position start = params.getRange().getStart();
+        System.err.println("[codeAction] Requested at " + start);
+        final PositionAnalyzer positionAnalyzer = new PositionAnalyzer(start);
+        final String uri = params.getTextDocument().getUri();
+        final ParseTree tree = parseTreeStore.get(uri);
+        final PositionAnalysis analysis = positionAnalyzer.visit(tree);
+        final CodeAction action = new CodeAction();
         action.setTitle("Extract variable");
         action.setKind(CodeActionKind.RefactorExtract);
-        action.setData(Map.of(
-            "uri", params.getTextDocument().getUri(),
-            "position", params.getRange().getStart(),
-            "contextStack", analysis.contextStack() // lista dostępnych wartości
-        ));
+        final VarExtractionInfo extractionInfo = new VarExtractionInfo(uri, start, analysis.contextStack());
+        for (var s : analysis.contextStack()) {
+            System.err.println("  context: " + s.getText());
+        }
+        final int codeActionId = codeActionId();
+        codeActionData.put(codeActionId, extractionInfo);
+        action.setData(codeActionId);
         return CompletableFuture.completedFuture(List.of(Either.forRight(action)));
     }
 }

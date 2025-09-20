@@ -5,7 +5,7 @@ options {
 
 
 xquery
-    : versionDecl? (libraryModule | mainModule)
+    : versionDecl? (libraryModule | mainModule) EOF
     ;
 
 expr: exprSingle (COMMA exprSingle)*;
@@ -326,8 +326,8 @@ typeName: qname;
 
 postfixExpr
     : primaryExpr                         # postfixPrimary
-    | postfixExpr predicate               # filterExpr
     | postfixExpr positionalArgumentList  # dynamicFunctionCall
+    | postfixExpr predicate               # filterExpr
     | postfixExpr lookup                  # lookupExpr
     | postfixExpr LOOKUP expr RBRACKET    # filterExprAMLookup
     ;
@@ -646,6 +646,7 @@ anyName: ID
         | WHILE
         | WINDOW
 
+        | VALUE
         | ZERO_DIGIT
         | XQUERY
         ;

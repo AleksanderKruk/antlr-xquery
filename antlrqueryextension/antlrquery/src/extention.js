@@ -6,24 +6,28 @@ let client;
 function activate(context) {
     console.log('Activating AntlrQuery extension...');
 
-    const disposable = vscode.commands.registerCommand('extension.selectExtractionTarget', async (contextStack) => {
-        const selected = await vscode.window.showQuickPick(contextStack, {
-            placeHolder: 'Select value to extract'
-        });
+    const disposable = vscode.commands.registerCommand(
+      'extension.selectExtractionTarget',
+      async (contextStack) => {
+        vscode.window.showInformationMessage('Odebrano');
+        // const selected = await vscode.window.showQuickPick(contextStack, {
+        //     placeHolder: 'Select value to extract'
+        // });
 
-        if (selected) {
-            const editor = vscode.window.activeTextEditor;
-            if (!editor) return;
+        // if (selected) {
+        //     const editor = vscode.window.activeTextEditor;
+        //     if (!editor) return;
 
-            const uri = editor.document.uri.toString();
+        //     const uri = editor.document.uri.toString();
+        //     vscode.window.showInformationMessage('Wiadomość została wysłana do serwera LSP. : ' + selected);
 
-            const edit = await client.sendRequest('custom/extractVariable', {
-                uri,
-                value: selectedValue
-            });
+        //     // const edit = await client.sendRequest('custom/extractVariable', {
+        //     //     uri,
+        //     //     value: selectedValue
+        //     // });
 
-            await vscode.workspace.applyEdit(edit);
-        }
+        //     // await vscode.workspace.applyEdit(edit);
+        // }
     });
 
     context.subscriptions.push(disposable);

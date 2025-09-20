@@ -124,6 +124,13 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         contextManager.enterContext();
     }
 
+    @Override
+    public XQueryValue visitXquery(XqueryContext ctx) {
+        if (ctx.libraryModule() != null)
+            return null;
+        return visitMainModule(ctx.mainModule());
+    }
+
 
     @Override
     public XQueryValue visitFLWORExpr(final FLWORExprContext ctx) {

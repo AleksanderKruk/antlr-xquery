@@ -98,6 +98,11 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
 
         capabilities.setCodeActionProvider(true);
 
+        CodeActionOptions options = new CodeActionOptions();
+        options.setResolveProvider(true);
+        capabilities.setCodeActionProvider(options);
+
+
 
         return CompletableFuture.completedFuture(new InitializeResult(capabilities));
     }

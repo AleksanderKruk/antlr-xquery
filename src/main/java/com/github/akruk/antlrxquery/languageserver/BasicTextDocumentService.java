@@ -47,6 +47,7 @@ import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defa
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTypeSets;
+import com.google.gson.JsonPrimitive;
 
 public class BasicTextDocumentService implements TextDocumentService {
     private LanguageClient client;
@@ -986,19 +987,22 @@ public class BasicTextDocumentService implements TextDocumentService {
 
     @Override
     public CompletableFuture<CodeAction> resolveCodeAction(CodeAction unresolved) {
-        int actionId = (int) unresolved.getData();
+        int actionId = ((JsonPrimitive) unresolved.getData()).getAsInt();
         System.err.println("[resolveCodeAction] Resolution of id: " + actionId);
         VarExtractionInfo extractionInfo = codeActionData.get(actionId);
         if (extractionInfo == null) {
-            return CompletableFuture.completedFuture(unresolved);
+            return CompletableFuture.completedFuture(null);
         }
         List<String> values = extractionInfo.contextStack.stream()
-            .map(ctx->ctx.toString()).toList();
+            .map(ctx->ctx.getText()).toList();
         unresolved.setCommand(new Command(
+            "AntlrQuery: Select value to extract",
             "extension.selectExtractionTarget",
-            "Select value to extract",
             List.of(values)
         ));
+        for (var s : values) {
+            System.err.println("  context: " + s);
+        }
         return CompletableFuture.completedFuture(unresolved);
     }
 
@@ -1024,7 +1028,6 @@ public class BasicTextDocumentService implements TextDocumentService {
     public CompletableFuture<List<Either<Command, CodeAction>>> codeAction(CodeActionParams params)
     {
         final Position start = params.getRange().getStart();
-        System.err.println("[codeAction] Requested at " + start);
         final PositionAnalyzer positionAnalyzer = new PositionAnalyzer(start);
         final String uri = params.getTextDocument().getUri();
         final ParseTree tree = parseTreeStore.get(uri);
@@ -1033,9 +1036,6 @@ public class BasicTextDocumentService implements TextDocumentService {
         action.setTitle("Extract variable");
         action.setKind(CodeActionKind.RefactorExtract);
         final VarExtractionInfo extractionInfo = new VarExtractionInfo(uri, start, analysis.contextStack());
-        for (var s : analysis.contextStack()) {
-            System.err.println("  context: " + s.getText());
-        }
         final int codeActionId = codeActionId();
         codeActionData.put(codeActionId, extractionInfo);
         action.setData(codeActionId);

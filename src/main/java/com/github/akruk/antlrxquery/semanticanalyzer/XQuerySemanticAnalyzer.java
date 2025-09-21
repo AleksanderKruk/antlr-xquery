@@ -93,6 +93,13 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         return functionManager;
     }
 
+    @Override
+    public XQuerySequenceType visitXquery(XqueryContext ctx) {
+        if (ctx.libraryModule() != null)
+            return visitLibraryModule(ctx.libraryModule());
+        return visitMainModule(ctx.mainModule());
+    }
+
 
 
     public XQuerySemanticAnalyzer(

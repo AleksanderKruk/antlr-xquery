@@ -5,7 +5,7 @@ options {
 
 
 xquery
-    : versionDecl? (libraryModule | mainModule)
+    : versionDecl? (libraryModule | mainModule) EOF
     ;
 
 expr: exprSingle (COMMA exprSingle)*;
@@ -324,8 +324,8 @@ typeName: qname;
 
 postfixExpr
     : primaryExpr                         # postfixPrimary
-    | postfixExpr predicate               # filterExpr
     | postfixExpr positionalArgumentList  # dynamicFunctionCall
+    | postfixExpr predicate               # filterExpr
     | postfixExpr lookup                  # lookupExpr
     | postfixExpr LOOKUP expr RBRACKET    # filterExprAMLookup
     ;
@@ -510,65 +510,67 @@ queryBody
     : expr?
     ;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 qname: (namespace COLON)* anyName;
 namespace: anyName;
 anyName: ID
-        | EMPTY
-        | COUNT
-        | MULTIPLICATION
         | ALLOWING
+        | AND
         | ANCESTOR
         | ANCESTOR_OR_SELF
-        | AND
         | ARRAY
         | AS
         | ASCENDING
         | AT
+
+        | BASE_URI
         | BY
+
         | CASE
         | CAST
+        | CASTABLE
+        | CATCH
         | CHILD
         | COLLATION
         | COUNT
+        | CONTEXT
+
+        | DECIMAL_FORMAT
+        | DECIMAL_SEPARATOR
+        | DECLARE
         | DEFAULT
         | DESCENDANT
         | DESCENDANT_OR_SELF
         | DESCENDING
+        | DIGIT
+
+        | ENCODING
         | ELEMENT
         | ELSE
         | EMPTY
         | EMPTY_SEQUENCE
         | END
         | ENUM
+        | EXPONENT_SEPARATOR
+        | EXTERNAL
         | EQ
         | EVERY
         | EXCEPT
+
+        | FINALLY
+        | FIXED
         | FOLLOWING
         | FOLLOWING_OR_SELF
         | FOLLOWING_SIBLING
         | FOLLOWING_SIBLING_OR_SELF
-        | FOR
         | FN
+        | FOR
         | FUNCTION
+
+        | GROUPING_SEPARATOR
         | GE
         | GREATEST
         | GT
+
         | IDIV
         | IF
         | IN
@@ -576,43 +578,75 @@ anyName: ID
         | INTERSECT
         | IS
         | ITEM
+        | INFINITY
+        | IMPORT
+
         | KEY
-        | VALUE
+
         | LE
         | LEAST
         | LET
         | LT
+
         | MAP
         | MEMBER
         | MOD
         | MULTIPLICATION
+
         | NE
         | NEXT
         | NODE
+        | NAMESPACE
+        | NAN
+
         | OF
         | ONLY
+        | OPTION
+        | OR
+
         | PARENT
         | PRECEDING
         | PRECEDING_OR_SELF
         | PRECEDING_SIBLING
         | PRECEDING_SIBLING_OR_SELF
+        | PATTERN_SEPARATOR
+        | PER_MILLE
+        | PERCENT
+        | PERCENTAGE
+        | PRESERVE
         | PREVIOUS
+
         | RECORD
         | RETURN
+
         | SATISFIES
+        | SCHEMA
         | SELF
         | SLIDING
         | SOME
+        | STABLE
+        | START
+        | STRIP
+        | SWITCH
+
         | THEN
         | TO
-        | THEN
         | TREAT
         | TUMBLING
+        | TRY
+        | TYPE
+
         | UNION
+        | UNORDERED
+
         | WHEN
         | WHERE
         | WHILE
         | WINDOW
+
+        | VALUE
+        | ZERO_DIGIT
+        | XQUERY
         ;
 
 stringConstructor:

@@ -34,7 +34,7 @@
     "commands": [
       {
         "command": "extension.selectExtractionTarget",
-        "title": "Select value to extract"
+        "title": "AntlrQuery: Select value to extract"
       }
     ]
   },

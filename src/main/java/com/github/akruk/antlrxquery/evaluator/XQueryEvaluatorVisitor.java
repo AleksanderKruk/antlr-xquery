@@ -836,7 +836,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
 
     @Override
-    public XQueryValue visitContextItemExpr(final ContextItemExprContext ctx) {
+    public XQueryValue visitContextValueRef(ContextValueRefContext ctx)
+    {
         return context.getValue();
     }
 

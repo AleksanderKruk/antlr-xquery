@@ -164,7 +164,6 @@ generalComp: EQ_OP | NE_OP | LT_OP | LE_OP | GT_OP | GE_OP;
 valueComp: EQ | NE | LT | LE | GT | GE;
 nodeComp: IS | PRECEDING_OP | FOLLOWING_OP;
 pathOperator: SLASH | SLASHES;
-singleType: anyName '?';
 
 
 exceptOrIntersect: EXCEPT | INTERSECT;
@@ -226,19 +225,18 @@ predicate: LBRACKET expr RBRACKET;
 primaryExpr: literal
         | varRef
         | parenthesizedExpr
-        | contextItemExpr // contextValueRef
+        | contextValueRef // contextValueRef
         | functionCall
-        // | orderedExpr
-        // | unorderedExpr
-        // | nodeConstructor
-        // | nodeConstructor
-        // | stringInterpolation
         | functionItemExpr
         | mapConstructor
         | arrayConstructor
-        // | stringTemplate
         | stringConstructor
         | unaryLookup
+        // | orderedExpr
+        // | unorderedExpr
+        // | nodeConstructor
+        // | stringInterpolation
+        // | stringTemplate
         ;
 
 
@@ -258,7 +256,7 @@ numericLiteral
 
 varRef: DOLLAR qname;
 parenthesizedExpr: LPAREN expr? RPAREN;
-contextItemExpr: DOT;
+contextValueRef: DOT;
 functionCall: functionName argumentList;
 typeDeclaration: AS sequenceType;
 occurrenceIndicator: QUESTION_MARK | STAR | PLUS;

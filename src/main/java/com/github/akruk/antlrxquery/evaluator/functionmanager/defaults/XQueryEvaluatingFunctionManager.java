@@ -52,7 +52,7 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.nodegetter.NodeGetter;
 
 public class XQueryEvaluatingFunctionManager {
-    private static final ParseTree CONTEXT_VALUE = getTree(".", parser -> parser.contextItemExpr());
+    private static final ParseTree CONTEXT_VALUE = getTree(".", parser -> parser.contextValueRef());
     private static final ParseTree DEFAULT_COLLATION = getTree("fn:default-collation()",
             parser -> parser.functionCall());
     private static final ParseTree EMPTY_SEQUENCE = getTree("()", p -> p.parenthesizedExpr());

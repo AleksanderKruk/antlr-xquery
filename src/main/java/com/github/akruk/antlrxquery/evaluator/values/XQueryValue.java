@@ -164,6 +164,12 @@ public class XQueryValue {
     }
 
     public static XQueryValue sequence(List<XQueryValue> sequence, XQuerySequenceType type) {
+        if (sequence.size() == 0) {
+            return emptySequence(type);
+        }
+        if (sequence.size() == 1) {
+            return sequence.get(0);
+        }
         return new XQueryValue(
             XQueryValues.SEQUENCE,
             type,
@@ -302,11 +308,11 @@ public class XQueryValue {
             case ARRAY -> "<Array:" + arrayMembers + "/>";
             case BOOLEAN -> "<Boolean:" + booleanValue + "/>";
             case ELEMENT -> "<Node:" + node.getClass().getSimpleName() + ":" + node.getText() + "/>";
-            case EMPTY_SEQUENCE -> "<Sequence:" + sequence + "/>";
+            case SEQUENCE -> "<Sequence:" + sequence + "/>";
+            case EMPTY_SEQUENCE -> "<EmptySequence/>";
             case FUNCTION -> "<Function:" + functionValue + "/>";
             case MAP -> "<Map:" + mapEntries + "/>";
             case NUMBER -> "<Number:" + numericValue.toPlainString() + "/>";
-            case SEQUENCE -> "<EmptySequence/>";
             case STRING -> "<String:\"" + stringValue + "\"/>";
             default -> throw new IllegalArgumentException("Unexpected value: " + valueType);
         };

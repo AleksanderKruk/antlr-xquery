@@ -19,7 +19,9 @@ fLWORExpr: initialClause intermediateClause* returnClause;
 initialClause: forClause
             | windowClause
             | letClause;
-intermediateClause: initialClause
+intermediateClause: forClause
+                | windowClause
+                | letClause
                 | windowClause
                 | whereClause
                 | whileClause
@@ -283,7 +285,8 @@ kindTest:	elementTest
 elementTest	:	ELEMENT LPAREN nameTestUnion? RPAREN;
 
 
-pathNameTestUnion	:	qname ('|' qname)*;
+pathNameTestUnion	:	qname ('|' qname)*
+            | LPAREN  qname ('|' qname)* RPAREN;
 
 nameTestUnion	:	nameTest ('|' nameTest)*;
 nameTest	:	qname | wildcard;

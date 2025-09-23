@@ -3,10 +3,11 @@ package com.github.akruk.antlrxquery.languageserver;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.eclipse.lsp4j.*;
@@ -32,8 +33,12 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.TypeNameContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameAndTypeContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarRefContext;
 import com.github.akruk.antlrxquery.evaluator.XQuery;
+import com.github.akruk.antlrxquery.evaluator.XQuery.TreeEvaluator;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMemoizedValueFactory;
+import com.github.akruk.antlrxquery.languageserver.AntlrQueryLanguageServer.ExtractLocationInfo;
+import com.github.akruk.antlrxquery.languageserver.AntlrQueryLanguageServer.ExtractVariableLocationsParams;
+import com.github.akruk.antlrxquery.languageserver.AntlrQueryLanguageServer.ExtractVariableParams;
 import com.github.akruk.antlrxquery.languageserver.VariableAnalyzer.TypedVariable;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.ResolvedName;
@@ -44,6 +49,7 @@ import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySeman
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQuerySemanticFunctionManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQuerySemanticFunctionManager.ArgumentSpecification;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQuerySemanticFunctionManager.FunctionSpecification;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTypeSets;
@@ -215,7 +221,7 @@ public class BasicTextDocumentService implements TextDocumentService {
                 System.err.println("[parseAndAnalyze] LanguageClient is null. Cannot publish diagnostics.");
             }
 
-            final var declarations = XQuery.evaluate(tree, "//varNameAndType", _parser).sequence;
+            final var declarations = XQuery.evaluateWithMockRoot(tree, "//varNameAndType", _parser).sequence;
             final List<VarNameAndTypeContext> declarationContexts = declarations.stream()
                 .map(x->(VarNameAndTypeContext) x.node)
                 .toList();
@@ -225,26 +231,26 @@ public class BasicTextDocumentService implements TextDocumentService {
             variableDeclarations.put(uri, declarationContexts);
             variableDeclarationsWithoutType.put(uri, declarationWithoutTypeContexts);
 
-            final var typeNames = XQuery.evaluate(tree, "//typeName", _parser).sequence;
+            final var typeNames = XQuery.evaluateWithMockRoot(tree, "//typeName", _parser).sequence;
             final List<TypeNameContext> typeNameContexts = typeNames.stream()
                 .map(x->(TypeNameContext) x.node)
                 .toList();
             namedTypes.put(uri, typeNameContexts);
 
-            final List<XQueryValue> recordDecls = XQuery.evaluate(tree, "//namedRecordTypeDecl", _parser).sequence;
+            final List<XQueryValue> recordDecls = XQuery.evaluateWithMockRoot(tree, "//namedRecordTypeDecl", _parser).sequence;
             final List<NamedRecordTypeDeclContext> rdecls = recordDecls.stream().map(v->(NamedRecordTypeDeclContext)v.node).toList();
             recordDeclarations.put(uri, rdecls);
 
-            final List<XQueryValue> variableRefs = XQuery.evaluate(tree, "//varRef", _parser).sequence;
+            final List<XQueryValue> variableRefs = XQuery.evaluateWithMockRoot(tree, "//varRef", _parser).sequence;
             variableReferences.put(uri, variableRefs.stream().map(v->(VarRefContext)v.node).toList());
 
-            final List<XQueryValue> fNames = XQuery.evaluate(tree, "//functionName", _parser).sequence;
+            final List<XQueryValue> fNames = XQuery.evaluateWithMockRoot(tree, "//functionName", _parser).sequence;
             functionNames.put(uri, fNames.stream().map(v -> (FunctionNameContext) v.node).toList());
 
-            final List<XQueryValue> namedRefs = XQuery.evaluate(tree, "//namedFunctionRef", _parser).sequence;
+            final List<XQueryValue> namedRefs = XQuery.evaluateWithMockRoot(tree, "//namedFunctionRef", _parser).sequence;
             namedFunctionRefs.put(uri, namedRefs.stream().map(v -> (NamedFunctionRefContext) v.node).toList());
 
-            final List<XQueryValue> fDecls = XQuery.evaluate(tree, "//functionDecl", _parser).sequence;
+            final List<XQueryValue> fDecls = XQuery.evaluateWithMockRoot(tree, "//functionDecl", _parser).sequence;
             functionDecls.put(uri, fDecls.stream().map(t -> (FunctionDeclContext)t.node).toList());
 
         } catch (final Exception e) {
@@ -257,7 +263,7 @@ public class BasicTextDocumentService implements TextDocumentService {
 
     private final AntlrXqueryLexer _lexer = new AntlrXqueryLexer(CharStreams.fromString(""));
     private final CommonTokenStream _tokens = new CommonTokenStream(_lexer);
-    private final AntlrXqueryParser _parser = new AntlrXqueryParser(_tokens);
+    final AntlrXqueryParser _parser = new AntlrXqueryParser(_tokens);
     private final NamespaceResolver resolver;
 
     record SemanticToken(int line, int charPos, int length, int typeIndex, int modifierBitmask) {}
@@ -274,7 +280,7 @@ public class BasicTextDocumentService implements TextDocumentService {
 
         final List<SemanticToken> tokens = new ArrayList<>();
 
-        final List<XQueryValue> typeValues = XQuery.evaluate(
+        final List<XQueryValue> typeValues = XQuery.evaluateWithMockRoot(
             tree, """
                     //(sequenceType|castTarget)
                     | //itemTypeDecl/(qname|itemType)
@@ -680,7 +686,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         return true;
     }
 
-    private Range getContextRange(final ParserRuleContext ctx) {
+    Range getContextRange(final ParserRuleContext ctx) {
         final Token startToken = ctx.getStart();
         final Token stopToken = ctx.getStop();
 
@@ -989,20 +995,30 @@ public class BasicTextDocumentService implements TextDocumentService {
     public CompletableFuture<CodeAction> resolveCodeAction(CodeAction unresolved) {
         int actionId = ((JsonPrimitive) unresolved.getData()).getAsInt();
         System.err.println("[resolveCodeAction] Resolution of id: " + actionId);
-        VarExtractionInfo extractionInfo = codeActionData.get(actionId);
+        VarExtractionInfo extractionInfo = varExtractionData.get(actionId);
         if (extractionInfo == null) {
             return CompletableFuture.completedFuture(null);
         }
-        List<String> values = extractionInfo.contextStack.stream()
-            .map(ctx->ctx.getText()).toList();
+
+        Set<Range> insertedRanges = new HashSet<>(extractionInfo.contextStack.size());
+        List<Range> ranges = new ArrayList<>(extractionInfo.contextStack.size());
+        List<Integer> indices = new ArrayList<>(extractionInfo.contextStack.size());
+        int i = 0;
+        for (var ctx : extractionInfo.contextStack) {
+            var range = getContextRange(ctx);
+            if (insertedRanges.add(range)) {
+                ranges.add(range);
+                indices.add(i);
+            }
+            i++;
+        }
+        resolvedVarExtractionData.put(actionId, new ResolvedVarExtractionInfo(ranges, indices));
+
         unresolved.setCommand(new Command(
             "AntlrQuery: Select value to extract",
             "extension.selectExtractionTarget",
-            List.of(values)
+            List.of(ranges, indices, actionId)
         ));
-        for (var s : values) {
-            System.err.println("  context: " + s);
-        }
         return CompletableFuture.completedFuture(unresolved);
     }
 
@@ -1012,8 +1028,15 @@ public class BasicTextDocumentService implements TextDocumentService {
         List<ParserRuleContext> contextStack
     ) {}
 
+    record ResolvedVarExtractionInfo(
+        List<Range> ranges,
+        List<Integer> indices
+    ) {}
+
+
     private int codeActionId = 0;
-    private final Map<Integer, VarExtractionInfo> codeActionData = new HashMap<>();
+    final Map<Integer, VarExtractionInfo> varExtractionData = new HashMap<>();
+    final Map<Integer, ResolvedVarExtractionInfo> resolvedVarExtractionData = new HashMap<>();
 
     synchronized int codeActionId() {
         if (codeActionId == Integer.MAX_VALUE) {
@@ -1037,8 +1060,78 @@ public class BasicTextDocumentService implements TextDocumentService {
         action.setKind(CodeActionKind.RefactorExtract);
         final VarExtractionInfo extractionInfo = new VarExtractionInfo(uri, start, analysis.contextStack());
         final int codeActionId = codeActionId();
-        codeActionData.put(codeActionId, extractionInfo);
+        varExtractionData.put(codeActionId, extractionInfo);
         action.setData(codeActionId);
         return CompletableFuture.completedFuture(List.of(Either.forRight(action)));
+    }
+
+    final TreeEvaluator innermostFlworQuery = XQuery.compile("/ancestor::(initialClause|intermediateClause|returnClause)", _parser);
+    final TreeEvaluator outermostExpr = XQuery.compile("/ancestor::expr", _parser);
+
+    Map<ParserRuleContext, ExtractLocationInfo> extractVariableLocationsCache = new HashMap<>();
+
+    public CompletableFuture<ExtractLocationInfo> extractVariableLocations(ExtractVariableLocationsParams params) {
+        final List<Range> ranges = new ArrayList<>();
+        final List<String> texts = new ArrayList<>();
+        final VarExtractionInfo info = varExtractionData.get(params.actionId());
+        final ParserRuleContext selectedContext = info.contextStack.get(params.selectedIndex());
+        final XQueryValue flwor = innermostFlworQuery.evaluate(selectedContext);
+        final String letBindingWithoutReturn = getLetBindingWithoutReturn(params);
+        for (var location : flwor.sequence) {
+            final ParserRuleContext ctx = (ParserRuleContext) location.node;
+            final Range ctxRange = getContextRange(ctx);
+            ranges.add(ctxRange);
+            texts.add(letBindingWithoutReturn);
+        }
+        final XQueryValue expression = outermostExpr.evaluate(selectedContext);
+        final String letBindingWithReturn = getLetBindingWithReturn(params);
+        for (var location: expression.sequence) {
+            final ParserRuleContext ctx = (ParserRuleContext) location.node;
+            final Range ctxRange = getContextRange(ctx);
+            ranges.add(ctxRange);
+            texts.add(letBindingWithReturn);
+        }
+
+        ExtractLocationInfo value = new ExtractLocationInfo(ranges, texts);
+        extractVariableLocationsCache.put(selectedContext, value);
+        return CompletableFuture.completedFuture(value);
+    }
+
+    private String getLetBindingWithoutReturn(ExtractVariableLocationsParams params) {
+        StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.append("let $");
+		stringBuilder.append(params.variableName());
+		stringBuilder.append(" := ");
+		stringBuilder.append(params.variableText());
+		stringBuilder.append("\n");
+		return stringBuilder.toString();
+    }
+
+    private String getLetBindingWithReturn(ExtractVariableLocationsParams params) {
+        StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.append("let $");
+		stringBuilder.append(params.variableName());
+		stringBuilder.append(" := (");
+		stringBuilder.append(params.variableText());
+		stringBuilder.append(") return ");
+		return stringBuilder.toString();
+    }
+
+
+    public CompletableFuture<WorkspaceEdit> extractVariable(ExtractVariableParams params) {
+        Map<String, List<TextEdit>> changes = new HashMap<>();
+        VarExtractionInfo info = varExtractionData.get(params.actionId());
+        ParserRuleContext selectedContext = info.contextStack.get(params.extractedContextIndex());
+        Range selectedContextRange = getContextRange(selectedContext);
+        ExtractLocationInfo varLocInfo = extractVariableLocationsCache.get(selectedContext);
+        var chosenPosition = varLocInfo.getRanges().get(params.chosenPositionIndex()).getStart();
+        var chosenBinding = varLocInfo.getTexts().get(params.chosenPositionIndex());
+
+        TextEdit varInserted = new TextEdit(selectedContextRange, "$" + params.variableName());
+        TextEdit valueExtracted = new TextEdit(
+            new Range(chosenPosition, chosenPosition), chosenBinding
+        );
+        changes.put(info.uri(), List.of(varInserted, valueExtracted));
+        return CompletableFuture.completedFuture(new WorkspaceEdit(changes));
     }
 }

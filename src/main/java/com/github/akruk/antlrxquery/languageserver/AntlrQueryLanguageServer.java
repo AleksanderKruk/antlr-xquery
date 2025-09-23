@@ -2,6 +2,7 @@ package com.github.akruk.antlrxquery.languageserver;
 
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
+import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.*;
 
 import java.util.List;
@@ -30,7 +31,7 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
     private static final List<String> tokenLegend = List.of("variable", "parameter", "function", "type");
 
     private final BasicTextDocumentService textDocumentService = new BasicTextDocumentService(tokenLegend);
-    private final com.github.akruk.antlrxquery.languageserver.BasicWorkspaceService workspaceService = new com.github.akruk.antlrxquery.languageserver.BasicWorkspaceService();
+    private final BasicWorkspaceService workspaceService = new BasicWorkspaceService();
 
     private LanguageClient client;
 
@@ -51,15 +52,51 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
         System.err.println("[connect] LanguageClient connected");
     }
 
-    // record ExtractVariableParams(TextDocumentIdentifier textDocument, Range range, String variableName)
-    // {}
+    record ExtractVariableParams(
+        Integer chosenPositionIndex,
+        Integer extractedContextIndex,
+        Integer actionId,
+        String variableName)
+    {}
 
-    // @JsonRequest("custom/extractVariable")
-    // public CompletableFuture<WorkspaceEdit> extractVariable(ExtractVariableParams params) {
-    //     return null;
-    // }
+    @JsonRequest("custom/extractVariable")
+    public CompletableFuture<WorkspaceEdit> extractVariable(ExtractVariableParams params) {
+        return textDocumentService.extractVariable(params);
+    }
 
+    record ExtractVariableLocationsParams(
+        Range range,
+        Integer selectedIndex,
+        Integer actionId,
+        String variableText,
+        String variableName)
+    {}
 
+    public static class ExtractLocationInfo {
+        private List<Range> ranges;
+		public ExtractLocationInfo(List<Range> ranges, List<String> texts) {
+			this.ranges = ranges;
+			this.texts = texts;
+		}
+		public List<Range> getRanges() {
+			return ranges;
+		}
+		public void setRanges(List<Range> ranges) {
+			this.ranges = ranges;
+		}
+		private List<String> texts;
+		public List<String> getTexts() {
+			return texts;
+		}
+		public void setTexts(List<String> texts) {
+			this.texts = texts;
+		}
+    }
+
+    @JsonRequest("custom/extractVariableLocations")
+    public CompletableFuture<ExtractLocationInfo> extractVariableLocations(ExtractVariableLocationsParams params) {
+        return textDocumentService.extractVariableLocations(params);
+    }
 
     @Override
     public CompletableFuture<InitializeResult> initialize(final InitializeParams params)

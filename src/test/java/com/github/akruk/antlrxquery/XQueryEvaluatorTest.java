@@ -21,7 +21,7 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
     @Test
     public void atomization() {
         final String xquery = "(1, (2,3,4), ((5, 6), 7))";
-        final var value = XQuery.evaluate(null, xquery, null);
+        final var value = XQuery.evaluateWithMockRoot(null, xquery, null);
         final List<XQueryValue> expected = List.of(
                 valueFactory.number(1),
                 valueFactory.number(2),
@@ -168,6 +168,32 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
     public void afterNode() throws Exception {
         assertDynamicGrammarQuery(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "/test >> /test", valueFactory.bool(false));
         assertDynamicGrammarQuery(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "/test/A[1] >> /test", valueFactory.bool(true));
+    }
+
+    @Test
+    public void ancestors() throws Exception {
+        String grammarString = """
+            grammar K;
+            a: b;
+            b: c;
+            c: D;
+            D: 'x';
+            """;
+        assertDynamicGrammarQuery(
+            "K",
+            grammarString,
+            "a",
+            "x",
+            "/a/b/c/D/ancestor::* => count()",
+            valueFactory.number(4));
+        assertDynamicGrammarQuery("K",
+            grammarString, "a", "x", "/a/b/c/D/ancestor::(b|c) => count()", valueFactory.number(2));
+        var tree = executeDynamicGrammarQueryWithTree("K",
+            grammarString, "a", "x", "/a/b/c/D");
+        var nodeD = tree.value().node;
+        var result = XQuery.evaluateWithMockRoot(nodeD, "/ancestor::*", tree.parser());
+        assertEquals(result.size, 3);
+
     }
 
     @Test

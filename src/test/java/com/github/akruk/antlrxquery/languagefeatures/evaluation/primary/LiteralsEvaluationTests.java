@@ -78,7 +78,7 @@ public class LiteralsEvaluationTests extends EvaluationTestsBase {
         String xquery = """
                     "a""b"
                 """;
-        var value = XQuery.evaluate(null, xquery, null);
+        var value = XQuery.evaluateWithMockRoot(null, xquery, null);
         assertEquals("a\"b", value.stringValue);
     }
 
@@ -175,7 +175,7 @@ public class LiteralsEvaluationTests extends EvaluationTestsBase {
     @Test
     public void sequenceLiteral() {
         String xquery = "(1, 2, 3)";
-        var value = XQuery.evaluate(null, xquery, null);
+        var value = XQuery.evaluateWithMockRoot(null, xquery, null);
         final List<XQueryValue> expected = List.of(
                 valueFactory.number(1),
                 valueFactory.number(2),

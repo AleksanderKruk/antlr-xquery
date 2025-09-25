@@ -5,6 +5,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 
 public class FLWORExpressionSemanticTests extends SemanticTestsBase {
     @Test
@@ -84,6 +85,41 @@ public class FLWORExpressionSemanticTests extends SemanticTestsBase {
                     while $x > 3
                     return $x
                 """, typeFactory.zeroOrMore(typeFactory.itemNumber()));
+    }
+
+    @Test
+    public void tumblingWindow() {
+        XQuerySequenceType zeroOrMoreNumbers = typeFactory.zeroOrMore(typeFactory.itemNumber());
+        assertType("""
+                    for tumbling window $w in (1, 2, 3)
+                        start $s at $si when $s = 2
+                        end $e at $ei when $e = 2
+                    return $w
+                """, zeroOrMoreNumbers);
+        assertType("""
+                    for tumbling window $w in (1, 2, 3)
+                        start $s at $si when $s = 2
+                        end $e at $ei when $e = 2
+                    return $s
+                """, zeroOrMoreNumbers);
+        assertType("""
+                    for tumbling window $w in (1, 2, 3)
+                        start $s at $si when $s = 2
+                        end $e at $ei when $e = 2
+                    return $si
+                """, zeroOrMoreNumbers);
+        assertType("""
+                    for tumbling window $w in (1, 2, 3)
+                        start $s at $si when $s = 2
+                        end $e at $ei when $e = 2
+                    return $e
+                """, zeroOrMoreNumbers);
+        assertType("""
+                    for tumbling window $w in (1, 2, 3)
+                        start $s at $si when $s = 2
+                        end $e at $ei when $e = 2
+                    return $ei
+                """, zeroOrMoreNumbers);
     }
 
 }

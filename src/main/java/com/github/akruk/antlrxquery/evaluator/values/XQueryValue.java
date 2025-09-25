@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
+import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import com.github.akruk.antlrxquery.evaluator.values.operations.ValueEquality;
@@ -307,7 +308,20 @@ public class XQueryValue {
             case ERROR -> "<Error:" + errorMessage + "/>";
             case ARRAY -> "<Array:" + arrayMembers + "/>";
             case BOOLEAN -> "<Boolean:" + booleanValue + "/>";
-            case ELEMENT -> "<Node:" + node.getClass().getSimpleName() + ":" + node.getText() + "/>";
+            case ELEMENT -> {
+                final Interval sourceInterval = node.getSourceInterval();
+                final StringBuilder stringBuilder = new StringBuilder();
+                stringBuilder.append("<Node:");
+                stringBuilder.append(node.getClass().getSimpleName());
+                stringBuilder.append(":");
+                stringBuilder.append(sourceInterval.a);
+                stringBuilder.append(",");
+                stringBuilder.append(sourceInterval.b);
+                stringBuilder.append(":");
+                stringBuilder.append(node.getText());
+                stringBuilder.append("/>");
+                yield stringBuilder.toString();
+            }
             case SEQUENCE -> "<Sequence:" + sequence + "/>";
             case EMPTY_SEQUENCE -> "<EmptySequence/>";
             case FUNCTION -> "<Function:" + functionValue + "/>";

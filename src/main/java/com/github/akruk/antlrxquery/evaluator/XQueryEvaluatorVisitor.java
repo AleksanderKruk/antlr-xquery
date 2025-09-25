@@ -654,6 +654,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
     private XQueryValue nodeSequence(final List<ParseTree> treenodes) {
         final List<XQueryValue> nodeSequence = treenodes.stream()
+                .distinct()
                 .map(valueFactory::node)
                 .collect(Collectors.toList());
         return valueFactory.sequence(nodeSequence);

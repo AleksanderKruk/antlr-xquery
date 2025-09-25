@@ -234,6 +234,7 @@ CONSTRUCTION: 'construction';
 ORDERING: 'ordering';
 COPY_NAMESPACES: 'copy-namespaces';
 DECIMAL_FORMAT: 'decimal-format';
+GROUP: 'group';
 
 
 ORDERED: 'ordered';

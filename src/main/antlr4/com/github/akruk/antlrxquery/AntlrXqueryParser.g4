@@ -26,6 +26,7 @@ intermediateClause: forClause
                 | whereClause
                 | whileClause
                 | orderByClause
+                | groupByClause
                 | countClause;
 
 forClause
@@ -75,6 +76,14 @@ orderSpecList: orderSpec (COMMA orderSpec)*;
 orderSpec: exprSingle orderModifier;
 orderModifier: (ASCENDING | DESCENDING)? (EMPTY (GREATEST | LEAST))?;
 returnClause: RETURN exprSingle;
+groupByClause
+    : GROUP BY groupingSpec (COMMA groupingSpec)*
+    ;
+
+groupingSpec
+    : varNameAndType (ASSIGNMENT_OP exprSingle)? (COLLATION STRING)?
+    ;
+
 
 quantifiedExpr: (SOME | EVERY) quantifierBinding (COMMA quantifierBinding)* SATISFIES exprSingle;
 quantifierBinding	:	varNameAndType IN exprSingle;
@@ -98,7 +107,7 @@ tryCatchExpr : tryClause ( (catchClause+ finallyClause?) | finallyClause ) ;
 tryClause : TRY enclosedExpr ;
 catchClause : CATCH (pureNameTestUnion | wildcard) enclosedExpr ;
 finallyClause : FINALLY enclosedExpr ;
-pureNameTestUnion	:	nameTest ('|' nameTest)*;
+pureNameTestUnion	:	nameTest (UNION_OP nameTest)*;
 
 
 
@@ -283,17 +292,17 @@ kindTest:	elementTest
 elementTest	:	ELEMENT LPAREN nameTestUnion? RPAREN;
 
 
-pathNameTestUnion	:	qname ('|' qname)*
-            | LPAREN  qname ('|' qname)* RPAREN;
+pathNameTestUnion	:	qname (UNION_OP qname)*
+            | LPAREN  qname (UNION_OP qname)* RPAREN;
 
-nameTestUnion	:	nameTest ('|' nameTest)*;
+nameTestUnion	:	nameTest (UNION_OP nameTest)*;
 nameTest	:	qname | wildcard;
 
 functionType:	annotation* (anyFunctionType | typedFunctionType);
 annotation	:	PERCENTAGE qname (LPAREN annotationValue (COMMA annotationValue)* RPAREN)?;
-annotationValue:	STRING | ('-'? numericLiteral) | (qname LPAREN RPAREN);
+annotationValue:	STRING | (MINUS? numericLiteral) | (qname LPAREN RPAREN);
 anyFunctionType	:	FUNCTION LPAREN STAR RPAREN;
-typedFunctionType	:	FUNCTION LPAREN (typedFunctionParam (COMMA typedFunctionParam)*)? RPAREN 'as' sequenceType;
+typedFunctionType	:	FUNCTION LPAREN (typedFunctionParam (COMMA typedFunctionParam)*)? RPAREN AS sequenceType;
 typedFunctionParam	:	(varRef AS)? sequenceType;
 
 mapType	:	anyMapType | typedMapType;

@@ -48,19 +48,88 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
     {
         var og = super.visitLetClause(ctx);
         for (final var letBinding : ctx.letBinding()) {
-            final VarRefContext varRef = letBinding.varNameAndType().varRef();
-            final String variableName = varRef.qname().getText();
-            final XQuerySequenceType assignedType = letBinding.exprSingle().accept(this);
-            final var range = getRange(varRef);
-            if (letBinding.varNameAndType().typeDeclaration() == null) {
-                variablesMappedToTypes.add(new TypedVariable(range, variableName, varRef, assignedType));
-                continue;
-            }
-            final XQuerySequenceType type = letBinding.varNameAndType().typeDeclaration().accept(this);
-            variablesMappedToTypes.add(new TypedVariable(range, variableName, varRef, type));
+            final VarNameAndTypeContext varNameAndType = letBinding.varNameAndType();
+            mapTypedVariableDeclaration(varNameAndType, visitExprSingle(letBinding.exprSingle()));
         }
         return og;
     }
+
+
+    private void mapTypedVariableDeclaration(final VarNameAndTypeContext varNameAndType, XQuerySequenceType assignedType) {
+        final VarRefContext varRef = varNameAndType.varRef();
+        final String variableName = varRef.qname().getText();
+        final var range = getRange(varRef);
+        if (varNameAndType.typeDeclaration() == null) {
+            variablesMappedToTypes.add(new TypedVariable(range, variableName, varRef, assignedType));
+        } else {
+            final XQuerySequenceType type = varNameAndType.typeDeclaration().accept(this);
+            variablesMappedToTypes.add(new TypedVariable(range, variableName, varRef, type));
+        }
+    }
+
+    private void mapTypedVariableDeclaration(final VarRefContext varRef, XQuerySequenceType type) {
+        final String variableName = varRef.qname().getText();
+        final var range = getRange(varRef);
+        variablesMappedToTypes.add(new TypedVariable(range, variableName, varRef, type));
+    }
+
+
+    @Override
+    public XQuerySequenceType visitSlidingWindowClause(SlidingWindowClauseContext ctx) {
+        var og = super.visitSlidingWindowClause(ctx);
+        final var iteratedType = visitExprSingle(ctx.exprSingle());
+        final var iterator = iteratedType.iteratorType();
+        final var optionalIterator = iterator.addOptionality();
+        final VarNameAndTypeContext varNameAndType = ctx.varNameAndType();
+        mapTypedVariableDeclaration(varNameAndType, visitExprSingle(ctx.exprSingle()));
+        if (ctx.windowStartCondition() != null)
+            mapWindowConditionVariables(iterator, optionalIterator, ctx.windowStartCondition().windowVars());
+        if (ctx.windowEndCondition() != null)
+            mapWindowConditionVariables(iterator, optionalIterator, ctx.windowEndCondition().windowVars());
+        return og;
+    }
+
+
+
+
+    @Override
+    public XQuerySequenceType visitTumblingWindowClause(TumblingWindowClauseContext ctx) {
+        var og = super.visitTumblingWindowClause(ctx);
+        final var iteratedType = visitExprSingle(ctx.exprSingle());
+        final var iterator = iteratedType.iteratorType();
+        final var optionalIterator = iterator.addOptionality();
+        final VarNameAndTypeContext varNameAndType = ctx.varNameAndType();
+        mapTypedVariableDeclaration(varNameAndType, visitExprSingle(ctx.exprSingle()));
+        if (ctx.windowStartCondition() != null)
+            mapWindowConditionVariables(iterator, optionalIterator, ctx.windowStartCondition().windowVars());
+        if (ctx.windowEndCondition() != null)
+            mapWindowConditionVariables(iterator, optionalIterator, ctx.windowEndCondition().windowVars());
+        return og;
+    }
+
+    private void mapWindowConditionVariables(
+        XQuerySequenceType iterator,
+        XQuerySequenceType optionalIterator,
+        WindowVarsContext windowVars)
+    {
+        {var currentVar = windowVars.currentVar();
+        if (currentVar != null) {
+            mapTypedVariableDeclaration(currentVar.varRef(), iterator);
+        }}
+        {var currentVarPos = windowVars.positionalVar();
+        if (currentVarPos != null) {
+            mapTypedVariableDeclaration(currentVarPos.varRef(), typeFactory.number());
+        }}
+        {var previousVar = windowVars.previousVar();
+        if (previousVar != null) {
+            mapTypedVariableDeclaration(previousVar.varRef(), optionalIterator);
+        }}
+        {var nextVar = windowVars.nextVar();
+        if (nextVar != null) {
+            mapTypedVariableDeclaration(nextVar.varRef(), optionalIterator);
+        }}
+    }
+
 
 
     private Range getRange(final ParserRuleContext rule) {
@@ -125,7 +194,6 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
         final ForEntryKeyBindingContext keyBinding = ctx.forEntryKeyBinding();
         final ForEntryValueBindingContext valueBinding = ctx.forEntryValueBinding();
 
-        // Process key binding
         if (keyBinding != null) {
             final String keyVariableName = keyBinding.varNameAndType().varRef().qname().getText();
             final XQueryItemType keyType = mapType.itemType.mapKeyType;
@@ -134,7 +202,6 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
             processVariableTypeDeclaration(keyBinding.varNameAndType(), keyIteratorType, keyVariableName, ctx);
         }
 
-        // Process value binding
         if (valueBinding != null) {
             final String valueVariableName = valueBinding.varNameAndType().varRef().qname().getText();
             final XQuerySequenceType valueType = mapType.itemType.mapValueType;

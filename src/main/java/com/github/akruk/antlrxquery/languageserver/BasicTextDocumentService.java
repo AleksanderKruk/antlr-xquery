@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
+
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.eclipse.lsp4j.*;
@@ -49,7 +51,6 @@ import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySeman
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQuerySemanticFunctionManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQuerySemanticFunctionManager.ArgumentSpecification;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQuerySemanticFunctionManager.FunctionSpecification;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTypeSets;
@@ -66,7 +67,7 @@ public class BasicTextDocumentService implements TextDocumentService {
     private final Map<String, List<TypeNameContext>> namedTypes = new HashMap<>();
     private final Map<String, List<VarRefContext>> variableReferences = new HashMap<>();
     private final Map<String, List<VarNameAndTypeContext>> variableDeclarations = new HashMap<>();
-    private final Map<String, List<VarNameAndTypeContext>> variableDeclarationsWithoutType = new HashMap<>();
+    private final Map<String, List<VarRefContext>> variableDeclarationsWithoutType = new HashMap<>();
     private final Map<String, List<FunctionDeclContext>> functionDecls = new HashMap<>();
     private final Map<String, List<NamedRecordTypeDeclContext>> recordDeclarations = new HashMap<>();
 
@@ -221,37 +222,59 @@ public class BasicTextDocumentService implements TextDocumentService {
                 System.err.println("[parseAndAnalyze] LanguageClient is null. Cannot publish diagnostics.");
             }
 
+            {
             final var declarations = XQuery.evaluateWithMockRoot(tree, "//varNameAndType", _parser).sequence;
             final List<VarNameAndTypeContext> declarationContexts = declarations.stream()
                 .map(x->(VarNameAndTypeContext) x.node)
                 .toList();
-            final List<VarNameAndTypeContext> declarationWithoutTypeContexts = declarationContexts.stream()
-                .filter(x->x.typeDeclaration() == null)
-                .toList();
-            variableDeclarations.put(uri, declarationContexts);
-            variableDeclarationsWithoutType.put(uri, declarationWithoutTypeContexts);
 
+            final Stream<VarRefContext> declarationWithoutTypeContexts = declarationContexts.stream()
+                .filter(x->x.typeDeclaration() == null)
+                .map(x->x.varRef());
+            variableDeclarations.put(uri, declarationContexts);
+
+            final List<XQueryValue> windowVars = XQuery.evaluateWithMockRoot(tree, "//windowVars//varRef", _parser).sequence;
+            var windowVarVarRefs = windowVars.stream().map(t -> (VarRefContext)t.node);
+            List<VarRefContext> combinedVarRefs = Stream
+                .of(declarationWithoutTypeContexts, windowVarVarRefs)
+                .flatMap((Stream<VarRefContext> x)->x)
+                .toList();
+            variableDeclarationsWithoutType.put(uri, combinedVarRefs);
+            }
+
+            {
             final var typeNames = XQuery.evaluateWithMockRoot(tree, "//typeName", _parser).sequence;
             final List<TypeNameContext> typeNameContexts = typeNames.stream()
                 .map(x->(TypeNameContext) x.node)
                 .toList();
             namedTypes.put(uri, typeNameContexts);
+            }
 
+            {
             final List<XQueryValue> recordDecls = XQuery.evaluateWithMockRoot(tree, "//namedRecordTypeDecl", _parser).sequence;
             final List<NamedRecordTypeDeclContext> rdecls = recordDecls.stream().map(v->(NamedRecordTypeDeclContext)v.node).toList();
             recordDeclarations.put(uri, rdecls);
+            }
 
+            {
             final List<XQueryValue> variableRefs = XQuery.evaluateWithMockRoot(tree, "//varRef", _parser).sequence;
             variableReferences.put(uri, variableRefs.stream().map(v->(VarRefContext)v.node).toList());
+            }
 
+            {
             final List<XQueryValue> fNames = XQuery.evaluateWithMockRoot(tree, "//functionName", _parser).sequence;
             functionNames.put(uri, fNames.stream().map(v -> (FunctionNameContext) v.node).toList());
+            }
 
+            {
             final List<XQueryValue> namedRefs = XQuery.evaluateWithMockRoot(tree, "//namedFunctionRef", _parser).sequence;
             namedFunctionRefs.put(uri, namedRefs.stream().map(v -> (NamedFunctionRefContext) v.node).toList());
+            }
 
+            {
             final List<XQueryValue> fDecls = XQuery.evaluateWithMockRoot(tree, "//functionDecl", _parser).sequence;
             functionDecls.put(uri, fDecls.stream().map(t -> (FunctionDeclContext)t.node).toList());
+            }
 
         } catch (final Exception e) {
             System.err.println("[parseAndAnalyze] Exception: " + e.getClass().getName() + " - " + e.getMessage());
@@ -653,7 +676,7 @@ public class BasicTextDocumentService implements TextDocumentService {
 
             if (position.getLine() + 1 < candidateCtx.getStart().getLine()
                 || (position.getLine() + 1 == candidateCtx.getStart().getLine()
-                && position.getCharacter() < candidateCtx.getStart().getCharPositionInLine()))
+                    && position.getCharacter() < candidateCtx.getStart().getCharPositionInLine()))
             {
                 high = mid - 1;
             }
@@ -743,11 +766,13 @@ public class BasicTextDocumentService implements TextDocumentService {
             return CompletableFuture.completedFuture(List.of());
         }
         List<TypedVariable> varsToTypes = analyzer.variablesMappedToTypes;
-        for (var variable : variableDeclarationsWithoutType.get(uri)) {
+        for (var variable : variableDeclarationsWithoutType.getOrDefault(uri, List.of())) {
             TypedVariable typedVariable = varsToTypes.stream()
-                .filter(typedVar -> typedVar.varRef() == variable.varRef())
+                .filter(typedVar -> typedVar.varRef() == variable)
                 .findFirst()
-                .get();
+                .orElse(null);
+            if (typedVariable == null)
+                continue;
             Token stop = typedVariable.varRef().getStop();
             Position hintPosition = new Position(stop.getLine() - 1,
                 stop.getCharPositionInLine() + stop.getText().length());

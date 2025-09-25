@@ -36,6 +36,7 @@ public class PrimarySemanticTests extends SemanticTestsBase {
         assertType("1.23e3", number);
         assertType(".5e+2", number);
         assertType("4.56E-1", number);
+        // TODO: ERROR
         assertType("7e4", number);
         assertType("1_2.3_4e+1_0", number); // z podkreśleniami
     }

@@ -207,6 +207,106 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         return null;
     }
 
+    @Override
+    public XQuerySequenceType visitTumblingWindowClause(TumblingWindowClauseContext ctx) {
+        final var iteratedType = visitExprSingle(ctx.exprSingle());
+        final var iterator = iteratedType.iteratorType();
+        final var optionalIterator = iterator.addOptionality();
+        final String windowVariableName = ctx.varNameAndType().varRef().qname().getText();
+        final XQuerySequenceType windowSequenceType = typeFactory.oneOrMore(iterator.itemType);
+
+        returnedOccurrence = arrayMergeFLWOROccurence();
+        handleWindowStartClause(ctx.windowStartCondition(), iterator, optionalIterator);
+        handleWindowEndClause(ctx.windowEndCondition(), iterator, optionalIterator);
+        handleWindowIterator(ctx.varNameAndType(), windowVariableName, windowSequenceType);
+        return null;
+    }
+
+    private void entypeWindowVariables(
+        XQuerySequenceType iterator,
+        XQuerySequenceType optionalIterator,
+        WindowVarsContext windowVars)
+    {
+        var currentVar = windowVars.currentVar();
+        if (currentVar != null) {
+            contextManager.entypeVariable(currentVar.varRef().qname().getText(), iterator);
+        }
+        var currentVarPos = windowVars.positionalVar();
+        if (currentVarPos != null) {
+            contextManager.entypeVariable(currentVarPos.varRef().qname().getText(), typeFactory.number());
+        }
+        var previousVar = windowVars.previousVar();
+        if (previousVar != null) {
+            contextManager.entypeVariable(previousVar.varRef().qname().getText(), optionalIterator);
+        }
+        var nextVar = windowVars.nextVar();
+        if (nextVar != null) {
+            contextManager.entypeVariable(nextVar.varRef().qname().getText(), optionalIterator);
+        }
+    }
+
+    @Override
+    public XQuerySequenceType visitSlidingWindowClause(SlidingWindowClauseContext ctx) {
+        final var iteratedType = visitExprSingle(ctx.exprSingle());
+        final var iterator = iteratedType.iteratorType();
+        final var optionalIterator = iterator.addOptionality();
+        final String windowVariableName = ctx.varNameAndType().varRef().qname().getText();
+        final XQuerySequenceType windowSequenceType = typeFactory.oneOrMore(iterator.itemType);
+
+        returnedOccurrence = arrayMergeFLWOROccurence();
+        handleWindowStartClause(ctx.windowStartCondition(), iterator, optionalIterator);
+        handleWindowEndClause(ctx.windowEndCondition(), iterator, optionalIterator);
+        handleWindowIterator(ctx.varNameAndType(), windowVariableName, windowSequenceType);
+        return null;
+    }
+
+    private void handleWindowIterator(VarNameAndTypeContext ctx, final String windowVariableName,
+            final XQuerySequenceType windowSequenceType) {
+        if (ctx.typeDeclaration() != null) {
+            XQuerySequenceType windowDeclaredVarType = visitTypeDeclaration(ctx.typeDeclaration());
+            if (!windowDeclaredVarType.isSubtypeOf(windowSequenceType)) {
+                error(ctx, "Mismatched types; declared: " + windowDeclaredVarType + " is not subtype of received: " + windowSequenceType);
+            }
+            contextManager.entypeVariable(windowVariableName, windowDeclaredVarType);
+        } else {
+            contextManager.entypeVariable(windowVariableName, windowSequenceType);
+        }
+    }
+
+    private void handleWindowStartClause(
+        final WindowStartConditionContext windowStartCondition,
+        final XQuerySequenceType iterator,
+        final XQuerySequenceType optionalIterator)
+    {
+        if (windowStartCondition != null) {
+            var windowVars = windowStartCondition.windowVars();
+            entypeWindowVariables(iterator, optionalIterator, windowVars);
+            if (windowStartCondition.WHEN() != null) {
+                var conditionType = visitExprSingle(windowStartCondition.exprSingle());
+                if (!conditionType.hasEffectiveBooleanValue) {
+                    error(windowStartCondition.exprSingle(), "Condition must have effective boolean value, received: " + conditionType);
+                }
+            }
+        }
+    }
+
+    private void handleWindowEndClause(
+        final WindowEndConditionContext windowEndConditionContext,
+        final XQuerySequenceType iterator,
+        final XQuerySequenceType optionalIterator)
+    {
+        if (windowEndConditionContext != null) {
+            var windowVars = windowEndConditionContext.windowVars();
+            entypeWindowVariables(iterator, optionalIterator, windowVars);
+            if (windowEndConditionContext.WHEN() != null) {
+                var conditionType = visitExprSingle(windowEndConditionContext.exprSingle());
+                if (!conditionType.hasEffectiveBooleanValue) {
+                    error(windowEndConditionContext.exprSingle(), "Condition must have effective boolean value, received: " + conditionType);
+                }
+            }
+        }
+    }
+
     public void processForItemBinding(final ForItemBindingContext ctx) {
         final String variableName = ctx.varNameAndType().varRef().qname().getText();
         final XQuerySequenceType sequenceType = ctx.exprSingle().accept(this);

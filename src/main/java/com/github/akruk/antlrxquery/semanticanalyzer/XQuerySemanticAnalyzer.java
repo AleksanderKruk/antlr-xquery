@@ -136,6 +136,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         this.anyNumbers = typeFactory.zeroOrMore(typeFactory.itemNumber());
         this.optionalString = typeFactory.zeroOrOne(typeFactory.itemString());
         this.anyItem = typeFactory.anyItem();
+        this.zeroOrOneItem = typeFactory.zeroOrOne(typeFactory.itemAnyItem());
 
         this.atomizer = new SequencetypeAtomization(typeFactory);
         this.castability = new SequencetypeCastable(typeFactory, atomizer);
@@ -328,8 +329,11 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
                     variableType = zeroOrMoreItems;
                 }
                 final XQuerySequenceType atomizedType = atomizer.atomize(variableType);
-                final XQuerySequenceType single = atomizedType.iteratorType();
-                contextManager.entypeVariable(varname, single);
+                if (!atomizedType.isSubtypeOf(zeroOrOneItem)) {
+                    error(gs.varNameAndType().varRef(), "Grouping variable: " + varname + " must be of type " + zeroOrOneItem + " received: " + atomizedType);
+
+                }
+                contextManager.entypeVariable(varname, atomizedType.iteratorType());
                 if (groupingVars.contains(varname)) {
                     error(gs.varNameAndType().varRef(), "Grouping variable: " + varname + " used multiple times");
                 } else {
@@ -2647,6 +2651,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
 
     XQueryAxis currentAxis;
+    private final XQuerySequenceType zeroOrOneItem;
 
     private XQueryAxis saveAxis() {
         final var saved = currentAxis;

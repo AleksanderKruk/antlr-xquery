@@ -297,15 +297,17 @@ public class ProcessingSequencesFunctions {
         return valueFactory.sequence(sequence.subList(0, sequence.size() - 1));
     }
 
-    public XQueryValue unordered(final XQueryVisitingContext context, final List<XQueryValue> args) {
-
+    public XQueryValue unordered(final XQueryVisitingContext context, final List<XQueryValue> args)
+    {
         // fn:unordered simply returns the input sequence as-is
         // It's a hint to the processor that order doesn't matter
         return args.get(0);
     }
 
-    public XQueryValue voidFunction(final XQueryVisitingContext context, final List<XQueryValue> args) {
-        if (args.size() > 1) return valueFactory.error(XQueryError.WrongNumberOfArguments, "");
+    public XQueryValue voidFunction(final XQueryVisitingContext context, final List<XQueryValue> args)
+    {
+        if (args.size() > 1)
+            return valueFactory.error(XQueryError.WrongNumberOfArguments, "");
 
         // fn:void always returns empty sequence regardless of input
         return valueFactory.emptySequence();

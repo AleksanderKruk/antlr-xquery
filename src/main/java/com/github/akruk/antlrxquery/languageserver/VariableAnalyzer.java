@@ -131,6 +131,19 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
     }
 
 
+    @Override
+    public XQuerySequenceType visitGroupByClause(GroupByClauseContext ctx) {
+        var og = super.visitGroupByClause(ctx);
+        for (var gs : ctx.groupingSpec()) {
+            if (gs.exprSingle() != null) {
+                mapTypedVariableDeclaration(gs.varNameAndType(), visitExprSingle(gs.exprSingle()));
+            } else {
+                mapTypedVariableDeclaration(gs.varNameAndType().varRef(), visitExprSingle(gs.exprSingle()));
+            }
+        }
+        return og;
+    }
+
 
     private Range getRange(final ParserRuleContext rule) {
         Token dollarSymbol = rule.getStart();
@@ -299,7 +312,7 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
             final TypeDeclarationContext typeDeclaration = parameter.typeDeclaration();
             final XQuerySequenceType parameterType = typeDeclaration != null
                 ? typeDeclaration.accept(this)
-                : anyItems;
+                : zeroOrMoreItems;
             var range = getRange(parameter.varRef());
             variablesMappedToTypes.add(new TypedVariable(range, parameterName, parameter.varRef(), parameterType));
         }

@@ -1,7 +1,9 @@
 package com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
@@ -40,6 +42,15 @@ public class XQuerySemanticContext {
             }
         }
         return null;
+    }
+
+    public Map<String, XQuerySequenceType> getVariables() {
+        HashMap<String, XQuerySequenceType> allvars = new HashMap<>();
+        for (var scope : scopes) {
+            var scopedVars = scope.getVariables();
+            allvars.putAll(scopedVars);
+        }
+        return allvars;
     }
 
     public boolean entypeVariable(String variableName, XQuerySequenceType assignedType) {

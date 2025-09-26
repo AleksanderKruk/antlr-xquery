@@ -208,7 +208,8 @@ public class ProcessingStrings {
 
     public XQueryValue collationAvailable(
             XQueryVisitingContext context,
-            List<XQueryValue> args) {
+            List<XQueryValue> args)
+    {
 
         final XQueryValue collation = args.get(0);
         // final XQueryValue usage = args.get(1);

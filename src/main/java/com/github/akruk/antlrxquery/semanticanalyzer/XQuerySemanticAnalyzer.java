@@ -76,7 +76,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     protected final XQuerySequenceType optionalString;
     protected final XQuerySequenceType anyItem;
     protected final XQuerySequenceType anyArrayOrMap;
-    protected final XQuerySequenceType anyItems;
+    protected final XQuerySequenceType zeroOrMoreItems;
     protected final XQuerySequenceType emptySequence;
 
     public List<DiagnosticError> getErrors()
@@ -124,7 +124,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         this.errors = new ArrayList<>();
         this.warnings = new ArrayList<>();
         this.anyArrayOrMap = typeFactory.zeroOrMore(typeFactory.itemChoice(Set.of(typeFactory.itemAnyMap(), typeFactory.itemAnyArray())));
-        this.anyItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
+        this.zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         this.emptySequence = typeFactory.emptySequence();
         this.number = typeFactory.number();
         this.zeroOrMoreNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
@@ -173,22 +173,29 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     {
         for (final var letBinding : ctx.letBinding()) {
             final VarNameAndTypeContext varNameAndType = letBinding.varNameAndType();
-            final String variableName = varNameAndType.varRef().qname().getText();
-            final XQuerySequenceType assignedValue = letBinding.exprSingle().accept(this);
-            if (varNameAndType.typeDeclaration() == null) {
-                contextManager.entypeVariable(variableName, assignedValue);
-                continue;
-            }
+            entypeVariable(letBinding, varNameAndType, letBinding.exprSingle());
+        }
+        return null;
+    }
+
+    private void entypeVariable(final ParserRuleContext ctx,
+                                final VarNameAndTypeContext varNameAndType,
+                                final ExprSingleContext assignedValueCtx)
+    {
+        final String variableName = varNameAndType.varRef().qname().getText();
+        final XQuerySequenceType assignedValue = visitExprSingle(assignedValueCtx);
+        if (varNameAndType.typeDeclaration() == null) {
+            contextManager.entypeVariable(variableName, assignedValue);
+        } else {
             final XQuerySequenceType type = varNameAndType.typeDeclaration().accept(this);
             if (!assignedValue.isSubtypeOf(type)) {
                 final String msg = String.format(
                     "Type of variable %s is not compatible with the assigned value: %s is not subtype of %s",
                     variableName, assignedValue, type);
-                error(letBinding, msg);
+                error(ctx, msg);
             }
             contextManager.entypeVariable(variableName, type);
         }
-        return null;
     }
 
 
@@ -305,6 +312,41 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
                 }
             }
         }
+    }
+
+    @Override
+    public XQuerySequenceType visitGroupByClause(GroupByClauseContext ctx) {
+        List<String> groupingVars = new ArrayList<>(ctx.groupingSpec().size());
+        for (var gs : ctx.groupingSpec()) {
+            if (gs.exprSingle() != null) {
+                entypeVariable(gs, gs.varNameAndType(), gs.exprSingle());
+            } else {
+                final String varname = gs.varNameAndType().varRef().qname().getText();
+                XQuerySequenceType variableType = contextManager.getVariable(varname);
+                if (variableType == null) {
+                    error(gs.varNameAndType().varRef(), "Variable: " + varname + " is not defined");
+                    variableType = zeroOrMoreItems;
+                }
+                final XQuerySequenceType atomizedType = atomizer.atomize(variableType);
+                final XQuerySequenceType single = atomizedType.iteratorType();
+                contextManager.entypeVariable(varname, single);
+                if (groupingVars.contains(varname)) {
+                    error(gs.varNameAndType().varRef(), "Grouping variable: " + varname + " used multiple times");
+                } else {
+                    groupingVars.add(varname);
+                }
+            }
+        }
+        Set<Entry<String, XQuerySequenceType>> variablesInContext = contextManager.currentContext().getVariables().entrySet();
+        for (var variableNameAndType : variablesInContext) {
+            String varName = variableNameAndType.getKey();
+            if (groupingVars.contains(varName)) {
+                continue;
+            }
+            var varType = variableNameAndType.getValue();
+            contextManager.entypeVariable(varName, varType.addOptionality());
+        }
+        return null;
     }
 
     public void processForItemBinding(final ForItemBindingContext ctx) {
@@ -597,7 +639,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         final XQuerySequenceType variableType = contextManager.getVariable(variableName);
         if (variableType == null) {
             error(ctx, "Undeclared variable referenced: " + variableName);
-            return anyItems;
+            return zeroOrMoreItems;
         } else {
             return variableType;
         }
@@ -1135,14 +1177,14 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         }
         if (!targetType.isSubtypeOf(anyArrayOrMap)) {
             error(ctx, "Left side of lookup expression '<left> ? ...' must be map(*)* or array(*)*");
-            return anyItems;
+            return zeroOrMoreItems;
         }
 
         switch (targetType.itemType.type) {
             case ARRAY:
                 final XQuerySequenceType targetItemType = targetType.itemType.arrayMemberType;
                 if (targetItemType == null)
-                    return anyItems;
+                    return zeroOrMoreItems;
                 final XQuerySequenceType result = targetItemType.sequenceMerge(targetItemType).addOptionality();
                 if (isWildcard) {
                     return result;
@@ -1154,13 +1196,13 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
                 return result;
             case ANY_ARRAY:
                 if (isWildcard) {
-                    return anyItems;
+                    return zeroOrMoreItems;
                 }
                 if (!keySpecifierType.isSubtypeOf(typeFactory.zeroOrMore(typeFactory.itemNumber())))
                 {
                     error(lookup, "Key type for lookup expression on " + targetType + " must be of type number*");
                 }
-                return anyItems;
+                return zeroOrMoreItems;
             case MAP:
                 return getMapLookuptype(ctx, lookup, keySpecifier, targetType, keySpecifierType, isWildcard);
             case EXTENSIBLE_RECORD:
@@ -1168,7 +1210,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             case RECORD:
                 return getRecordLookupType(ctx, lookup, keySpecifier,targetType, keySpecifierType, isWildcard);
             case ANY_MAP:
-                return anyItems;
+                return zeroOrMoreItems;
             default:
                 return getAnyArrayOrMapLookupType(lookup, isWildcard, targetType, keySpecifierType);
         }
@@ -1206,7 +1248,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
                     targetKeyItemType = targetItemType.alternativeMerge(itemType.mapKeyType);
                     break;
                 default:
-                    resultingType = anyItems;
+                    resultingType = zeroOrMoreItems;
                     targetKeyItemType = typeFactory.itemAnyItem();
             }
         }
@@ -1285,7 +1327,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         }
         if (!keySpecifierType.isSubtypeOf(typeFactory.zeroOrMore(typeFactory.itemString()))) {
             error(keySpecifier, "Key specifier on a record type should be subtype of string*");
-            return anyItems;
+            return zeroOrMoreItems;
         }
         final var string = keySpecifier.STRING();
         if (string != null) {
@@ -1293,7 +1335,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             final var valueType = recordFields.get(key);
             if (valueType == null) {
                 error(keySpecifier, "Key specifier: " + key + " does not match record of type " + targetType);
-                return anyItems;
+                return zeroOrMoreItems;
             }
             return valueType.type();
         }
@@ -1312,7 +1354,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
                 final var recordField = recordFields.get(member);
                 if (recordField == null) {
                     warn(lookup, "The following enum member: " + member + "does not match any record field");
-                    return anyItems;
+                    return zeroOrMoreItems;
                 }
                 if (recordField.isRequired()) {
                     merged = merged.sequenceMerge(recordField.type());
@@ -1349,14 +1391,14 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         }
         if (!keySpecifierType.isSubtypeOf(typeFactory.zeroOrMore(typeFactory.itemString()))) {
             error(ctx, "Key specifier on a record type should be subtype of string*");
-            return anyItems;
+            return zeroOrMoreItems;
         }
         final var string = keySpecifier.STRING();
         if (string != null) {
             final String key = processStringLiteral(keySpecifier);
             final var valueType = recordFields.get(key);
             if (valueType == null) {
-                return anyItems;
+                return zeroOrMoreItems;
             }
             return valueType.type();
         }
@@ -1374,7 +1416,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
                     continue;
                 final var recordField = recordFields.get(member);
                 if (recordField == null)  {
-                    return anyItems;
+                    return zeroOrMoreItems;
                 }
                 if (recordField.isRequired()) {
                     merged = merged.alternativeMerge(recordField.type());
@@ -1489,7 +1531,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         }
         for (int i = 0; i < ctx.rangeExpr().size(); i++) {
             final var visitedType = visitRangeExpr(ctx.rangeExpr(i));
-            if (!visitedType.isSubtypeOf(anyItems)) {
+            if (!visitedType.isSubtypeOf(zeroOrMoreItems)) {
                 error(ctx.rangeExpr(i), "Operands of 'or expression' need to be subtype of item()?");
             }
         }
@@ -1982,7 +2024,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         }
         ctx.positionalArgumentList().accept(this);
 
-        final var expectedFunction = typeFactory.itemFunction(anyItems, visitedPositionalArguments);
+        final var expectedFunction = typeFactory.itemFunction(zeroOrMoreItems, visitedPositionalArguments);
         if (!value.itemType.itemtypeIsSubtypeOf(expectedFunction)){
             error(ctx, "Dynamic function call expects: " + expectedFunction + " received: " + value);
         }
@@ -1990,7 +2032,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         if (isCallable)
             return value.itemType.returnedType;
         else
-            return anyItems;
+            return zeroOrMoreItems;
     }
 
 
@@ -2399,7 +2441,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             final TypeDeclarationContext typeDeclaration = parameter.typeDeclaration();
             final XQuerySequenceType parameterType = typeDeclaration != null
                 ? typeDeclaration.accept(this)
-                : anyItems;
+                : zeroOrMoreItems;
             if (argumentNames.contains(parameterName))
                 error(parameter, "Duplicate parameter name: " + parameterName);
             argumentNames.add(parameterName);
@@ -2452,7 +2494,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
                 var argName = getArgName(param);
                 XQuerySequenceType paramType = null;
                 if (param.varNameAndType().typeDeclaration() == null) {
-                    paramType = anyItems;
+                    paramType = zeroOrMoreItems;
                 } else {
                     paramType = param.varNameAndType().typeDeclaration().accept(this);
                 }
@@ -2564,7 +2606,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         for (ExtendedFieldDeclarationContext field : extendedFieldDeclaration) {
             var fieldName = field.fieldDeclaration().fieldName().getText();
             var fieldTypeCtx = field.fieldDeclaration().sequenceType();
-            XQuerySequenceType fieldType = anyItems;
+            XQuerySequenceType fieldType = zeroOrMoreItems;
             if (fieldTypeCtx != null) {
                 fieldType = fieldTypeCtx.accept(this);
             }

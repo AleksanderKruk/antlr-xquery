@@ -148,7 +148,6 @@ public class AggregateFunctions {
                 XQueryValue b = items.get(j);
 
                 if (atomicEquals(a, b, collator)) {
-                    // Znaleziono duplikat
                     return valueFactory.bool(false);
                 }
             }
@@ -159,13 +158,16 @@ public class AggregateFunctions {
 
 
     private boolean atomicEquals(
-            XQueryValue a,
-            XQueryValue b,
-            Collator collator)
+        XQueryValue a,
+        XQueryValue b,
+        Collator collator)
     {
         // TODO: rewrite
         if (a.isNumeric && b.isNumeric) {
             return a.numericValue.compareTo(b.numericValue) == 0;
+        }
+        if (a.isBoolean && b.isBoolean) {
+            return a.booleanValue == b.booleanValue;
         }
         return collator.compare(a.stringValue, b.stringValue) == 0;
     }

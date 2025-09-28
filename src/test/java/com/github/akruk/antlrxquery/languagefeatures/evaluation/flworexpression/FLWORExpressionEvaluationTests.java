@@ -144,4 +144,33 @@ public class FLWORExpressionEvaluationTests extends EvaluationTestsBase {
                         valueFactory.number(2),
                         valueFactory.number(1)));
     }
+
+
+    @Test
+    public void groupBy() {
+        assertResult("for $x in (2, 4, 3, 1) group by $x order by $x descending return $x",
+                List.of(valueFactory.number(4),
+                        valueFactory.number(3),
+                        valueFactory.number(2),
+                        valueFactory.number(1)));
+    }
+
+    @Test
+    public void groupByNonGrouping() {
+        assertResult("""
+                for $x in (2, 4, 3, 1)
+                group by $is-even := $x mod 2 eq 0
+                return $is-even
+            """,
+                List.of(valueFactory.bool(true), valueFactory.bool(false)));
+        assertResult("""
+                for $x in (2, 4, 3, 1)
+                group by $is-even := $x mod 2 eq 0
+                return $x
+            """,
+                List.of(valueFactory.number(2),
+                        valueFactory.number(4),
+                        valueFactory.number(3),
+                        valueFactory.number(1)));
+    }
 }

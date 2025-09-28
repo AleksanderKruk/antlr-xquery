@@ -75,8 +75,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     private Map<String, XQueryValue> visitedKeywordArguments;
 
 
-    private record VariableCoupling(Variable item, Variable key, Variable value, Variable position) {}
-    private record Variable(String name, XQueryValue value){}
+    record VariableCoupling(Variable item, Variable key, Variable value, Variable position) {}
+    record Variable(String name, XQueryValue value){}
 
     public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser, final XQuerySemanticAnalyzer analyzer, final XQueryTypeFactory typeFactory) {
         this(tree, parser, new XQueryMemoizedValueFactory(typeFactory), analyzer, typeFactory);
@@ -143,9 +143,10 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         }
         // at this point visitedTupleStream should contain all tuples
         final var expressionValue = visitReturnClause(ctx.returnClause());
+        final var atomized = atomizer.atomize(expressionValue);
         contextManager.leaveScope();
         visitedTupleStream = savedTupleStream;
-        return expressionValue;
+        return valueFactory.sequence(atomized);
     }
 
     @Override
@@ -987,6 +988,146 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             currentAxis = XQueryAxis.FOLLOWING_OR_SELF;
         return null;
     }
+
+
+    // @Override
+    // public XQueryValue visitGroupByClause(GroupByClauseContext ctx) {
+    //     final int groupingCount = ctx.groupingSpec().size();
+    //     final List<String> groupingVars = new ArrayList<>(groupingCount);
+    //     final List<ExprSingleContext> groupingExpressions = new ArrayList<>(groupingCount);
+    //     for (var gs : ctx.groupingSpec()) {
+    //         groupingVars.add(gs.varNameAndType().varRef().qname().getText());
+    //         groupingExpressions.add(gs.exprSingle());
+    //     }
+    //     final Map<XQueryValue, List<XQueryValue>> grouped =  visitedTupleStream.collect(Collectors.<XQueryValue, XQueryValue>groupingBy(
+    //         (XQueryValue coupling) -> {
+    //             return
+
+    //         }
+    //     ));
+    //     // visitedTupleStream =
+    //     return null;
+    // }
+
+    private List<XQueryValue> computeGroupingKey(
+        final XQueryValue tuple,
+        final List<String> groupingVars,
+        final List<ExprSingleContext> groupingExpressions
+    ) {
+        final int count = groupingVars.size();
+        final List<XQueryValue> key = new ArrayList<>(count);
+
+        for (int i = 0; i < count; i++) {
+            final String varName = groupingVars.get(i);
+            final ExprSingleContext expr = groupingExpressions.get(i);
+            final XQueryValue value = expr != null
+                ? visitExprSingle(expr)
+                : contextManager.getVariable(varName);
+            key.add(value);
+        }
+
+        return key;
+    }
+
+
+    @Override
+    public XQueryValue visitGroupByClause(final GroupByClauseContext ctx) {
+        final int groupingCount = ctx.groupingSpec().size();
+        final List<String> groupingVars = new ArrayList<>(groupingCount);
+        final List<ExprSingleContext> groupingExpressions = new ArrayList<>(groupingCount);
+
+        for (final GroupingSpecContext gs : ctx.groupingSpec()) {
+            groupingVars.add(gs.varNameAndType().varRef().qname().getText());
+            groupingExpressions.add(gs.exprSingle());
+        }
+
+        final Map<List<XQueryValue>, List<List<VariableCoupling>>> grouped = new LinkedHashMap<>();
+
+        visitedTupleStream.forEach((List<VariableCoupling> tuple) -> {
+            final List<XQueryValue> key = new ArrayList<>(groupingCount);
+
+            for (int i = 0; i < groupingCount; i++) {
+                final String varName = groupingVars.get(i);
+                final ExprSingleContext expr = groupingExpressions.get(i);
+                final XQueryValue value = expr != null
+                    ? visitExprSingle(expr)
+                    : getVariableValue(tuple.reversed(), varName);
+                key.add(value);
+            }
+
+            grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(tuple);
+        });
+
+        final Stream<List<VariableCoupling>> result = grouped.entrySet()
+            .stream()
+            .map(
+                (Map.Entry<List<XQueryValue>,
+                          List<List<VariableCoupling>>> entry)
+                -> {
+                    final List<XQueryValue> keyValues = entry.getKey();
+                    final List<List<VariableCoupling>> groupTuples = entry.getValue();
+
+                    final List<VariableCoupling> resultTuple = new ArrayList<>();
+
+                    for (int i = 0; i < groupingVars.size(); i++) {
+                        final String name = groupingVars.get(i);
+                        final XQueryValue value = keyValues.get(i);
+                        resultTuple.add(new VariableCoupling(
+                            new Variable(name, value),
+                            null, null, null
+                        ));
+                    }
+
+                    final Map<String, List<XQueryValue>> collected = new LinkedHashMap<>();
+
+                    for (List<VariableCoupling> tuple : groupTuples) {
+                        for (VariableCoupling coupling : tuple) {
+                            List<Variable> vars = new ArrayList<>(4);
+                            vars.add(coupling.item);
+                            vars.add(coupling.key);
+                            vars.add(coupling.value);
+                            vars.add(coupling.position);
+                            for (Variable var : vars) {
+                                if (var != null && !groupingVars.contains(var.name)) {
+                                    collected.computeIfAbsent(var.name, k -> new ArrayList<>()).add(var.value);
+                                }
+                            }
+                        }
+                    }
+
+                    for (Map.Entry<String, List<XQueryValue>> e : collected.entrySet()) {
+                        resultTuple.add(new VariableCoupling(
+                            new Variable(e.getKey(), valueFactory.sequence(e.getValue())),
+                            null, null, null
+                        ));
+                    }
+
+                    return resultTuple;
+            }
+        );
+
+        visitedTupleStream = result;
+        return null;
+    }
+
+    private XQueryValue getVariableValue(final List<VariableCoupling> tuple, final String name) {
+        for (VariableCoupling coupling : tuple) {
+            List<Variable> vars = new ArrayList<>(4);
+            vars.add(coupling.item);
+            vars.add(coupling.key);
+            vars.add(coupling.value);
+            vars.add(coupling.position);
+            for (Variable var : vars) {
+                if (var != null && var.name().equals(name)) {
+                    return var.value;
+                }
+            }
+        }
+        return null;
+    }
+
+
+
 
     @Override
     public XQueryValue visitReverseAxis(final ReverseAxisContext ctx) {

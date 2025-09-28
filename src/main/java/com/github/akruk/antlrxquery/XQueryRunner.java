@@ -53,7 +53,7 @@ public class XQueryRunner {
 
 
     public static void runXQueryTool(final ExtractionResult config)
-    throws Exception
+        throws Exception
     {
 
         final List<String> grammarFiles = config.grammars;
@@ -128,6 +128,9 @@ public class XQueryRunner {
                 outputStream.println("File: " + file);
                 // TODO: atomize
                 // TODO:
+                if (results.sequence == null) {
+                    errorStream.println(results);
+                }
                 for (final var result : results.sequence) {
                     final String printed = result.stringValue;
                     if (printed != null)

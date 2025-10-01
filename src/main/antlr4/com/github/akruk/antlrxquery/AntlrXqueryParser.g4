@@ -314,8 +314,8 @@ recordType:	anyRecordType | typedRecordType;
 anyRecordType: RECORD LPAREN STAR RPAREN;
 typedRecordType: RECORD LPAREN (fieldDeclaration (COMMA fieldDeclaration)*)? extensibleFlag? RPAREN;
 extensibleFlag:	COMMA STAR;
-fieldDeclaration	:	fieldName QUESTION_MARK? (AS sequenceType)?;
-fieldName	:	ID;
+fieldDeclaration:	fieldName QUESTION_MARK? (AS sequenceType)?;
+fieldName:anyName;
 
 
 arrayType	:	anyArrayType | typedArrayType;

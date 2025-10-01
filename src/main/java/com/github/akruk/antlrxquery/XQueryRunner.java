@@ -69,11 +69,6 @@ public class XQueryRunner {
         Files.createDirectories(sourceDir);
         Files.createDirectories(outputDir);
 
-
-
-
-
-        // XQuery.evaluate(null, query, new AntlrXqueryParser(null));
         final String baseName = getBaseGrammarName(grammarFiles.get(0));
         final String grammarPackage = "generated." + baseName.toLowerCase();
 
@@ -126,8 +121,6 @@ public class XQueryRunner {
                 final String fileContent = Files.readString(Path.of(file));
                 final XQueryValue results = executeQuery(xqueryTree, lexerClass, parserClass, startingRule, fileContent);
                 outputStream.println("File: " + file);
-                // TODO: atomize
-                // TODO:
                 if (results.sequence == null) {
                     errorStream.println(results);
                 }

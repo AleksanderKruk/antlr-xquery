@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.TerminalNode;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -24,6 +25,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryLexer;
 import com.github.akruk.antlrxquery.AntlrXqueryParser;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ArgumentListContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ArrowTargetContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.ConstructorCharsContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionCallContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionDeclContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionNameContext;
@@ -31,6 +33,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.KeywordArgumentsContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.NamedFunctionRefContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.NamedRecordTypeDeclContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PositionalArgumentsContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.StringConstructorContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.TypeNameContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameAndTypeContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarRefContext;
@@ -73,16 +76,18 @@ public class BasicTextDocumentService implements TextDocumentService {
 
 
     private final int variableIndex;
-    // private final int parameterIndex;
     private final int functionIndex;
     private final int typeIndex;
+    private final int parameterIndex;
+    private final int stringIndex;
 
     BasicTextDocumentService(final List<String> tokenLegend)
     {
         variableIndex = tokenLegend.indexOf("variable");
-        // parameterIndex = tokenLegend.indexOf("parameter");
         functionIndex = tokenLegend.indexOf("function");
         typeIndex = tokenLegend.indexOf("type");
+        parameterIndex = tokenLegend.indexOf("parameter");
+        stringIndex = tokenLegend.indexOf("string");
         resolver = new NamespaceResolver("fn");
     }
 
@@ -289,6 +294,10 @@ public class BasicTextDocumentService implements TextDocumentService {
     final AntlrXqueryParser _parser = new AntlrXqueryParser(_tokens);
     private final NamespaceResolver resolver;
 
+    private final TreeEvaluator constructors = XQuery.compile("//constructorChars", _parser);
+    private final TreeEvaluator constructorBoundaries = XQuery.compile("//(STRING_CONSTRUCTION_START|STRING_CONSTRUCTION_END)", _parser);
+    // private final TreeEvaluator fields = XQuery.compile("//()", _parser);
+
     record SemanticToken(int line, int charPos, int length, int typeIndex, int modifierBitmask) {}
 
     @Override
@@ -340,6 +349,27 @@ public class BasicTextDocumentService implements TextDocumentService {
             final SemanticToken functionToken = getFunctionSemanticToken(val);
             tokens.add(functionToken);
         }
+
+        for (final XQueryValue val : constructors.evaluate(tree).sequence) {
+            final ConstructorCharsContext ctx = (ConstructorCharsContext) val.node;
+            final Token start = ctx.getStart();
+            final Token stop = ctx.getStop();
+            final int line = start.getLine() - 1;
+            final int charPos = start.getCharPositionInLine();
+            final int length = stop.getStopIndex() - start.getStartIndex() + 1;
+            final SemanticToken semTok = new SemanticToken(line, charPos, length, stringIndex, 0);
+            tokens.add(semTok);
+        }
+
+        for (final XQueryValue val : constructorBoundaries.evaluate(tree).sequence) {
+            final TerminalNode ctx = (TerminalNode) val.node;
+            final Token start = ctx.getSymbol();
+            final int line = start.getLine() - 1;
+            final int charPos = start.getCharPositionInLine();
+            final SemanticToken semTok = new SemanticToken(line, charPos, 3, stringIndex, 0);
+            tokens.add(semTok);
+        }
+
 
 
         tokens.sort(Comparator

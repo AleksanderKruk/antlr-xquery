@@ -250,8 +250,8 @@ UNORDERED: 'unordered';
 ID: NAME_START (DASH NAME_MIDDLE)*
     ; /* Replace with antlr compatible */
 
-fragment NAME_START: [\p{Alpha}][\p{Alpha}\p{Alnum}]*;
-fragment NAME_MIDDLE: [\p{Alpha}\p{Alnum}]+;
+fragment NAME_START: [\p{Alpha}_][\p{Alpha}\p{Alnum}_]*;
+fragment NAME_MIDDLE: [\p{Alpha}\p{Alnum}_]+;
 fragment DASH: '-';
 
 // STRING_INTERPOLATION_START  : '`' -> pushMode(INSIDE_INTERPOLATION);

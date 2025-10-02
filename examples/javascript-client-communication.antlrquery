@@ -1,0 +1,12 @@
+(: Sekcja js dla komunikacji  :)
+
+let $registeredCommands := //funccall[funcname = 'registerCommand']
+for $command in $registeredCommands
+let $requests := $command/args[2]//funccall[funcname = 'sendRequest']
+let $requestNames := $requests/args[1],
+	$requestMessages := $requests/args[2]
+for $m in $requestMessages
+let $parameters := $m//objectLiteral//propertyName
+					| $m//objectLiteral//propertyAssignment[not(propertyName) and not('(') and not('[')]/singleExpression
+return ()
+

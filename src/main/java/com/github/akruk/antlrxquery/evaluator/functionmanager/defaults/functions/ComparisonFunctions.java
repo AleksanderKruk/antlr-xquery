@@ -30,60 +30,60 @@ public class ComparisonFunctions {
         if (a.size != b.size)
             return false;
         switch(a.valueType) {
-        case BOOLEAN:
-            return a.booleanValue == b.booleanValue;
-        case NUMBER:
-            return a.numericValue.compareTo(b.numericValue) == 0;
-        case STRING:
-            return collator.compare(a.stringValue, b.stringValue) == 0;
-        case ARRAY: {
-            var aMembers = a.arrayMembers;
-            var bMembers = b.arrayMembers;
-            if (aMembers.size() != bMembers.size()) {
-                return false;
-            }
-
-            for (int i = 0; i < aMembers.size(); i++) {
-                var aValue = aMembers.get(i);
-                var bValue = bMembers.get(i);
-                if (!deepEquals(aValue, bValue, collator)) {
+            case BOOLEAN:
+                return a.booleanValue == b.booleanValue;
+            case NUMBER:
+                return a.numericValue.compareTo(b.numericValue) == 0;
+            case STRING:
+                return collator.compare(a.stringValue, b.stringValue) == 0;
+            case ARRAY: {
+                var aMembers = a.arrayMembers;
+                var bMembers = b.arrayMembers;
+                if (aMembers.size() != bMembers.size()) {
                     return false;
                 }
+
+                for (int i = 0; i < aMembers.size(); i++) {
+                    var aValue = aMembers.get(i);
+                    var bValue = bMembers.get(i);
+                    if (!deepEquals(aValue, bValue, collator)) {
+                        return false;
+                    }
+                }
+                return true;
             }
-            return true;
-        }
-        case MAP: {
-            var aEntries = a.mapEntries;
-            var bEntries = b.mapEntries;
-            if (a.mapEntries.size() != b.mapEntries.size()) {
-                return false;
-            }
-            if (!aEntries.keySet().containsAll(bEntries.keySet()))
-                return false;
-            for (var akey : aEntries.keySet()) {
-                var aValue = aEntries.get(akey);
-                var bValue = bEntries.get(akey);
-                if (!deepEquals(aValue, bValue, collator)) {
+            case MAP: {
+                var aEntries = a.mapEntries;
+                var bEntries = b.mapEntries;
+                if (a.mapEntries.size() != b.mapEntries.size()) {
                     return false;
                 }
+                if (!aEntries.keySet().containsAll(bEntries.keySet()))
+                    return false;
+                for (var akey : aEntries.keySet()) {
+                    var aValue = aEntries.get(akey);
+                    var bValue = bEntries.get(akey);
+                    if (!deepEquals(aValue, bValue, collator)) {
+                        return false;
+                    }
+                }
+                return true;
             }
-            return true;
-        }
-        case ELEMENT: {
+            case ELEMENT: {
 
-        }
-        case EMPTY_SEQUENCE: {
+            }
+            case EMPTY_SEQUENCE: {
 
-        }
-        case FUNCTION: {
+            }
+            case FUNCTION: {
 
-        }
-        case ERROR: {
+            }
+            case ERROR: {
 
-        }
-        case SEQUENCE: {
+            }
+            case SEQUENCE: {
 
-        }
+            }
         }
         return false;
     }

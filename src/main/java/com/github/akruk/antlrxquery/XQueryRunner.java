@@ -69,11 +69,6 @@ public class XQueryRunner {
         Files.createDirectories(sourceDir);
         Files.createDirectories(outputDir);
 
-
-
-
-
-        // XQuery.evaluate(null, query, new AntlrXqueryParser(null));
         final String baseName = getBaseGrammarName(grammarFiles.get(0));
         final String grammarPackage = "generated." + baseName.toLowerCase();
 
@@ -126,8 +121,6 @@ public class XQueryRunner {
                 final String fileContent = Files.readString(Path.of(file));
                 final XQueryValue results = executeQuery(xqueryTree, lexerClass, parserClass, startingRule, fileContent);
                 outputStream.println("File: " + file);
-                // TODO: atomize
-                // TODO:
                 if (results.sequence == null) {
                     errorStream.println(results);
                 }
@@ -303,10 +296,17 @@ public class XQueryRunner {
         OK, ERROR, EOF, NO_GRAMMARS, NO_TARGET_FILES, NO_STARTING_RULE, NO_QUERY, INVALID_QUERY, QUERY_DUPLICATION, INVALID_TARGET_FILE
     }
 
-    record ExtractionResult(List<String> grammars, List<String> targetFiles, String startingRule,
-            String lexerName, String parserName, String query,
-            InputStream inputStream, PrintStream outputStream, PrintStream errorStream) {
-    }
+    record ExtractionResult(
+        List<String> grammars,
+        List<String> targetFiles,
+        String startingRule,
+        String lexerName,
+        String parserName,
+        String query,
+        InputStream inputStream,
+        PrintStream outputStream,
+        PrintStream errorStream)
+    {}
 
     private static ValidationResult validateStreamFiles(final Map<String, List<String>> args) {
     if (args.containsKey(STDIN_ARG)) {
@@ -376,10 +376,10 @@ public class XQueryRunner {
 
 
     private static final String GRAMMARS_ARG = "--grammars";
-    private static final String TARGET_FILES_ARG = "--target-files";
     private static final String STARTING_RULE_ARG = "--starting-rule";
     private static final String QUERY_ARG = "--query";
     private static final String QUERY_FILE_ARG = "--query-file";
+    private static final String TARGET_FILES_ARG = "--target-files";
     private static final String LEXER_NAME_ARG = "--lexer-name";
     private static final String PARSER_NAME_ARG = "--parser-name";
     private static final String STDIN_ARG = "--stdin";

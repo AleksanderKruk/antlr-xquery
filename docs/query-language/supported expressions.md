@@ -39,7 +39,7 @@ Arithmetic Expressions | `4*5 + +10`<br>`5 div 5 - -1`<br>`10 idiv 2 + 10 mod 2`
 String Concatenation Expressions | `"a" \|\| "b"` | yes |
 Value comparisons | `$sequence[. eq "a"]` | yes |
 General comparisons | `$sequence = "a"` | yes |
-Node comparisons | `$x[. is y]`<br>`$x[. << after]`<br>`$x[. >> before]` | yes |
+Node comparisons | `$x[. is $y]`<br>`$x[. << after]`<br>`$x[. >> before]` | yes |
 Logical Expressions | `false() or true() and false()` | yes |
 String Constructors (string interpolation) | ``` ``[`{$s}` fish]`` ``` | |
 Map Constructors | ``` map { "a": "x", "b": "y" } ``` | |

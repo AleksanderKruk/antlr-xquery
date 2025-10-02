@@ -1,0 +1,7 @@
+(: Plant UML inheritance class diagram from java files :)
+for $class in //normalClassDeclaration => outermost()
+	let $className := $class/typeIdentifier => text()
+	let $extendedClass := $class/classExtends/classType => text()
+	let $implementedClasses := $class/classImplements//interfaceType =!> text()
+return (``[`{$className} --|> `{$extendedClass}`]``,
+		$implementedClasses ! ``[{$className} --|> {.}]``)

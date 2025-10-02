@@ -2094,8 +2094,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
     private XQuerySequenceType handleGeneralComparison(final ComparisonExprContext ctx)
     {
-        final var leftHandSide = ctx.otherwiseExpr(0).accept(this);
-        final var rightHandSide = ctx.otherwiseExpr(1).accept(this);
+        final var leftHandSide = atomizer.atomize(ctx.otherwiseExpr(0).accept(this));
+        final var rightHandSide = atomizer.atomize(ctx.otherwiseExpr(1).accept(this));
         if (!leftHandSide.isSubtypeOf(rightHandSide) && !rightHandSide.isSubtypeOf(leftHandSide)) {
             final String msg = String.format("The types: %s and %s in general comparison are not comparable",
                 leftHandSide.toString(), rightHandSide.toString());

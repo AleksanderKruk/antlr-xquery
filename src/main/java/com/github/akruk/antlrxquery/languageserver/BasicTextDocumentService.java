@@ -25,7 +25,6 @@ import com.github.akruk.antlrxquery.AntlrXqueryLexer;
 import com.github.akruk.antlrxquery.AntlrXqueryParser;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ArgumentListContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ArrowTargetContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.ConstructorCharsContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionCallContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionDeclContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionNameContext;
@@ -33,7 +32,6 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.KeywordArgumentsContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.NamedFunctionRefContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.NamedRecordTypeDeclContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PositionalArgumentsContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.StringConstructorContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.TypeNameContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameAndTypeContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarRefContext;
@@ -80,6 +78,7 @@ public class BasicTextDocumentService implements TextDocumentService {
     private final int typeIndex;
     private final int parameterIndex;
     private final int stringIndex;
+    private final int propertyIndex;
 
     BasicTextDocumentService(final List<String> tokenLegend)
     {
@@ -88,6 +87,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         typeIndex = tokenLegend.indexOf("type");
         parameterIndex = tokenLegend.indexOf("parameter");
         stringIndex = tokenLegend.indexOf("string");
+        propertyIndex = tokenLegend.indexOf("property");
         resolver = new NamespaceResolver("fn");
     }
 
@@ -296,6 +296,7 @@ public class BasicTextDocumentService implements TextDocumentService {
 
     private final TreeEvaluator constructors = XQuery.compile("//constructorChars", _parser);
     private final TreeEvaluator constructorBoundaries = XQuery.compile("//(STRING_CONSTRUCTION_START|STRING_CONSTRUCTION_END)", _parser);
+    private final TreeEvaluator properties = XQuery.compile("//extendedFieldDeclaration//fieldDeclaration/fieldName", _parser);
     // private final TreeEvaluator fields = XQuery.compile("//()", _parser);
 
     record SemanticToken(int line, int charPos, int length, int typeIndex, int modifierBitmask) {}
@@ -332,7 +333,7 @@ public class BasicTextDocumentService implements TextDocumentService {
 
 
         for (final var ctx : variableReferences.getOrDefault(uri, List.of())) {
-            final Token start = ctx.DOLLAR().getSymbol();
+            final Token start = ctx.getStart();
             final Token stop = ctx.qname().getStop();
             final int line = start.getLine() - 1;
             final int charPos = start.getCharPositionInLine();
@@ -350,16 +351,7 @@ public class BasicTextDocumentService implements TextDocumentService {
             tokens.add(functionToken);
         }
 
-        for (final XQueryValue val : constructors.evaluate(tree).sequence) {
-            final ConstructorCharsContext ctx = (ConstructorCharsContext) val.node;
-            final Token start = ctx.getStart();
-            final Token stop = ctx.getStop();
-            final int line = start.getLine() - 1;
-            final int charPos = start.getCharPositionInLine();
-            final int length = stop.getStopIndex() - start.getStartIndex() + 1;
-            final SemanticToken semTok = new SemanticToken(line, charPos, length, stringIndex, 0);
-            tokens.add(semTok);
-        }
+        markTokens(tree, tokens, constructors, stringIndex);
 
         for (final XQueryValue val : constructorBoundaries.evaluate(tree).sequence) {
             final TerminalNode ctx = (TerminalNode) val.node;
@@ -369,6 +361,8 @@ public class BasicTextDocumentService implements TextDocumentService {
             final SemanticToken semTok = new SemanticToken(line, charPos, 3, stringIndex, 0);
             tokens.add(semTok);
         }
+
+        markTokens(tree, tokens, properties, propertyIndex);
 
 
 
@@ -395,6 +389,20 @@ public class BasicTextDocumentService implements TextDocumentService {
         }
 
         return CompletableFuture.completedFuture(new SemanticTokens(data));
+    }
+
+    private void markTokens(final ParseTree tree, final List<SemanticToken> tokens, TreeEvaluator contextQuery, int typeIndex)
+    {
+        for (final XQueryValue val : contextQuery.evaluate(tree).sequence) {
+            final ParserRuleContext ctx = (ParserRuleContext) val.node;
+            final Token start = ctx.getStart();
+            final Token stop = ctx.getStop();
+            final int line = start.getLine() - 1;
+            final int charPos = start.getCharPositionInLine();
+            final int length = stop.getStopIndex() - start.getStartIndex() + 1;
+            final SemanticToken semTok = new SemanticToken(line, charPos, length, typeIndex, 0);
+            tokens.add(semTok);
+        }
     }
 
     private SemanticToken getFunctionSemanticToken(ParserRuleContext ctx)

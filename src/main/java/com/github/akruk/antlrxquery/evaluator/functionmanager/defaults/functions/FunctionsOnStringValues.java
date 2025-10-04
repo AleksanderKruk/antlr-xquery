@@ -596,5 +596,38 @@ public class FunctionsOnStringValues {
         return valueFactory.number(BigDecimal.valueOf(length));
     }
 
+    /**
+     * fn:string-empty(
+     *   $value as xs:string := fn:string(.)
+     * ) as xs:integer
+     */
+    public XQueryValue stringEmpty(
+            XQueryVisitingContext context,
+            List<XQueryValue> args)
+    {
+
+        String input;
+
+        if (args.isEmpty()) {
+            // zero‐arg form: use context item
+            final XQueryValue ctxItem = context.getValue();
+            if (ctxItem == null) {
+                return valueFactory.error(XQueryError.MissingDynamicContextComponent, "");
+            }
+            // atomize
+            final List<XQueryValue> atoms = atomizer.atomize(ctxItem);
+            if (atoms.size() != 1) {
+                return valueFactory.error(XQueryError.InvalidArgumentType, "");
+            }
+            input = atoms.get(0).stringValue;
+        } else {
+            // one‐arg form
+            XQueryValue arg = args.get(0);
+            return valueFactory.bool(arg.stringValue.isEmpty());
+        }
+
+        return valueFactory.bool(input.isEmpty());
+    }
+
 
 }

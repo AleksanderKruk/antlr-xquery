@@ -989,26 +989,6 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return null;
     }
 
-
-    // @Override
-    // public XQueryValue visitGroupByClause(GroupByClauseContext ctx) {
-    //     final int groupingCount = ctx.groupingSpec().size();
-    //     final List<String> groupingVars = new ArrayList<>(groupingCount);
-    //     final List<ExprSingleContext> groupingExpressions = new ArrayList<>(groupingCount);
-    //     for (var gs : ctx.groupingSpec()) {
-    //         groupingVars.add(gs.varNameAndType().varRef().qname().getText());
-    //         groupingExpressions.add(gs.exprSingle());
-    //     }
-    //     final Map<XQueryValue, List<XQueryValue>> grouped =  visitedTupleStream.collect(Collectors.<XQueryValue, XQueryValue>groupingBy(
-    //         (XQueryValue coupling) -> {
-    //             return
-
-    //         }
-    //     ));
-    //     // visitedTupleStream =
-    //     return null;
-    // }
-
     @Override
     public XQueryValue visitGroupByClause(final GroupByClauseContext ctx) {
         final int groupingCount = ctx.groupingSpec().size();
@@ -1288,7 +1268,6 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return ctx.stringConcatExpr(length - 1).accept(this);
     }
 
-    // private final Num
 
     @Override
     public XQueryValue visitMultiplicativeExpr(final MultiplicativeExprContext ctx) {

@@ -385,9 +385,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         checkPositionalVariableDistinct(ctx.positionalVar(), variableName, ctx);
 
         final XQuerySequenceType memberType = arrayType.itemType.arrayMemberType;
-        final XQuerySequenceType iteratorType = memberType.addOptionality();
 
-        processVariableTypeDeclaration(ctx.varNameAndType(), iteratorType, variableName, ctx);
+        processVariableTypeDeclaration(ctx.varNameAndType(), memberType, variableName, ctx);
 
         if (ctx.positionalVar() != null) {
             final String positionalVariableName = ctx.positionalVar().varRef().qname().getText();

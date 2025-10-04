@@ -125,7 +125,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitXquery(XqueryContext ctx) {
+    public XQueryValue visitXquery(final XqueryContext ctx) {
         if (ctx.libraryModule() != null)
             return null;
         return visitMainModule(ctx.mainModule());
@@ -738,7 +738,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitArrowTarget(ArrowTargetContext ctx)
+    public XQueryValue visitArrowTarget(final ArrowTargetContext ctx)
     {
         if (ctx.functionCall() != null) {
             ctx.functionCall().argumentList().accept(this);
@@ -750,12 +750,12 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
 
     @Override
-    public XQueryValue visitVarDecl(VarDeclContext ctx)
+    public XQueryValue visitVarDecl(final VarDeclContext ctx)
     {
         if (ctx.EXTERNAL() != null)
             return null;
-        var name = ctx.varNameAndType().varRef().qname().getText();
-        var value = visitVarValue(ctx.varValue());
+        final var name = ctx.varNameAndType().varRef().qname().getText();
+        final var value = visitVarValue(ctx.varValue());
         contextManager.provideVariable(name, value);
         return null;
     }
@@ -775,40 +775,40 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
 
     @Override
-    public XQueryValue visitFunctionDecl(FunctionDeclContext ctx)
+    public XQueryValue visitFunctionDecl(final FunctionDeclContext ctx)
     {
         if (ctx.EXTERNAL() != null) {
             return null;
         }
-        String qname = ctx.qname().getText();
-        ResolvedName resolved = namespaceResolver.resolve(qname);
-        var argNames = new ArrayList<String>();
-        Map<String, ParseTree> defaults = new HashMap<String, ParseTree>();
+        final String qname = ctx.qname().getText();
+        final ResolvedName resolved = namespaceResolver.resolve(qname);
+        final var argNames = new ArrayList<String>();
+        final Map<String, ParseTree> defaults = new HashMap<String, ParseTree>();
         contextManager.enterScope();
         if (ctx.paramListWithDefaults() != null) {
-            var params = ctx.paramListWithDefaults().paramWithDefault();
-            for (ParamWithDefaultContext param : params) {
-                var argName = param.varNameAndType().varRef().qname().anyName().getText();
-                var defaultValue = param.exprSingle();
+            final var params = ctx.paramListWithDefaults().paramWithDefault();
+            for (final ParamWithDefaultContext param : params) {
+                final var argName = param.varNameAndType().varRef().qname().anyName().getText();
+                final var defaultValue = param.exprSingle();
                 if (defaultValue != null) {
                     defaults.put(argName, defaultValue);
                 }
                 argNames.add(argName);
             }
         }
-        var body = ctx.functionBody().enclosedExpr();
+        final var body = ctx.functionBody().enclosedExpr();
         functionManager.registerFunction(
             resolved.namespace(), resolved.name(),
             (context, positionalArguments) -> {
-                var saved = saveContext();
+                final var saved = saveContext();
                 contextManager.enterContext();
                 this.context = context;
                 for (int i = 0; i < positionalArguments.size(); i++) {
-                    var arg = positionalArguments.get(i);
-                    var argname = argNames.get(i);
+                    final var arg = positionalArguments.get(i);
+                    final var argname = argNames.get(i);
                     contextManager.provideVariable(argname, arg);
                 }
-                var result = visitEnclosedExpr(body);
+                final var result = visitEnclosedExpr(body);
                 contextManager.leaveContext();
                 context = saved;
                 return result;
@@ -845,7 +845,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
 
     @Override
-    public XQueryValue visitContextValueRef(ContextValueRefContext ctx)
+    public XQueryValue visitContextValueRef(final ContextValueRefContext ctx)
     {
         return context.getValue();
     }
@@ -908,7 +908,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             }
             i++;
         }
-        for (var node : stepNodes) {
+        for (final var node : stepNodes) {
             int j = 0;
             for (final String _ : names) {
                 final int targetRuleOrTokenIndex = ruleOrTokenIndices[j];
@@ -989,47 +989,6 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return null;
     }
 
-
-    // @Override
-    // public XQueryValue visitGroupByClause(GroupByClauseContext ctx) {
-    //     final int groupingCount = ctx.groupingSpec().size();
-    //     final List<String> groupingVars = new ArrayList<>(groupingCount);
-    //     final List<ExprSingleContext> groupingExpressions = new ArrayList<>(groupingCount);
-    //     for (var gs : ctx.groupingSpec()) {
-    //         groupingVars.add(gs.varNameAndType().varRef().qname().getText());
-    //         groupingExpressions.add(gs.exprSingle());
-    //     }
-    //     final Map<XQueryValue, List<XQueryValue>> grouped =  visitedTupleStream.collect(Collectors.<XQueryValue, XQueryValue>groupingBy(
-    //         (XQueryValue coupling) -> {
-    //             return
-
-    //         }
-    //     ));
-    //     // visitedTupleStream =
-    //     return null;
-    // }
-
-    private List<XQueryValue> computeGroupingKey(
-        final XQueryValue tuple,
-        final List<String> groupingVars,
-        final List<ExprSingleContext> groupingExpressions
-    ) {
-        final int count = groupingVars.size();
-        final List<XQueryValue> key = new ArrayList<>(count);
-
-        for (int i = 0; i < count; i++) {
-            final String varName = groupingVars.get(i);
-            final ExprSingleContext expr = groupingExpressions.get(i);
-            final XQueryValue value = expr != null
-                ? visitExprSingle(expr)
-                : contextManager.getVariable(varName);
-            key.add(value);
-        }
-
-        return key;
-    }
-
-
     @Override
     public XQueryValue visitGroupByClause(final GroupByClauseContext ctx) {
         final int groupingCount = ctx.groupingSpec().size();
@@ -1043,7 +1002,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
         final Map<List<XQueryValue>, List<List<VariableCoupling>>> grouped = new LinkedHashMap<>();
 
-        visitedTupleStream.forEach((List<VariableCoupling> tuple) -> {
+        visitedTupleStream.forEach((final List<VariableCoupling> tuple) -> {
             final List<XQueryValue> key = new ArrayList<>(groupingCount);
 
             for (int i = 0; i < groupingCount; i++) {
@@ -1055,13 +1014,13 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
                 key.add(value);
             }
 
-            grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(tuple);
+            grouped.computeIfAbsent(key, _ -> new ArrayList<>()).add(tuple);
         });
 
         final Stream<List<VariableCoupling>> result = grouped.entrySet()
             .stream()
             .map(
-                (Map.Entry<List<XQueryValue>,
+                (final Map.Entry<List<XQueryValue>,
                           List<List<VariableCoupling>>> entry)
                 -> {
                     final List<XQueryValue> keyValues = entry.getKey();
@@ -1080,22 +1039,22 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
                     final Map<String, List<XQueryValue>> collected = new LinkedHashMap<>();
 
-                    for (List<VariableCoupling> tuple : groupTuples) {
-                        for (VariableCoupling coupling : tuple) {
-                            List<Variable> vars = new ArrayList<>(4);
+                    for (final List<VariableCoupling> tuple : groupTuples) {
+                        for (final VariableCoupling coupling : tuple) {
+                            final List<Variable> vars = new ArrayList<>(4);
                             vars.add(coupling.item);
                             vars.add(coupling.key);
                             vars.add(coupling.value);
                             vars.add(coupling.position);
-                            for (Variable var : vars) {
+                            for (final Variable var : vars) {
                                 if (var != null && !groupingVars.contains(var.name)) {
-                                    collected.computeIfAbsent(var.name, k -> new ArrayList<>()).add(var.value);
+                                    collected.computeIfAbsent(var.name, _ -> new ArrayList<>()).add(var.value);
                                 }
                             }
                         }
                     }
 
-                    for (Map.Entry<String, List<XQueryValue>> e : collected.entrySet()) {
+                    for (final Map.Entry<String, List<XQueryValue>> e : collected.entrySet()) {
                         resultTuple.add(new VariableCoupling(
                             new Variable(e.getKey(), valueFactory.sequence(e.getValue())),
                             null, null, null
@@ -1111,13 +1070,13 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     private XQueryValue getVariableValue(final List<VariableCoupling> tuple, final String name) {
-        for (VariableCoupling coupling : tuple) {
-            List<Variable> vars = new ArrayList<>(4);
+        for (final VariableCoupling coupling : tuple) {
+            final List<Variable> vars = new ArrayList<>(4);
             vars.add(coupling.item);
             vars.add(coupling.key);
             vars.add(coupling.value);
             vars.add(coupling.position);
-            for (Variable var : vars) {
+            for (final Variable var : vars) {
                 if (var != null && var.name().equals(name)) {
                     return var.value;
                 }
@@ -1170,7 +1129,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
         var contextArgument = ctx.unaryExpr().accept(this);
         visitedPositionalArguments.add(contextArgument);
-        for (var arrowexpr : ctx.children.subList(1, ctx.children.size())) {
+        for (final var arrowexpr : ctx.children.subList(1, ctx.children.size())) {
             contextArgument = arrowexpr.accept(this);
             visitedPositionalArguments = new ArrayList<>();
             visitedPositionalArguments.add(contextArgument);
@@ -1183,13 +1142,13 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitMappingArrowTarget(MappingArrowTargetContext ctx) {
-        XQueryValue mappedSequence = visitedPositionalArguments.get(visitedPositionalArguments.size()-1);
-        ArrayList<XQueryValue> resultingSequence = new ArrayList<>(mappedSequence.size);
-        for (XQueryValue el : mappedSequence.sequence) {
+    public XQueryValue visitMappingArrowTarget(final MappingArrowTargetContext ctx) {
+        final XQueryValue mappedSequence = visitedPositionalArguments.get(visitedPositionalArguments.size()-1);
+        final ArrayList<XQueryValue> resultingSequence = new ArrayList<>(mappedSequence.size);
+        for (final XQueryValue el : mappedSequence.sequence) {
             visitedPositionalArguments = new ArrayList<>();
             visitedPositionalArguments.add(el);
-            var call = ctx.arrowTarget().accept(this);
+            final var call = ctx.arrowTarget().accept(this);
             if (call.isError)
                 return call;
             resultingSequence.add(call);
@@ -1198,32 +1157,13 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitRestrictedDynamicCall(RestrictedDynamicCallContext ctx) {
-        var function = ctx.children.get(0).accept(this);
+    public XQueryValue visitRestrictedDynamicCall(final RestrictedDynamicCallContext ctx) {
+        final var function = ctx.children.get(0).accept(this);
         if (function.isError)
             return function;
         ctx.positionalArgumentList().accept(this);
         return function.functionValue.call(context, visitedPositionalArguments);
     }
-
-
-    // public XQueryValue visitSequenceArrowTarget(final SequenceArrowTargetContext ctx) {
-    //     if (ctx.ID() != null) {
-    //         final ResolvedName parts = namespaceResolver.resolve(ctx.ID().getText());
-    //         final String namespace = parts.namespace();
-    //         final String localName = parts.name();
-    //         return functionManager.getFunctionReference(namespace, localName, visitedArgumentList.size());
-    //     }
-    //     if (ctx.varRef() != null)
-    //         return visitVarRef(ctx.varRef());
-    //     return visitParenthesizedExpr(ctx.parenthesizedExpr());
-
-    // }
-
-
-
-
-
 
     final NamespaceResolver namespaceResolver = new NamespaceResolver("fn");
 
@@ -1328,7 +1268,6 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return ctx.stringConcatExpr(length - 1).accept(this);
     }
 
-    // private final Num
 
     @Override
     public XQueryValue visitMultiplicativeExpr(final MultiplicativeExprContext ctx) {
@@ -2080,7 +2019,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
 
     @Override
-    public XQueryValue visitCurlyArrayConstructor(CurlyArrayConstructorContext ctx) {
+    public XQueryValue visitCurlyArrayConstructor(final CurlyArrayConstructorContext ctx) {
         final XQueryValue enclosedValue = visitEnclosedExpr(ctx.enclosedExpr());
         final List<XQueryValue> atomized = atomizer.atomize(enclosedValue);
         return valueFactory.array(atomized);

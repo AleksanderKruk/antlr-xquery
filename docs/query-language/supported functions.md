@@ -1,23 +1,167 @@
 # Function index
 
+## Processing sequences
+
+### General
+
+Function                                           | Is implemented      | Comment
+---------------------------------------------------|---------------------|---------
+`fn:empty`                                         | &#10004;            |
+`fn:exists`                                        | &#10004;            |
+`fn:foot`                                          | &#10004;            |
+`fn:head`                                          | &#10004;            |
+`fn:identity`                                      | &#10004;            |
+`fn:insert-before`                                 | &#10004;            |
+`fn:items-at`                                      | &#10004;            |
+`fn:remove`                                        | &#10004;            |
+`fn:replicate`                                     | &#10004;            |
+`fn:reverse`                                       | &#10004;            |
+`fn:sequence-join`                                 | &#10004;            |
+`fn:slice`                                         | &#10004;            |
+`fn:subsequence`                                   | &#10004;            |
+`fn:unordered`                                     | &#10006;            | Adding sets will probably be a better idea than a separate function for unordered sequences
+`fn:void`                                          | &#10004;            |
+
+### Sequence Comparisons
+
+Function                                           | Is implemented      | Comment
+---------------------------------------------------|---------------------|---------
+`fn:atomic-equal`                                  |                     |
+`fn:compare`                                       |                     |
+`fn:contains-subsequence`                          |                     |
+`fn:deep-equal`                                    |                     |
+`fn:distinct-values`                               |                     |
+`fn:duplicate-values`                              |                     |
+`fn:ends-with-subsequence`                         |                     |
+`fn:index-of`                                      |                     |
+`fn:starts-with-subsequence`                       |                     |
+
+
+### Asserting Cardinality
+Function                                           | Is implemented      | Comment
+---------------------------------------------------|---------------------|---------
+`fn:zero-or-one`                                   | &#10004;            |
+`fn:one-or-more`                                   | &#10004;            |
+`fn:exactly-one`                                   | &#10004;            |
+
+### Aggregate functions
+Function                                           | Is implemented      | Comment
+---------------------------------------------------|---------------------|---------
+`fn:count`                                         | &#10004;            |
+`fn:all-equal`                                     | &#10004;            |
+`fn:all-different`                                 | &#10004;            |
+`fn:avg`                                           | &#10004;            |
+`fn:max`                                           | &#10004;            |
+`fn:min`                                           | &#10004;            |
+`fn:sum`                                           | &#10004;            |
+
+
+### Basic higher-order functions
+Function                                           | Is implemented      | Comment
+---------------------------------------------------|---------------------|---------
+`fn:apply`                                         |                     |
+`fn:do-until`                                      |                     |
+`fn:every`                                         |                     |
+`fn:filter`                                        |                     |
+`fn:fold-left`                                     |                     |
+`fn:fold-right`                                    |                     |
+`fn:for-each`                                      |                     |
+`fn:for-each-pair`                                 |                     |
+`fn:highest`                                       |                     |
+`fn:index-where`                                   |                     |
+`fn:lowest`                                        |                     |
+`fn:partial-apply`                                 |                     |
+`fn:partition`                                     |                     |
+`fn:scan-left`                                     |                     |
+`fn:scan-right`                                    |                     |
+`fn:some`                                          |                     |
+`fn:sort`                                          |                     |
+`fn:sort-by`                                       |                     |
+`fn:sort-with`                                     |                     |
+`fn:subsequence-where`                             |                     |
+`fn:take-while`                                    |                     |
+`fn:transitive-closure`                            |                     |
+`fn:while-do`                                      |                     |
+
+
+## Processing booleans
+Function                                           | Is implemented | Comment
+---------------------------------------------------|----------------|---------
+`fn:true`                                          | &#10004;       |
+`fn:false`                                         | &#10004;       |
+`fn:boolean`                                       | &#10004;       |
+`fn:not`                                           | &#10004;       |
+
+
+## Processing numerics
+
+### Functions on numeric values
+Function                                           | Is implemented | Comment
+---------------------------------------------------|----------------|---------
+`fn:abs`                                           | &#10004;            |
+`fn:ceiling`                                       | &#10004;            |
+`fn:divide-decimals`                               | &#10004;            |
+`fn:floor`                                         | &#10004;            |
+`fn:is-NaN`                                        | &#10006;            | NaN values are not modelled
+`fn:round`                                         | &#10004;            |
+`fn:round-half-to-even`                            | &#10004;            |
+
+### Parsing numbers
+Function                                           | Is implemented | Comment
+---------------------------------------------------|----------------|---------
+`fn:number`                                        |                |
+`fn:parse-integer`                                 |                |
+
+### Formatting numbers
+Function                                           | Is implemented | Comment
+---------------------------------------------------|----------------|---------
+`fn:format-integer`                                |                |
+`fn:format-number`                                 |                |
+
+### Trigonometric and exponential functions
+Function                                           | Is implemented | Comment
+---------------------------------------------------|----------------|---------
+`math:pi`                                          | &#10004;       |
+`math:e`                                           | &#10004;       |
+`math:acos`                                        | &#10004;       |
+`math:asin`                                        | &#10004;       |
+`math:atan`                                        | &#10004;       |
+`math:atan2`                                       | &#10004;       |
+`math:cos`                                         | &#10004;       |
+`math:cosh`                                        | &#10004;       |
+`math:exp`                                         | &#10004;       |
+`math:exp10`                                       | &#10004;       |
+`math:log`                                         | &#10004;       |
+`math:log10`                                       | &#10004;       |
+`math:pow`                                         | &#10004;       |
+`math:sin`                                         | &#10004;       |
+`math:sinh`                                        | &#10004;       |
+`math:sqrt`                                        | &#10004;       |
+`math:tan`                                         | &#10004;       |
+`math:tanh`                                        | &#10004;       |
+
+### Random numbers
+Function                                           | Is implemented | Comment
+---------------------------------------------------|----------------|---------
+`fn:random-number-generator`                       |                |
 
 ## Operators
 Function                                           | Is implemented | Comment
 ---------------------------------------------------|----------------|---------
-`op:numeric-add`                                   | yes            |
-`op:numeric-subtract`                              | yes            |
-`op:numeric-multiply`                              | yes            |
-`op:numeric-divide`                                | yes            |
-`op:numeric-integer-divide`                        | yes            |
-`op:numeric-mod`                                   | yes            |
-`op:numeric-unary-plus`                            | yes            |
-`op:numeric-unary-minus`                           | yes            |
-`op:numeric-equal`                                 | yes            |
-`op:numeric-less-than`                             | yes            |
-`op:numeric-greater-than`                          | yes            |
-`op:boolean-equal`                                 | yes            |
-`op:boolean-less-than`                             | yes            |
-`op:boolean-greater-than`                          | yes            |
+`op:numeric-add`                                   | &#10004;       |
+`op:numeric-subtract`                              | &#10004;       |
+`op:numeric-multiply`                              | &#10004;       |
+`op:numeric-divide`                                | &#10004;       |
+`op:numeric-integer-divide`                        | &#10004;       |
+`op:numeric-mod`                                   | &#10004;       |
+`op:numeric-unary-plus`                            | &#10004;       |
+`op:numeric-unary-minus`                           | &#10004;       |
+`op:numeric-equal`                                 | &#10004;       |
+`op:numeric-less-than`                             | &#10004;       |
+`op:numeric-greater-than`                          | &#10004;       |
+`op:boolean-equal`                                 | &#10004;       |
+`op:boolean-less-than`                             | &#10004;       |
+`op:boolean-greater-than`                          | &#10004;       |
 `op:hexBinary-equal`                               |                |
 `op:hexBinary-less-than`                           |                |
 `op:hexBinary-greater-than`                        |                |
@@ -28,200 +172,118 @@ Function                                           | Is implemented | Comment
 `op:same-key`                                      |                |
 
 
-## String functions
+## Processing strings
+
+### Functions to assemble and disassemble strigns
 Function                                           | Is implemented | Comment
 ---------------------------------------------------|----------------|---------
-`fn:string`                                        | yes            |
 `fn:codepoints-to-string`                          |                |
 `fn:string-to-codepoints`                          |                |
-`fn:compare`                                       |                |
+
+### Comparison of strings
+Function                                           | Is implemented | Comment
+---------------------------------------------------|----------------|---------
 `fn:codepoint-equal`                               |                |
+`fn:collation`                                     |                |
+`fn:collation-available`                           |                |
 `fn:collation-key`                                 |                |
 `fn:contains-token`                                |                |
-`fn:concat`                                        | yes            |
-`fn:string-join`                                   | yes            |
-`fn:string-length`                                 | yes            |
-`fn:string-empty`                                  |                | non-standard
-`fn:normalize-space`                               | yes            |
-`fn:normalize-unicode`                             |                |
-`fn:upper-case`                                    | yes            |
-`fn:lower-case`                                    | yes            |
-`fn:translate`                                     |                |
-`fn:contains`                                      | yes            |
-`fn:starts-with`                                   | yes            |
-`fn:ends-with`                                     | yes            |
-`fn:substring`                                     | yes            |
-`fn:substring-before`                              | yes            |
-`fn:substring-after`                               | yes            |
+
+### Functions on string values
+Function                                           | Is implemented | Comment
+---------------------------------------------------|----------------|---------
+`fn:char`                                          | &#10004;       |
+`fn:characters`                                    | &#10004;       |
+`fn:graphemes`                                     | &#10004;       |
+`fn:concat`                                        | &#10004;       |
+`fn:string-join`                                   | &#10004;       |
+`fn:substring`                                     | &#10004;       |
+`fn:string-length`                                 | &#10004;       |
+`fn:string-empty`                                  | &#10004;       | non-standard
+`fn:normalize-space`                               | &#10004;       |
+`fn:normalize-unicode`                             | &#10004;       |
+`fn:upper-case`                                    | &#10004;       |
+`fn:lower-case`                                    | &#10004;       |
+`fn:translate`                                     | &#10004;       |
+`fn:hash`                                          |                |
+
+### Functions based on substring matching
+Function                                           | Is implemented | Comment
+---------------------------------------------------|----------------|---------
+`fn:contains`                                      | &#10004;       |
+`fn:starts-with`                                   | &#10004;       |
+`fn:ends-with`                                     | &#10004;       |
+`fn:substring`                                     | &#10004;       |
+`fn:substring-before`                              | &#10004;       |
+`fn:substring-after`                               | &#10004;       |
+
+### Functions using regular expressions
+Function                                           | Is implemented | Comment
+---------------------------------------------------|----------------|---------
 `fn:matches`                                       |                |
 `fn:replace`                                       |                |
 `fn:tokenize`                                      |                |
 `fn:analyze-string`                                |                |
-`fn:format-integer`                                |                |
-`fn:format-number`                                 |                |
-`fn:format-dateTime`                               |                |
-`fn:format-date`                                   |                |
-`fn:format-time`                                   |                |
-`fn:serialize`                                     |                |
-`fn:default-collation`                             |                |
-`fn:default-language`                              |                |
 
-
-## Node functions
-
-Function                                              | Is implemented | Comment
-------------------------------------------------------|----------------|---------
-`fn:node-name`                                        |                |
-`fn:has-children`                                     |                |
-`fn:name`                                             |                |
-`fn:local-name`                                       |                |
-`fn:lang`                                             |                |
-`fn:id`                                               |                |
-`fn:element-with-id`                                  |                |
-`fn:idref`                                            |                |
-`antlr:start`                                         |                | non-standard, equivalent to $start in grammar
-`antlr:stop`                                          |                | non-standard, equivalent to $stop in grammar
-`antlr:line`                                          |                | non-standard, equivalent to $ctx in grammar
-`antlr:ctx`                                           |                | non-standard, equivalent to $ctx in grammar
-
-## Sequence functions
-
+## Processing URIs
 Function                                           | Is implemented | Comment
 ---------------------------------------------------|----------------|---------
-`fn:empty`                                         | yes            |
-`fn:exists`                                        | yes            |
-`fn:head`                                          | yes            |
-`fn:tail`                                          | yes            |
-`fn:insert-before`                                 | yes            |
-`fn:remove`                                        | yes            |
-`fn:reverse`                                       | yes            |
-`fn:subsequence`                                   | yes            |
-`fn:unordered`                                     | yes            |
-`fn:distinct-values`                               | yes            |
+`fn:decode-from-uri`                               |                |
+`fn:encode-for-uri`                                |                |
+`fn:escape-html-uri`                               |                |
+`fn:iri-to-uri`                                    |                |
+`fn:resolve-uri`                                   |                |
+
+### Parsing and building URIs
+Function                                           | Is implemented | Comment
+---------------------------------------------------|----------------|---------
+`fn:parse-uri`                                     |                |
+`fn:build-uri`                                     |                |
+
+
+## Processing nodes
+
+### Accessors
+Function                                           | Is implemented | Comment
+---------------------------------------------------|----------------|---------
+`fn:base-uri`                                      |                |
+`fn:document-uri`                                  |                |
+`fn:nilled`                                        |                |
+`fn:node-name`                                     |                |
+`fn:string`                                        |                |
+`fn:data`                                          |                |
+`fn:node-name`                                     |                |
+`antlr:start`                                      |                | non-standard, equivalent to $start in grammar
+`antlr:stop`                                       |                | non-standard, equivalent to $stop in grammar
+`antlr:line`                                       |                | non-standard, equivalent to $ctx in grammar
+`antlr:ctx`                                        |                | non-standard, equivalent to $ctx in grammar
+
+
+### Other properties of nodes
+Function                                           | Is implemented | Comment
+---------------------------------------------------|----------------|---------
+`fn:has-children`                                  |                |
+`fn:in-scope-namespaces`                           |                |
+`fn:in-scope-prefixes`                             |                |
+`fn:lang`                                          |                |
+`fn:local-name`                                    |                |
+`fn:name`                                          |                |
+`fn:namespace-uri`                                 |                |
+`fn:namespace-uri-for-prefix`                      |                |
+`fn:path`                                          |                |
+`fn:root`                                          |                |
+`fn:siblings`                                      |                |
+
+
+### Functions on sequences of nodes
+Function                                           | Is implemented | Comment
+---------------------------------------------------|----------------|---------
+`fn:distinct-ordered-nodes`                        |                |
 `fn:innermost`                                     |                |
 `fn:outermost`                                     |                |
-`fn:index-of`                                      |                |
-`fn:deep-equal`                                    |                |
-`fn:zero-or-one`                                   | yes            |
-`fn:one-or-more`                                   | yes            |
-`fn:exactly-one`                                   | yes            |
-`fn:position`                                      | yes            |
-`fn:last`                                          | yes            |
-`fn:data`                                          |                |
 
 
-## Aggregate functions
-
-Function                                           | Is implemented | Comment
----------------------------------------------------|----------------|---------
-`fn:count`                                         |                |
-`fn:avg`                                           |                |
-`fn:max`                                           |                |
-`fn:min`                                           |                |
-`fn:sum`                                           |                |
-
-## Math functions
-
-Function                                           | Is implemented | Comment
----------------------------------------------------|----------------|---------
-`fn:number`                                        |                |
-`fn:abs`                                           | yes            |
-`fn:ceiling`                                       | yes            |
-`fn:floor`                                         | yes            |
-`fn:round`                                         | yes            |
-`fn:round-half-to-even`                            |                |
-`math:pi`                                          | yes            |
-`math:exp`                                         | yes            |
-`math:exp10`                                       | yes            |
-`math:log`                                         | yes            |
-`math:log10`                                       | yes            |
-`math:pow`                                         | yes            |
-`math:sqrt`                                        | yes            |
-`math:sin`                                         | yes            |
-`math:cos`                                         | yes            |
-`math:tan`                                         | yes            |
-`math:asin`                                        | yes            |
-`math:acos`                                        | yes            |
-`math:atan`                                        | yes            |
-`math:atan2`                                       | yes            |
-
-
-## Array functions
-
-Function                                           | Is implemented | Comment
----------------------------------------------------|----------------|---------
-`array:size`                                       |                |
-`array:get`                                        |                |
-`array:put`                                        |                |
-`array:append`                                     |                |
-`array:subarray`                                   |                |
-`array:remove`                                     |                |
-`array:insert-before`                              |                |
-`array:head`                                       |                |
-`array:tail`                                       |                |
-`array:reverse`                                    |                |
-`array:join`                                       |                |
-`array:for-each`                                   |                |
-`array:filter`                                     |                |
-`array:fold-left`                                  |                |
-`array:fold-right`                                 |                |
-`array:for-each-pair`                              |                |
-`array:sort`                                       |                |
-`array:flatten`                                    |                |
-
-## Map functions
-
-Function                                           | Is implemented | Comment
----------------------------------------------------|----------------|---------
-`map:merge`                                        |                |
-`map:size`                                         |                |
-`map:keys`                                         |                |
-`map:contains`                                     |                |
-`map:get`                                          |                |
-`map:find`                                         |                |
-`map:put`                                          |                |
-`map:entry`                                        |                |
-`map:remove`                                       |                |
-`map:for-each`                                     |                |
-
-## Boolean functions
-
-Function                                           | Is implemented | Comment
----------------------------------------------------|----------------|---------
-`fn:true`                                          | yes            |
-`fn:false`                                         | yes            |
-`fn:boolean`                                       |                |
-`fn:not`                                           | yes            |
-
-
-## Input functions
-
-Function                                           | Is implemented | Comment
----------------------------------------------------|----------------|---------
-`fn:unparsed-text`                                 |                |
-`fn:unparsed-text-lines`                           |                |
-`fn:unparsed-text-available`                       |                |
-
-## Output functions
-
-Function                                           | Is implemented | Comment
----------------------------------------------------|----------------|---------
-`fn:error`                                         |                |
-`fn:trace`                                         |                |
-
-## Output format functions
-`fn:parse-antlr`                                   |                | non-standard
-`fn:parse-xml`                                     |                |
-`fn:parse-xml-fragment`                            |                |
-`fn:parse-json`                                    |                |
-`fn:xml-to-json`                                   |                |
-`fn:json-to-xml`                                   |                |
-`fn:xml-to-json`                                   |                |
-`fn:json-doc`                                      |                |
-
-
-## Id functions
-
+### Identifying nodes
 Function                                           | Is implemented | Comment
 ---------------------------------------------------|----------------|---------
 `fn:id`                                            |                |
@@ -229,151 +291,160 @@ Function                                           | Is implemented | Comment
 `fn:idref`                                         |                |
 `fn:generate-id`                                   |                |
 
-## Path functions
 
-Function                                           | Is implemented | Comment
----------------------------------------------------|----------------|---------
-`fn:root`                                          |                |
-`fn:path`                                          |                |
-
-
-## Higher order functions
+### Processing function items
 Function                                           | Is implemented | Comment
 ---------------------------------------------------|----------------|---------
 `fn:function-lookup`                               |                |
 `fn:function-name`                                 |                |
 `fn:function-arity`                                |                |
-`fn:for-each`                                      |                |
-`fn:filter`                                        |                |
-`fn:fold-left`                                     |                |
-`fn:fold-right`                                    |                |
-`fn:for-each-pair`                                 |                |
-`fn:sort`                                          |                |
-`fn:apply`                                         |                |
+`fn:function-identity`                             |                |
+`fn:function-annotations`                          |                |
 
 
-## Varia
+## Map functions
 
 Function                                           | Is implemented | Comment
 ---------------------------------------------------|----------------|---------
-`fn:nilled`                                        |                |
-`fn:random-number-generator`                       |                |
+`map:build`                                        |                |
+`map:contains`                                     |                |
+`map:empty`                                        |                |
+`map:entries`                                      |                |
+`map:entry`                                        |                |
+`map:filter`                                       |                |
+`map:find`                                         |                |
+`map:for-each`                                     |                |
+`map:get`                                          |                |
+`map:items`                                        |                |
+`map:keys`                                         |                |
+`map:keys-where`                                   |                |
+`map:merge`                                        |                |
+`map:put`                                          |                |
+`map:remove`                                       |                |
+`map:size`                                         |                |
 
-## Environment Variables
+
+
+## Array functions
 
 Function                                           | Is implemented | Comment
 ---------------------------------------------------|----------------|---------
-`fn:environment-variable`                          |                |
-`fn:available-environment-variables`               |                |
+`array:append`                                     |                |
+`array:build`                                      |                |
+`array:empty`                                      |                |
+`array:filter`                                     |                |
+`array:flatten`                                    |                |
+`array:fold-left`                                  |                |
+`array:fold-right`                                 |                |
+`array:foot`                                       |                |
+`array:for-each`                                   |                |
+`array:for-each-pair`                              |                |
+`array:get`                                        |                |
+`array:head`                                       |                |
+`array:index-of`                                   |                |
+`array:index-where`                                |                |
+`array:insert-before`                              |                |
+`array:items`                                      |                |
+`array:join`                                       |                |
+`array:members`                                    |                |
+`array:of-members`                                 |                |
+`array:put`                                        |                |
+`array:remove`                                     |                |
+`array:reverse`                                    |                |
+`array:size`                                       |                |
+`array:slice`                                      |                |
+`array:sort`                                       |                |
+`array:sort-by`                                    |                |
+`array:split`                                      |                |
+`array:subarray`                                   |                |
+`array:tail`                                       |                |
+`array:trunk`                                      |                |
 
-
-## Document functions
-
+## External resources and data formats
+### Accessing external information
 Function                                           | Is implemented | Comment
 ---------------------------------------------------|----------------|---------
 `fn:doc`                                           |                |
 `fn:doc-available`                                 |                |
-
-## URI
-
-Function                                           | Is implemented | Comment
----------------------------------------------------|----------------|---------
-`fn:base-uri`                                      |                |
-`fn:document-uri`                                  |                |
-`fn:resolve-uri`                                   |                |
-`fn:encode-for-uri`                                |                |
-`fn:iri-to-uri`                                    |                |
-`fn:escape-html-uri`                               |                |
-`fn:namespace-uri`                                 |                |
-`fn:namespace-uri-for-prefix`                      |                |
-`fn:in-scope-prefixes`                             |                |
-`fn:static-base-uri`                               |                |
 `fn:collection`                                    |                |
 `fn:uri-collection`                                |                |
+`fn:unparsed-text`                                 |                |
+`fn:unparsed-text-lines`                           |                |
+`fn:unparsed-text-available`                       |                |
+`fn:unparsed-binary`                               |                |
+`fn:environment-variable`                          |                |
+`fn:available-environment-variables`               |                |
 
-
-## Time, Dates, Datetimes
+<!--
+### Functions on ANTLR Data
 Function                                           | Is implemented | Comment
 ---------------------------------------------------|----------------|---------
-`fn:current-dateTime`                              |                |
-`fn:current-date`                                  |                |
-`fn:current-time`                                  |                |
-`fn:years-from-duration`                           |                |
-`fn:months-from-duration`                          |                |
-`fn:days-from-duration`                            |                |
-`fn:hours-from-duration`                           |                |
-`fn:minutes-from-duration`                         |                |
-`fn:seconds-from-duration`                         |                |
-`fn:dateTime`                                      |                |
-`fn:year-from-dateTime`                            |                |
-`fn:month-from-dateTime`                           |                |
-`fn:day-from-dateTime`                             |                |
-`fn:hours-from-dateTime`                           |                |
-`fn:minutes-from-dateTime`                         |                |
-`fn:seconds-from-dateTime`                         |                |
-`fn:timezone-from-dateTime`                        |                |
-`fn:year-from-date`                                |                |
-`fn:month-from-date`                               |                |
-`fn:day-from-date`                                 |                |
-`fn:timezone-from-date`                            |                |
-`fn:hours-from-time`                               |                |
-`fn:minutes-from-time`                             |                |
-`fn:seconds-from-time`                             |                |
-`fn:timezone-from-time`                            |                |
-`fn:adjust-dateTime-to-timezone`                   |                |
-`fn:adjust-date-to-timezone`                       |                |
-`fn:adjust-time-to-timezone`                       |                |
-`fn:parse-ietf-date`                               |                |
-`fn:implicit-timezone`                             |                |
+``         |                |
+``|                |
+-->
 
-
-## Other
+### Functions on XML Data
 Function                                           | Is implemented | Comment
 ---------------------------------------------------|----------------|---------
-`fn:lang`                                          |                |
+`fn:parse-xml`                                     |                |
+`fn:parse-xml-fragment`                            |                |
 `fn:serialize`                                     |                |
-`fn:default-language`                              |                |
-`fn:load-xquery-module`                            |                |
+`fn:xsd-validator`                                 |                |
+`fn:invisible-xml`                                 |                |
+
+
+### Functions on HTML Data
+Function                                           | Is implemented | Comment
+---------------------------------------------------|----------------|---------
+`fn:parse-html`                                    |                |
+`fn:doc-available`                                 |                |
+
+### Functions on JSON Data
+Function                                           | Is implemented | Comment
+---------------------------------------------------|----------------|---------
+`fn:parse-json`                                    |                |
+`fn:json-doc`                                      |                |
+`fn:json-to-xml`                                   |                |
+`fn:xml-to-json`                                   |                |
+
+### Functions on CSV Data
+Function                                           | Is implemented | Comment
+---------------------------------------------------|----------------|---------
+`fn:parse-csv`                                     |                |
+`fn:csv-doc`                                       |                |
+`fn:csv-to-xml`                                    |                |
+
+
+## Dynamic evaluation
+Function                                           | Is implemented | Comment
+---------------------------------------------------|----------------|---------
+`fn:load-module`                                   |                |
 `fn:transform`                                     |                |
-`op:yearMonthDuration-less-than`                   |                |
-`op:yearMonthDuration-greater-than`                |                |
-`op:dayTimeDuration-less-than`                     |                |
-`op:dayTimeDuration-greater-than`                  |                |
-`op:duration-equal`                                |                |
-`op:add-yearMonthDurations`                        |                |
-`op:subtract-yearMonthDurations`                   |                |
-`op:multiply-yearMonthDuration`                    |                |
-`op:divide-yearMonthDuration`                      |                |
-`op:divide-yearMonthDuration-by-yearMonthDuration` |                |
-`op:add-dayTimeDurations`                          |                |
-`op:subtract-dayTimeDurations`                     |                |
-`op:multiply-dayTimeDuration`                      |                |
-`op:divide-dayTimeDuration`                        |                |
-`op:divide-dayTimeDuration-by-dayTimeDuration`     |                |
-`op:dateTime-equal`                                |                |
-`op:dateTime-less-than`                            |                |
-`op:dateTime-greater-than`                         |                |
-`op:date-equal`                                    |                |
-`op:date-less-than`                                |                |
-`op:date-greater-than`                             |                |
-`op:time-equal`                                    |                |
-`op:time-less-than`                                |                |
-`op:time-greater-than`                             |                |
-`op:gYearMonth-equal`                              |                |
-`op:gYear-equal`                                   |                |
-`op:gMonthDay-equal`                               |                |
-`op:gMonth-equal`                                  |                |
-`op:gDay-equal`                                    |                |
-`op:subtract-dateTimes`                            |                |
-`op:subtract-dates`                                |                |
-`op:subtract-times`                                |                |
-`op:add-yearMonthDuration-to-dateTime`             |                |
-`op:add-dayTimeDuration-to-dateTime`               |                |
-`op:subtract-yearMonthDuration-from-dateTime`      |                |
-`op:subtract-dayTimeDuration-from-dateTime`        |                |
-`op:add-yearMonthDuration-to-date`                 |                |
-`op:add-dayTimeDuration-to-date`                   |                |
-`op:subtract-yearMonthDuration-from-date`          |                |
-`op:subtract-dayTimeDuration-from-date `           |                |
-`op:add-dayTimeDuration-to-time`                   |                |
-`op:subtract-dayTimeDuration-from-time`            |                |
+`fn:op`                                            |                |
+
+## Processing types
+Function                                           | Is implemented | Comment
+---------------------------------------------------|----------------|---------
+`fn:schema-type`                                   |                |
+`fn:type-of`                                       |                |
+
+## Accessing context
+Function                                           | Is implemented | Comment
+---------------------------------------------------|----------------|---------
+`fn:current-date`                                  |                |
+`fn:current-dateTime`                              |                |
+`fn:current-time`                                  |                |
+`fn:current-collation`                             |                |
+`fn:current-language`                              |                |
+`fn:implicit-timezone`                             |                |
+`fn:last`                                          |                |
+`fn:position`                                      |                |
+`fn:static-base-uri`                               |                |
+
+## Errors and diagnostics
+
+Function                                           | Is implemented | Comment
+---------------------------------------------------|----------------|---------
+`fn:error`                                         |                |
+`fn:trace`                                         |                |
+`fn:message`                                       |                |

@@ -28,17 +28,6 @@ import com.github.akruk.antlrxquery.evaluator.XQueryEvaluatorVisitor;
 import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
 import com.github.akruk.antlrxquery.evaluator.collations.Collations;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.*;
-import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.AggregateFunctions;
-import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.CardinalityFunctions;
-import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.FunctionsBasedOnSubstringMatching;
-import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.FunctionsOnNumericValues;
-import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.FunctionsOnStringValues;
-import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.MathFunctions;
-import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.NumericOperators;
-import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.OtherFunctionsOnNodes;
-import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.ProcessingBooleans;
-import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.ProcessingSequencesFunctions;
-import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.ProcessingStrings;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryError;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryFunction;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
@@ -53,14 +42,14 @@ import com.github.akruk.nodegetter.NodeGetter;
 
 public class XQueryEvaluatingFunctionManager {
     private static final ParseTree CONTEXT_VALUE = getTree(".", parser -> parser.contextValueRef());
-    private static final ParseTree DEFAULT_COLLATION = getTree("fn:default-collation()",
-            parser -> parser.functionCall());
+    private static final ParseTree DEFAULT_COLLATION = getTree(
+        "fn:default-collation()", parser -> parser.functionCall());
     private static final ParseTree EMPTY_SEQUENCE = getTree("()", p -> p.parenthesizedExpr());
     private static final ParseTree DEFAULT_ROUNDING_MODE = getTree("'half-to-ceiling'", parser -> parser.literal());
     private static final ParseTree ZERO_LITERAL = getTree("0", parser -> parser.literal());
     private static final ParseTree NFC = getTree("\"NFC\"", parser -> parser.literal());
-    // private static final ParseTree STRING_AT_CONTEXT_VALUE =
-    // getTree("fn:string(.)", (parser) -> parser.functionCall());
+    private static final ParseTree STRING_AT_CONTEXT_VALUE =
+        getTree("fn:string(.)", (parser) -> parser.functionCall());
     private static final ParseTree EMPTY_STRING = getTree("\"\"", (parser) -> parser.literal());
 
     record FunctionEntry(XQueryFunction function, long minArity, long maxArity, List<String> argNames,
@@ -86,8 +75,15 @@ public class XQueryEvaluatingFunctionManager {
     private final ProcessingSequencesFunctions processingSequences;
     private final XQueryTypeFactory typeFactory;
 
-    public XQueryEvaluatingFunctionManager(final XQueryEvaluatorVisitor evaluator, final Parser parser,
-            final XQueryValueFactory valueFactory, final NodeGetter nodeGetter, XQueryTypeFactory typeFactory, EffectiveBooleanValue ebv, ValueAtomizer atomizer, ValueComparisonOperator valueComparisonOperator)
+    public XQueryEvaluatingFunctionManager(
+        final XQueryEvaluatorVisitor evaluator,
+        final Parser parser,
+        final XQueryValueFactory valueFactory,
+        final NodeGetter nodeGetter,
+        final XQueryTypeFactory typeFactory,
+        final EffectiveBooleanValue ebv,
+        final ValueAtomizer atomizer,
+        final ValueComparisonOperator valueComparisonOperator)
     {
         this.valueFactory = valueFactory;
         this.evaluator = evaluator;
@@ -218,7 +214,7 @@ public class XQueryEvaluatingFunctionManager {
 
         registerFunction("fn", "trunk", processingSequences::trunk, List.of("input"), Map.of());
 
-        registerFunction("fn", "unordered", processingSequences::unordered, List.of("input"), Map.of());
+        // registerFunction("fn", "unordered", processingSequences::unordered, List.of("input"), Map.of());
 
         registerFunction("fn", "void", processingSequences::voidFunction, List.of("input"), emptyInputArg);
 
@@ -283,10 +279,13 @@ public class XQueryEvaluatingFunctionManager {
                 Map.of("length", EMPTY_SEQUENCE));
 
         registerFunction("fn", "string-length", functionsOnStringValues::stringLength, valueArg,
-                Map.of("value", CONTEXT_VALUE)); // := fn:string(.)
+                Map.of("value", STRING_AT_CONTEXT_VALUE)); // := fn:string(.)
+
+        registerFunction("fn", "string-empty", functionsOnStringValues::stringEmpty, valueArg,
+                Map.of("value", STRING_AT_CONTEXT_VALUE)); // := fn:string(.)
 
         registerFunction("fn", "normalize-space", functionsOnStringValues::normalizeSpace, valueArg,
-                Map.of("value", CONTEXT_VALUE)); // := fn:string(.)
+                Map.of("value", STRING_AT_CONTEXT_VALUE)); // := fn:string(.)
 
         registerFunction("fn", "normalize-unicode", functionsOnStringValues::normalizeUnicode, List.of("value", "form"),
                 Map.of("form", NFC));
@@ -299,7 +298,9 @@ public class XQueryEvaluatingFunctionManager {
                 Map.of());
 
         registerFunction("fn", "replace", this::replace, List.of(), Map.of());
+
         registerFunction("fn", "position", this::position, List.of(), Map.of());
+
         registerFunction("fn", "last", this::last, List.of(), Map.of());
 
         registerFunction("math", "pi", mathFunctions::pi, List.of(), Map.of());
@@ -507,8 +508,10 @@ public class XQueryEvaluatingFunctionManager {
         return new FunctionOrError(functionWithRequiredArity.get(), null);
     }
 
-    public XQueryValue call(final String namespace, final String functionName, final XQueryVisitingContext context,
-            final List<XQueryValue> args, final Map<String, XQueryValue> keywordArgs) {
+    public XQueryValue call(
+        final String namespace, final String functionName, final XQueryVisitingContext context,
+        final List<XQueryValue> args, final Map<String, XQueryValue> keywordArgs)
+    {
         // Copy is made to allow for immutable hashmaps
         final var keywordArgs_ = new HashMap<>(keywordArgs);
         final int argsCount = args.size();
@@ -538,12 +541,12 @@ public class XQueryEvaluatingFunctionManager {
                     return default_.accept(evaluator);
                 }));
         keywordArgs_.putAll(defaultedArguments);
-        var rearranged = rearrangeArguments(remainingArgs, context, args, keywordArgs_);
+        final var rearranged = rearrangeArguments(remainingArgs, context, args, keywordArgs_);
         return function.call(context, rearranged);
     }
 
-    private XQueryValue callVariadicFunction(FunctionEntry functionEntry, XQueryVisitingContext context,
-            List<XQueryValue> args, Map<String, XQueryValue> keywordArgs) {
+    private XQueryValue callVariadicFunction(final FunctionEntry functionEntry, final XQueryVisitingContext context,
+            final List<XQueryValue> args, final Map<String, XQueryValue> keywordArgs) {
         return functionEntry.function.call(context, args);
     }
 
@@ -567,7 +570,7 @@ public class XQueryEvaluatingFunctionManager {
             final List<XQueryValue> args, final Map<String, XQueryValue> keywordArgs) {
         final List<XQueryValue> rearranged = new ArrayList<>(args.size() + keywordArgs.size());
         rearranged.addAll(args);
-        for (var arg : remainingArgs) {
+        for (final var arg : remainingArgs) {
             var argValue = keywordArgs.get(arg);
             if (argValue == null) {
                 argValue = valueFactory.error(XQueryError.WrongNumberOfArguments, "Argument " + arg + " is missing");

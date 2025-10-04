@@ -71,6 +71,8 @@ public class Accessors {
             return valueFactory.string(target.booleanValue? "true" : "false");
         if (target.isNumeric)
             return valueFactory.string(target.numericValue.toString());
+        if (target.isNode)
+            return valueFactory.string(target.node.getText());
         return valueFactory.string(target.toString());
     }
 

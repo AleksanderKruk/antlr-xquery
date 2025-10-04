@@ -1,4 +1,4 @@
-(: Sekcja js dla komunikacji  :)
+(: Js client side of communication  :)
 
 let $registeredCommands := //funccall[funcname = 'registerCommand']
 for $command in $registeredCommands

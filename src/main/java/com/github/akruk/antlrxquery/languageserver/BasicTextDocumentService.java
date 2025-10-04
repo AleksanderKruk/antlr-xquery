@@ -76,18 +76,20 @@ public class BasicTextDocumentService implements TextDocumentService {
     private final int variableIndex;
     private final int functionIndex;
     private final int typeIndex;
-    private final int parameterIndex;
+    // private final int parameterIndex;
     private final int stringIndex;
     private final int propertyIndex;
+    private final int decoratorIndex;
 
     BasicTextDocumentService(final List<String> tokenLegend)
     {
         variableIndex = tokenLegend.indexOf("variable");
         functionIndex = tokenLegend.indexOf("function");
         typeIndex = tokenLegend.indexOf("type");
-        parameterIndex = tokenLegend.indexOf("parameter");
+        // parameterIndex = tokenLegend.indexOf("parameter");
         stringIndex = tokenLegend.indexOf("string");
         propertyIndex = tokenLegend.indexOf("property");
+        decoratorIndex = tokenLegend.indexOf("decorator");
         resolver = new NamespaceResolver("fn");
     }
 
@@ -297,7 +299,7 @@ public class BasicTextDocumentService implements TextDocumentService {
     private final TreeEvaluator constructors = XQuery.compile("//constructorChars", _parser);
     private final TreeEvaluator constructorBoundaries = XQuery.compile("//(STRING_CONSTRUCTION_START|STRING_CONSTRUCTION_END)", _parser);
     private final TreeEvaluator properties = XQuery.compile("//extendedFieldDeclaration//fieldDeclaration/fieldName", _parser);
-    // private final TreeEvaluator fields = XQuery.compile("//()", _parser);
+    private final TreeEvaluator annotations = XQuery.compile("//annotation", _parser);
 
     record SemanticToken(int line, int charPos, int length, int typeIndex, int modifierBitmask) {}
 
@@ -363,7 +365,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         }
 
         markTokens(tree, tokens, properties, propertyIndex);
-
+        markTokens(tree, tokens, annotations, decoratorIndex);
 
 
         tokens.sort(Comparator

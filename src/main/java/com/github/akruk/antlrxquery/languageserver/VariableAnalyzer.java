@@ -188,12 +188,9 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
         super.processForMemberBinding(ctx);
 
         final String variableName = ctx.varNameAndType().varRef().qname().getText();
-        final XQuerySequenceType arrayType = ctx.exprSingle().accept(this);
+        final XQuerySequenceType type = contextManager.getVariable(variableName);
 
-        final XQuerySequenceType memberType = arrayType.itemType.arrayMemberType;
-        final XQuerySequenceType iteratorType = memberType.addOptionality();
-
-        processVariableTypeDeclaration(ctx.varNameAndType(), iteratorType, variableName, ctx);
+        processVariableTypeDeclaration(ctx.varNameAndType(), type, variableName, ctx);
         handlePositionalVariable(ctx.positionalVar());
     }
 

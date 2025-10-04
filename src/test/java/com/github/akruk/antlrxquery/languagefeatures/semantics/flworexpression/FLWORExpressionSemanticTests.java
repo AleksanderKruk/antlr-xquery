@@ -33,6 +33,16 @@ public class FLWORExpressionSemanticTests extends SemanticTestsBase {
     }
 
     @Test
+    public void forMembersAssignmentRef() {
+        assertType( """
+                for member $x in [1, 2, 3]
+                    let $y as number := $x
+                return $x
+        """,
+            typeFactory.zeroOrMore(typeFactory.itemNumber()));
+    }
+
+    @Test
     public void forMembersPositional() {
         assertType("for member $x at $i in [1, 2, 3] return $i", typeFactory.zeroOrMore(typeFactory.itemNumber()));
     }

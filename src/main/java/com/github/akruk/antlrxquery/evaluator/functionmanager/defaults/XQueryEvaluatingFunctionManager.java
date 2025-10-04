@@ -75,8 +75,15 @@ public class XQueryEvaluatingFunctionManager {
     private final ProcessingSequencesFunctions processingSequences;
     private final XQueryTypeFactory typeFactory;
 
-    public XQueryEvaluatingFunctionManager(final XQueryEvaluatorVisitor evaluator, final Parser parser,
-            final XQueryValueFactory valueFactory, final NodeGetter nodeGetter, XQueryTypeFactory typeFactory, EffectiveBooleanValue ebv, ValueAtomizer atomizer, ValueComparisonOperator valueComparisonOperator)
+    public XQueryEvaluatingFunctionManager(
+        final XQueryEvaluatorVisitor evaluator,
+        final Parser parser,
+        final XQueryValueFactory valueFactory,
+        final NodeGetter nodeGetter,
+        final XQueryTypeFactory typeFactory,
+        final EffectiveBooleanValue ebv,
+        final ValueAtomizer atomizer,
+        final ValueComparisonOperator valueComparisonOperator)
     {
         this.valueFactory = valueFactory;
         this.evaluator = evaluator;
@@ -501,8 +508,10 @@ public class XQueryEvaluatingFunctionManager {
         return new FunctionOrError(functionWithRequiredArity.get(), null);
     }
 
-    public XQueryValue call(final String namespace, final String functionName, final XQueryVisitingContext context,
-            final List<XQueryValue> args, final Map<String, XQueryValue> keywordArgs) {
+    public XQueryValue call(
+        final String namespace, final String functionName, final XQueryVisitingContext context,
+        final List<XQueryValue> args, final Map<String, XQueryValue> keywordArgs)
+    {
         // Copy is made to allow for immutable hashmaps
         final var keywordArgs_ = new HashMap<>(keywordArgs);
         final int argsCount = args.size();
@@ -532,12 +541,12 @@ public class XQueryEvaluatingFunctionManager {
                     return default_.accept(evaluator);
                 }));
         keywordArgs_.putAll(defaultedArguments);
-        var rearranged = rearrangeArguments(remainingArgs, context, args, keywordArgs_);
+        final var rearranged = rearrangeArguments(remainingArgs, context, args, keywordArgs_);
         return function.call(context, rearranged);
     }
 
-    private XQueryValue callVariadicFunction(FunctionEntry functionEntry, XQueryVisitingContext context,
-            List<XQueryValue> args, Map<String, XQueryValue> keywordArgs) {
+    private XQueryValue callVariadicFunction(final FunctionEntry functionEntry, final XQueryVisitingContext context,
+            final List<XQueryValue> args, final Map<String, XQueryValue> keywordArgs) {
         return functionEntry.function.call(context, args);
     }
 
@@ -561,7 +570,7 @@ public class XQueryEvaluatingFunctionManager {
             final List<XQueryValue> args, final Map<String, XQueryValue> keywordArgs) {
         final List<XQueryValue> rearranged = new ArrayList<>(args.size() + keywordArgs.size());
         rearranged.addAll(args);
-        for (var arg : remainingArgs) {
+        for (final var arg : remainingArgs) {
             var argValue = keywordArgs.get(arg);
             if (argValue == null) {
                 argValue = valueFactory.error(XQueryError.WrongNumberOfArguments, "Argument " + arg + " is missing");

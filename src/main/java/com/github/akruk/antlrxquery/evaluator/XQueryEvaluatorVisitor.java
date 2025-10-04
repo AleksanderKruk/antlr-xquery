@@ -1185,25 +1185,6 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return function.functionValue.call(context, visitedPositionalArguments);
     }
 
-
-    // public XQueryValue visitSequenceArrowTarget(final SequenceArrowTargetContext ctx) {
-    //     if (ctx.ID() != null) {
-    //         final ResolvedName parts = namespaceResolver.resolve(ctx.ID().getText());
-    //         final String namespace = parts.namespace();
-    //         final String localName = parts.name();
-    //         return functionManager.getFunctionReference(namespace, localName, visitedArgumentList.size());
-    //     }
-    //     if (ctx.varRef() != null)
-    //         return visitVarRef(ctx.varRef());
-    //     return visitParenthesizedExpr(ctx.parenthesizedExpr());
-
-    // }
-
-
-
-
-
-
     final NamespaceResolver namespaceResolver = new NamespaceResolver("fn");
 
     private String[] resolveNamespace(final String functionName) {

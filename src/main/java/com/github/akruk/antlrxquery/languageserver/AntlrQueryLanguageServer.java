@@ -28,7 +28,7 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
         launcher.startListening();
     }
 
-    private static final List<String> tokenLegend = List.of("variable", "parameter", "function", "type", "string");
+    private static final List<String> tokenLegend = List.of("variable", "parameter", "function", "type", "string", "property");
 
     private final BasicTextDocumentService textDocumentService = new BasicTextDocumentService(tokenLegend);
     private final BasicWorkspaceService workspaceService = new BasicWorkspaceService();

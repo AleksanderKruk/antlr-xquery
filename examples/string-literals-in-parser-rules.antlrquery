@@ -1,0 +1,26 @@
+(: Find string literals in parser rules and compute text edits :)
+let $parserTokenRefs := //parserRuleDef//STRING
+for $parserTokenRef in $parserTokenRefs
+group by $text-representation := $parserTokenRef => string() => substring(2, string-length())
+for $tokenDef in //lexerRuleDef
+for $variant in $tokenDef => variants()
+return if ($text-representation = $variant) {
+	lsp:TextEdit(
+		range   = $parserTokenRef=>lsp:range(),
+		newText = $variant
+	)
+}
+
+
+(:
+	let $tokenVariants as enum('simple', 'enumeration', 'dynamic')
+		:= getTokenType($tokenDef)
+	return switch($tokenVariants) {
+	  case "simple"
+		return
+	  case "enumeration"
+		return
+	  default
+		return ()
+	}
+:)

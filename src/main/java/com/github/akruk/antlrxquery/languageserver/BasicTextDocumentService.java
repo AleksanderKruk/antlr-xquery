@@ -1103,7 +1103,8 @@ public class BasicTextDocumentService implements TextDocumentService {
     final Map<Integer, VarExtractionInfo> varExtractionData = new HashMap<>();
     final Map<Integer, ResolvedVarExtractionInfo> resolvedVarExtractionData = new HashMap<>();
 
-    synchronized int codeActionId() {
+    synchronized int codeActionId()
+    {
         if (codeActionId == Integer.MAX_VALUE) {
             codeActionId = 0;
         } else {
@@ -1111,6 +1112,48 @@ public class BasicTextDocumentService implements TextDocumentService {
         }
         return codeActionId;
     }
+
+    private final TreeEvaluator extractableExpressions = XQuery.compile("""
+        /ancestor-or-self::(exprSingle
+            | fLWORExpr
+            | quantifiedExpr
+            | ifExpr
+            | switchExpr
+            | tryCatchExpr
+            | orExpr
+            | comparisonExpr
+            | otherwiseExpr
+            | stringConcatExpr
+            | rangeExpr
+            | additiveExpr
+            | multiplicativeExpr
+            | unionExpr
+            | intersectExpr
+            | instanceofExpr
+            | treatExpr
+            | castableExpr
+            | castExpr
+            | pipelineExpr
+            | arrowExpr
+            | postfixExpr
+            | axisStep
+            | reverseStep
+            | forwardStep
+            | functionItemExpr
+            | mapConstructor
+            | arrayConstructor
+            | primaryExpr
+            | literal
+            | varRef
+            | parenthesizedExpr
+            | contextValueRef
+            | functionCall
+            | functionItemExpr
+            | mapConstructor
+            | arrayConstructor
+            | stringConstructor
+            | unaryLookup)
+    """, _parser);
 
     @Override
     public CompletableFuture<List<Either<Command, CodeAction>>> codeAction(CodeActionParams params)
@@ -1120,10 +1163,14 @@ public class BasicTextDocumentService implements TextDocumentService {
         final String uri = params.getTextDocument().getUri();
         final ParseTree tree = parseTreeStore.get(uri);
         final PositionAnalysis analysis = positionAnalyzer.visit(tree);
+        List<ParserRuleContext> extractableExpressionNodes = extractableExpressions
+            .evaluate(analysis.innerMostContext())
+            .sequence.stream().map(v -> (ParserRuleContext) v.node)
+            .toList();
         final CodeAction action = new CodeAction();
         action.setTitle("Extract variable");
         action.setKind(CodeActionKind.RefactorExtract);
-        final VarExtractionInfo extractionInfo = new VarExtractionInfo(uri, start, analysis.contextStack());
+        final VarExtractionInfo extractionInfo = new VarExtractionInfo(uri, start, extractableExpressionNodes);
         final int codeActionId = codeActionId();
         varExtractionData.put(codeActionId, extractionInfo);
         action.setData(codeActionId);

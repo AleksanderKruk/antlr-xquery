@@ -1,12 +1,22 @@
 (: Js client side of communication  :)
 
-let $registeredCommands := //funccall[funcname = 'registerCommand']
+declare function is-simple-property-assignment($rule as element(propertyAssignment)) as boolean
+{
+  not($rule/propertyName)
+  and (: TODO: correct 'literal tokens' :) not('(')
+  and not('[')
+};
+
+
+let $registeredCommands := //funccall[funcname=!>string() = 'registerCommand']
 for $command in $registeredCommands
-let $requests := $command/args[2]//funccall[funcname = 'sendRequest']
+let $requests := $command/args[2]//funccall[funcname=!>string() = 'sendRequest']
 let $requestNames := $requests/args[1],
-	$requestMessages := $requests/args[2]
-for $m in $requestMessages
-let $parameters := $m//objectLiteral//propertyName
-					| $m//objectLiteral//propertyAssignment[not(propertyName) and not('(') and not('[')]/singleExpression
+  $requestMessages := $requests/args[2]
+for $message in $requestMessages
+let $literals := $message//objectLiteral
+let $parameters :=
+  $literals//propertyName
+  | $literals//propertyAssignment[is-simple-property-assignment(.)]/singleExpression
 return ()
 

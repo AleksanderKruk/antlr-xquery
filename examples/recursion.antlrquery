@@ -1,0 +1,9 @@
+
+declare function testowanko:rekursja($x as number) as number {
+    if ($x > 0) then
+        $x + testowanko:rekursja($x - 1)
+    else
+        0
+};
+
+(::) 1

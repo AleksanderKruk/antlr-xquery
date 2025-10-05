@@ -257,28 +257,28 @@ fragment NAME_START: [\p{Alpha}_][\p{Alpha}\p{Alnum}_]*;
 fragment NAME_MIDDLE: [\p{Alpha}\p{Alnum}_]+;
 fragment DASH: '-';
 
-// STRING_INTERPOLATION_START  : '`' -> pushMode(INSIDE_INTERPOLATION);
 STRING_CONSTRUCTOR_START : '``[' -> pushMode(INSIDE_STRING_CONSTRUCTOR);
-CONSTRUCTION_END: '}`' -> popMode;
+STRING_INTERPOLATION_START  : '`' -> pushMode(INSIDE_INTERPOLATION);
+// CONSTRUCTION_END: '}`' -> popMode;
 
-LCURLY: '{';
-RCURLY: '}';
+LCURLY: '{' -> pushMode(DEFAULT_MODE);
+RCURLY: '}' -> popMode;
 
 CLOSE_SHORT_CONSTRUCTOR: '/>';
 CLOSE_LONG_CONSTRUCTOR: '</';
 
 
 
-// mode INSIDE_INTERPOLATION;
+mode INSIDE_INTERPOLATION;
 
-// STRING_INTERPOLATION_END  : '`' -> popMode;
+STRING_INTERPOLATION_END  : '`' -> popMode;
 
-// INTERPOLATION_START : '{' -> pushMode(DEFAULT_MODE);
+INTERPOLATION_START : '{' -> pushMode(DEFAULT_MODE);
 
-// INTERPOLATION_CHARS        :
-//     ~[`{]+
-//     | '`{' ~[`{]+
-//     ;
+INTERPOLATION_CHARS        :
+    ~[`{]+
+    | '`{' ~[`{]+
+    ;
 
 mode INSIDE_STRING_CONSTRUCTOR;
 

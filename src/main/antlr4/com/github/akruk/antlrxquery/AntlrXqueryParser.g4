@@ -240,12 +240,11 @@ primaryExpr: literal
         | mapConstructor
         | arrayConstructor
         | stringConstructor
+        | stringInterpolation
         | unaryLookup
         // | orderedExpr
         // | unorderedExpr
         // | nodeConstructor
-        // | stringInterpolation
-        // | stringTemplate
         ;
 
 
@@ -680,29 +679,25 @@ constructorChars:
 constructorInterpolation:
     CONSTRUCTION_START
     expr?
-    CONSTRUCTION_END
+    RCURLY BACKTICK
     ;
 
 
-// stringInterpolation:
-//     STRING_INTERPOLATION_START
-//     stringInterpolationContent
-//     STRING_INTERPOLATION_END?
-//     ;
+stringInterpolation:
+    STRING_INTERPOLATION_START (interpolationChars | interpolationInterpolationNormal)* STRING_INTERPOLATION_END
+    ;
 
-// stringInterpolationContent:
-//     (interpolationChars | interpolationInterpolation)*
-//     ;
+stringInterpolationContent:
+    (interpolationChars | interpolationInterpolationNormal)*
+    ;
 
-// interpolationChars:
-//     INTERPOLATION_CHARS
-//     ;
+interpolationChars:
+    INTERPOLATION_CHARS
+    ;
 
-// interpolationInterpolation:
-//     INTERPOLATION_START
-//     expr?
-//     RCURLY
-//     ;
+interpolationInterpolationNormal:
+    INTERPOLATION_START expr? RCURLY
+    ;
 
 windowClause
     : FOR (tumblingWindowClause | slidingWindowClause)

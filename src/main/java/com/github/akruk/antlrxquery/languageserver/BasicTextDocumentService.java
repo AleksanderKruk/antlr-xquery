@@ -693,11 +693,11 @@ public class BasicTextDocumentService implements TextDocumentService {
     }
 
     private <Rule extends ParserRuleContext>
-        Rule findRuleUsingPosition(final Position position, final List<Rule> calls)
+        Rule findRuleUsingPosition(final Position position, final List<Rule> elements)
     {
         int low = 0;
-        int high = calls.size() - 1;
-        return findRuleUsingPosition(position, calls, low, high);
+        int high = elements.size() - 1;
+        return findRuleUsingPosition(position, elements, low, high);
     }
 
     private <Rule extends ParserRuleContext>
@@ -992,7 +992,7 @@ public class BasicTextDocumentService implements TextDocumentService {
     {
         var position = params.getPosition();
         var document = params.getTextDocument().getUri();
-        var varRefs = variableReferences.get(document);
+        var varRefs = variableReferences.getOrDefault(document, List.of());
         VarRefContext foundVarRef = findRuleUsingPosition(position, varRefs);
         if (foundVarRef != null) {
             return handleVariableReferenceDefinition(document, foundVarRef);

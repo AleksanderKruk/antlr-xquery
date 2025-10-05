@@ -141,27 +141,35 @@
           </includes>
         </configuration>
       </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-antrun-plugin</artifactId>
-        <version>3.1.0</version>
-        <executions>
-          <execution>
-            <id>copy-language-server-jar</id>
-            <phase>package</phase>
-            <configuration>
-              <target>
-                <copy file="${project.build.directory}/antlrxquery-language-server.jar"
-                      tofile="antlrqueryextension/antlrquery/server/antlrxquery-language-server.jar"
-                      overwrite="true"/>
-              </target>
-            </configuration>
-            <goals>
-              <goal>run</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-antrun-plugin</artifactId>
+      <version>3.1.0</version>
+      <executions>
+        <execution>
+          <id>copy-server-and-extension</id>
+          <phase>package</phase>
+          <configuration>
+            <target>
+              <!-- Copy newly compiled server to extention directory -->
+              <mkdir dir="antlrqueryextension/antlrquery/server"/>
+              <copy file="${project.build.directory}/antlrxquery-language-server.jar"
+                    tofile="antlrqueryextension/antlrquery/server/antlrxquery-language-server.jar"
+                    overwrite="true"/>
+
+              <!-- Copy extension directory to local available extensions -->
+            <mkdir dir="${user.home}/.vscode/extensions/antlrquery"/>
+            <copy todir="${user.home}/.vscode/extensions/antlrquery" overwrite="true">
+              <fileset dir="antlrqueryextension/antlrquery"/>
+            </copy>
+            </target>
+          </configuration>
+          <goals>
+            <goal>run</goal>
+          </goals>
+        </execution>
+      </executions>
+    </plugin>
     </plugins>
   </build>
 </project>

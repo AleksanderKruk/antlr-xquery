@@ -79,6 +79,9 @@ TRY: 'try' ;
 CATCH: 'catch' ;
 FINALLY: 'finally' ;
 
+FOLLOWS: 'follows' ;
+PRECEDES: 'precedes' ;
+
 PIPE_ARROW: '->';
 CASTABLE: 'castable';
 MAPPING_ARROW : '=!>' ;

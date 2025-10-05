@@ -171,7 +171,7 @@ unionOperator: UNION | UNION_OP;
 multiplicativeOperator: STAR | DIV | DIV_OP | IDIV | MOD | MULTIPLICATION;
 generalComp: EQ_OP | NE_OP | LT_OP | LE_OP | GT_OP | GE_OP;
 valueComp: EQ | NE | LT | LE | GT | GE;
-nodeComp: IS | PRECEDING_OP | FOLLOWING_OP;
+nodeComp: IS | PRECEDING_OP | FOLLOWING_OP | FOLLOWS | PRECEDES;
 pathOperator: SLASH | SLASHES;
 
 
@@ -570,6 +570,7 @@ anyName: ID
 
         | FINALLY
         | FIXED
+        | FOLLOWS
         | FOLLOWING
         | FOLLOWING_OR_SELF
         | FOLLOWING_SIBLING
@@ -617,6 +618,7 @@ anyName: ID
         | OR
 
         | PARENT
+        | PRECEDES
         | PRECEDING
         | PRECEDING_OR_SELF
         | PRECEDING_SIBLING

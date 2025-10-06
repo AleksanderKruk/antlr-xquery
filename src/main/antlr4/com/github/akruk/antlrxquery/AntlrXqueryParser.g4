@@ -684,18 +684,18 @@ constructorInterpolation:
 
 
 stringInterpolation:
-    STRING_INTERPOLATION_START (interpolationChars | interpolationInterpolationNormal)* STRING_INTERPOLATION_END
+    STRING_INTERPOLATION_START stringInterpolationContent STRING_INTERPOLATION_END
     ;
 
 stringInterpolationContent:
-    (interpolationChars | interpolationInterpolationNormal)*
+    (interpolationChars | interpolationInterpolation)*
     ;
 
 interpolationChars:
     INTERPOLATION_CHARS
     ;
 
-interpolationInterpolationNormal:
+interpolationInterpolation:
     INTERPOLATION_START expr? RCURLY
     ;
 
@@ -746,9 +746,9 @@ inlineFunctionExpr
     ;
 
 functionSignature
-    : '(' paramList ')' typeDeclaration?
+    : LPAREN paramList RPAREN typeDeclaration?
     ;
 
 paramList
-    : (varNameAndType (',' varNameAndType)*)?
+    : (varNameAndType (COMMA varNameAndType)*)?
     ;

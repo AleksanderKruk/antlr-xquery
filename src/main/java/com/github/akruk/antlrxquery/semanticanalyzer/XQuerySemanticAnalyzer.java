@@ -2225,7 +2225,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             expressionType = zeroOrMoreNodes;
         }
         final var operatorCount = ctx.exceptOrIntersect().size();
-        for (int i = 1; i <= operatorCount; i++) {
+        for (int i = 1; i < operatorCount; i++) {
             final var instanceofExpr = ctx.instanceofExpr(i);
             final var visitedType = instanceofExpr.accept(this);
             if (!visitedType.isSubtypeOf(zeroOrMoreNodes)) {

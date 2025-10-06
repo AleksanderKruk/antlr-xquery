@@ -2427,6 +2427,13 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     }
 
     @Override
+    public XQuerySequenceType visitStringInterpolation(StringInterpolationContext ctx)
+    {
+        return typeFactory.string();
+    }
+
+
+    @Override
     public XQuerySequenceType visitInlineFunctionExpr(final InlineFunctionExprContext ctx)
     {
         // Is a focus function?

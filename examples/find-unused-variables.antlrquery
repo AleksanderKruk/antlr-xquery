@@ -6,14 +6,15 @@ let $visibilities := $vars !  ./parent::varRef/parent::varNameAndType/parent::le
 							| ./parent::varRef/parent::varNameAndType/parent::varDecl
 let $varRefs := //varRef
 for sliding window $varScope in $vars
-	start $var at $defPosition
-	end $redefinition at $redefPosition
-		when $defPosition ne $redefPosition
-			and $varNames[$defPosition] = $varNames[$redefPosition]
-	let $visibility-start := $visibilities[$defPosition]
-	let $visibility-end := $visibilities[$redefPosition]
-	let $varname := $varNames[$defPosition]
-	let $relevantRefsInScope := $varRefs[. follows $visibility-start
-											and (. is $visibility-end or . precedes $visibility-end)]
-										[./qname=>string() = $varname]
-	return if ($relevantRefsInScope => empty()) { $var }
+  start $var at $defPosition
+  end $redefinition at $redefPosition
+    when $defPosition ne $redefPosition
+          and $varNames[$defPosition] = $varNames[$redefPosition]
+let $visibility-start := $visibilities[$defPosition]
+let $visibility-end := $visibilities[$redefPosition]
+let $varname := $varNames[$defPosition]
+let $relevantRefsInScope := $varRefs
+  [. follows $visibility-start]
+  [. is $visibility-end or . precedes $visibility-end]
+  [./qname=!>string() = $varname]
+return if ($relevantRefsInScope => empty()) { $var }

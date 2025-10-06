@@ -2225,7 +2225,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             expressionType = zeroOrMoreNodes;
         }
         final var operatorCount = ctx.exceptOrIntersect().size();
-        for (int i = 1; i <= operatorCount; i++) {
+        for (int i = 1; i < operatorCount; i++) {
             final var instanceofExpr = ctx.instanceofExpr(i);
             final var visitedType = instanceofExpr.accept(this);
             if (!visitedType.isSubtypeOf(zeroOrMoreNodes)) {
@@ -2667,7 +2667,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
 
     @Override
-    public XQuerySequenceType visitSchemaImport(SchemaImportContext ctx)
+    public XQuerySequenceType visitGrammarImport(GrammarImportContext ctx)
     {
         var strings = ctx.STRING();
         var grammarAnalysisResult = resolvePath(ctx, strings.get(0).getText());
@@ -2675,7 +2675,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         return null;
     }
 
-    private GrammarAnalysisResult resolvePath(SchemaImportContext ctx, String path)
+    private GrammarAnalysisResult resolvePath(GrammarImportContext ctx, String path)
     {
         Path target = Path.of(path);
         var grammarAnalyzer = new InputGrammarAnalyzer();

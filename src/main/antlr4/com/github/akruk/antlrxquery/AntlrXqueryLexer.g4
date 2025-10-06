@@ -223,7 +223,7 @@ SEPARATOR: ';';
 DECLARE: 'declare';
 MODULE: 'module';
 IMPORT: 'import';
-SCHEMA: 'schema';
+GRAMMAR: 'grammar';
 CONTEXT: 'context';
 EXTERNAL: 'external';
 VARIABLE: 'variable';

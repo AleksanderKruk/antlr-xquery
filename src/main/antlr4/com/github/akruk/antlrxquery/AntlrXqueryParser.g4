@@ -468,24 +468,25 @@ namespaceDecl
     ;
 
 importDecl
-    : schemaImport
+    : grammarImport
     | moduleImport
     ;
 
-schemaImport
-    : IMPORT SCHEMA namespaceDeclaration? STRING (COMMA STRING)*
-    ;
-
-namespaceDeclaration:
-    qname EQ_OP
+grammarImport
+    : IMPORT GRAMMAR namespacePrefix? STRING (COMMA STRING)*
     ;
 
 moduleImport
-    : IMPORT MODULE (NAMESPACE qname EQ_OP)? STRING (AT (STRING (COMMA STRING)*))?
+    : IMPORT MODULE namespacePrefix? STRING (COMMA STRING)*
+    ;
+
+namespacePrefix:
+    qname EQ_OP
     ;
 
 contextValueDecl
-    : DECLARE CONTEXT ((VALUE (AS sequenceType)?) | (ITEM (AS itemType)?)) ((EQ_OP varValue) | (EXTERNAL (EQ_OP varDefaultValue)?))
+    : DECLARE CONTEXT VALUE (AS sequenceType)?
+      ((EQ_OP varValue) | (EXTERNAL (EQ_OP varDefaultValue)?))
     ;
 
 varValue: exprSingle;
@@ -579,6 +580,7 @@ anyName: ID
         | FOR
         | FUNCTION
 
+        | GRAMMAR
         | GROUPING_SEPARATOR
         | GE
         | GREATEST
@@ -634,7 +636,6 @@ anyName: ID
         | RETURN
 
         | SATISFIES
-        | SCHEMA
         | SELF
         | SLIDING
         | SOME

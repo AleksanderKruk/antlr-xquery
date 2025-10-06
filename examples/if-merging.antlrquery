@@ -1,0 +1,15 @@
+array {
+  let $ifs  := //ifExpr
+  for $if in $ifs
+  let $innerTrue := $if/trueExpr/exprSingle/ifExpr
+  let $innerFalse := $if/falseExpr/exprSingle/ifExpr
+  let $ending := (($innerFalse otherwise $innerTrue) treat as element(ifExpr))
+return if (($innerTrue, $innerFalse) => exists()) {
+    {
+      "range": lsp:Range($if=>lsp:start(), $ending=>lsp:end()),
+      "target-expression": $if,
+      "merged-expression-true": $innerTrue,
+      "merged-expression-false": $innerFalse
+    }
+  }
+}

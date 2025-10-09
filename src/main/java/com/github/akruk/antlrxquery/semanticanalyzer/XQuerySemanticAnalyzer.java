@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.CharStreams;
@@ -33,6 +34,9 @@ import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.XQueryAxis;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper.XQuerySemanticCharEscaperResult;
+import com.github.akruk.antlrxquery.evaluator.XQuery;
+import com.github.akruk.antlrxquery.evaluator.XQuery.TreeEvaluator;
+import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.inputgrammaranalyzer.InputGrammarAnalyzer;
 import com.github.akruk.antlrxquery.inputgrammaranalyzer.InputGrammarAnalyzer.GrammarAnalysisResult;
@@ -59,7 +63,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     private final XQueryValueFactory valueFactory;
     private final XQuerySemanticFunctionManager functionManager;
     private final SequencetypePathOperator pathOperator;
-    // private final Parser parser;
+    private final Parser parser;
     private XQueryVisitingSemanticContext context;
     private List<XQuerySequenceType> visitedPositionalArguments;
     private Map<String, XQuerySequenceType> visitedKeywordArguments;
@@ -94,13 +98,19 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     }
 
     @Override
-    public XQuerySequenceType visitXquery(XqueryContext ctx) {
+    public XQuerySequenceType visitXquery(XqueryContext ctx)
+    {
+        final XQueryValue typeNameNodes = getTypeNames.evaluate(ctx);
+
+
+        availableTypeNames = typeNameNodes.sequence.stream()
+            .map((XQueryValue v) -> v.node.getText())
+            .collect(Collectors.toSet());
+
         if (ctx.libraryModule() != null)
             return visitLibraryModule(ctx.libraryModule());
         return visitMainModule(ctx.mainModule());
     }
-
-
 
     public XQuerySemanticAnalyzer(
         final Parser parser,
@@ -111,7 +121,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         final GrammarAnalysisResult grammarAnalysisResult)
     {
         this.grammarAnalysisResult = grammarAnalysisResult;
-        // this.parser = parser;
+        this.parser = parser;
         this.typeFactory = typeFactory;
         this.valueFactory = valueFactory;
         this.functionManager = functionCaller;
@@ -142,6 +152,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         this.castability = new SequencetypeCastable(typeFactory, atomizer);
         this.anyNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
         this.pathOperator = new SequencetypePathOperator(typeFactory, parser);
+        getTypeNames = XQuery.compile("//(itemTypeDecl|namedRecordTypeDecl)/qname", parser);
     }
 
     @Override
@@ -594,7 +605,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         final Map<String, XQueryRecordField> fields = new HashMap<>(fieldDeclarations.size());
         for (final var field : fieldDeclarations) {
             final String fieldName = field.fieldName().getText();
-            final XQuerySequenceType fieldType = field.sequenceType().accept(this);
+            final XQuerySequenceType fieldType = visitSequenceType(field.sequenceType());
             final boolean isRequired = field.QUESTION_MARK() != null;
             final XQueryRecordField recordField = new XQueryRecordField(fieldType, isRequired);
             fields.put(fieldName, recordField);
@@ -2507,7 +2518,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
                     paramType = zeroOrMoreItems;
                 } else {
                     paramType = param.varNameAndType().typeDeclaration().accept(this);
-                }
+                  }
                 var argDecl = new ArgumentSpecification(argName, paramType, null);
                 boolean added = argNames.add(argName);
                 if (!added) {
@@ -2540,9 +2551,9 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
                 contextManager.entypeVariable(arg.name(), arg.type());
             }
         }
-        var returned = visitTypeDeclaration(ctx.typeDeclaration());
-        functionManager.register(
-            resolved.namespace(), resolved.name(), args, returned);
+
+        XQuerySequenceType returned = ctx.typeDeclaration() != null? visitTypeDeclaration(ctx.typeDeclaration()) : zeroOrMoreItems;
+        functionManager.register(resolved.namespace(), resolved.name(), args, returned);
         FunctionBodyContext functionBody = ctx.functionBody();
         if (functionBody != null) {
             var bodyType = visitEnclosedExpr(functionBody.enclosedExpr());
@@ -2658,6 +2669,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
     XQueryAxis currentAxis;
     private final XQuerySequenceType zeroOrOneItem;
+    private final TreeEvaluator getTypeNames;
+    private Set<String> availableTypeNames;
 
     private XQueryAxis saveAxis() {
         final var saved = currentAxis;

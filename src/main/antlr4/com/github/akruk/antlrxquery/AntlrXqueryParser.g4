@@ -234,7 +234,7 @@ predicate: LBRACKET expr RBRACKET;
 primaryExpr: literal
         | varRef
         | parenthesizedExpr
-        | contextValueRef // contextValueRef
+        | contextValueRef
         | functionCall
         | functionItemExpr
         | mapConstructor
@@ -314,7 +314,7 @@ anyRecordType: RECORD LPAREN STAR RPAREN;
 typedRecordType: RECORD LPAREN (fieldDeclaration (COMMA fieldDeclaration)*)? extensibleFlag? RPAREN;
 extensibleFlag:	COMMA STAR;
 fieldDeclaration:	fieldName QUESTION_MARK? (AS sequenceType)?;
-fieldName:anyName;
+fieldName: anyName;
 
 
 arrayType	:	anyArrayType | typedArrayType;
@@ -659,6 +659,7 @@ anyName: ID
         | WINDOW
 
         | VALUE
+        | VERSION
         | ZERO_DIGIT
         | XQUERY
         ;

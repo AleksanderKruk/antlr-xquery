@@ -1,0 +1,7 @@
+declare type lsp:Any :=
+	map(string, lsp:Any)
+	| array(lsp:Any)
+	| string
+	| number
+	| boolean
+	(: null should be modelled as optionality :);

@@ -695,6 +695,8 @@ public class BasicTextDocumentService implements TextDocumentService {
     private <Rule extends ParserRuleContext>
         Rule findRuleUsingPosition(final Position position, final List<Rule> elements)
     {
+        if (position == null || elements == null)
+            return null;
         int low = 0;
         int high = elements.size() - 1;
         return findRuleUsingPosition(position, elements, low, high);

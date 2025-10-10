@@ -387,7 +387,7 @@ functionBody
 
 
 versionDecl
-    : XQUERY ((ENCODING STRING) | (VERSION STRING (ENCODING STRING)?)) SEPARATOR
+    : VERSION STRING (ENCODING STRING)? SEPARATOR
     ;
 
 libraryModule
@@ -395,7 +395,7 @@ libraryModule
     ;
 
 moduleDecl
-    : MODULE NAMESPACE qname EQ_OP STRING SEPARATOR
+    : MODULE qname SEPARATOR
     ;
 
 prolog
@@ -463,7 +463,7 @@ dfPropertyName
 
 
 namespaceDecl
-    : DECLARE NAMESPACE qname EQ_OP STRING
+    : DECLARE NAMESPACE qname
     ;
 
 importDecl

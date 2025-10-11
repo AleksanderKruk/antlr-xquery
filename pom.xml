@@ -147,6 +147,22 @@
       <version>3.1.0</version>
       <executions>
         <execution>
+          <?m2e execute onConfiguration?>
+          <id>cleanup-dot-antlr</id>
+          <phase>initialize</phase> <!-- Wykonuje się przed compile -->
+          <configuration>
+            <target>
+              <delete includeemptydirs="true" quiet="true">
+                <fileset dir="${basedir}" includes="**/.antlr/**"/>
+                <dirset dir="${basedir}" includes="**/.antlr"/>
+              </delete>
+            </target>
+          </configuration>
+          <goals>
+            <goal>run</goal>
+          </goals>
+        </execution>
+        <execution>
           <id>copy-server-and-extension</id>
           <phase>package</phase>
           <configuration>

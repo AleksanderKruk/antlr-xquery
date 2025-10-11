@@ -1,5 +1,4 @@
-module namespace lsp = "";
-declare namespace antlr = "";
+module lsp;
 
 declare record lsp:Position(
 	line as number,

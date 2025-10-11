@@ -1,4 +1,4 @@
-package com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults;
+package com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,6 +20,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticError;
+import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQueryVisitingSemanticContext;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
@@ -29,11 +30,12 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 public class XQuerySemanticFunctionManager {
     public static record AnalysisResult(XQuerySequenceType result,
+                                        GrainedAnalysis grainedAnalysis,
                                         List<ArgumentSpecification> requiredDefaultArguments,
                                         List<DiagnosticError> errors)
                                             {}
     public static record ArgumentSpecification(String name, XQuerySequenceType type, ParseTree defaultArgument) {}
-    public static record UsedArg(XQuerySequenceType type, XQueryValue value) {}
+    public static record UsedArg(XQuerySequenceType type, XQueryValue value, ParseTree tree) {}
     public interface GrainedAnalysis {
         XQuerySequenceType analyze(List<UsedArg> args, XQueryVisitingSemanticContext context, ParseTree functionBody);
 
@@ -72,6 +74,12 @@ public class XQuerySemanticFunctionManager {
                 final List<XQuerySequenceType> types);
     }
     private final XQueryTypeFactory typeFactory;
+    private XQuerySemanticAnalyzer analyzer;
+
+    public void setAnalyzer(XQuerySemanticAnalyzer analyzer)
+    {
+        this.analyzer = analyzer;
+    }
 
     public XQuerySemanticFunctionManager(final XQueryTypeFactory typeFactory) {
         this.typeFactory = typeFactory;
@@ -88,16 +96,17 @@ public class XQuerySemanticFunctionManager {
         final XQuerySequenceType optionalNumber = typeFactory.zeroOrOne(typeFactory.itemNumber());
         final ArgumentSpecification valueNum = new ArgumentSpecification("value", optionalNumber, null);
         final ArgumentSpecification roundingMode = new ArgumentSpecification("mode",
-                typeFactory.zeroOrOne(typeFactory.itemEnum(Set.of("floor",
-                                        "ceiling",
-                                        "toward-zero",
-                                        "away-from-zero",
-                                        "half-to-floor",
-                                        "half-to-ceiling",
-                                        "half-toward-zero",
-                                        "half-away-from-zero",
-                                        "half-to-even"))),
-                                        DEFAULT_ROUNDING_MODE);
+            typeFactory.zeroOrOne(typeFactory.itemEnum(Set.of(
+                "floor",
+                "ceiling",
+                "toward-zero",
+                "away-from-zero",
+                "half-to-floor",
+                "half-to-ceiling",
+                "half-toward-zero",
+                "half-away-from-zero",
+                "half-to-even"))),
+                DEFAULT_ROUNDING_MODE);
         final ArgumentSpecification precision = new ArgumentSpecification("precision", optionalNumber, ZERO_LITERAL);
 
         final ArgumentSpecification optionalCollation = new ArgumentSpecification(
@@ -174,43 +183,54 @@ public class XQuerySemanticFunctionManager {
         final ArgumentSpecification anyItemsRequiredInput = new ArgumentSpecification("input", zeroOrMoreItems, null);
         register("fn", "zero-or-one",
                 List.of(anyItemsRequiredInput),
-                optionalItem);
+                optionalItem,
+                (args, _, _) -> {
+                    XQuerySequenceType unrefinedType = args.get(0).type;
+                    var refinedType = typeFactory.zeroOrOne(unrefinedType.itemType);
+                    if (unrefinedType.isSubtypeOf(refinedType)) {
+                        return unrefinedType;
+                    }
+                    return refinedType;
+                });
 
         // fn:one-or-more(
         //  as item()*
         // ) as item()+
         register("fn", "one-or-more",
                 List.of(anyItemsRequiredInput),
-                typeFactory.oneOrMore(typeFactory.itemAnyItem()));
+                typeFactory.oneOrMore(typeFactory.itemAnyItem()),
+                (args, _, _) -> {
+                    XQuerySequenceType unrefinedType = args.get(0).type;
+                    var refinedType = typeFactory.oneOrMore(unrefinedType.itemType);
+                    if (unrefinedType.isSubtypeOf(refinedType)) {
+                        return unrefinedType;
+                    }
+                    return refinedType;
+                });
 
         // fn:exactly-one(
         //  as item()*
         // ) as item()
         register("fn", "exactly-one",
                 List.of(anyItemsRequiredInput),
-                typeFactory.one(typeFactory.itemAnyItem()));
+                typeFactory.one(typeFactory.itemAnyItem()), (args, _, _) -> typeFactory.one(args.get(0).type.itemType));
 
         // fn:node-name($node as node()? := .) as xs:QName?
-        ArgumentSpecification nodeNameNode = new ArgumentSpecification(
+        ArgumentSpecification optionalNodeArg = new ArgumentSpecification(
             "node",
             typeFactory.zeroOrOne(typeFactory.itemAnyNode()),
             CONTEXT_ITEM
         );
         register(
             "fn", "node-name",
-            List.of(nodeNameNode),
+            List.of(optionalNodeArg),
             typeFactory.zeroOrOne(typeFactory.itemString())
         );
 
         // fn:nilled($node as node()? := .) as xs:boolean?
-        ArgumentSpecification nilledNode = new ArgumentSpecification(
-            "node",
-            typeFactory.zeroOrOne(typeFactory.itemAnyNode()),
-            CONTEXT_ITEM
-        );
         register(
             "fn", "nilled",
-            List.of(nilledNode),
+            List.of(optionalNodeArg),
             typeFactory.zeroOrOne(typeFactory.itemBoolean())
         );
 
@@ -232,30 +252,24 @@ public class XQuerySemanticFunctionManager {
 
 
 
-        final ArgumentSpecification nodeArg = new ArgumentSpecification(
-            "node",
-            typeFactory.zeroOrOne(typeFactory.itemAnyNode()),
-            CONTEXT_ITEM
-        );
-
         // fn:base-uri($node as node()? := .) as xs:anyURI?
         register(
             "fn", "base-uri",
-            List.of(nodeArg),
+            List.of(optionalNodeArg),
             typeFactory.zeroOrOne(typeFactory.itemString())
         );
 
         // fn:document-uri($node as node()? := .) as xs:anyURI?
         register(
             "fn", "document-uri",
-            List.of(nodeArg),
+            List.of(optionalNodeArg),
             typeFactory.zeroOrOne(typeFactory.itemString())
         );
 
         // fn:root($node as node()? := .) as node()?
         register(
             "fn", "root",
-            List.of(nodeArg),
+            List.of(optionalNodeArg),
             typeFactory.zeroOrOne(typeFactory.itemAnyNode())
         );
 
@@ -268,21 +282,21 @@ public class XQuerySemanticFunctionManager {
         // fn:path($node as node()? := ., $options as map(*)? := {}) as xs:string?
         register(
             "fn", "path",
-            List.of(nodeArg, mapOptionsArg),
+            List.of(optionalNodeArg, mapOptionsArg),
             typeFactory.zeroOrOne(typeFactory.itemString())
         );
 
         // fn:has-children($node as node()? := .) as xs:boolean
         register(
             "fn", "has-children",
-            List.of(nodeArg),
+            List.of(optionalNodeArg),
             typeFactory.boolean_()
         );
 
         // fn:siblings( $node as node()? := .) as node()*
         register(
             "fn", "siblings",
-            List.of(nodeArg),
+            List.of(optionalNodeArg),
             zeroOrMoreNodes
         );
 
@@ -2703,6 +2717,57 @@ public class XQuerySemanticFunctionManager {
             typeFactory.namedType("fn:random-number-generator-record")
         );
 
+
+        register(
+            "antlr", "start",
+            List.of(optionalNodeArg),
+            optionalNumber
+        );
+
+        register(
+            "antlr", "stop",
+            List.of(optionalNodeArg),
+            optionalNumber
+        );
+
+        register(
+            "antlr", "pos",
+            List.of(optionalNodeArg),
+            optionalNumber
+        );
+
+        register(
+            "antlr", "index",
+            List.of(optionalNodeArg),
+            optionalNumber
+        );
+
+        register(
+            "antlr", "line",
+            List.of(optionalNodeArg),
+            optionalNumber
+        );
+
+        // LSP functions
+        // register(
+        //     "lsp", "start-position",
+        //     List.of(optionalNodeArg),
+        //     optionalNumber
+        // );
+
+        // register(
+        //     "lsp", "end-position",
+        //     List.of(optionalNodeArg),
+        //     optionalNumber
+        // );
+
+        // register(
+        //     "lsp", "range",
+        //     List.of(optionalNodeArg),
+        //     optionalNumber
+        // );
+
+
     }
 
     private static ParseTree getTree(final String xquery, Function<AntlrXqueryParser, ParseTree> initialRule) {
@@ -2718,13 +2783,13 @@ public class XQuerySemanticFunctionManager {
     private AnalysisResult handleUnknownNamespace(final String namespace, final DiagnosticError errorMessageSupplier,
             final XQuerySequenceType fallbackType) {
         final List<DiagnosticError> errors = List.of(errorMessageSupplier);
-        return new AnalysisResult(fallbackType, List.of(), errors);
+        return new AnalysisResult(fallbackType, null, List.of(), errors);
     }
 
     private AnalysisResult handleUnknownFunction(final String namespace, final String name,
             final DiagnosticError errorMessageSupplier, final XQuerySequenceType fallbackType) {
         final List<DiagnosticError> errors = List.of(errorMessageSupplier);
-        return new AnalysisResult(fallbackType, List.of(), errors);
+        return new AnalysisResult(fallbackType, null, List.of(), errors);
     }
 
     private AnalysisResult handleNoMatchingFunction(
@@ -2732,7 +2797,7 @@ public class XQuerySemanticFunctionManager {
             final XQuerySequenceType fallbackType)
     {
         final List<DiagnosticError> errors = List.of(errorMessageSupplier);
-        return new AnalysisResult(fallbackType, List.of(), errors);
+        return new AnalysisResult(fallbackType, null, List.of(), errors);
     }
 
     record SpecAndErrors(FunctionSpecification spec, List<DiagnosticError> errors) {
@@ -2789,7 +2854,7 @@ public class XQuerySemanticFunctionManager {
 
         final SpecAndErrors specAndErrors = getFunctionSpecification(location, namespace, name, namedFunctions, requiredArity);
         if (specAndErrors.spec == null) {
-            return new AnalysisResult(anyItems, List.of(), specAndErrors.errors);
+            return new AnalysisResult(anyItems, null, List.of(), specAndErrors.errors);
         }
         final var spec = specAndErrors.spec;
         // used positional arguments need to have matching types
@@ -2830,7 +2895,7 @@ public class XQuerySemanticFunctionManager {
             mismatchReasons.add("Function " + name + ": " + String.join("; ", reasons));
         }
         if (mismatchReasons.isEmpty()) {
-            return new AnalysisResult(spec.returnedType, defaultArgs.toList(), List.of());
+            return new AnalysisResult(spec.returnedType, specAndErrors.spec.grainedAnalysis, defaultArgs.toList(), List.of());
         }
         final String message = getNoMatchingFunctionMessage(namespace, name, requiredArity, mismatchReasons);
         final DiagnosticError error = DiagnosticError.of(location, message);
@@ -2976,12 +3041,12 @@ public class XQuerySemanticFunctionManager {
             stringBuilder.append("#");
             stringBuilder.append(arity);
             DiagnosticError error = DiagnosticError.of(location, stringBuilder.toString());
-            return new AnalysisResult(fallback, List.of(), List.of(error));
+            return new AnalysisResult(fallback, null, List.of(), List.of(error));
         }
         XQuerySequenceType returnedType = specAndErrors.spec.returnedType;
         List<XQuerySequenceType> argTypes = specAndErrors.spec.args.stream().map(arg->arg.type()).toList().subList(0, arity);
         var functionItem = typeFactory.function(returnedType, argTypes);
-        return new AnalysisResult(functionItem, List.of(), specAndErrors.errors);
+        return new AnalysisResult(functionItem, specAndErrors.spec.grainedAnalysis, List.of(), specAndErrors.errors);
 
     }
 
@@ -3011,6 +3076,18 @@ public class XQuerySemanticFunctionManager {
             final List<ArgumentSpecification> args,
             final XQuerySequenceType returnedType) {
         return register(namespace, functionName, args, returnedType, null, false, false, null, ((_, _, _) -> returnedType));
+    }
+
+    public XQuerySemanticError register(
+            final String namespace,
+            final String functionName,
+            final List<ArgumentSpecification> args,
+            final XQuerySequenceType returnedType,
+            final GrainedAnalysis analysis)
+    {
+        return register(namespace, functionName, args, returnedType,
+            null, false,
+            false, null, analysis);
     }
 
     public XQuerySemanticError register(

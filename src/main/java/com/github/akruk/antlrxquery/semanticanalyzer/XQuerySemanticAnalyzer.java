@@ -2502,7 +2502,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         ResolvedName resolved = namespaceResolver.resolve(qname);
         int i = 0;
         var args = new ArrayList<ArgumentSpecification>();
-        contextManager.enterScope();
+        contextManager.enterContext();
         if (ctx.paramListWithDefaults() != null) {
             Set<String> argNames = new HashSet<>();
             var params = ctx.paramListWithDefaults().paramWithDefault();
@@ -2560,7 +2560,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
             }
         }
 
-        contextManager.leaveScope();
+        contextManager.leaveContext();
         return null;
     }
 

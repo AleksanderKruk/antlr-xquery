@@ -27,16 +27,13 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.*;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.ResolvedName;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQuerySemanticFunctionManager;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQuerySemanticFunctionManager.AnalysisResult;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.defaults.XQuerySemanticFunctionManager.ArgumentSpecification;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionManager;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionManager.AnalysisResult;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionManager.ArgumentSpecification;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.XQueryAxis;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper.XQuerySemanticCharEscaperResult;
-import com.github.akruk.antlrxquery.evaluator.XQuery;
-import com.github.akruk.antlrxquery.evaluator.XQuery.TreeEvaluator;
-import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.inputgrammaranalyzer.InputGrammarAnalyzer;
 import com.github.akruk.antlrxquery.inputgrammaranalyzer.InputGrammarAnalyzer.GrammarAnalysisResult;
@@ -100,12 +97,12 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
     @Override
     public XQuerySequenceType visitXquery(XqueryContext ctx)
     {
-        final XQueryValue typeNameNodes = getTypeNames.evaluate(ctx);
+        // final XQueryValue typeNameNodes = getTypeNames.evaluate(ctx);
 
 
-        availableTypeNames = typeNameNodes.sequence.stream()
-            .map((XQueryValue v) -> v.node.getText())
-            .collect(Collectors.toSet());
+        // availableTypeNames = typeNameNodes.sequence.stream()
+        //     .map((XQueryValue v) -> v.node.getText())
+        //     .collect(Collectors.toSet());
 
         if (ctx.libraryModule() != null)
             return visitLibraryModule(ctx.libraryModule());
@@ -125,6 +122,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         this.typeFactory = typeFactory;
         this.valueFactory = valueFactory;
         this.functionManager = functionCaller;
+        this.functionManager.setAnalyzer(this);
         this.contextManager = contextManager;
         this.contextManager.enterContext();
         this.context = new XQueryVisitingSemanticContext();
@@ -152,7 +150,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
         this.castability = new SequencetypeCastable(typeFactory, atomizer);
         this.anyNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
         this.pathOperator = new SequencetypePathOperator(typeFactory, parser);
-        getTypeNames = XQuery.compile("//(itemTypeDecl|namedRecordTypeDecl)/qname", parser);
+        // getTypeNames = XQuery.compile("//(itemTypeDecl|namedRecordTypeDecl)/qname", parser);
     }
 
     @Override
@@ -2669,7 +2667,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<XQueryS
 
     XQueryAxis currentAxis;
     private final XQuerySequenceType zeroOrOneItem;
-    private final TreeEvaluator getTypeNames;
+    // private final TreeEvaluator getTypeNames;
     private Set<String> availableTypeNames;
 
     private XQueryAxis saveAxis() {

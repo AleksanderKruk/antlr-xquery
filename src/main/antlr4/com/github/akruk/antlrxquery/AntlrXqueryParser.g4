@@ -477,8 +477,9 @@ grammarImport
     ;
 
 moduleImport
-    : IMPORT MODULE namespacePrefix? STRING # namespaceModuleImport
-    | IMPORT MODULE qname # simpleModuleImport
+    : IMPORT MODULE STRING # pathModuleImport
+    | IMPORT MODULE namespacePrefix STRING # namespaceModuleImport
+    | IMPORT MODULE qname # defaultPathModuleImport
     ;
 
 namespacePrefix:

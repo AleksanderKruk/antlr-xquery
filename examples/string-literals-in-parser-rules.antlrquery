@@ -18,7 +18,7 @@ declare record lsp:TextEdit(
 declare function local:x($acc,$option) {
   array {
     for $prefix in $acc
-    return concat($prefix, $option)
+    return concat(($prefix, $option))
   }
 };
 

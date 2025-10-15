@@ -1,7 +1,9 @@
 package com.github.akruk.antlrxquery.semanticanalyzer;
 
+import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,7 +17,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
@@ -33,8 +34,8 @@ import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.XQueryAxis;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper.XQuerySemanticCharEscaperResult;
+import com.github.akruk.antlrxquery.evaluator.XQuery;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
-import com.github.akruk.antlrxquery.inputgrammaranalyzer.InputGrammarAnalyzer;
 import com.github.akruk.antlrxquery.inputgrammaranalyzer.InputGrammarAnalyzer.GrammarAnalysisResult;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
@@ -2718,25 +2719,78 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     }
 
 
+    // @Override
+    // public TypeInContext visitGrammarImport(GrammarImportContext ctx)
+    // {
+    //     var strings = ctx.STRING();
+    //     var grammarAnalysisResult = analyzeGrammar(ctx, strings.get(0).getText());
+    //     this.grammarAnalysisResult = grammarAnalysisResult;
+    //     return null;
+    // }
+
+
+
+
     @Override
-    public TypeInContext visitGrammarImport(GrammarImportContext ctx)
-    {
-        var strings = ctx.STRING();
-        var grammarAnalysisResult = resolvePath(ctx, strings.get(0).getText());
-        this.grammarAnalysisResult = grammarAnalysisResult;
-        return null;
+    public TypeInContext visitPathModuleImport(PathModuleImportContext ctx) {
+        String path = stringContents(ctx.STRING());
+        ParseTree contents = resolveModuleContents(ctx, path);
+        if (contents == null) {
+            return null;
+        }
+        return contents.accept(this);
     }
 
-    private GrammarAnalysisResult resolvePath(GrammarImportContext ctx, String path)
+    private String stringContents(TerminalNode ctx)
     {
-        Path target = Path.of(path);
-        var grammarAnalyzer = new InputGrammarAnalyzer();
+        var text = ctx.getText();
+        return text.substring(1, text.length() - 1);
+    }
+
+
+    private Path resolveModulePath(ParserRuleContext ctx, String path)
+    {
+        Path target = Path.of(path).toAbsolutePath();
+        File file = target.toFile();
+        if (!file.exists()) {
+            error(ctx, "Module import path does not exist: " + target.toAbsolutePath());
+            return null;
+        }
+        if (!file.isFile()) {
+            error(ctx, "Module import path is not a file: " + target.toAbsolutePath());
+            return null;
+        }
+        if (!file.canRead()) {
+            error(ctx, "Module import path cannot be read: " + target.toAbsolutePath());
+            return null;
+        }
+        return target;
+    }
+
+    private ParseTree resolveModuleContents(ParserRuleContext ctx, String path)
+    {
         try {
-            return grammarAnalyzer.analyze(CharStreams.fromPath(target.toAbsolutePath()));
+            Path resolved = resolveModulePath(ctx, path);
+            String text = Files.readString(resolved);
+            ParseTree moduleTree = XQuery.parse(text);
+            return moduleTree;
         } catch (IOException e) {
-            error(ctx, "Invalid grammar import path: " + e.getMessage());
+            error(ctx, "Invalid module import path: " + e.getMessage());
         }
         return null;
+
     }
+
+    // private GrammarAnalysisResult analyzeGrammar(ParserRuleContext ctx, String path)
+    // {
+    //     Path target = Path.of(path);
+    //     var grammarAnalyzer = new InputGrammarAnalyzer();
+    //     try {
+    //         return grammarAnalyzer.analyze(CharStreams.fromPath(target.toAbsolutePath()));
+    //     } catch (IOException e) {
+    //         error(ctx, "Invalid grammar import path: " + e.getMessage());
+    //     }
+    //     return null;
+    // }
 
 }

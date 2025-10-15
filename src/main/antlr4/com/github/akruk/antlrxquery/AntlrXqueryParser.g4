@@ -472,11 +472,13 @@ importDecl
     ;
 
 grammarImport
-    : IMPORT GRAMMAR namespacePrefix? STRING (COMMA STRING)*
+    : IMPORT GRAMMAR namespacePrefix? STRING (COMMA STRING)* # namespaceGrammarImport
+    | IMPORT GRAMMAR qname # simpleGrammarImport
     ;
 
 moduleImport
-    : IMPORT MODULE namespacePrefix? STRING (COMMA STRING)*
+    : IMPORT MODULE namespacePrefix? STRING # namespaceModuleImport
+    | IMPORT MODULE qname # simpleModuleImport
     ;
 
 namespacePrefix:

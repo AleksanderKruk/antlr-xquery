@@ -12,6 +12,7 @@ import java.util.List;
 import org.antlr.v4.runtime.CharStream;
 import com.github.akruk.antlrxquery.AntlrXqueryLexer;
 import com.github.akruk.antlrxquery.AntlrXqueryParser;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.XqueryContext;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMemoizedValueFactory;
@@ -25,11 +26,7 @@ public final class XQuery {
     public static XQueryValue evaluateWithMockRoot(
         final ParseTree tree, final String xquery, final Parser parser)
     {
-        final CharStream characters = CharStreams.fromString(xquery);
-        final var xqueryLexer = new AntlrXqueryLexer(characters);
-        final var xqueryTokens = new CommonTokenStream(xqueryLexer);
-        final var xqueryParser = new AntlrXqueryParser(xqueryTokens);
-        final var xqueryTree = xqueryParser.xquery();
+        final var xqueryTree = parse(xquery);
         final ParserRuleContext root = new ParserRuleContext();
         if (tree != null) {
             root.children = List.of(tree);
@@ -53,11 +50,7 @@ public final class XQuery {
     public static XQueryValue evaluateWithoutMockRoot(
         final ParseTree tree, final String xquery, final Parser parser)
     {
-        final CharStream characters = CharStreams.fromString(xquery);
-        final var xqueryLexer = new AntlrXqueryLexer(characters);
-        final var xqueryTokens = new CommonTokenStream(xqueryLexer);
-        final var xqueryParser = new AntlrXqueryParser(xqueryTokens);
-        final var xqueryTree = xqueryParser.xquery();
+        final var xqueryTree = parse(xquery);
         final XQueryMemoizedTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
         final XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory(typeFactory);
         final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
@@ -79,11 +72,7 @@ public final class XQuery {
 
     public static TreeEvaluator compile(final String xquery, final Parser parser)
     {
-        final CharStream characters = CharStreams.fromString(xquery);
-        final var xqueryLexer = new AntlrXqueryLexer(characters);
-        final var xqueryTokens = new CommonTokenStream(xqueryLexer);
-        final var xqueryParser = new AntlrXqueryParser(xqueryTokens);
-        final var xqueryTree = xqueryParser.xquery();
+        final var xqueryTree = parse(xquery);
         final XQueryMemoizedTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
         final XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory(typeFactory);
         final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
@@ -97,4 +86,16 @@ public final class XQuery {
 			return evaluated;
         };
     }
+
+
+    public static XqueryContext parse(final String xquery) {
+        final CharStream characters = CharStreams.fromString(xquery);
+        final var xqueryLexer = new AntlrXqueryLexer(characters);
+        final var xqueryTokens = new CommonTokenStream(xqueryLexer);
+        final var xqueryParser = new AntlrXqueryParser(xqueryTokens);
+        final var xqueryTree = xqueryParser.xquery();
+        return xqueryTree;
+    }
+
+
 }

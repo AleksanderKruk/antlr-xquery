@@ -239,7 +239,7 @@ public class XQuerySequenceType {
     }
 
 
-    public static XQuerySequenceType emptySequence(XQueryTypeFactory typeFactory) {
+    public static XQuerySequenceType emptySequence(final XQueryTypeFactory typeFactory) {
         return new XQuerySequenceType(typeFactory, null, XQueryCardinality.ZERO);
     }
 
@@ -249,7 +249,7 @@ public class XQuerySequenceType {
         if (occurence == XQueryCardinality.ZERO) {
             return "empty-sequence()";
         }
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
 
         if (requiresParentheses)
         {
@@ -280,11 +280,11 @@ public class XQuerySequenceType {
     }
 
 
-    public RelativeCoercability coerceableTo(XQuerySequenceType requiredType) {
+    public RelativeCoercability coerceableTo(final XQuerySequenceType requiredType) {
         if (this == requiredType || isSubtypeOf(requiredType)) {
             return RelativeCoercability.ALWAYS;
         }
-        boolean emptySequenceRequired = requiredType.isSubtypeOf(typeFactory.emptySequence());
+        final boolean emptySequenceRequired = requiredType.isSubtypeOf(typeFactory.emptySequence());
         if (emptySequenceRequired) {
             return RelativeCoercability.NEVER;
         }

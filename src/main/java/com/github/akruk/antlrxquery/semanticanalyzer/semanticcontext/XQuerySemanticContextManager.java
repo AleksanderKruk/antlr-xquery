@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
+import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 
 
@@ -46,11 +47,15 @@ public class XQuerySemanticContextManager {
         return currentContext().currentScope();
     }
 
-    public boolean entypeVariable(String variableName, XQuerySequenceType assignedType) {
+    public boolean entypeVariable(String variableName, TypeInContext assignedType) {
         return currentContext().entypeVariable(variableName, assignedType);
     }
 
-    public XQuerySequenceType getVariable(String variableName) {
+    public boolean entypeVariable(String variableName, XQuerySequenceType assignedType) {
+        return currentContext().entypeVariable(variableName, new TypeInContext(assignedType));
+    }
+
+    public TypeInContext getVariable(String variableName) {
         return currentContext().getVariable(variableName);
     }
 

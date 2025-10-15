@@ -42,7 +42,7 @@ public class SemanticTestsBase {
                 caller,
                 null);
         final var lastVisitedType = analyzer.visit(xqueryTree);
-        return new AnalysisResult(analyzer, lastVisitedType);
+        return new AnalysisResult(analyzer, lastVisitedType.type);
     }
 
     protected void assertNoErrors(final AnalysisResult analyzer) {
@@ -57,7 +57,7 @@ public class SemanticTestsBase {
     }
 
     protected void assertErrors(final AnalysisResult analyzer) {
-        assertTrue(analyzer.analyzer.getErrors().size() != 0);
+        assertTrue(analyzer.analyzer.getErrors().size() != 0, "Found no erros");
     }
 
     protected void assertType(final AnalysisResult result, final XQuerySequenceType expectedType) {

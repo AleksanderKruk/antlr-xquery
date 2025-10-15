@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
 
 
 public class XQuerySemanticContext {
@@ -34,7 +34,7 @@ public class XQuerySemanticContext {
         return scopes.getLast();
     }
 
-    public XQuerySequenceType getVariable(String variableName) {
+    public TypeInContext getVariable(String variableName) {
         for (var scope : scopes.reversed()) {
             var variable = scope.getVariable(variableName);
             if (variable != null) {
@@ -44,8 +44,8 @@ public class XQuerySemanticContext {
         return null;
     }
 
-    public Map<String, XQuerySequenceType> getVariables() {
-        HashMap<String, XQuerySequenceType> allvars = new HashMap<>();
+    public Map<String, TypeInContext> getVariables() {
+        HashMap<String, TypeInContext> allvars = new HashMap<>();
         for (var scope : scopes) {
             var scopedVars = scope.getVariables();
             allvars.putAll(scopedVars);
@@ -53,7 +53,7 @@ public class XQuerySemanticContext {
         return allvars;
     }
 
-    public boolean entypeVariable(String variableName, XQuerySequenceType assignedType) {
+    public boolean entypeVariable(String variableName, TypeInContext assignedType) {
         return currentScope().entypeVariable(variableName, assignedType);
     }
 }

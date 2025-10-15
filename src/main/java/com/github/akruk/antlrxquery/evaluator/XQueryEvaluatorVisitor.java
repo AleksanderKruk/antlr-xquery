@@ -2167,7 +2167,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             return visitTreatExpr(ctx.treatExpr());
         final var visited = visitTreatExpr(ctx.treatExpr());
         final var expectedType = ctx.sequenceType().accept(this.semanticAnalyzer);
-        final boolean result = visited.type.isSubtypeOf(expectedType);
+        final boolean result = visited.type.isSubtypeOf(expectedType.type);
         return valueFactory.bool(result);
     }
 
@@ -2178,7 +2178,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             return visitCastableExpr(ctx.castableExpr());
         final var type = ctx.sequenceType().accept(semanticAnalyzer);
         final var expr =  visitCastableExpr(ctx.castableExpr());
-        if (!expr.type.isSubtypeOf(type)) {
+        if (!expr.type.isSubtypeOf(type.type)) {
             return valueFactory.error(XQueryError.TreatAsTypeMismatch,
             "Type: " + expr.type + " cannot be treated as " + type);
         }
@@ -2190,7 +2190,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     {
         if (ctx.CASTABLE() == null)
             return visitCastExpr(ctx.castExpr());
-        final XQuerySequenceType targetType = semanticAnalyzer.visitCastTarget(ctx.castTarget());
+        final XQuerySequenceType targetType = semanticAnalyzer.visitCastTarget(ctx.castTarget()).type;
         final XQueryValue testedValue = visitCastExpr(ctx.castExpr());
         final boolean isCastable = !caster.cast(targetType, testedValue).isError;
         return valueFactory.bool(isCastable);
@@ -2201,7 +2201,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     public XQueryValue visitCastExpr(final CastExprContext ctx) {
         if (ctx.CAST() == null)
             return visitPipelineExpr(ctx.pipelineExpr());
-        final XQuerySequenceType targetType = semanticAnalyzer.visitCastTarget(ctx.castTarget());
+        final XQuerySequenceType targetType = semanticAnalyzer.visitCastTarget(ctx.castTarget()).type;
         final XQueryValue testedValue = visitPipelineExpr(ctx.pipelineExpr());
         final XQueryValue cast = caster.cast(targetType, testedValue);
         return cast;

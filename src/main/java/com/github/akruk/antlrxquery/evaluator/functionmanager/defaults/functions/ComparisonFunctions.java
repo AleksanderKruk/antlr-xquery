@@ -27,12 +27,15 @@ public class ComparisonFunctions {
         if (a.size != b.size)
             return false;
         switch(a.valueType) {
-            case BOOLEAN:
+            case BOOLEAN: {
                 return a.booleanValue == b.booleanValue;
-            case NUMBER:
+            }
+            case NUMBER: {
                 return a.numericValue.compareTo(b.numericValue) == 0;
-            case STRING:
+            }
+            case STRING: {
                 return collator.compare(a.stringValue, b.stringValue) == 0;
+            }
             case ARRAY: {
                 var aMembers = a.arrayMembers;
                 var bMembers = b.arrayMembers;

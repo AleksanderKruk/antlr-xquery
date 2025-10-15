@@ -24,6 +24,7 @@ import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQueryVisitingSemanticContext;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
+import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
@@ -2831,8 +2832,8 @@ public class XQuerySemanticFunctionManager {
             final ParserRuleContext location,
             final String namespace,
             final String name,
-            final List<XQuerySequenceType> positionalargs,
-            final Map<String, XQuerySequenceType> keywordArgs,
+            final List<TypeInContext> positionalargs,
+            final Map<String, TypeInContext> keywordArgs,
             final XQueryVisitingSemanticContext context)
     {
         final var anyItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
@@ -2859,8 +2860,8 @@ public class XQuerySemanticFunctionManager {
         final var spec = specAndErrors.spec;
         // used positional arguments need to have matching types
         final List<String> reasons = new ArrayList<>();
-        final boolean positionalTypeMismatch = tryToMatchPositionalArgs(positionalargs, positionalArgsCount, spec,
-                reasons);
+        final boolean positionalTypeMismatch = tryToMatchPositionalArgs(
+            positionalargs, positionalArgsCount, spec, reasons);
 
         if (positionalTypeMismatch) {
             mismatchReasons.add("Function " + name + ": " + String.join("; ", reasons));
@@ -2946,12 +2947,14 @@ public class XQuerySemanticFunctionManager {
         return stringBuilder.toString();
     }
 
-    private boolean checkIfTypesMatchForKeywordArgs(final Map<String, XQuerySequenceType> keywordArgs,
+    private boolean checkIfTypesMatchForKeywordArgs(
+            final Map<String, TypeInContext> keywordArgs,
             final List<String> reasons,
-            final Map<Boolean, List<ArgumentSpecification>> partitioned) {
+            final Map<Boolean, List<ArgumentSpecification>> partitioned)
+    {
         boolean keywordTypeMismatch = false;
         for (final ArgumentSpecification arg : partitioned.get(true)) {
-            final XQuerySequenceType passedType = keywordArgs.get(arg.name());
+            final XQuerySequenceType passedType = keywordArgs.get(arg.name()).type;
             if (!passedType.isSubtypeOf(arg.type())) {
                 reasons.add("Keyword argument '" + arg.name() + "' type mismatch: expected " + arg.type() + ", got "
                         + passedType);
@@ -2979,8 +2982,11 @@ public class XQuerySemanticFunctionManager {
     }
 
     private void checkIfKeywordNotAlreadyInPositionalArgs(final String name,
-            final Map<String, XQuerySequenceType> keywordArgs,
-            final List<String> mismatchReasons, final List<String> reasons, final List<String> remainingArgNames) {
+        final Map<String, TypeInContext> keywordArgs,
+        final List<String> mismatchReasons,
+        final List<String> reasons,
+        final List<String> remainingArgNames)
+    {
         if (!remainingArgNames.containsAll(keywordArgs.keySet())) {
             reasons.add("Keyword argument(s) overlap with positional arguments: " + keywordArgs.keySet().stream()
                     .filter(k -> !remainingArgNames.contains(k)).collect(Collectors.joining(", ")));
@@ -2988,8 +2994,10 @@ public class XQuerySemanticFunctionManager {
         }
     }
 
-    private void checkIfCorrectKeywordNames(final String name, final Map<String, XQuerySequenceType> keywordArgs,
-            final List<String> mismatchReasons, final List<String> reasons, final List<String> allArgNames) {
+    private void checkIfCorrectKeywordNames(
+        final String name, final Map<String, TypeInContext> keywordArgs,
+        final List<String> mismatchReasons, final List<String> reasons, final List<String> allArgNames)
+    {
         if (!allArgNames.containsAll(keywordArgs.keySet())) {
             reasons.add("Unknown keyword argument(s): " + keywordArgs.keySet().stream()
                     .filter(k -> !allArgNames.contains(k)).collect(Collectors.joining(", ")));
@@ -2997,8 +3005,12 @@ public class XQuerySemanticFunctionManager {
         }
     }
 
-    private boolean tryToMatchPositionalArgs(final List<XQuerySequenceType> positionalargs,
-            final int positionalArgsCount, final FunctionSpecification spec, final List<String> reasons) {
+    private boolean tryToMatchPositionalArgs(
+        final List<TypeInContext> positionalargs,
+        final int positionalArgsCount,
+        final FunctionSpecification spec,
+        final List<String> reasons)
+    {
         boolean positionalTypeMismatch = false;
         for (int i = 0; i < positionalArgsCount; i++) {
             final var positionalArg = positionalargs.get(i);

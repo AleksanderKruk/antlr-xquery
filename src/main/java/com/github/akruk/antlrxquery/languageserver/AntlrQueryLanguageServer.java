@@ -5,6 +5,11 @@ import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.*;
 
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -140,6 +145,25 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
         options.setResolveProvider(true);
         capabilities.setCodeActionProvider(options);
 
+        params.getWorkspaceFolders().forEach(t -> {
+            try {
+
+                var directoryUrl = Paths.get(URI.create(t.getUri()));
+                Files.walk(directoryUrl).forEach(p -> {
+                    try {
+                        if (p.toFile().isFile() && p.endsWith(".antlrquery"))
+                        {
+                            textDocumentService.parseAndAnalyze(p.toAbsolutePath().toString(), Files.readString(p));
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace(System.err);
+                    }
+
+                });
+            } catch (IOException e) {
+                e.printStackTrace(System.err);
+            }
+        });
 
 
         return CompletableFuture.completedFuture(new InitializeResult(capabilities));

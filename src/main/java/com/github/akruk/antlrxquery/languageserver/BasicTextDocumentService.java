@@ -139,7 +139,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         parseAndAnalyze(uri, params.getText());
     }
 
-    private void parseAndAnalyze(final String uri, final String text)
+    public void parseAndAnalyze(final String uri, final String text)
     {
         System.err.println("[parseAndAnalyze] Starting for: " + uri);
         System.err.println("[parseAndAnalyze] Text length: " + text.length());

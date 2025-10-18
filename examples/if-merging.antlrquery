@@ -1,3 +1,6 @@
+import module lsp="./lsp.antlrquery";
+
+
 array {
   let $ifs  := //ifExpr
   for $if in $ifs

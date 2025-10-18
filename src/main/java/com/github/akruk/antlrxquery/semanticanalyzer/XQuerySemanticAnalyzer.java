@@ -2735,16 +2735,26 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     public TypeInContext visitPathModuleImport(PathModuleImportContext ctx) {
         String path = stringContents(ctx.STRING());
         ParseTree contents = resolveModuleContents(ctx, path);
-        if (contents == null) {
-            return null;
+        if (contents != null) {
+            return contents.accept(this);
         }
-        return contents.accept(this);
+        return null;
     }
 
     private String stringContents(TerminalNode ctx)
     {
         var text = ctx.getText();
         return text.substring(1, text.length() - 1);
+    }
+
+    @Override
+    public TypeInContext visitDefaultPathModuleImport(DefaultPathModuleImportContext ctx) {
+        String moduleName = "./" + ctx.qname().getText() + ".antlrquery";
+        var contents = resolveModuleContents(ctx, moduleName);
+        if (contents != null) {
+            return contents.accept(this);
+        }
+        return null;
     }
 
 
@@ -2771,6 +2781,9 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     {
         try {
             Path resolved = resolveModulePath(ctx, path);
+            if (resolved == null) {
+                return null;
+            }
             String text = Files.readString(resolved);
             ParseTree moduleTree = XQuery.parse(text);
             return moduleTree;

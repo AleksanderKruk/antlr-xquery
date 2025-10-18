@@ -59,4 +59,7 @@ public class XQuerySemanticContextManager {
         return currentContext().getVariable(variableName);
     }
 
+    public TypeInContext typeInContext(XQuerySequenceType type) {
+        return currentContext().currentScope().typeInContext(type);
+    }
 }

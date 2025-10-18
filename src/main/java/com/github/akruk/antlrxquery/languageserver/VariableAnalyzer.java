@@ -82,8 +82,8 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
     public TypeInContext visitSlidingWindowClause(final SlidingWindowClauseContext ctx) {
         final var og = super.visitSlidingWindowClause(ctx);
         final var iteratedType = visitExprSingle(ctx.exprSingle());
-        final var iterator = new TypeInContext(iteratedType.iteratorType());
-        final var optionalIterator = new TypeInContext(iterator.type.addOptionality());
+        final var iterator = contextManager.typeInContext(iteratedType.iteratorType());
+        final var optionalIterator = contextManager.typeInContext(iterator.type.addOptionality());
         final VarNameAndTypeContext varNameAndType = ctx.varNameAndType();
         mapTypedVariableDeclaration(varNameAndType, visitExprSingle(ctx.exprSingle()));
         if (ctx.windowStartCondition() != null)
@@ -100,8 +100,8 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
     public TypeInContext visitTumblingWindowClause(final TumblingWindowClauseContext ctx) {
         final var og = super.visitTumblingWindowClause(ctx);
         final var iteratedType = visitExprSingle(ctx.exprSingle());
-        final var iterator = new TypeInContext(iteratedType.iteratorType());
-        final var optionalIterator = new TypeInContext(iterator.type.addOptionality());
+        final var iterator = contextManager.typeInContext(iteratedType.iteratorType());
+        final var optionalIterator = contextManager.typeInContext(iterator.type.addOptionality());
         final VarNameAndTypeContext varNameAndType = ctx.varNameAndType();
         mapTypedVariableDeclaration(varNameAndType, visitExprSingle(ctx.exprSingle()));
         if (ctx.windowStartCondition() != null)
@@ -122,7 +122,7 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
         }}
         {final var currentVarPos = windowVars.positionalVar();
         if (currentVarPos != null) {
-            mapTypedVariableDeclaration(currentVarPos.varRef(), new TypeInContext(typeFactory.number()));
+            mapTypedVariableDeclaration(currentVarPos.varRef(), contextManager.typeInContext(typeFactory.number()));
         }}
         {final var previousVar = windowVars.previousVar();
         if (previousVar != null) {
@@ -174,7 +174,7 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
                 ? typeFactory.zeroOrOne(itemType)
                 : typeFactory.one(itemType);
 
-        processVariableTypeDeclaration(ctx.varNameAndType(), new TypeInContext(iteratorType), variableName, ctx);
+        processVariableTypeDeclaration(ctx.varNameAndType(), contextManager.typeInContext(iteratorType), variableName, ctx);
         handlePositionalVariable(ctx.positionalVar());
     }
 
@@ -183,7 +183,7 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
         if (ctx != null) {
             final String positionalVariableName = ctx.varRef().qname().getText();
             final var range = getRange(ctx.varRef());
-            variablesMappedToTypes.add(new TypedVariable(range, positionalVariableName, ctx.varRef(), new TypeInContext(number)));
+            variablesMappedToTypes.add(new TypedVariable(range, positionalVariableName, ctx.varRef(), contextManager.typeInContext(number)));
         }
     }
 
@@ -211,14 +211,14 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
         if (keyBinding != null) {
             final String keyVariableName = keyBinding.varNameAndType().varRef().qname().getText();
             final XQueryItemType keyType = mapType.type.itemType.mapKeyType;
-            final TypeInContext keyIteratorType = new TypeInContext(typeFactory.one(keyType));
+            final TypeInContext keyIteratorType = contextManager.typeInContext(typeFactory.one(keyType));
 
             processVariableTypeDeclaration(keyBinding.varNameAndType(), keyIteratorType, keyVariableName, ctx);
         }
 
         if (valueBinding != null) {
             final String valueVariableName = valueBinding.varNameAndType().varRef().qname().getText();
-            final TypeInContext valueType = new TypeInContext(mapType.type.itemType.mapValueType);
+            final TypeInContext valueType = contextManager.typeInContext(mapType.type.itemType.mapValueType);
 
             processVariableTypeDeclaration(valueBinding.varNameAndType(), valueType, valueVariableName, ctx);
         }
@@ -249,7 +249,7 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
         final var og = super.visitCountClause(ctx);
         final String countVariableName = ctx.varRef().getText();
         final var range = getRange(ctx.varRef());
-        variablesMappedToTypes.add(new TypedVariable(range, countVariableName, ctx.varRef(), new TypeInContext(number)));
+        variablesMappedToTypes.add(new TypedVariable(range, countVariableName, ctx.varRef(), contextManager.typeInContext(number)));
         return og;
     }
 
@@ -313,7 +313,7 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
             final TypeDeclarationContext typeDeclaration = parameter.typeDeclaration();
             final TypeInContext parameterType = typeDeclaration != null
                 ? typeDeclaration.accept(this)
-                : new TypeInContext(zeroOrMoreItems);
+                : contextManager.typeInContext(zeroOrMoreItems);
             final var range = getRange(parameter.varRef());
             variablesMappedToTypes.add(new TypedVariable(range, parameterName, parameter.varRef(), parameterType));
         }

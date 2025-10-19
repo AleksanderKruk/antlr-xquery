@@ -2,6 +2,7 @@ package com.github.akruk.antlrxquery.languagefeatures.semantics;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.CharStream;
@@ -42,7 +43,7 @@ public class SemanticTestsBase {
                 new XQueryMemoizedValueFactory(typeFactory),
                 caller,
                 null,
-                List.of());
+                Set.of());
         final var lastVisitedType = analyzer.visit(xqueryTree);
         return new AnalysisResult(analyzer, lastVisitedType.type);
     }

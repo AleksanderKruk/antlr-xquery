@@ -113,6 +113,7 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
             .map(t->Paths.get(URI.create(t.getUri())))
             .toList();
         textDocumentService.setModulePaths(workspacePaths);
+        System.err.println("Module paths from workspace: " + workspacePaths);
 
         final TextDocumentSyncOptions syncOptions = new TextDocumentSyncOptions();
         syncOptions.setSave(new SaveOptions(true));

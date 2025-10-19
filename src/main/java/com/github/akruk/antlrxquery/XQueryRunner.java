@@ -62,7 +62,7 @@ public class XQueryRunner {
         final String query = config.query;
         final PrintStream outputStream = config.outputStream;
         final PrintStream errorStream = config.errorStream;
-        final List<Path> modulePaths = config.modulePaths;
+        final Set<Path> modulePaths = config.modulePaths;
 
         final Path tmpDir = Files.createTempDirectory("antlr-gen");
         final Path sourceDir = tmpDir.resolve("src");
@@ -146,7 +146,7 @@ public class XQueryRunner {
             final Class<?> parserClass,
             final String startingRule,
             final String input,
-            final List<Path> modulePaths)
+            final Set<Path> modulePaths)
     {
         try {
             final ParserAndTree parserAndTree = parseTargetFile(input, lexerClass, parserClass, startingRule);
@@ -315,7 +315,7 @@ public class XQueryRunner {
         InputStream inputStream,
         PrintStream outputStream,
         PrintStream errorStream,
-        List<Path> modulePaths)
+        Set<Path> modulePaths)
     {}
 
     private static ValidationResult validateStreamFiles(final Map<String, List<String>> args) {
@@ -516,7 +516,7 @@ private static ValidationResult validateStartingRule(final Map<String, List<Stri
         final String parserName = getFirstArg(args, PARSER_NAME_ARG, "");
 
         // Handle query extraction
-        List<Path> modulePaths = new ArrayList<>();
+        Set<Path> modulePaths = new HashSet<>();
         String query;
         if (args.containsKey(QUERY_ARG)) {
             query = String.join(" ", args.get(QUERY_ARG));
@@ -545,8 +545,17 @@ private static ValidationResult validateStartingRule(final Map<String, List<Stri
             errorStream = new PrintStream(new FileOutputStream(args.get(STDERR_ARG).get(0)));
         }
 
-        return new ExtractionResult(grammars, targetFiles, startingRule, lexerName, parserName, query,
-                                inputStream, outputStream, errorStream, modulePaths);
+        return new ExtractionResult(
+            grammars,
+            targetFiles,
+            startingRule,
+            lexerName,
+            parserName,
+            query,
+            inputStream,
+            outputStream,
+            errorStream,
+            modulePaths);
     }
     record ValidationResult(InputStatus status, String message, ExtractionResult extractedArgs) {
         ValidationResult(final InputStatus status, final String message) {

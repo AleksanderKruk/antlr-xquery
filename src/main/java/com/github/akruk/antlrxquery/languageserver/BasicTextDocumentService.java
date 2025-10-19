@@ -195,9 +195,11 @@ public class BasicTextDocumentService implements TextDocumentService {
             }
 
             final XQueryTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
-            final ArrayList<Path> paths = new ArrayList<>(modulePaths.size());
+            final Set<Path> paths = new HashSet<>(modulePaths.size());
+            paths.addAll(modulePaths);
             final Path currentPath = Path.of(URI.create(uri));
-            paths.add(currentPath);
+            paths.add(currentPath.getParent());
+            System.err.println("Pre analysis paths:" + paths);
             final VariableAnalyzer analyzer = new VariableAnalyzer(
                 null,
                 new XQuerySemanticContextManager(),

@@ -5,8 +5,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.IntStream;
 
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -14,7 +16,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import com.github.akruk.antlrxquery.evaluator.XQuery;
 
 public class ModuleManager {
-    private List<Path> modulePaths;
+    private Set<Path> modulePaths;
     private Map<Path, ParseTree> trees;
 
     enum ImportStatus {
@@ -32,8 +34,9 @@ public class ModuleManager {
     )
     {}
 
-    public ModuleManager(List<Path> modulePaths) {
+    public ModuleManager(Set<Path> modulePaths) {
         this.modulePaths = modulePaths;
+        this.trees = new HashMap<>();
     }
     // error(ctx, "Module import path does not exist: " + target.toAbsolutePath());
     // error(ctx, "Module import path is not a file: " + target.toAbsolutePath());
@@ -62,6 +65,7 @@ public class ModuleManager {
                     statuses.add(ResolvingStatus.UNREADABLE);
                     continue;
                 }
+                statuses.add(ResolvingStatus.OK);
             }
 
             List<Path> validFiles = IntStream.range(0, statuses.size())

@@ -8,6 +8,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.CharStreams;
 
 import java.util.List;
+import java.util.Set;
 
 import org.antlr.v4.runtime.CharStream;
 import com.github.akruk.antlrxquery.AntlrXqueryLexer;
@@ -37,7 +38,8 @@ public final class XQuery {
         final XQueryMemoizedTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
         final XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory(typeFactory);
         final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(parser, new XQuerySemanticContextManager(),
-                typeFactory, valueFactory, new XQuerySemanticFunctionManager(typeFactory), null, List.of());
+                typeFactory, valueFactory, new XQuerySemanticFunctionManager(typeFactory), null,
+                Set.of());
         final XQueryEvaluatorVisitor visitor = new XQueryEvaluatorVisitor(root, parser, analyzer, typeFactory);
         final XQueryValue evaluated = visitor.visit(xqueryTree);
         if (tree != null) {
@@ -55,7 +57,8 @@ public final class XQuery {
         final XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory(typeFactory);
         final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
             parser, new XQuerySemanticContextManager(), typeFactory, valueFactory,
-            new XQuerySemanticFunctionManager(typeFactory), null, List.of());
+            new XQuerySemanticFunctionManager(typeFactory), null,
+            Set.of());
         final XQueryEvaluatorVisitor visitor = new XQueryEvaluatorVisitor(tree, parser, analyzer, typeFactory);
         final XQueryValue evaluated = visitor.visit(xqueryTree);
         return evaluated;
@@ -77,7 +80,9 @@ public final class XQuery {
         final XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory(typeFactory);
         final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
             parser, new XQuerySemanticContextManager(), typeFactory, valueFactory,
-            new XQuerySemanticFunctionManager(typeFactory), null, List.of());
+            new XQuerySemanticFunctionManager(typeFactory),
+            null,
+            Set.of());
 
 
         return tree -> {

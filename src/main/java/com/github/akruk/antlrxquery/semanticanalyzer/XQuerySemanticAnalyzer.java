@@ -117,7 +117,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final XQueryValueFactory valueFactory,
         final XQuerySemanticFunctionManager functionCaller,
         final GrammarAnalysisResult grammarAnalysisResult,
-        final List<Path> modulePaths)
+        final Set<Path> modulePaths)
     {
         this.grammarAnalysisResult = grammarAnalysisResult;
         this.parser = parser;
@@ -2843,7 +2843,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     }
 
     private StringBuilder getNoPathMessageFromImport(ImportResult result) {
-        StringBuilder message = new StringBuilder("No path was found: ");
+        StringBuilder message = new StringBuilder("No path was found");
         int i = 0;
         for (var p : result.resolvedPaths()) {
             switch(result.resolvingStatuses().get(i)) {

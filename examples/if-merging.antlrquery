@@ -1,4 +1,4 @@
-import module lsp="./lsp.antlrquery";
+import module lsp-positions;
 
 
 array {
@@ -9,8 +9,10 @@ array {
   let $ending := (($innerFalse otherwise $innerTrue) treat as element(ifExpr))
 return if (($innerTrue, $innerFalse) => exists()) {
     {
-      "range": lsp:Range($if=>lsp:start(), $ending=>lsp:end()),
-      "target-expression": $if,
+      "range": lsp:Range(
+        $if=>lsp:start-position() treat as lsp:Position, (:TODO: refine asumptions:)
+        $ending=>lsp:end-position() treat as lsp:Position),
+      target-expression: $if,
       "merged-expression-true": $innerTrue,
       "merged-expression-false": $innerFalse
     }

@@ -53,7 +53,6 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
     public void connect(final LanguageClient client)
     {
         this.client = client;
-        textDocumentService.setClient(client);
         workspaceService.setClient(client);
         System.err.println("[connect] LanguageClient connected");
     }
@@ -109,6 +108,11 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
     {
         System.err.println("[initialize] Server initialized");
         final ServerCapabilities capabilities = new ServerCapabilities();
+        List<Path> workspacePaths = params.getWorkspaceFolders()
+            .stream()
+            .map(t->Paths.get(URI.create(t.getUri())))
+            .toList();
+        textDocumentService.setModulePaths(workspacePaths);
 
         final TextDocumentSyncOptions syncOptions = new TextDocumentSyncOptions();
         syncOptions.setSave(new SaveOptions(true));
@@ -145,11 +149,9 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
         options.setResolveProvider(true);
         capabilities.setCodeActionProvider(options);
 
-        params.getWorkspaceFolders().forEach(t -> {
+        workspacePaths.forEach(directoryPath->{
             try {
-
-                var directoryUrl = Paths.get(URI.create(t.getUri()));
-                Files.walk(directoryUrl).forEach(p -> {
+                Files.walk(directoryPath).forEach(p -> {
                     try {
                         if (p.toFile().isFile() && p.endsWith(".antlrquery"))
                         {
@@ -164,6 +166,7 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
                 e.printStackTrace(System.err);
             }
         });
+        textDocumentService.setClient(client);
 
 
         return CompletableFuture.completedFuture(new InitializeResult(capabilities));

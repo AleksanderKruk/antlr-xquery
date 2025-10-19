@@ -118,14 +118,14 @@ public class XQuerySemanticScope {
     {
         var resolvedType = resolveType(type);
         var inscope = scopedImplications.get(resolvedType);
-        return inscope;
+        return inscope != null? inscope : List.of();
     }
 
     public List<Assumption> resolveAssumptionsForType(TypeInContext type)
     {
         var resolvedType = resolveType(type);
         var inscope = this.scopedAssumptions.get(resolvedType);
-        return inscope;
+        return inscope != null? inscope : List.of();
     }
 
     public boolean hasVariable(String variableName)

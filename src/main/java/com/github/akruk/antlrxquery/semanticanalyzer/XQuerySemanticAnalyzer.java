@@ -26,6 +26,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.*;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.ResolvedName;
+import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager.ImportResult;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.Assumption;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.Implication;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.ValueImplication;
@@ -66,6 +67,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     private final XQuerySemanticFunctionManager functionManager;
     private final SequencetypePathOperator pathOperator;
     private final Parser parser;
+    // private final List<Path> modulePaths;
+    private final ModuleManager moduleManager;
     private XQueryVisitingSemanticContext context;
     private List<TypeInContext> visitedPositionalArguments;
     private Map<String, TypeInContext> visitedKeywordArguments;
@@ -102,12 +105,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     @Override
     public TypeInContext visitXquery(XqueryContext ctx)
     {
-        // final XQueryValue typeNameNodes = getTypeNames.evaluate(ctx);
-
-
-        // availableTypeNames = typeNameNodes.sequence.stream()
-        //     .map((XQueryValue v) -> v.node.getText())
-        //     .collect(Collectors.toSet());Implication
         if (ctx.libraryModule() != null)
             return visitLibraryModule(ctx.libraryModule());
         return visitMainModule(ctx.mainModule());
@@ -119,10 +116,12 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final XQueryTypeFactory typeFactory,
         final XQueryValueFactory valueFactory,
         final XQuerySemanticFunctionManager functionCaller,
-        final GrammarAnalysisResult grammarAnalysisResult)
+        final GrammarAnalysisResult grammarAnalysisResult,
+        final List<Path> modulePaths)
     {
         this.grammarAnalysisResult = grammarAnalysisResult;
         this.parser = parser;
+        // this.modulePaths = modulePaths;
         this.typeFactory = typeFactory;
         this.valueFactory = valueFactory;
         this.functionManager = functionCaller;
@@ -154,7 +153,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         this.castability = new SequencetypeCastable(typeFactory, atomizer);
         this.anyNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
         this.pathOperator = new SequencetypePathOperator(typeFactory, parser);
-        // getTypeNames = XQuery.compile("//(itemTypeDecl|namedRecordTypeDecl)/qname", parser);
+        this.moduleManager = new ModuleManager(modulePaths);
     }
 
     @Override
@@ -2807,12 +2806,64 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
 
     @Override
     public TypeInContext visitPathModuleImport(PathModuleImportContext ctx) {
-        String path = stringContents(ctx.STRING());
-        ParseTree contents = resolveModuleContents(ctx, path);
-        if (contents != null) {
-            return contents.accept(this);
+        String pathQuery = stringContents(ctx.STRING());
+        var result = moduleManager.pathModuleImport(pathQuery);
+        return handleModuleImport(ctx, result);
+    }
+
+
+    @Override
+    public TypeInContext visitDefaultPathModuleImport(DefaultPathModuleImportContext ctx) {
+        String pathQuery = ctx.qname().getText().replace(":", "/");
+        var result = moduleManager.defaultPathModuleImport(pathQuery);
+        return handleModuleImport(ctx, result);
+    }
+
+    @Override
+    public TypeInContext visitNamespaceModuleImport(NamespaceModuleImportContext ctx) {
+        String pathQuery = stringContents(ctx.STRING());
+        var result = moduleManager.namespaceModuleImport(pathQuery);
+        return handleModuleImport(ctx, result);
+    }
+
+
+    private TypeInContext handleModuleImport(ParserRuleContext ctx, ImportResult result) {
+        switch (result.status()) {
+            case NO_PATH_FOUND:
+                StringBuilder message = getNoPathMessageFromImport(result);
+                error(ctx, message.toString());
+                return null;
+            case MANY_VALID_PATHS:
+                warn(ctx, "There are multiple possible import candidates: " + result.validPaths());
+                return result.tree().accept(this);
+            case OK:
+                return result.tree().accept(this);
         }
         return null;
+    }
+
+    private StringBuilder getNoPathMessageFromImport(ImportResult result) {
+        StringBuilder message = new StringBuilder("No path was found: ");
+        int i = 0;
+        for (var p : result.resolvedPaths()) {
+            switch(result.resolvingStatuses().get(i)) {
+                case FOUND_OTHER_THAN_FILE:
+                    message.append("\n\t");
+                    message.append(p);
+                    message.append(" is not a file");
+                    break;
+                case UNREADABLE:
+                    message.append("\n\t");
+                    message.append(p);
+                    message.append(" cannot be read");
+                    break;
+                case OK:
+                    // Unreachable
+                    break;
+            }
+            i++;
+        }
+        return message;
     }
 
     private String stringContents(TerminalNode ctx)
@@ -2821,52 +2872,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         return text.substring(1, text.length() - 1);
     }
 
-    @Override
-    public TypeInContext visitDefaultPathModuleImport(DefaultPathModuleImportContext ctx) {
-        String moduleName = "./" + ctx.qname().getText() + ".antlrquery";
-        var contents = resolveModuleContents(ctx, moduleName);
-        if (contents != null) {
-            return contents.accept(this);
-        }
-        return null;
-    }
-
-
-    private Path resolveModulePath(ParserRuleContext ctx, String path)
-    {
-        Path target = Path.of(path).toAbsolutePath();
-        File file = target.toFile();
-        if (!file.exists()) {
-            error(ctx, "Module import path does not exist: " + target.toAbsolutePath());
-            return null;
-        }
-        if (!file.isFile()) {
-            error(ctx, "Module import path is not a file: " + target.toAbsolutePath());
-            return null;
-        }
-        if (!file.canRead()) {
-            error(ctx, "Module import path cannot be read: " + target.toAbsolutePath());
-            return null;
-        }
-        return target;
-    }
-
-    private ParseTree resolveModuleContents(ParserRuleContext ctx, String path)
-    {
-        try {
-            Path resolved = resolveModulePath(ctx, path);
-            if (resolved == null) {
-                return null;
-            }
-            String text = Files.readString(resolved);
-            ParseTree moduleTree = XQuery.parse(text);
-            return moduleTree;
-        } catch (IOException e) {
-            error(ctx, "Invalid module import path: " + e.getMessage());
-        }
-        return null;
-
-    }
 
     // private GrammarAnalysisResult analyzeGrammar(ParserRuleContext ctx, String path)
     // {

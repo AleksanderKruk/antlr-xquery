@@ -23,6 +23,7 @@ import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQueryVisitingSemanticContext;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContext;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
@@ -36,9 +37,14 @@ public class XQuerySemanticFunctionManager {
                                         List<DiagnosticError> errors)
                                             {}
     public static record ArgumentSpecification(String name, XQuerySequenceType type, ParseTree defaultArgument) {}
-    public static record UsedArg(XQuerySequenceType type, XQueryValue value, ParseTree tree) {}
+    public static record UsedArg(TypeInContext type, XQueryValue value, ParseTree tree) {}
     public interface GrainedAnalysis {
-        XQuerySequenceType analyze(List<UsedArg> args, XQueryVisitingSemanticContext context, ParseTree functionBody);
+        TypeInContext analyze(
+            List<UsedArg> args,
+            XQueryVisitingSemanticContext context,
+            ParseTree functionBody,
+            XQuerySemanticContext typeContext
+        );
 
     }
     public static record FunctionSpecification(
@@ -185,13 +191,13 @@ public class XQuerySemanticFunctionManager {
         register("fn", "zero-or-one",
                 List.of(anyItemsRequiredInput),
                 optionalItem,
-                (args, _, _) -> {
-                    XQuerySequenceType unrefinedType = args.get(0).type;
-                    var refinedType = typeFactory.zeroOrOne(unrefinedType.itemType);
+                (args, _, _, ctx) -> {
+                    TypeInContext unrefinedType = args.get(0).type;
+                    var refinedType = typeFactory.zeroOrOne(unrefinedType.type.itemType);
                     if (unrefinedType.isSubtypeOf(refinedType)) {
                         return unrefinedType;
                     }
-                    return refinedType;
+                    return ctx.currentScope().typeInContext(refinedType);
                 });
 
         // fn:one-or-more(
@@ -200,13 +206,13 @@ public class XQuerySemanticFunctionManager {
         register("fn", "one-or-more",
                 List.of(anyItemsRequiredInput),
                 typeFactory.oneOrMore(typeFactory.itemAnyItem()),
-                (args, _, _) -> {
-                    XQuerySequenceType unrefinedType = args.get(0).type;
-                    var refinedType = typeFactory.oneOrMore(unrefinedType.itemType);
+                (args, _, _, ctx) -> {
+                    TypeInContext unrefinedType = args.get(0).type;
+                    var refinedType = typeFactory.oneOrMore(unrefinedType.type.itemType);
                     if (unrefinedType.isSubtypeOf(refinedType)) {
                         return unrefinedType;
                     }
-                    return refinedType;
+                    return ctx.currentScope().typeInContext(refinedType);
                 });
 
         // fn:exactly-one(
@@ -214,7 +220,16 @@ public class XQuerySemanticFunctionManager {
         // ) as item()
         register("fn", "exactly-one",
                 List.of(anyItemsRequiredInput),
-                typeFactory.one(typeFactory.itemAnyItem()), (args, _, _) -> typeFactory.one(args.get(0).type.itemType));
+            typeFactory.one(typeFactory.itemAnyItem()),
+            (args, _, _, ctx) -> {
+                TypeInContext unrefinedType = args.get(0).type;
+                var refinedType = typeFactory.one(unrefinedType.type.itemType);
+                if (unrefinedType.isSubtypeOf(refinedType)) {
+                    return unrefinedType;
+                }
+                return ctx.currentScope().typeInContext(refinedType);
+            }
+        );
 
         // fn:node-name($node as node()? := .) as xs:QName?
         ArgumentSpecification optionalNodeArg = new ArgumentSpecification(
@@ -3087,7 +3102,8 @@ public class XQuerySemanticFunctionManager {
             final String functionName,
             final List<ArgumentSpecification> args,
             final XQuerySequenceType returnedType) {
-        return register(namespace, functionName, args, returnedType, null, false, false, null, ((_, _, _) -> returnedType));
+        return register(namespace, functionName, args, returnedType, null, false, false, null,
+            ((_, _, _, ctx) -> ctx.currentScope().typeInContext(returnedType)));
     }
 
     public XQuerySemanticError register(

@@ -62,6 +62,7 @@ public class XQueryRunner {
         final String query = config.query;
         final PrintStream outputStream = config.outputStream;
         final PrintStream errorStream = config.errorStream;
+        final List<Path> modulePaths = config.modulePaths;
 
         final Path tmpDir = Files.createTempDirectory("antlr-gen");
         final Path sourceDir = tmpDir.resolve("src");
@@ -100,6 +101,8 @@ public class XQueryRunner {
             final String targetFile = Files.readString(Path.of(targetFiles.get(0)));
             final ParserAndTree parserAndTree = parseTargetFile(targetFile, lexerClass, parserClass, startingRule);
             final XQueryTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
+            final Path cwd = Path.of(System.getProperty("user.dir"));
+            modulePaths.add(cwd);
             final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
                     parserAndTree.parser,
                     new XQuerySemanticContextManager(),
@@ -107,7 +110,9 @@ public class XQueryRunner {
                     new XQueryMemoizedValueFactory(typeFactory),
                     new XQuerySemanticFunctionManager(typeFactory),
                     // TODO:
-                    null);
+                    null,
+                    modulePaths
+                    );
             analyzer.visit(xqueryTree);
             final var querySemanticErrors = analyzer.getErrors();
             for (final var error : querySemanticErrors) {
@@ -119,7 +124,7 @@ public class XQueryRunner {
 
             for (final String file : targetFiles) {
                 final String fileContent = Files.readString(Path.of(file));
-                final XQueryValue results = executeQuery(xqueryTree, lexerClass, parserClass, startingRule, fileContent);
+                final XQueryValue results = executeQuery(xqueryTree, lexerClass, parserClass, startingRule, fileContent, modulePaths);
                 outputStream.println("File: " + file);
                 if (results.sequence == null) {
                     errorStream.println(results);
@@ -140,17 +145,21 @@ public class XQueryRunner {
             final Class<?> lexerClass,
             final Class<?> parserClass,
             final String startingRule,
-            final String input)
+            final String input,
+            final List<Path> modulePaths)
     {
         try {
             final ParserAndTree parserAndTree = parseTargetFile(input, lexerClass, parserClass, startingRule);
             final XQueryTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
             final XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory(typeFactory);
-            final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(parserAndTree.parser,
+            final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
+                parserAndTree.parser,
                 new XQuerySemanticContextManager(),
                 typeFactory,
                 valueFactory,
-                new XQuerySemanticFunctionManager(typeFactory), null);
+                new XQuerySemanticFunctionManager(typeFactory),
+                null,
+                modulePaths);
             final XQueryEvaluatorVisitor evaluator = new XQueryEvaluatorVisitor(
                 parserAndTree.tree,
                 parserAndTree.parser,
@@ -305,39 +314,40 @@ public class XQueryRunner {
         String query,
         InputStream inputStream,
         PrintStream outputStream,
-        PrintStream errorStream)
+        PrintStream errorStream,
+        List<Path> modulePaths)
     {}
 
     private static ValidationResult validateStreamFiles(final Map<String, List<String>> args) {
-    if (args.containsKey(STDIN_ARG)) {
-        final String stdinPath = String.join(" ", args.get(STDIN_ARG));
-        final Path stdinFilePath = Path.of(stdinPath);
-        if (!Files.exists(stdinFilePath)) {
-            return new ValidationResult(InputStatus.INVALID_TARGET_FILE, "STDIN file does not exist: " + stdinPath);
+        if (args.containsKey(STDIN_ARG)) {
+            final String stdinPath = String.join(" ", args.get(STDIN_ARG));
+            final Path stdinFilePath = Path.of(stdinPath);
+            if (!Files.exists(stdinFilePath)) {
+                return new ValidationResult(InputStatus.INVALID_TARGET_FILE, "STDIN file does not exist: " + stdinPath);
+            }
+            if (Files.isDirectory(stdinFilePath)) {
+                return new ValidationResult(InputStatus.INVALID_TARGET_FILE, "STDIN file is a directory: " + stdinPath);
+            }
         }
-        if (Files.isDirectory(stdinFilePath)) {
-            return new ValidationResult(InputStatus.INVALID_TARGET_FILE, "STDIN file is a directory: " + stdinPath);
-        }
-    }
 
-    if (args.containsKey(STDOUT_ARG)) {
-        final String stdoutPath = String.join(" ", args.get(STDOUT_ARG));
-        final Path stdoutFilePath = Path.of(stdoutPath);
-        if (Files.exists(stdoutFilePath) && Files.isDirectory(stdoutFilePath)) {
-            return new ValidationResult(InputStatus.INVALID_TARGET_FILE, "STDOUT path is a directory: " + stdoutPath);
+        if (args.containsKey(STDOUT_ARG)) {
+            final String stdoutPath = String.join(" ", args.get(STDOUT_ARG));
+            final Path stdoutFilePath = Path.of(stdoutPath);
+            if (Files.exists(stdoutFilePath) && Files.isDirectory(stdoutFilePath)) {
+                return new ValidationResult(InputStatus.INVALID_TARGET_FILE, "STDOUT path is a directory: " + stdoutPath);
+            }
         }
-    }
 
-    if (args.containsKey(STDERR_ARG)) {
-        final String stderrPath = String.join(" ", args.get(STDERR_ARG));
-        final Path stderrFilePath = Path.of(stderrPath);
-        if (Files.exists(stderrFilePath) && Files.isDirectory(stderrFilePath)) {
-            return new ValidationResult(InputStatus.INVALID_TARGET_FILE, "STDERR path is a directory: " + stderrPath);
+        if (args.containsKey(STDERR_ARG)) {
+            final String stderrPath = String.join(" ", args.get(STDERR_ARG));
+            final Path stderrFilePath = Path.of(stderrPath);
+            if (Files.exists(stderrFilePath) && Files.isDirectory(stderrFilePath)) {
+                return new ValidationResult(InputStatus.INVALID_TARGET_FILE, "STDERR path is a directory: " + stderrPath);
+            }
         }
-    }
 
-    return new ValidationResult(InputStatus.OK, null);
-}
+        return new ValidationResult(InputStatus.OK, null);
+    }
 
 
 
@@ -506,12 +516,17 @@ private static ValidationResult validateStartingRule(final Map<String, List<Stri
         final String parserName = getFirstArg(args, PARSER_NAME_ARG, "");
 
         // Handle query extraction
+        List<Path> modulePaths = new ArrayList<>();
         String query;
         if (args.containsKey(QUERY_ARG)) {
             query = String.join(" ", args.get(QUERY_ARG));
         } else {
             final String queryFile = args.get(QUERY_FILE_ARG).get(0);
-            query = Files.readString(Path.of(queryFile));
+            Path queryFilePath = Path.of(queryFile);
+            query = Files.readString(queryFilePath);
+            Path parent = queryFilePath.getParent();
+            if (parent != null)
+                modulePaths.add(parent);
         }
 
         // Handle stream arguments
@@ -531,7 +546,7 @@ private static ValidationResult validateStartingRule(final Map<String, List<Stri
         }
 
         return new ExtractionResult(grammars, targetFiles, startingRule, lexerName, parserName, query,
-                                inputStream, outputStream, errorStream);
+                                inputStream, outputStream, errorStream, modulePaths);
     }
     record ValidationResult(InputStatus status, String message, ExtractionResult extractedArgs) {
         ValidationResult(final InputStatus status, final String message) {

@@ -38,8 +38,7 @@ public class TypeInContext {
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return type.toString();
     }
 

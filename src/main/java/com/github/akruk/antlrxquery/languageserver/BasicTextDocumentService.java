@@ -1,5 +1,7 @@
 package com.github.akruk.antlrxquery.languageserver;
 
+import java.net.URI;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -72,8 +74,9 @@ public class BasicTextDocumentService implements TextDocumentService {
     private final Map<String, List<FunctionDeclContext>> functionDecls = new HashMap<>();
     private final Map<String, List<NamedRecordTypeDeclContext>> recordDeclarations = new HashMap<>();
 
+    private List<Path> modulePaths = List.of();
 
-    private final int variableIndex;
+	private final int variableIndex;
     private final int functionIndex;
     private final int typeIndex;
     // private final int parameterIndex;
@@ -92,6 +95,10 @@ public class BasicTextDocumentService implements TextDocumentService {
         decoratorIndex = tokenLegend.indexOf("decorator");
         resolver = new NamespaceResolver("fn");
     }
+
+    public void setModulePaths(List<Path> modulePaths) {
+		this.modulePaths = modulePaths;
+	}
 
     public void setClient(final LanguageClient client)
     {
@@ -188,13 +195,18 @@ public class BasicTextDocumentService implements TextDocumentService {
             }
 
             final XQueryTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
+            final ArrayList<Path> paths = new ArrayList<>(modulePaths.size());
+            final Path currentPath = Path.of(URI.create(uri));
+            paths.add(currentPath);
             final VariableAnalyzer analyzer = new VariableAnalyzer(
                 null,
                 new XQuerySemanticContextManager(),
                 typeFactory,
                 new XQueryMemoizedValueFactory(typeFactory),
                 new XQuerySemanticFunctionManager(typeFactory),
-                null);
+                null,
+                paths
+                );
             analyzer.visit(tree);
             semanticAnalyzers.put(uri, analyzer);
 

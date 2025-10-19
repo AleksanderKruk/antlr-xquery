@@ -1,5 +1,6 @@
 package com.github.akruk.antlrxquery.languageserver;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import org.antlr.v4.runtime.Parser;
@@ -36,9 +37,10 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
         final XQueryTypeFactory typeFactory,
         final XQueryValueFactory valueFactory,
         final XQuerySemanticFunctionManager functionCaller,
-        final GrammarAnalysisResult grammarAnalysisResult)
+        final GrammarAnalysisResult grammarAnalysisResult,
+        final List<Path> modulePaths)
     {
-        super(parser, contextManager, typeFactory, valueFactory, functionCaller, grammarAnalysisResult);
+        super(parser, contextManager, typeFactory, valueFactory, functionCaller, grammarAnalysisResult, modulePaths);
         this.contextManager = contextManager;
         this.typeFactory = typeFactory;
     }

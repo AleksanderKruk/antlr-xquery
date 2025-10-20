@@ -11,7 +11,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientAware {
     public static void main(final String[] args)
@@ -108,10 +110,10 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
     {
         System.err.println("[initialize] Server initialized");
         final ServerCapabilities capabilities = new ServerCapabilities();
-        List<Path> workspacePaths = params.getWorkspaceFolders()
+        Set<Path> workspacePaths = params.getWorkspaceFolders()
             .stream()
             .map(t->Paths.get(URI.create(t.getUri())))
-            .toList();
+            .collect(Collectors.toSet());
         textDocumentService.setModulePaths(workspacePaths);
         System.err.println("Module paths from workspace: " + workspacePaths);
 

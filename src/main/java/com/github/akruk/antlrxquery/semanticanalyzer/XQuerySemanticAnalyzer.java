@@ -1,10 +1,6 @@
 package com.github.akruk.antlrxquery.semanticanalyzer;
 
-import java.io.File;
-import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -39,7 +35,6 @@ import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.XQueryAxis;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper.XQuerySemanticCharEscaperResult;
-import com.github.akruk.antlrxquery.evaluator.XQuery;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.inputgrammaranalyzer.InputGrammarAnalyzer.GrammarAnalysisResult;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
@@ -117,7 +112,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final XQueryValueFactory valueFactory,
         final XQuerySemanticFunctionManager functionCaller,
         final GrammarAnalysisResult grammarAnalysisResult,
-        final Set<Path> modulePaths)
+        final ModuleManager moduleManager)
     {
         this.grammarAnalysisResult = grammarAnalysisResult;
         this.parser = parser;
@@ -153,7 +148,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         this.castability = new SequencetypeCastable(typeFactory, atomizer);
         this.anyNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
         this.pathOperator = new SequencetypePathOperator(typeFactory, parser);
-        this.moduleManager = new ModuleManager(modulePaths);
+        this.moduleManager = moduleManager;
     }
 
     @Override

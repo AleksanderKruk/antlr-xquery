@@ -12,6 +12,7 @@ import com.github.akruk.antlrxquery.evaluator.XQueryEvaluatorVisitor;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMemoizedValueFactory;
+import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionManager;
@@ -111,7 +112,7 @@ public class XQueryRunner {
                     new XQuerySemanticFunctionManager(typeFactory),
                     // TODO:
                     null,
-                    modulePaths
+                    new ModuleManager(modulePaths)
                     );
             analyzer.visit(xqueryTree);
             final var querySemanticErrors = analyzer.getErrors();
@@ -152,6 +153,7 @@ public class XQueryRunner {
             final ParserAndTree parserAndTree = parseTargetFile(input, lexerClass, parserClass, startingRule);
             final XQueryTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
             final XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory(typeFactory);
+            final ModuleManager manager = new ModuleManager(modulePaths);
             final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
                 parserAndTree.parser,
                 new XQuerySemanticContextManager(),
@@ -159,12 +161,14 @@ public class XQueryRunner {
                 valueFactory,
                 new XQuerySemanticFunctionManager(typeFactory),
                 null,
-                modulePaths);
+                manager);
             final XQueryEvaluatorVisitor evaluator = new XQueryEvaluatorVisitor(
                 parserAndTree.tree,
                 parserAndTree.parser,
                 analyzer,
-                typeFactory);
+                typeFactory,
+                manager
+                );
             return evaluator.visit(query);
         } catch (final Exception e) {
             return null;

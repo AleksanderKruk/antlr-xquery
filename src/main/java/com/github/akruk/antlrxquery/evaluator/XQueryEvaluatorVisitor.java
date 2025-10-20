@@ -25,6 +25,7 @@ import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMe
 import com.github.akruk.antlrxquery.evaluator.values.operations.*;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.ResolvedName;
+import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
@@ -48,6 +49,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     private final Stringifier stringifier;
     private final Caster caster;
     private final NodeGetter nodeGetter;
+    private final ModuleManager moduleManager;
 
     // Functions used in logic
     private final XQueryFunction concat;
@@ -78,8 +80,21 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     record VariableCoupling(Variable item, Variable key, Variable value, Variable position) {}
     record Variable(String name, XQueryValue value){}
 
-    public XQueryEvaluatorVisitor(final ParseTree tree, final Parser parser, final XQuerySemanticAnalyzer analyzer, final XQueryTypeFactory typeFactory) {
-        this(tree, parser, new XQueryMemoizedValueFactory(typeFactory), analyzer, typeFactory);
+    public XQueryEvaluatorVisitor(
+        final ParseTree tree,
+        final Parser parser,
+        final XQuerySemanticAnalyzer analyzer,
+        final XQueryTypeFactory typeFactory,
+        final ModuleManager moduleManager
+        )
+    {
+        this(
+            tree,
+            parser,
+            new XQueryMemoizedValueFactory(typeFactory),
+            analyzer,
+            typeFactory,
+            moduleManager);
     }
 
     public XQueryEvaluatorVisitor(
@@ -87,9 +102,11 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             final Parser parser,
             final XQueryValueFactory valueFactory,
             final XQuerySemanticAnalyzer analyzer,
-            final XQueryTypeFactory typeFactory)
+            final XQueryTypeFactory typeFactory,
+            final ModuleManager moduleManager)
     {
         this.semanticAnalyzer = analyzer;
+        this.moduleManager = moduleManager;
         this.root = valueFactory.node(tree);
         this.context = new XQueryVisitingContext();
         this.context.setValue(root);
@@ -2205,6 +2222,34 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         final XQueryValue testedValue = visitPipelineExpr(ctx.pipelineExpr());
         final XQueryValue cast = caster.cast(targetType, testedValue);
         return cast;
+    }
+
+    private String stringContents(TerminalNode ctx)
+    {
+        var text = ctx.getText();
+        return text.substring(1, text.length() - 1);
+    }
+
+
+    @Override
+    public XQueryValue visitPathModuleImport(PathModuleImportContext ctx) {
+        var result = moduleManager.pathModuleImport(stringContents(ctx.STRING()));
+        this.visit(result.tree());
+        return null;
+    }
+
+    @Override
+    public XQueryValue visitDefaultPathModuleImport(DefaultPathModuleImportContext ctx) {
+        var result = moduleManager.defaultPathModuleImport(ctx.getText().replace(":", "/"));
+        this.visit(result.tree());
+        return null;
+    }
+
+    @Override
+    public XQueryValue visitNamespaceModuleImport(NamespaceModuleImportContext ctx) {
+        var result = moduleManager.pathModuleImport(stringContents(ctx.STRING()));
+        this.visit(result.tree());
+        return null;
     }
 
 }

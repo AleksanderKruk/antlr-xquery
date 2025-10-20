@@ -17,6 +17,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.XqueryContext;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMemoizedValueFactory;
+import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionManager;
@@ -37,10 +38,11 @@ public final class XQuery {
         }
         final XQueryMemoizedTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
         final XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory(typeFactory);
+        final ModuleManager moduleManager = new ModuleManager(Set.of());
         final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(parser, new XQuerySemanticContextManager(),
                 typeFactory, valueFactory, new XQuerySemanticFunctionManager(typeFactory), null,
-                Set.of());
-        final XQueryEvaluatorVisitor visitor = new XQueryEvaluatorVisitor(root, parser, analyzer, typeFactory);
+                moduleManager);
+        final XQueryEvaluatorVisitor visitor = new XQueryEvaluatorVisitor(root, parser, analyzer, typeFactory, moduleManager);
         final XQueryValue evaluated = visitor.visit(xqueryTree);
         if (tree != null) {
             tree.setParent(null);
@@ -55,11 +57,13 @@ public final class XQuery {
         final var xqueryTree = parse(xquery);
         final XQueryMemoizedTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
         final XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory(typeFactory);
+        final ModuleManager moduleManager = new ModuleManager(Set.of());
         final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
             parser, new XQuerySemanticContextManager(), typeFactory, valueFactory,
             new XQuerySemanticFunctionManager(typeFactory), null,
-            Set.of());
-        final XQueryEvaluatorVisitor visitor = new XQueryEvaluatorVisitor(tree, parser, analyzer, typeFactory);
+            moduleManager);
+        final XQueryEvaluatorVisitor visitor = new XQueryEvaluatorVisitor(
+            tree, parser, analyzer, typeFactory, moduleManager);
         final XQueryValue evaluated = visitor.visit(xqueryTree);
         return evaluated;
     }
@@ -78,15 +82,17 @@ public final class XQuery {
         final var xqueryTree = parse(xquery);
         final XQueryMemoizedTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
         final XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory(typeFactory);
+        final ModuleManager moduleManager = new ModuleManager(Set.of());
         final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
             parser, new XQuerySemanticContextManager(), typeFactory, valueFactory,
             new XQuerySemanticFunctionManager(typeFactory),
             null,
-            Set.of());
+            moduleManager);
 
 
         return tree -> {
-            final XQueryEvaluatorVisitor visitor = new XQueryEvaluatorVisitor(tree, parser, valueFactory, analyzer, typeFactory);
+            final XQueryEvaluatorVisitor visitor = new XQueryEvaluatorVisitor(
+                tree, parser, valueFactory, analyzer, typeFactory, moduleManager);
             final XQueryValue evaluated = visitor.visit(xqueryTree);
 			return evaluated;
         };

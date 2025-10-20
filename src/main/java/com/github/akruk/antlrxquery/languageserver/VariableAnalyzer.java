@@ -1,10 +1,7 @@
 package com.github.akruk.antlrxquery.languageserver;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
@@ -13,6 +10,7 @@ import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 
 import com.github.akruk.antlrxquery.AntlrXqueryParser.*;
+import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionManager;
@@ -40,9 +38,16 @@ public class VariableAnalyzer extends XQuerySemanticAnalyzer {
         final XQueryValueFactory valueFactory,
         final XQuerySemanticFunctionManager functionCaller,
         final GrammarAnalysisResult grammarAnalysisResult,
-        final Set<Path> modulePaths)
+        final ModuleManager moduleManager)
     {
-        super(parser, contextManager, typeFactory, valueFactory, functionCaller, grammarAnalysisResult, modulePaths);
+        super(
+            parser,
+            contextManager,
+            typeFactory,
+            valueFactory,
+            functionCaller,
+            grammarAnalysisResult,
+            moduleManager);
         this.contextManager = contextManager;
         this.typeFactory = typeFactory;
     }

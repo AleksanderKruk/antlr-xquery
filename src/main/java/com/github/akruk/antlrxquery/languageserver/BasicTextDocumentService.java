@@ -49,6 +49,7 @@ import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.ResolvedName;
 import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticWarning;
+import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionManager;
@@ -74,7 +75,7 @@ public class BasicTextDocumentService implements TextDocumentService {
     private final Map<String, List<FunctionDeclContext>> functionDecls = new HashMap<>();
     private final Map<String, List<NamedRecordTypeDeclContext>> recordDeclarations = new HashMap<>();
 
-    private List<Path> modulePaths = List.of();
+    private Set<Path> modulePaths = Set.of();
 
 	private final int variableIndex;
     private final int functionIndex;
@@ -96,7 +97,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         resolver = new NamespaceResolver("fn");
     }
 
-    public void setModulePaths(List<Path> modulePaths) {
+    public void setModulePaths(Set<Path> modulePaths) {
 		this.modulePaths = modulePaths;
 	}
 
@@ -207,7 +208,7 @@ public class BasicTextDocumentService implements TextDocumentService {
                 new XQueryMemoizedValueFactory(typeFactory),
                 new XQuerySemanticFunctionManager(typeFactory),
                 null,
-                paths
+                new ModuleManager(paths)
                 );
             analyzer.visit(tree);
             semanticAnalyzers.put(uri, analyzer);

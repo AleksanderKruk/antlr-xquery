@@ -15,6 +15,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryLexer;
 import com.github.akruk.antlrxquery.AntlrXqueryParser;
 import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMemoizedValueFactory;
 import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticError;
+import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionManager;
@@ -43,7 +44,7 @@ public class SemanticTestsBase {
                 new XQueryMemoizedValueFactory(typeFactory),
                 caller,
                 null,
-                Set.of());
+                new ModuleManager(Set.of()));
         final var lastVisitedType = analyzer.visit(xqueryTree);
         return new AnalysisResult(analyzer, lastVisitedType.type);
     }

@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -25,9 +26,9 @@ public class ModuleManager {
     enum ResolvingStatus {
         OK, FOUND_OTHER_THAN_FILE, UNREADABLE
     }
-    record ImportResult(
+    public record ImportResult(
         ParseTree tree,
-        List<Path> validPaths,
+        Set<Path> validPaths,
         List<Path> resolvedPaths,
         List<ResolvingStatus> resolvingStatuses,
         ImportStatus status
@@ -38,9 +39,6 @@ public class ModuleManager {
         this.modulePaths = modulePaths;
         this.trees = new HashMap<>();
     }
-    // error(ctx, "Module import path does not exist: " + target.toAbsolutePath());
-    // error(ctx, "Module import path is not a file: " + target.toAbsolutePath());
-    // error(ctx, "Module import path cannot be read: " + target.toAbsolutePath());
 
     public ImportResult pathModuleImport(String moduleImportQuery) {
         return resolveImport(moduleImportQuery);
@@ -68,12 +66,12 @@ public class ModuleManager {
                 statuses.add(ResolvingStatus.OK);
             }
 
-            List<Path> validFiles = IntStream.range(0, statuses.size())
+            Set<Path> validFiles = IntStream.range(0, statuses.size())
                 .filter(i->statuses.get(i) == ResolvingStatus.OK)
                 .mapToObj(i->resolvedPaths.get(i))
-                .toList();
+                .collect(Collectors.toSet());
             if (validFiles.size() == 1) {
-                Path validFile = validFiles.get(0);
+                Path validFile = validFiles.stream().findFirst().orElse(null);
                 ParseTree tree = resolveTree(validFile);
                 return new ImportResult(tree, validFiles, resolvedPaths, statuses, ImportStatus.OK);
             }
@@ -84,7 +82,7 @@ public class ModuleManager {
             }
 
             return new ImportResult(
-                resolveTree(validFiles.get(0)),
+                resolveTree(validFiles.stream().findFirst().orElse(null)),
                 validFiles,
                 resolvedPaths,
                 statuses,

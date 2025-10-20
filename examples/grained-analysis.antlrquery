@@ -1,0 +1,5 @@
+let $x := '' => fn:exactly-one()
+return if (not($x instance of enum('a')))
+  then let $y := $x return $y
+  else let $y := $x return $y
+

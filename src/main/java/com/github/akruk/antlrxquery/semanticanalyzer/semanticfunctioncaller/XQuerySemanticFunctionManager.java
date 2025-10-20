@@ -2835,9 +2835,16 @@ public class XQuerySemanticFunctionManager {
             // used positional arguments need to have matching types
             return new SpecAndErrors(spec, List.of());
         }
+        final StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("No matching function ");
+        stringBuilder.append(namespace);
+        stringBuilder.append(":");
+        stringBuilder.append(name);
+        stringBuilder.append("#");
+        stringBuilder.append(requiredArity);
+        stringBuilder.append((mismatchReasons.isEmpty() ? "" : ". Reasons:\n" + String.join("\n", mismatchReasons)));
         // If no spec matched, return all mismatch reasons
-        final String errorMessage = "No matching function " + namespace + ":" + name + " for arity " + requiredArity +
-                (mismatchReasons.isEmpty() ? "" : ". Reasons:\n" + String.join("\n", mismatchReasons));
+        final String errorMessage = stringBuilder.toString();
 
         DiagnosticError error = DiagnosticError.of(location, errorMessage);
         return new SpecAndErrors(null, List.of(error));

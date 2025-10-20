@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 
 
 public class XQuerySemanticContext {
@@ -51,5 +52,9 @@ public class XQuerySemanticContext {
 
     public boolean entypeVariable(String variableName, TypeInContext assignedType) {
         return currentScope().entypeVariable(variableName, assignedType);
+    }
+
+    public TypeInContext typeInContext(XQuerySequenceType type) {
+        return currentScope().typeInContext(type);
     }
 }

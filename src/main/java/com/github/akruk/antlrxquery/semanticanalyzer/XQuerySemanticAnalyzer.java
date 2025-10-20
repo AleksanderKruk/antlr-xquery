@@ -872,20 +872,9 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
 
         final AnalysisResult callAnalysisResult = functionManager.call(
             ctx, namespace, functionName, visitedPositionalArguments,
-            visitedKeywordArguments, context);
+            visitedKeywordArguments, context, contextManager.currentContext());
         errors.addAll(callAnalysisResult.errors());
-        for (final ArgumentSpecification defaultArg : callAnalysisResult.requiredDefaultArguments()) {
-            final var expectedType = defaultArg.type();
-            final var receivedType = defaultArg.defaultArgument().accept(this);
-            if (!receivedType.type.isSubtypeOf(expectedType)) {
-                error(ctx, String.format(
-                    "Type mismatch for default argument '%s': expected '%s', but got '%s'.",
-                    defaultArg.name(),
-                    expectedType,
-                    receivedType));
-            }
-        }
-        return contextManager.typeInContext(callAnalysisResult.result());
+        return callAnalysisResult.result();
     }
 
     @Override
@@ -1821,9 +1810,9 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final int arity = Integer.parseInt(ctx.IntegerLiteral().getText());
         final ResolvedName resolvedName = namespaceResolver.resolve(ctx.qname().getText());
         final var analysis = functionManager.getFunctionReference(
-            ctx, resolvedName.namespace(), resolvedName.name(), arity);
+            ctx, resolvedName.namespace(), resolvedName.name(), arity, contextManager.currentContext());
         errors.addAll(analysis.errors());
-        return contextManager.typeInContext(analysis.result());
+        return analysis.result();
     }
 
     @Override

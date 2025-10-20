@@ -1,5 +1,7 @@
 package com.github.akruk.antlrxquery.languagefeatures.semantics.functions;
 
+import java.util.Set;
+
 import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
@@ -11,15 +13,16 @@ public class CardinalityFunctionsTest extends SemanticTestsBase {
     public void zeroOrOne_withMultipleItems() {
         assertType(
             "fn:zero-or-one((1, 2, 3))",
-            typeFactory.zeroOrOne(typeFactory.itemAnyItem())
+            typeFactory.zeroOrOne(typeFactory.itemNumber())
         );
+        // assertErrors( "fn:zero-or-one((1, 2, 3))");
     }
 
     @Test
     public void zeroOrOne_namedArg() {
         assertType(
             "fn:zero-or-one(input := ('a','b'))",
-            typeFactory.zeroOrOne(typeFactory.itemAnyItem())
+            typeFactory.zeroOrOne(typeFactory.itemEnum(Set.of("a", "b")))
         );
     }
 
@@ -39,7 +42,7 @@ public class CardinalityFunctionsTest extends SemanticTestsBase {
     public void oneOrMore_singleItem() {
         assertType(
             "fn:one-or-more(42)",
-            typeFactory.oneOrMore(typeFactory.itemAnyItem())
+            typeFactory.one(typeFactory.itemNumber())
         );
     }
 
@@ -47,7 +50,7 @@ public class CardinalityFunctionsTest extends SemanticTestsBase {
     public void oneOrMore_sequence() {
         assertType(
             "fn:one-or-more((true(), false()))",
-            typeFactory.oneOrMore(typeFactory.itemAnyItem())
+            typeFactory.oneOrMore(typeFactory.itemBoolean())
         );
     }
 
@@ -66,8 +69,12 @@ public class CardinalityFunctionsTest extends SemanticTestsBase {
     @Test
     public void exactlyOne_sequenceOfTwo() {
         assertType(
-            "fn:exactly-one((1, 2))",
-            typeFactory.one(typeFactory.itemAnyItem())
+            "fn:exactly-one(1)",
+            typeFactory.one(typeFactory.itemNumber())
+        );
+        assertType(
+            "fn:exactly-one((1, 2, 3))",
+            typeFactory.one(typeFactory.itemNumber())
         );
     }
 
@@ -75,7 +82,7 @@ public class CardinalityFunctionsTest extends SemanticTestsBase {
     public void exactlyOne_singleCall() {
         assertType(
             "fn:exactly-one(input := (1))",
-            typeFactory.one(typeFactory.itemAnyItem())
+            typeFactory.one(typeFactory.itemNumber())
         );
     }
 

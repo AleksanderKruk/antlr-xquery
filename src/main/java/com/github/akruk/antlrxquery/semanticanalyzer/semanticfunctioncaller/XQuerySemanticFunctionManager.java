@@ -31,11 +31,9 @@ import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 public class XQuerySemanticFunctionManager {
-    public static record AnalysisResult(XQuerySequenceType result,
-                                        GrainedAnalysis grainedAnalysis,
-                                        List<ArgumentSpecification> requiredDefaultArguments,
+    public static record AnalysisResult(TypeInContext result,
                                         List<DiagnosticError> errors)
-                                            {}
+        {}
     public static record ArgumentSpecification(String name, XQuerySequenceType type, ParseTree defaultArgument) {}
     public static record UsedArg(TypeInContext type, XQueryValue value, ParseTree tree) {}
     public interface GrainedAnalysis {
@@ -1004,8 +1002,17 @@ public class XQuerySemanticFunctionManager {
                 List.of(anyItemsRequiredInput),
                 typeFactory.boolean_());
 
+
         // // fn:not( as item()*) as xs:boolean
-        register("fn", "not", List.of(argItems), typeFactory.boolean_());
+        register("fn", "not", List.of(argItems), typeFactory.boolean_(),
+            (args, _, _, typeContext) -> {
+                var scope = typeContext.currentScope();
+                var returned = typeContext.typeInContext(typeFactory.boolean_());
+                scope.imply(returned, new NotImplication(returned, args.get(0).type, false));
+                scope.imply(returned, new NotImplication(returned, args.get(0).type, true));
+                return returned;
+            }
+        );
 
         // fn:empty( as item()*) as xs:boolean
         register("fn", "empty", List.of(anyItemsRequiredInput), typeFactory.boolean_());
@@ -2796,24 +2803,27 @@ public class XQuerySemanticFunctionManager {
 
     final Map<String, Map<String, List<FunctionSpecification>>> namespaces;
 
-    private AnalysisResult handleUnknownNamespace(final String namespace, final DiagnosticError errorMessageSupplier,
-            final XQuerySequenceType fallbackType) {
+    private AnalysisResult handleUnknownNamespace(
+        final String namespace,
+        final DiagnosticError errorMessageSupplier,
+        final TypeInContext fallbackType)
+    {
         final List<DiagnosticError> errors = List.of(errorMessageSupplier);
-        return new AnalysisResult(fallbackType, null, List.of(), errors);
+        return new AnalysisResult(fallbackType, errors);
     }
 
     private AnalysisResult handleUnknownFunction(final String namespace, final String name,
-            final DiagnosticError errorMessageSupplier, final XQuerySequenceType fallbackType) {
+            final DiagnosticError errorMessageSupplier, final TypeInContext fallbackType) {
         final List<DiagnosticError> errors = List.of(errorMessageSupplier);
-        return new AnalysisResult(fallbackType, null, List.of(), errors);
+        return new AnalysisResult(fallbackType, errors);
     }
 
     private AnalysisResult handleNoMatchingFunction(
             final DiagnosticError errorMessageSupplier,
-            final XQuerySequenceType fallbackType)
+            final TypeInContext fallbackType)
     {
         final List<DiagnosticError> errors = List.of(errorMessageSupplier);
-        return new AnalysisResult(fallbackType, null, List.of(), errors);
+        return new AnalysisResult(fallbackType, errors);
     }
 
     record SpecAndErrors(FunctionSpecification spec, List<DiagnosticError> errors) {
@@ -2856,9 +2866,10 @@ public class XQuerySemanticFunctionManager {
             final String name,
             final List<TypeInContext> positionalargs,
             final Map<String, TypeInContext> keywordArgs,
-            final XQueryVisitingSemanticContext context)
+            final XQueryVisitingSemanticContext context,
+            final XQuerySemanticContext typeContext)
     {
-        final var anyItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
+        final var anyItems = typeContext.currentScope().typeInContext(typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         if (!namespaces.containsKey(namespace)) {
             DiagnosticError error = DiagnosticError.of(location, "Unknown function namespace: " + namespace);
             return handleUnknownNamespace(namespace, error, anyItems);
@@ -2877,7 +2888,7 @@ public class XQuerySemanticFunctionManager {
 
         final SpecAndErrors specAndErrors = getFunctionSpecification(location, namespace, name, namedFunctions, requiredArity);
         if (specAndErrors.spec == null) {
-            return new AnalysisResult(anyItems, null, List.of(), specAndErrors.errors);
+            return new AnalysisResult(anyItems, specAndErrors.errors);
         }
         final var spec = specAndErrors.spec;
         // used positional arguments need to have matching types
@@ -2899,7 +2910,7 @@ public class XQuerySemanticFunctionManager {
         final int specifiedArgsSize = spec.args.size();
         final List<String> remainingArgNames = allArgNames.subList(positionalArgsCount, specifiedArgsSize);
         // used keywords mustn't be any of the used positional args
-        checkIfKeywordNotAlreadyInPositionalArgs(name, keywordArgs, mismatchReasons, reasons, remainingArgNames);
+        checkIfKeywordNotInPositionalArgs(name, keywordArgs, mismatchReasons, reasons, remainingArgNames);
 
         // args that have not been positionally assigned
         final var remainingArgs = spec.args.subList(positionalArgsCount, specifiedArgsSize);
@@ -2907,7 +2918,7 @@ public class XQuerySemanticFunctionManager {
                 .<ArgumentSpecification>partitioningBy(arg -> keywordArgs.containsKey(arg.name()));
         final var unusedArgs = remainingArgs.parallelStream().collect(usedAsKeywordCriterion);
         final var unusedArgs_ = unusedArgs.get(false);
-        checkIfAllNotUsedArgumentsAreOptional(name, mismatchReasons, reasons, unusedArgs_);
+        checkIfAllUnusedArgumentsAreOptional(name, mismatchReasons, reasons, unusedArgs_);
 
         final Stream<ArgumentSpecification> defaultArgs = unusedArgs_.stream().filter(arg->arg.defaultArgument() != null);
 
@@ -2917,12 +2928,51 @@ public class XQuerySemanticFunctionManager {
         if (keywordTypeMismatch) {
             mismatchReasons.add("Function " + name + ": " + String.join("; ", reasons));
         }
-        if (mismatchReasons.isEmpty()) {
-            return new AnalysisResult(spec.returnedType, specAndErrors.spec.grainedAnalysis, defaultArgs.toList(), List.of());
+
+
+        Map<ArgumentSpecification, TypeInContext> defaultArgTypes = new HashMap<>();
+        for (final ArgumentSpecification defaultArg : defaultArgs.toList()) {
+            final var expectedType = defaultArg.type();
+            final var receivedType = defaultArg.defaultArgument().accept(analyzer);
+            if (!receivedType.type.isSubtypeOf(expectedType)) {
+                mismatchReasons.add(String.format(
+                    "Type mismatch for default argument '%s': expected '%s', but got '%s'.",
+                    defaultArg.name(),
+                    expectedType,
+                    receivedType));
+            }
+            defaultArgTypes.put(defaultArg, receivedType);
         }
-        final String message = getNoMatchingFunctionMessage(namespace, name, requiredArity, mismatchReasons);
-        final DiagnosticError error = DiagnosticError.of(location, message);
-        return handleNoMatchingFunction(error, spec.returnedType);
+
+
+        if (mismatchReasons.isEmpty()) {
+            if (spec.grainedAnalysis==null) {
+                return new AnalysisResult(typeContext.typeInContext(spec.returnedType), List.of());
+            } else {
+                List<UsedArg> args = new ArrayList<>(positionalargs.size() + keywordArgs.size());
+                for (TypeInContext positional : positionalargs) {
+                    args.add(new UsedArg(positional, null, null));
+                }
+                for (ArgumentSpecification arg : remainingArgs) {
+                    TypeInContext type = defaultArgTypes.get(arg);
+                    if (type != null) {
+                        args.add(new UsedArg(type, null, null));
+                    } else {
+                        TypeInContext keywordType = keywordArgs.get(arg.name);
+                        args.add(new UsedArg(keywordType, null, null));
+                    }
+                }
+
+                TypeInContext granularType = spec.grainedAnalysis.analyze(
+                    args, context, location,typeContext);
+                return new AnalysisResult(granularType, List.of());
+            }
+        } else {
+            final String message = getNoMatchingFunctionMessage(namespace, name, requiredArity, mismatchReasons);
+            final DiagnosticError error = DiagnosticError.of(location, message);
+            return handleNoMatchingFunction(error, typeContext.currentScope().typeInContext(spec.returnedType));
+
+        }
     }
 
     private void checkIfCorrectContext(FunctionSpecification spec, XQueryVisitingSemanticContext context, List<String> mismatchReasons)
@@ -2986,7 +3036,7 @@ public class XQuerySemanticFunctionManager {
         return keywordTypeMismatch;
     }
 
-    private void checkIfAllNotUsedArgumentsAreOptional(final String name, final List<String> mismatchReasons,
+    private void checkIfAllUnusedArgumentsAreOptional(final String name, final List<String> mismatchReasons,
             final List<String> reasons,
             final List<ArgumentSpecification> unusedArgs)
     {
@@ -3003,11 +3053,13 @@ public class XQuerySemanticFunctionManager {
         }
     }
 
-    private void checkIfKeywordNotAlreadyInPositionalArgs(final String name,
+    private void checkIfKeywordNotInPositionalArgs(
+        final String name,
         final Map<String, TypeInContext> keywordArgs,
         final List<String> mismatchReasons,
         final List<String> reasons,
-        final List<String> remainingArgNames)
+        final List<String> remainingArgNames
+        )
     {
         if (!remainingArgNames.containsAll(keywordArgs.keySet())) {
             reasons.add("Keyword argument(s) overlap with positional arguments: " + keywordArgs.keySet().stream()
@@ -3049,10 +3101,11 @@ public class XQuerySemanticFunctionManager {
     public AnalysisResult getFunctionReference(final ParserRuleContext location,
                                                 final String namespace,
                                                 final String functionName,
-                                                final int arity)
+                                                final int arity,
+                                                final XQuerySemanticContext context)
     {
         // TODO: Verify logic
-        final var fallback = typeFactory.anyFunction();
+        final var fallback = context.currentScope().typeInContext(typeFactory.anyFunction());
         if (!namespaces.containsKey(namespace)) {
             DiagnosticError error = DiagnosticError.of(location, "Unknown function namespace: " + namespace);
             return handleUnknownNamespace(namespace, error, fallback);
@@ -3075,12 +3128,15 @@ public class XQuerySemanticFunctionManager {
             stringBuilder.append("#");
             stringBuilder.append(arity);
             DiagnosticError error = DiagnosticError.of(location, stringBuilder.toString());
-            return new AnalysisResult(fallback, null, List.of(), List.of(error));
+            return new AnalysisResult(fallback, List.of(error));
         }
-        XQuerySequenceType returnedType = specAndErrors.spec.returnedType;
-        List<XQuerySequenceType> argTypes = specAndErrors.spec.args.stream().map(arg->arg.type()).toList().subList(0, arity);
-        var functionItem = typeFactory.function(returnedType, argTypes);
-        return new AnalysisResult(functionItem, specAndErrors.spec.grainedAnalysis, List.of(), specAndErrors.errors);
+        TypeInContext returnedType = context.typeInContext(specAndErrors.spec.returnedType);
+        List<XQuerySequenceType> argTypes = specAndErrors.spec.args.stream()
+            .map(arg->arg.type())
+            .toList()
+            .subList(0, arity);
+        var functionItem = typeFactory.function(returnedType.type, argTypes);
+        return new AnalysisResult(context.currentScope().typeInContext(functionItem), specAndErrors.errors);
 
     }
 
@@ -3160,8 +3216,9 @@ public class XQuerySemanticFunctionManager {
         if (!namespaces.containsKey(namespace)) {
             final Map<String, List<FunctionSpecification>> functions = new HashMap<>();
             final List<FunctionSpecification> functionList = new ArrayList<>();
-            functionList.add(new FunctionSpecification(minArity, maxArity, args, returnedType, requiredContextValueType,
-                    requiresPosition, requiresLength, body, analysis));
+            functionList.add(
+                new FunctionSpecification(
+                    minArity, maxArity, args, returnedType, requiredContextValueType, requiresPosition, requiresLength, body, analysis));
             functions.put(functionName, functionList);
             namespaces.put(namespace, functions);
             return null;
@@ -3169,7 +3226,8 @@ public class XQuerySemanticFunctionManager {
         final var namespaceMapping = namespaces.get(namespace);
         if (!namespaceMapping.containsKey(functionName)) {
             final List<FunctionSpecification> functionList = new ArrayList<>();
-            functionList.add(new FunctionSpecification(minArity, maxArity, args, returnedType, requiredContextValueType,
+            functionList.add(new FunctionSpecification(
+                minArity, maxArity, args, returnedType, requiredContextValueType,
                     requiresPosition, requiresLength, body, analysis));
             namespaceMapping.put(functionName, functionList);
             return null;
@@ -3182,8 +3240,9 @@ public class XQuerySemanticFunctionManager {
         if (!noOverlapping) {
             return XQuerySemanticError.FunctionNameArityConflict;
         }
-        alreadyRegistered.add(new FunctionSpecification(minArity, maxArity, args, returnedType, requiredContextValueType,
-                requiresPosition, requiresLength, body, analysis));
+        alreadyRegistered.add(new FunctionSpecification(
+            minArity, maxArity, args, returnedType, requiredContextValueType,
+            requiresPosition, requiresLength, body, analysis));
         return null;
     }
 }

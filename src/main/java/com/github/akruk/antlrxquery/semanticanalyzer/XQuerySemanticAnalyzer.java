@@ -1588,6 +1588,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         if (expression.isSubtypeOf(testedType)) {
             warn(ctx, "Unnecessary instance of expression is always true");
         }
+        // TODO: add warning on impossible instance of tests
         final var bool = contextManager.typeInContext(this.boolean_);
         contextManager.currentScope().imply(bool, new InstanceOfSuccessImplication(bool, true, expression, testedType));
         return bool;

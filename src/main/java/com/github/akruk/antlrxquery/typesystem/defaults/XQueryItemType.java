@@ -34,7 +34,6 @@ public class XQueryItemType {
     public final Set<String> elementNames;
     public final Map<String, XQueryRecordField> recordFields;
     public final Collection<XQueryItemType> itemTypes;
-    public final boolean hasEffectiveBooleanValue;
 
     // private final XQueryTypeFactory typeFactory;
     private final ItemtypeUnionMerger unionMerger;
@@ -74,7 +73,6 @@ public class XQueryItemType {
         this.itemtypeSubtyper = new ItemtypeSubtyper(this, typeFactory);
         this.representationOp = representationProvider.getOperation(type);
         this.enumMembers = enumMembers;
-        this.hasEffectiveBooleanValue = hasEffectiveBooleanValue();
     }
 
     protected XQueryItemType()
@@ -97,7 +95,6 @@ public class XQueryItemType {
         this.itemtypeSubtyper = null;
         this.representationOp = null;
         this.enumMembers = null;
-        this.hasEffectiveBooleanValue = false;
     }
 
     private static boolean isNullableEquals(final Object one, final Object other) {
@@ -178,19 +175,6 @@ public class XQueryItemType {
                 && this.argumentTypes.size() == otherArgumentTypes.size()
                 && IntStream.range(0, this.argumentTypes.size())
                         .allMatch(i -> this.argumentTypes.get(i).equals(otherArgumentTypes.get(i)));
-    }
-
-    private static final boolean[] noEffectiveBooleanValue = booleanEnumArray(XQueryTypes.FUNCTION,
-                                                                                XQueryTypes.ANY_ARRAY,
-                                                                                XQueryTypes.MAP,
-                                                                                XQueryTypes.ANY_MAP,
-                                                                                XQueryTypes.ARRAY,
-                                                                                XQueryTypes.ANY_ARRAY);
-    private boolean hasEffectiveBooleanValue() {
-        if (type == XQueryTypes.CHOICE) {
-            return itemTypes.stream().allMatch(itemType->itemType.hasEffectiveBooleanValue());
-        }
-        return !noEffectiveBooleanValue[typeOrdinal];
     }
 
     private static final boolean[][] castableAs;

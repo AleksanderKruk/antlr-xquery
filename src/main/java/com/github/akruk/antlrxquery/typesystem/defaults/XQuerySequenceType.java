@@ -1,5 +1,6 @@
 package com.github.akruk.antlrxquery.typesystem.defaults;
 
+import java.util.Set;
 import java.util.function.Function;
 
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
@@ -25,7 +26,6 @@ public class XQuerySequenceType {
     public final XQueryItemType itemType;
     public final XQueryCardinality occurence;
     public final int occurenceOrdinal;
-    public final boolean hasEffectiveBooleanValue;
     public final boolean isZero;
     public final boolean isOne;
     public final boolean isZeroOrOne;
@@ -58,7 +58,6 @@ public class XQuerySequenceType {
         this.isZeroOrOne = XQueryCardinality.ZERO_OR_ONE == occurence;
         this.isZeroOrMore = XQueryCardinality.ZERO_OR_MORE == occurence;
         this.isOneOrMore = XQueryCardinality.ONE_OR_MORE == occurence;
-        this.hasEffectiveBooleanValue = hasEffectiveBooleanValue();
     }
 
     private static boolean isNullableEquals(final Object one, final Object other)
@@ -123,12 +122,16 @@ public class XQuerySequenceType {
     }
 
 
-    private boolean hasEffectiveBooleanValue() {
-        return switch(occurence) {
-            case ZERO -> true;
-            case ZERO_OR_ONE, ONE -> itemType.hasEffectiveBooleanValue;
-            default -> false;
-        };
+    public boolean hasEffectiveBooleanValue() {
+        var variantSingleton = typeFactory.zeroOrOne(typeFactory.itemChoice(Set.of(
+            typeFactory.itemString(),
+            typeFactory.itemBoolean(),
+            typeFactory.itemNumber()
+        )));
+        if (isSubtypeOf(variantSingleton))
+            return true;
+        var variantNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
+        return isSubtypeOf(variantNodes);
     }
 
     private static final UnionOccurenceMerger unionOccurences = new UnionOccurenceMerger();
@@ -207,7 +210,6 @@ public class XQuerySequenceType {
     public XQuerySequenceType addOptionality() {
         return alternativeMerge(typeFactory.emptySequence());
     }
-
 
 
     private static final IsValueComparableWith occurenceIsValueComparable = new IsValueComparableWith();

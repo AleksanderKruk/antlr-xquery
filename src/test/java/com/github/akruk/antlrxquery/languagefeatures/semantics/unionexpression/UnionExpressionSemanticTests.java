@@ -31,4 +31,17 @@ public class UnionExpressionSemanticTests extends SemanticTestsBase {
                 """);
     }
 
+
+    @Test
+    public void efb() {
+        assertType("""
+                    let $x as number? := 3
+                    return if ($x)
+                        then $x
+                        else 1
+                """, typeFactory.one(typeFactory.itemNumber()));
+    }
+
+
+
 }

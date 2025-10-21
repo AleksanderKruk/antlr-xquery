@@ -24,9 +24,6 @@ import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.ResolvedName;
 import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager.ImportResult;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.Assumption;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.Implication;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.ValueImplication;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContext;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionManager.AnalysisResult;
@@ -298,7 +295,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             entypeWindowVariables(iterator, optionalIterator, windowVars);
             if (windowStartCondition.WHEN() != null) {
                 var conditionType = visitExprSingle(windowStartCondition.exprSingle());
-                if (!conditionType.type.hasEffectiveBooleanValue) {
+                if (!conditionType.type.hasEffectiveBooleanValue()) {
                     error(windowStartCondition.exprSingle(), "Condition must have effective boolean value, received: " + conditionType);
                 }
             }
@@ -315,7 +312,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             entypeWindowVariables(iterator, optionalIterator, windowVars);
             if (windowEndConditionContext.WHEN() != null) {
                 var conditionType = visitExprSingle(windowEndConditionContext.exprSingle());
-                if (!conditionType.type.hasEffectiveBooleanValue) {
+                if (!conditionType.type.hasEffectiveBooleanValue()) {
                     error(windowEndConditionContext.exprSingle(),
                         "Condition must have effective boolean value, received: " + conditionType);
                 }
@@ -638,7 +635,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     {
         final var filteringExpression = ctx.exprSingle();
         final var filteringExpressionType = filteringExpression.accept(this);
-        if (!filteringExpressionType.type.hasEffectiveBooleanValue) {
+        if (!filteringExpressionType.type.hasEffectiveBooleanValue()) {
             error(filteringExpression, "Filtering expression must have effective boolean value");
         }
         returnedOccurrence = addOptionality(returnedOccurrence);
@@ -717,7 +714,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     {
         final var filteringExpression = ctx.exprSingle();
         final var filteringExpressionType = filteringExpression.accept(this);
-        if (!filteringExpressionType.type.hasEffectiveBooleanValue) {
+        if (!filteringExpressionType.type.hasEffectiveBooleanValue()) {
             error(filteringExpression, "Filtering expression must have effective boolean value");
         }
         returnedOccurrence = addOptionality(returnedOccurrence);
@@ -913,7 +910,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         }
 
         final XQuerySequenceType queriedType = criterionNode.accept(this).type;
-        if (!queriedType.hasEffectiveBooleanValue) {
+        if (!queriedType.hasEffectiveBooleanValue()) {
             error(criterionNode, "Criterion value needs to have effective boolean value");
         }
 
@@ -929,11 +926,13 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final var orCount = ctx.OR().size();
         for (int i = 0; i <= orCount; i++) {
             final var visitedType = ctx.andExpr(i).accept(this);
-            if (!visitedType.type.hasEffectiveBooleanValue) {
+            if (!visitedType.type.hasEffectiveBooleanValue()) {
                 error(ctx.andExpr(i), "Operands of 'or expression' need to have effective boolean value");
             }
         }
-        return contextManager.typeInContext(boolean_);
+        var andBool = contextManager.typeInContext(boolean_);
+        // contextManager.currentScope().imply(andBool);
+        return andBool;
     }
 
     @Override
@@ -1126,7 +1125,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             context.setType(deducedInContext);
             return deducedInContext;
         }
-        if (!predicateExpression.type.hasEffectiveBooleanValue) {
+        if (!predicateExpression.type.hasEffectiveBooleanValue()) {
             final var msg = String.format(
                 "Predicate requires either number* type (for item by index aquisition) or a value that has effective boolean value, provided type: %s",
                 predicateExpression);
@@ -2085,15 +2084,24 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         if (ctx.AND().isEmpty()) {
             return ctx.comparisonExpr(0).accept(this);
         }
-        final XQuerySequenceType boolean_ = this.boolean_;
         final var operatorCount = ctx.AND().size();
+        final List<TypeInContext> andExprEbvs = new ArrayList<>(operatorCount+1);
+        contextManager.enterScope();
         for (int i = 0; i <= operatorCount; i++) {
             final var visitedType = ctx.comparisonExpr(i).accept(this);
-            if (!visitedType.type.hasEffectiveBooleanValue) {
+            if (!visitedType.type.hasEffectiveBooleanValue()) {
                 error(ctx.comparisonExpr(i), "Operands of 'or expression' need to have effective boolean value");
+            } else {
+                var ebv = contextManager.typeInContext(typeFactory.boolean_());
+                contextManager.currentScope().imply(ebv, new EffectiveBooleanValueTrue(ebv, visitedType, typeFactory));
+                contextManager.currentScope().assume(ebv, new Assumption(ebv, true));
+                andExprEbvs.add(ebv);
             }
         }
-        return contextManager.typeInContext(boolean_);
+        contextManager.leaveScope();
+        var andExpr = contextManager.typeInContext(boolean_);
+        contextManager.currentScope().imply(andExpr, new AndTrueImplication(andExpr, andExprEbvs));
+        return andExpr;
     }
 
     @Override
@@ -2396,39 +2404,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         warnings.add(DiagnosticWarning.of(start, stop, message));
     }
 
-    private final class InstanceOfSuccessImplication extends ValueImplication<Boolean> {
-        private final TypeInContext target;
-        private final Boolean value;
-        private final TypeInContext expression;
-        private final TypeInContext testedType;
 
-        private InstanceOfSuccessImplication(
-            TypeInContext target, Boolean value, TypeInContext expression, TypeInContext testedType) {
-            super(target, value);
-            this.target = target;
-            this.value = value;
-            this.expression = expression;
-            this.testedType = testedType;
-        }
-
-        @Override
-        public void transform(XQuerySemanticContext context)
-        {
-            expression.type = testedType.type;
-        }
-
-        @Override
-        public Implication remapTypes(Map<TypeInContext, TypeInContext> typeMapping)
-        {
-            return new InstanceOfSuccessImplication(
-                typeMapping.getOrDefault(target, target),
-                value,
-                typeMapping.getOrDefault(expression, expression),
-                typeMapping.getOrDefault(testedType, testedType)
-            );
-        }
-
-    }
 
     // private final class InstanceOfFailureImplication extends ValueImplication<Boolean> {
     //     private final TypeInContext expression;
@@ -2499,7 +2475,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     public TypeInContext visitIfExpr(final IfExprContext ctx)
     {
         final var conditionType = visitExpr(ctx.expr());
-        if (!conditionType.type.hasEffectiveBooleanValue) {
+        if (!conditionType.type.hasEffectiveBooleanValue()) {
             final var msg = String.format(
                 "If condition must have an effective boolean value and the type %s doesn't have one",
                 conditionType.toString());
@@ -2507,23 +2483,25 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         }
         TypeInContext trueType = null;
         TypeInContext falseType = null;
+        TypeInContext ebv = contextManager.currentScope().typeInContext(typeFactory.boolean_());
+        contextManager.currentScope().imply(ebv, new EffectiveBooleanValueTrue(ebv, conditionType, typeFactory));
         if (ctx.bracedAction() != null) {
             contextManager.enterScope();
-            contextManager.currentScope().assume(conditionType, new Assumption(conditionType, true));
+            contextManager.currentScope().assume(ebv, new Assumption(ebv, true));
             trueType = visitEnclosedExpr(ctx.bracedAction().enclosedExpr());
             contextManager.leaveScope();
 
             contextManager.enterScope();
-            contextManager.currentScope().assume(conditionType, new Assumption(conditionType, false));
+            contextManager.currentScope().assume(ebv, new Assumption(ebv, false));
             falseType = contextManager.typeInContext(emptySequence);
             contextManager.leaveScope();
         } else {
             contextManager.enterScope();
-            contextManager.currentScope().assume(conditionType, new Assumption(conditionType, true));
+            contextManager.currentScope().assume(ebv, new Assumption(ebv, true));
             trueType = ctx.unbracedActions().exprSingle(0).accept(this);
             contextManager.leaveScope();
             contextManager.enterScope();
-            contextManager.currentScope().assume(conditionType, new Assumption(conditionType, false));
+            contextManager.currentScope().assume(ebv, new Assumption(ebv, false));
             falseType = ctx.unbracedActions().exprSingle(1).accept(this);
             contextManager.leaveScope();
         }

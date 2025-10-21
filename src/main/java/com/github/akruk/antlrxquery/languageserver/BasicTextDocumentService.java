@@ -203,7 +203,7 @@ public class BasicTextDocumentService implements TextDocumentService {
             System.err.println("Pre analysis paths:" + paths);
             final VariableAnalyzer analyzer = new VariableAnalyzer(
                 null,
-                new XQuerySemanticContextManager(),
+                new XQuerySemanticContextManager(typeFactory),
                 typeFactory,
                 new XQueryMemoizedValueFactory(typeFactory),
                 new XQuerySemanticFunctionManager(typeFactory),

@@ -122,16 +122,24 @@ public class XQuerySequenceType {
     }
 
 
-    public boolean hasEffectiveBooleanValue() {
+    public XQueryTypes effectiveBooleanValueType() {
         var variantSingleton = typeFactory.zeroOrOne(typeFactory.itemChoice(Set.of(
             typeFactory.itemString(),
             typeFactory.itemBoolean(),
             typeFactory.itemNumber()
         )));
         if (isSubtypeOf(variantSingleton))
-            return true;
+            return this.itemType.type;
         var variantNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
-        return isSubtypeOf(variantNodes);
+        if (isSubtypeOf(variantNodes)) {
+            return this.itemType.type;
+        }
+        return null;
+    }
+
+
+    public boolean hasEffectiveBooleanValue() {
+        return effectiveBooleanValueType() != null;
     }
 
     private static final UnionOccurenceMerger unionOccurences = new UnionOccurenceMerger();

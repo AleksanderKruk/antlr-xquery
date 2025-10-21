@@ -7,6 +7,8 @@ import java.util.Map;
 
 import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
+import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 
 public class XQuerySemanticScope {
@@ -16,22 +18,31 @@ public class XQuerySemanticScope {
     final Map<TypeInContext, List<Implication>> scopedImplications;
     final XQuerySemanticContext context;
     final Map<TypeInContext, TypeInContext> typeMapping;
+    final Map<TypeInContext, TypeInContext> ebvs;
+    final private XQueryTypeFactory typeFactory;
 
     public XQuerySemanticScope(
         XQuerySemanticContext context,
-        XQuerySemanticScope previousScope
+        XQuerySemanticScope previousScope,
+        XQueryTypeFactory typeFactory
     )
     {
+        this.typeFactory = typeFactory;
         scopedTypes = new ArrayList<>(previousScope.scopedTypes.size() * 2);
         scopedAssumptions = new HashMap<>(previousScope.scopedAssumptions.size() * 2);
         scopedImplications = new HashMap<>(previousScope.scopedImplications.size() * 2);
         variables = new HashMap<>(previousScope.variables.size() * 2);
+        ebvs = new HashMap<>(previousScope.ebvs.size());
 
         typeMapping = new HashMap<>();
         for (var type : previousScope.scopedTypes) {
             var copiedType = typeInContext(type.type);
-
             typeMapping.put(type, copiedType);
+            var ebv = previousScope.ebvs.get(type);
+            if (ebv != null) {
+                var copiedEbv = typeInContext(ebv.type);
+                ebvs.put(copiedType, copiedEbv);
+            }
         }
 
         for (var variableEntry : previousScope.variables.entrySet()) {
@@ -63,7 +74,8 @@ public class XQuerySemanticScope {
     }
 
     public XQuerySemanticScope(
-        XQuerySemanticContext context
+        XQuerySemanticContext context,
+        XQueryTypeFactory typeFactory
     )
     {
         this.scopedTypes = new ArrayList<>();
@@ -72,6 +84,8 @@ public class XQuerySemanticScope {
         this.scopedImplications = new HashMap<>();
         this.typeMapping = new HashMap<>();
         this.context = context;
+        this.ebvs = new HashMap<>();
+        this.typeFactory = typeFactory;
     }
 
     public Map<String, TypeInContext> getVariables() {
@@ -153,4 +167,21 @@ public class XQuerySemanticScope {
         }
         return false;
     }
+
+    public TypeInContext resolveEffectiveBooleanValue(TypeInContext type, XQueryTypes ebvType) {
+        if (ebvType == XQueryTypes.BOOLEAN && type.type.isOne) {
+            return typeMapping.getOrDefault(type, type);
+        }
+        var ebv = ebvs.get(typeMapping.getOrDefault(type, type));
+        if (ebv != null) {
+            return ebv;
+        } else {
+            return typeInContext(typeFactory.boolean_());
+        }
+    }
+
+    public TypeInContext resolveEffectiveBooleanValue(TypeInContext type) {
+        return resolveEffectiveBooleanValue(type, type.type.effectiveBooleanValueType());
+    }
+
 }

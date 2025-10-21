@@ -6,6 +6,8 @@ import java.util.function.Supplier;
 
 import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
+import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 
 
@@ -13,8 +15,8 @@ public class XQuerySemanticContextManager {
     final List<XQuerySemanticContext> contexts;
     final Supplier<XQuerySemanticContext> contextFactory;
 
-    public XQuerySemanticContextManager() {
-        this(XQuerySemanticContext::new);
+    public XQuerySemanticContextManager(XQueryTypeFactory typeFactory) {
+        this(() -> new XQuerySemanticContext(typeFactory));
     }
 
     public XQuerySemanticContextManager(Supplier<XQuerySemanticContext> contextFactory) {
@@ -61,5 +63,13 @@ public class XQuerySemanticContextManager {
 
     public TypeInContext typeInContext(XQuerySequenceType type) {
         return currentContext().currentScope().typeInContext(type);
+    }
+
+    public TypeInContext resolveEffectiveBooleanValue(TypeInContext type) {
+        return currentContext().currentScope().resolveEffectiveBooleanValue(type);
+    }
+
+    public TypeInContext resolveEffectiveBooleanValue(TypeInContext type, XQueryTypes ebvType) {
+        return currentContext().currentScope().resolveEffectiveBooleanValue(type, ebvType);
     }
 }

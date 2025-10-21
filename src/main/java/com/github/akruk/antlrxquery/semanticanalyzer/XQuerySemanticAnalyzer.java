@@ -1449,10 +1449,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         return mergedRecordFieldTypes.addOptionality();
     }
 
-
-
-
-
     TypeInContext getKeySpecifier(final LookupExprContext ctx) {
         final KeySpecifierContext keySpecifier = ctx.lookup().keySpecifier();
         if (keySpecifier.qname() != null) {
@@ -2416,28 +2412,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
 
 
 
-    // private final class InstanceOfFailureImplication extends ValueImplication<Boolean> {
-    //     private final TypeInContext expression;
-    //     private final TypeInContext testedType;
-
-    //     private InstanceOfFailureImplication(
-    //         TypeInContext target,
-    //         Boolean value,
-    //         TypeInContext expression,
-    //         TypeInContext testedType)
-    //     {
-    //         super(target, value);
-    //         this.expression = expression;
-    //         this.testedType = testedType;
-    //     }
-
-    //     @Override
-    //     public void transform(XQuerySemanticContext context)
-    //     {
-    //         expression.type = testedType.type;
-    //     }
-    // }
-
     record LineEndCharPosEnd(int lineEnd, int charPosEnd) {
     }
 
@@ -2485,15 +2459,19 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     public TypeInContext visitIfExpr(final IfExprContext ctx)
     {
         final var conditionType = visitExpr(ctx.expr());
-        if (!conditionType.type.hasEffectiveBooleanValue()) {
+        TypeInContext ebv;
+        final XQueryTypes ebvtype = conditionType.type.effectiveBooleanValueType();
+        if (ebvtype == null) { // no effective boolean value
+            ebv = contextManager.currentScope().typeInContext(typeFactory.boolean_());
             final var msg = String.format(
                 "If condition must have an effective boolean value and the type %s doesn't have one",
                 conditionType.toString());
             error(ctx, msg);
+        } else {
+            ebv = contextManager.resolveEffectiveBooleanValue(conditionType, ebvtype);
         }
         TypeInContext trueType = null;
         TypeInContext falseType = null;
-        final TypeInContext ebv = contextManager.currentScope().typeInContext(typeFactory.boolean_());
         contextManager.currentScope().imply(ebv, new EffectiveBooleanValueTrue(ebv, conditionType, typeFactory));
         if (ctx.bracedAction() != null) {
             contextManager.enterScope();
@@ -2517,6 +2495,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         }
         return contextManager.typeInContext(trueType.type.alternativeMerge(falseType.type));
     }
+
 
     @Override
     public TypeInContext visitStringConstructor(final StringConstructorContext ctx)

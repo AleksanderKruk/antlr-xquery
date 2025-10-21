@@ -6,12 +6,16 @@ import java.util.Map;
 
 import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
+import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 
 public class XQuerySemanticContext {
     final List<XQuerySemanticScope> scopes;
+    final private XQueryTypeFactory typeFactory;
 
-    public XQuerySemanticContext() {
+    public XQuerySemanticContext(XQueryTypeFactory typeFactory) {
+        this.typeFactory = typeFactory;
         this.scopes = new ArrayList<>();
     }
 
@@ -21,9 +25,9 @@ public class XQuerySemanticContext {
 
     public void enterScope() {
         if (this.scopes.isEmpty()) {
-            this.scopes.add(new XQuerySemanticScope(this));
+            this.scopes.add(new XQuerySemanticScope(this, typeFactory));
         } else {
-            this.scopes.add(new XQuerySemanticScope(this, currentScope()));
+            this.scopes.add(new XQuerySemanticScope(this, currentScope(), typeFactory));
         }
     }
 
@@ -56,5 +60,13 @@ public class XQuerySemanticContext {
 
     public TypeInContext typeInContext(XQuerySequenceType type) {
         return currentScope().typeInContext(type);
+    }
+
+    public TypeInContext resolveEffectiveBooleanValue(TypeInContext type) {
+        return currentScope().resolveEffectiveBooleanValue(type);
+    }
+
+    public TypeInContext resolveEffectiveBooleanValue(TypeInContext type, XQueryTypes ebvType) {
+        return currentScope().resolveEffectiveBooleanValue(type, ebvType);
     }
 }

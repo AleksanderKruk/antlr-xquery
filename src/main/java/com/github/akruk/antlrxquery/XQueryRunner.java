@@ -106,7 +106,7 @@ public class XQueryRunner {
             modulePaths.add(cwd);
             final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
                     parserAndTree.parser,
-                    new XQuerySemanticContextManager(),
+                    new XQuerySemanticContextManager(typeFactory),
                     typeFactory,
                     new XQueryMemoizedValueFactory(typeFactory),
                     new XQuerySemanticFunctionManager(typeFactory),
@@ -156,7 +156,7 @@ public class XQueryRunner {
             final ModuleManager manager = new ModuleManager(modulePaths);
             final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
                 parserAndTree.parser,
-                new XQuerySemanticContextManager(),
+                new XQuerySemanticContextManager(typeFactory),
                 typeFactory,
                 valueFactory,
                 new XQuerySemanticFunctionManager(typeFactory),

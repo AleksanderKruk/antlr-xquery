@@ -1,7 +1,6 @@
 package com.github.akruk.antlrxquery.languagefeatures.semantics;
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -39,7 +38,7 @@ public class SemanticTestsBase {
         final XQuerySemanticFunctionManager caller = new XQuerySemanticFunctionManager(typeFactory);
         final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
                 null,
-                new XQuerySemanticContextManager(),
+                new XQuerySemanticContextManager(typeFactory),
                 typeFactory,
                 new XQueryMemoizedValueFactory(typeFactory),
                 caller,

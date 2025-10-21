@@ -39,7 +39,7 @@ public final class XQuery {
         final XQueryMemoizedTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
         final XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory(typeFactory);
         final ModuleManager moduleManager = new ModuleManager(Set.of());
-        final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(parser, new XQuerySemanticContextManager(),
+        final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(parser, new XQuerySemanticContextManager(typeFactory),
                 typeFactory, valueFactory, new XQuerySemanticFunctionManager(typeFactory), null,
                 moduleManager);
         final XQueryEvaluatorVisitor visitor = new XQueryEvaluatorVisitor(root, parser, analyzer, typeFactory, moduleManager);
@@ -59,7 +59,7 @@ public final class XQuery {
         final XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory(typeFactory);
         final ModuleManager moduleManager = new ModuleManager(Set.of());
         final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
-            parser, new XQuerySemanticContextManager(), typeFactory, valueFactory,
+            parser, new XQuerySemanticContextManager(typeFactory), typeFactory, valueFactory,
             new XQuerySemanticFunctionManager(typeFactory), null,
             moduleManager);
         final XQueryEvaluatorVisitor visitor = new XQueryEvaluatorVisitor(
@@ -84,7 +84,7 @@ public final class XQuery {
         final XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory(typeFactory);
         final ModuleManager moduleManager = new ModuleManager(Set.of());
         final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
-            parser, new XQuerySemanticContextManager(), typeFactory, valueFactory,
+            parser, new XQuerySemanticContextManager(typeFactory), typeFactory, valueFactory,
             new XQuerySemanticFunctionManager(typeFactory),
             null,
             moduleManager);

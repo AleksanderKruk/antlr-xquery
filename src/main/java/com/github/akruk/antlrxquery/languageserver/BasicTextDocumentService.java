@@ -74,6 +74,7 @@ public class BasicTextDocumentService implements TextDocumentService {
     private final Map<String, List<VarRefContext>> variableDeclarationsWithoutType = new HashMap<>();
     private final Map<String, List<FunctionDeclContext>> functionDecls = new HashMap<>();
     private final Map<String, List<NamedRecordTypeDeclContext>> recordDeclarations = new HashMap<>();
+    private final DiagnosticMessageCreator diagnosticMessageCreator = new DiagnosticMessageCreator();
 
     private Set<Path> modulePaths = Set.of();
 
@@ -223,7 +224,7 @@ public class BasicTextDocumentService implements TextDocumentService {
                     new Range(
                         new Position(error.startLine() - 1, error.charPositionInLine()),
                         new Position(error.endLine() - 1, error.endCharPositionInLine())),
-                    error.message(),
+                    diagnosticMessageCreator.create(error),
                     DiagnosticSeverity.Error,
                     "antlr-xquery"));
             }
@@ -233,7 +234,7 @@ public class BasicTextDocumentService implements TextDocumentService {
                     new Range(
                         new Position(warning.startLine() - 1, warning.charPositionInLine()),
                         new Position(warning.endLine() - 1, warning.endCharPositionInLine())),
-                    warning.message(),
+                    diagnosticMessageCreator.create(warning),
                     DiagnosticSeverity.Warning,
                     "antlr-xquery"));
             }

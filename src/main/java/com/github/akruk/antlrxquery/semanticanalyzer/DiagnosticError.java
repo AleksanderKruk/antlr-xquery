@@ -1,31 +1,43 @@
 package com.github.akruk.antlrxquery.semanticanalyzer;
 
+import java.util.List;
+
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
-public record DiagnosticError( String message,
-                            int startLine,
-                            int charPositionInLine,
-                            int endLine,
-                            int endCharPositionInLine)
+public record DiagnosticError(
+    ErrorType type,
+    List<Object> data,
+    int startLine,
+    int charPositionInLine,
+    int endLine,
+    int endCharPositionInLine)
 {
-  public static DiagnosticError of(ParserRuleContext where, String message) {
-      final Token start = where.getStart();
-      final Token stop = where.getStop();
-      final int line = start.getLine();
-      final int charPositionInLine = start.getCharPositionInLine();
-      final LineEndCharPosEnd lineEndCharPosEnd = getLineEndCharPosEnd(stop);
+    public static DiagnosticError of(
+        ParserRuleContext where,
+        ErrorType type,
+        List<Object> data
+        )
+    {
+        final Token start = where.getStart();
+        final Token stop = where.getStop();
+        final int line = start.getLine();
+        final int charPositionInLine = start.getCharPositionInLine();
+        final LineEndCharPosEnd lineEndCharPosEnd = getLineEndCharPosEnd(stop);
 
-      return new DiagnosticError( message,
-                                  line,
-                                  charPositionInLine,
-                                  lineEndCharPosEnd.lineEnd,
-                                  lineEndCharPosEnd.charPosEnd);
-  }
+        return new DiagnosticError(
+            type,
+            data,
+            line,
+            charPositionInLine,
+            lineEndCharPosEnd.lineEnd,
+            lineEndCharPosEnd.charPosEnd);
+    }
 
-  public static DiagnosticError of(Token start, Token stop, String message) {
+  public static DiagnosticError of(Token start, Token stop, ErrorType type, List<Object> data) {
     return new DiagnosticError(
-        message,
+        type,
+        data,
         start.getLine(),
         start.getCharPositionInLine(),
         stop.getLine(),

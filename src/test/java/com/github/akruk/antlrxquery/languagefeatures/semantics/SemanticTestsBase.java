@@ -13,7 +13,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import com.github.akruk.antlrxquery.AntlrXqueryLexer;
 import com.github.akruk.antlrxquery.AntlrXqueryParser;
 import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMemoizedValueFactory;
-import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticError;
+import com.github.akruk.antlrxquery.languageserver.DiagnosticMessageCreator;
 import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
@@ -48,9 +48,12 @@ public class SemanticTestsBase {
         return new AnalysisResult(analyzer, lastVisitedType.type);
     }
 
+    protected DiagnosticMessageCreator messageCreator = new DiagnosticMessageCreator();
     protected void assertNoErrors(final AnalysisResult analyzer) {
         boolean noErrors = analyzer.analyzer.getErrors().size() == 0;
-        String concatenatedInNewlinesMessages = analyzer.analyzer.getErrors().stream().map(DiagnosticError::message).collect(Collectors.joining(System.lineSeparator()));
+        String concatenatedInNewlinesMessages = analyzer.analyzer.getErrors().stream()
+            .map(e->messageCreator.create(e))
+            .collect(Collectors.joining(System.lineSeparator()));
         assertTrue(noErrors, concatenatedInNewlinesMessages);
     }
 

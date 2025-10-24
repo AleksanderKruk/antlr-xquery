@@ -20,6 +20,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticError;
+import com.github.akruk.antlrxquery.semanticanalyzer.ErrorType;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQueryVisitingSemanticContext;
@@ -2770,27 +2771,6 @@ public class XQuerySemanticFunctionManager {
             List.of(optionalNodeArg),
             optionalNumber
         );
-
-        // LSP functions
-        // register(
-        //     "lsp", "start-position",
-        //     List.of(optionalNodeArg),
-        //     optionalNumber
-        // );
-
-        // register(
-        //     "lsp", "end-position",
-        //     List.of(optionalNodeArg),
-        //     optionalNumber
-        // );
-
-        // register(
-        //     "lsp", "range",
-        //     List.of(optionalNodeArg),
-        //     optionalNumber
-        // );
-
-
     }
 
     private static ParseTree getTree(final String xquery, Function<AntlrXqueryParser, ParseTree> initialRule) {
@@ -2845,18 +2825,8 @@ public class XQuerySemanticFunctionManager {
             // used positional arguments need to have matching types
             return new SpecAndErrors(spec, List.of());
         }
-        final StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("No matching function ");
-        stringBuilder.append(namespace);
-        stringBuilder.append(":");
-        stringBuilder.append(name);
-        stringBuilder.append("#");
-        stringBuilder.append(requiredArity);
-        stringBuilder.append((mismatchReasons.isEmpty() ? "" : ". Reasons:\n" + String.join("\n", mismatchReasons)));
-        // If no spec matched, return all mismatch reasons
-        final String errorMessage = stringBuilder.toString();
-
-        DiagnosticError error = DiagnosticError.of(location, errorMessage);
+        DiagnosticError error = DiagnosticError.of(
+            location, ErrorType.FUNCTION__NO_MATCHING_FUNCTION, List.of(namespace, name, requiredArity));
         return new SpecAndErrors(null, List.of(error));
     }
 
@@ -2871,13 +2841,15 @@ public class XQuerySemanticFunctionManager {
     {
         final var anyItems = typeContext.currentScope().typeInContext(typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         if (!namespaces.containsKey(namespace)) {
-            DiagnosticError error = DiagnosticError.of(location, "Unknown function namespace: " + namespace);
-            return handleUnknownNamespace(namespace, error, anyItems);
+            DiagnosticError error = DiagnosticError.of(location, ErrorType.FUNCTION__UNKNOWN_NAMESPACE, List.of(namespace));
+            final DiagnosticError errorMessageSupplier = error;
+            final List<DiagnosticError> errors = List.of(errorMessageSupplier);
+            return new AnalysisResult(anyItems, errors);
         }
 
         final var namespaceFunctions = namespaces.get(namespace);
         if (!namespaceFunctions.containsKey(name)) {
-            DiagnosticError error = DiagnosticError.of(location, "Unknown function: " + namespace + ":" + name);
+            DiagnosticError error = DiagnosticError.of(location, ErrorType.FUNCTION__UNKNOWN_FUNCTION, List.of(namespace, name));
             return handleUnknownFunction(namespace, name, error, anyItems);
         }
         final var namedFunctions = namespaceFunctions.get(name);
@@ -2968,8 +2940,11 @@ public class XQuerySemanticFunctionManager {
                 return new AnalysisResult(granularType, List.of());
             }
         } else {
-            final String message = getNoMatchingFunctionMessage(namespace, name, requiredArity, mismatchReasons);
-            final DiagnosticError error = DiagnosticError.of(location, message);
+            final DiagnosticError error = DiagnosticError.of(
+                location,
+                ErrorType.FUNCTION__NO_MATCHING_FUNCTION,
+                List.of(namespace, name, requiredArity, mismatchReasons)
+                );
             return handleNoMatchingFunction(error, typeContext.currentScope().typeInContext(spec.returnedType));
 
         }
@@ -2997,25 +2972,6 @@ public class XQuerySemanticFunctionManager {
         stringBuilder.append(context.getType().toString());
         stringBuilder.append(" is not subtype of ");
         stringBuilder.append(spec.requiredContextValueType.toString());
-        return stringBuilder.toString();
-    }
-
-	private String getNoMatchingFunctionMessage(final String namespace, final String name, final int requiredArity,
-            final List<String> mismatchReasons) {
-        final StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("No matching function ");
-        stringBuilder.append(namespace);
-        stringBuilder.append(":");
-        stringBuilder.append(name);
-        stringBuilder.append(" for arity ");
-        stringBuilder.append(requiredArity);
-        if (!mismatchReasons.isEmpty()) {
-            for (final String reason : mismatchReasons) {
-                stringBuilder.append(System.lineSeparator());
-                stringBuilder.append("\t");
-                stringBuilder.append(reason);
-            }
-        }
         return stringBuilder.toString();
     }
 
@@ -3107,12 +3063,12 @@ public class XQuerySemanticFunctionManager {
         // TODO: Verify logic
         final var fallback = context.currentScope().typeInContext(typeFactory.anyFunction());
         if (!namespaces.containsKey(namespace)) {
-            DiagnosticError error = DiagnosticError.of(location, "Unknown function namespace: " + namespace);
+            DiagnosticError error = DiagnosticError.of(location, ErrorType.FUNCTION__UNKNOWN_NAMESPACE, List.of(namespace));
             return handleUnknownNamespace(namespace, error, fallback);
         }
         final var namespaceFunctions = namespaces.get(namespace);
         if (!namespaceFunctions.containsKey(functionName)) {
-            DiagnosticError error = DiagnosticError.of(location, "Unknown function: " + namespace + ":" + functionName);
+            DiagnosticError error = DiagnosticError.of(location, ErrorType.FUNCTION__UNKNOWN_FUNCTION, List.of(namespace, functionName));
             return handleUnknownFunction(namespace, functionName, error, fallback);
         }
 
@@ -3120,14 +3076,8 @@ public class XQuerySemanticFunctionManager {
         final SpecAndErrors specAndErrors = getFunctionSpecification(
             location, namespace, functionName, namedFunctions, arity);
         if (specAndErrors.spec == null) {
-            final StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.append("Unknown function reference: ");
-            stringBuilder.append(namespace);
-            stringBuilder.append(":");
-            stringBuilder.append(functionName);
-            stringBuilder.append("#");
-            stringBuilder.append(arity);
-            DiagnosticError error = DiagnosticError.of(location, stringBuilder.toString());
+            DiagnosticError error = DiagnosticError.of(
+                location, ErrorType.FUNCTION_REFERENCE__UNKNOWN, List.of(namespace, functionName, arity));
             return new AnalysisResult(fallback, List.of(error));
         }
         TypeInContext returnedType = context.typeInContext(specAndErrors.spec.returnedType);

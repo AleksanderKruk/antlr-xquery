@@ -3,21 +3,19 @@ package com.github.akruk.antlrxquery.charescaper;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.antlr.v4.runtime.ParserRuleContext;
+
+import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticError;
+import com.github.akruk.antlrxquery.semanticanalyzer.ErrorType;
+
 public class XQuerySemanticCharEscaper {
 
-    public record XQuerySemanticCharEscaperResult(String unescaped, List<Error> errors) {}
-
-    public record Error(String message, int position) {
-        @Override
-        public String toString() {
-            return "Error at " + position + ": " + message;
-        }
-    }
+    public record XQuerySemanticCharEscaperResult(String unescaped, List<DiagnosticError> errors) {}
 
 
-    public XQuerySemanticCharEscaperResult escapeWithDiagnostics(final String str) {
+    public XQuerySemanticCharEscaperResult escapeWithDiagnostics(ParserRuleContext ctx, final String str) {
         final StringBuilder result = new StringBuilder();
-        final List<Error> errors = new ArrayList<>();
+        final List<DiagnosticError> errors = new ArrayList<>();
         final int length = str.length();
 
         for (int i = 0; i < length; i++) {
@@ -32,19 +30,25 @@ public class XQuerySemanticCharEscaper {
                                 : Integer.parseInt(code, 10);
 
                         if (!Character.isValidCodePoint(charCode)) {
-                            errors.add(new Error("Invalid Unicode code point: " + charCode, i));
+                            errors.add(
+                                DiagnosticError.of(
+                                    ctx,
+                                    ErrorType.CHAR__INVALID_UNICODE_POINT,
+                                    List.of(charCode, i)
+                                    )
+                                );
                         }
 
                         result.append((char) charCode);
                         i = semi;
                         continue;
                     } catch (Exception e) {
-                        errors.add(new Error("Invalid character reference: " + code, i));
+                        errors.add(DiagnosticError.of(ctx, ErrorType.CHAR__INVALID_CHARACTER_REFERENCE, List.of(code, i)));
                         i = semi;
                         continue;
                     }
                 } else {
-                    errors.add(new Error("Unterminated character reference", i));
+                    errors.add(DiagnosticError.of(ctx, ErrorType.CHAR__UNTERMINATED_CHARACTER_REFERENCE, List.of(i)));
                 }
             }
 

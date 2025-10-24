@@ -1,16 +1,21 @@
 package com.github.akruk.antlrxquery.semanticanalyzer;
 
+import java.util.List;
+
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
-public record DiagnosticWarning(String message,
-                            int startLine,
-                            int charPositionInLine,
-                            int endLine,
-                            int endCharPositionInLine)
+public record DiagnosticWarning(
+    WarningType type,
+    List<Object> data,
+    int startLine,
+    int charPositionInLine,
+    int endLine,
+    int endCharPositionInLine
+    )
 {
 
-    public static DiagnosticWarning of(ParserRuleContext where, String message) {
+    public static DiagnosticWarning of(ParserRuleContext where, WarningType type, List<Object> data) {
         final Token start = where.getStart();
         final Token stop = where.getStop();
         final int line = start.getLine();
@@ -18,7 +23,8 @@ public record DiagnosticWarning(String message,
         final LineEndCharPosEnd lineEndCharPosEnd = getLineEndCharPosEnd(stop);
 
         return new DiagnosticWarning(
-            message,
+            type,
+            data,
             line,
             charPositionInLine,
             lineEndCharPosEnd.lineEnd,
@@ -26,9 +32,10 @@ public record DiagnosticWarning(String message,
         );
     }
 
-    public static DiagnosticWarning of(Token start, Token stop, String message) {
+    public static DiagnosticWarning of(Token start, Token stop, WarningType type, List<Object> data) {
         return new DiagnosticWarning(
-            message,
+            type,
+            data,
             start.getLine(),
             start.getCharPositionInLine(),
             stop.getLine(),

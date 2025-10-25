@@ -27,6 +27,7 @@ import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQue
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionManager.AnalysisResult;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionManager.ArgumentSpecification;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
+import com.github.akruk.antlrxquery.HelperTrees;
 import com.github.akruk.antlrxquery.XQueryAxis;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper.XQuerySemanticCharEscaperResult;
@@ -2582,7 +2583,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                 }
             } else {
                 optionalArgs
-                    .add(new ArgumentSpecification(fieldName, fieldType, XQuerySemanticFunctionManager.EMPTY_SEQUENCE));
+                    .add(new ArgumentSpecification(fieldName, fieldType, new HelperTrees().EMPTY_SEQUENCE));
             }
         }
         mandatoryArgs.addAll(optionalArgs);

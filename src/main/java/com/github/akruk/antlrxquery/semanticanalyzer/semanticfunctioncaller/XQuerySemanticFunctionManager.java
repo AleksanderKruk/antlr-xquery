@@ -5,18 +5,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
-import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.tree.ParseTree;
-import com.github.akruk.antlrxquery.AntlrXqueryLexer;
-import com.github.akruk.antlrxquery.AntlrXqueryParser;
+import com.github.akruk.antlrxquery.HelperTrees;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticError;
@@ -59,20 +54,6 @@ public class XQuerySemanticFunctionManager {
     { }
 
 
-    private static final ParseTree CONTEXT_ITEM = getTree(".", parser -> parser.contextValueRef());
-    private static final ParseTree DEFAULT_COLLATION = getTree("fn:default-collation()", parser->parser.functionCall());
-    public static final ParseTree EMPTY_SEQUENCE = getTree("()", p->p.parenthesizedExpr());
-    private static final ParseTree DEFAULT_ROUNDING_MODE = getTree("'half-to-ceiling'", parser->parser.literal());
-    private static final ParseTree ZERO_LITERAL = getTree("0", parser->parser.literal());
-    private static final ParseTree NFC = XQuerySemanticFunctionManager.getTree("\"NFC\"", parser -> parser.literal());
-    private static final ParseTree STRING_AT_CONTEXT_VALUE = XQuerySemanticFunctionManager.getTree("fn:string(.)", (parser) -> parser.functionCall());
-    private static final ParseTree EMPTY_STRING = XQuerySemanticFunctionManager.getTree("\"\"", (parser)->parser.literal());
-    private static final ParseTree EMPTY_MAP = getTree("map {}", parser -> parser.mapConstructor());
-    private static final ParseTree IDENTITY$1 = XQuerySemanticFunctionManager.getTree("fn:identity#1", p->p.namedFunctionRef());
-    private static final ParseTree BOOLEAN$1 = XQuerySemanticFunctionManager.getTree("fn:boolean#1", p->p.namedFunctionRef());
-    private static final ParseTree DATA$1 = XQuerySemanticFunctionManager.getTree("fn:data#1", p->p.namedFunctionRef());
-    private static final ParseTree TRUE$0 = XQuerySemanticFunctionManager.getTree("fn:true#0", p->p.namedFunctionRef());
-    private static final ParseTree FALSE$0 = XQuerySemanticFunctionManager.getTree("fn:false#0", p->p.namedFunctionRef());
 
     public interface XQuerySemanticFunction {
         public AnalysisResult call(final XQueryTypeFactory typeFactory,
@@ -90,6 +71,25 @@ public class XQuerySemanticFunctionManager {
     public XQuerySemanticFunctionManager(final XQueryTypeFactory typeFactory) {
         this.typeFactory = typeFactory;
         this.namespaces = new HashMap<>(6);
+
+        var helperTrees = new HelperTrees();
+        final ParseTree CONTEXT_VALUE = helperTrees.CONTEXT_VALUE;
+        final ParseTree DEFAULT_COLLATION = helperTrees.DEFAULT_COLLATION;
+        final ParseTree EMPTY_SEQUENCE = helperTrees.EMPTY_SEQUENCE;
+        final ParseTree DEFAULT_ROUNDING_MODE = helperTrees.DEFAULT_ROUNDING_MODE;
+        final ParseTree ZERO_LITERAL = helperTrees.ZERO_LITERAL;
+        final ParseTree NFC = helperTrees.NFC;
+        final ParseTree STRING_AT_CONTEXT_VALUE = helperTrees.STRING_AT_CONTEXT_VALUE;
+        final ParseTree EMPTY_STRING = helperTrees.EMPTY_STRING;
+        final ParseTree EMPTY_MAP = helperTrees.EMPTY_MAP;
+        final ParseTree IDENTITY$1 = helperTrees.IDENTITY$1;
+        final ParseTree BOOLEAN$1 = helperTrees.BOOLEAN$1;
+        final ParseTree DATA$1 = helperTrees.DATA$1;
+        final ParseTree TRUE$0 = helperTrees.TRUE$0;
+        final ParseTree FALSE$0 = helperTrees.FALSE$0;
+        final ParseTree DEFAULT_COMPARATOR = helperTrees.DEFAULT_COMPARATOR;
+        final ParseTree TEN = helperTrees.TEN;
+
 
         final XQuerySequenceType optionalString = typeFactory.zeroOrOne(typeFactory.itemString());
         final XQuerySequenceType zeroOrMoreNumbers = typeFactory.zeroOrMore(typeFactory.itemNumber());
@@ -234,7 +234,7 @@ public class XQuerySemanticFunctionManager {
         ArgumentSpecification optionalNodeArg = new ArgumentSpecification(
             "node",
             typeFactory.zeroOrOne(typeFactory.itemAnyNode()),
-            CONTEXT_ITEM
+            CONTEXT_VALUE
         );
         register(
             "fn", "node-name",
@@ -252,7 +252,7 @@ public class XQuerySemanticFunctionManager {
         // fn:string(
         //  as item()? := .
         // ) as xs:string
-        final ArgumentSpecification stringValue = new ArgumentSpecification("value", optionalItem, CONTEXT_ITEM);
+        final ArgumentSpecification stringValue = new ArgumentSpecification("value", optionalItem, CONTEXT_VALUE);
         register("fn", "string",
                 List.of(stringValue),
                 typeFactory.string());
@@ -261,7 +261,7 @@ public class XQuerySemanticFunctionManager {
         //  as item()* := .
         // ) as xs:anyAtomicType*
         final ArgumentSpecification dataInput = new ArgumentSpecification(
-            "input", zeroOrMoreItems, CONTEXT_ITEM);
+            "input", zeroOrMoreItems, CONTEXT_VALUE);
         register("fn", "data",
                 List.of(dataInput), zeroOrMoreItems);
 
@@ -355,7 +355,7 @@ public class XQuerySemanticFunctionManager {
         ArgumentSpecification errorValue = new ArgumentSpecification(
             "value",
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            CONTEXT_ITEM
+            CONTEXT_VALUE
         );
         register(
             "fn", "error",
@@ -509,7 +509,7 @@ public class XQuerySemanticFunctionManager {
         ArgumentSpecification parseIntRadix = new ArgumentSpecification(
             "radix",
             typeFactory.zeroOrOne(typeFactory.itemNumber()),
-            getTree("10", AntlrXqueryParser::primaryExpr)
+            TEN
         );
         register(
             "fn", "parse-integer",
@@ -1186,7 +1186,6 @@ public class XQuerySemanticFunctionManager {
         final ArgumentSpecification required_arg_subsequence_anyItems = new ArgumentSpecification("subsequence", zeroOrMoreItems, null);
         final var comparator = typeFactory.zeroOrOne(typeFactory.itemFunction(typeFactory.boolean_(),
                 List.of(typeFactory.anyItem(), typeFactory.anyItem())));
-        final var DEFAULT_COMPARATOR = getTree("fn:deep-equal#2", parser -> parser.namedFunctionRef());
         final ArgumentSpecification optional_arg_compare_comparator = new ArgumentSpecification("compare", comparator, DEFAULT_COMPARATOR);
         register("fn", "starts-with-subsequence",
                 List.of(anyItemsRequiredInput, required_arg_subsequence_anyItems, optional_arg_compare_comparator),
@@ -2771,14 +2770,6 @@ public class XQuerySemanticFunctionManager {
             List.of(optionalNodeArg),
             optionalNumber
         );
-    }
-
-    private static ParseTree getTree(final String xquery, Function<AntlrXqueryParser, ParseTree> initialRule) {
-        final CodePointCharStream charStream = CharStreams.fromString(xquery);
-        final AntlrXqueryLexer lexer = new AntlrXqueryLexer(charStream);
-        final CommonTokenStream stream = new CommonTokenStream(lexer);
-        final AntlrXqueryParser parser = new AntlrXqueryParser(stream);
-        return initialRule.apply(parser);
     }
 
     final Map<String, Map<String, List<FunctionSpecification>>> namespaces;

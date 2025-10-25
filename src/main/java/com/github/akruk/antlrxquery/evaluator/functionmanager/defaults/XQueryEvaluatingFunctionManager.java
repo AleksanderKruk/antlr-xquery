@@ -10,20 +10,15 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CodePointCharStream;
-import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import com.github.akruk.antlrxquery.AntlrXqueryLexer;
-import com.github.akruk.antlrxquery.AntlrXqueryParser;
+import com.github.akruk.antlrxquery.HelperTrees;
 import com.github.akruk.antlrxquery.evaluator.XQueryEvaluatorVisitor;
 import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
 import com.github.akruk.antlrxquery.evaluator.collations.Collations;
@@ -41,17 +36,6 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.nodegetter.NodeGetter;
 
 public class XQueryEvaluatingFunctionManager {
-    private static final ParseTree CONTEXT_VALUE = getTree(".", parser -> parser.contextValueRef());
-    private static final ParseTree DEFAULT_COLLATION = getTree(
-        "fn:default-collation()", parser -> parser.functionCall());
-    private static final ParseTree EMPTY_SEQUENCE = getTree("()", p -> p.parenthesizedExpr());
-    private static final ParseTree DEFAULT_ROUNDING_MODE = getTree("'half-to-ceiling'", parser -> parser.literal());
-    private static final ParseTree ZERO_LITERAL = getTree("0", parser -> parser.literal());
-    private static final ParseTree NFC = getTree("\"NFC\"", parser -> parser.literal());
-    private static final ParseTree STRING_AT_CONTEXT_VALUE =
-        getTree("fn:string(.)", (parser) -> parser.functionCall());
-    private static final ParseTree EMPTY_STRING = getTree("\"\"", (parser) -> parser.literal());
-
     record FunctionEntry(XQueryFunction function, long minArity, long maxArity, List<String> argNames,
             Map<String, ParseTree> defaultArguments, String variadicArg, XQuerySequenceType type) {
     }
@@ -106,6 +90,16 @@ public class XQueryEvaluatingFunctionManager {
                 collators, Locale.getDefault(), atomizer, ebv);
         this.processingBooleans = new ProcessingBooleans(valueFactory, parser, ebv);
         this.aggregateFunctions = new AggregateFunctions(valueFactory, parser, collators, atomizer, valueComparisonOperator);
+
+        var helperTrees = new HelperTrees();
+        final ParseTree CONTEXT_VALUE = helperTrees.CONTEXT_VALUE;
+        final ParseTree DEFAULT_COLLATION = helperTrees.DEFAULT_COLLATION;
+        final ParseTree EMPTY_SEQUENCE = helperTrees.EMPTY_SEQUENCE;
+        final ParseTree DEFAULT_ROUNDING_MODE = helperTrees.DEFAULT_ROUNDING_MODE;
+        final ParseTree ZERO_LITERAL = helperTrees.ZERO_LITERAL;
+        final ParseTree NFC = helperTrees.NFC;
+        final ParseTree STRING_AT_CONTEXT_VALUE = helperTrees.STRING_AT_CONTEXT_VALUE;
+        final ParseTree EMPTY_STRING = helperTrees.EMPTY_STRING;
 
         // Accessors
         final Map<String, ParseTree> defaultNodeArg = Map.of("node", CONTEXT_VALUE);
@@ -556,14 +550,6 @@ public class XQueryEvaluatingFunctionManager {
             return error(XQueryError.UnknownFunctionName, "", typeFactory.error());
         }
         return valueFactory.functionReference(function.entry().function, null);
-    }
-
-    private static ParseTree getTree(final String xquery, final Function<AntlrXqueryParser, ParseTree> initialRule) {
-        final CodePointCharStream charStream = CharStreams.fromString(xquery);
-        final AntlrXqueryLexer lexer = new AntlrXqueryLexer(charStream);
-        final CommonTokenStream stream = new CommonTokenStream(lexer);
-        final AntlrXqueryParser parser = new AntlrXqueryParser(stream);
-        return initialRule.apply(parser);
     }
 
     List<XQueryValue> rearrangeArguments(final List<String> remainingArgs, final XQueryVisitingContext context,

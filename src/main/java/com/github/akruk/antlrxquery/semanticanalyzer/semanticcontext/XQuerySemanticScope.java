@@ -5,9 +5,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.github.akruk.antlrxquery.semanticanalyzer.EffectiveBooleanValueTrue;
 import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType.EffectiveBooleanValueType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 
@@ -28,6 +30,7 @@ public class XQuerySemanticScope {
     )
     {
         this.typeFactory = typeFactory;
+        this.context = context;
         scopedTypes = new ArrayList<>(previousScope.scopedTypes.size() * 2);
         scopedAssumptions = new HashMap<>(previousScope.scopedAssumptions.size() * 2);
         scopedImplications = new HashMap<>(previousScope.scopedImplications.size() * 2);
@@ -70,7 +73,6 @@ public class XQuerySemanticScope {
             }
         }
 
-        this.context = context;
     }
 
     public XQuerySemanticScope(
@@ -151,6 +153,13 @@ public class XQuerySemanticScope {
     {
         var tic = new TypeInContext(type);
         scopedTypes.add(tic);
+        var ebvType = type.effectiveBooleanValueType();
+        if (ebvType != EffectiveBooleanValueType.NO_EBV) {
+            TypeInContext effectiveBooleanValue = resolveEffectiveBooleanValue(tic, ebvType);
+            if (tic != effectiveBooleanValue) {
+                imply(effectiveBooleanValue, new EffectiveBooleanValueTrue(effectiveBooleanValue, tic, typeFactory));
+            }
+        }
         return tic;
     }
 
@@ -168,16 +177,20 @@ public class XQuerySemanticScope {
         return false;
     }
 
-    public TypeInContext resolveEffectiveBooleanValue(TypeInContext type, XQueryTypes ebvType) {
-        if (ebvType == XQueryTypes.BOOLEAN && type.type.isOne) {
-            return typeMapping.getOrDefault(type, type);
-        }
-        var ebv = ebvs.get(typeMapping.getOrDefault(type, type));
-        if (ebv != null) {
-            return ebv;
-        } else {
-            return typeInContext(typeFactory.boolean_());
-        }
+    public TypeInContext resolveEffectiveBooleanValue(TypeInContext typeInContext, EffectiveBooleanValueType ebvType) {
+        var resolvedType = resolveType(typeInContext);
+        return switch (ebvType) {
+            case ALWAYS_FALSE__EMPTY_SEQUENCE, ALWAYS_TRUE__NODE, NODE, NO_EBV ->
+            {
+                yield ebvs.computeIfAbsent(resolvedType, (_) -> typeInContext(typeFactory.boolean_()));
+            }
+            case ALWAYS_TRUE__NUMBER_STRING_BOOLEAN, NUMBER_STRING_BOOLEAN-> {
+                if (typeInContext.type.itemType.type == XQueryTypes.BOOLEAN && typeInContext.type.isOne) {
+                    yield resolvedType;
+                }
+                yield ebvs.computeIfAbsent(resolvedType, (_) -> typeInContext(typeFactory.boolean_()));
+            }
+        };
     }
 
     public TypeInContext resolveEffectiveBooleanValue(TypeInContext type) {

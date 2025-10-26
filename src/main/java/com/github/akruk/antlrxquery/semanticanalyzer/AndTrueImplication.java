@@ -11,19 +11,19 @@ import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
 
 final class AndTrueImplication extends ValueImplication<Boolean> {
     private final TypeInContext andResult;
-    private final List<TypeInContext> andExpressions;
+    private final List<TypeInContext> andEffectiveBooleanValues;
 
-    AndTrueImplication(TypeInContext andResult, List<TypeInContext> andExpressions) {
+    AndTrueImplication(TypeInContext andResult, List<TypeInContext> andEffectiveBooleanValues) {
         super(andResult, true);
         this.andResult = andResult;
-        this.andExpressions = andExpressions;
+        this.andEffectiveBooleanValues = andEffectiveBooleanValues;
     }
 
     @Override
     public void transform(XQuerySemanticContext context)
     {
-        for (var andExpr : andExpressions) {
-            context.currentScope().assume(andExpr, new Assumption(andExpr, true));
+        for (var andEbv : andEffectiveBooleanValues) {
+            context.currentScope().assume(andEbv, new Assumption(andEbv, true));
         }
     }
 
@@ -31,8 +31,8 @@ final class AndTrueImplication extends ValueImplication<Boolean> {
     public Implication remapTypes(Map<TypeInContext, TypeInContext> typeMapping)
     {
         TypeInContext remappedAndResult = typeMapping.getOrDefault(andResult, andResult);
-        List<TypeInContext> remappedAndExpressions = new java.util.ArrayList<>(andExpressions.size());
-        for (var expr : andExpressions) {
+        List<TypeInContext> remappedAndExpressions = new java.util.ArrayList<>(andEffectiveBooleanValues.size());
+        for (var expr : andEffectiveBooleanValues) {
             remappedAndExpressions.add(typeMapping.getOrDefault(expr, expr));
         }
         return new AndTrueImplication(remappedAndResult, remappedAndExpressions);

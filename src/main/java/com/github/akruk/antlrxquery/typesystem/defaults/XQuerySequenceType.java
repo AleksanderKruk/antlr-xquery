@@ -122,24 +122,48 @@ public class XQuerySequenceType {
     }
 
 
-    public XQueryTypes effectiveBooleanValueType() {
-        var variantSingleton = typeFactory.zeroOrOne(typeFactory.itemChoice(Set.of(
+    public enum EffectiveBooleanValueType {
+        ALWAYS_FALSE__EMPTY_SEQUENCE,
+        ALWAYS_TRUE__NUMBER_STRING_BOOLEAN,
+        NUMBER_STRING_BOOLEAN,
+        ALWAYS_TRUE__NODE,
+        NODE,
+        NO_EBV
+    }
+
+    public EffectiveBooleanValueType effectiveBooleanValueType() {
+        if (isSubtypeOf(typeFactory.emptySequence())) {
+            return EffectiveBooleanValueType.ALWAYS_FALSE__EMPTY_SEQUENCE;
+        }
+        final XQueryItemType itemChoice = typeFactory.itemChoice(Set.of(
             typeFactory.itemString(),
             typeFactory.itemBoolean(),
             typeFactory.itemNumber()
-        )));
-        if (isSubtypeOf(variantSingleton))
-            return this.itemType.type;
-        var variantNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
-        if (isSubtypeOf(variantNodes)) {
-            return this.itemType.type;
+        ));
+
+        var variantSingleton = typeFactory.one(itemChoice);
+        if (isSubtypeOf(variantSingleton)) {
+            return EffectiveBooleanValueType.ALWAYS_TRUE__NUMBER_STRING_BOOLEAN;
         }
-        return null;
+
+        variantSingleton = typeFactory.zeroOrOne(itemChoice);
+        if (isSubtypeOf(variantSingleton)) {
+            return EffectiveBooleanValueType.NUMBER_STRING_BOOLEAN;
+        }
+        var variantNodes = typeFactory.oneOrMore(typeFactory.itemAnyNode());
+        if (isSubtypeOf(variantNodes)) {
+            return EffectiveBooleanValueType.ALWAYS_TRUE__NODE;
+        }
+        variantNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
+        if (isSubtypeOf(variantNodes)) {
+            return EffectiveBooleanValueType.NODE;
+        }
+        return EffectiveBooleanValueType.NO_EBV;
     }
 
 
     public boolean hasEffectiveBooleanValue() {
-        return effectiveBooleanValueType() != null;
+        return effectiveBooleanValueType() != EffectiveBooleanValueType.NO_EBV;
     }
 
     private static final UnionOccurenceMerger unionOccurences = new UnionOccurenceMerger();

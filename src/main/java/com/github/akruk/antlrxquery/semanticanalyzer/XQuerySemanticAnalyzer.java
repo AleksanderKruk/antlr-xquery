@@ -38,6 +38,7 @@ import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType.EffectiveBooleanValueType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType.RelativeCoercability;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypeAtomization;
@@ -2011,8 +2012,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             if (!visitedType.type.hasEffectiveBooleanValue()) {
                 error(ctx.comparisonExpr(i), ErrorType.AND__NON_EBV, List.of(visitedType));
             } else {
-                final var ebv = contextManager.typeInContext(typeFactory.boolean_());
-                contextManager.currentScope().imply(ebv, new EffectiveBooleanValueTrue(ebv, visitedType, typeFactory));
+                final var ebv = contextManager.resolveEffectiveBooleanValue(visitedType);
+                // contextManager.currentScope().imply(ebv, new EffectiveBooleanValueTrue(ebv, visitedType, typeFactory));
                 contextManager.currentScope().assume(ebv, new Assumption(ebv, true));
                 andExprEbvs.add(ebv);
             }
@@ -2337,8 +2338,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     {
         final var conditionType = visitExpr(ctx.expr());
         TypeInContext ebv;
-        final XQueryTypes ebvtype = conditionType.type.effectiveBooleanValueType();
-        if (ebvtype == null) { // no effective boolean value
+        final EffectiveBooleanValueType ebvtype = conditionType.type.effectiveBooleanValueType();
+        if (ebvtype == EffectiveBooleanValueType.NO_EBV) { // no effective boolean value
             ebv = contextManager.currentScope().typeInContext(typeFactory.boolean_());
             error(ctx, ErrorType.IF__CONDITION_NON_EBV, List.of(conditionType));
         } else {
@@ -2346,7 +2347,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         }
         TypeInContext trueType = null;
         TypeInContext falseType = null;
-        contextManager.currentScope().imply(ebv, new EffectiveBooleanValueTrue(ebv, conditionType, typeFactory));
+        // contextManager.currentScope().imply(ebv, new EffectiveBooleanValueTrue(ebv, conditionType, typeFactory));
         if (ctx.bracedAction() != null) {
             contextManager.enterScope();
             contextManager.currentScope().assume(ebv, new Assumption(ebv, true));

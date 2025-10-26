@@ -6,7 +6,7 @@ import java.util.Map;
 
 import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType.EffectiveBooleanValueType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 
@@ -66,7 +66,7 @@ public class XQuerySemanticContext {
         return currentScope().resolveEffectiveBooleanValue(type);
     }
 
-    public TypeInContext resolveEffectiveBooleanValue(TypeInContext type, XQueryTypes ebvType) {
+    public TypeInContext resolveEffectiveBooleanValue(TypeInContext type, EffectiveBooleanValueType ebvType) {
         return currentScope().resolveEffectiveBooleanValue(type, ebvType);
     }
 }

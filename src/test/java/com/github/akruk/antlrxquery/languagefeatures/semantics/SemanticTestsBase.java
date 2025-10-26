@@ -77,8 +77,6 @@ public class SemanticTestsBase {
         assertEquals(expectedType, analysisResult.expressionType);
     }
 
-
-
     protected void assertNoErrors(String query) {
         assertNoErrors(analyze(query));
     }

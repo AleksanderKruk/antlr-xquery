@@ -2005,22 +2005,26 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             return ctx.comparisonExpr(0).accept(this);
         }
         final var operatorCount = ctx.AND().size();
-        final List<TypeInContext> andExprEbvs = new ArrayList<>(operatorCount+1);
+        final List<ParseTree> exprs = new ArrayList<>(operatorCount+1);
         contextManager.enterScope();
+        boolean valid = true;
         for (int i = 0; i <= operatorCount; i++) {
-            final var visitedType = ctx.comparisonExpr(i).accept(this);
+            final ComparisonExprContext expr = ctx.comparisonExpr(i);
+            final var visitedType = visitComparisonExpr(expr);
             if (!visitedType.type.hasEffectiveBooleanValue()) {
-                error(ctx.comparisonExpr(i), ErrorType.AND__NON_EBV, List.of(visitedType));
+                error(expr, ErrorType.AND__NON_EBV, List.of(visitedType));
+                valid = false;
             } else {
                 final var ebv = contextManager.resolveEffectiveBooleanValue(visitedType);
-                // contextManager.currentScope().imply(ebv, new EffectiveBooleanValueTrue(ebv, visitedType, typeFactory));
                 contextManager.currentScope().assume(ebv, new Assumption(ebv, true));
-                andExprEbvs.add(ebv);
+                exprs.add(expr);
             }
         }
         contextManager.leaveScope();
         final var andExpr = contextManager.typeInContext(boolean_);
-        contextManager.currentScope().imply(andExpr, new AndTrueImplication(andExpr, andExprEbvs));
+        if (valid) {
+            contextManager.currentScope().imply(andExpr, new AndTrueImplication(andExpr, exprs, this));
+        }
         return andExpr;
     }
 

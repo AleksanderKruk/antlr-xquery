@@ -35,15 +35,22 @@ public class XQuerySemanticScope {
         scopedAssumptions = new HashMap<>(previousScope.scopedAssumptions.size() * 2);
         scopedImplications = new HashMap<>(previousScope.scopedImplications.size() * 2);
         variables = new HashMap<>(previousScope.variables.size() * 2);
-        ebvs = new HashMap<>(previousScope.ebvs.size());
+        ebvs = new HashMap<>(previousScope.ebvs.size()*2);
 
-        typeMapping = new HashMap<>();
+        typeMapping = new HashMap<>(previousScope.scopedTypes.size()*2);
         for (var type : previousScope.scopedTypes) {
+            if (typeMapping.containsKey(type)) {
+                continue;
+            }
             var copiedType = typeInContext(type.type);
             typeMapping.put(type, copiedType);
             var ebv = previousScope.ebvs.get(type);
             if (ebv != null) {
+                if (typeMapping.containsKey(ebv)) {
+                    continue;
+                }
                 var copiedEbv = typeInContext(ebv.type);
+                typeMapping.put(ebv, copiedEbv);
                 ebvs.put(copiedType, copiedEbv);
             }
         }
@@ -51,7 +58,7 @@ public class XQuerySemanticScope {
         for (var variableEntry : previousScope.variables.entrySet()) {
             var variableName = variableEntry.getKey();
             var variableType = variableEntry.getValue();
-            var copiedType = typeMapping.getOrDefault(variableType, variableType);
+            var copiedType = typeMapping.get(variableType);
             variables.put(variableName, copiedType);
         }
 

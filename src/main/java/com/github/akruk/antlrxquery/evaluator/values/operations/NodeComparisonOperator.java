@@ -76,6 +76,25 @@ public class NodeComparisonOperator {
         return valueFactory.bool(i1 < i2);
     }
 
+    public XQueryValue precedesOrIs(final XQueryValue o1, final XQueryValue o2)
+    {
+        if (o1.isEmptySequence)
+            return o1;
+        if (o2.isEmptySequence)
+            return o2;
+        if (!o1.isNode || !o2.isNode) {
+            if (o1.isError)
+                return o1;
+            if (o2.isError)
+                return o2;
+            return valueFactory.error(XQueryError.InvalidArgumentType,
+                "Node comparison between " + o1 + " and " + o2 + " is impossible");
+        }
+        int i1 = indices.get(o1.node);
+        int i2 = indices.get(o2.node);
+        return valueFactory.bool(i1 <= i2);
+    }
+
     public XQueryValue follows(final XQueryValue o1, final XQueryValue o2)
     {
         if (o1.isEmptySequence)
@@ -93,5 +112,24 @@ public class NodeComparisonOperator {
         int i1 = indices.get(o1.node);
         int i2 = indices.get(o2.node);
         return valueFactory.bool(i1 > i2);
+    }
+
+    public XQueryValue followsOrIs(final XQueryValue o1, final XQueryValue o2)
+    {
+        if (o1.isEmptySequence)
+            return o1;
+        if (o2.isEmptySequence)
+            return o2;
+        if (!o1.isNode || !o2.isNode) {
+            if (o1.isError)
+                return o1;
+            if (o2.isError)
+                return o2;
+            return valueFactory.error(XQueryError.InvalidArgumentType,
+                "Node comparison between " + o1 + " and " + o2 + " is impossible");
+        }
+        int i1 = indices.get(o1.node);
+        int i2 = indices.get(o2.node);
+        return valueFactory.bool(i1 >= i2);
     }
 }

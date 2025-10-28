@@ -79,8 +79,12 @@ TRY: 'try' ;
 CATCH: 'catch' ;
 FINALLY: 'finally' ;
 
+IS: 'is';
+IS_NOT: 'is-not';
 FOLLOWS: 'follows' ;
 PRECEDES: 'precedes' ;
+FOLLOWS_OR_IS: 'follows-or-is' ;
+PRECEDES_OR_IS: 'precedes-or-is' ;
 
 PIPE_ARROW: '->';
 CASTABLE: 'castable';
@@ -177,7 +181,6 @@ LE_OP: '<=';
 PRECEDING_OP: '<<';
 FOLLOWING_OP: '>>';
 ASSIGNMENT_OP: ':=';
-IS: 'is';
 SLASHES: '//';
 SLASH: '/';
 GREATEST: 'greatest';

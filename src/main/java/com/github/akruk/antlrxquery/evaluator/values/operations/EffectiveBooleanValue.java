@@ -9,10 +9,12 @@ import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactor
 public class EffectiveBooleanValue {
 
     private final XQueryValueFactory valueFactory;
+    private final XQueryValue true_;
     private final XQueryValue false_;
 
     public EffectiveBooleanValue(XQueryValueFactory valueFactory) {
         this.valueFactory = valueFactory;
+        true_ = valueFactory.bool(true);
         false_ = valueFactory.bool(false);
     }
 
@@ -20,28 +22,24 @@ public class EffectiveBooleanValue {
         if (value.isEmptySequence) {
             return false_;
         }
+        if (value.sequence.get(0).isNode)
+            return true_;
         if (value.size != 1)
-            return valueFactory.error(XQueryError.InvalidArgumentType, "Sequence: " + value + " of type " + value.type + " does not have an effective boolean value");
-        if (!(value.isString || value.isBoolean || value.isNumeric))
-            return valueFactory.error(XQueryError.InvalidArgumentType,
-                "Value: " + value + " of type " + value.type + " does not have an effective boolean value");
-
-        return valueFactory.bool(effectiveBooleanValue_(value));
-
-    }
-
-    public boolean effectiveBooleanValue_(XQueryValue value) {
-        if (value.isEmptySequence) {
-            return false;
-        }
-        if (value.isString)
-            return !value.stringValue.isEmpty();
+            return valueFactory.error(
+                XQueryError.InvalidArgumentType,
+                "Sequence: " + value + " of type " + value.type + " does not have an effective boolean value");
         if (value.isBoolean)
-            return value.booleanValue;
+            return value;
+        if (value.isString)
+            return valueFactory.bool(!value.stringValue.isEmpty());
         if (value.isNumeric) {
             boolean ebf = value.numericValue.compareTo(BigDecimal.ZERO) != 0;
-            return ebf;
+            return valueFactory.bool(ebf);
         }
-        return false;
+        return valueFactory.error(
+            XQueryError.InvalidArgumentType,
+            "Value: " + value + " of type " + value.type + " does not have an effective boolean value");
+
     }
+
 }

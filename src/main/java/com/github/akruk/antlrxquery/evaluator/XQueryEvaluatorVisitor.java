@@ -586,8 +586,10 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             case "is" -> nodeComparisonOperator.is(visitedLeft, visitedRight);
             case "is-not" -> nodeComparisonOperator.isNot(visitedLeft, visitedRight);
             case "precedes" -> nodeComparisonOperator.precedes(visitedLeft, visitedRight);
+            case "precedes-or-is" -> nodeComparisonOperator.precedesOrIs(visitedLeft, visitedRight);
             case "<<" -> nodeComparisonOperator.precedes(visitedLeft, visitedRight);
             case "follows" -> nodeComparisonOperator.follows(visitedLeft, visitedRight);
+            case "follows-or-is" -> nodeComparisonOperator.followsOrIs(visitedLeft, visitedRight);
             case ">>" -> nodeComparisonOperator.follows(visitedLeft, visitedRight);
             default -> null; // shouldn't be reachable
         };

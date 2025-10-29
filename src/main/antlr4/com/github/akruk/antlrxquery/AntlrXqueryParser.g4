@@ -171,7 +171,7 @@ unionOperator: UNION | UNION_OP;
 multiplicativeOperator: STAR | DIV | DIV_OP | IDIV | MOD | MULTIPLICATION;
 generalComp: EQ_OP | NE_OP | LT_OP | LE_OP | GT_OP | GE_OP;
 valueComp: EQ | NE | LT | LE | GT | GE;
-nodeComp: IS | PRECEDING_OP | FOLLOWING_OP | FOLLOWS | PRECEDES;
+nodeComp: IS | IS_NOT | PRECEDING_OP | FOLLOWING_OP | FOLLOWS | PRECEDES | PRECEDES_OR_IS | FOLLOWS_OR_IS;
 pathOperator: SLASH | SLASHES;
 
 

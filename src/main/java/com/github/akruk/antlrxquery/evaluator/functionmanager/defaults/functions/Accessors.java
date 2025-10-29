@@ -10,6 +10,7 @@ import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryError;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
+import com.github.akruk.antlrxquery.evaluator.values.operations.Stringifier;
 import com.github.akruk.antlrxquery.evaluator.values.operations.ValueAtomizer;
 
 public class Accessors {
@@ -17,11 +18,19 @@ public class Accessors {
     private final XQueryValueFactory valueFactory;
     private final Parser targetParser;
     private final ValueAtomizer atomizer;
+    private final Stringifier stringifier;
 
-    public Accessors(final XQueryValueFactory valueFactory, final Parser targetParser, final ValueAtomizer atomizer) {
+    public Accessors(
+        final XQueryValueFactory valueFactory,
+        final Parser targetParser,
+        final ValueAtomizer atomizer,
+        final Stringifier stringifier
+        )
+    {
         this.valueFactory = valueFactory;
         this.targetParser = targetParser;
         this.atomizer = atomizer;
+        this.stringifier = stringifier;
     }
 
 
@@ -61,19 +70,7 @@ public class Accessors {
     {
 
         XQueryValue target = args.get(0);
-        if (target.isError)
-            return target;
-        if (target.isEmptySequence)
-            return valueFactory.emptyString();
-        if (target.isString)
-            return target;
-        if (target.isBoolean)
-            return valueFactory.string(target.booleanValue? "true" : "false");
-        if (target.isNumeric)
-            return valueFactory.string(target.numericValue.toString());
-        if (target.isNode)
-            return valueFactory.string(target.node.getText());
-        return valueFactory.string(target.toString());
+        return stringifier.stringify(target);
     }
 
 

@@ -124,7 +124,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         this.nodeComparisonOperator = new NodeComparisonOperator(valueFactory, root.node);
         this.booleanOperator = new ValueBooleanOperator(this, valueFactory, effectiveBooleanValue);
         this.nodeOperator = new NodeOperator(valueFactory);
-        this.functionManager = new XQueryEvaluatingFunctionManager(this, parser, valueFactory, nodeGetter, typeFactory, effectiveBooleanValue, atomizer, valueComparisonOperator);
+        this.functionManager = new XQueryEvaluatingFunctionManager(this, parser, valueFactory, nodeGetter, typeFactory, effectiveBooleanValue, atomizer, stringifier, valueComparisonOperator);
         this.contextManager = new XQueryDynamicContextManager();
         this.concat = functionManager.getFunctionReference("fn", "concat", 2).functionValue;
         this.string = functionManager.getFunctionReference("fn", "string", 1).functionValue;

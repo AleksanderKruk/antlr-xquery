@@ -67,6 +67,7 @@ public class XQueryEvaluatingFunctionManager {
         final XQueryTypeFactory typeFactory,
         final EffectiveBooleanValue ebv,
         final ValueAtomizer atomizer,
+        final Stringifier stringifier,
         final ValueComparisonOperator valueComparisonOperator)
     {
         this.valueFactory = valueFactory;
@@ -74,8 +75,8 @@ public class XQueryEvaluatingFunctionManager {
         this.typeFactory = typeFactory;
         this.namespaces = new HashMap<>(10);
         this.mathFunctions = new MathFunctions(valueFactory);
-        this.accessors = new Accessors(valueFactory, parser, atomizer);
-        this.functionsOnStringValues = new FunctionsOnStringValues(valueFactory, atomizer, new Stringifier(valueFactory, ebv));
+        this.accessors = new Accessors(valueFactory, parser, atomizer, stringifier);
+        this.functionsOnStringValues = new FunctionsOnStringValues(valueFactory, atomizer, stringifier);
         this.functionsOnNumericValues = new FunctionsOnNumericValues(valueFactory);
         this.functionsBasedOnSubstringMatching = new FunctionsBasedOnSubstringMatching(valueFactory);
         this.cardinalityFunctions = new CardinalityFunctions(valueFactory, atomizer);

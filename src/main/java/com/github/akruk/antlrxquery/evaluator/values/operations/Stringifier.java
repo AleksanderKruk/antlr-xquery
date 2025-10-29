@@ -13,7 +13,7 @@ public class Stringifier {
     }
 
     public XQueryValue stringify(XQueryValue target) {
-        if (target.isError)
+        if (target.isError || target.isString)
             return target;
         return valueFactory.string(stringify_(target));
     }
@@ -27,6 +27,8 @@ public class Stringifier {
             return target.booleanValue? "true" : "false";
         if (target.isNumeric)
             return target.numericValue.toString();
+        if (target.isNode)
+            return target.node.getText();
         return target.toString();
     }
 

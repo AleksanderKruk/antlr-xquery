@@ -18,7 +18,7 @@ public class NodeComparisonOperator {
         final XQueryValueFactory valueFactory,
         final ParseTree tree)
     {
-        NodeIndexer indexer = new NodeIndexer();
+        final NodeIndexer indexer = new NodeIndexer();
         this.indices = indexer.indexNodes(tree);
         this.valueFactory = valueFactory;
     }
@@ -71,8 +71,8 @@ public class NodeComparisonOperator {
             return valueFactory.error(XQueryError.InvalidArgumentType,
                 "Node comparison between " + o1 + " and " + o2 + " is impossible");
         }
-        int i1 = indices.get(o1.node);
-        int i2 = indices.get(o2.node);
+        final int i1 = indices.get(o1.node);
+        final int i2 = indices.get(o2.node);
         return valueFactory.bool(i1 < i2);
     }
 
@@ -90,8 +90,8 @@ public class NodeComparisonOperator {
             return valueFactory.error(XQueryError.InvalidArgumentType,
                 "Node comparison between " + o1 + " and " + o2 + " is impossible");
         }
-        int i1 = indices.get(o1.node);
-        int i2 = indices.get(o2.node);
+        final int i1 = indices.get(o1.node);
+        final int i2 = indices.get(o2.node);
         return valueFactory.bool(i1 <= i2);
     }
 
@@ -109,8 +109,8 @@ public class NodeComparisonOperator {
             return valueFactory.error(XQueryError.InvalidArgumentType,
                 "Node comparison between " + o1 + " and " + o2 + " is impossible");
         }
-        int i1 = indices.get(o1.node);
-        int i2 = indices.get(o2.node);
+        final int i1 = indices.get(o1.node);
+        final int i2 = indices.get(o2.node);
         return valueFactory.bool(i1 > i2);
     }
 
@@ -128,8 +128,8 @@ public class NodeComparisonOperator {
             return valueFactory.error(XQueryError.InvalidArgumentType,
                 "Node comparison between " + o1 + " and " + o2 + " is impossible");
         }
-        int i1 = indices.get(o1.node);
-        int i2 = indices.get(o2.node);
+        final int i1 = indices.get(o1.node);
+        final int i2 = indices.get(o2.node);
         return valueFactory.bool(i1 >= i2);
     }
 }

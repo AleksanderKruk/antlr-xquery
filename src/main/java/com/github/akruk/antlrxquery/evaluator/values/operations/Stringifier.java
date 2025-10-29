@@ -5,20 +5,20 @@ import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactor
 
 public class Stringifier {
 
-    private XQueryValueFactory valueFactory;
+    private final XQueryValueFactory valueFactory;
 
     public Stringifier(final XQueryValueFactory valueFactory, final EffectiveBooleanValue ebv)
     {
         this.valueFactory = valueFactory;
     }
 
-    public XQueryValue stringify(XQueryValue target) {
+    public XQueryValue stringify(final XQueryValue target) {
         if (target.isError || target.isString)
             return target;
         return valueFactory.string(stringify_(target));
     }
 
-    public String stringify_(XQueryValue target) {
+    public String stringify_(final XQueryValue target) {
         if (target.isEmptySequence)
             return "";
         if (target.isString)

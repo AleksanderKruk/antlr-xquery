@@ -14,7 +14,7 @@ public class ValueBooleanOperator {
     private final EffectiveBooleanValue ebv;
     private final XQueryEvaluatorVisitor evaluator;
 
-    public ValueBooleanOperator(XQueryEvaluatorVisitor evaluator, final XQueryValueFactory valueFactory, final EffectiveBooleanValue ebv) {
+    public ValueBooleanOperator(final XQueryEvaluatorVisitor evaluator, final XQueryValueFactory valueFactory, final EffectiveBooleanValue ebv) {
         this.evaluator = evaluator;
         this.valueFactory = valueFactory;
         this.ebv = ebv;
@@ -23,9 +23,9 @@ public class ValueBooleanOperator {
 
     public XQueryValue or(final List<? extends ParseTree> operands) {
         boolean result = false;
-        for (var operand : operands) {
-            var evaluatedOperand = operand.accept(evaluator);
-            var effectiveBooleanValue = ebv.effectiveBooleanValue(evaluatedOperand);
+        for (final var operand : operands) {
+            final var evaluatedOperand = operand.accept(evaluator);
+            final var effectiveBooleanValue = ebv.effectiveBooleanValue(evaluatedOperand);
             if (effectiveBooleanValue.isError)
                 return effectiveBooleanValue;
             result = result || effectiveBooleanValue.booleanValue;
@@ -35,9 +35,9 @@ public class ValueBooleanOperator {
 
     public XQueryValue and(final List<? extends ParseTree> operands) {
         boolean result = true;
-        for (var operand : operands) {
-            var evaluatedOperand = operand.accept(evaluator);
-            var effectiveBooleanValue = ebv.effectiveBooleanValue(evaluatedOperand);
+        for (final var operand : operands) {
+            final var evaluatedOperand = operand.accept(evaluator);
+            final var effectiveBooleanValue = ebv.effectiveBooleanValue(evaluatedOperand);
             if (effectiveBooleanValue.isError)
                 return effectiveBooleanValue;
             result = result && effectiveBooleanValue.booleanValue;

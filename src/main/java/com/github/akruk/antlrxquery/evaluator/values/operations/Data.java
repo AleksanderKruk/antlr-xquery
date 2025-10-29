@@ -14,7 +14,7 @@ public class Data {
         this.atomizer = atomizer;
     }
 
-    public XQueryValue data(XQueryValue target) {
+    public XQueryValue data(final XQueryValue target) {
         return valueFactory.sequence(atomizer.atomize(target));
     }
 

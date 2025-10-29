@@ -32,7 +32,7 @@ public final class XQuery {
         final ParserRuleContext root = new ParserRuleContext();
         if (tree != null) {
             root.children = List.of(tree);
-            var originalParent = tree.getParent();
+            final var originalParent = tree.getParent();
             tree.setParent(root);
             root.setParent((RuleContext) originalParent);
         }

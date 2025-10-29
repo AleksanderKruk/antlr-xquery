@@ -524,15 +524,15 @@ private static ValidationResult validateStartingRule(final Map<String, List<Stri
         final String parserName = getFirstArg(args, PARSER_NAME_ARG, "");
 
         // Handle query extraction
-        Set<Path> modulePaths = new HashSet<>();
+        final Set<Path> modulePaths = new HashSet<>();
         String query;
         if (args.containsKey(QUERY_ARG)) {
             query = String.join(" ", args.get(QUERY_ARG));
         } else {
             final String queryFile = args.get(QUERY_FILE_ARG).get(0);
-            Path queryFilePath = Path.of(queryFile);
+            final Path queryFilePath = Path.of(queryFile);
             query = Files.readString(queryFilePath);
-            Path parent = queryFilePath.getParent();
+            final Path parent = queryFilePath.getParent();
             if (parent != null)
                 modulePaths.add(parent);
         }

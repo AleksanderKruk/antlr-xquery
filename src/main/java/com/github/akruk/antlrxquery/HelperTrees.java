@@ -33,7 +33,4 @@ public class HelperTrees {
         final AntlrXqueryParser parser = new AntlrXqueryParser(stream);
         return initialRule.apply(parser);
     }
-
-
-
 }

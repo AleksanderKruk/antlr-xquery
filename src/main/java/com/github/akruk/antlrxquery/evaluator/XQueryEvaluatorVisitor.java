@@ -2226,30 +2226,30 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return cast;
     }
 
-    private String stringContents(TerminalNode ctx)
+    private String stringContents(final TerminalNode ctx)
     {
-        var text = ctx.getText();
+        final var text = ctx.getText();
         return text.substring(1, text.length() - 1);
     }
 
 
     @Override
-    public XQueryValue visitPathModuleImport(PathModuleImportContext ctx) {
-        var result = moduleManager.pathModuleImport(stringContents(ctx.STRING()));
+    public XQueryValue visitPathModuleImport(final PathModuleImportContext ctx) {
+        final var result = moduleManager.pathModuleImport(stringContents(ctx.STRING()));
         this.visit(result.tree());
         return null;
     }
 
     @Override
-    public XQueryValue visitDefaultPathModuleImport(DefaultPathModuleImportContext ctx) {
-        var result = moduleManager.defaultPathModuleImport(ctx.getText().replace(":", "/"));
+    public XQueryValue visitDefaultPathModuleImport(final DefaultPathModuleImportContext ctx) {
+        final var result = moduleManager.defaultPathModuleImport(ctx.getText().replace(":", "/"));
         this.visit(result.tree());
         return null;
     }
 
     @Override
-    public XQueryValue visitNamespaceModuleImport(NamespaceModuleImportContext ctx) {
-        var result = moduleManager.pathModuleImport(stringContents(ctx.STRING()));
+    public XQueryValue visitNamespaceModuleImport(final NamespaceModuleImportContext ctx) {
+        final var result = moduleManager.pathModuleImport(stringContents(ctx.STRING()));
         this.visit(result.tree());
         return null;
     }

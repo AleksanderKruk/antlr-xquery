@@ -9,19 +9,19 @@ public class XQueryVisitingContext {
     public XQueryValue getValue() {
         return value;
     }
-    public void setValue(XQueryValue item) {
+    public void setValue(final XQueryValue item) {
         this.value = item;
     }
     public int getPosition() {
         return position;
     }
-    public void setPosition(int position) {
+    public void setPosition(final int position) {
         this.position = position;
     }
     public int getSize() {
         return size;
     }
-    public void setSize(int size) {
+    public void setSize(final int size) {
         this.size = size;
     }
 }

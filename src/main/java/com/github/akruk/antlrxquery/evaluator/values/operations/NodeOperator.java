@@ -20,7 +20,7 @@ public class NodeOperator {
             if (operand.isError)
                 return operand;
         }
-        final var unionized = operands.stream().flatMap((XQueryValue op)->op.sequence.stream()).toList();
+        final var unionized = operands.stream().flatMap((final XQueryValue op)->op.sequence.stream()).toList();
         return valueFactory.sequence(unionized);
     }
 
@@ -32,7 +32,7 @@ public class NodeOperator {
         if (operands.size() == 0)
             return valueFactory.emptySequence();
         final var result = new ArrayList<>(operands.get(0).sequence);
-        for (var operand: operands.subList(1, operands.size())) {
+        for (final var operand: operands.subList(1, operands.size())) {
             if (result.size() == 0)
                 break;
             result.retainAll(operand.sequence);
@@ -48,7 +48,7 @@ public class NodeOperator {
         if (operands.size() == 0)
             return valueFactory.emptySequence();
         final var result = new ArrayList<>(operands.get(0).sequence);
-        for (var operand: operands.subList(1, operands.size())) {
+        for (final var operand: operands.subList(1, operands.size())) {
             if (result.size() == 0)
                 break;
             result.removeAll(operand.sequence);

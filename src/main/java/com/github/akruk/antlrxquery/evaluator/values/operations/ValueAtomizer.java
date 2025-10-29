@@ -9,13 +9,13 @@ import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 
 public class ValueAtomizer {
 
-    public List<XQueryValue> atomize(XQueryValue value) {
-        List<XQueryValue> result = new ArrayList<>();
-        Queue<XQueryValue> queue = new LinkedList<>();
+    public List<XQueryValue> atomize(final XQueryValue value) {
+        final List<XQueryValue> result = new ArrayList<>();
+        final Queue<XQueryValue> queue = new LinkedList<>();
         queue.add(value);
 
         while (!queue.isEmpty()) {
-            XQueryValue current = queue.poll();
+            final XQueryValue current = queue.poll();
 
             if (current.isEmptySequence) continue;
 

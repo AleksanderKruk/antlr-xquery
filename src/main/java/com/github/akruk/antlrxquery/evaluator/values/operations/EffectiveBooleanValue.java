@@ -12,13 +12,13 @@ public class EffectiveBooleanValue {
     private final XQueryValue true_;
     private final XQueryValue false_;
 
-    public EffectiveBooleanValue(XQueryValueFactory valueFactory) {
+    public EffectiveBooleanValue(final XQueryValueFactory valueFactory) {
         this.valueFactory = valueFactory;
         true_ = valueFactory.bool(true);
         false_ = valueFactory.bool(false);
     }
 
-    public XQueryValue effectiveBooleanValue(XQueryValue value) {
+    public XQueryValue effectiveBooleanValue(final XQueryValue value) {
         if (value.isEmptySequence) {
             return false_;
         }
@@ -33,7 +33,7 @@ public class EffectiveBooleanValue {
         if (value.isString)
             return valueFactory.bool(!value.stringValue.isEmpty());
         if (value.isNumeric) {
-            boolean ebf = value.numericValue.compareTo(BigDecimal.ZERO) != 0;
+            final boolean ebf = value.numericValue.compareTo(BigDecimal.ZERO) != 0;
             return valueFactory.bool(ebf);
         }
         return valueFactory.error(

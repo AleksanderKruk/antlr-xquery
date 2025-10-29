@@ -14,9 +14,9 @@ public record DiagnosticError(
     int endCharPositionInLine)
 {
     public static DiagnosticError of(
-        ParserRuleContext where,
-        ErrorType type,
-        List<Object> data
+        final ParserRuleContext where,
+        final ErrorType type,
+        final List<Object> data
         )
     {
         final Token start = where.getStart();
@@ -34,7 +34,7 @@ public record DiagnosticError(
             lineEndCharPosEnd.charPosEnd);
     }
 
-  public static DiagnosticError of(Token start, Token stop, ErrorType type, List<Object> data) {
+  public static DiagnosticError of(final Token start, final Token stop, final ErrorType type, final List<Object> data) {
     return new DiagnosticError(
         type,
         data,

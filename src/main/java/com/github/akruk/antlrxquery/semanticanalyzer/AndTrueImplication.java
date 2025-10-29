@@ -1,6 +1,5 @@
 package com.github.akruk.antlrxquery.semanticanalyzer;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -17,7 +16,7 @@ final class AndTrueImplication extends ValueImplication<Boolean> {
     private final List<ParseTree> andEffectiveBooleanValues;
     private final XQuerySemanticAnalyzer analyzer;
 
-    AndTrueImplication(TypeInContext andResult, List<ParseTree> andExprs, XQuerySemanticAnalyzer analyzer) {
+    AndTrueImplication(final TypeInContext andResult, final List<ParseTree> andExprs, final XQuerySemanticAnalyzer analyzer) {
         super(andResult, true);
         this.andResult = andResult;
         this.andEffectiveBooleanValues = andExprs;
@@ -25,13 +24,13 @@ final class AndTrueImplication extends ValueImplication<Boolean> {
     }
 
     @Override
-    public void transform(XQuerySemanticContext context)
+    public void transform(final XQuerySemanticContext context)
     {
-        var errors = analyzer.getErrors();
-        var preerrorcount = errors.size();
-        for (var andExpr : andEffectiveBooleanValues) {
-            var andEbv = andExpr.accept(analyzer);
-            var ebv = context.resolveEffectiveBooleanValue(andEbv);
+        final var errors = analyzer.getErrors();
+        final var preerrorcount = errors.size();
+        for (final var andExpr : andEffectiveBooleanValues) {
+            final var andEbv = andExpr.accept(analyzer);
+            final var ebv = context.resolveEffectiveBooleanValue(andEbv);
             context.currentScope().assume(ebv, new Assumption(ebv, true));
         }
         while (errors.size() != preerrorcount) {
@@ -40,9 +39,9 @@ final class AndTrueImplication extends ValueImplication<Boolean> {
     }
 
     @Override
-    public Implication remapTypes(Map<TypeInContext, TypeInContext> typeMapping)
+    public Implication remapTypes(final Map<TypeInContext, TypeInContext> typeMapping)
     {
-        TypeInContext remappedAndResult = typeMapping.get(andResult);
+        final TypeInContext remappedAndResult = typeMapping.get(andResult);
         return new AndTrueImplication(remappedAndResult, this.andEffectiveBooleanValues, this.analyzer);
     }
 

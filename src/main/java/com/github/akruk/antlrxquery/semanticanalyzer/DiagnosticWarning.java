@@ -15,7 +15,12 @@ public record DiagnosticWarning(
     )
 {
 
-    public static DiagnosticWarning of(ParserRuleContext where, WarningType type, List<Object> data) {
+    public static DiagnosticWarning of(
+        final ParserRuleContext where,
+        final WarningType type,
+        final List<Object> data
+        )
+    {
         final Token start = where.getStart();
         final Token stop = where.getStop();
         final int line = start.getLine();
@@ -32,7 +37,12 @@ public record DiagnosticWarning(
         );
     }
 
-    public static DiagnosticWarning of(Token start, Token stop, WarningType type, List<Object> data) {
+    public static DiagnosticWarning of(
+        final Token start,
+        final Token stop,
+        final WarningType type,
+        final List<Object> data)
+    {
         return new DiagnosticWarning(
             type,
             data,
@@ -42,9 +52,7 @@ public record DiagnosticWarning(
             stop.getCharPositionInLine() + stop.getText().length());
     }
 
-
-    record LineEndCharPosEnd(int lineEnd, int charPosEnd) {
-    }
+    record LineEndCharPosEnd(int lineEnd, int charPosEnd) {}
 
     private static LineEndCharPosEnd getLineEndCharPosEnd(final Token end)
     {
@@ -61,7 +69,8 @@ public record DiagnosticWarning(
         }
 
         final int lineEnd = end.getLine() + newlineCount;
-        final int charPositionInLineEnd = newlineCount == 0 ? end.getCharPositionInLine() + length
+        final int charPositionInLineEnd = newlineCount == 0
+            ? end.getCharPositionInLine() + length
             : length - lastNewlineIndex;
         return new LineEndCharPosEnd(lineEnd, charPositionInLineEnd);
     }

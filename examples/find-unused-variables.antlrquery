@@ -15,6 +15,6 @@ let $visibility-end := $visibilities[$redefPosition]
 let $varname := $varNames[$defPosition]
 let $relevantRefsInScope := $varRefs
   [. follows $visibility-start]
-  [. is $visibility-end or . precedes $visibility-end]
+  [. precedes-or-is $visibility-end]
   [./qname=!>string() = $varname]
 return if ($relevantRefsInScope => empty()) { $var }

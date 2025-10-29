@@ -1,6 +1,5 @@
 package com.github.akruk.antlrxquery.languagefeatures.evaluation.varia;
 
-import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.Test;

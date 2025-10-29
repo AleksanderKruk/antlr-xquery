@@ -97,7 +97,9 @@ public class EvaluationTestsBase {
         if (result.size != 1)
             assertTrue(deepEquals(result, value));
         else
-            assertTrue(result == value || value.equals(result));
+            if (result == value)
+                return;
+            assertEquals(result, value);
     }
 
     public void assertResult(String xquery, XQueryValue result) {
@@ -200,6 +202,20 @@ public class EvaluationTestsBase {
 
     public void assertDynamicGrammarQuery(String grammarName, String grammarString, String startRuleName, String textualTree, String xquery, XQueryValue expected) throws Exception {
         var value = executeDynamicGrammarQuery(grammarName, grammarString, startRuleName, textualTree, xquery);
+        assertNotNull(value);;
+        assertResult(value, expected);
+    }
+
+    public void assertDynamicGrammarQuery(
+        String grammarName,
+        Path grammar,
+        String startRuleName,
+        String textualTree,
+        String xquery,
+        XQueryValue expected)
+            throws Exception
+    {
+        var value = executeDynamicGrammarQuery(grammarName, Files.readString(grammar), startRuleName, textualTree, xquery);
         assertNotNull(value);;
         assertResult(value, expected);
     }

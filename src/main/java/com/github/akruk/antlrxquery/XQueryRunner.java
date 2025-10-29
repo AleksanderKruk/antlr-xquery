@@ -127,6 +127,10 @@ public class XQueryRunner {
                 final String fileContent = Files.readString(Path.of(file));
                 final XQueryValue results = executeQuery(xqueryTree, lexerClass, parserClass, startingRule, fileContent, modulePaths);
                 outputStream.println("File: " + file);
+                if (results == null) {
+                    errorStream.print("<null>");
+                    return;
+                }
                 if (results.sequence == null) {
                     errorStream.println(results);
                 }

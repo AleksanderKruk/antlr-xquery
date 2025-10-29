@@ -253,8 +253,8 @@ UNORDERED: 'unordered';
 ID: NAME_START (DASH NAME_MIDDLE)*
     ; /* Replace with antlr compatible */
 
-fragment NAME_START: [\p{Alpha}_][\p{Alpha}\p{Alnum}_]*;
-fragment NAME_MIDDLE: [\p{Alpha}\p{Alnum}_]+;
+fragment NAME_START:  [\p{Alpha}_][\p{Alpha}\p{Alnum}_]*;
+fragment NAME_MIDDLE: [\p{Alpha}_][\p{Alpha}\p{Alnum}_]*;
 fragment DASH: '-';
 
 STRING_CONSTRUCTOR_START : '``[' -> pushMode(INSIDE_STRING_CONSTRUCTOR);

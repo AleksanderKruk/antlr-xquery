@@ -679,7 +679,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     private List<ParseTree> matchedTreeNodes() {
-        return matchedNodes.sequence.stream().map(v->v.node).toList();
+        return matchedNodes.sequence.stream().map(v->v.node).distinct().toList();
     }
 
     @Override

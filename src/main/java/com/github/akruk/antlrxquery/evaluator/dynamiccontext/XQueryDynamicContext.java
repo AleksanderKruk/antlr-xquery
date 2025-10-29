@@ -33,7 +33,13 @@ public class XQueryDynamicContext {
     }
 
     public XQueryValue getVariable(String variableName) {
-        return currentScope().getVariable(variableName);
+        for (var scope : scopes.reversed()) {
+            var value = scope.getVariable(variableName);
+            if (value != null) {
+                return value;
+            }
+        }
+        return null;
     }
 
     public boolean provideVariable(String variableName, XQueryValue assignedValue) {

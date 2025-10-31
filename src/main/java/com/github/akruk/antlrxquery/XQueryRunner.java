@@ -28,28 +28,44 @@ import java.nio.file.*;
 import java.util.*;
 
 public class XQueryRunner {
-    public static void main(final String[] args) throws Exception {
-        runXQueryTool(args);
+    public enum ExecutionStatus {
+        OK,
+        INVALID_STARTING_RULE__NONEXISTENT_RULE
+        ;
+
     }
 
-    public static void runXQueryTool(final String[] args) throws Exception {
+    public static void main(final String[] args)
+    {
+        runXQueryTool(args);
+
+    }
+
+    record ToolRunResult(ExecutionStatus status) {
+    }
+
+    public static void runXQueryTool(final String[] args) {
         runXQueryTool(args, System.in, System.out, System.err);
     }
 
-    public static void runXQueryTool(final String[] args,
-                                     final InputStream inputStream,
-                                     final PrintStream outputStream,
-                                     final PrintStream errorStream)
-    throws Exception
+    public static void runXQueryTool(
+        final String[] args,
+        final InputStream inputStream,
+        final PrintStream outputStream,
+        final PrintStream errorStream
+        )
     {
-        final Map<String, List<String>> argMap = parseArgs(args);
-        final ValidationResult result = validateAndExtractInput(argMap, inputStream, outputStream, errorStream);
-        if (result.status != InputStatus.OK) {
-            errorStream.println(result.message);
-            System.exit(result.status.ordinal());
+        try {
+            final Map<String, List<String>> argMap = parseArgs(args);
+            final ValidationResult result = validateAndExtractInput(argMap, inputStream, outputStream, errorStream);
+            if (result.status != InputStatus.OK) {
+                errorStream.println(result.message);
+                System.exit(result.status.ordinal());
+            }
+            runXQueryTool(result.extractedArgs);
+        } catch (final Exception e) {
+            e.printStackTrace(errorStream);
         }
-
-        runXQueryTool(result.extractedArgs);
     }
 
 

@@ -2370,34 +2370,34 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return null;
     }
 
-    // @Override
-    // public XQueryValue visitTypeswitchExpr(TypeswitchExprContext ctx)
-    // {
-    //     var switched = visitExpr(ctx.expr());
-    //     var cases = ctx.bracedTypeswitchCases() != null
-    //         ? ctx.bracedTypeswitchCases().typeswitchCases()
-    //         : ctx.typeswitchCases()
-    //         ;
-    //     var clauses = cases.caseClause();
-    //     for (var typeswitchCase : clauses) {
-    //         for (var typeCtx : typeswitchCase.sequenceTypeUnion().sequenceType()) {
-    //             var type = semanticAnalyzer.visitSequenceType(typeCtx);
-    //             if (switched.type.isSubtypeOf(type.type)) {
-    //                 if (typeswitchCase.varRef() != null) {
-    //                     var caseVarName = cases.varRef().qname().getText();
-    //                     contextManager.provideVariable(caseVarName, switched);
-    //                 }
-    //                 var evaluatedCase = visitExprSingle(typeswitchCase.exprSingle());
-    //                 return evaluatedCase;
-    //             }
-    //         }
-    //     }
-    //     if (cases.varRef() != null) {
-    //         var defaultName = cases.varRef().qname().getText();
-    //         contextManager.provideVariable(defaultName, switched);
-    //     }
-    //     final var defaultValue = visitExprSingle(cases.exprSingle());
-    //     return defaultValue;
-    // }
+    @Override
+    public XQueryValue visitTypeswitchExpr(TypeswitchExprContext ctx)
+    {
+        var switched = visitExpr(ctx.expr());
+        var cases = ctx.bracedTypeswitchCases() != null
+            ? ctx.bracedTypeswitchCases().typeswitchCases()
+            : ctx.typeswitchCases()
+            ;
+        var clauses = cases.caseClause();
+        for (var typeswitchCase : clauses) {
+            for (var typeCtx : typeswitchCase.sequenceTypeUnion().sequenceType()) {
+                var type = semanticAnalyzer.visitSequenceType(typeCtx);
+                if (switched.type.isSubtypeOf(type.type)) {
+                    if (typeswitchCase.varRef() != null) {
+                        var caseVarName = cases.varRef().qname().getText();
+                        contextManager.provideVariable(caseVarName, switched);
+                    }
+                    var evaluatedCase = visitExprSingle(typeswitchCase.exprSingle());
+                    return evaluatedCase;
+                }
+            }
+        }
+        if (cases.varRef() != null) {
+            var defaultName = cases.varRef().qname().getText();
+            contextManager.provideVariable(defaultName, switched);
+        }
+        final var defaultValue = visitExprSingle(cases.exprSingle());
+        return defaultValue;
+    }
 }
 

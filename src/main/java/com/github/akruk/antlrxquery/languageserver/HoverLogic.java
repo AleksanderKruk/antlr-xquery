@@ -1,10 +1,10 @@
 package com.github.akruk.antlrxquery.languageserver;
+import java.util.Stack;
+
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
-
-import java.util.Stack;
 
 public class HoverLogic {
     enum HoverKind {
@@ -22,9 +22,8 @@ public class HoverLogic {
 
         while (!stack.isEmpty()) {
             ParseTree node = stack.pop();
-
-            if (node instanceof TerminalNode) {
-                Token token = ((TerminalNode) node).getSymbol();
+            if (node instanceof final TerminalNode terminalNode) {
+                Token token = terminalNode.getSymbol();
                 if (token != null) {
                     // Check if the desired position falls within the token's range
                     if (token.getLine() == line + 1 // ANTLR lines are 1-based

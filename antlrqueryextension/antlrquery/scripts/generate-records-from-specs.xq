@@ -14,20 +14,49 @@ declare function local:get-fields(
         return `{$field}{if ($field-optionality) { '?' }} as {$type}`
 };
 
-
+declare function local:map-parentheses(
+    $start
+) 
+{
+    let $closing := $start/following-sibling::*[
+        normalize-space() => fn:matches(
+            ('\};?', '\);?', '\];?', '\}\)\[\];') => string-join("|")
+            )
+        ]
+    let $opening := $start/following-sibling::*[normalize-space() = ('{', '(', '[', '({')]
+    for $o at $oi in $opening
+    for $c at $ci in $closing=>reverse()
+    return if ($opening=>count() - $oi + 1 = $ci) {
+        map { $o: ($c, $o/following-sibling::*[. << $c]=>string-join()) }
+    }
+}
 
 declare function local:parse-type(
     $type-mapping,
-    $type
+    $colon,
+    $mapped-parentheses
 ) as xs:string*
 {
-    (: let $is-record := $colon/following-sibling::*[1][normalize-space() = '[];']
+
+    let $closing := $colon/following-sibling::*[normalize-space() = '}']
+    let $opening := $colon/following-sibling::*[normalize-space() = '{']
+    for $o at $oi in $opening
+    for $c at $ci in $closing=>reverse()
+    return if ($opening=>count() - $oi + 1 = $ci)
+
+    let := $colon/following-sibling::*[normalize-space() = ('{', '}')]
+    let := $colon/following-sibling::*[]
     let $s := switch($colon/following-sibling::*[1])
         case '({' return ()
-        case '{' return()
-        default return $colon/following-sibling::* :)
+        case '{'  return
+            local:parse-type($colon/following-sibling::*[2]) 
+        case '['  return()
+        case '('  return ()
+        default return $colon/following-sibling::* 
+    let $type := $field/following-sibling::span[2][@class=('nx', 'kr')] 
 
 
+    let $is-record := $colon/following-sibling::*[1][normalize-space() = '[];']
     let $is-array := $type/following-sibling::*[1][normalize-space() = '[];']
     let $accessed-type as xs:string? := $type-mapping?($type)
     let $used-type as xs:string := if ($accessed-type=>exists())
@@ -68,9 +97,8 @@ let $structuredClassInformation := (
         'field-types': (
             (
                 for $field in $fields
-                    let $type := $field/following-sibling::span[2][@class=('nx', 'kr')]
-                    let $is-record := $type=>exists()
-                    let $used-type := local:parse-type($type-mapping, $type)
+                    let $colon := $field/following-sibling::span[1][normalize-space() = ':']
+                    let $used-type := local:parse-type($type-mapping, $colon, local:map-parentheses())
                     return $used-type
             )
         ),

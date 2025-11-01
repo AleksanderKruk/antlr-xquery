@@ -1793,7 +1793,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                 if (c.pureNameTestUnion() != null) {
                     final var foundErrors = new ArrayList<XQueryItemType>();
                     for (final var error : c.pureNameTestUnion().nameTest()) {
-                        String errorText = error.getText();
+                        final String errorText = error.getText();
                         var typeRef = typeFactory.itemNamedType(errorText);
                         if (typeRef == null) {
                             error(c, ErrorType.TRY_CATCH__UNKNOWN_ERROR, List.of(errorText));
@@ -2104,8 +2104,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final var optionalBoolean = typeFactory.zeroOrOne(typeFactory.itemBoolean());
         final var visitedLeft = visitOtherwiseExpr(ctx.otherwiseExpr(0));
         final var visitedRight = visitOtherwiseExpr(ctx.otherwiseExpr(1));
-        boolean validLhs = visitedLeft.isSubtypeOf(anyNode);
-        boolean validRhs = visitedRight.isSubtypeOf(anyNode);
+        final boolean validLhs = visitedLeft.isSubtypeOf(anyNode);
+        final boolean validRhs = visitedRight.isSubtypeOf(anyNode);
         if (!validLhs && !validRhs) {
             error(ctx.otherwiseExpr(0), ErrorType.NODE_COMP__BOTH_INVALID, List.of(visitedLeft, visitedRight));
         }
@@ -2543,7 +2543,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final var status = typeFactory.registerItemNamedType(typeName, itemType);
         switch (status) {
             case ALREADY_REGISTERED_DIFFERENT: {
-                var expected = typeFactory.namedType(typeName);
+                final var expected = typeFactory.namedType(typeName);
                 error(ctx, ErrorType.ITEM_DECLARATION__ALREADY_REGISTERED_DIFFERENT, List.of(typeName, expected));
                 break;
             }
@@ -2599,7 +2599,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final var status = typeFactory.registerItemNamedType(typeName, itemRecordType);
         switch (status) {
             case ALREADY_REGISTERED_DIFFERENT: {
-                XQuerySequenceType expr = typeFactory.namedType(typeName);
+                final XQuerySequenceType expr = typeFactory.namedType(typeName);
                 error(ctx, ErrorType.RECORD_DECLARATION__ALREADY_REGISTERED_DIFFERENT, List.of(typeName, expr));
                 break;
             }
@@ -2721,5 +2721,46 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     //     }
     //     return null;
     // }
+
+
+
+    @Override
+    public TypeInContext visitTypeswitchExpr(final TypeswitchExprContext ctx)
+    {
+        final var switched = visitExpr(ctx.expr());
+        final var cases = ctx.bracedTypeswitchCases() != null
+            ? ctx.bracedTypeswitchCases().typeswitchCases()
+            : ctx.typeswitchCases()
+            ;
+        final var clauses = cases.caseClause();
+        final List<XQuerySequenceType> types = new ArrayList<>();
+        for (final var typeswitchCase : clauses) {
+            for (final var typeCtx : typeswitchCase.sequenceTypeUnion().sequenceType()) {
+                final var type = visitSequenceType(typeCtx);
+                contextManager.enterScope();
+                if (switched.type.isSubtypeOf(type.type)) {
+                    if (typeswitchCase.varRef() != null) {
+                        final var caseVarName = cases.varRef().qname().getText();
+                        contextManager.entypeVariable(caseVarName, type);
+                    }
+                    final var evaluatedCase = visitExprSingle(typeswitchCase.exprSingle());
+                    types.add(evaluatedCase.type);
+                }
+                contextManager.leaveScope();
+            }
+        }
+        contextManager.enterScope();
+        if (cases.varRef() != null) {
+            final var defaultName = cases.varRef().qname().getText();
+            contextManager.entypeVariable(defaultName, switched);
+        }
+        final var defaultType = visitExprSingle(cases.exprSingle());
+        contextManager.leaveScope();
+        types.add(defaultType.type);
+        final XQuerySequenceType orElse = types.stream()
+            .reduce(XQuerySequenceType::alternativeMerge)
+            .orElse(zeroOrMoreItems);
+        return contextManager.typeInContext(orElse);
+    }
 
 }

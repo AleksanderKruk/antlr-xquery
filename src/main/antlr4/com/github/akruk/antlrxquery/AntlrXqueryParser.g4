@@ -110,7 +110,21 @@ finallyClause : FINALLY enclosedExpr ;
 pureNameTestUnion	:	nameTest (UNION_OP nameTest)*;
 
 
+typeswitchExpr
+    : TYPESWITCH LPAREN expr RPAREN (typeswitchCases | bracedTypeswitchCases)
+    ;
 
+typeswitchCases
+    : caseClause+ DEFAULT varRef? RETURN exprSingle
+    ;
+
+caseClause
+    : CASE (varRef AS)? sequenceTypeUnion RETURN exprSingle
+    ;
+
+bracedTypeswitchCases
+    : LCURLY typeswitchCases RCURLY
+    ;
 
 
 

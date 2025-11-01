@@ -68,7 +68,6 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     private final XQuerySemanticAnalyzer semanticAnalyzer;
     // private final XQueryTypeFactory typeFactory;
 
-
     private XQueryValue matchedNodes;
     private XQueryAxis currentAxis;
     private List<XQueryValue> visitedPositionalArguments;
@@ -76,18 +75,18 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     private Stream<List<VariableCoupling>> visitedTupleStream;
     private Map<String, XQueryValue> visitedKeywordArguments;
 
+    record VariableCoupling(Variable item, Variable key, Variable value, Variable position) {
+    }
 
-    record VariableCoupling(Variable item, Variable key, Variable value, Variable position) {}
-    record Variable(String name, XQueryValue value){}
+    record Variable(String name, XQueryValue value) {
+    }
 
     public XQueryEvaluatorVisitor(
         final ParseTree tree,
         final Parser parser,
         final XQuerySemanticAnalyzer analyzer,
         final XQueryTypeFactory typeFactory,
-        final ModuleManager moduleManager
-        )
-    {
+        final ModuleManager moduleManager) {
         this(
             tree,
             parser,
@@ -98,13 +97,12 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     public XQueryEvaluatorVisitor(
-            final ParseTree tree,
-            final Parser parser,
-            final XQueryValueFactory valueFactory,
-            final XQuerySemanticAnalyzer analyzer,
-            final XQueryTypeFactory typeFactory,
-            final ModuleManager moduleManager)
-    {
+        final ParseTree tree,
+        final Parser parser,
+        final XQueryValueFactory valueFactory,
+        final XQuerySemanticAnalyzer analyzer,
+        final XQueryTypeFactory typeFactory,
+        final ModuleManager moduleManager) {
         this.semanticAnalyzer = analyzer;
         this.moduleManager = moduleManager;
         this.root = valueFactory.node(tree);
@@ -124,7 +122,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         this.nodeComparisonOperator = new NodeComparisonOperator(valueFactory, root.node);
         this.booleanOperator = new ValueBooleanOperator(this, valueFactory, effectiveBooleanValue);
         this.nodeOperator = new NodeOperator(valueFactory);
-        this.functionManager = new XQueryEvaluatingFunctionManager(this, parser, valueFactory, nodeGetter, typeFactory, effectiveBooleanValue, atomizer, stringifier, valueComparisonOperator);
+        this.functionManager = new XQueryEvaluatingFunctionManager(this, parser, valueFactory, nodeGetter, typeFactory,
+            effectiveBooleanValue, atomizer, stringifier, valueComparisonOperator);
         this.contextManager = new XQueryDynamicContextManager();
         this.concat = functionManager.getFunctionReference("fn", "concat", 2).functionValue;
         this.string = functionManager.getFunctionReference("fn", "string", 1).functionValue;
@@ -142,15 +141,16 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitXquery(final XqueryContext ctx) {
+    public XQueryValue visitXquery(final XqueryContext ctx)
+    {
         if (ctx.libraryModule() != null)
             return null;
         return visitMainModule(ctx.mainModule());
     }
 
-
     @Override
-    public XQueryValue visitFLWORExpr(final FLWORExprContext ctx) {
+    public XQueryValue visitFLWORExpr(final FLWORExprContext ctx)
+    {
         final var savedTupleStream = saveVisitedTupleStream();
         contextManager.enterScope();
         // visitedTupleStream will be manipulated to prepare result stream
@@ -167,7 +167,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitLetClause(final LetClauseContext ctx) {
+    public XQueryValue visitLetClause(final LetClauseContext ctx)
+    {
         final int newVariableCount = ctx.letBinding().size();
         visitedTupleStream = visitedTupleStream.map(tuple -> {
             final var newTuple = new ArrayList<VariableCoupling>(tuple.size() + newVariableCount);
@@ -185,18 +186,19 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitOrderByClause(final OrderByClauseContext ctx) {
+    public XQueryValue visitOrderByClause(final OrderByClauseContext ctx)
+    {
         final int sortingExprCount = ctx.orderSpecList().orderSpec().size();
         final var orderSpecs = ctx.orderSpecList().orderSpec();
         final int[] modifierMaskArray = orderSpecs.stream()
-                .map(OrderSpecContext::orderModifier)
-                .mapToInt(m -> {
-                    final int isDescending = m.DESCENDING() != null ? 1 : 0;
-                    final int isEmptyLeast = m.LEAST() != null ? 1 : 0;
-                    final int mask = (isDescending << 1) | isEmptyLeast;
-                    return mask;
-                })
-                .toArray();
+            .map(OrderSpecContext::orderModifier)
+            .mapToInt(m -> {
+                final int isDescending = m.DESCENDING() != null ? 1 : 0;
+                final int isEmptyLeast = m.LEAST() != null ? 1 : 0;
+                final int mask = (isDescending << 1) | isEmptyLeast;
+                return mask;
+            })
+            .toArray();
         visitedTupleStream = visitedTupleStream.sorted((tuple1, tuple2) -> {
             var comparator = comparatorFromNthOrderSpec(orderSpecs, modifierMaskArray, 0);
             for (int i = 1; i < sortingExprCount; i++) {
@@ -212,11 +214,12 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitForClause(final ForClauseContext ctx) {
+    public XQueryValue visitForClause(final ForClauseContext ctx)
+    {
         final int numberOfVariables = ctx.forBinding().size();
         visitedTupleStream = visitedTupleStream.flatMap(tuple -> {
             final List<List<VariableCoupling>> newTupleLike = tuple.stream().map(e -> List.of(e))
-                    .collect(Collectors.toList());
+                .collect(Collectors.toList());
 
             for (final ForBindingContext forBinding : ctx.forBinding()) {
                 final List<VariableCoupling> tupleElements = processForBinding(forBinding);
@@ -232,7 +235,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return null;
     }
 
-    private List<VariableCoupling> processForBinding(final ForBindingContext forBinding) {
+    private List<VariableCoupling> processForBinding(final ForBindingContext forBinding)
+    {
         if (forBinding.forItemBinding() != null) {
             return processForItemBinding(forBinding.forItemBinding());
         }
@@ -245,7 +249,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         throw new IllegalStateException("Unknown for binding type");
     }
 
-    private List<VariableCoupling> processForItemBinding(final ForItemBindingContext ctx) {
+    private List<VariableCoupling> processForItemBinding(final ForItemBindingContext ctx)
+    {
         final String variableName = ctx.varNameAndType().varRef().qname().getText();
         final List<XQueryValue> sequence = visitExprSingle(ctx.exprSingle()).sequence;
         final PositionalVarContext positional = ctx.positionalVar();
@@ -259,7 +264,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
         if (sequence.isEmpty() && allowingEmpty) {
             final var emptyVar = new Variable(variableName, emptySequence);
-            final var element =  new VariableCoupling(emptyVar, null, null, positionalVar);
+            final var element = new VariableCoupling(emptyVar, null, null, positionalVar);
             return List.of(element);
         }
 
@@ -268,20 +273,21 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             for (int i = 0; i < sequence.size(); i++) {
                 final XQueryValue value = sequence.get(i);
                 final VariableCoupling element = new VariableCoupling(new Variable(variableName, value),
-                                                                        null,
-                                                                        null,
-                                                                        new Variable(positionalName, valueFactory.number(i + 1)));
+                    null,
+                    null,
+                    new Variable(positionalName, valueFactory.number(i + 1)));
                 elementsWithIndex.add(element);
             }
             return elementsWithIndex;
         }
 
         return sequence.stream()
-                .map(value -> new VariableCoupling(new Variable(variableName, value), null, null, null))
-                .toList();
+            .map(value -> new VariableCoupling(new Variable(variableName, value), null, null, null))
+            .toList();
     }
 
-    private List<VariableCoupling> processForMemberBinding(final ForMemberBindingContext ctx) {
+    private List<VariableCoupling> processForMemberBinding(final ForMemberBindingContext ctx)
+    {
         final String variableName = ctx.varNameAndType().varRef().qname().getText();
         final XQueryValue arrayValue = visitExprSingle(ctx.exprSingle());
         final PositionalVarContext positional = ctx.positionalVar();
@@ -294,20 +300,21 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             for (int i = 0; i < arrayMembers.size(); i++) {
                 final XQueryValue member = arrayMembers.get(i);
                 final VariableCoupling element = new VariableCoupling(new Variable(variableName, member),
-                                                                        null,
-                                                                        null,
-                                                                        new Variable(positionalName, valueFactory.number(i + 1)));
+                    null,
+                    null,
+                    new Variable(positionalName, valueFactory.number(i + 1)));
                 elementsWithIndex.add(element);
             }
             return elementsWithIndex;
         }
 
         return arrayMembers.stream()
-                .map(value -> new VariableCoupling(new Variable(variableName, value), null, null, null))
-                .toList();
+            .map(value -> new VariableCoupling(new Variable(variableName, value), null, null, null))
+            .toList();
     }
 
-    private List<VariableCoupling> processForEntryBinding(final ForEntryBindingContext ctx) {
+    private List<VariableCoupling> processForEntryBinding(final ForEntryBindingContext ctx)
+    {
         final XQueryValue mapValue = visitExprSingle(ctx.exprSingle());
         final PositionalVarContext positional = ctx.positionalVar();
 
@@ -352,14 +359,16 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitCountClause(final CountClauseContext ctx) {
+    public XQueryValue visitCountClause(final CountClauseContext ctx)
+    {
         final String countVariableName = ctx.varRef().qname().getText();
         final MutableInt index = new MutableInt();
         index.i = 1;
         visitedTupleStream = visitedTupleStream.map(tuple -> {
             final var newTuple = new ArrayList<VariableCoupling>(tuple.size() + 1);
             newTuple.addAll(tuple);
-            final var element = new VariableCoupling(new Variable(countVariableName, valueFactory.number(index.i++)), null, null, null);
+            final var element = new VariableCoupling(new Variable(countVariableName, valueFactory.number(index.i++)),
+                null, null, null);
             contextManager.provideVariable(element.item.name, element.item.value);
             newTuple.add(element);
             return newTuple;
@@ -367,9 +376,9 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return null;
     }
 
-
     @Override
-    public XQueryValue visitWhereClause(final WhereClauseContext ctx) {
+    public XQueryValue visitWhereClause(final WhereClauseContext ctx)
+    {
         final var filteringExpression = ctx.exprSingle();
         visitedTupleStream = visitedTupleStream.filter(_ -> {
             final XQueryValue filter = filteringExpression.accept(this);
@@ -379,7 +388,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitReturnClause(final ReturnClauseContext ctx) {
+    public XQueryValue visitReturnClause(final ReturnClauseContext ctx)
+    {
         final List<XQueryValue> results = visitedTupleStream.map((tupleStream) -> {
             provideVariables(tupleStream);
             final XQueryValue value = visitExprSingle(ctx.exprSingle());
@@ -393,7 +403,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitWhileClause(final WhileClauseContext ctx) {
+    public XQueryValue visitWhileClause(final WhileClauseContext ctx)
+    {
         final var filteringExpression = ctx.exprSingle();
         visitedTupleStream = visitedTupleStream.takeWhile(_ -> {
             final XQueryValue filter = filteringExpression.accept(this);
@@ -403,14 +414,16 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitVarRef(final VarRefContext ctx) {
+    public XQueryValue visitVarRef(final VarRefContext ctx)
+    {
         final String variableName = ctx.qname().getText();
         final XQueryValue variableValue = contextManager.getVariable(variableName);
         return variableValue;
     }
 
     @Override
-    public XQueryValue visitLiteral(final LiteralContext ctx) {
+    public XQueryValue visitLiteral(final LiteralContext ctx)
+    {
         if (ctx.STRING() != null) {
             return handleString(ctx);
         }
@@ -444,13 +457,15 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return null;
     }
 
-    private XQueryValue handleInteger(final TerminalNode integerLiteral) {
+    private XQueryValue handleInteger(final TerminalNode integerLiteral)
+    {
         final String value = integerLiteral.getText().replace("_", "");
         return valueFactory.number(new BigDecimal(value));
     }
 
     @Override
-    public XQueryValue visitParenthesizedExpr(final ParenthesizedExprContext ctx) {
+    public XQueryValue visitParenthesizedExpr(final ParenthesizedExprContext ctx)
+    {
         // Empty parentheses mean an empty sequence '()'
         if (ctx.expr() == null) {
             return valueFactory.sequence(List.of());
@@ -459,7 +474,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitExpr(final ExprContext ctx) {
+    public XQueryValue visitExpr(final ExprContext ctx)
+    {
         // Only one expression
         // e.g. 13
         if (ctx.exprSingle().size() == 1) {
@@ -484,14 +500,15 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return valueFactory.sequence(result);
     }
 
-    private String unescapeString(final String str) {
+    private String unescapeString(final String str)
+    {
         final var charEscaper = new XQueryCharEscaper();
         return charEscaper.escapeChars(str);
     }
 
-
     @Override
-    public XQueryValue visitFunctionCall(final FunctionCallContext ctx) {
+    public XQueryValue visitFunctionCall(final FunctionCallContext ctx)
+    {
         final List<XQueryValue> savedArgs = saveVisitedArguments();
         final Map<String, XQueryValue> savedKwargs = saveVisitedKeywordArguments();
         ctx.argumentList().accept(this);
@@ -503,9 +520,9 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     private XQueryValue callFunction(
-            final String qname,
-            final List<XQueryValue> args,
-            final Map<String, XQueryValue> kwargs)
+        final String qname,
+        final List<XQueryValue> args,
+        final Map<String, XQueryValue> kwargs)
     {
         final String[] parts = resolveNamespace(qname);
         final String namespace = parts.length == 2 ? parts[0] : "fn";
@@ -514,41 +531,42 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return value;
     }
 
-    private Map<String, XQueryValue> saveVisitedKeywordArguments() {
+    private Map<String, XQueryValue> saveVisitedKeywordArguments()
+    {
         final var saved = visitedKeywordArguments;
         visitedKeywordArguments = new HashMap<>();
         return saved;
     }
 
-    public static <T> Stream<List<T>> cartesianProduct(final List<List<T>> lists) {
+    public static <T> Stream<List<T>> cartesianProduct(final List<List<T>> lists)
+    {
         if (lists.isEmpty()) {
             return Stream.of(List.of());
         }
 
         final int size = lists.size();
         return lists.get(0).stream()
-                .flatMap(firstElement -> cartesianProduct(lists.subList(1, size))
-                        .map(rest -> {
-                            final List<T> combination = new ArrayList<>(size);
-                            combination.add(firstElement);
-                            combination.addAll(rest);
-                            return combination;
-                        }));
+            .flatMap(firstElement -> cartesianProduct(lists.subList(1, size))
+                .map(rest -> {
+                    final List<T> combination = new ArrayList<>(size);
+                    combination.add(firstElement);
+                    combination.addAll(rest);
+                    return combination;
+                }));
     }
 
-
-
     @Override
-    public XQueryValue visitQuantifiedExpr(final QuantifiedExprContext ctx) {
+    public XQueryValue visitQuantifiedExpr(final QuantifiedExprContext ctx)
+    {
         final List<QuantifierBindingContext> quantifierBindings = ctx.quantifierBinding();
 
         final List<String> variableNames = quantifierBindings.stream()
-                .map(binding -> binding.varNameAndType().varRef().qname().getText())
-                .toList();
+            .map(binding -> binding.varNameAndType().varRef().qname().getText())
+            .toList();
 
         final List<List<XQueryValue>> sequences = quantifierBindings.stream()
-                .map(binding -> binding.exprSingle().accept(this).sequence)
-                .toList();
+            .map(binding -> binding.exprSingle().accept(this).sequence)
+            .toList();
 
         final ExprSingleContext criterionNode = ctx.exprSingle();
 
@@ -576,10 +594,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return null;
     }
 
-
-
-
-    private XQueryValue handleNodeComp(final ComparisonExprContext ctx) {
+    private XQueryValue handleNodeComp(final ComparisonExprContext ctx)
+    {
         final var visitedLeft = ctx.otherwiseExpr(0).accept(this);
         final var visitedRight = ctx.otherwiseExpr(1).accept(this);
         return switch (ctx.nodeComp().getText()) {
@@ -596,14 +612,16 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitEnclosedExpr(final EnclosedExprContext ctx) {
+    public XQueryValue visitEnclosedExpr(final EnclosedExprContext ctx)
+    {
         if (ctx.expr() == null)
             return emptySequence;
         return visitExpr(ctx.expr());
     }
 
     @Override
-    public XQueryValue visitRangeExpr(final RangeExprContext ctx) {
+    public XQueryValue visitRangeExpr(final RangeExprContext ctx)
+    {
         final var fromValue = ctx.additiveExpr(0).accept(this);
         if (ctx.TO() == null)
             return fromValue;
@@ -617,13 +635,14 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         if (fromInt > toInt)
             return emptySequence;
         final List<XQueryValue> values = IntStream.rangeClosed(fromInt, toInt)
-                .mapToObj(i -> valueFactory.number(i))
-                .collect(Collectors.toList());
+            .mapToObj(i -> valueFactory.number(i))
+            .collect(Collectors.toList());
         return valueFactory.sequence(values);
     }
 
     @Override
-    public XQueryValue visitPathExpr(final PathExprContext ctx) {
+    public XQueryValue visitPathExpr(final PathExprContext ctx)
+    {
         final boolean pathExpressionFromRoot = ctx.SLASH() != null;
         if (pathExpressionFromRoot) {
             final var savedNodes = saveMatchedModes();
@@ -651,7 +670,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitRelativePathExpr(final RelativePathExprContext ctx) {
+    public XQueryValue visitRelativePathExpr(final RelativePathExprContext ctx)
+    {
         if (ctx.pathOperator().isEmpty()) {
             return ctx.stepExpr(0).accept(this);
         }
@@ -672,27 +692,31 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return matchedNodes;
     }
 
-    private XQueryValue nodeSequence(final List<ParseTree> treenodes) {
+    private XQueryValue nodeSequence(final List<ParseTree> treenodes)
+    {
         final List<XQueryValue> nodeSequence = treenodes.stream()
-                .distinct()
-                .map(valueFactory::node)
-                .collect(Collectors.toList());
+            .distinct()
+            .map(valueFactory::node)
+            .collect(Collectors.toList());
         return valueFactory.sequence(nodeSequence);
     }
 
-    private List<ParseTree> matchedTreeNodes() {
-        return matchedNodes.sequence.stream().map(v->v.node).distinct().toList();
+    private List<ParseTree> matchedTreeNodes()
+    {
+        return matchedNodes.sequence.stream().map(v -> v.node).distinct().toList();
     }
 
     @Override
-    public XQueryValue visitStepExpr(final StepExprContext ctx) {
+    public XQueryValue visitStepExpr(final StepExprContext ctx)
+    {
         if (ctx.postfixExpr() != null)
             return ctx.postfixExpr().accept(this);
         return visitAxisStep(ctx.axisStep());
     }
 
     @Override
-    public XQueryValue visitAxisStep(final AxisStepContext ctx) {
+    public XQueryValue visitAxisStep(final AxisStepContext ctx)
+    {
         XQueryValue stepResult = null;
         if (ctx.reverseStep() != null)
             stepResult = visitReverseStep(ctx.reverseStep());
@@ -717,7 +741,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitFilterExpr(final FilterExprContext ctx) {
+    public XQueryValue visitFilterExpr(final FilterExprContext ctx)
+    {
         final var savedContext = saveContext();
         final var savedArgs = saveVisitedArguments();
         final var value = ctx.postfixExpr().accept(this);
@@ -728,9 +753,9 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return filtered;
     }
 
-
     @Override
-    public XQueryValue visitPredicate(final PredicateContext ctx) {
+    public XQueryValue visitPredicate(final PredicateContext ctx)
+    {
         final var contextValue = context.getValue();
         final var filteredSequence = atomizer.atomize(contextValue);
         final var filteredValues = new ArrayList<XQueryValue>(filteredSequence.size());
@@ -741,7 +766,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             context.setValue(contextItem);
             context.setPosition(index);
             final XQueryValue visitedExpression = visitExpr(ctx.expr());
-            if (visitedExpression.sequence.stream().allMatch(v->v.isNumeric)) {
+            if (visitedExpression.sequence.stream().allMatch(v -> v.isNumeric)) {
                 final XQueryValue items = handleAsItemGetter(filteredSequence, visitedExpression);
                 context = savedContext;
                 return items;
@@ -767,7 +792,6 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return ctx.restrictedDynamicCall().accept(this);
     }
 
-
     @Override
     public XQueryValue visitVarDecl(final VarDeclContext ctx)
     {
@@ -779,7 +803,6 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return null;
     }
 
-
     @Override
     public XQueryValue visitDynamicFunctionCall(final DynamicFunctionCallContext ctx)
     {
@@ -789,9 +812,6 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         final var value = function.call(context, visitedPositionalArguments);
         return value;
     }
-
-
-
 
     @Override
     public XQueryValue visitFunctionDecl(final FunctionDeclContext ctx)
@@ -838,9 +858,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return null;
     }
 
-
     XQueryValue handleAsItemGetter(final List<XQueryValue> sequence,
-            final XQueryValue getter)
+        final XQueryValue getter)
     {
         if (getter.isEmptySequence)
             return emptySequence;
@@ -862,7 +881,6 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return valueFactory.sequence(items);
     }
 
-
     @Override
     public XQueryValue visitContextValueRef(final ContextValueRefContext ctx)
     {
@@ -870,7 +888,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitForwardStep(final ForwardStepContext ctx) {
+    public XQueryValue visitForwardStep(final ForwardStepContext ctx)
+    {
         if (ctx.forwardAxis() != null) {
             visitForwardAxis(ctx.forwardAxis());
         } else {
@@ -885,7 +904,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitReverseStep(final ReverseStepContext ctx) {
+    public XQueryValue visitReverseStep(final ReverseStepContext ctx)
+    {
         if (ctx.abbrevReverseStep() != null) {
             return visitAbbrevReverseStep(ctx.abbrevReverseStep());
         }
@@ -894,15 +914,18 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitAbbrevReverseStep(final AbbrevReverseStepContext ctx) {
+    public XQueryValue visitAbbrevReverseStep(final AbbrevReverseStepContext ctx)
+    {
         final var matchedParents = nodeGetter.getAllParents(matchedTreeNodes());
         return nodeSequence(matchedParents);
     }
 
     @Override
-    public XQueryValue visitNodeTest(final NodeTestContext ctx) {
+    public XQueryValue visitNodeTest(final NodeTestContext ctx)
+    {
         var matchedTreeNodes = matchedTreeNodes();
-        final Function<NodeGetter, Function<List<ParseTree>,List<ParseTree>>> axisFunctionSelector = AXIS_DISPATCH_TABLE[currentAxis.ordinal()];
+        final Function<NodeGetter, Function<List<ParseTree>, List<ParseTree>>> axisFunctionSelector = AXIS_DISPATCH_TABLE[currentAxis
+            .ordinal()];
         final Function<List<ParseTree>, List<ParseTree>> axisFunction = axisFunctionSelector.apply(nodeGetter);
         final List<ParseTree> stepNodes = axisFunction.apply(matchedTreeNodes);
 
@@ -938,8 +961,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
                     if (token.getType() == targetRuleOrTokenIndex) {
                         matchedTreeNodes.add(tokenNode);
                     }
-                }
-                else {
+                } else {
                     if (!(node instanceof final ParserRuleContext testedRule))
                         continue;
                     if (testedRule.getRuleIndex() == targetRuleOrTokenIndex) {
@@ -953,20 +975,14 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return nodeSequence(matchedTreeNodes);
     }
 
-
     private final Predicate<String> canBeTokenName = Pattern.compile("^[\\p{IsUppercase}].*").asPredicate();
-
-
-
 
     private static final Function<NodeGetter, Function<List<ParseTree>, List<ParseTree>>>[] AXIS_DISPATCH_TABLE;
 
     static {
         @SuppressWarnings("unchecked")
-        final
-        Function<NodeGetter, Function<List<ParseTree>, List<ParseTree>>>[] table =
-            (Function<NodeGetter, Function<List<ParseTree>, List<ParseTree>>>[])
-                new Function[XQueryAxis.values().length];
+        final Function<NodeGetter, Function<List<ParseTree>, List<ParseTree>>>[] table = (Function<NodeGetter, Function<List<ParseTree>, List<ParseTree>>>[]) new Function[XQueryAxis
+            .values().length];
 
         table[XQueryAxis.ANCESTOR.ordinal()] = nodeGetter -> nodeGetter::getAllAncestors;
         table[XQueryAxis.ANCESTOR_OR_SELF.ordinal()] = nodeGetter -> nodeGetter::getAllAncestorsOrSelf;
@@ -988,7 +1004,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitForwardAxis(final ForwardAxisContext ctx) {
+    public XQueryValue visitForwardAxis(final ForwardAxisContext ctx)
+    {
         if (ctx.CHILD() != null)
             currentAxis = XQueryAxis.CHILD;
         if (ctx.DESCENDANT() != null)
@@ -1009,7 +1026,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitGroupByClause(final GroupByClauseContext ctx) {
+    public XQueryValue visitGroupByClause(final GroupByClauseContext ctx)
+    {
         final int groupingCount = ctx.groupingSpec().size();
         final List<String> groupingVars = new ArrayList<>(groupingCount);
         final List<ExprSingleContext> groupingExpressions = new ArrayList<>(groupingCount);
@@ -1039,9 +1057,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         final Stream<List<VariableCoupling>> result = grouped.entrySet()
             .stream()
             .map(
-                (final Map.Entry<List<XQueryValue>,
-                          List<List<VariableCoupling>>> entry)
-                -> {
+                (final Map.Entry<List<XQueryValue>, List<List<VariableCoupling>>> entry) -> {
                     final List<XQueryValue> keyValues = entry.getKey();
                     final List<List<VariableCoupling>> groupTuples = entry.getValue();
 
@@ -1052,8 +1068,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
                         final XQueryValue value = keyValues.get(i);
                         resultTuple.add(new VariableCoupling(
                             new Variable(name, value),
-                            null, null, null
-                        ));
+                            null, null, null));
                     }
 
                     final Map<String, List<XQueryValue>> collected = new LinkedHashMap<>();
@@ -1076,19 +1091,18 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
                     for (final Map.Entry<String, List<XQueryValue>> e : collected.entrySet()) {
                         resultTuple.add(new VariableCoupling(
                             new Variable(e.getKey(), valueFactory.sequence(e.getValue())),
-                            null, null, null
-                        ));
+                            null, null, null));
                     }
 
                     return resultTuple;
-            }
-        );
+                });
 
         visitedTupleStream = result;
         return null;
     }
 
-    private XQueryValue getVariableValue(final List<VariableCoupling> tuple, final String name) {
+    private XQueryValue getVariableValue(final List<VariableCoupling> tuple, final String name)
+    {
         for (final VariableCoupling coupling : tuple) {
             final List<Variable> vars = new ArrayList<>(4);
             vars.add(coupling.item);
@@ -1104,11 +1118,9 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return null;
     }
 
-
-
-
     @Override
-    public XQueryValue visitReverseAxis(final ReverseAxisContext ctx) {
+    public XQueryValue visitReverseAxis(final ReverseAxisContext ctx)
+    {
         if (ctx.PARENT() != null)
             currentAxis = XQueryAxis.PARENT;
         if (ctx.ANCESTOR() != null)
@@ -1127,7 +1139,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitStringConcatExpr(final StringConcatExprContext ctx) {
+    public XQueryValue visitStringConcatExpr(final StringConcatExprContext ctx)
+    {
         final var firstValue = ctx.rangeExpr(0).accept(this);
         if (ctx.CONCATENATION().isEmpty())
             return firstValue;
@@ -1137,7 +1150,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitArrowExpr(final ArrowExprContext ctx) {
+    public XQueryValue visitArrowExpr(final ArrowExprContext ctx)
+    {
         final boolean notSequenceArrow = ctx.sequenceArrowTarget().isEmpty();
         final boolean notMappingArrow = ctx.mappingArrowTarget().isEmpty();
         if (notSequenceArrow && notMappingArrow) {
@@ -1161,8 +1175,9 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitMappingArrowTarget(final MappingArrowTargetContext ctx) {
-        final XQueryValue mappedSequence = visitedPositionalArguments.get(visitedPositionalArguments.size()-1);
+    public XQueryValue visitMappingArrowTarget(final MappingArrowTargetContext ctx)
+    {
+        final XQueryValue mappedSequence = visitedPositionalArguments.get(visitedPositionalArguments.size() - 1);
         final ArrayList<XQueryValue> resultingSequence = new ArrayList<>(mappedSequence.size);
         for (final XQueryValue el : mappedSequence.sequence) {
             visitedPositionalArguments = new ArrayList<>();
@@ -1176,7 +1191,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitRestrictedDynamicCall(final RestrictedDynamicCallContext ctx) {
+    public XQueryValue visitRestrictedDynamicCall(final RestrictedDynamicCallContext ctx)
+    {
         final var function = ctx.children.get(0).accept(this);
         if (function.isError)
             return function;
@@ -1186,36 +1202,39 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
     final NamespaceResolver namespaceResolver = new NamespaceResolver("fn");
 
-    private String[] resolveNamespace(final String functionName) {
+    private String[] resolveNamespace(final String functionName)
+    {
         final String[] parts = functionName.split(":", 2);
         return parts;
     }
 
     @Override
-    public XQueryValue visitOrExpr(final OrExprContext ctx) {
+    public XQueryValue visitOrExpr(final OrExprContext ctx)
+    {
         final var value = ctx.andExpr(0).accept(this);
         if (ctx.OR().isEmpty())
             return value;
         return booleanOperator.or(ctx.andExpr());
     }
 
-
     @Override
-    public XQueryValue visitAndExpr(final AndExprContext ctx) {
+    public XQueryValue visitAndExpr(final AndExprContext ctx)
+    {
         if (ctx.AND().isEmpty())
             return ctx.comparisonExpr(0).accept(this);
         return booleanOperator.and(ctx.comparisonExpr());
     }
 
     @Override
-    public XQueryValue visitAdditiveExpr(final AdditiveExprContext ctx) {
+    public XQueryValue visitAdditiveExpr(final AdditiveExprContext ctx)
+    {
         var value = ctx.multiplicativeExpr(0).accept(this);
         if (ctx.additiveOperator().isEmpty())
             return value;
         final var operatorCount = ctx.additiveOperator().size();
         for (int i = 1; i <= operatorCount; i++) {
             final var visitedExpression = ctx.multiplicativeExpr(i).accept(this);
-            value = switch (ctx.additiveOperator(i-1).getText()) {
+            value = switch (ctx.additiveOperator(i - 1).getText()) {
                 case "+" -> addition.call(context, List.of(value, visitedExpression));
                 case "-" -> subtraction.call(context, List.of(value, visitedExpression));
                 default -> null;
@@ -1225,7 +1244,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitComparisonExpr(final ComparisonExprContext ctx) {
+    public XQueryValue visitComparisonExpr(final ComparisonExprContext ctx)
+    {
         if (ctx.generalComp() != null)
             return handleGeneralComparison(ctx);
         if (ctx.valueComp() != null)
@@ -1235,24 +1255,26 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return ctx.otherwiseExpr(0).accept(this);
     }
 
-    private XQueryValue handleGeneralComparison(final ComparisonExprContext ctx) {
+    private XQueryValue handleGeneralComparison(final ComparisonExprContext ctx)
+    {
         final var value = ctx.otherwiseExpr(0).accept(this);
         final var visitedExpression = ctx.otherwiseExpr(1).accept(this);
         return switch (ctx.generalComp().getText()) {
-            case "=" ->  generalComparisonOperator.generalEquals(value, visitedExpression);
+            case "=" -> generalComparisonOperator.generalEquals(value, visitedExpression);
             case "!=" -> generalComparisonOperator.generalUnequals(value, visitedExpression);
-            case ">" ->  generalComparisonOperator.generalGreaterThan(value, visitedExpression);
+            case ">" -> generalComparisonOperator.generalGreaterThan(value, visitedExpression);
             // Operators such as < and > can use the full-width forms ＜ and ＞ to avoid the need for XML escaping.
-            case "＞" ->  generalComparisonOperator.generalGreaterThan(value, visitedExpression);
+            case "＞" -> generalComparisonOperator.generalGreaterThan(value, visitedExpression);
             case "＜" -> generalComparisonOperator.generalLessThan(value, visitedExpression);
-            case "<" ->  generalComparisonOperator.generalLessThan(value, visitedExpression);
+            case "<" -> generalComparisonOperator.generalLessThan(value, visitedExpression);
             case "<=" -> generalComparisonOperator.generalLessEqual(value, visitedExpression);
             case ">=" -> generalComparisonOperator.generalGreaterEqual(value, visitedExpression);
             default -> null;
         };
     }
 
-    private XQueryValue handleValueComparison(final ComparisonExprContext ctx) {
+    private XQueryValue handleValueComparison(final ComparisonExprContext ctx)
+    {
         final var value = ctx.otherwiseExpr(0).accept(this);
         final var visitedExpression = ctx.otherwiseExpr(1).accept(this);
         if (value.isEmptySequence) {
@@ -1273,7 +1295,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitOtherwiseExpr(final OtherwiseExprContext ctx) {
+    public XQueryValue visitOtherwiseExpr(final OtherwiseExprContext ctx)
+    {
         if (ctx.OTHERWISE().isEmpty())
             return ctx.stringConcatExpr(0).accept(this);
         final int length = ctx.stringConcatExpr().size();
@@ -1287,16 +1310,16 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return ctx.stringConcatExpr(length - 1).accept(this);
     }
 
-
     @Override
-    public XQueryValue visitMultiplicativeExpr(final MultiplicativeExprContext ctx) {
+    public XQueryValue visitMultiplicativeExpr(final MultiplicativeExprContext ctx)
+    {
         var value = ctx.unionExpr(0).accept(this);
         if (ctx.multiplicativeOperator().isEmpty())
             return value;
         final var orCount = ctx.multiplicativeOperator().size();
         for (int i = 1; i <= orCount; i++) {
             final var visitedExpression = ctx.unionExpr(i).accept(this);
-            value = switch (ctx.multiplicativeOperator(i-1).getText()) {
+            value = switch (ctx.multiplicativeOperator(i - 1).getText()) {
                 case "*" -> multiplication.call(context, List.of(value, visitedExpression));
                 case "x" -> multiplication.call(context, List.of(value, visitedExpression));
                 case "div" -> division.call(context, List.of(value, visitedExpression));
@@ -1310,7 +1333,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitUnionExpr(final UnionExprContext ctx) {
+    public XQueryValue visitUnionExpr(final UnionExprContext ctx)
+    {
         if (ctx.unionOperator().isEmpty())
             return ctx.intersectExpr(0).accept(this);
         final var values = ctx.intersectExpr().stream().map(this::visit).toList();
@@ -1318,14 +1342,15 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitIntersectExpr(final IntersectExprContext ctx) {
+    public XQueryValue visitIntersectExpr(final IntersectExprContext ctx)
+    {
         var value = ctx.instanceofExpr(0).accept(this);
         if (ctx.exceptOrIntersect().isEmpty())
             return value;
         final var operatorCount = ctx.exceptOrIntersect().size();
         for (int i = 1; i <= operatorCount; i++) {
             final var visitedExpression = ctx.instanceofExpr(i).accept(this);
-            final boolean isExcept = ctx.exceptOrIntersect(i-1).EXCEPT() != null;
+            final boolean isExcept = ctx.exceptOrIntersect(i - 1).EXCEPT() != null;
             if (isExcept) {
                 value = nodeOperator.except(List.of(value, visitedExpression));
             } else {
@@ -1336,7 +1361,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitSimpleMapExpr(final SimpleMapExprContext ctx) {
+    public XQueryValue visitSimpleMapExpr(final SimpleMapExprContext ctx)
+    {
         final List<PathExprContext> terms = ctx.pathExpr();
         // if there's only one term, no mapping needed
         if (terms.size() == 1) {
@@ -1362,7 +1388,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitUnaryExpr(final UnaryExprContext ctx) {
+    public XQueryValue visitUnaryExpr(final UnaryExprContext ctx)
+    {
         final var value = visitSimpleMapExpr(ctx.simpleMapExpr());
         if (ctx.PLUS() != null)
             return unaryPlus.call(context, List.of(value));
@@ -1372,7 +1399,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitSwitchExpr(final SwitchExprContext ctx) {
+    public XQueryValue visitSwitchExpr(final SwitchExprContext ctx)
+    {
         final SwitchComparandContext switchComparand = ctx.switchComparand();
 
         final XQueryValue switchedValue = switchComparand.switchedExpr != null
@@ -1387,12 +1415,12 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         final List<SwitchCaseClauseContext> caseClauseList = switchCases.switchCaseClause();
 
         final Map<XQueryValue, ParseTree> valueToExpression = caseClauseList.stream()
-                .flatMap(clause -> {
-                    final ExprSingleContext exprSingle = clause.exprSingle();
-                    return clause.switchCaseOperand().stream()
-                            .map(operand -> Map.entry(operand.expr().accept(this), exprSingle));
-                })
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            .flatMap(clause -> {
+                final ExprSingleContext exprSingle = clause.exprSingle();
+                return clause.switchCaseOperand().stream()
+                    .map(operand -> Map.entry(operand.expr().accept(this), exprSingle));
+            })
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         final ParseTree toBeExecuted = valueToExpression.getOrDefault(switchedValue, switchCases.defaultExpr);
 
@@ -1400,43 +1428,50 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitArgument(final ArgumentContext ctx) {
+    public XQueryValue visitArgument(final ArgumentContext ctx)
+    {
         final var value = super.visitArgument(ctx);
         visitedPositionalArguments.add(value);
         return value;
     }
 
-    private List<XQueryValue> saveVisitedArguments() {
+    private List<XQueryValue> saveVisitedArguments()
+    {
         final var saved = visitedPositionalArguments;
         visitedPositionalArguments = new ArrayList<>();
         return saved;
     }
 
-    private XQueryValue saveMatchedModes() {
+    private XQueryValue saveMatchedModes()
+    {
         final XQueryValue saved = matchedNodes;
         matchedNodes = valueFactory.sequence(List.of());
         return saved;
     }
 
-    private Stream<List<VariableCoupling>> saveVisitedTupleStream() {
+    private Stream<List<VariableCoupling>> saveVisitedTupleStream()
+    {
         final Stream<List<VariableCoupling>> saved = visitedTupleStream;
         visitedTupleStream = Stream.of(List.of());
         return saved;
     }
 
-    private XQueryVisitingContext saveContext() {
+    private XQueryVisitingContext saveContext()
+    {
         final XQueryVisitingContext saved = context;
         context = new XQueryVisitingContext();
         return saved;
     }
 
-    private XQueryAxis saveAxis() {
+    private XQueryAxis saveAxis()
+    {
         final var saved = currentAxis;
         currentAxis = null;
         return saved;
     }
 
-    private Comparator<List<VariableCoupling>> ascendingEmptyGreatest(final ParseTree expr) {
+    private Comparator<List<VariableCoupling>> ascendingEmptyGreatest(final ParseTree expr)
+    {
         return (tuple1, tuple2) -> {
             provideVariables(tuple1);
             final XQueryValue value1 = expr.accept(this);
@@ -1452,7 +1487,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         };
     };
 
-    private Comparator<List<VariableCoupling>> ascendingEmptyLeast(final ParseTree expr) {
+    private Comparator<List<VariableCoupling>> ascendingEmptyLeast(final ParseTree expr)
+    {
         return (tuple1, tuple2) -> {
             provideVariables(tuple1);
             final XQueryValue value1 = expr.accept(this);
@@ -1468,7 +1504,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         };
     };
 
-    private Comparator<List<VariableCoupling>> descendingEmptyGreatest(final ParseTree expr) {
+    private Comparator<List<VariableCoupling>> descendingEmptyGreatest(final ParseTree expr)
+    {
         return (tuple1, tuple2) -> {
             provideVariables(tuple1);
             final XQueryValue value1 = expr.accept(this);
@@ -1484,7 +1521,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         };
     };
 
-    private Comparator<List<VariableCoupling>> descendingEmptyLeast(final ParseTree expr) {
+    private Comparator<List<VariableCoupling>> descendingEmptyLeast(final ParseTree expr)
+    {
         return (tuple1, tuple2) -> {
             provideVariables(tuple1);
             final XQueryValue value1 = expr.accept(this);
@@ -1501,7 +1539,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     };
 
     private Comparator<List<VariableCoupling>> comparatorFromNthOrderSpec(final List<OrderSpecContext> orderSpecs,
-            final int[] modifierMaskArray, final int i) {
+        final int[] modifierMaskArray, final int i)
+    {
         final OrderSpecContext orderSpec = orderSpecs.get(0);
         final ExprSingleContext expr = orderSpec.exprSingle();
         final int modifierMask = modifierMaskArray[i];
@@ -1519,7 +1558,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitIfExpr(final IfExprContext ctx) {
+    public XQueryValue visitIfExpr(final IfExprContext ctx)
+    {
         final var condition = ctx.expr().accept(this);
         final var effectiveBooleanValue = this.effectiveBooleanValue.effectiveBooleanValue(condition);
         final var isBraced = ctx.bracedAction() != null;
@@ -1539,7 +1579,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitWindowClause(final WindowClauseContext ctx) {
+    public XQueryValue visitWindowClause(final WindowClauseContext ctx)
+    {
         if (ctx.tumblingWindowClause() != null) {
             return visitTumblingWindowClause(ctx.tumblingWindowClause());
         } else if (ctx.slidingWindowClause() != null) {
@@ -1548,9 +1589,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return null;
     }
 
-
-
-    public XQueryValue visitTumblingWindowClause(final TumblingWindowClauseContext ctx) {
+    public XQueryValue visitTumblingWindowClause(final TumblingWindowClauseContext ctx)
+    {
         final String windowVarName = ctx.varNameAndType().varRef().qname().getText();
         final XQueryValue sequence = visitExprSingle(ctx.exprSingle());
 
@@ -1564,17 +1604,17 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         final String endPrevVarName = getEndPreviousVarName(ctx.windowEndCondition());
         final String endNextVarName = getEndNextVarName(ctx.windowEndCondition());
 
-        visitedTupleStream = visitedTupleStream.flatMap(tuple ->
-            processTumblingWindowSubSequences(sequence, ctx, windowVarName,
+        visitedTupleStream = visitedTupleStream
+            .flatMap(tuple -> processTumblingWindowSubSequences(sequence, ctx, windowVarName,
                 startVarName, startPosVarName, startPrevVarName, startNextVarName,
                 endVarName, endPosVarName, endPrevVarName, endNextVarName,
-                new ArrayList<>(tuple))
-        );
+                new ArrayList<>(tuple)));
 
         return null;
     }
 
-    public XQueryValue visitSlidingWindowClause(final SlidingWindowClauseContext ctx) {
+    public XQueryValue visitSlidingWindowClause(final SlidingWindowClauseContext ctx)
+    {
         final String windowVarName = ctx.varNameAndType().varRef().qname().getText();
         final XQueryValue sequence = visitExprSingle(ctx.exprSingle());
 
@@ -1588,59 +1628,78 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         final String endPrevVarName = getEndPreviousVarName(ctx.windowEndCondition());
         final String endNextVarName = getEndNextVarName(ctx.windowEndCondition());
 
-        visitedTupleStream = visitedTupleStream.flatMap(tuple ->
-            processSlidingWindowSubSequences(sequence, ctx, windowVarName,
+        visitedTupleStream = visitedTupleStream
+            .flatMap(tuple -> processSlidingWindowSubSequences(sequence, ctx, windowVarName,
                 startVarName, startPosVarName, startPrevVarName, startNextVarName,
                 endVarName, endPosVarName, endPrevVarName, endNextVarName,
-                new ArrayList<>(tuple))
-        );
+                new ArrayList<>(tuple)));
 
         return null;
     }
 
-    private String getStartCurrentVarName(final WindowStartConditionContext condition) {
-        return condition != null && condition.windowVars() != null && condition.windowVars().currentVar() != null ?
-            condition.windowVars().currentVar().varRef().qname().getText() : null;
+    private String getStartCurrentVarName(final WindowStartConditionContext condition)
+    {
+        return condition != null && condition.windowVars() != null && condition.windowVars().currentVar() != null
+            ? condition.windowVars().currentVar().varRef().qname().getText()
+            : null;
     }
 
-    private String getStartPositionalVarName(final WindowStartConditionContext condition) {
-        return condition != null && condition.windowVars() != null && condition.windowVars().positionalVar() != null ?
-            condition.windowVars().positionalVar().varRef().qname().getText() : null;
+    private String getStartPositionalVarName(final WindowStartConditionContext condition)
+    {
+        return condition != null && condition.windowVars() != null && condition.windowVars().positionalVar() != null
+            ? condition.windowVars().positionalVar().varRef().qname().getText()
+            : null;
     }
 
-    private String getStartPreviousVarName(final WindowStartConditionContext condition) {
-        return condition != null && condition.windowVars() != null && condition.windowVars().previousVar() != null ?
-            condition.windowVars().previousVar().varRef().qname().getText() : null;
+    private String getStartPreviousVarName(final WindowStartConditionContext condition)
+    {
+        return condition != null && condition.windowVars() != null && condition.windowVars().previousVar() != null
+            ? condition.windowVars().previousVar().varRef().qname().getText()
+            : null;
     }
 
-    private String getStartNextVarName(final WindowStartConditionContext condition) {
-        return condition != null && condition.windowVars() != null && condition.windowVars().nextVar() != null ?
-            condition.windowVars().nextVar().varRef().qname().getText() : null;
+    private String getStartNextVarName(final WindowStartConditionContext condition)
+    {
+        return condition != null && condition.windowVars() != null && condition.windowVars().nextVar() != null
+            ? condition.windowVars().nextVar().varRef().qname().getText()
+            : null;
     }
 
-    private String getEndCurrentVarName(final WindowEndConditionContext condition) {
-        return condition != null && condition.windowVars() != null && condition.windowVars().currentVar() != null ?
-            condition.windowVars().currentVar().varRef().qname().getText() : null;
+    private String getEndCurrentVarName(final WindowEndConditionContext condition)
+    {
+        return condition != null && condition.windowVars() != null && condition.windowVars().currentVar() != null
+            ? condition.windowVars().currentVar().varRef().qname().getText()
+            : null;
     }
 
-    private String getEndPositionalVarName(final WindowEndConditionContext condition) {
-        return condition != null && condition.windowVars() != null && condition.windowVars().positionalVar() != null ?
-            condition.windowVars().positionalVar().varRef().qname().getText() : null;
+    private String getEndPositionalVarName(final WindowEndConditionContext condition)
+    {
+        return condition != null && condition.windowVars() != null && condition.windowVars().positionalVar() != null
+            ? condition.windowVars().positionalVar().varRef().qname().getText()
+            : null;
     }
 
-    private String getEndPreviousVarName(final WindowEndConditionContext condition) {
-        return condition != null && condition.windowVars() != null && condition.windowVars().previousVar() != null ?
-            condition.windowVars().previousVar().varRef().qname().getText() : null;
+    private String getEndPreviousVarName(final WindowEndConditionContext condition)
+    {
+        return condition != null && condition.windowVars() != null && condition.windowVars().previousVar() != null
+            ? condition.windowVars().previousVar().varRef().qname().getText()
+            : null;
     }
 
-    private String getEndNextVarName(final WindowEndConditionContext condition) {
-        return condition != null && condition.windowVars() != null && condition.windowVars().nextVar() != null ?
-            condition.windowVars().nextVar().varRef().qname().getText() : null;
+    private String getEndNextVarName(final WindowEndConditionContext condition)
+    {
+        return condition != null && condition.windowVars() != null && condition.windowVars().nextVar() != null
+            ? condition.windowVars().nextVar().varRef().qname().getText()
+            : null;
     }
 
-    private Stream<List<VariableCoupling>> processTumblingWindowSubSequences(final XQueryValue sequence, final TumblingWindowClauseContext ctx,
-        final String windowVarName, final String startVarName, final String startPosVarName, final String startPrevVarName, final String startNextVarName,
-        final String endVarName, final String endPosVarName, final String endPrevVarName, final String endNextVarName, final List<VariableCoupling> initialTupleElements) {
+    private Stream<List<VariableCoupling>> processTumblingWindowSubSequences(final XQueryValue sequence,
+        final TumblingWindowClauseContext ctx,
+        final String windowVarName, final String startVarName, final String startPosVarName,
+        final String startPrevVarName, final String startNextVarName,
+        final String endVarName, final String endPosVarName, final String endPrevVarName, final String endNextVarName,
+        final List<VariableCoupling> initialTupleElements)
+    {
 
         final List<XQueryValue> sequenceList = sequence.sequence;
         final List<List<VariableCoupling>> allTuples = new ArrayList<>();
@@ -1677,9 +1736,13 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return allTuples.stream();
     }
 
-    private Stream<List<VariableCoupling>> processSlidingWindowSubSequences(final XQueryValue sequence, final SlidingWindowClauseContext ctx,
-        final String windowVarName, final String startVarName, final String startPosVarName, final String startPrevVarName, final String startNextVarName,
-        final String endVarName, final String endPosVarName, final String endPrevVarName, final String endNextVarName, final List<VariableCoupling> initialTupleElements) {
+    private Stream<List<VariableCoupling>> processSlidingWindowSubSequences(final XQueryValue sequence,
+        final SlidingWindowClauseContext ctx,
+        final String windowVarName, final String startVarName, final String startPosVarName,
+        final String startPrevVarName, final String startNextVarName,
+        final String endVarName, final String endPosVarName, final String endPrevVarName, final String endNextVarName,
+        final List<VariableCoupling> initialTupleElements)
+    {
 
         final List<XQueryValue> sequenceList = sequence.sequence;
         final List<List<VariableCoupling>> allTuples = new ArrayList<>();
@@ -1716,18 +1779,27 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return allTuples.stream();
     }
 
-    private void addWindowVariables(final List<VariableCoupling> windowTupleElements, final String windowVarName, final List<XQueryValue> subSequence,
-        final int startIndex, final int endIndex, final String startVarName, final String startPosVarName, final String startPrevVarName, final String startNextVarName,
-        final String endVarName, final String endPosVarName, final String endPrevVarName, final String endNextVarName) {
+    private void addWindowVariables(final List<VariableCoupling> windowTupleElements, final String windowVarName,
+        final List<XQueryValue> subSequence,
+        final int startIndex, final int endIndex, final String startVarName, final String startPosVarName,
+        final String startPrevVarName, final String startNextVarName,
+        final String endVarName, final String endPosVarName, final String endPrevVarName, final String endNextVarName)
+    {
 
-        windowTupleElements.add(new VariableCoupling(new Variable(windowVarName, valueFactory.sequence(subSequence)), null, null, null));
+        windowTupleElements.add(
+            new VariableCoupling(new Variable(windowVarName, valueFactory.sequence(subSequence)), null, null, null));
 
-        addStartVariables(windowTupleElements, subSequence, startIndex, startVarName, startPosVarName, startPrevVarName, startNextVarName);
-        addEndVariables(windowTupleElements, subSequence, endIndex, endVarName, endPosVarName, endPrevVarName, endNextVarName);
+        addStartVariables(windowTupleElements, subSequence, startIndex, startVarName, startPosVarName, startPrevVarName,
+            startNextVarName);
+        addEndVariables(windowTupleElements, subSequence, endIndex, endVarName, endPosVarName, endPrevVarName,
+            endNextVarName);
     }
 
-    private void addStartVariables(final List<VariableCoupling> windowTupleElements, final List<XQueryValue> subSequence, final int startIndex,
-        final String startVarName, final String startPosVarName, final String startPrevVarName, final String startNextVarName) {
+    private void addStartVariables(final List<VariableCoupling> windowTupleElements,
+        final List<XQueryValue> subSequence, final int startIndex,
+        final String startVarName, final String startPosVarName, final String startPrevVarName,
+        final String startNextVarName)
+    {
 
         if (startVarName != null) {
             final Variable startVar = new Variable(startVarName, subSequence.get(0));
@@ -1749,8 +1821,10 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         }
     }
 
-    private void addEndVariables(final List<VariableCoupling> windowTupleElements, final List<XQueryValue> subSequence, final int endIndex,
-        final String endVarName, final String endPosVarName, final String endPrevVarName, final String endNextVarName) {
+    private void addEndVariables(final List<VariableCoupling> windowTupleElements, final List<XQueryValue> subSequence,
+        final int endIndex,
+        final String endVarName, final String endPosVarName, final String endPrevVarName, final String endNextVarName)
+    {
 
         if (endVarName != null) {
             final Variable endVar = new Variable(endVarName, subSequence.get(subSequence.size() - 1));
@@ -1761,7 +1835,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             windowTupleElements.add(new VariableCoupling(endPosVar, null, null, null));
         }
         if (endPrevVarName != null) {
-            final var vl =subSequence.size() > 1 ? subSequence.get(subSequence.size() - 2) : emptySequence;
+            final var vl = subSequence.size() > 1 ? subSequence.get(subSequence.size() - 2) : emptySequence;
             final Variable endPrevVar = new Variable(endPrevVarName, vl);
             windowTupleElements.add(new VariableCoupling(endPrevVar, null, null, null));
         }
@@ -1771,8 +1845,9 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         }
     }
 
-
-    private boolean isStartConditionMet(final WindowStartConditionContext ctx, final int currentIndex, final List<XQueryValue> sequenceList) {
+    private boolean isStartConditionMet(final WindowStartConditionContext ctx, final int currentIndex,
+        final List<XQueryValue> sequenceList)
+    {
         if (ctx != null && ctx.exprSingle() != null) {
             provideVariablesForCondition(ctx, currentIndex, sequenceList);
             final var visited = ctx.exprSingle().accept(this);
@@ -1782,9 +1857,9 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     private int findEndIndex(final WindowStartConditionContext startCtx,
-            final WindowEndConditionContext ctx,
-            final int startIndex,
-            final List<XQueryValue> sequenceList)
+        final WindowEndConditionContext ctx,
+        final int startIndex,
+        final List<XQueryValue> sequenceList)
     {
         int endIndex = startIndex;
         if (ctx != null && ctx.exprSingle() != null) {
@@ -1795,7 +1870,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
                 if (effectiveBooleanValue.effectiveBooleanValue(accepted).booleanValue) {
                     break;
                 }
-                if (endIndex + 1 > sequenceList.size()-1)
+                if (endIndex + 1 > sequenceList.size() - 1)
                     break;
                 endIndex++;
             }
@@ -1805,11 +1880,14 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return endIndex;
     }
 
-    private boolean isOnlyEnd(final WindowEndConditionContext ctx) {
+    private boolean isOnlyEnd(final WindowEndConditionContext ctx)
+    {
         return ctx != null && ctx.ONLY() != null;
     }
 
-    private void provideVariablesForCondition(final WindowStartConditionContext ctx, final int currentIndex, final List<XQueryValue> sequenceList) {
+    private void provideVariablesForCondition(final WindowStartConditionContext ctx, final int currentIndex,
+        final List<XQueryValue> sequenceList)
+    {
         final var windowVars = ctx.windowVars();
         provideCurrentVariable(windowVars, currentIndex, sequenceList);
         providePositionalVariable(windowVars, currentIndex);
@@ -1817,7 +1895,9 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         provideNextVariable(windowVars, currentIndex, sequenceList);
     }
 
-    private void provideVariablesForCondition(final WindowEndConditionContext ctx, final int currentIndex, final List<XQueryValue> sequenceList) {
+    private void provideVariablesForCondition(final WindowEndConditionContext ctx, final int currentIndex,
+        final List<XQueryValue> sequenceList)
+    {
         final var windowVars = ctx.windowVars();
         provideCurrentVariable(windowVars, currentIndex, sequenceList);
         providePositionalVariable(windowVars, currentIndex);
@@ -1825,37 +1905,45 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         provideNextVariable(windowVars, currentIndex, sequenceList);
     }
 
-    private void provideCurrentVariable(final WindowVarsContext vars, final int currentIndex, final List<XQueryValue> sequenceList) {
+    private void provideCurrentVariable(final WindowVarsContext vars, final int currentIndex,
+        final List<XQueryValue> sequenceList)
+    {
         if (vars.currentVar() != null) {
             final String currentVarName = vars.currentVar().varRef().qname().getText();
             contextManager.provideVariable(currentVarName, sequenceList.get(currentIndex));
         }
     }
 
-    private void providePositionalVariable(final WindowVarsContext vars, final int currentIndex) {
+    private void providePositionalVariable(final WindowVarsContext vars, final int currentIndex)
+    {
         if (vars.positionalVar() != null) {
             final String positionalVarName = vars.positionalVar().varRef().qname().getText();
             contextManager.provideVariable(positionalVarName, valueFactory.number(currentIndex + 1));
         }
     }
 
-    private void providePreviousVariable(final WindowVarsContext vars, final int currentIndex, final List<XQueryValue> sequenceList) {
+    private void providePreviousVariable(final WindowVarsContext vars, final int currentIndex,
+        final List<XQueryValue> sequenceList)
+    {
         if (vars.previousVar() != null) {
             final String previousVarName = vars.previousVar().varRef().qname().getText();
-            contextManager.provideVariable(previousVarName, currentIndex > 0 ? sequenceList.get(currentIndex - 1) : emptySequence);
+            contextManager.provideVariable(previousVarName,
+                currentIndex > 0 ? sequenceList.get(currentIndex - 1) : emptySequence);
         }
     }
 
-    private void provideNextVariable(final WindowVarsContext vars, final int currentIndex, final List<XQueryValue> sequenceList) {
+    private void provideNextVariable(final WindowVarsContext vars, final int currentIndex,
+        final List<XQueryValue> sequenceList)
+    {
         if (vars.nextVar() != null) {
             final String nextVarName = vars.nextVar().varRef().qname().getText();
-            contextManager.provideVariable(nextVarName, currentIndex < sequenceList.size() - 1 ? sequenceList.get(currentIndex + 1) : emptySequence);
+            contextManager.provideVariable(nextVarName,
+                currentIndex < sequenceList.size() - 1 ? sequenceList.get(currentIndex + 1) : emptySequence);
         }
     }
 
-
-
-    private int compareValues(final XQueryValue value1, final XQueryValue value2) {
+    private int compareValues(final XQueryValue value1, final XQueryValue value2)
+    {
         if (valueComparisonOperator.valueEquals(value1, value2).booleanValue) {
             return 0;
         } else {
@@ -1867,8 +1955,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         }
     }
 
-
-    private void provideVariables(final List<VariableCoupling> tuple) {
+    private void provideVariables(final List<VariableCoupling> tuple)
+    {
         for (final var e : tuple) {
             if (e.item != null)
                 contextManager.provideVariable(e.item.name, e.item.value);
@@ -1882,73 +1970,87 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitStringConstructor(final StringConstructorContext ctx) {
+    public XQueryValue visitStringInterpolation(final StringInterpolationContext ctx)
+    {
         final StringBuilder result = new StringBuilder();
 
-        // Przetwórz zawartość string constructora
+        if (ctx.stringInterpolationContent() != null) {
+            final StringInterpolationContentContext ctx1 = ctx.stringInterpolationContent();
+
+            for (int i = 0; i < ctx1.getChildCount(); i++) {
+                final var child = ctx1.getChild(i);
+
+                if (child instanceof final InterpolationCharsContext charsCtx) {
+                    // simple chars - unescape and append
+                    final StringBuilder result11 = new StringBuilder();
+
+                    for (int i1 = 0; i1 < charsCtx.getChildCount(); i1++) {
+                        final ParseTree child1 = charsCtx.getChild(i1);
+
+                        if (child1 instanceof final TerminalNode terminal) {
+                            result11.append(terminal.getText());
+                        }
+                    }
+                    result.append(unescapeConstructorChars(result11.toString()));
+
+                } else if (child instanceof final InterpolationInterpolationContext interpolationCtx) {
+                    // interpolation - evaluate and append
+                    // Is { expr } or {} ?
+                    if (interpolationCtx.expr() != null) {
+                        // { expr } -> expr.stringValue
+                        final XQueryValue exprValue = visitExpr(interpolationCtx.expr());
+                        result.append(processInterpolationValue(exprValue));
+                    } else {
+                        // {} -> empty string
+                    }
+                }
+            }
+        }
+        return valueFactory.string(result.toString());
+    }
+
+    @Override
+    public XQueryValue visitStringConstructor(final StringConstructorContext ctx)
+    {
+        final StringBuilder result = new StringBuilder();
+
         if (ctx.stringConstructorContent() != null) {
-            final XQueryValue contentValue = visitStringConstructorContent(ctx.stringConstructorContent());
-            result.append(contentValue.stringValue);
-        }
+            final StringConstructorContentContext ctx1 = ctx.stringConstructorContent();
 
+            for (int i = 0; i < ctx1.getChildCount(); i++) {
+                final var child = ctx1.getChild(i);
+
+                if (child instanceof final ConstructorCharsContext charsCtx) {
+                    // simple chars - unescape and append
+                    final StringBuilder result11 = new StringBuilder();
+
+                    for (int i1 = 0; i1 < charsCtx.getChildCount(); i1++) {
+                        final ParseTree child1 = charsCtx.getChild(i1);
+
+                        if (child1 instanceof final TerminalNode terminal) {
+                            result11.append(terminal.getText());
+                        }
+                    }
+                    result.append(unescapeConstructorChars(result11.toString()));
+
+                } else if (child instanceof final ConstructorInterpolationContext interpolationCtx) {
+                    // interpolation - evaluate and append
+                    // Is { expr } or {} ?
+                    if (interpolationCtx.expr() != null) {
+                        // { expr } -> expr.stringValue
+                        final XQueryValue exprValue = visitExpr(interpolationCtx.expr());
+                        result.append(processInterpolationValue(exprValue));
+                    } else {
+                        // {} -> empty string
+                    }
+                }
+            }
+        }
         return valueFactory.string(result.toString());
     }
 
-    @Override
-    public XQueryValue visitStringConstructorContent(final StringConstructorContentContext ctx) {
-        final StringBuilder result = new StringBuilder();
-
-        for (int i = 0; i < ctx.getChildCount(); i++) {
-            final var child = ctx.getChild(i);
-
-            if (child instanceof ConstructorCharsContext) {
-                // simple chars - unescape and append
-                final ConstructorCharsContext charsCtx = (ConstructorCharsContext) child;
-                final XQueryValue charsValue = charsCtx.accept(this);
-                result.append(charsValue.stringValue);
-
-            } else if (child instanceof ConstructorInterpolationContext) {
-                // interpolation - evaluate and append
-                final ConstructorInterpolationContext interpolationCtx = (ConstructorInterpolationContext) child;
-                final XQueryValue interpolationValue = interpolationCtx.accept(this);
-                result.append(interpolationValue.stringValue);
-            }
-        }
-
-        return valueFactory.string(result.toString());
-    }
-
-    @Override
-    public XQueryValue visitConstructorChars(final ConstructorCharsContext ctx) {
-        final StringBuilder result = new StringBuilder();
-
-        // Iterujemy przez wszystkie dzieci w kolejności wystąpienia
-        for (int i = 0; i < ctx.getChildCount(); i++) {
-            final ParseTree child = ctx.getChild(i);
-
-            if (child instanceof TerminalNode) {
-                final TerminalNode terminal = (TerminalNode) child;
-                result.append(terminal.getText());
-            }
-        }
-
-        return valueFactory.string(unescapeConstructorChars(result.toString()));
-    }
-
-    @Override
-    public XQueryValue visitConstructorInterpolation(final ConstructorInterpolationContext ctx) {
-        // Is { expr } or {} ?
-        if (ctx.expr() != null) {
-            // { expr } -> expr.stringValue
-            final XQueryValue exprValue = visitExpr(ctx.expr());
-            return valueFactory.string(processInterpolationValue(exprValue));
-        } else {
-            // {} -> empty string
-            return valueFactory.string("");
-        }
-    }
-
-    private String unescapeConstructorChars(final String str) {
+    private String unescapeConstructorChars(final String str)
+    {
         if (str == null || str.isEmpty()) {
             return str;
         }
@@ -2030,30 +2132,31 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return result.toString();
     }
 
-    private String processInterpolationValue(final XQueryValue value) {
+    private String processInterpolationValue(final XQueryValue value)
+    {
         return atomizer.atomize(value).stream()
-                .map(v->string.call(context, List.of(v)).stringValue)
-                .collect(Collectors.joining(" "));
+            .map(v -> string.call(context, List.of(v)).stringValue)
+            .collect(Collectors.joining(" "));
     }
 
-
     @Override
-    public XQueryValue visitCurlyArrayConstructor(final CurlyArrayConstructorContext ctx) {
+    public XQueryValue visitCurlyArrayConstructor(final CurlyArrayConstructorContext ctx)
+    {
         final XQueryValue enclosedValue = visitEnclosedExpr(ctx.enclosedExpr());
         final List<XQueryValue> atomized = atomizer.atomize(enclosedValue);
         return valueFactory.array(atomized);
     }
 
-
     @Override
-    public XQueryValue visitSquareArrayConstructor(final SquareArrayConstructorContext ctx) {
+    public XQueryValue visitSquareArrayConstructor(final SquareArrayConstructorContext ctx)
+    {
         final List<XQueryValue> values = ctx.exprSingle().stream().map(this::visit).toList();
         return valueFactory.array(values);
     }
 
-
     @Override
-    public XQueryValue visitMapConstructor(final MapConstructorContext ctx) {
+    public XQueryValue visitMapConstructor(final MapConstructorContext ctx)
+    {
         final var map = ctx.mapConstructorEntry().stream()
             .collect(Collectors.toMap(
                 entry -> entry.mapKeyExpr().accept(this),
@@ -2065,13 +2168,14 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitPipelineExpr(final PipelineExprContext ctx) {
+    public XQueryValue visitPipelineExpr(final PipelineExprContext ctx)
+    {
         if (ctx.PIPE_ARROW().isEmpty())
             return ctx.arrowExpr(0).accept(this);
         final var saved = saveContext();
         final int size = ctx.arrowExpr().size();
         XQueryValue contextValue = ctx.arrowExpr(0).accept(this);
-        for (var i = 1; i < size; i++ ) {
+        for (var i = 1; i < size; i++) {
             final var contextualizedExpr = ctx.arrowExpr(i);
             context.setValue(contextValue);
             contextValue = contextualizedExpr.accept(this);
@@ -2081,14 +2185,16 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
     @Override
-    public XQueryValue visitLookupExpr(final LookupExprContext ctx) {
+    public XQueryValue visitLookupExpr(final LookupExprContext ctx)
+    {
         final var target = ctx.postfixExpr().accept(this);
         final var keySpecifier = getKeySpecifier(ctx);
         return evaluateLookup(target, keySpecifier);
 
     }
 
-    private XQueryValue evaluateLookup(final XQueryValue target, final XQueryValue keySpecifier) {
+    private XQueryValue evaluateLookup(final XQueryValue target, final XQueryValue keySpecifier)
+    {
         if (keySpecifier == null) {
             return evaluateWildcardLookup(target);
         } else {
@@ -2096,7 +2202,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         }
     }
 
-    private XQueryValue evaluateKeyLookup(final XQueryValue target, final XQueryValue keySpecifier) {
+    private XQueryValue evaluateKeyLookup(final XQueryValue target, final XQueryValue keySpecifier)
+    {
         final int resultsize = target.size * keySpecifier.size;
         final ArrayList<XQueryValue> results = new ArrayList<>(resultsize);
         for (final XQueryValue element : target.sequence) {
@@ -2104,9 +2211,10 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
                 case ARRAY:
                     if (!keySpecifier.isNumeric)
                         continue;
-                    final int index = keySpecifier.numericValue.intValue()-1;
+                    final int index = keySpecifier.numericValue.intValue() - 1;
                     if (index > element.arrayMembers.size() || index < 0)
-                        valueFactory.error(XQueryError.ArrayIndexOutOfBounds, getLookupArrayErrorMessage(keySpecifier, element));
+                        valueFactory.error(XQueryError.ArrayIndexOutOfBounds,
+                            getLookupArrayErrorMessage(keySpecifier, element));
                     results.add(element.arrayMembers.get(index));
                     break;
                 case MAP:
@@ -2122,13 +2230,16 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return valueFactory.sequence(results);
     }
 
-    private String getLookupArrayErrorMessage(final XQueryValue keySpecifier, final XQueryValue element) {
-        return "Index: " + keySpecifier.numericValue + " is out of bounds for array " + element + " of size " + element.size;
+    private String getLookupArrayErrorMessage(final XQueryValue keySpecifier, final XQueryValue element)
+    {
+        return "Index: " + keySpecifier.numericValue + " is out of bounds for array " + element + " of size "
+            + element.size;
     }
 
-    private XQueryValue evaluateWildcardLookup(final XQueryValue target) {
+    private XQueryValue evaluateWildcardLookup(final XQueryValue target)
+    {
         final int resultsize = target.size;
-        final ArrayList<XQueryValue> results = new ArrayList<>(resultsize*resultsize);
+        final ArrayList<XQueryValue> results = new ArrayList<>(resultsize * resultsize);
         for (final XQueryValue element : target.sequence) {
             switch (element.valueType) {
                 case ARRAY:
@@ -2139,26 +2250,27 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
                     break;
                 default:
                     return valueFactory.error(XQueryError.InvalidArgumentType,
-                    "Target of a lookup must be a sequence of arrays and maps, encountered: " + element);
+                        "Target of a lookup must be a sequence of arrays and maps, encountered: " + element);
             }
         }
         return valueFactory.sequence(results);
     }
 
     @Override
-    public XQueryValue visitUnaryLookup(final UnaryLookupContext ctx) {
+    public XQueryValue visitUnaryLookup(final UnaryLookupContext ctx)
+    {
         final var target = context.getValue();
         final var keySpecifier = ctx.lookup().keySpecifier().accept(this);
         return evaluateLookup(target, keySpecifier);
     }
 
-
-    XQueryValue getKeySpecifier(final LookupExprContext ctx) {
+    XQueryValue getKeySpecifier(final LookupExprContext ctx)
+    {
         final KeySpecifierContext keySpecifier = ctx.lookup().keySpecifier();
         if (keySpecifier.qname() != null) {
             return valueFactory.string(keySpecifier.qname().getText());
         }
-        if (keySpecifier.STRING() != null ) {
+        if (keySpecifier.STRING() != null) {
             return handleString(keySpecifier);
         }
         if (keySpecifier.IntegerLiteral() != null) {
@@ -2167,21 +2279,23 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return keySpecifier.accept(this);
     }
 
-    private XQueryValue handleString(final ParserRuleContext ctx) {
+    private XQueryValue handleString(final ParserRuleContext ctx)
+    {
         final String content = processStringLiteral(ctx);
         return valueFactory.string(content);
     }
 
-    private String processStringLiteral(final ParserRuleContext ctx) {
+    private String processStringLiteral(final ParserRuleContext ctx)
+    {
         final String rawText = ctx.getText();
         final String content = unescapeString(rawText.substring(1, rawText.length() - 1));
         valueFactory.string(content);
         return content;
     }
 
-
     @Override
-    public XQueryValue visitInstanceofExpr(final InstanceofExprContext ctx) {
+    public XQueryValue visitInstanceofExpr(final InstanceofExprContext ctx)
+    {
         if (ctx.INSTANCE() == null)
             return visitTreatExpr(ctx.treatExpr());
         final var visited = visitTreatExpr(ctx.treatExpr());
@@ -2190,16 +2304,16 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return valueFactory.bool(result);
     }
 
-
     @Override
-    public XQueryValue visitTreatExpr(final TreatExprContext ctx) {
+    public XQueryValue visitTreatExpr(final TreatExprContext ctx)
+    {
         if (ctx.TREAT() == null)
             return visitCastableExpr(ctx.castableExpr());
         final var type = ctx.sequenceType().accept(semanticAnalyzer);
-        final var expr =  visitCastableExpr(ctx.castableExpr());
+        final var expr = visitCastableExpr(ctx.castableExpr());
         if (!expr.type.isSubtypeOf(type.type)) {
             return valueFactory.error(XQueryError.TreatAsTypeMismatch,
-            "Type: " + expr.type + " cannot be treated as " + type);
+                "Type: " + expr.type + " cannot be treated as " + type);
         }
         return expr;
     }
@@ -2215,9 +2329,9 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return valueFactory.bool(isCastable);
     }
 
-
     @Override
-    public XQueryValue visitCastExpr(final CastExprContext ctx) {
+    public XQueryValue visitCastExpr(final CastExprContext ctx)
+    {
         if (ctx.CAST() == null)
             return visitPipelineExpr(ctx.pipelineExpr());
         final XQuerySequenceType targetType = semanticAnalyzer.visitCastTarget(ctx.castTarget()).type;
@@ -2232,26 +2346,58 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return text.substring(1, text.length() - 1);
     }
 
-
     @Override
-    public XQueryValue visitPathModuleImport(final PathModuleImportContext ctx) {
+    public XQueryValue visitPathModuleImport(final PathModuleImportContext ctx)
+    {
         final var result = moduleManager.pathModuleImport(stringContents(ctx.STRING()));
         this.visit(result.tree());
         return null;
     }
 
     @Override
-    public XQueryValue visitDefaultPathModuleImport(final DefaultPathModuleImportContext ctx) {
+    public XQueryValue visitDefaultPathModuleImport(final DefaultPathModuleImportContext ctx)
+    {
         final var result = moduleManager.defaultPathModuleImport(ctx.getText().replace(":", "/"));
         this.visit(result.tree());
         return null;
     }
 
     @Override
-    public XQueryValue visitNamespaceModuleImport(final NamespaceModuleImportContext ctx) {
+    public XQueryValue visitNamespaceModuleImport(final NamespaceModuleImportContext ctx)
+    {
         final var result = moduleManager.pathModuleImport(stringContents(ctx.STRING()));
         this.visit(result.tree());
         return null;
     }
 
+    @Override
+    public XQueryValue visitTypeswitchExpr(TypeswitchExprContext ctx)
+    {
+        var switched = visitExpr(ctx.expr());
+        var cases = ctx.bracedTypeswitchCases() != null
+            ? ctx.bracedTypeswitchCases().typeswitchCases()
+            : ctx.typeswitchCases()
+            ;
+        var clauses = cases.caseClause();
+        for (var typeswitchCase : clauses) {
+            for (var typeCtx : typeswitchCase.sequenceTypeUnion().sequenceType()) {
+                var type = semanticAnalyzer.visitSequenceType(typeCtx);
+                if (switched.type.isSubtypeOf(type.type)) {
+                    if (typeswitchCase.varRef() != null) {
+                        var caseVarName = cases.varRef().qname().getText();
+                        contextManager.provideVariable(caseVarName, switched);
+                    }
+                    var evaluatedCase = visitExprSingle(typeswitchCase.exprSingle());
+                    return evaluatedCase;
+                }
+            }
+        }
+        if (cases.varRef() != null) {
+            var defaultName = cases.varRef().qname().getText();
+            contextManager.provideVariable(defaultName, switched);
+        }
+        final var defaultValue = visitExprSingle(cases.exprSingle());
+        return defaultValue;
+    }
 }
+

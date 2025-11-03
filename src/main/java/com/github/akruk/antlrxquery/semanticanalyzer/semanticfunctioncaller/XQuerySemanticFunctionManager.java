@@ -14,6 +14,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import com.github.akruk.antlrxquery.HelperTrees;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
+import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.ErrorType;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
@@ -2153,7 +2154,11 @@ public class XQuerySemanticFunctionManager {
         // map:of-pairs($input as key-value-pair*, $options as map(*)? := {}) as map(*)
         ArgumentSpecification opInput = new ArgumentSpecification(
             "input",
-            typeFactory.zeroOrMore(typeFactory.itemNamedType("fn:key-value-pair")),
+            typeFactory.zeroOrMore(
+                typeFactory.itemNamedType(
+                    new QualifiedName("fn", "key-value-pair")
+                ).type()
+            ),
             null
         );
         register(
@@ -2176,7 +2181,7 @@ public class XQuerySemanticFunctionManager {
         register(
             "map", "pair",
             List.of(mpKey, mpValue),
-            typeFactory.namedType("fn:key-value-pair")
+            typeFactory.namedType(new QualifiedName("fn", "key-value-pair")).type()
         );
 
         register(
@@ -2188,7 +2193,9 @@ public class XQuerySemanticFunctionManager {
                     null
                 )
             ),
-            typeFactory.zeroOrMore(typeFactory.itemNamedType("fn:key-value-pair"))
+            typeFactory.zeroOrMore(
+                typeFactory.itemNamedType(new QualifiedName("fn", "key-value-pair")).type()
+                )
         );
 
 
@@ -2737,7 +2744,7 @@ public class XQuerySemanticFunctionManager {
         register(
             "fn", "random-number-generator",
             List.of(rngSeed),
-            typeFactory.namedType("fn:random-number-generator-record")
+            typeFactory.namedType(new QualifiedName("fn", "random-number-generator-record")).type()
         );
 
 

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
@@ -27,11 +28,18 @@ public interface XQueryTypeFactory {
     public XQueryItemType itemRecord(Map<String, XQueryRecordField> fields);
     public XQueryItemType itemExtensibleRecord(Map<String, XQueryRecordField> fields);
     public XQueryItemType itemChoice(Collection<XQueryItemType> items);
-    public XQueryItemType itemNamedType(String name);
-    enum RegistrationStatus {
+    
+    public enum NamedAccessingStatus {
+        OK, UNKNOWN_NAMESPACE, UNKNOWN_NAME
+    }
+    public record NamedItemAccessingResult(XQueryItemType type, NamedAccessingStatus status) {}
+    public NamedItemAccessingResult itemNamedType(QualifiedName name);
+    
+    public enum RegistrationStatus {
         OK, ALREADY_REGISTERED_SAME, ALREADY_REGISTERED_DIFFERENT
     }
-    public RegistrationStatus registerItemNamedType(String name, XQueryItemType itemType);
+    record RegistrationResult(XQueryItemType registered, RegistrationStatus status){}
+    public RegistrationResult registerNamedType(QualifiedName name, XQueryItemType itemType);
 
     public XQuerySequenceType error();
     public XQuerySequenceType string();
@@ -51,7 +59,9 @@ public interface XQueryTypeFactory {
     public XQuerySequenceType anyItem();
     public XQuerySequenceType boolean_();
     public XQuerySequenceType emptySequence();
-    public XQuerySequenceType namedType(String name);
+    
+    public record NamedAccessingResult(XQuerySequenceType type, NamedAccessingStatus status) {}
+    public NamedAccessingResult namedType(QualifiedName name);
 
     public XQuerySequenceType one(XQueryItemType itemType);
     public XQuerySequenceType zeroOrOne(XQueryItemType itemType);

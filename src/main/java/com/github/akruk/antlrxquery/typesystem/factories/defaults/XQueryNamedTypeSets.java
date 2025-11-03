@@ -10,8 +10,8 @@ import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 
 public final class XQueryNamedTypeSets {
-    private Map<String, XQueryItemType> DEFAULT_ALL;
-    public Map<String, XQueryItemType> all() {
+    private Map<String, Map<String, XQueryItemType>> DEFAULT_ALL;
+    public Map<String, Map<String, XQueryItemType>> all() {
         XQueryMemoizedTypeFactory typeFactory = new XQueryMemoizedTypeFactory(Map.of());
         if (DEFAULT_ALL != null)
             return DEFAULT_ALL;
@@ -21,7 +21,7 @@ public final class XQueryNamedTypeSets {
             "key", new XQueryRecordField(typeFactory.anyItem(), true),
             "value", new XQueryRecordField(anyItems, true)
         ));
-        DEFAULT_ALL.put("fn:key-value-pair", keyValuePair);
+        DEFAULT_ALL.computeIfAbsent("fn", _->new HashMap<>()).put("key-value-pair", keyValuePair);
 
         final XQuerySequenceType stringToAnyItems = typeFactory.map(typeFactory.itemString(), anyItems);
         final XQuerySequenceType integerToAnyFunction = typeFactory.map(typeFactory.itemNumber(), typeFactory.anyFunction());
@@ -30,7 +30,7 @@ public final class XQueryNamedTypeSets {
             "variables", new XQueryRecordField(stringToAnyItems, true),
             "functions", new XQueryRecordField(stringToIntegerToAnyFunction, true)
         ));
-        DEFAULT_ALL.put("fn:load-xquery-module-record", loadXQueryModuleRecord);
+        DEFAULT_ALL.computeIfAbsent("fn", _->new HashMap<>()).put("load-xquery-module-record", loadXQueryModuleRecord);
 
         // final XQueryItemType parsedCSVStructureRecord = typeFactory.itemRecord(Map.of(
         //     "columns", new XQueryRecordField(stringToAnyItems, true),
@@ -48,7 +48,7 @@ public final class XQueryNamedTypeSets {
         final var oneRandomRef = typeFactory.one(randomNumberGeneratorRecord);
         fields.put("next", new XQueryRecordField(typeFactory.function(oneRandomRef, List.of()), true));
 
-        DEFAULT_ALL.put("fn:random-number-generator-record", randomNumberGeneratorRecord);
+        DEFAULT_ALL.computeIfAbsent("fn", _->new HashMap<>()).put("random-number-generator-record", randomNumberGeneratorRecord);
 
         // DEFAULT_ALL.put("fn:schema-type-record", null);
         // DEFAULT_ALL.put("fn:uri-structure-record", null);

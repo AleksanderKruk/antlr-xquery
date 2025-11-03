@@ -7,11 +7,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.defaults.*;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
-public class XQueryMemoizedTypeFactory implements XQueryTypeFactory {
+public class XQueryMemoizedTypeFactory implements XQueryTypeFactory 
+{
     private final XQueryItemType ERROR_ITEM_TYPE = XQueryItemType.error(this);
     private final XQueryItemType STRING_ITEM_TYPE = XQueryItemType.string(this);
     private final XQueryItemType NUMBER_ITEM_TYPE = XQueryItemType.number(this);
@@ -44,7 +46,7 @@ public class XQueryMemoizedTypeFactory implements XQueryTypeFactory {
 
 
 
-    public XQueryMemoizedTypeFactory(final Map<String, XQueryItemType> predefinedNamedTypes) {
+    public XQueryMemoizedTypeFactory(final Map<String, Map<String, XQueryItemType>> predefinedNamedTypes) {
         namedTypes = predefinedNamedTypes;
     }
 
@@ -255,37 +257,49 @@ public class XQueryMemoizedTypeFactory implements XQueryTypeFactory {
     }
 
 
-    private final Map<String, XQueryItemType> namedTypes;
-
-    public XQueryItemType registerNamedType(final String name, final XQueryItemType aliasedType) {
-        return namedTypes.put(name, aliasedType);
-    }
-
+    private final Map<String, Map<String, XQueryItemType>> namedTypes;
 
     @Override
-    public XQueryItemType itemNamedType(final String name)
+    public NamedItemAccessingResult itemNamedType(final QualifiedName name)
     {
-        return namedTypes.get(name);
-    }
-
-
-
-    @Override
-    public RegistrationStatus registerItemNamedType(String name, XQueryItemType itemType)
-    {
-        var existing = namedTypes.get(name);
-        if (existing == null) {
-            namedTypes.put(name, itemType);
-            return RegistrationStatus.OK;
+        var namespace = namedTypes.get(name.namespace());
+        if (namespace!=null) {
+            var type = namespace.get(name.name());
+            if (type != null) {
+                return new NamedItemAccessingResult(type, NamedAccessingStatus.OK);
+            }
+            return new NamedItemAccessingResult(null, NamedAccessingStatus.UNKNOWN_NAME);
         }
-        if (existing.equals(itemType))
-            return RegistrationStatus.ALREADY_REGISTERED_SAME;
-        return RegistrationStatus.ALREADY_REGISTERED_DIFFERENT;
+        return new NamedItemAccessingResult(null, NamedAccessingStatus.UNKNOWN_NAMESPACE)  ;
+    }
+
+
+
+    @Override
+    public RegistrationResult registerNamedType(QualifiedName name, XQueryItemType itemType)
+    {
+        var namespace = namedTypes.computeIfAbsent(name.namespace(), _ -> new HashMap<>());
+        var existing = namespace.put(name.name(), itemType);
+        if (existing == null) {
+            return new RegistrationResult(itemType, RegistrationStatus.OK);
+        } else if (existing.equals(itemType)) {
+            return new RegistrationResult(existing, RegistrationStatus.ALREADY_REGISTERED_SAME);
+        }
+        return new RegistrationResult(existing, RegistrationStatus.ALREADY_REGISTERED_DIFFERENT);
     }
 
     @Override
-    public XQuerySequenceType namedType(final String name) {
+    public NamedAccessingResult namedType(final QualifiedName name) {
         var item = itemNamedType(name);
-        return (item != null)? one(itemNamedType(name)) : null;
+        switch(item.status()) {
+        case OK:
+            return new NamedAccessingResult(one(item.type()), NamedAccessingStatus.OK);
+        case UNKNOWN_NAME:
+            return new NamedAccessingResult(null, NamedAccessingStatus.UNKNOWN_NAME);
+        case UNKNOWN_NAMESPACE:
+            return new NamedAccessingResult(null, NamedAccessingStatus.UNKNOWN_NAMESPACE);
+        }
+        return null;
     }
+
 }

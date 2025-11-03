@@ -9,65 +9,65 @@ import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticWarning;
 public class DiagnosticMessageCreator {
     public String create(final DiagnosticError error) {
         switch (error.type()) {
-            case ADDITIVE__INVALID: {
+            case ADDITIVE__INVALID -> {
                 final var operand = error.data().get(0);
-                return "Operands in additive expression must be numeric"
-                        + "\n\treceived: " + operand;
+                return String.format("Operands in additive expression must be numeric\n\treceived: %s", operand);
             }
-            case AND__NON_EBV: {
-                return "Operands of 'and expression' need to have effective boolean value"
-                    + "\n\treceived: " + error.data().get(0);
+            case AND__NON_EBV -> {
+                return String.format(
+                    "Operands of 'and expression' need to have effective boolean value\n\treceived: %s", 
+                    error.data().get(0));
             }
-            case CAST__EMPTY_SEQUENCE: {
+            case CAST__EMPTY_SEQUENCE -> {
                 return "Tested expression is an empty sequence";
             }
-            case CAST__EMPTY_WITHOUT_FLAG: {
+            case CAST__EMPTY_WITHOUT_FLAG -> {
                 return "Tested expression of type " + error.data().get(0) + " can be an empty sequence without flag '?'";
             }
-            case CAST__IMPOSSIBLE: {
+            case CAST__IMPOSSIBLE -> {
                 final var tested = error.data().get(0);
                 final var type = error.data().get(1);
                 return "Casting from type " + tested + " to type " + type + " will never succeed";
 
             }
-            case CAST__WRONG_TARGET_TYPE: {
+            case CAST__WRONG_TARGET_TYPE -> {
                 final var type = error.data().get(0);
                 return "Type: " + type + " is invalid casting target";
             }
-            case CAST__ZERO_OR_MORE: {
+            case CAST__ZERO_OR_MORE -> {
                 final var tested = error.data().get(0);
                 return "Tested expression of type " + tested + " can be a sequence of cardinality greater than one (or '?')";
             }
-            case CHOICE_ITEM_TYPE__DUPLICATED:{
+            case CHOICE_ITEM_TYPE__DUPLICATED -> {
                 return "Duplicated type signatures in choice item type declaration";
             }
-            case CHOICE_ITEM_TYPE__UNRECOGNIZED:{
+            case CHOICE_ITEM_TYPE__UNRECOGNIZED -> {
                 return String.format("Type %s is not recognized", error.data().get(0));
             }
-            case CONCAT__INVALID: {
+            case CONCAT__INVALID -> {
                 return "Operands of 'concatenation expression' need to be subtype of item()?";
             }
-            case FILTERING__EXPR_NOT_EBV: {
+            case FILTERING__EXPR_NOT_EBV -> {
                 return "Filtering expression must have effective boolean value; received: " + error.data().get(0);
             }
-            case FOR_ENTRY__KEY_VALUE_VARS_DUPLICATED_NAME: {
+            case FOR_ENTRY__KEY_VALUE_VARS_DUPLICATED_NAME -> {
                 return "Key and value variable names must be distinct";
             }
-            case FOR_ENTRY__POSITIONAL_VARIABLE_SAME_AS_MAIN_VARIABLE_NAME: {
+            case FOR_ENTRY__POSITIONAL_VARIABLE_SAME_AS_MAIN_VARIABLE_NAME -> {
                 return "Positional variable name must be distinct from main variable name";
             }
-            case FOR_ENTRY__WRONG_ITERABLE_TYPE: {
+            case FOR_ENTRY__WRONG_ITERABLE_TYPE -> {
                 return "ForEntryBinding requires a single map value";
             }
-            case FOR_MEMBER__WRONG_ITERABLE_TYPE: {
+            case FOR_MEMBER__WRONG_ITERABLE_TYPE -> {
                 final var arrayType = error.data().get(0);
                 return "ForMemberBinding requires a single array value; received: " + arrayType;
             }
-            case FUNCTION__DUPLICATED_ARG_NAME: {
+            case FUNCTION__DUPLICATED_ARG_NAME -> {
                 final var parameterName = error.data().get(0);
                 return "Duplicate parameter name: " + parameterName;
             }
-            case FUNCTION__INVALID_BODY_TYPE: {
+            case FUNCTION__INVALID_BODY_TYPE -> {
                 final var inlineType = error.data().get(0);
                 final var returnedType = error.data().get(1);
                 return String.format(
@@ -75,30 +75,30 @@ public class DiagnosticMessageCreator {
                     inlineType.toString(), returnedType.toString()
                     );
             }
-            case FUNCTION__INVALID_DEFAULT: {
+            case FUNCTION__INVALID_DEFAULT -> {
                 final var dvt = error.data().get(0);
                 final var paramType = error.data().get(1);
                 return "Invalid default value: " + dvt + " is not subtype of " + paramType;
             }
-            case FUNCTION__INVALID_RETURNED_TYPE: {
+            case FUNCTION__INVALID_RETURNED_TYPE -> {
                 final var bodyType = error.data().get(0);
                 final var returned = error.data().get(1);
                 return "Invalid returned type: " + bodyType + " is not subtype of " + returned;
             }
-            case FUNCTION__POSITIONAL_ARG_BEFORE_DEFAULT: {
+            case FUNCTION__POSITIONAL_ARG_BEFORE_DEFAULT -> {
                 return "Positional arguments must be located before default arguments";
             }
-            case FUNCTION__UNKNOWN_NAMESPACE: {
+            case FUNCTION__UNKNOWN_NAMESPACE -> {
                 final var namespace = error.data().get(0);
                 return "Unknown function namespace: " + namespace;
             }
-            case FUNCTION__UNKNOWN_FUNCTION: {
+            case FUNCTION__UNKNOWN_FUNCTION -> {
                 final var namespace = error.data().get(0);
                 final var functionName = error.data().get(1);
                 return "Unknown function: " + namespace + ":" + functionName;
 
             }
-            case FUNCTION__NO_MATCHING_FUNCTION: {
+            case FUNCTION__NO_MATCHING_FUNCTION -> {
                 final var namespace = error.data().get(0);
                 final var name = error.data().get(1);
                 final var requiredArity = error.data().get(2);
@@ -119,7 +119,7 @@ public class DiagnosticMessageCreator {
                 return stringBuilder.toString();
 
             }
-            case FUNCTION_REFERENCE__UNKNOWN: {
+            case FUNCTION_REFERENCE__UNKNOWN -> {
                 final var namespace = error.data().get(0);
                 final var name = error.data().get(1);
                 final var arity = error.data().get(2);
@@ -132,21 +132,21 @@ public class DiagnosticMessageCreator {
                 stringBuilder.append(arity);
                 return stringBuilder.toString();
             }
-            case GENERAL_COMP__INVALID: {
+            case GENERAL_COMP__INVALID -> {
                 final var leftHandSide = error.data().get(0);
                 final var rightHandSide = error.data().get(1);
                 return String.format("The types: %s and %s in general comparison are not comparable",
                     leftHandSide.toString(), rightHandSide.toString());
             }
-            case GROUP_BY__DUPLICATED_VAR: {
+            case GROUP_BY__DUPLICATED_VAR -> {
                 final var varname = error.data().get(0);
                 return "Grouping variable: " + varname + " used multiple times";
             }
-            case GROUP_BY__UNDEFINED_GROUPING_VARIABLE: {
+            case GROUP_BY__UNDEFINED_GROUPING_VARIABLE -> {
                 final var varname = error.data().get(0);
                 return "Variable: " + varname + " is not defined";
             }
-            case GROUP_BY__WRONG_GROUPING_VAR_TYPE:{
+            case GROUP_BY__WRONG_GROUPING_VAR_TYPE -> {
                 final var varname = error.data().get(0);
                 final var zeroOrOneItem = error.data().get(1);
                 final var atomizedType = error.data().get(2);
@@ -157,28 +157,29 @@ public class DiagnosticMessageCreator {
                     + " received: "
                     + atomizedType;
             }
-            case IF__CONDITION_NON_EBV: {
+            case IF__CONDITION_NON_EBV -> {
                 return String.format(
                 "If condition must have an effective boolean value and the type %s doesn't have one",
                     error.data().get(0));
             }
-            case IMPORT_MODULE__NO_PATH_FOUND: {
+            case IMPORT_MODULE__NO_PATH_FOUND -> {
                 return error.data().get(0).toString();
 
             }
-            case INTERSECT_OR_EXCEPT__INVALID: {
+            case INTERSECT_OR_EXCEPT__INVALID -> {
                 final var expressionType = error.data().get(0);
-                return "Expression of operator node()* except/intersect node()* does match the type 'node()'"
-                        + "\n\treceived type: " + expressionType;
+                return """
+                       Expression of operator node()* except/intersect node()* does match the type 'node()'
+                       \treceived type: """.stripIndent() + expressionType;
             }
-            case ITEM_DECLARATION__ALREADY_REGISTERED_DIFFERENT: {
+            case ITEM_DECLARATION__ALREADY_REGISTERED_DIFFERENT -> {
                 final var typeName = error.data().get(0);
                 final var expected = error.data().get(1);
                 return typeName + " has already been registered as type: " + expected;
             }
-            case ITEM_DECLARATION__ALREADY_REGISTERED_SAME:
-                break;
-            case LOOKUP__ARRAY_INVALID_KEY: {
+            case ITEM_DECLARATION__ALREADY_REGISTERED_SAME -> {
+            }
+            case LOOKUP__ARRAY_INVALID_KEY -> {
                 final var targetType = error.data().get(0);
                 final var keySpecifierType = error.data().get(1);
                 return "Key type for lookup expression on " + targetType + " must be of type number*"
@@ -186,7 +187,7 @@ public class DiagnosticMessageCreator {
                     + "\n\t   key type: " + keySpecifierType
                     ;
             }
-            case LOOKUP__ARRAY_OR_MAP_INVALID_KEY: {
+            case LOOKUP__ARRAY_OR_MAP_INVALID_KEY -> {
                 final var targetType = error.data().get(0);
                 final var expectedKeyItemtype = error.data().get(1);
                 return "Key type for lookup expression on "
@@ -194,17 +195,17 @@ public class DiagnosticMessageCreator {
                     + " must be subtype of type "
                     + expectedKeyItemtype;
             }
-            case LOOKUP__INVALID_EXTENDED_RECORD_KEY_TYPE: {
+            case LOOKUP__INVALID_EXTENDED_RECORD_KEY_TYPE -> {
                 final var targetType = error.data().get(0);
                 final var expectedKeyItemtype = error.data().get(1);
                 return "Key type for lookup expression on " + targetType + " must be subtype of type " + expectedKeyItemtype;
             }
-            case LOOKUP__INVALID_RECORD_KEY_NAME: {
+            case LOOKUP__INVALID_RECORD_KEY_NAME -> {
                 final var key = error.data().get(0);
                 final var targetType = error.data().get(1);
                 return "Key specifier: " + key + " does not match record of type " + targetType;
             }
-            case LOOKUP__INVALID_RECORD_KEY_TYPE: {
+            case LOOKUP__INVALID_RECORD_KEY_TYPE -> {
                 final var targetType = error.data().get(0);
                 final var expectedKeyItemtype = error.data().get(1);
                 return "Key type for lookup expression on "
@@ -212,157 +213,170 @@ public class DiagnosticMessageCreator {
                     + " must be subtype of type "
                     + expectedKeyItemtype;
             }
-            case LOOKUP__INVALID_TARGET: {
-                return "Left side of lookup expression '<left> ? ...' must be map(*)* or array(*)*"
-                    + "\n\treceived: " + error.data().get(0);
+            case LOOKUP__INVALID_TARGET -> {
+                return String.format("Left side of lookup expression '<left> ? ...' must be map(*)* or array(*)*\n\treceived: %s", error.data().get(0));
             }
-            case LOOKUP__MAP_INVALID_KEY:
-                break;
-            case MAPPING__EMPTY_SEQUENCE: {
+            case LOOKUP__MAP_INVALID_KEY -> {
+            }
+            case MAPPING__EMPTY_SEQUENCE -> {
                 return "Mapping empty sequence";
             }
-            case MUL__INVALID: {
+            case MUL__INVALID -> {
                 final var visitedType = error.data().get(0);
                 return "Multiplicative expression requires a number, received: " + visitedType;
             }
-            case NODE_COMP__BOTH_INVALID: {
-                return "Operands of node comparison must be of type 'node()?'"
-                            +"\n\tinvalid left: " + error.data().get(0)
-                            +"\n\tinvalid right: " + error.data().get(1);
+            case NODE_COMP__BOTH_INVALID -> {
+                return String.format("""
+                                Operands of node comparison must be of type 'node()?'\
+                                
+                                	invalid left: \
+                                %s\
+                                
+                                	invalid right: \
+                                %s""", error.data().get(0), error.data().get(1));
             }
-            case NODE_COMP__LHS_INVALID: {
-                return "Operands of node comparison must be of type 'node()?'"
-                            +"\n\tinvalid left: " + error.data().get(0);
+            case NODE_COMP__LHS_INVALID -> {
+                return String.format("Operands of node comparison must be of type 'node()?'\n\tinvalid left: %s", error.data().get(0));
             }
-            case NODE_COMP__RHS_INVALID: {
-                return "Operands of node comparison must be of type 'node()?'"
-                            +"\n\tinvalid right: " + error.data().get(0);
+            case NODE_COMP__RHS_INVALID -> {
+                return String.format("Operands of node comparison must be of type 'node()?'\n\tinvalid right: %s", error.data().get(0));
             }
-            case NODE_TEST__LHS_INVALID: {
-                return "Path expression requires left hand side argument to be of type node()*"
-                        +"\n\tfound: " + error.data().get(0);
+            case NODE_TEST__LHS_INVALID -> {
+                return String.format("Path expression requires left hand side argument to be of type node()*\n\tfound: %s", error.data().get(0));
             }
-            case NODE_TEST__RHS_INVALID: {
+            case NODE_TEST__RHS_INVALID -> {
                 return "Node test requires node()*\n\treceived: " + error.data().get(0);
             }
-            case NODE_TEST__UNRECOGNIZED_RULE_NAMES: {
+            case NODE_TEST__UNRECOGNIZED_RULE_NAMES -> {
                 final Object joinedNames = error.data().get(0);
                 return "Path expression references unrecognized rule names: " + joinedNames;
             }
-            case OR__NON_EBV: {
+            case OR__NON_EBV -> {
                 return "Operands of 'or expression' need to have effective boolean value; received: " + error.data().get(0);
             }
-            case PARAM__NAMESPACE: {
+            case PARAM__NAMESPACE -> {
                 return "Parameter " + error.data().get(0) + " cannot have a namespace";
             }
-            case PATH_EXPR__CONTEXT_NOT_NODES: {
+            case PATH_EXPR__CONTEXT_NOT_NODES -> {
                 final var contexttype = error.data().get(0);
                 return "Path expression starting from root requires context to be of type node()*;\n\tfound: " + contexttype;
             }
-            case PATH_EXPR__CONTEXT_TYPE_ABSENT: {
+            case PATH_EXPR__CONTEXT_TYPE_ABSENT -> {
                 return "Path expression starting from root requires context to be present and of type node()*";
             }
-            case PREDICATE__NON_EBV: {
+            case PREDICATE__NON_EBV -> {
                 final var predicateExpression = error.data().get(0);
                 return String.format(
                     "Predicate requires either number* type (for item by index aquisition) or a value that has effective boolean value, provided type: %s",
                     predicateExpression);
             }
-            case QUANTIFIED__CRITERION_NON_EBV: {
+            case QUANTIFIED__CRITERION_NON_EBV -> {
                 return "Criterion value needs to have effective boolean value; received: " + error.data().get(0);
             }
-            case RANGE__INVALID_FROM: {
+            case RANGE__INVALID_FROM -> {
                 return "Wrong type in 'from' operand of 'range expression': '<number?> to <number?>'";
             }
-            case RANGE__INVALID_TO: {
+            case RANGE__INVALID_TO -> {
                 return "Wrong type in 'to' operand of range expression: '<number?> to <number?>'";
             }
-            case RANGE__INVALID_BOTH: {
-                return "Wrong type in 'to' and 'from' operands of range expression: '<number?> to <number?>'"
-                        + "\n\tfrom: " + error.data().get(0)
-                        + "\n\tto  : " + error.data().get(1)
+            case RANGE__INVALID_BOTH -> {
+                return String.format("""
+                                Wrong type in 'to' and 'from' operands of range expression: '<number?> to <number?>'\
+                                
+                                	from: \
+                                %s\
+                                
+                                	to  : \
+                                %s""", error.data().get(0), error.data().get(1))
                         ;
             }
-            case RECORD_DECLARATION__ALREADY_REGISTERED_DIFFERENT: {
+            case RECORD_DECLARATION__ALREADY_REGISTERED_DIFFERENT -> {
                 final var typeName = error.data().get(0);
                 final var expr = error.data().get(1);
                 return typeName + " has already been registered as type: " + expr;
             }
-            case RECORD_DECLARATION__ALREADY_REGISTERED_SAME:{
+            case RECORD_DECLARATION__ALREADY_REGISTERED_SAME -> {
                 final var typeName = error.data().get(0);
                 return typeName + " has already been registered";
             }
-            case RESTRICTED_DYNAMIC_CALL__NON_FUNCTION: {
+            case RESTRICTED_DYNAMIC_CALL__NON_FUNCTION -> {
                 final var value = error.data().get(0);
                 return "Expected function in dynamic function call expression, received: " + value;
             }
-            case RESTRICTED_DYNAMIC_CALL__INVALID_FUNCTION: {
+            case RESTRICTED_DYNAMIC_CALL__INVALID_FUNCTION -> {
                 final var expectedFunction = error.data().get(0);
                 final var value = error.data().get(1);
                 return "Dynamic function call expects: " + expectedFunction + " received: " + value;
             }
-            case SWITCH__INVALID_CASE: {
+            case SWITCH__INVALID_CASE -> {
                 final var operandType = error.data().get(0);
                 final var comparand = error.data().get(1);
                 return "Invalid operand type; " + operandType + " is not a subtype of " + comparand;
             }
-            case SWITCH__UNCOERSABLE:
-                break;
-            case TRY_CATCH__DUPLICATED_ERROR: {
+            case SWITCH__UNCOERSABLE -> {
+                final var type = error.data().get(0);
+                return "Unknown type: " + type;
+
+            }
+            case TRY_CATCH__DUPLICATED_ERROR -> {
                 final var name = error.data().get(0);
                 return "Error: " + name + "already used in catch clause";
             }
-            case TRY_CATCH__FINALLY_NON_EMPTY: {
+            case TRY_CATCH__FINALLY_NON_EMPTY -> {
                 final var finallyType = error.data().get(0);
                 return "Finally clause needs to evaluate to empty sequence, currently:" + finallyType;
             }
-            case TRY_CATCH__NON_ERROR: {
+            case TRY_CATCH__NON_ERROR -> {
                 final var typeRef = error.data().get(0);
                 final var err = error.data().get(1);
-                return "Type "
-                    + typeRef.toString()
-                    + " is not an error in try/catch: "
-                    + err;
+                return String.format("Type %s is not an error in try/catch: %s", typeRef.toString(), err);
 
             }
-            case TRY_CATCH__UNKNOWN_ERROR: {
+            case TRY_CATCH__ERROR__UNKNOWN_NAME -> {
                 return "Unknown error in try/catch: " + error;
             }
-            case TRY_CATCH__UNNECESSARY_ERROR_BECAUSE_OF_WILDCARD: {
+            case TRY_CATCH__UNNECESSARY_ERROR_BECAUSE_OF_WILDCARD -> {
                 return "Unnecessary catch clause, wildcard already used";
             }
-            case TYPE_NAME__UNKNOWN: {
-
+            case TYPE_NAME__UNKNOWN -> {
+                final var type = error.data().get(0);
+                return "Unknown type: " + type;
             }
-            case UNARY__INVALID: {
-                return "Arithmetic unary expression requires a number"
-                        + "\n\treceived: " + error.data().get(0);
+            case UNARY__INVALID -> {
+                return """
+                       Arithmetic unary expression requires a number
+                       \treceived: """.stripIndent() + error.data().get(0);
             }
-            case UNION__INVALID: {
-                return "Expression of union operator node()* | node()* does match the type 'node()';"
-                        + "\n\treceived: " + error.data().get(0);
+            case UNION__INVALID -> {
+                return """
+                       Expression of union operator node()* | node()* does match the type 'node()';
+                       \treceived: """.stripIndent() + error.data().get(0);
             }
-            case VALUE_COMP__INCOMPARABLE: {
-                return "Given operands of 'value comparison' are incomparable"
-                        +"\n\t left operand: " + error.data().get(0)
+            case VALUE_COMP__INCOMPARABLE -> {
+                return """
+                       Given operands of 'value comparison' are incomparable
+                       \t left operand: """.stripIndent() + error.data().get(0)
                         +"\n\tright operand: " + error.data().get(1)
                         ;
             }
-            case VALUE_COMP__LHS_INVALID: {
-                return "Left hand side of 'value comparison' must be of type 'item()?'"
-                        +"\n\treceived: " + error.data().get(0);
+            case VALUE_COMP__LHS_INVALID -> {
+                return """
+                       Left hand side of 'value comparison' must be of type 'item()?'
+                       \treceived: """.stripIndent() + error.data().get(0);
             }
-            case VALUE_COMP__RHS_INVALID: {
-                return "Right hand side of 'value comparison' must be of type 'item()?'"
-                        +"\n\treceived: " + error.data().get(0);
+            case VALUE_COMP__RHS_INVALID -> {
+                return """
+                       Right hand side of 'value comparison' must be of type 'item()?'
+                       \treceived: """.stripIndent() + error.data().get(0);
             }
-            case VALUE_COMP__BOTH_INVALID: {
-                return "Operands of 'value comparison' must be of type 'item()?'"
-                        +"\n\t left operand: " + error.data().get(0)
+            case VALUE_COMP__BOTH_INVALID -> {
+                return """
+                       Operands of 'value comparison' must be of type 'item()?'
+                       \t left operand: """.stripIndent() + error.data().get(0)
                         +"\n\tright operand: " + error.data().get(1);
 
             }
-            case VARIABLE_DECLARATION__ASSIGNED_TYPE_INCOMPATIBLE: {
+            case VARIABLE_DECLARATION__ASSIGNED_TYPE_INCOMPATIBLE -> {
                 final Object variableName = error.data().get(0);
                 final Object inferredType = error.data().get(1);
                 final Object declaredType = error.data().get(2);
@@ -370,12 +384,12 @@ public class DiagnosticMessageCreator {
                     "Type of variable %s is not compatible with the assigned value: %s is not subtype of %s",
                     variableName, inferredType, declaredType);
             }
-            case VAR_DECL_WITH_COERSION__INVALID: {
+            case VAR_DECL_WITH_COERSION__INVALID -> {
                 final Object assignedType = error.data().get(0);
                 final Object desiredType = error.data().get(1);
                 return String.format("Type: %s is not coercable to %s", assignedType, desiredType);
             }
-            case VAR_DECL__UNCOERSABLE: {
+            case VAR_DECL__UNCOERSABLE -> {
                 final var name = error.data().get(0);
                 final var declaredType = error.data().get(1);
                 final var assignedType = error.data().get(2);
@@ -388,34 +402,34 @@ public class DiagnosticMessageCreator {
                     + assignedType;
 
             }
-            case VAR_REF__UNDECLARED: {
+            case VAR_REF__UNDECLARED -> {
                 return "Undeclared variable referenced: " + error.data().get(0);
             }
-            case WINDOW__DECLARATION_MISMATCH: {
+            case WINDOW__DECLARATION_MISMATCH -> {
                 final var windowDeclaredVarType = error.data().get(0);
                 final var windowSequenceType = error.data().get(1);
                 return "Mismatched types; declared: " + windowDeclaredVarType + " is not subtype of received: " + windowSequenceType;
             }
-            case WINDOW__END_CLAUSE_CONDITION_NOT_EBV: {
+            case WINDOW__END_CLAUSE_CONDITION_NOT_EBV -> {
                 final var conditionType = error.data().get(0);
                 return "Condition must have effective boolean value, received: " + conditionType;
             }
-            case WINDOW__START_CLAUSE_CONDITION_NOT_EBV: {
+            case WINDOW__START_CLAUSE_CONDITION_NOT_EBV -> {
                 final var conditionType = error.data().get(0);
                 return "Condition must have effective boolean value, received: " + conditionType;
             }
-            case CHAR__INVALID_UNICODE_POINT: {
+            case CHAR__INVALID_UNICODE_POINT -> {
                 final var charCode = error.data().get(0);
                 final var i = error.data().get(1);
                 return "Invalid Unicode code point: " + charCode + " at index: " + i;
 
             }
-            case CHAR__INVALID_CHARACTER_REFERENCE: {
+            case CHAR__INVALID_CHARACTER_REFERENCE -> {
                 final var code = error.data().get(0);
                 final var i = error.data().get(1);
                 return "Invalid character reference: " + code + " at index: " + i;
             }
-            case CHAR__UNTERMINATED_CHARACTER_REFERENCE: {
+            case CHAR__UNTERMINATED_CHARACTER_REFERENCE -> {
                 final var i = error.data().get(0);
                 return "Unterminated character reference at " + i;
             }
@@ -427,9 +441,7 @@ public class DiagnosticMessageCreator {
     public String create(final DiagnosticWarning warning) {
         switch(warning.type()) {
         case CASTABLE__UNNECESSARY: {
-            return "Unnecessary castability test"
-                + "\n\tatomized: " + warning.data().get(0)
-                + "\n\t  tested: " + warning.data().get(1)
+            return String.format("Unnecessary castability test\n\tatomized: %s\n\t  tested: %s", warning.data().get(0), warning.data().get(1))
                 ;
         }
         case CAST__POSSIBLE_MANY_ITEMTYPES: {
@@ -483,16 +495,13 @@ public class DiagnosticMessageCreator {
 
         }
         case OTHERWISE__IMPOSSIBLE: {
-            return "Unnecessary otherwise expression"
-                    + "\n\ttype: " + warning.data().get(0) + " can never be an empty sequence";
+            return String.format("Unnecessary otherwise expression\n\ttype: %s can never be an empty sequence", warning.data().get(0));
         }
         case PATH_OPERATOR__EMPTY_SEQUENCE: {
             return "Empty sequence as target of path operator";
         }
         case TREAT__UNLIKELY:
-            return "Unlikely treat expression"
-                + "\n\ta: " + warning.data().get(0)
-                + "\n\tb: " + warning.data().get(1)
+            return String.format("Unlikely treat expression\n\ta: %s\n\tb: %s", warning.data().get(0), warning.data().get(1))
                 ;
         }
         return null;

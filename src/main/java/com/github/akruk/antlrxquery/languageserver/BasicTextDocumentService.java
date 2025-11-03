@@ -12,16 +12,53 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
-import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.BaseErrorListener;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.Recognizer;
+import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
-import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.CodeAction;
+import org.eclipse.lsp4j.CodeActionKind;
+import org.eclipse.lsp4j.CodeActionParams;
+import org.eclipse.lsp4j.Command;
+import org.eclipse.lsp4j.DefinitionParams;
+import org.eclipse.lsp4j.Diagnostic;
+import org.eclipse.lsp4j.DiagnosticSeverity;
+import org.eclipse.lsp4j.DidChangeTextDocumentParams;
+import org.eclipse.lsp4j.DidCloseTextDocumentParams;
+import org.eclipse.lsp4j.DidOpenTextDocumentParams;
+import org.eclipse.lsp4j.DidSaveTextDocumentParams;
+import org.eclipse.lsp4j.Hover;
+import org.eclipse.lsp4j.HoverParams;
+import org.eclipse.lsp4j.InlayHint;
+import org.eclipse.lsp4j.InlayHintKind;
+import org.eclipse.lsp4j.InlayHintParams;
+import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.LocationLink;
+import org.eclipse.lsp4j.MarkupContent;
+import org.eclipse.lsp4j.MarkupKind;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.PrepareRenameDefaultBehavior;
+import org.eclipse.lsp4j.PrepareRenameParams;
+import org.eclipse.lsp4j.PrepareRenameResult;
+import org.eclipse.lsp4j.PublishDiagnosticsParams;
+import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.RenameParams;
+import org.eclipse.lsp4j.SemanticTokens;
+import org.eclipse.lsp4j.SemanticTokensParams;
+import org.eclipse.lsp4j.TextEdit;
+import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.jsonrpc.messages.Either3;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode;
-import org.eclipse.lsp4j.services.*;
+import org.eclipse.lsp4j.services.LanguageClient;
+import org.eclipse.lsp4j.services.TextDocumentService;
 
 import com.github.akruk.antlrxquery.AntlrXqueryLexer;
 import com.github.akruk.antlrxquery.AntlrXqueryParser;
@@ -46,7 +83,7 @@ import com.github.akruk.antlrxquery.languageserver.AntlrQueryLanguageServer.Extr
 import com.github.akruk.antlrxquery.languageserver.AntlrQueryLanguageServer.ExtractVariableParams;
 import com.github.akruk.antlrxquery.languageserver.VariableAnalyzer.TypedVariable;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
-import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.ResolvedName;
+import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticWarning;
 import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager;
@@ -95,7 +132,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         stringIndex = tokenLegend.indexOf("string");
         propertyIndex = tokenLegend.indexOf("property");
         decoratorIndex = tokenLegend.indexOf("decorator");
-        resolver = new NamespaceResolver("fn");
+        resolver = new NamespaceResolver("fn", "");
     }
 
     public void setModulePaths(Set<Path> modulePaths) {
@@ -201,7 +238,6 @@ public class BasicTextDocumentService implements TextDocumentService {
             paths.addAll(modulePaths);
             final Path currentPath = Path.of(URI.create(uri));
             paths.add(currentPath.getParent());
-            System.err.println("Pre analysis paths:" + paths);
             final VariableAnalyzer analyzer = new VariableAnalyzer(
                 null,
                 new XQuerySemanticContextManager(typeFactory),
@@ -458,12 +494,12 @@ public class BasicTextDocumentService implements TextDocumentService {
         FunctionNameContext foundName = findRuleUsingPosition(position, names);
         if (foundName != null) {
             int arity = getArity(foundName);
-            final ResolvedName qname = resolver.resolve(foundName.getText());
+            final QualifiedName qname = resolver.resolveFunction(foundName.getText());
             return getFunctionHover(foundName, analyzer, qname, arity);
         }
         NamedFunctionRefContext foundNamedRef = findRuleUsingPosition(position, namedRefs);
         if (foundNamedRef != null) {
-            final ResolvedName qname = resolver.resolve(foundNamedRef.qname().getText());
+            final QualifiedName qname = resolver.resolveFunction(foundNamedRef.qname().getText());
             final int arity = getArity(foundNamedRef);
 
             return getFunctionHover(foundNamedRef, analyzer, qname, arity);
@@ -591,7 +627,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         {
             var foundFunctionName = findRuleUsingPosition(position, functionNames.get(uri));
             if (foundFunctionName != null) {
-                var fName = resolver.resolve(foundFunctionName.qname().getText());
+                var fName = resolver.resolveFunction(foundFunctionName.qname().getText());
                 var functionDeclaration = getFunctionDeclaration(foundFunctionName, fName, analyzer);
                 if (functionDeclaration != null) {
                     functionBeingRenamed = functionDeclaration;
@@ -604,7 +640,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         {
             var foundFunctionRef = findRuleUsingPosition(position, namedFunctionRefs.get(uri));
             if (foundFunctionRef != null) {
-                var fName = resolver.resolve(foundFunctionRef.qname().getText());
+                var fName = resolver.resolveFunction(foundFunctionRef.qname().getText());
                 var functionDeclaration = getFunctionDeclaration(foundFunctionRef, fName, analyzer);
                 if (functionDeclaration != null) {
                     functionBeingRenamed = functionDeclaration;
@@ -652,7 +688,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         for (var functionUri : functionNames.keySet()) {
             List<TextEdit> fileEdits = edits.computeIfAbsent(functionUri, (_)->new ArrayList<>());
             for (var functionName : functionNames.get(functionUri)) {
-                var qname = resolver.resolve(functionName.qname().getText());
+                var qname = resolver.resolveFunction(functionName.qname().getText());
                 FunctionDeclData functionDeclaration = getFunctionDeclaration(
                     functionName, qname, semanticAnalyzers.get(functionUri));
                 if (functionDeclaration == null)
@@ -667,7 +703,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         for (var namedUri : namedFunctionRefs.keySet()) {
             List<TextEdit> fileEdits = edits.computeIfAbsent(namedUri, (_)->new ArrayList<>());
             for (var namedRef : namedFunctionRefs.getOrDefault(namedUri, List.of())) {
-                var qname = resolver.resolve(namedRef.qname().getText());
+                var qname = resolver.resolveFunction(namedRef.qname().getText());
                 FunctionDeclData functionDeclaration = getFunctionDeclaration(
                     namedRef, qname, semanticAnalyzers.get(namedUri));
                 if (functionDeclaration == null)
@@ -695,7 +731,7 @@ public class BasicTextDocumentService implements TextDocumentService {
 
 
     private CompletableFuture<Hover> getFunctionHover(ParserRuleContext foundCtx, final XQuerySemanticAnalyzer analyzer,
-            final ResolvedName qname, final int arity) {
+            final QualifiedName qname, final int arity) {
         final FunctionSpecification specification = analyzer.getFunctionManager().getNamedFunctionSpecification(
             foundCtx, qname.namespace(), qname.name(), arity);
         if (specification == null)
@@ -791,7 +827,7 @@ public class BasicTextDocumentService implements TextDocumentService {
                 .append("(");
 
             final List<ArgumentSpecification> args = specification.args().subList(0, arity);
-            if (args.size() > 0) {
+            if (!args.isEmpty()) {
                 sb.append("\n");
                 for (int i = 0; i < args.size(); i++) {
                     final ArgumentSpecification arg = args.get(i);
@@ -846,7 +882,7 @@ public class BasicTextDocumentService implements TextDocumentService {
 
         for (FunctionNameContext functionName : functionNames.getOrDefault(uri, List.of())) {
             int arity = getArity(functionName);
-            ResolvedName resolvedName = resolver.resolve(functionName.qname().getText());
+            QualifiedName resolvedName = resolver.resolveFunction(functionName.qname().getText());
             FunctionSpecification spec = analyzer.getFunctionManager().getNamedFunctionSpecification(
                 functionName, resolvedName.namespace(), resolvedName.name(), arity);
             if (spec == null)
@@ -886,7 +922,7 @@ public class BasicTextDocumentService implements TextDocumentService {
     record FunctionDeclData(String uri, FunctionDeclContext context) {
     }
 
-    FunctionDeclData getFunctionDeclaration(NamedFunctionRefContext namedFunctionRef, ResolvedName qname,
+    FunctionDeclData getFunctionDeclaration(NamedFunctionRefContext namedFunctionRef, QualifiedName qname,
         XQuerySemanticAnalyzer analyzer)
     {
         int arity = getArity(namedFunctionRef);
@@ -898,7 +934,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         }
         for (var fDeclUri : functionDecls.keySet()) {
             for (var fDecl : functionDecls.get(fDeclUri)) {
-                var qname2 = resolver.resolve(fDecl.qname().getText());
+                var qname2 = resolver.resolveFunction(fDecl.qname().getText());
                 if (!qname.equals(qname2)) {
                     continue;
                 }
@@ -908,7 +944,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         return null;
     }
 
-    FunctionDeclData getFunctionDeclaration(FunctionNameContext namedFunctionRef, ResolvedName qname,
+    FunctionDeclData getFunctionDeclaration(FunctionNameContext namedFunctionRef, QualifiedName qname,
         XQuerySemanticAnalyzer analyzer)
     {
         int arity = getArity(namedFunctionRef);
@@ -920,7 +956,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         }
         for (var fDeclUri : functionDecls.keySet()) {
             for (var fDecl : functionDecls.get(fDeclUri)) {
-                var qname2 = resolver.resolve(fDecl.qname().getText());
+                var qname2 = resolver.resolveFunction(fDecl.qname().getText());
                 if (!qname.equals(qname2)) {
                     continue;
                 }
@@ -933,11 +969,11 @@ public class BasicTextDocumentService implements TextDocumentService {
     record RecordDeclData(String uri, NamedRecordTypeDeclContext context) {
     }
 
-    RecordDeclData getRecordDeclaration(ResolvedName qname, XQuerySemanticAnalyzer analyzer) {
+    RecordDeclData getRecordDeclaration(QualifiedName qname, XQuerySemanticAnalyzer analyzer) {
         for (var recordUrl : recordDeclarations.keySet()) {
             for (var record : recordDeclarations.get(recordUrl)) {
                 var name = record.qname().getText();
-                var resolved = resolver.resolve(name);
+                var resolved = resolver.resolveType(name);
                 if (resolved.equals(qname)) {
                     return new RecordDeclData(recordUrl, record);
                 }
@@ -947,39 +983,13 @@ public class BasicTextDocumentService implements TextDocumentService {
     }
 
 
-    CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
-        handleFunctionCallDefinition(NamedFunctionRefContext namedFunctionRef, String document)
-    {
-        var analyzer = semanticAnalyzers.get(document);
-        var qname = resolver.resolve(namedFunctionRef.qname().getText());
-        int arity = getArity(namedFunctionRef);
-        FunctionSpecification spec = analyzer.getFunctionManager().getNamedFunctionSpecification(
-            namedFunctionRef, qname.namespace(), qname.name(), arity);
-        if (spec == null) {
-            return CompletableFuture.completedFuture(Either.forLeft(List.of()));
-        }
-        var functionDeclaration = getFunctionDeclaration(namedFunctionRef, qname, analyzer);
-        if (functionDeclaration != null) {
-            return CompletableFuture.completedFuture(Either.forLeft(List.of(
-                new Location(functionDeclaration.uri, getContextRange(functionDeclaration.context.qname())))));
-        }
-
-        var recordDeclaration = getRecordDeclaration(qname, analyzer);
-        if (recordDeclaration != null) {
-            return CompletableFuture.completedFuture(Either.forLeft(List.of(
-                new Location(recordDeclaration.uri, getContextRange(recordDeclaration.context.qname()))
-            )));
-        }
-
-        return CompletableFuture.completedFuture(Either.forLeft(List.of()));
-    }
 
     CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
         handleFunctionCallDefinition(FunctionNameContext functionName, String document)
     {
         int arity = getArity(functionName);
         var analyzer = semanticAnalyzers.get(document);
-        var qname = resolver.resolve(functionName.getText());
+        var qname = resolver.resolveFunction(functionName.getText());
         FunctionSpecification spec = analyzer.getFunctionManager().getNamedFunctionSpecification(
             functionName, qname.namespace(), qname.name(), arity);
         if (spec == null) {
@@ -1033,10 +1043,10 @@ public class BasicTextDocumentService implements TextDocumentService {
     private CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
         handleTypeName(TypeNameContext foundNamedType)
     {
-        var resolvedName = resolver.resolve(foundNamedType.qname().getText());
+        var resolvedName = resolver.resolveType(foundNamedType.qname().getText());
         for (var recordDeclUrl : recordDeclarations.keySet()) {
             for (var recordDecl : recordDeclarations.get(recordDeclUrl)) {
-                var recordName = resolver.resolve(recordDecl.qname().getText());
+                var recordName = resolver.resolveType(recordDecl.qname().getText());
                 if (recordName.equals(resolvedName)) {
                     return CompletableFuture.completedFuture(Either.forLeft(List.of(
                         new Location(recordDeclUrl, getContextRange(recordDecl.qname()))
@@ -1180,6 +1190,9 @@ public class BasicTextDocumentService implements TextDocumentService {
         final PositionAnalyzer positionAnalyzer = new PositionAnalyzer(start);
         final String uri = params.getTextDocument().getUri();
         final ParseTree tree = parseTreeStore.get(uri);
+        if (tree == null) {
+            return CompletableFuture.completedFuture(List.of());
+        }
         final PositionAnalysis analysis = positionAnalyzer.visit(tree);
         List<ParserRuleContext> extractableExpressionNodes = extractableExpressions
             .evaluate(analysis.innerMostContext())
@@ -1189,9 +1202,9 @@ public class BasicTextDocumentService implements TextDocumentService {
         action.setTitle("Extract variable");
         action.setKind(CodeActionKind.RefactorExtract);
         final VarExtractionInfo extractionInfo = new VarExtractionInfo(uri, start, extractableExpressionNodes);
-        final int codeActionId = codeActionId();
-        varExtractionData.put(codeActionId, extractionInfo);
-        action.setData(codeActionId);
+        final int codeActionId_ = codeActionId();
+        varExtractionData.put(codeActionId_, extractionInfo);
+        action.setData(codeActionId_);
         return CompletableFuture.completedFuture(List.of(Either.forRight(action)));
     }
 

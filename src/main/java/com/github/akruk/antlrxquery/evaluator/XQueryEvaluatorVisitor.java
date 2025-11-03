@@ -24,7 +24,7 @@ import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactor
 import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMemoizedValueFactory;
 import com.github.akruk.antlrxquery.evaluator.values.operations.*;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
-import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.ResolvedName;
+import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
@@ -820,7 +820,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
             return null;
         }
         final String qname = ctx.qname().getText();
-        final ResolvedName resolved = namespaceResolver.resolve(qname);
+        final QualifiedName resolved = namespaceResolver.resolveFunction(qname);
         final var argNames = new ArrayList<String>();
         final Map<String, ParseTree> defaults = new HashMap<String, ParseTree>();
         contextManager.enterScope();
@@ -1200,7 +1200,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return function.functionValue.call(context, visitedPositionalArguments);
     }
 
-    final NamespaceResolver namespaceResolver = new NamespaceResolver("fn");
+    final NamespaceResolver namespaceResolver = new NamespaceResolver("fn", "");
 
     private String[] resolveNamespace(final String functionName)
     {

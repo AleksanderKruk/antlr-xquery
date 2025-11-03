@@ -1,10 +1,5 @@
 package com.github.akruk.antlrxquery.languageserver;
 
-import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.jsonrpc.Launcher;
-import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
-import org.eclipse.lsp4j.services.*;
-
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -14,6 +9,30 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+
+import org.eclipse.lsp4j.CodeActionOptions;
+import org.eclipse.lsp4j.InitializeParams;
+import org.eclipse.lsp4j.InitializeResult;
+import org.eclipse.lsp4j.InitializedParams;
+import org.eclipse.lsp4j.InlayHintRegistrationOptions;
+import org.eclipse.lsp4j.MessageParams;
+import org.eclipse.lsp4j.MessageType;
+import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.RenameOptions;
+import org.eclipse.lsp4j.SaveOptions;
+import org.eclipse.lsp4j.SemanticTokensLegend;
+import org.eclipse.lsp4j.SemanticTokensWithRegistrationOptions;
+import org.eclipse.lsp4j.ServerCapabilities;
+import org.eclipse.lsp4j.TextDocumentSyncKind;
+import org.eclipse.lsp4j.TextDocumentSyncOptions;
+import org.eclipse.lsp4j.WorkspaceEdit;
+import org.eclipse.lsp4j.jsonrpc.Launcher;
+import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
+import org.eclipse.lsp4j.services.LanguageClient;
+import org.eclipse.lsp4j.services.LanguageClientAware;
+import org.eclipse.lsp4j.services.LanguageServer;
+import org.eclipse.lsp4j.services.TextDocumentService;
+import org.eclipse.lsp4j.services.WorkspaceService;
 
 public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientAware {
     public static void main(final String[] args)
@@ -47,7 +66,6 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
     public void initialized(InitializedParams params)
     {
         client.logMessage(new MessageParams(MessageType.Info, "AntlrQuery LSP initialized"));
-        return;
     }
 
 
@@ -59,7 +77,7 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
         System.err.println("[connect] LanguageClient connected");
     }
 
-    record ExtractVariableParams(
+    public record ExtractVariableParams(
         Integer chosenPositionIndex,
         Integer extractedContextIndex,
         Integer actionId,
@@ -71,7 +89,7 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
         return textDocumentService.extractVariable(params);
     }
 
-    record ExtractVariableLocationsParams(
+    public record ExtractVariableLocationsParams(
         Range range,
         Integer selectedIndex,
         Integer actionId,

@@ -3,6 +3,7 @@ package com.github.akruk.antlrxquery.languagefeatures.semantics.functions;
 import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
+import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 
 public class ProcessingMapFunctionsTest extends SemanticTestsBase {
 
@@ -225,7 +226,7 @@ public class ProcessingMapFunctionsTest extends SemanticTestsBase {
     public void pair_valid() {
         assertType(
                 "map:pair('k', 1)",
-                typeFactory.namedType("fn:key-value-pair"));
+                typeFactory.namedType(new QualifiedName("fn", "key-value-pair")).type());
     }
 
     @Test
@@ -239,7 +240,11 @@ public class ProcessingMapFunctionsTest extends SemanticTestsBase {
     public void pairs_valid() {
         assertType(
                 "map:pairs(map{'a':1})",
-                typeFactory.zeroOrMore(typeFactory.itemNamedType("fn:key-value-pair")));
+                typeFactory.zeroOrMore(
+                    typeFactory.itemNamedType(
+                        new QualifiedName("fn", "key-value-pair")
+                        ).type()
+                ));
     }
 
     @Test

@@ -15,6 +15,16 @@ HASH: '#';
 
 LOOKUP: '?[';
 
+DecimalLiteral
+    : DOT DigitSeq                          // np. .75
+    | DigitSeq DOT DigitSeq?               // np. 1.2 lub 1.
+    ;
+
+DoubleLiteral
+    : (DOT DigitSeq | DigitSeq (DOT DigitSeq)?) ExponentPart
+    ;
+
+
 IntegerLiteral
     : DigitSeq
     ;
@@ -25,15 +35,6 @@ HexIntegerLiteral
 
 BinaryIntegerLiteral
     : BIN_PREFIX BinaryDigitSeq
-    ;
-
-DecimalLiteral
-    : DOT DigitSeq                          // np. .75
-    | DigitSeq DOT DigitSeq?               // np. 1.2 lub 1.
-    ;
-
-DoubleLiteral
-    : (DOT DigitSeq | DigitSeq DOT DigitSeq?) ExponentPart
     ;
 
 fragment DigitSeq

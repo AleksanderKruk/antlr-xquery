@@ -15,7 +15,7 @@ public class DiagnosticMessageCreator {
             }
             case AND__NON_EBV -> {
                 return String.format(
-                    "Operands of 'and expression' need to have effective boolean value\n\treceived: %s", 
+                    "Operands of 'and expression' need to have effective boolean value\n\treceived: %s",
                     error.data().get(0));
             }
             case CAST__EMPTY_SEQUENCE -> {
@@ -228,10 +228,10 @@ public class DiagnosticMessageCreator {
             case NODE_COMP__BOTH_INVALID -> {
                 return String.format("""
                                 Operands of node comparison must be of type 'node()?'\
-                                
+
                                 	invalid left: \
                                 %s\
-                                
+
                                 	invalid right: \
                                 %s""", error.data().get(0), error.data().get(1));
             }
@@ -282,10 +282,10 @@ public class DiagnosticMessageCreator {
             case RANGE__INVALID_BOTH -> {
                 return String.format("""
                                 Wrong type in 'to' and 'from' operands of range expression: '<number?> to <number?>'\
-                                
+
                                 	from: \
                                 %s\
-                                
+
                                 	to  : \
                                 %s""", error.data().get(0), error.data().get(1))
                         ;
@@ -306,12 +306,12 @@ public class DiagnosticMessageCreator {
             case RESTRICTED_DYNAMIC_CALL__INVALID_FUNCTION -> {
                 final var expectedFunction = error.data().get(0);
                 final var value = error.data().get(1);
-                return "Dynamic function call expects: " + expectedFunction + " received: " + value;
+                return String.format("Dynamic function call expects: %s received: %s", expectedFunction, value);
             }
             case SWITCH__INVALID_CASE -> {
                 final var operandType = error.data().get(0);
                 final var comparand = error.data().get(1);
-                return "Invalid operand type; " + operandType + " is not a subtype of " + comparand;
+                return String.format("Invalid operand type; %s is not a subtype of %s", operandType, comparand);
             }
             case SWITCH__UNCOERSABLE -> {
                 final var type = error.data().get(0);
@@ -334,6 +334,9 @@ public class DiagnosticMessageCreator {
             }
             case TRY_CATCH__ERROR__UNKNOWN_NAME -> {
                 return "Unknown error in try/catch: " + error;
+            }
+            case TRY_CATCH__ERROR__UNKNOWN_NAMESPACE -> {
+                return "Unknown error in try/catch, unknown namespace:" + error;
             }
             case TRY_CATCH__UNNECESSARY_ERROR_BECAUSE_OF_WILDCARD -> {
                 return "Unnecessary catch clause, wildcard already used";

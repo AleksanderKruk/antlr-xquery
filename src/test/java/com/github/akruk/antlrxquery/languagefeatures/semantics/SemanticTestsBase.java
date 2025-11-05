@@ -4,10 +4,13 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Lexer;
+import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import com.github.akruk.antlrxquery.AntlrXqueryLexer;
@@ -34,6 +37,18 @@ public class SemanticTestsBase {
         final Lexer xqueryLexer = new AntlrXqueryLexer(characters);
         final CommonTokenStream xqueryTokens = new CommonTokenStream(xqueryLexer);
         final AntlrXqueryParser xqueryParser = new AntlrXqueryParser(xqueryTokens);
+        xqueryParser.addErrorListener(new BaseErrorListener() {
+            @Override
+            public void syntaxError(
+                Recognizer<?, ?> recognizer, 
+                Object offendingSymbol, 
+                int line,
+                int charPositionInLine, 
+                String msg, RecognitionException e) 
+            {
+                throw e;
+            }
+        });
         final ParseTree xqueryTree = xqueryParser.xquery();
         final XQuerySemanticFunctionManager caller = new XQuerySemanticFunctionManager(typeFactory);
         final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(

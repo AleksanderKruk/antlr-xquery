@@ -60,7 +60,7 @@ public class ErrorsAndDiagnosticsTest extends SemanticTestsBase {
 
     @Test
     public void message_withLabel() {
-        assertType("fn:message('x', 'lbl'))", typeFactory.emptySequence());
+        assertType("fn:message('x', 'lbl')", typeFactory.emptySequence());
     }
 
     @Test

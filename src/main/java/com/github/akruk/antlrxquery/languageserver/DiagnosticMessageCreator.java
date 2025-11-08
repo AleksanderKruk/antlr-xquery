@@ -333,7 +333,12 @@ public class DiagnosticMessageCreator {
 
             }
             case TRY_CATCH__ERROR__UNKNOWN_NAME -> {
-                return "Unknown error in try/catch: " + error;
+                final var err = error.data().get(0);
+                return "Unknown error in try/catch: " + err;
+            }
+            case TRY_CATCH__ERROR__UNKNOWN_NAMESPACE -> {
+                final var err = error.data().get(0);
+                return "Unknown error in try/catch: " + err;
             }
             case TRY_CATCH__UNNECESSARY_ERROR_BECAUSE_OF_WILDCARD -> {
                 return "Unnecessary catch clause, wildcard already used";

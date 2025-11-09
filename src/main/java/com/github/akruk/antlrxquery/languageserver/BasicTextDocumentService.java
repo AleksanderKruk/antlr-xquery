@@ -265,7 +265,11 @@ public class BasicTextDocumentService implements TextDocumentService {
                     varRefsMappedToTypes_.put(varRef, type);
                 }
             });
-            analyzer.visit(tree);
+            try {
+                analyzer.visit(tree);
+            } catch(Exception e) {
+
+            }
             semanticAnalyzers.put(uri, analyzer);
             varRefsMappedToTypes.put(uri, varRefsMappedToTypes_);
             varNamesMappedToTypes.put(uri, varNamesMappedToTypes_);

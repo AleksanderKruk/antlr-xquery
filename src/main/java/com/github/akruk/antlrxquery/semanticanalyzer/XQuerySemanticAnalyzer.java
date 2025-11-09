@@ -2602,7 +2602,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     @Override
     public TypeInContext visitVarDecl(final VarDeclContext ctx)
     {
-        final var name = ctx.varNameAndType().varName().qname().getText();
+        final VarNameContext varNameCtx = ctx.varNameAndType().varName();
+        final var name = varNameCtx.qname().getText();
         final var declaredType = visitTypeDeclaration(ctx.varNameAndType().typeDeclaration());
         if (ctx.EXTERNAL() == null) {
             final var assignedType = visitVarValue(ctx.varValue()).type;
@@ -2610,7 +2611,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                 error(ctx, ErrorType.VAR_DECL__UNCOERSABLE, List.of(name, declaredType, assignedType));
             }
         }
-        contextManager.entypeVariable(name, declaredType);
+        declareVariable(declaredType, name, varNameCtx);
         return null;
     }
 
@@ -2633,8 +2634,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             case ALREADY_REGISTERED_SAME ->  {
                 error(ctx, ErrorType.ITEM_DECLARATION__ALREADY_REGISTERED_SAME, List.of(qName));
             }
-            case OK -> {
-            }
+            case OK -> { } 
         }
         return null;
 
@@ -2838,7 +2838,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                 if (switched.type.isSubtypeOf(type.type)) {
                     if (typeswitchCase.varName() != null) {
                         final var caseVarName = cases.varName().qname().getText();
-                        contextManager.entypeVariable(caseVarName, type);
+                        declareVariable(type, caseVarName, cases.varName());
                     }
                     final var evaluatedCase = visitExprSingle(typeswitchCase.exprSingle());
                     types.add(evaluatedCase.type);
@@ -2848,8 +2848,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         }
         contextManager.enterScope();
         if (cases.varName() != null) {
-            final var defaultName = cases.varName().qname().getText();
-            contextManager.entypeVariable(defaultName, switched);
+            declareVariable(switched, cases.varName());
         }
         final var defaultType = visitExprSingle(cases.exprSingle());
         contextManager.leaveScope();

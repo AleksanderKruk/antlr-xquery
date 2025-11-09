@@ -83,6 +83,29 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     protected final XQuerySequenceType zeroOrMoreItems;
     protected final XQuerySequenceType emptySequence;
 
+    public interface AnalysisListener {
+        void onVariableDeclaration(VarNameContext varName, TypeInContext type);
+        void onVariableReference(VarRefContext varRef, TypeInContext type);
+    } 
+
+    private List<AnalysisListener> listeners = new ArrayList<>();
+
+    public List<AnalysisListener> getListeners() {
+        return listeners;
+    }
+
+    public void setListeners(List<AnalysisListener> listeners) {
+        this.listeners = listeners;
+    }
+
+    public void addListener(AnalysisListener listener) {
+        listeners.add(listener);
+    }
+
+    public void removeListener(AnalysisListener listener) {
+        listeners.remove(listener);
+    }
+
     public List<DiagnosticError> getErrors()
     {
         return errors;
@@ -198,28 +221,37 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     {
         for (final var letBinding : ctx.letBinding()) {
             final VarNameAndTypeContext varNameAndType = letBinding.varNameAndType();
-            entypeVariable(letBinding, varNameAndType, letBinding.exprSingle());
+            declareVariable(letBinding, varNameAndType, letBinding.exprSingle());
         }
         return null;
     }
 
-    private void entypeVariable(final ParserRuleContext ctx,
+    private void declareVariable(final ParserRuleContext ctx,
                                 final VarNameAndTypeContext varNameAndType,
                                 final ExprSingleContext assignedValueCtx)
     {
-        final String variableName = varNameAndType.varRef().qname().getText();
+        final String variableName = varNameAndType.varName().qname().getText();
         final TypeInContext assignedValue = visitExprSingle(assignedValueCtx);
         if (varNameAndType.typeDeclaration() == null) {
-            contextManager.entypeVariable(variableName, assignedValue);
+            declareVariable(assignedValue, variableName, varNameAndType.varName());
         } else {
             final TypeInContext type = varNameAndType.typeDeclaration().accept(this);
             if (!assignedValue.isSubtypeOf(type)) {
-                // final String msg = String.format(
-                //     "Type of variable %s is not compatible with the assigned value: %s is not subtype of %s",
-                //     variableName, assignedValue, type);
                 error(ctx, ErrorType.LOOKUP__INVALID_TARGET, List.of(variableName, assignedValue, type));
             }
-            contextManager.entypeVariable(variableName, type);
+            declareVariable(type, variableName, varNameAndType.varName());
+        }
+    }
+    
+    private void declareVariable(final TypeInContext type, final VarNameContext varNameCtx) {
+        final String varName = varNameCtx.qname().getText();
+        declareVariable(type, varName, varNameCtx);
+    }
+
+    private void declareVariable(final TypeInContext type, final String varName, final VarNameContext varNameCtx) {
+        contextManager.entypeVariable(varName, type);
+        for (var listener : listeners) {
+            listener.onVariableDeclaration(varNameCtx, type);
         }
     }
 
@@ -244,7 +276,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final var iteratedType = visitExprSingle(ctx.exprSingle());
         final var iterator = contextManager.typeInContext(iteratedType.iteratorType());
         final var optionalIterator = contextManager.typeInContext(iterator.type.addOptionality());
-        final String windowVariableName = ctx.varNameAndType().varRef().qname().getText();
+        final String windowVariableName = ctx.varNameAndType().varName().qname().getText();
         final TypeInContext windowSequenceType = contextManager.typeInContext(typeFactory.oneOrMore(iterator.type.itemType));
 
         returnedOccurrence = arrayMergeFLWOROccurence();
@@ -261,19 +293,19 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     {
         final var currentVar = windowVars.currentVar();
         if (currentVar != null) {
-            contextManager.entypeVariable(currentVar.varRef().qname().getText(), iterator);
+            declareVariable(iterator, currentVar.varName());
         }
         final var currentVarPos = windowVars.positionalVar();
         if (currentVarPos != null) {
-            contextManager.entypeVariable(currentVarPos.varRef().qname().getText(), contextManager.typeInContext(typeFactory.number()));
+            declareVariable(contextManager.typeInContext(number), currentVarPos.varName());
         }
         final var previousVar = windowVars.previousVar();
         if (previousVar != null) {
-            contextManager.entypeVariable(previousVar.varRef().qname().getText(), optionalIterator);
+            declareVariable(optionalIterator, previousVar.varName());
         }
         final var nextVar = windowVars.nextVar();
         if (nextVar != null) {
-            contextManager.entypeVariable(nextVar.varRef().qname().getText(), optionalIterator);
+            declareVariable(optionalIterator, nextVar.varName());
         }
     }
 
@@ -282,7 +314,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final var iteratedType = visitExprSingle(ctx.exprSingle());
         final var iterator = contextManager.typeInContext(iteratedType.iteratorType());
         final var optionalIterator = contextManager.typeInContext(iterator.type.addOptionality());
-        final String windowVariableName = ctx.varNameAndType().varRef().qname().getText();
+        final String windowVariableName = ctx.varNameAndType().varName().qname().getText();
         final TypeInContext windowSequenceType = contextManager.typeInContext(typeFactory.oneOrMore(iterator.type.itemType));
 
         returnedOccurrence = arrayMergeFLWOROccurence();
@@ -299,9 +331,9 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             if (!windowDeclaredVarType.isSubtypeOf(windowSequenceType)) {
                 error(ctx, ErrorType.WINDOW__DECLARATION_MISMATCH, List.of(windowDeclaredVarType, windowSequenceType));
             }
-            contextManager.entypeVariable(windowVariableName, windowDeclaredVarType);
+            declareVariable(windowDeclaredVarType, windowVariableName, ctx.varName());
         } else {
-            contextManager.entypeVariable(windowVariableName, windowSequenceType);
+            declareVariable(windowSequenceType, windowVariableName, ctx.varName());
         }
     }
 
@@ -350,15 +382,17 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     @Override
     public TypeInContext visitGroupByClause(final GroupByClauseContext ctx) {
         final List<String> groupingVars = new ArrayList<>(ctx.groupingSpec().size());
+        final List<VarNameContext> groupingVarsCtx = new ArrayList<>(ctx.groupingSpec().size());
         for (final var gs : ctx.groupingSpec()) {
             if (gs.exprSingle() != null) {
-                entypeVariable(gs, gs.varNameAndType(), gs.exprSingle());
+                declareVariable(gs, gs.varNameAndType(), gs.exprSingle());
             } else {
-                final String varname = gs.varNameAndType().varRef().qname().getText();
+                VarNameContext varName2 = gs.varNameAndType().varName();
+                final String varname = varName2.qname().getText();
                 TypeInContext variableType = contextManager.getVariable(varname);
                 if (variableType == null) {
                     error(
-                        gs.varNameAndType().varRef(),
+                        varName2,
                         ErrorType.GROUP_BY__UNDEFINED_GROUPING_VARIABLE,
                         List.of(varname)
                         );
@@ -367,34 +401,37 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                 final XQuerySequenceType atomizedType = atomizer.atomize(variableType.type);
                 if (!atomizedType.isSubtypeOf(zeroOrOneItem)) {
                     error(
-                        gs.varNameAndType().varRef(),
+                        varName2,
                         ErrorType.GROUP_BY__WRONG_GROUPING_VAR_TYPE,
                         List.of(varname, zeroOrOneItem, atomizedType)
                         );
 
                 }
-                contextManager.entypeVariable(varname, contextManager.typeInContext(atomizedType.iteratorType()));
+                declareVariable(contextManager.typeInContext(atomizedType.iteratorType()), varname, varName2);
                 if (groupingVars.contains(varname)) {
-                    error(gs.varNameAndType().varRef(), ErrorType.GROUP_BY__DUPLICATED_VAR, List.of(varname));
+                    error(varName2, ErrorType.GROUP_BY__DUPLICATED_VAR, List.of(varname));
                 } else {
                     groupingVars.add(varname);
+                    groupingVarsCtx.add(varName2);
                 }
             }
         }
         final Set<Entry<String, TypeInContext>> variablesInContext = contextManager.currentContext().getVariables().entrySet();
+        int i = 0;
         for (final var variableNameAndType : variablesInContext) {
             final String varName = variableNameAndType.getKey();
             if (groupingVars.contains(varName)) {
                 continue;
             }
             final var varType = variableNameAndType.getValue();
-            contextManager.entypeVariable(varName, contextManager.typeInContext(varType.type.addOptionality()));
+            declareVariable(contextManager.typeInContext(varType.type.addOptionality()), varName, groupingVarsCtx.get(i));
+            i++;
         }
         return null;
     }
 
     public void processForItemBinding(final ForItemBindingContext ctx) {
-        final String variableName = ctx.varNameAndType().varRef().qname().getText();
+        final String variableName = ctx.varNameAndType().varName().qname().getText();
         final TypeInContext sequenceType = ctx.exprSingle().accept(this);
         returnedOccurrence = mergeFLWOROccurrence(sequenceType.type);
 
@@ -408,13 +445,13 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         processVariableTypeDeclaration(ctx.varNameAndType(), contextManager.typeInContext(iteratorType), variableName, ctx);
 
         if (ctx.positionalVar() != null) {
-            final String positionalVariableName = ctx.positionalVar().varRef().qname().getText();
-            contextManager.entypeVariable(positionalVariableName, contextManager.typeInContext(number));
+            final String positionalVariableName = ctx.positionalVar().varName().qname().getText();
+            declareVariable(contextManager.typeInContext(number), positionalVariableName, ctx.positionalVar().varName());
         }
     }
 
     public void processForMemberBinding(final ForMemberBindingContext ctx) {
-        final String variableName = ctx.varNameAndType().varRef().qname().getText();
+        final String variableName = ctx.varNameAndType().varName().qname().getText();
         final TypeInContext arrayType = ctx.exprSingle().accept(this);
         returnedOccurrence = arrayMergeFLWOROccurence();
 
@@ -429,8 +466,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         processVariableTypeDeclaration(ctx.varNameAndType(), contextManager.typeInContext(memberType), variableName, ctx);
 
         if (ctx.positionalVar() != null) {
-            final String positionalVariableName = ctx.positionalVar().varRef().qname().getText();
-            contextManager.entypeVariable(positionalVariableName, contextManager.typeInContext(number));
+            final String positionalVariableName = ctx.positionalVar().varName().qname().getText();
+            declareVariable(contextManager.typeInContext(number), positionalVariableName, ctx.positionalVar().varName());
         }
     }
 
@@ -451,8 +488,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
 
         // Check for duplicate key and value variable names
         if (keyBinding != null && valueBinding != null) {
-            final String keyVarName = keyBinding.varNameAndType().varRef().qname().getText();
-            final String valueVarName = valueBinding.varNameAndType().varRef().qname().getText();
+            final String keyVarName = keyBinding.varNameAndType().varName().qname().getText();
+            final String valueVarName = valueBinding.varNameAndType().varName().qname().getText();
             if (keyVarName.equals(valueVarName)) {
                 error(ctx, ErrorType.FOR_ENTRY__KEY_VALUE_VARS_DUPLICATED_NAME, List.of());
             }
@@ -460,7 +497,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
 
         // Process key binding
         if (keyBinding != null) {
-            final String keyVariableName = keyBinding.varNameAndType().varRef().qname().getText();
+            final String keyVariableName = keyBinding.varNameAndType().varName().qname().getText();
             final XQueryItemType keyType = mapType.type.itemType.mapKeyType;
             final XQuerySequenceType keyIteratorType = typeFactory.one(keyType);
 
@@ -470,7 +507,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
 
         // Process value binding
         if (valueBinding != null) {
-            final String valueVariableName = valueBinding.varNameAndType().varRef().qname().getText();
+            final String valueVariableName = valueBinding.varNameAndType().varName().qname().getText();
             final XQuerySequenceType valueType = mapType.type.itemType.mapValueType;
 
             checkPositionalVariableDistinct(ctx.positionalVar(), valueVariableName, ctx);
@@ -478,8 +515,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         }
 
         if (ctx.positionalVar() != null) {
-            final String positionalVariableName = ctx.positionalVar().varRef().qname().getText();
-            contextManager.entypeVariable(positionalVariableName, contextManager.typeInContext(number));
+            final String positionalVariableName = ctx.positionalVar().varName().qname().getText();
+            declareVariable(contextManager.typeInContext(number), positionalVariableName, ctx.positionalVar().varName());
         }
     }
 
@@ -488,7 +525,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                                             final ParserRuleContext context)
     {
         if (positionalVar != null) {
-            final String positionalVariableName = positionalVar.varRef().qname().getText();
+            final String positionalVariableName = positionalVar.varName().qname().getText();
             if (mainVariableName.equals(positionalVariableName)) {
                 error(context, ErrorType.FOR_ENTRY__POSITIONAL_VARIABLE_SAME_AS_MAIN_VARIABLE_NAME, List.of());
             }
@@ -501,7 +538,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                                             final ParseTree context)
     {
         if (varNameAndType.typeDeclaration() == null) {
-            contextManager.entypeVariable(variableName, inferredType);
+            declareVariable(inferredType, variableName, varNameAndType.varName());
             return;
         }
 
@@ -513,7 +550,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                 List.of(variableName, inferredType, declaredType)
                 );
         }
-        contextManager.entypeVariable(variableName, declaredType);
+        declareVariable(declaredType, variableName, varNameAndType.varName());
     }
 
 
@@ -680,8 +717,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     @Override
     public TypeInContext visitCountClause(final CountClauseContext ctx)
     {
-        final String countVariableName = ctx.varRef().qname().getText();
-        contextManager.entypeVariable(countVariableName, number);
+        declareVariable(contextManager.typeInContext(number), ctx.varName());
         return contextManager.typeInContext(number);
     }
 
@@ -706,6 +742,9 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             error(ctx, ErrorType.VAR_REF__UNDECLARED, List.of(variableName));
             return contextManager.typeInContext(zeroOrMoreItems);
         } else {
+            for (var l : listeners) {
+                l.onVariableReference(ctx, variableType);
+            }
             return variableType;
         }
     }
@@ -931,7 +970,11 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final List<QuantifierBindingContext> quantifierBindings = ctx.quantifierBinding();
 
         final List<String> variableNames = quantifierBindings.stream()
-                .map(binding -> binding.varNameAndType().varRef().qname().getText())
+                .map(binding -> binding.varNameAndType().varName().qname().getText())
+                .toList();
+
+        final List<VarNameContext> variableNameCtxs = quantifierBindings.stream()
+                .map(binding -> binding.varNameAndType().varName())
                 .toList();
 
         final List<XQuerySequenceType> coercedTypes = quantifierBindings.stream()
@@ -957,10 +1000,10 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                         ErrorType.VAR_DECL_WITH_COERSION__INVALID,
                         List.of(assignedType, desiredType));
                 }
-                contextManager.entypeVariable(variableNames.get(i), desiredType);
+                declareVariable(contextManager.typeInContext(desiredType), variableNames.get(i), variableNameCtxs.get(i));
                 continue;
             }
-            contextManager.entypeVariable(variableNames.get(i), assignedType);
+            declareVariable(contextManager.typeInContext(assignedType), variableNames.get(i), variableNameCtxs.get(i));
         }
 
         final XQuerySequenceType queriedType = criterionNode.accept(this).type;
@@ -1870,15 +1913,15 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                 context.setPositionType(null);
                 context.setSizeType(null);
                 contextManager.enterScope();
-                contextManager.entypeVariable("err:code", string);
-                contextManager.entypeVariable("err:description", optionalString);
-                contextManager.entypeVariable("err:value", typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-                contextManager.entypeVariable("err:module", typeFactory.zeroOrOne(typeFactory.itemString()));
-                contextManager.entypeVariable("err:line-number", typeFactory.zeroOrOne(typeFactory.itemNumber()));
-                contextManager.entypeVariable("err:column-number", typeFactory.zeroOrOne(typeFactory.itemNumber()));
-                contextManager.entypeVariable("err:stack-trace", typeFactory.zeroOrOne(typeFactory.itemString()));
-                contextManager.entypeVariable("err:additional", typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-                contextManager.entypeVariable("err:map", typeFactory.anyMap());
+                declareVariable(contextManager.typeInContext(string), "err:code", null);
+                declareVariable(contextManager.typeInContext(optionalString), "err:description", null);
+                declareVariable(contextManager.typeInContext(typeFactory.zeroOrMore(typeFactory.itemAnyItem())), "err:value", null);
+                declareVariable(contextManager.typeInContext(typeFactory.zeroOrOne(typeFactory.itemString())), "err:module", null);
+                declareVariable(contextManager.typeInContext(typeFactory.zeroOrOne(typeFactory.itemNumber())), "err:line-number", null);
+                declareVariable(contextManager.typeInContext(typeFactory.zeroOrOne(typeFactory.itemNumber())), "err:column-number", null);
+                declareVariable(contextManager.typeInContext(typeFactory.zeroOrOne(typeFactory.itemString())), "err:stack-trace", null);
+                declareVariable(contextManager.typeInContext(typeFactory.zeroOrMore(typeFactory.itemAnyItem())), "err:additional", null);
+                declareVariable(contextManager.typeInContext(typeFactory.anyMap()), "err:map", null);
 
                 final var visited = c.enclosedExpr().accept(this);
                 contextManager.leaveScope();
@@ -2439,7 +2482,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final var returnTypeDeclaration = functionSignature.typeDeclaration();
         contextManager.enterScope();
         for (final var parameter : functionSignature.paramList().varNameAndType()) {
-            final String parameterName = parameter.varRef().qname().getText();
+            final String parameterName = parameter.varName().qname().getText();
             final TypeDeclarationContext typeDeclaration = parameter.typeDeclaration();
             final XQuerySequenceType parameterType = typeDeclaration != null
                 ? typeDeclaration.accept(this).type
@@ -2449,7 +2492,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             }
             argumentNames.add(parameterName);
             args.add(parameterType);
-            contextManager.entypeVariable(parameterName, parameterType);
+            declareVariable(contextManager.typeInContext(parameterType), parameterName, parameter.varName());
         }
         final var inlineType = ctx.functionBody().enclosedExpr().accept(this);
         if (returnTypeDeclaration != null) {
@@ -2481,6 +2524,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final QualifiedName resolved = namespaceResolver.resolveFunction(qname);
         int i = 0;
         final var args = new ArrayList<ArgumentSpecification>();
+        final var argNameCtx = new ArrayList<VarNameContext>();
         contextManager.enterContext();
         if (ctx.paramListWithDefaults() != null) {
             final Set<String> argNames = new HashSet<>();
@@ -2499,6 +2543,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                     error(param, ErrorType.FUNCTION__DUPLICATED_ARG_NAME, List.of(argName));
                 }
                 args.add(argDecl);
+                argNameCtx.add(param.varNameAndType().varName());
                 i++;
             }
             for (final ParamWithDefaultContext param : params.subList(i, params.size())) {
@@ -2520,9 +2565,12 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                     error(param.getParent(), ErrorType.FUNCTION__DUPLICATED_ARG_NAME, List.of(argName));
                 }
                 args.add(argDecl);
+                argNameCtx.add(param.varNameAndType().varName());
             }
+            i = 0;
             for (final var arg : args) {
-                contextManager.entypeVariable(arg.name(), arg.type());
+                declareVariable(contextManager.typeInContext(arg.type()), arg.name(), argNameCtx.get(i));
+                i++;
             }
         }
 
@@ -2542,7 +2590,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
 
     private String getArgName(final ParamWithDefaultContext param)
     {
-        final var paramName = param.varNameAndType().varRef().qname();
+        final var paramName = param.varNameAndType().varName().qname();
         if (!paramName.namespace().isEmpty())
         {
             error(param, ErrorType.PARAM__NAMESPACE, List.of(paramName.anyName().getText()));
@@ -2554,7 +2602,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     @Override
     public TypeInContext visitVarDecl(final VarDeclContext ctx)
     {
-        final var name = ctx.varNameAndType().varRef().qname().getText();
+        final var name = ctx.varNameAndType().varName().qname().getText();
         final var declaredType = visitTypeDeclaration(ctx.varNameAndType().typeDeclaration());
         if (ctx.EXTERNAL() == null) {
             final var assignedType = visitVarValue(ctx.varValue()).type;
@@ -2788,8 +2836,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                 final var type = visitSequenceType(typeCtx);
                 contextManager.enterScope();
                 if (switched.type.isSubtypeOf(type.type)) {
-                    if (typeswitchCase.varRef() != null) {
-                        final var caseVarName = cases.varRef().qname().getText();
+                    if (typeswitchCase.varName() != null) {
+                        final var caseVarName = cases.varName().qname().getText();
                         contextManager.entypeVariable(caseVarName, type);
                     }
                     final var evaluatedCase = visitExprSingle(typeswitchCase.exprSingle());
@@ -2799,8 +2847,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             }
         }
         contextManager.enterScope();
-        if (cases.varRef() != null) {
-            final var defaultName = cases.varRef().qname().getText();
+        if (cases.varName() != null) {
+            final var defaultName = cases.varName().qname().getText();
             contextManager.entypeVariable(defaultName, switched);
         }
         final var defaultType = visitExprSingle(cases.exprSingle());

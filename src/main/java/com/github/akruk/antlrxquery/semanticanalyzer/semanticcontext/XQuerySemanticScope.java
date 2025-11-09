@@ -101,6 +101,13 @@ public class XQuerySemanticScope {
         return variables;
     }
 
+    /**
+     * Either creates variable with required type
+     * or overrides existing variable
+     * @param variableName 
+     * @param assignedType
+     * @return true if variable was added
+     */
     public boolean entypeVariable(String variableName, TypeInContext assignedType) {
         boolean addedVariable = variables.containsKey(variableName);
         variables.put(variableName, assignedType);

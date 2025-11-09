@@ -49,12 +49,15 @@ public class XQuerySemanticContextManager {
         return currentContext().currentScope();
     }
 
+    /**
+     * Either creates variable with required type
+     * or overrides existing variable in the current scope
+     * @param variableName 
+     * @param assignedType
+     * @return true if variable was added
+     */
     public boolean entypeVariable(String variableName, TypeInContext assignedType) {
         return currentContext().entypeVariable(variableName, assignedType);
-    }
-
-    public boolean entypeVariable(String variableName, XQuerySequenceType assignedType) {
-        return currentContext().entypeVariable(variableName, new TypeInContext(assignedType));
     }
 
     public TypeInContext getVariable(String variableName) {

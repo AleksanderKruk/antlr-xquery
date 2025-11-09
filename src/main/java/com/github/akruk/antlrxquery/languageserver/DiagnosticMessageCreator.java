@@ -333,7 +333,12 @@ public class DiagnosticMessageCreator {
 
             }
             case TRY_CATCH__ERROR__UNKNOWN_NAME -> {
-                return "Unknown error in try/catch: " + error;
+                final var err = error.data().get(0);
+                return "Unknown error in try/catch: " + err;
+            }
+            case TRY_CATCH__ERROR__UNKNOWN_NAMESPACE -> {
+                final var err = error.data().get(0);
+                return "Unknown error in try/catch: " + err;
             }
             case TRY_CATCH__ERROR__UNKNOWN_NAMESPACE -> {
                 return "Unknown error in try/catch, unknown namespace:" + error;

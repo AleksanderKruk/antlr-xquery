@@ -73,9 +73,12 @@ forEntryValueBinding
     ;
 
 
-positionalVar:
-    AT varRef;
+positionalVar: AT varName;
 
+// TODO: let destructuring
+// LetSequenceBinding	::=	"$" "(" (VarNameAndType ++ ",") ")" TypeDeclaration? ":=" ExprSingle
+// LetArrayBinding	::=	"$" "[" (VarNameAndType ++ ",") "]" TypeDeclaration? ":=" ExprSingle
+// LetMapBinding	::=	"$" "{" (VarNameAndType ++ ",") "}" TypeDeclaration? ":=" ExprSingle
 letClause:
     LET letBinding (COMMA letBinding)*;
 
@@ -83,7 +86,7 @@ letBinding:
     varNameAndType ASSIGNMENT_OP exprSingle;
 
 countClause:
-    COUNT varRef;
+    COUNT varName;
 
 whereClause:
     WHERE exprSingle;
@@ -120,7 +123,6 @@ quantifiedExpr:
 quantifierBinding:
     varNameAndType IN exprSingle;
 
-
 ifExpr:
     IF LPAREN expr RPAREN (unbracedActions | bracedAction);
 
@@ -148,9 +150,11 @@ switchCases:
 switchCaseClause:
     (CASE switchCaseOperand)+ RETURN exprSingle;
 
-switchCaseOperand: expr;
+switchCaseOperand:
+    expr;
 
-bracedSwitchCases:LCURLY switchCases RCURLY;
+bracedSwitchCases:
+    LCURLY switchCases RCURLY;
 
 
 tryCatchExpr : tryClause ( (catchClause+ finallyClause?) | finallyClause ) ;
@@ -169,11 +173,11 @@ typeswitchExpr
     ;
 
 typeswitchCases
-    : caseClause+ DEFAULT varRef? RETURN exprSingle
+    : caseClause+ DEFAULT varName? RETURN exprSingle
     ;
 
 caseClause
-    : CASE (varRef AS)? sequenceTypeUnion RETURN exprSingle
+    : CASE (varName AS)? sequenceTypeUnion RETURN exprSingle
     ;
 
 bracedTypeswitchCases
@@ -299,21 +303,22 @@ curlyArrayConstructor
 
 predicateList: predicate*;
 predicate: LBRACKET expr RBRACKET;
-primaryExpr: literal
-        | varRef
-        | parenthesizedExpr
-        | contextValueRef
-        | functionCall
-        | functionItemExpr
-        | mapConstructor
-        | arrayConstructor
-        | stringConstructor
-        | stringInterpolation
-        | unaryLookup
-        // | orderedExpr
-        // | unorderedExpr
-        // | nodeConstructor
-        ;
+primaryExpr:
+    literal
+    | varRef
+    | parenthesizedExpr
+    | contextValueRef
+    | functionCall
+    | functionItemExpr
+    | mapConstructor
+    | arrayConstructor
+    | stringConstructor
+    | stringInterpolation
+    | unaryLookup
+    // | orderedExpr
+    // | unorderedExpr
+    // | nodeConstructor
+    ;
 
 
 namedFunctionRef:qname HASH IntegerLiteral;
@@ -331,6 +336,8 @@ numericLiteral
     ;
 
 varRef: DOLLAR qname;
+varName: DOLLAR qname;
+paramName: DOLLAR qname;
 parenthesizedExpr: LPAREN expr? RPAREN;
 contextValueRef: DOT;
 functionCall: functionName argumentList;
@@ -386,7 +393,7 @@ typedFunctionType:
     FUNCTION LPAREN (typedFunctionParam (COMMA typedFunctionParam)*)? RPAREN AS sequenceType;
 
 typedFunctionParam:
-    (varRef AS)? sequenceType;
+    (paramName AS)? sequenceType;
 
 mapType
     : anyMapType
@@ -807,7 +814,7 @@ slidingWindowClause
     ;
 
 varNameAndType
-    : varRef typeDeclaration?
+    : varName typeDeclaration?
     ;
 
 windowStartCondition
@@ -823,15 +830,15 @@ windowVars
     ;
 
 currentVar
-    : varRef
+    : varName
     ;
 
 previousVar
-    : PREVIOUS varRef
+    : PREVIOUS varName
     ;
 
 nextVar
-    : NEXT varRef
+    : NEXT varName
     ;
 
 

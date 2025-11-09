@@ -73,6 +73,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.NamedRecordTypeDeclContext
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PositionalArgumentsContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.TypeNameContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameAndTypeContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarRefContext;
 import com.github.akruk.antlrxquery.evaluator.XQuery;
 import com.github.akruk.antlrxquery.evaluator.XQuery.TreeEvaluator;
@@ -81,17 +82,18 @@ import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMe
 import com.github.akruk.antlrxquery.languageserver.AntlrQueryLanguageServer.ExtractLocationInfo;
 import com.github.akruk.antlrxquery.languageserver.AntlrQueryLanguageServer.ExtractVariableLocationsParams;
 import com.github.akruk.antlrxquery.languageserver.AntlrQueryLanguageServer.ExtractVariableParams;
-import com.github.akruk.antlrxquery.languageserver.VariableAnalyzer.TypedVariable;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticWarning;
 import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
+import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer.AnalysisListener;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionManager.ArgumentSpecification;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionManager.FunctionSpecification;
+import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTypeSets;
@@ -101,16 +103,18 @@ public class BasicTextDocumentService implements TextDocumentService {
     private LanguageClient client;
     private final Map<String, List<Token>> tokenStore = new HashMap<>();
     private final Map<String, ParseTree> parseTreeStore = new HashMap<>();
-    private final Map<String, VariableAnalyzer> semanticAnalyzers = new HashMap<>();
+    private final Map<String, XQuerySemanticAnalyzer> semanticAnalyzers = new HashMap<>();
     private final Map<String, List<NamedFunctionRefContext>> namedFunctionRefs = new HashMap<>();
     private final Map<String, List<FunctionNameContext>> functionNames = new HashMap<>();
     private final Map<String, List<ParserRuleContext>> types = new HashMap<>();
     private final Map<String, List<TypeNameContext>> namedTypes = new HashMap<>();
     private final Map<String, List<VarRefContext>> variableReferences = new HashMap<>();
-    private final Map<String, List<VarNameAndTypeContext>> variableDeclarations = new HashMap<>();
-    private final Map<String, List<VarRefContext>> variableDeclarationsWithoutType = new HashMap<>();
+    private final Map<String, List<VarNameContext>> variableDeclarationsWithoutType = new HashMap<>();
     private final Map<String, List<FunctionDeclContext>> functionDecls = new HashMap<>();
     private final Map<String, List<NamedRecordTypeDeclContext>> recordDeclarations = new HashMap<>();
+    private final Map<String, List<VarNameAndTypeContext>> variableDeclarations = new HashMap<>();
+    private final Map<String, Map<VarRefContext, TypeInContext>> varRefsMappedToTypes = new HashMap<>();
+    private final Map<String, Map<VarNameContext, TypeInContext>> varNamesMappedToTypes = new HashMap<>();
     private final DiagnosticMessageCreator diagnosticMessageCreator = new DiagnosticMessageCreator();
 
     private Set<Path> modulePaths = Set.of();
@@ -238,7 +242,7 @@ public class BasicTextDocumentService implements TextDocumentService {
             paths.addAll(modulePaths);
             final Path currentPath = Path.of(URI.create(uri));
             paths.add(currentPath.getParent());
-            final VariableAnalyzer analyzer = new VariableAnalyzer(
+            final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
                 null,
                 new XQuerySemanticContextManager(typeFactory),
                 typeFactory,
@@ -247,8 +251,29 @@ public class BasicTextDocumentService implements TextDocumentService {
                 null,
                 new ModuleManager(paths)
                 );
-            analyzer.visit(tree);
+
+            final Map<VarRefContext, TypeInContext> varRefsMappedToTypes_ = new HashMap<>();
+            final Map<VarNameContext, TypeInContext> varNamesMappedToTypes_ = new HashMap<>();
+            analyzer.addListener(new AnalysisListener() {
+                @Override
+                public void onVariableDeclaration(VarNameContext varName, TypeInContext type) {
+                    varNamesMappedToTypes_.put(varName, type);
+                }
+
+                @Override
+                public void onVariableReference(VarRefContext varRef, TypeInContext type) {
+                    varRefsMappedToTypes_.put(varRef, type);
+                }
+            });
+            try {
+                analyzer.visit(tree);
+            } catch(Exception e) {
+
+            }
             semanticAnalyzers.put(uri, analyzer);
+            varRefsMappedToTypes.put(uri, varRefsMappedToTypes_);
+            varNamesMappedToTypes.put(uri, varNamesMappedToTypes_);
+
 
             final List<DiagnosticError> errors = analyzer.getErrors();
             final List<DiagnosticWarning> warnings = analyzer.getWarnings();
@@ -287,16 +312,16 @@ public class BasicTextDocumentService implements TextDocumentService {
                 .map(x->(VarNameAndTypeContext) x.node)
                 .toList();
 
-            final Stream<VarRefContext> declarationWithoutTypeContexts = declarationContexts.stream()
+            final Stream<VarNameContext> declarationWithoutTypeContexts = declarationContexts.stream()
                 .filter(x->x.typeDeclaration() == null)
-                .map(x->x.varRef());
+                .map(x->x.varName());
             variableDeclarations.put(uri, declarationContexts);
 
-            final List<XQueryValue> windowVars = XQuery.evaluateWithMockRoot(tree, "//windowVars//varRef", _parser).sequence;
-            final var windowVarVarRefs = windowVars.stream().map(t -> (VarRefContext)t.node);
-            final List<VarRefContext> combinedVarRefs = Stream
+            final List<XQueryValue> windowVars = XQuery.evaluateWithMockRoot(tree, "//windowVars//varName", _parser).sequence;
+            var windowVarVarRefs = windowVars.stream().map(t -> (VarNameContext) t.node);
+            List<VarNameContext> combinedVarRefs = Stream
                 .of(declarationWithoutTypeContexts, windowVarVarRefs)
-                .flatMap((final Stream<VarRefContext> x)->x)
+                .flatMap((Stream<VarNameContext> x)->x)
                 .toList();
             variableDeclarationsWithoutType.put(uri, combinedVarRefs);
             }
@@ -478,7 +503,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         final Position position = params.getPosition();
 
         final ParseTree tree = parseTreeStore.get(uri);
-        final VariableAnalyzer analyzer = semanticAnalyzers.get(uri);
+        final XQuerySemanticAnalyzer analyzer = semanticAnalyzers.get(uri);
 
         if (tree == null || analyzer == null) {
             return CompletableFuture.completedFuture(null);
@@ -505,22 +530,18 @@ public class BasicTextDocumentService implements TextDocumentService {
             return getFunctionHover(foundNamedRef, analyzer, qname, arity);
         }
 
-        final List<TypedVariable> variablesMappedToTypes = analyzer.variablesMappedToTypes;
-        if (variablesMappedToTypes == null || variablesMappedToTypes.isEmpty()) {
-            return CompletableFuture.completedFuture(null);
-        }
 
-        final TypedVariable foundVar = findTypedVar(position, variablesMappedToTypes);
-
-        if (foundVar != null) {
-            final String hoverText = "```antlrquery\n" + foundVar.type() + "\n```";
-            final MarkupContent content = new MarkupContent(MarkupKind.MARKDOWN, hoverText);
-            final Hover hover = new Hover(content);
-            hover.setRange(foundVar.range());
+        {VarRefContext foundVarRef = findRuleUsingPosition(position, variableReferences.get(uri));
+        if (foundVarRef != null) {
+            var type = varRefsMappedToTypes.get(uri).get(foundVarRef);
+            String hoverText = "```antlrquery\n" + type + "\n```";
+            MarkupContent content = new MarkupContent(MarkupKind.MARKDOWN, hoverText);
+            Hover hover = new Hover(content);
+            hover.setRange(getContextRange(foundVarRef));
             return CompletableFuture.completedFuture(hover);
-        }
+        }}
 
-        final List<ParserRuleContext> ts = types.get(uri);
+        {final List<ParserRuleContext> ts = types.get(uri);
         if (ts.isEmpty()) {
             return CompletableFuture.completedFuture(null);
         }
@@ -532,7 +553,7 @@ public class BasicTextDocumentService implements TextDocumentService {
             final Hover hover = new Hover(content);
             hover.setRange(getContextRange(foundType));
             return CompletableFuture.completedFuture(hover);
-        }
+        }}
 
         return CompletableFuture.completedFuture(null);
     }
@@ -559,43 +580,6 @@ public class BasicTextDocumentService implements TextDocumentService {
         return Integer.parseInt(ctx.IntegerLiteral().getText());
     }
 
-    private TypedVariable findTypedVar(final Position position, final List<TypedVariable> variablesMappedToTypes) {
-        final Comparator<TypedVariable> comparator = (v1, v2) -> {
-            final Position s1 = v1.range().getStart();
-            final Position s2 = v2.range().getStart();
-            final int cmpStart = (s1.getLine() != s2.getLine())
-                ? Integer.compare(s1.getLine(), s2.getLine())
-                : Integer.compare(s1.getCharacter(), s2.getCharacter());
-            if (cmpStart != 0)
-                return cmpStart;
-
-            final Position e1 = v1.range().getEnd();
-            final Position e2 = v2.range().getEnd();
-            return (e1.getLine() != e2.getLine())
-                ? Integer.compare(e1.getLine(), e2.getLine())
-                : Integer.compare(e1.getCharacter(), e2.getCharacter());
-        };
-
-        variablesMappedToTypes.sort(comparator);
-
-        // Find variable at position
-        final TypedVariable foundVar = variablesMappedToTypes.stream()
-            .filter(v -> {
-                final Range r = v.range();
-                final Position start = r.getStart();
-                final Position end = r.getEnd();
-                final int line = position.getLine();
-                final int charPos = position.getCharacter();
-                final boolean afterStart = (line > start.getLine()) ||
-                    (line == start.getLine() && charPos >= start.getCharacter());
-                final boolean beforeEnd = (line < end.getLine()) ||
-                    (line == end.getLine() && charPos <= end.getCharacter());
-                return afterStart && beforeEnd;
-            })
-            .findFirst()
-            .orElse(null);
-        return foundVar;
-    }
 
 
     private String varBeingRenamed = null;
@@ -623,7 +607,7 @@ public class BasicTextDocumentService implements TextDocumentService {
             return CompletableFuture.completedFuture(Either3.forFirst(range));
         }
 
-        final VariableAnalyzer analyzer = semanticAnalyzers.get(uri);
+        XQuerySemanticAnalyzer analyzer = semanticAnalyzers.get(uri);
         {
             final var foundFunctionName = findRuleUsingPosition(position, functionNames.get(uri));
             if (foundFunctionName != null) {
@@ -859,21 +843,18 @@ public class BasicTextDocumentService implements TextDocumentService {
         if (analyzer == null) {
             return CompletableFuture.completedFuture(List.of());
         }
-        final List<TypedVariable> varsToTypes = analyzer.variablesMappedToTypes;
-        for (final var variable : variableDeclarationsWithoutType.getOrDefault(uri, List.of())) {
-            final TypedVariable typedVariable = varsToTypes.stream()
-                .filter(typedVar -> typedVar.varRef() == variable)
-                .findFirst()
-                .orElse(null);
-            if (typedVariable == null)
-                continue;
-            final Token stop = typedVariable.varRef().getStop();
-            final Position hintPosition = new Position(stop.getLine() - 1,
+
+        List<VarNameContext> variableDeclarationsWithoutTypeForFile = variableDeclarationsWithoutType.getOrDefault(uri, List.of());
+        Map<VarNameContext, TypeInContext> varNamesMappedToTypesForFile = varNamesMappedToTypes.getOrDefault(uri, Map.of());
+        for (VarNameContext variable : variableDeclarationsWithoutTypeForFile) {
+            TypeInContext type = varNamesMappedToTypesForFile.get(variable);
+            Token stop = variable.getStop();
+            Position hintPosition = new Position(stop.getLine() - 1,
                 stop.getCharPositionInLine() + stop.getText().length());
 
             final InlayHint hint = new InlayHint();
             hint.setPosition(hintPosition);
-            hint.setLabel(Either.forLeft(typedVariable.type().toString()));
+            hint.setLabel(Either.forLeft(type.toString()));
             hint.setKind(InlayHintKind.Type);
             hint.setPaddingLeft(true);
 
@@ -1058,19 +1039,21 @@ public class BasicTextDocumentService implements TextDocumentService {
         return CompletableFuture.completedFuture(Either.forLeft(List.of()));
     }
 
-    private CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> handleVariableReferenceDefinition(
-        final String document, final VarRefContext foundVarRef)
+    private CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
+        handleVariableReferenceDefinition(
+            String document,
+            VarRefContext foundVarRef)
     {
         final String varname = foundVarRef.getText();
         final int foundOffset = foundVarRef.getStart().getStartIndex();
         VarNameAndTypeContext previousDecl = null;
 
-        for (final var vdef : variableDeclarations.getOrDefault(document, List.of())) {
-            final int declOffset = vdef.varRef().getStart().getStartIndex();
+        for (VarNameAndTypeContext vdef : variableDeclarations.getOrDefault(document, List.of())) {
+            int declOffset = vdef.varName().getStart().getStartIndex();
             if (declOffset > foundOffset) {
                 break;
             }
-            if (vdef.varRef().getText().equals(varname)) {
+            if (vdef.varName().getText().equals(varname)) {
                 previousDecl = vdef;
             }
         }
@@ -1079,8 +1062,8 @@ public class BasicTextDocumentService implements TextDocumentService {
             return CompletableFuture.completedFuture(Either.forLeft(List.of()));
         }
 
-        final var declaringVarRef = (VarRefContext) previousDecl.varRef();
-        final Location location = new Location(document, getContextRange(declaringVarRef));
+        var declaringVarRef = previousDecl.varName();
+        Location location = new Location(document, getContextRange(declaringVarRef));
         return CompletableFuture.completedFuture(Either.forLeft(List.of(location)));
     }
 
@@ -1210,6 +1193,21 @@ public class BasicTextDocumentService implements TextDocumentService {
 
     final TreeEvaluator innermostFlworQuery = XQuery.compile("/ancestor::(initialClause|intermediateClause|returnClause)", _parser);
     final TreeEvaluator outermostExpr = XQuery.compile("/ancestor::expr", _parser);
+    final String x = """
+        let $expr := .
+        let $dependentVariables := .//varRef except .//varNameAndType/varRef
+        let $dependentVariableStrings := $dependentVariables =!> string()
+        let $dependentDeclaration := ./ancestor::varNameAndType/varRef[string() = $dependentVariableStrings][last()]
+        let $clauses := ./ancestor::(initialClause|intermediateClause|returnClause)[. follows $dependentDeclaration]
+        let $exprs := ./ancestor::expr[. follows $dependentDeclaration]
+        return (
+            array { $clauses, $exprs },
+            array {
+                $clauses ! `let ${$variableText} := {$variableText}\n`,
+                $exprs ! `let ${$variableText} := ({$variableText}) return\n`
+            }
+        )
+    """;
 
     Map<ParserRuleContext, ExtractLocationInfo> extractVariableLocationsCache = new HashMap<>();
 

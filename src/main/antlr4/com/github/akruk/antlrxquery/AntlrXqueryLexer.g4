@@ -21,7 +21,7 @@ DecimalLiteral
     ;
 
 DoubleLiteral
-    : (DOT DigitSeq | DigitSeq (DOT DigitSeq)?) ExponentPart
+    : (DOT DigitSeq | DigitSeq (DOT DigitSeq?)?) ExponentPart
     ;
 
 

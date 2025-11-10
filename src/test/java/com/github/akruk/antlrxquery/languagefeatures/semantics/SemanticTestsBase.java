@@ -29,8 +29,11 @@ import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTyp
 public class SemanticTestsBase {
     final protected XQueryTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
 
-    record AnalysisResult(XQuerySemanticAnalyzer analyzer, XQuerySequenceType expressionType) {
-    };
+    record AnalysisResult(
+        XQuerySemanticAnalyzer analyzer,
+        XQuerySequenceType expressionType
+        )
+    {};
 
     protected AnalysisResult analyze(final String text) {
         final CharStream characters = CharStreams.fromString(text);
@@ -40,11 +43,11 @@ public class SemanticTestsBase {
         xqueryParser.addErrorListener(new BaseErrorListener() {
             @Override
             public void syntaxError(
-                Recognizer<?, ?> recognizer, 
-                Object offendingSymbol, 
+                Recognizer<?, ?> recognizer,
+                Object offendingSymbol,
                 int line,
-                int charPositionInLine, 
-                String msg, RecognitionException e) 
+                int charPositionInLine,
+                String msg, RecognitionException e)
             {
                 throw e;
             }
@@ -60,7 +63,11 @@ public class SemanticTestsBase {
                 null,
                 new ModuleManager(Set.of()));
         final var lastVisitedType = analyzer.visit(xqueryTree);
-        return new AnalysisResult(analyzer, lastVisitedType.type);
+        if (lastVisitedType == null) {
+            return new AnalysisResult(analyzer, null);
+        } else {
+            return new AnalysisResult(analyzer, lastVisitedType.type);
+        }
     }
 
     protected DiagnosticMessageCreator messageCreator = new DiagnosticMessageCreator();

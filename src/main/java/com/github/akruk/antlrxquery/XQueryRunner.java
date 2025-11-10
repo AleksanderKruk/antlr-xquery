@@ -128,7 +128,8 @@ public class XQueryRunner {
                     new XQuerySemanticFunctionManager(typeFactory),
                     // TODO:
                     null,
-                    new ModuleManager(modulePaths)
+                    new ModuleManager(modulePaths),
+                    typeFactory.anyNode()
                     );
             analyzer.visit(xqueryTree);
             final var querySemanticErrors = analyzer.getErrors();
@@ -181,7 +182,9 @@ public class XQueryRunner {
                 valueFactory,
                 new XQuerySemanticFunctionManager(typeFactory),
                 null,
-                manager);
+                manager,
+                typeFactory.anyNode()
+                );
             final XQueryEvaluatorVisitor evaluator = new XQueryEvaluatorVisitor(
                 parserAndTree.tree,
                 parserAndTree.parser,

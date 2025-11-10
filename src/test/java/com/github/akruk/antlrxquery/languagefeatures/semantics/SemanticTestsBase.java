@@ -61,7 +61,9 @@ public class SemanticTestsBase {
                 new XQueryMemoizedValueFactory(typeFactory),
                 caller,
                 null,
-                new ModuleManager(Set.of()));
+                new ModuleManager(Set.of()),
+                typeFactory.anyNode()
+                );
         final var lastVisitedType = analyzer.visit(xqueryTree);
         if (lastVisitedType == null) {
             return new AnalysisResult(analyzer, null);

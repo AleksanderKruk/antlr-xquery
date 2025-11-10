@@ -249,9 +249,10 @@ public class BasicTextDocumentService implements TextDocumentService {
                 new XQueryMemoizedValueFactory(typeFactory),
                 new XQuerySemanticFunctionManager(typeFactory),
                 null,
-                new ModuleManager(paths)
+                new ModuleManager(paths),
+                typeFactory.anyNode()
                 );
-            
+
             final Map<VarRefContext, TypeInContext> varRefsMappedToTypes_ = new HashMap<>();
             final Map<VarNameContext, TypeInContext> varNamesMappedToTypes_ = new HashMap<>();
             analyzer.addListener(new AnalysisListener() {
@@ -1039,9 +1040,9 @@ public class BasicTextDocumentService implements TextDocumentService {
         return CompletableFuture.completedFuture(Either.forLeft(List.of()));
     }
 
-    private CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> 
+    private CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
         handleVariableReferenceDefinition(
-            String document, 
+            String document,
             VarRefContext foundVarRef)
     {
         String varname = foundVarRef.getText();

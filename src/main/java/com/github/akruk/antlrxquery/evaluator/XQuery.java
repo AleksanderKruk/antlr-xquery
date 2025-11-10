@@ -39,9 +39,16 @@ public final class XQuery {
         final XQueryMemoizedTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
         final XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory(typeFactory);
         final ModuleManager moduleManager = new ModuleManager(Set.of());
-        final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(parser, new XQuerySemanticContextManager(typeFactory),
-                typeFactory, valueFactory, new XQuerySemanticFunctionManager(typeFactory), null,
-                moduleManager);
+        final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
+            parser,
+            new XQuerySemanticContextManager(typeFactory),
+            typeFactory,
+            valueFactory,
+            new XQuerySemanticFunctionManager(typeFactory),
+            null,
+            moduleManager,
+            typeFactory.anyNode()
+            );
         final XQueryEvaluatorVisitor visitor = new XQueryEvaluatorVisitor(root, parser, analyzer, typeFactory, moduleManager);
         final XQueryValue evaluated = visitor.visit(xqueryTree);
         if (tree != null) {
@@ -59,9 +66,15 @@ public final class XQuery {
         final XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory(typeFactory);
         final ModuleManager moduleManager = new ModuleManager(Set.of());
         final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
-            parser, new XQuerySemanticContextManager(typeFactory), typeFactory, valueFactory,
-            new XQuerySemanticFunctionManager(typeFactory), null,
-            moduleManager);
+            parser,
+            new XQuerySemanticContextManager(typeFactory),
+            typeFactory,
+            valueFactory,
+            new XQuerySemanticFunctionManager(typeFactory),
+            null,
+            moduleManager,
+            typeFactory.anyNode()
+            );
         final XQueryEvaluatorVisitor visitor = new XQueryEvaluatorVisitor(
             tree, parser, analyzer, typeFactory, moduleManager);
         final XQueryValue evaluated = visitor.visit(xqueryTree);
@@ -84,10 +97,15 @@ public final class XQuery {
         final XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory(typeFactory);
         final ModuleManager moduleManager = new ModuleManager(Set.of());
         final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
-            parser, new XQuerySemanticContextManager(typeFactory), typeFactory, valueFactory,
+            parser,
+            new XQuerySemanticContextManager(typeFactory),
+            typeFactory,
+            valueFactory,
             new XQuerySemanticFunctionManager(typeFactory),
             null,
-            moduleManager);
+            moduleManager,
+            typeFactory.anyNode()
+            );
 
 
         return tree -> {

@@ -130,21 +130,43 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     {
        if (ctx.libraryModule() != null) {
             var p = ctx.libraryModule().prolog();
+            for (var ctxValueDecl : p.contextValueDecl()) {
+                error(ctxValueDecl, ErrorType.CONTEXT_VALUE_DECL__NOT_IN_MAIN_MODULE, null);
+            }
             namedRecords = p.namedRecordTypeDecl();
             itemTypes = p.itemTypeDecl();
             functions = p.functionDecl();
             for (var import_ : p.importDecl()) {
-
             }
-
+        //     : ((defaultNamespaceDecl | setter | namespaceDecl | importDecl) SEPARATOR)*
+        // ((... | varDecl | functionDecl | itemTypeDecl | namedRecordTypeDecl | optionDecl) SEPARATOR)*
 
             return visitLibraryModule(ctx.libraryModule());
         } else {
             var p = ctx.mainModule().prolog();
+                    // if (varValue.coerceableTo(type.type) == RelativeCoercability.NEVER) {
+        //     error(ctx, ErrorType.CONTEXT_VALUE__UNCOERSABLE, List.of(varValue, type));
+        // }
+            handleContextValueDeclarations(p);
+
+
+
             namedRecords = p.namedRecordTypeDecl();
             itemTypes = p.itemTypeDecl();
             functions = p.functionDecl();
             return visitMainModule(ctx.mainModule());
+        }
+    }
+
+    private void handleContextValueDeclarations(PrologContext p) {
+        switch (p.contextValueDecl().size()) {
+            case 0 -> {}// set in constructor
+            case 1 -> visitContextValueDecl(p.contextValueDecl(0));
+            default -> {
+                for (var ctxValueDecl : p.contextValueDecl()) {
+                    error(ctxValueDecl, ErrorType.CONTEXT_VALUE_DECL__MULTIPLE_DECLARATIONS, null);
+                }
+            }
         }
     }
 
@@ -156,7 +178,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final XQueryValueFactory valueFactory,
         final XQuerySemanticFunctionManager functionCaller,
         final GrammarAnalysisResult grammarAnalysisResult,
-        final ModuleManager moduleManager)
+        final ModuleManager moduleManager,
+        final XQuerySequenceType contextType)
     {
         this.grammarAnalysisResult = grammarAnalysisResult;
         // this.antlrQueryParser = antlrQueryParser;
@@ -168,7 +191,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         this.contextManager = contextManager;
         this.contextManager.enterContext();
         this.context = new XQueryVisitingSemanticContext();
-        this.context.setType(contextManager.typeInContext(typeFactory.anyNode()));
+        this.context.setType(contextManager.typeInContext(contextType));
         this.context.setPositionType(null);
         this.context.setSizeType(null);
         this.errors = new ArrayList<>();
@@ -2865,6 +2888,55 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             .reduce(XQuerySequenceType::alternativeMerge)
             .orElse(zeroOrMoreItems);
         return contextManager.typeInContext(orElse);
+    }
+
+    @Override
+    public TypeInContext visitContextValueDecl(ContextValueDeclContext ctx) {
+        if (ctx.EXTERNAL() != null) {
+            // DECLARE CONTEXT VALUE (AS sequenceType)? EXTERNAL (EQ_OP varDefaultValue)?
+            if (ctx.sequenceType() != null) {
+                // DECLARE CONTEXT VALUE AS sequenceType EXTERNAL (EQ_OP varDefaultValue)?
+                if (ctx.varDefaultValue() != null) {
+                    // DECLARE CONTEXT VALUE AS sequenceType EXTERNAL EQ_OP varDefaultValue
+                    var declaredType = visitSequenceType(ctx.sequenceType());
+                    var defaultValueType = visitVarDefaultValue(ctx.varDefaultValue());
+                    if (defaultValueType.type.coerceableTo(declaredType.type) == RelativeCoercability.NEVER) {
+                        error(ctx, ErrorType.CONTEXT_VALUE_DECL__UNCOERSABLE, List.of(defaultValueType, declaredType));
+                    }
+                    context.setType(declaredType);
+                } else {
+                    // DECLARE CONTEXT VALUE AS sequenceType EXTERNAL
+                    var declaredType = visitSequenceType(ctx.sequenceType());
+                    context.setType(declaredType);
+                }
+            } else {
+                // DECLARE CONTEXT VALUE EXTERNAL (EQ_OP varDefaultValue)?
+                if (ctx.varDefaultValue() != null) {
+                    // DECLARE CONTEXT VALUE EXTERNAL EQ_OP varDefaultValue
+                    var defaultValueType = visitVarDefaultValue(ctx.varDefaultValue());
+                    context.setType(defaultValueType);
+                } else {
+                    // DECLARE CONTEXT VALUE EXTERNAL
+                }
+            }
+        } else {
+            // DECLARE CONTEXT VALUE (AS sequenceType)? EQ_OP varValue
+            if (ctx.sequenceType() != null) {
+                // DECLARE CONTEXT VALUE AS sequenceType EQ_OP varValue
+                var declaredType = visitSequenceType(ctx.sequenceType());
+                var valueType = visitVarValue(ctx.varValue());
+                if (valueType.type.coerceableTo(declaredType.type) == RelativeCoercability.NEVER) {
+                    error(ctx, ErrorType.CONTEXT_VALUE_DECL__UNCOERSABLE, List.of(valueType, declaredType));
+                }
+                context.setType(declaredType);
+            } else {
+                // DECLARE CONTEXT VALUE EQ_OP varValue
+                var valueType = visitVarValue(ctx.varValue());
+                context.setType(valueType);
+            }
+
+        }
+        return null;
     }
 
 }

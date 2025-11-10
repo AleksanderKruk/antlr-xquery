@@ -70,34 +70,34 @@ positionalVar: AT varName;
 // LetSequenceBinding	::=	"$" "(" (VarNameAndType ++ ",") ")" TypeDeclaration? ":=" ExprSingle
 // LetArrayBinding	::=	"$" "[" (VarNameAndType ++ ",") "]" TypeDeclaration? ":=" ExprSingle
 // LetMapBinding	::=	"$" "{" (VarNameAndType ++ ",") "}" TypeDeclaration? ":=" ExprSingle
-letClause: 
+letClause:
     LET letBinding (COMMA letBinding)*;
 
-letBinding: 
+letBinding:
     varNameAndType ASSIGNMENT_OP exprSingle;
 
-countClause: 
+countClause:
     COUNT varName;
 
-whereClause: 
+whereClause:
     WHERE exprSingle;
 
-whileClause: 
+whileClause:
     WHILE exprSingle;
 
-orderByClause: 
+orderByClause:
     ((ORDER BY) | (STABLE ORDER BY)) orderSpecList;
 
-orderSpecList: 
+orderSpecList:
     orderSpec (COMMA orderSpec)*;
 
-orderSpec: 
+orderSpec:
     exprSingle orderModifier;
 
-orderModifier: 
+orderModifier:
     (ASCENDING | DESCENDING)? (EMPTY (GREATEST | LEAST))?;
 
-returnClause: 
+returnClause:
     RETURN exprSingle;
 
 groupByClause
@@ -108,16 +108,16 @@ groupingSpec
     : varNameAndType (ASSIGNMENT_OP exprSingle)? (COLLATION STRING)?
     ;
 
-quantifiedExpr: 
+quantifiedExpr:
     (SOME | EVERY) quantifierBinding (COMMA quantifierBinding)* SATISFIES exprSingle;
 
-quantifierBinding:	
+quantifierBinding:
     varNameAndType IN exprSingle;
 
-ifExpr:	
+ifExpr:
     IF LPAREN expr RPAREN (unbracedActions | bracedAction);
 
-otherwiseExpr:	
+otherwiseExpr:
     stringConcatExpr (OTHERWISE stringConcatExpr)*;
 
 unbracedActions:
@@ -129,7 +129,7 @@ bracedAction:
 enclosedExpr:
     LCURLY expr? RCURLY;
 
-switchExpr:	
+switchExpr:
     SWITCH switchComparand (switchCases | bracedSwitchCases);
 
 switchComparand:
@@ -138,7 +138,7 @@ switchComparand:
 switchCases:
     switchCaseClause+ DEFAULT RETURN defaultExpr=exprSingle;
 
-switchCaseClause: 
+switchCaseClause:
     (CASE switchCaseOperand)+ RETURN exprSingle;
 
 switchCaseOperand:
@@ -290,7 +290,7 @@ curlyArrayConstructor
 
 predicateList: predicate*;
 predicate: LBRACKET expr RBRACKET;
-primaryExpr: 
+primaryExpr:
     literal
     | varRef
     | parenthesizedExpr
@@ -308,7 +308,8 @@ primaryExpr:
     ;
 
 
-namedFunctionRef	:	qname HASH IntegerLiteral;
+namedFunctionRef:
+    qname HASH IntegerLiteral;
 
 literal:
   numericLiteral
@@ -350,21 +351,31 @@ itemType: anyItemTest
 kindTest:	elementTest
         | anyKindTest;
 
-elementTest	:	ELEMENT LPAREN nameTestUnion? RPAREN;
+elementTest:
+    ELEMENT LPAREN nameTestUnion? RPAREN;
 
 
-pathNameTestUnion	:	qname (UNION_OP qname)*
-            | LPAREN  qname (UNION_OP qname)* RPAREN;
+pathNameTestUnion
+    : qname (UNION_OP qname)*
+    | LPAREN  qname (UNION_OP qname)* RPAREN;
 
-nameTestUnion	:	nameTest (UNION_OP nameTest)*;
-nameTest	:	qname | wildcard;
+nameTestUnion:
+    nameTest (UNION_OP nameTest)*;
+nameTest:
+    qname | wildcard;
 
-functionType:	annotation* (anyFunctionType | typedFunctionType);
-annotation	:	PERCENTAGE qname (LPAREN annotationValue (COMMA annotationValue)* RPAREN)?;
-annotationValue:	STRING | (MINUS? numericLiteral) | (qname LPAREN RPAREN);
-anyFunctionType	:	FUNCTION LPAREN STAR RPAREN;
-typedFunctionType	:	FUNCTION LPAREN (typedFunctionParam (COMMA typedFunctionParam)*)? RPAREN AS sequenceType;
-typedFunctionParam	:	(paramName AS)? sequenceType;
+functionType:
+    annotation* (anyFunctionType | typedFunctionType);
+annotation:
+    PERCENTAGE qname (LPAREN annotationValue (COMMA annotationValue)* RPAREN)?;
+annotationValue:
+    STRING | (MINUS? numericLiteral) | (qname LPAREN RPAREN);
+anyFunctionType:
+    FUNCTION LPAREN STAR RPAREN;
+typedFunctionType:
+    FUNCTION LPAREN (typedFunctionParam (COMMA typedFunctionParam)*)? RPAREN AS sequenceType;
+typedFunctionParam:
+    (paramName AS)? sequenceType;
 
 
 mapType	:	anyMapType | typedMapType;

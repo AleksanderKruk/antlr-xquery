@@ -500,8 +500,8 @@ prolog
       ((contextValueDecl | varDecl | functionDecl | itemTypeDecl | namedRecordTypeDecl | optionDecl) SEPARATOR)*
     ;
 
-defaultNamespaceDecl
-    : DECLARE FIXED? DEFAULT (ELEMENT | FUNCTION) NAMESPACE STRING
+defaultNamespaceDecl // removed FIXED
+    : DECLARE DEFAULT (ELEMENT | FUNCTION) NAMESPACE qname
     ;
 
 setter
@@ -509,7 +509,6 @@ setter
     | defaultCollationDecl
     | baseURIDecl
     | constructionDecl
-    | orderingModeDecl
     | emptyOrderDecl
     | decimalFormatDecl
     ;
@@ -528,10 +527,6 @@ baseURIDecl
 
 constructionDecl
     : DECLARE CONSTRUCTION (STRIP | PRESERVE)
-    ;
-
-orderingModeDecl
-    : DECLARE ORDERING (ORDERED | UNORDERED)
     ;
 
 emptyOrderDecl

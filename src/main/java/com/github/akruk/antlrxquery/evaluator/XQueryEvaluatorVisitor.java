@@ -14,6 +14,7 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
+import com.github.akruk.antlrxquery.HelperTrees;
 import com.github.akruk.antlrxquery.XQueryAxis;
 import com.github.akruk.antlrxquery.charescaper.XQueryCharEscaper;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.*;
@@ -102,7 +103,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         final XQueryValueFactory valueFactory,
         final XQuerySemanticAnalyzer analyzer,
         final XQueryTypeFactory typeFactory,
-        final ModuleManager moduleManager) {
+        final ModuleManager moduleManager)
+    {
         this.semanticAnalyzer = analyzer;
         this.moduleManager = moduleManager;
         this.root = valueFactory.node(tree);
@@ -144,7 +146,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     public XQueryValue visitXquery(final XqueryContext ctx)
     {
         if (ctx.libraryModule() != null)
-            return null;
+            return visitLibraryModule(ctx.libraryModule());
         return visitMainModule(ctx.mainModule());
     }
 
@@ -212,6 +214,38 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         });
         return null;
     }
+
+    @Override
+    public XQueryValue visitNamedRecordTypeDecl(NamedRecordTypeDeclContext ctx)
+    {
+        final var qName = namespaceResolver.resolveType(ctx.qname().getText());
+        final var defaultArgs = new HashMap<String, ParseTree>();
+        final var mandatoryArgs = new ArrayList<String>();
+        final var optionalArgs = new ArrayList<String>();
+
+        for (final ExtendedFieldDeclarationContext field : ctx.extendedFieldDeclaration()) {
+            final var fieldName = field.fieldDeclaration().fieldName().getText();
+            final boolean isRequired = field.fieldDeclaration().QUESTION_MARK() == null;
+            final ExprSingleContext defaultExpr = field.exprSingle();
+            if (isRequired) {
+                if (defaultExpr == null) {
+                    mandatoryArgs.add(fieldName);
+                } else {
+                    optionalArgs.add(fieldName);
+                    defaultArgs.put(fieldName, defaultExpr);
+                }
+            } else {
+                optionalArgs.add(fieldName);
+                defaultArgs.put(fieldName, new HelperTrees().EMPTY_SEQUENCE);
+            }
+        }
+        final var argNames = new ArrayList<String>();
+        argNames.addAll(mandatoryArgs);
+        argNames.addAll(optionalArgs);
+        functionManager.registerFunction(qName.namespace(), qName.name(), constructorFunction(argNames), argNames, defaultArgs);
+        return null;
+    }
+
 
     @Override
     public XQueryValue visitForClause(final ForClauseContext ctx)
@@ -838,24 +872,42 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         final var body = ctx.functionBody().enclosedExpr();
         functionManager.registerFunction(
             resolved.namespace(), resolved.name(),
-            (context, positionalArguments) -> {
-                final var saved = saveContext();
-                contextManager.enterContext();
-                this.context = context;
-                for (int i = 0; i < positionalArguments.size(); i++) {
-                    final var arg = positionalArguments.get(i);
-                    final var argname = argNames.get(i);
-                    contextManager.provideVariable(argname, arg);
-                }
-                final var result = visitEnclosedExpr(body);
-                contextManager.leaveContext();
-                context = saved;
-                return result;
-            },
+            standardQueryFunction(argNames, body),
             argNames, defaults);
 
         contextManager.leaveScope();
         return null;
+    }
+
+    private XQueryFunction standardQueryFunction(final ArrayList<String> argNames, final EnclosedExprContext body)
+    {
+        return (context, positionalArguments) -> {
+            final var saved = saveContext();
+            contextManager.enterContext();
+            this.context = context;
+            for (int i = 0; i < positionalArguments.size(); i++) {
+                final var arg = positionalArguments.get(i);
+                final var argname = argNames.get(i);
+                contextManager.provideVariable(argname, arg);
+            }
+            final var result = visitEnclosedExpr(body);
+            contextManager.leaveContext();
+            context = saved;
+            return result;
+        };
+    }
+
+    private XQueryFunction constructorFunction(final ArrayList<String> argNames)
+    {
+        return (context, positionalArguments) -> {
+            var map = new HashMap<XQueryValue, XQueryValue>();
+            for (int i = 0; i < positionalArguments.size(); i++) {
+                final var arg = positionalArguments.get(i);
+                final var argname = valueFactory.string(argNames.get(i));
+                map.put(arg, argname);
+            }
+            return valueFactory.map(map);
+        };
     }
 
     XQueryValue handleAsItemGetter(final List<XQueryValue> sequence,

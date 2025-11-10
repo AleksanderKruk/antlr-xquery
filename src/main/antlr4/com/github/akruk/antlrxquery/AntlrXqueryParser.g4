@@ -8,26 +8,35 @@ xquery
     : versionDecl? (libraryModule | mainModule) EOF
     ;
 
-expr: exprSingle (COMMA exprSingle)*;
-exprSingle: fLWORExpr
-        | quantifiedExpr
-        | ifExpr
-        | switchExpr
-        | tryCatchExpr
-        | orExpr;
-fLWORExpr: initialClause intermediateClause* returnClause;
-initialClause: forClause
-            | windowClause
-            | letClause;
-intermediateClause: forClause
-                | windowClause
-                | letClause
-                | windowClause
-                | whereClause
-                | whileClause
-                | orderByClause
-                | groupByClause
-                | countClause;
+expr:
+    exprSingle (COMMA exprSingle)*;
+
+exprSingle
+    : fLWORExpr
+    | quantifiedExpr
+    | ifExpr
+    | switchExpr
+    | tryCatchExpr
+    | orExpr;
+
+fLWORExpr:
+    initialClause intermediateClause* returnClause;
+
+initialClause
+    : forClause
+    | windowClause
+    | letClause;
+
+intermediateClause
+    : forClause
+    | windowClause
+    | letClause
+    | windowClause
+    | whereClause
+    | whileClause
+    | orderByClause
+    | groupByClause
+    | countClause;
 
 forClause
     : FOR forBinding (COMMA forBinding)*
@@ -149,10 +158,14 @@ bracedSwitchCases:
 
 
 tryCatchExpr : tryClause ( (catchClause+ finallyClause?) | finallyClause ) ;
+
 tryClause : TRY enclosedExpr ;
+
 catchClause : CATCH (pureNameTestUnion | wildcard) enclosedExpr ;
+
 finallyClause : FINALLY enclosedExpr ;
-pureNameTestUnion	:	nameTest (UNION_OP nameTest)*;
+
+pureNameTestUnion:nameTest (UNION_OP nameTest)*;
 
 
 typeswitchExpr
@@ -184,10 +197,10 @@ unionExpr: intersectExpr (unionOperator intersectExpr)*;
 intersectExpr: instanceofExpr (exceptOrIntersect instanceofExpr)*;
 instanceofExpr: treatExpr (INSTANCE OF sequenceType)?;
 treatExpr: castableExpr (TREAT AS sequenceType)?;
-castableExpr: castExpr ((CASTABLE AS) castTarget)?;
+castableExpr: castExpr (CASTABLE AS castTarget)?;
   castTarget: (typeName | choiceItemType | enumerationType) QUESTION_MARK?;
-castExpr: pipelineExpr ((CAST AS) castTarget)?;
-pipelineExpr:	arrowExpr (PIPE_ARROW arrowExpr)*;
+castExpr: pipelineExpr (CAST AS castTarget)?;
+pipelineExpr:arrowExpr (PIPE_ARROW arrowExpr)*;
 
 arrowExpr
     : unaryExpr (sequenceArrowTarget | mappingArrowTarget)*
@@ -267,10 +280,10 @@ argumentPlaceholder: QUESTION_MARK;
 
 
 
-mapConstructor	: MAP? LCURLY (mapConstructorEntry (COMMA mapConstructorEntry)*)? RCURLY;
-mapConstructorEntry	:	mapKeyExpr COLON mapValueExpr;
-mapKeyExpr	:	exprSingle;
-mapValueExpr	:	exprSingle;
+mapConstructor: MAP? LCURLY (mapConstructorEntry (COMMA mapConstructorEntry)*)? RCURLY;
+mapConstructorEntry:mapKeyExpr COLON mapValueExpr;
+mapKeyExpr:exprSingle;
+mapValueExpr:exprSingle;
 
 arrayConstructor
     : squareArrayConstructor
@@ -348,7 +361,7 @@ itemType: anyItemTest
         | enumerationType
         | choiceItemType;
 
-kindTest:	elementTest
+kindTest:elementTest
         | anyKindTest;
 
 elementTest:
@@ -366,46 +379,61 @@ nameTest:
 
 functionType:
     annotation* (anyFunctionType | typedFunctionType);
+
 annotation:
     PERCENTAGE qname (LPAREN annotationValue (COMMA annotationValue)* RPAREN)?;
+
 annotationValue:
     STRING | (MINUS? numericLiteral) | (qname LPAREN RPAREN);
+
 anyFunctionType:
     FUNCTION LPAREN STAR RPAREN;
+
 typedFunctionType:
     FUNCTION LPAREN (typedFunctionParam (COMMA typedFunctionParam)*)? RPAREN AS sequenceType;
+
 typedFunctionParam:
     (paramName AS)? sequenceType;
 
+mapType
+    : anyMapType
+    | typedMapType;
 
-mapType	:	anyMapType | typedMapType;
-anyMapType	:	MAP LPAREN STAR RPAREN;
-typedMapType	:	MAP LPAREN itemType COMMA sequenceType RPAREN;
+anyMapType:
+    MAP LPAREN STAR RPAREN;
 
+typedMapType:
+    MAP LPAREN itemType COMMA sequenceType RPAREN;
 
-recordType:	anyRecordType | typedRecordType;
+recordType:anyRecordType | typedRecordType;
+
 anyRecordType: RECORD LPAREN STAR RPAREN;
+
 typedRecordType: RECORD LPAREN (fieldDeclaration (COMMA fieldDeclaration)*)? extensibleFlag? RPAREN;
-extensibleFlag:	COMMA STAR;
-fieldDeclaration:	fieldName QUESTION_MARK? (AS sequenceType)?;
+
+extensibleFlag:COMMA STAR;
+
+fieldDeclaration:fieldName QUESTION_MARK? (AS sequenceType)?;
+
 fieldName: anyName;
 
+arrayType:anyArrayType | typedArrayType;
 
-arrayType	:	anyArrayType | typedArrayType;
-anyArrayType	:	ARRAY LPAREN STAR RPAREN;
-typedArrayType	:	ARRAY LPAREN sequenceType RPAREN;
+anyArrayType:ARRAY LPAREN STAR RPAREN;
 
-enumerationType	:	ENUM LPAREN STRING (COMMA STRING)* RPAREN;
+typedArrayType:ARRAY LPAREN sequenceType RPAREN;
 
-choiceItemType	:	LPAREN itemType (UNION_OP itemType)* RPAREN;
+enumerationType:ENUM LPAREN STRING (COMMA STRING)* RPAREN;
 
-anyItemTest	:	ITEM LPAREN RPAREN;
-anyKindTest	:	NODE LPAREN RPAREN;
+choiceItemType:LPAREN itemType (UNION_OP itemType)* RPAREN;
+
+anyItemTest:ITEM LPAREN RPAREN;
+
+anyKindTest:NODE LPAREN RPAREN;
 
 functionName: qname;
+
 typeName: qname;
-
-
 
 postfixExpr
     : primaryExpr                         # postfixPrimary
@@ -415,7 +443,7 @@ postfixExpr
     | postfixExpr LOOKUP expr RBRACKET    # filterExprAMLookup
     ;
 
-positionalArgumentList:	LPAREN positionalArguments? RPAREN;
+positionalArgumentList:LPAREN positionalArguments? RPAREN;
 
 lookup
     : QUESTION_MARK keySpecifier
@@ -438,14 +466,9 @@ unaryLookup
     ;
 
 
-
-
-
-
 functionDecl
     : DECLARE annotation* FUNCTION qname LPAREN paramListWithDefaults? RPAREN typeDeclaration? (functionBody | EXTERNAL)
     ;
-
 
 paramListWithDefaults
     : paramWithDefault (COMMA paramWithDefault)*

@@ -57,6 +57,7 @@ public class XQueryEvaluatingFunctionManager {
     private final ProcessingStrings processingStrings;
     private final ProcessingBooleans processingBooleans;
     private final ProcessingSequencesFunctions processingSequences;
+    private final AntlrFunctions antlrFunctions;
     private final XQueryTypeFactory typeFactory;
 
     public XQueryEvaluatingFunctionManager(
@@ -91,6 +92,7 @@ public class XQueryEvaluatingFunctionManager {
                 collators, Locale.getDefault(), atomizer, ebv);
         this.processingBooleans = new ProcessingBooleans(valueFactory, parser, ebv);
         this.aggregateFunctions = new AggregateFunctions(valueFactory, parser, collators, atomizer, valueComparisonOperator);
+        this.antlrFunctions = new AntlrFunctions(valueFactory, parser, collators, atomizer, valueComparisonOperator);
 
         var helperTrees = new HelperTrees();
         final ParseTree CONTEXT_VALUE = helperTrees.CONTEXT_VALUE;
@@ -366,6 +368,15 @@ public class XQueryEvaluatingFunctionManager {
 
         registerFunction("op", "numeric-greater-than-or-equal", numericOperators::numericGreaterThanOrEqual,
                 List.of("arg1", "arg2"), Map.of());
+
+
+        var nodearg = List.of("node");
+        var nodeargdefault = Map.of("node", CONTEXT_VALUE);
+        registerFunction("antlr", "start", antlrFunctions::start, nodearg, nodeargdefault);
+        registerFunction("antlr", "stop", antlrFunctions::stop, nodearg, nodeargdefault);
+        registerFunction("antlr", "pos", antlrFunctions::pos, nodearg, nodeargdefault);
+        registerFunction("antlr", "index", antlrFunctions::index, nodearg, nodeargdefault);
+        registerFunction("antlr", "line", antlrFunctions::line, nodearg, nodeargdefault);
 
     }
 

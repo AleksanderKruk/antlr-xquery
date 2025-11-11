@@ -500,8 +500,12 @@ prolog
       ((contextValueDecl | varDecl | functionDecl | itemTypeDecl | namedRecordTypeDecl | optionDecl) SEPARATOR)*
     ;
 
-defaultNamespaceDecl // removed FIXED
-    : DECLARE DEFAULT (ELEMENT | FUNCTION) NAMESPACE qname
+defaultNamespaceDecl
+    : DECLARE DEFAULT FUNCTION NAMESPACE qname
+    | DECLARE DEFAULT TYPE NAMESPACE qname
+    | DECLARE DEFAULT ELEMENT NAMESPACE qname
+    | DECLARE DEFAULT ANNOTATION NAMESPACE qname
+    | DECLARE DEFAULT CONSTRUCTION NAMESPACE qname
     ;
 
 setter
@@ -564,8 +568,9 @@ importDecl
     ;
 
 grammarImport
-    : IMPORT GRAMMAR namespacePrefix? STRING (COMMA STRING)* # namespaceGrammarImport
-    | IMPORT GRAMMAR qname # simpleGrammarImport
+    : IMPORT GRAMMAR namespacePrefix STRING (COMMA STRING)* # namespaceGrammarImport
+    | IMPORT GRAMMAR STRING (COMMA STRING)* # pathOnlyGrammarImport
+    | IMPORT GRAMMAR qname # defaultPathGrammarImport
     ;
 
 moduleImport
@@ -624,6 +629,7 @@ anyName: ID
         | AND
         | ANCESTOR
         | ANCESTOR_OR_SELF
+        | ANNOTATION
         | ARRAY
         | AS
         | ASCENDING

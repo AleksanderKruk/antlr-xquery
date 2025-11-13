@@ -21,6 +21,7 @@ import com.github.akruk.antlrxquery.semanticanalyzer.GrammarManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.FunctionSets;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
@@ -54,7 +55,7 @@ public class SemanticTestsBase {
             }
         });
         final ParseTree xqueryTree = xqueryParser.xquery();
-        final XQuerySemanticSymbolManager caller = new XQuerySemanticSymbolManager(typeFactory);
+        final XQuerySemanticSymbolManager caller = new XQuerySemanticSymbolManager(typeFactory, FunctionSets.ALL(typeFactory));
         final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
                 null,
                 new XQuerySemanticContextManager(typeFactory),

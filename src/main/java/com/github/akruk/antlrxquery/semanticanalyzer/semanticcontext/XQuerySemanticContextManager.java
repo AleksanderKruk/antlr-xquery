@@ -52,7 +52,7 @@ public class XQuerySemanticContextManager {
     /**
      * Either creates variable with required type
      * or overrides existing variable in the current scope
-     * @param variableName 
+     * @param variableName
      * @param assignedType
      * @return true if variable was added
      */
@@ -75,4 +75,5 @@ public class XQuerySemanticContextManager {
     public TypeInContext resolveEffectiveBooleanValue(TypeInContext type, EffectiveBooleanValueType ebvType) {
         return currentContext().currentScope().resolveEffectiveBooleanValue(type, ebvType);
     }
+
 }

@@ -17,10 +17,11 @@ import com.github.akruk.antlrxquery.AntlrXqueryLexer;
 import com.github.akruk.antlrxquery.AntlrXqueryParser;
 import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMemoizedValueFactory;
 import com.github.akruk.antlrxquery.languageserver.DiagnosticMessageCreator;
+import com.github.akruk.antlrxquery.semanticanalyzer.GrammarManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionManager;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
@@ -53,7 +54,7 @@ public class SemanticTestsBase {
             }
         });
         final ParseTree xqueryTree = xqueryParser.xquery();
-        final XQuerySemanticFunctionManager caller = new XQuerySemanticFunctionManager(typeFactory);
+        final XQuerySemanticSymbolManager caller = new XQuerySemanticSymbolManager(typeFactory);
         final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
                 null,
                 new XQuerySemanticContextManager(typeFactory),
@@ -62,6 +63,7 @@ public class SemanticTestsBase {
                 caller,
                 null,
                 new ModuleManager(Set.of()),
+                new GrammarManager(Set.of()),
                 typeFactory.anyNode()
                 );
         final var lastVisitedType = analyzer.visit(xqueryTree);

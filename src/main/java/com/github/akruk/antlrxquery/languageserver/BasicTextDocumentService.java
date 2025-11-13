@@ -86,13 +86,14 @@ import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticWarning;
+import com.github.akruk.antlrxquery.semanticanalyzer.GrammarManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer.AnalysisListener;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionManager;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionManager.ArgumentSpecification;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionManager.FunctionSpecification;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.ArgumentSpecification;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.FunctionSpecification;
 import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
@@ -136,7 +137,12 @@ public class BasicTextDocumentService implements TextDocumentService {
         stringIndex = tokenLegend.indexOf("string");
         propertyIndex = tokenLegend.indexOf("property");
         decoratorIndex = tokenLegend.indexOf("decorator");
-        resolver = new NamespaceResolver("fn", "");
+        resolver = new NamespaceResolver(
+            "fn",
+            "",
+            "",
+            "",
+            "");
     }
 
     public void setModulePaths(final Set<Path> modulePaths) {
@@ -247,9 +253,10 @@ public class BasicTextDocumentService implements TextDocumentService {
                 new XQuerySemanticContextManager(typeFactory),
                 typeFactory,
                 new XQueryMemoizedValueFactory(typeFactory),
-                new XQuerySemanticFunctionManager(typeFactory),
+                new XQuerySemanticSymbolManager(typeFactory),
                 null,
                 new ModuleManager(paths),
+                new GrammarManager(paths),
                 typeFactory.anyNode()
                 );
 
@@ -717,7 +724,7 @@ public class BasicTextDocumentService implements TextDocumentService {
 
     private CompletableFuture<Hover> getFunctionHover(final ParserRuleContext foundCtx, final XQuerySemanticAnalyzer analyzer,
             final QualifiedName qname, final int arity) {
-        final FunctionSpecification specification = analyzer.getFunctionManager().getNamedFunctionSpecification(
+        final FunctionSpecification specification = analyzer.getSymbolManager().getNamedFunctionSpecification(
             foundCtx, qname.namespace(), qname.name(), arity);
         if (specification == null)
             return CompletableFuture.completedFuture(null);
@@ -865,7 +872,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         for (final FunctionNameContext functionName : functionNames.getOrDefault(uri, List.of())) {
             final int arity = getArity(functionName);
             final QualifiedName resolvedName = resolver.resolveFunction(functionName.qname().getText());
-            final FunctionSpecification spec = analyzer.getFunctionManager().getNamedFunctionSpecification(
+            final FunctionSpecification spec = analyzer.getSymbolManager().getNamedFunctionSpecification(
                 functionName, resolvedName.namespace(), resolvedName.name(), arity);
             if (spec == null)
                 continue;
@@ -909,7 +916,7 @@ public class BasicTextDocumentService implements TextDocumentService {
     {
         final int arity = getArity(namedFunctionRef);
         final FunctionSpecification spec = analyzer
-            .getFunctionManager()
+            .getSymbolManager()
             .getNamedFunctionSpecification(namedFunctionRef, qname.namespace(), qname.name(), arity);
         if (spec == null) {
             return null;
@@ -931,7 +938,7 @@ public class BasicTextDocumentService implements TextDocumentService {
     {
         final int arity = getArity(namedFunctionRef);
         final FunctionSpecification spec = analyzer
-            .getFunctionManager()
+            .getSymbolManager()
             .getNamedFunctionSpecification(namedFunctionRef, qname.namespace(), qname.name(), arity);
         if (spec == null) {
             return null;
@@ -972,7 +979,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         final int arity = getArity(functionName);
         final var analyzer = semanticAnalyzers.get(document);
         final var qname = resolver.resolveFunction(functionName.getText());
-        final FunctionSpecification spec = analyzer.getFunctionManager().getNamedFunctionSpecification(
+        final FunctionSpecification spec = analyzer.getSymbolManager().getNamedFunctionSpecification(
             functionName, qname.namespace(), qname.name(), arity);
         if (spec == null) {
             return CompletableFuture.completedFuture(Either.forLeft(List.of()));

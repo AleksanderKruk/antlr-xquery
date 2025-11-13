@@ -14,6 +14,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import com.github.akruk.antlrxquery.HelperTrees;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ParenthesizedExprContext;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
+import com.github.akruk.antlrxquery.inputgrammaranalyzer.InputGrammarAnalyzer.QualifiedGrammarAnalysisResult;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.ErrorType;
@@ -27,7 +28,7 @@ import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
-public class XQuerySemanticFunctionManager {
+public class XQuerySemanticSymbolManager {
     public static record AnalysisResult(TypeInContext result,
                                         List<DiagnosticError> errors)
         {}
@@ -69,10 +70,11 @@ public class XQuerySemanticFunctionManager {
         this.analyzer = analyzer;
     }
 
-    public XQuerySemanticFunctionManager(final XQueryTypeFactory typeFactory) {
+    public XQuerySemanticSymbolManager(final XQueryTypeFactory typeFactory) {
         this.typeFactory = typeFactory;
         this.namespaces = new HashMap<>(6);
 
+        this.grammars = null;
         var helperTrees = new HelperTrees();
         final ParseTree CONTEXT_VALUE = helperTrees.CONTEXT_VALUE;
         final ParseTree DEFAULT_COLLATION = helperTrees.DEFAULT_COLLATION;
@@ -122,18 +124,18 @@ public class XQuerySemanticFunctionManager {
         // fn:abs(
         // 	as xs:numeric?
         // ) as xs:numeric?
-        register("fn", "abs", List.of(valueNum), optionalNumber);
+        registerFunction("fn", "abs", List.of(valueNum), optionalNumber);
 
         // fn:ceiling(
         // 	as xs:numeric?
         // ) as xs:numeric?
-        register("fn", "ceiling", List.of(valueNum), optionalNumber);
+        registerFunction("fn", "ceiling", List.of(valueNum), optionalNumber);
 
 
         // fn:floor(
         // 	as xs:numeric?
         // ) as xs:numeric?
-        register("fn", "floor", List.of(valueNum), optionalNumber);
+        registerFunction("fn", "floor", List.of(valueNum), optionalNumber);
 
 
         // fn:round(
@@ -149,7 +151,7 @@ public class XQuerySemanticFunctionManager {
         //                     'half-away-from-zero',
         //                     'half-to-even')?	:= 'half-to-ceiling'
         // ) as xs:numeric?
-        register("fn", "round",
+        registerFunction("fn", "round",
                 List.of(valueNum, precision, roundingMode), optionalNumber);
 
 
@@ -157,7 +159,7 @@ public class XQuerySemanticFunctionManager {
         // $value	as xs:numeric?,
         // $precision	as xs:integer?	:= 0
         // ) as xs:numeric?
-        register("fn", "round-half-to-even",
+        registerFunction("fn", "round-half-to-even",
                 List.of(valueNum, precision), optionalNumber);
 
 
@@ -172,14 +174,14 @@ public class XQuerySemanticFunctionManager {
         final var divisionResult = typeFactory.record(
             Map.of("quotient", numericField,
                    "remainder", numericField));
-        register("fn", "divide-decimals",
+        registerFunction("fn", "divide-decimals",
                 List.of(arg_value_number, arg_divisor_number, precision), divisionResult);
 
 
         // fn:is-NaN(
         // $value	as xs:anyAtomicType
         // ) as xs:boolean
-        register("fn", "is-NaN",
+        registerFunction("fn", "is-NaN",
                 List.of(new ArgumentSpecification("value", typeFactory.anyItem(), null)),
                 typeFactory.boolean_());
 
@@ -188,7 +190,7 @@ public class XQuerySemanticFunctionManager {
         //  as item()*
         // ) as item()?
         final ArgumentSpecification anyItemsRequiredInput = new ArgumentSpecification("input", zeroOrMoreItems, null);
-        register("fn", "zero-or-one",
+        registerFunction("fn", "zero-or-one",
                 List.of(anyItemsRequiredInput),
                 optionalItem,
                 (args, _, _, ctx) -> {
@@ -203,7 +205,7 @@ public class XQuerySemanticFunctionManager {
         // fn:one-or-more(
         //  as item()*
         // ) as item()+
-        register("fn", "one-or-more",
+        registerFunction("fn", "one-or-more",
                 List.of(anyItemsRequiredInput),
                 typeFactory.oneOrMore(typeFactory.itemAnyItem()),
                 (args, _, _, ctx) -> {
@@ -218,7 +220,7 @@ public class XQuerySemanticFunctionManager {
         // fn:exactly-one(
         //  as item()*
         // ) as item()
-        register("fn", "exactly-one",
+        registerFunction("fn", "exactly-one",
                 List.of(anyItemsRequiredInput),
             typeFactory.one(typeFactory.itemAnyItem()),
             (args, _, _, ctx) -> {
@@ -237,14 +239,14 @@ public class XQuerySemanticFunctionManager {
             typeFactory.zeroOrOne(typeFactory.itemAnyNode()),
             CONTEXT_VALUE
         );
-        register(
+        registerFunction(
             "fn", "node-name",
             List.of(optionalNodeArg),
             typeFactory.zeroOrOne(typeFactory.itemString())
         );
 
         // fn:nilled($node as node()? := .) as xs:boolean?
-        register(
+        registerFunction(
             "fn", "nilled",
             List.of(optionalNodeArg),
             typeFactory.zeroOrOne(typeFactory.itemBoolean())
@@ -254,7 +256,7 @@ public class XQuerySemanticFunctionManager {
         //  as item()? := .
         // ) as xs:string
         final ArgumentSpecification stringValue = new ArgumentSpecification("value", optionalItem, CONTEXT_VALUE);
-        register("fn", "string",
+        registerFunction("fn", "string",
                 List.of(stringValue),
                 typeFactory.string());
 
@@ -263,27 +265,27 @@ public class XQuerySemanticFunctionManager {
         // ) as xs:anyAtomicType*
         final ArgumentSpecification dataInput = new ArgumentSpecification(
             "input", zeroOrMoreItems, CONTEXT_VALUE);
-        register("fn", "data",
+        registerFunction("fn", "data",
                 List.of(dataInput), zeroOrMoreItems);
 
 
 
         // fn:base-uri($node as node()? := .) as xs:anyURI?
-        register(
+        registerFunction(
             "fn", "base-uri",
             List.of(optionalNodeArg),
             typeFactory.zeroOrOne(typeFactory.itemString())
         );
 
         // fn:document-uri($node as node()? := .) as xs:anyURI?
-        register(
+        registerFunction(
             "fn", "document-uri",
             List.of(optionalNodeArg),
             typeFactory.zeroOrOne(typeFactory.itemString())
         );
 
         // fn:root($node as node()? := .) as node()?
-        register(
+        registerFunction(
             "fn", "root",
             List.of(optionalNodeArg),
             typeFactory.zeroOrOne(typeFactory.itemAnyNode())
@@ -296,21 +298,21 @@ public class XQuerySemanticFunctionManager {
         );
 
         // fn:path($node as node()? := ., $options as map(*)? := {}) as xs:string?
-        register(
+        registerFunction(
             "fn", "path",
             List.of(optionalNodeArg, mapOptionsArg),
             typeFactory.zeroOrOne(typeFactory.itemString())
         );
 
         // fn:has-children($node as node()? := .) as xs:boolean
-        register(
+        registerFunction(
             "fn", "has-children",
             List.of(optionalNodeArg),
             typeFactory.boolean_()
         );
 
         // fn:siblings( $node as node()? := .) as node()*
-        register(
+        registerFunction(
             "fn", "siblings",
             List.of(optionalNodeArg),
             zeroOrMoreNodes
@@ -322,21 +324,21 @@ public class XQuerySemanticFunctionManager {
             zeroOrMoreNodes,
             null
         );
-        register(
+        registerFunction(
             "fn", "distinct-ordered-nodes",
             List.of(nodesArg),
             zeroOrMoreNodes
         );
 
         // fn:innermost($nodes as node()*) as node()*
-        register(
+        registerFunction(
             "fn", "innermost",
             List.of(nodesArg),
             zeroOrMoreNodes
         );
 
         // fn:outermost($nodes as node()*) as node()*
-        register(
+        registerFunction(
             "fn", "outermost",
             List.of(nodesArg),
             zeroOrMoreNodes
@@ -358,7 +360,7 @@ public class XQuerySemanticFunctionManager {
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
             CONTEXT_VALUE
         );
-        register(
+        registerFunction(
             "fn", "error",
             List.of(errorCode, errorDescription, errorValue),
             typeFactory.zeroOrMore(typeFactory.itemAnyItem())
@@ -375,7 +377,7 @@ public class XQuerySemanticFunctionManager {
             typeFactory.zeroOrOne(typeFactory.itemString()),
             EMPTY_SEQUENCE
         );
-        register(
+        registerFunction(
             "fn", "trace",
             List.of(traceInput, traceLabel),
             typeFactory.zeroOrMore(typeFactory.itemAnyItem())
@@ -392,7 +394,7 @@ public class XQuerySemanticFunctionManager {
             typeFactory.zeroOrOne(typeFactory.itemString()),
             EMPTY_SEQUENCE
         );
-        register(
+        registerFunction(
             "fn", "message",
             List.of(messageInput, messageLabel),
             typeFactory.emptySequence()
@@ -409,42 +411,42 @@ public class XQuerySemanticFunctionManager {
             typeFactory.number(),
             null
         );
-        register(
+        registerFunction(
             "op", "numeric-add",
             List.of(numericArg1, numericArg2),
             typeFactory.number()
         );
 
         // op:numeric-subtract($arg1 as xs:numeric, $arg2 as xs:numeric) as xs:numeric
-        register(
+        registerFunction(
             "op", "numeric-subtract",
             List.of(numericArg1, numericArg2),
             typeFactory.number()
         );
 
         // op:numeric-multiply($arg1 as xs:numeric, $arg2 as xs:numeric) as xs:numeric
-        register(
+        registerFunction(
             "op", "numeric-multiply",
             List.of(numericArg1, numericArg2),
             typeFactory.number()
         );
 
         // op:numeric-divide($arg1 as xs:numeric, $arg2 as xs:numeric) as xs:numeric
-        register(
+        registerFunction(
             "op", "numeric-divide",
             List.of(numericArg1, numericArg2),
             typeFactory.number()
         );
 
         // op:numeric-integer-divide($arg1 as xs:numeric, $arg2 as xs:numeric) as xs:integer
-        register(
+        registerFunction(
             "op", "numeric-integer-divide",
             List.of(numericArg1, numericArg2),
             typeFactory.number()
         );
 
         // op:numeric-mod($arg1 as xs:numeric, $arg2 as xs:numeric) as xs:numeric
-        register(
+        registerFunction(
             "op", "numeric-mod",
             List.of(numericArg1, numericArg2),
             typeFactory.number()
@@ -456,45 +458,45 @@ public class XQuerySemanticFunctionManager {
             typeFactory.number(),
             null
         );
-        register(
+        registerFunction(
             "op", "numeric-unary-plus",
             List.of(numericArg),
             typeFactory.number()
         );
 
         // op:numeric-unary-minus($arg as xs:numeric) as xs:numeric
-        register(
+        registerFunction(
             "op", "numeric-unary-minus",
             List.of(numericArg),
             typeFactory.number()
         );
 
         // op:numeric-equal($arg1 as xs:numeric, $arg2 as xs:numeric) as xs:boolean
-        register("op", "numeric-equal",
+        registerFunction("op", "numeric-equal",
             List.of(numericArg1, numericArg2),
             typeFactory.boolean_()
         );
 
         // op:numeric-less-than($arg1 as xs:numeric, $arg2 as xs:numeric) as xs:boolean
-        register("op", "numeric-less-than",
+        registerFunction("op", "numeric-less-than",
             List.of(numericArg1, numericArg2),
             typeFactory.boolean_()
         );
 
         // op:numeric-greater-than($arg1 as xs:numeric, $arg2 as xs:numeric) as xs:boolean
-        register("op", "numeric-greater-than",
+        registerFunction("op", "numeric-greater-than",
             List.of(numericArg1, numericArg2),
             typeFactory.boolean_()
         );
 
         // op:numeric-less-than-or-equal($arg1 as xs:numeric, $arg2 as xs:numeric) as xs:boolean
-        register("op", "numeric-less-than-or-equal",
+        registerFunction("op", "numeric-less-than-or-equal",
             List.of(numericArg1, numericArg2),
             typeFactory.boolean_()
         );
 
         // op:numeric-greater-than-or-equal($arg1 as xs:numeric, $arg2 as xs:numeric) as xs:boolean
-        register("op", "numeric-greater-than-or-equal",
+        registerFunction("op", "numeric-greater-than-or-equal",
             List.of(numericArg1, numericArg2),
             typeFactory.boolean_()
         );
@@ -512,7 +514,7 @@ public class XQuerySemanticFunctionManager {
             typeFactory.zeroOrOne(typeFactory.itemNumber()),
             TEN
         );
-        register(
+        registerFunction(
             "fn", "parse-integer",
             List.of(parseIntValue, parseIntRadix),
             typeFactory.zeroOrOne(typeFactory.itemNumber())
@@ -534,7 +536,7 @@ public class XQuerySemanticFunctionManager {
             typeFactory.zeroOrOne(typeFactory.itemString()),
             EMPTY_SEQUENCE
         );
-        register(
+        registerFunction(
             "fn", "format-integer",
             List.of(fmtIntValue, pictureString, optionalLangugae),
             typeFactory.string()
@@ -551,7 +553,7 @@ public class XQuerySemanticFunctionManager {
             typeFactory.zeroOrOne(typeFactory.itemChoice(Set.of(typeFactory.itemString(), typeFactory.itemAnyMap()))),
             EMPTY_SEQUENCE
         );
-        register(
+        registerFunction(
             "fn", "format-number",
             List.of(fmtNumValue, pictureString, fmtNumOptions),
             typeFactory.string()
@@ -559,37 +561,37 @@ public class XQuerySemanticFunctionManager {
 
 
         // math:pi() as xs:double
-        register("math", "pi",
+        registerFunction("math", "pi",
                 List.of(),
                 typeFactory.number());
 
         // math:e() as xs:double
-        register("math", "e",
+        registerFunction("math", "e",
                 List.of(),
                 typeFactory.number());
 
 
         // math:exp(  as xs:double?  ) as xs:double?
         final ArgumentSpecification expValue = new ArgumentSpecification("value", optionalNumber, null);
-        register("math", "exp",
+        registerFunction("math", "exp",
                 List.of(expValue),
                 optionalNumber);
 
         // math:exp10(  as xs:double?  ) as xs:double?
         final ArgumentSpecification exp10Value = new ArgumentSpecification("value", optionalNumber, null);
-        register("math", "exp10",
+        registerFunction("math", "exp10",
                 List.of(exp10Value),
                 optionalNumber);
 
         // math:log(  as xs:double?  ) as xs:double?
         final ArgumentSpecification logValue = new ArgumentSpecification("value", optionalNumber, null);
-        register("math", "log",
+        registerFunction("math", "log",
                 List.of(logValue),
                 optionalNumber);
 
         // math:log10(  as xs:double?  ) as xs:double?
         final ArgumentSpecification log10Value = new ArgumentSpecification("value", optionalNumber, null);
-        register("math", "log10",
+        registerFunction("math", "log10",
                 List.of(log10Value),
                 optionalNumber);
 
@@ -599,7 +601,7 @@ public class XQuerySemanticFunctionManager {
         // ) as xs:double?
         final ArgumentSpecification powX = new ArgumentSpecification("x", optionalNumber, null);
         final ArgumentSpecification powY = new ArgumentSpecification("y", typeFactory.number(), null);
-        register("math", "pow",
+        registerFunction("math", "pow",
                 List.of(powX, powY),
                 optionalNumber);
 
@@ -607,7 +609,7 @@ public class XQuerySemanticFunctionManager {
         //  as xs:double?
         // ) as xs:double?
         final ArgumentSpecification sqrtValue = new ArgumentSpecification("value", optionalNumber, null);
-        register("math", "sqrt",
+        registerFunction("math", "sqrt",
                 List.of(sqrtValue),
                 optionalNumber);
 
@@ -615,7 +617,7 @@ public class XQuerySemanticFunctionManager {
         //  as xs:double?
         // ) as xs:double?
         final ArgumentSpecification sinValue = new ArgumentSpecification("radians", optionalNumber, null);
-        register("math", "sin",
+        registerFunction("math", "sin",
                 List.of(sinValue),
                 optionalNumber);
 
@@ -623,7 +625,7 @@ public class XQuerySemanticFunctionManager {
         //  as xs:double?
         // ) as xs:double?
         final ArgumentSpecification cosValue = new ArgumentSpecification("radians", optionalNumber, null);
-        register("math", "cos",
+        registerFunction("math", "cos",
                 List.of(cosValue),
                 optionalNumber);
 
@@ -631,7 +633,7 @@ public class XQuerySemanticFunctionManager {
         //  as xs:double?
         // ) as xs:double?
         final ArgumentSpecification tanValue = new ArgumentSpecification("radians", optionalNumber, null);
-        register("math", "tan",
+        registerFunction("math", "tan",
                 List.of(tanValue),
                 optionalNumber);
 
@@ -639,7 +641,7 @@ public class XQuerySemanticFunctionManager {
         //  as xs:double?
         // ) as xs:double?
         final ArgumentSpecification asinValue = new ArgumentSpecification("value", optionalNumber, null);
-        register("math", "asin",
+        registerFunction("math", "asin",
                 List.of(asinValue),
                 optionalNumber);
 
@@ -647,14 +649,14 @@ public class XQuerySemanticFunctionManager {
         //  as xs:double?
         // ) as xs:double?
         final ArgumentSpecification acosValue = new ArgumentSpecification("value", optionalNumber, null);
-        register("math", "acos",
+        registerFunction("math", "acos",
                 List.of(acosValue),
                 optionalNumber);
         // math:atan(
         //  as xs:double?
         // ) as xs:double?
         final ArgumentSpecification atanVal = new ArgumentSpecification("value", optionalNumber, null);
-        register("math", "atan",
+        registerFunction("math", "atan",
                 List.of(atanVal),
                 optionalNumber);
 
@@ -664,7 +666,7 @@ public class XQuerySemanticFunctionManager {
         // ) as xs:double
         final ArgumentSpecification atan2Y = new ArgumentSpecification("y", typeFactory.number(), null);
         final ArgumentSpecification atan2X = new ArgumentSpecification("x", typeFactory.number(), null);
-        register("math", "atan2",
+        registerFunction("math", "atan2",
                 List.of(atan2Y, atan2X),
                 typeFactory.number());
 
@@ -672,7 +674,7 @@ public class XQuerySemanticFunctionManager {
         //  as xs:double?
         // ) as xs:double?
         final ArgumentSpecification sinhVal = new ArgumentSpecification("value", optionalNumber, null);
-        register("math", "sinh",
+        registerFunction("math", "sinh",
                 List.of(sinhVal),
                 optionalNumber);
 
@@ -680,7 +682,7 @@ public class XQuerySemanticFunctionManager {
         //  as xs:double?
         // ) as xs:double?
         final ArgumentSpecification coshVal = new ArgumentSpecification("value", optionalNumber, null);
-        register("math", "cosh",
+        registerFunction("math", "cosh",
                 List.of(coshVal),
                 optionalNumber);
 
@@ -688,7 +690,7 @@ public class XQuerySemanticFunctionManager {
         //  as xs:double?
         // ) as xs:double?
         final ArgumentSpecification tanhVal = new ArgumentSpecification("value", optionalNumber, null);
-        register("math", "tanh",
+        registerFunction("math", "tanh",
                 List.of(tanhVal),
                 optionalNumber);
 
@@ -696,7 +698,7 @@ public class XQuerySemanticFunctionManager {
         //  as xs:integer*
         // ) as xs:string
         final ArgumentSpecification cpsValues = new ArgumentSpecification("values", zeroOrMoreNumbers, null);
-        register("fn", "codepoints-to-string",
+        registerFunction("fn", "codepoints-to-string",
                 List.of(cpsValues),
                 typeFactory.string());
 
@@ -704,7 +706,7 @@ public class XQuerySemanticFunctionManager {
         //  as xs:string?
         // ) as xs:integer*
         final ArgumentSpecification stcpValue = new ArgumentSpecification("value", optionalString, null);
-        register("fn", "string-to-codepoints",
+        registerFunction("fn", "string-to-codepoints",
                 List.of(stcpValue),
                 typeFactory.zeroOrMore(typeFactory.itemNumber()));
 
@@ -714,7 +716,7 @@ public class XQuerySemanticFunctionManager {
         // ) as xs:boolean?
         final ArgumentSpecification cpEq1 = new ArgumentSpecification("value1", optionalString, null);
         final ArgumentSpecification cpEq2 = new ArgumentSpecification("value2", optionalString, null);
-        register("fn", "codepoint-equal",
+        registerFunction("fn", "codepoint-equal",
                 List.of(cpEq1, cpEq2),
                 typeFactory.zeroOrOne(typeFactory.itemBoolean()));
 
@@ -722,7 +724,7 @@ public class XQuerySemanticFunctionManager {
         //  as map(*)
         // ) as xs:string
         final ArgumentSpecification collationOpts = new ArgumentSpecification("options", typeFactory.one(typeFactory.itemAnyMap()), null);
-        register("fn", "collation",
+        registerFunction("fn", "collation",
                 List.of(collationOpts),
                 typeFactory.string());
 
@@ -734,7 +736,7 @@ public class XQuerySemanticFunctionManager {
         final ArgumentSpecification colAvailUsage = new ArgumentSpecification("usage",
             typeFactory.zeroOrMore(typeFactory.itemEnum(Set.of("compare", "key", "substring"))),
             EMPTY_SEQUENCE);
-        register("fn", "collation-available",
+        registerFunction("fn", "collation-available",
                 List.of(colAvailColl, colAvailUsage),
                 typeFactory.boolean_());
 
@@ -745,7 +747,7 @@ public class XQuerySemanticFunctionManager {
         // ) as xs:boolean
         final ArgumentSpecification ctValue = new ArgumentSpecification("value", typeFactory.zeroOrMore(typeFactory.itemString()), null);
         final ArgumentSpecification ctToken = new ArgumentSpecification("token", typeFactory.string(), null);
-        register("fn", "contains-token",
+        registerFunction("fn", "contains-token",
                 List.of(ctValue, ctToken, optionalCollation),
                 typeFactory.boolean_());
 
@@ -754,19 +756,19 @@ public class XQuerySemanticFunctionManager {
         // ) as xs:string
         XQuerySequenceType stringOrNumber = typeFactory.choice(List.of(typeFactory.itemString(), typeFactory.itemNumber()));
         ArgumentSpecification charVal = new ArgumentSpecification("value", stringOrNumber, null);
-        register("fn", "char", List.of(charVal), typeFactory.string());
+        registerFunction("fn", "char", List.of(charVal), typeFactory.string());
 
 
 
         // fn:characters( as xs:string?) as xs:string*
         final ArgumentSpecification charactersValue = new ArgumentSpecification("value", optionalString, null);
-        register("fn", "characters",
+        registerFunction("fn", "characters",
                 List.of(charactersValue),
                 typeFactory.zeroOrMore(typeFactory.itemString()));
 
         // fn:graphemes( as xs:string?) as xs:string*
         final ArgumentSpecification graphemesValue = new ArgumentSpecification("value", optionalString, null);
-        register("fn", "graphemes",
+        registerFunction("fn", "graphemes",
                 List.of(graphemesValue),
                 typeFactory.zeroOrMore(typeFactory.itemString()));
 
@@ -774,7 +776,7 @@ public class XQuerySemanticFunctionManager {
         //  as xs:anyAtomicType* := ()
         // ) as xs:string
         final ArgumentSpecification concatValues = new ArgumentSpecification("values", zeroOrMoreItems, EMPTY_SEQUENCE);
-        register("fn", "concat",
+        registerFunction("fn", "concat",
                 List.of(concatValues),
                 typeFactory.string());
 
@@ -784,7 +786,7 @@ public class XQuerySemanticFunctionManager {
         // ) as xs:string
         final ArgumentSpecification joinValues = new ArgumentSpecification("values", zeroOrMoreItems, EMPTY_SEQUENCE);
         final ArgumentSpecification separator = new ArgumentSpecification("separator", optionalString, EMPTY_STRING);
-        register("fn", "string-join",
+        registerFunction("fn", "string-join",
                 List.of(joinValues, separator),
                 typeFactory.string());
 
@@ -796,7 +798,7 @@ public class XQuerySemanticFunctionManager {
         final ArgumentSpecification substrValue = new ArgumentSpecification("value", optionalString, null);
         final ArgumentSpecification substrStart = new ArgumentSpecification("start", typeFactory.number(), null);
         final ArgumentSpecification substrLength = new ArgumentSpecification("length", optionalNumber, new ParenthesizedExprContext(null, 0));
-        register("fn", "substring",
+        registerFunction("fn", "substring",
                 List.of(substrValue, substrStart, substrLength),
                 typeFactory.string());
 
@@ -804,7 +806,7 @@ public class XQuerySemanticFunctionManager {
         //  as xs:string? := fn:string(.)
         // ) as xs:integer
         final ArgumentSpecification lengthValue = new ArgumentSpecification("value", optionalString, STRING_AT_CONTEXT_VALUE);
-        register("fn", "string-length",
+        registerFunction("fn", "string-length",
                 List.of(lengthValue),
                 typeFactory.number() // or typeFactory.integer() if available
         );
@@ -813,7 +815,7 @@ public class XQuerySemanticFunctionManager {
 
         // fn:normalize-space( as xs:string? := fn:string(.)) as xs:string
         final ArgumentSpecification nsValue = new ArgumentSpecification("value", optionalString, STRING_AT_CONTEXT_VALUE);
-        register("fn", "normalize-space",
+        registerFunction("fn", "normalize-space",
                 List.of(nsValue),
                 typeFactory.string());
 
@@ -823,19 +825,19 @@ public class XQuerySemanticFunctionManager {
         // ) as xs:string
         final ArgumentSpecification nuValue = new ArgumentSpecification("value", optionalString, null);
         final ArgumentSpecification nuForm = new ArgumentSpecification("form", optionalString, NFC);
-        register("fn", "normalize-unicode",
+        registerFunction("fn", "normalize-unicode",
                 List.of(nuValue, nuForm),
                 typeFactory.string());
 
         // fn:upper-case( as xs:string?) as xs:string
         final ArgumentSpecification ucValue = new ArgumentSpecification("value", optionalString, null);
-        register("fn", "upper-case",
+        registerFunction("fn", "upper-case",
                 List.of(ucValue),
                 typeFactory.string());
 
         // fn:lower-case( as xs:string?) as xs:string
         final ArgumentSpecification lcValue = new ArgumentSpecification("value", optionalString, null);
-        register("fn", "lower-case",
+        registerFunction("fn", "lower-case",
                 List.of(lcValue),
                 typeFactory.string());
 
@@ -847,7 +849,7 @@ public class XQuerySemanticFunctionManager {
         final ArgumentSpecification trValue = new ArgumentSpecification("value", optionalString, null);
         final ArgumentSpecification trFrom = new ArgumentSpecification("replace", typeFactory.string(), null);
         final ArgumentSpecification trTo = new ArgumentSpecification("with", typeFactory.string(), null);
-        register("fn", "translate",
+        registerFunction("fn", "translate",
                 List.of(trValue, trFrom, trTo),
                 typeFactory.string());
 
@@ -872,7 +874,7 @@ public class XQuerySemanticFunctionManager {
         final ArgumentSpecification cValue = new ArgumentSpecification("value", optionalString, null);
         final ArgumentSpecification cSubstr = new ArgumentSpecification("substring", optionalString, null);
         final ArgumentSpecification cColl = optionalCollation;
-        register("fn", "contains", List.of(cValue, cSubstr, cColl), typeFactory.boolean_());
+        registerFunction("fn", "contains", List.of(cValue, cSubstr, cColl), typeFactory.boolean_());
 
         // fn:starts-with(
         //  as xs:string?,
@@ -882,7 +884,7 @@ public class XQuerySemanticFunctionManager {
         final ArgumentSpecification swValue = new ArgumentSpecification("value", optionalString, null);
         final ArgumentSpecification swSubstring = new ArgumentSpecification("substring", optionalString, null);
         final ArgumentSpecification swCollation = optionalCollation;
-        register("fn", "starts-with", List.of(swValue, swSubstring, swCollation), typeFactory.boolean_());
+        registerFunction("fn", "starts-with", List.of(swValue, swSubstring, swCollation), typeFactory.boolean_());
 
         // fn:ends-with(
         //  as xs:string?,
@@ -892,7 +894,7 @@ public class XQuerySemanticFunctionManager {
         final ArgumentSpecification ewValue = new ArgumentSpecification("value", optionalString, null);
         final ArgumentSpecification ewSubstring = new ArgumentSpecification("substring", optionalString, null);
         final ArgumentSpecification ewCollation = optionalCollation;
-        register("fn", "ends-with", List.of(ewValue, ewSubstring, ewCollation), typeFactory.boolean_());
+        registerFunction("fn", "ends-with", List.of(ewValue, ewSubstring, ewCollation), typeFactory.boolean_());
 
         // fn:substring-before(
         //  as xs:string?,
@@ -902,7 +904,7 @@ public class XQuerySemanticFunctionManager {
         final ArgumentSpecification sbValue = new ArgumentSpecification("value", optionalString, null);
         final ArgumentSpecification sbSubstring = new ArgumentSpecification("substring", optionalString, null);
         final ArgumentSpecification sbCollation = optionalCollation;
-        register("fn", "substring-before", List.of(sbValue, sbSubstring, sbCollation), typeFactory.string());
+        registerFunction("fn", "substring-before", List.of(sbValue, sbSubstring, sbCollation), typeFactory.string());
 
         // fn:substring-after(
         //  as xs:string?,
@@ -912,7 +914,7 @@ public class XQuerySemanticFunctionManager {
         final ArgumentSpecification saValue = new ArgumentSpecification("value", optionalString, null);
         final ArgumentSpecification saSubstring = new ArgumentSpecification("substring", optionalString, null);
         final ArgumentSpecification saCollation = optionalCollation;
-        register("fn", "substring-after",
+        registerFunction("fn", "substring-after",
                 List.of(saValue, saSubstring, saCollation),
                 typeFactory.string());
 
@@ -924,7 +926,7 @@ public class XQuerySemanticFunctionManager {
         final ArgumentSpecification optionalStringRequiredValue = new ArgumentSpecification("value", optionalString, null);
         final ArgumentSpecification pattern = new ArgumentSpecification("pattern", typeFactory.string(), null);
         final ArgumentSpecification flags = new ArgumentSpecification("flags", optionalString, EMPTY_STRING);
-        register("fn", "matches",
+        registerFunction("fn", "matches",
                 List.of(optionalStringRequiredValue, pattern, flags),
                 typeFactory.boolean_());
 
@@ -938,7 +940,7 @@ public class XQuerySemanticFunctionManager {
         final XQueryItemType dynamicReplacement = typeFactory.itemFunction(optionalItem, List.of(typeFactory.anyItem(), zeroOrMoreItems));
         final var replacementType = typeFactory.choice(List.of(typeFactory.itemString(), dynamicReplacement));
         final ArgumentSpecification replacement = new ArgumentSpecification("replacement", replacementType, EMPTY_SEQUENCE);
-        register("fn", "replace",
+        registerFunction("fn", "replace",
                 List.of(optionalStringRequiredValue, pattern, replacement, flags),
                 typeFactory.string());
 
@@ -948,7 +950,7 @@ public class XQuerySemanticFunctionManager {
         //  as xs:string? := ""
         // ) as xs:string*
         final ArgumentSpecification optionalPattern = new ArgumentSpecification("pattern", optionalString, EMPTY_SEQUENCE);
-        register("fn", "tokenize",
+        registerFunction("fn", "tokenize",
                 List.of(optionalStringRequiredValue, optionalPattern, flags),
                 typeFactory.zeroOrMore(typeFactory.itemString()));
 
@@ -957,56 +959,56 @@ public class XQuerySemanticFunctionManager {
         //  as xs:string,
         //  as xs:string? := ""
         // ) as element(fn:analyze-string-result)
-        register("fn", "analyze-string",
+        registerFunction("fn", "analyze-string",
                 List.of(optionalStringRequiredValue, pattern, flags),
                 typeFactory.one(typeFactory.itemElement(Set.of("fn:analyze-string-result"))));
 
         // fn:true() as xs:boolean
-        register("fn", "true", List.of(), typeFactory.boolean_());
+        registerFunction("fn", "true", List.of(), typeFactory.boolean_());
 
         // fn:false() as xs:boolean
-        register("fn", "false", List.of(), typeFactory.boolean_());
+        registerFunction("fn", "false", List.of(), typeFactory.boolean_());
 
         // op:boolean-equal( as xs:boolean,  as xs:boolean) as xs:boolean
         final ArgumentSpecification bool1ValueRequired = new ArgumentSpecification("value1", typeFactory.boolean_(), null);
         final ArgumentSpecification bool2ValueRequired = new ArgumentSpecification("value2", typeFactory.boolean_(), null);
-        register("op", "boolean-equal",
+        registerFunction("op", "boolean-equal",
                 List.of(bool1ValueRequired, bool2ValueRequired),
                 typeFactory.boolean_());
 
         // op:boolean-less-than( as xs:boolean,  as xs:boolean) as xs:boolean
-        register("op", "boolean-less-than",
+        registerFunction("op", "boolean-less-than",
                 List.of(bool1ValueRequired, bool2ValueRequired),
                 typeFactory.boolean_());
         // op:boolean-greater-than( as xs:boolean,  as xs:boolean) as xs:boolean
-        register("op", "boolean-greater-than",
+        registerFunction("op", "boolean-greater-than",
                 List.of(bool1ValueRequired, bool2ValueRequired),
                 typeFactory.boolean_());
 
         // op:boolean-not-equal( as xs:boolean,  as xs:boolean) as xs:boolean
-        register("op", "boolean-not-equal",
+        registerFunction("op", "boolean-not-equal",
                 List.of(bool1ValueRequired, bool2ValueRequired),
                 typeFactory.boolean_());
 
         // op:boolean-less-than-or-equal( as xs:boolean,  as xs:boolean) as xs:boolean
-        register("op", "boolean-less-than-or-equal",
+        registerFunction("op", "boolean-less-than-or-equal",
                 List.of(bool1ValueRequired, bool2ValueRequired),
                 typeFactory.boolean_());
 
         // op:boolean-greater-than-or-equal( as xs:boolean,  as xs:boolean) as xs:boolean
-        register("op", "boolean-greater-than-or-equal",
+        registerFunction("op", "boolean-greater-than-or-equal",
                 List.of(bool1ValueRequired, bool2ValueRequired),
                 typeFactory.boolean_());
 
 
         // fn:boolean( as item()*) as xs:boolean
-        register("fn", "boolean",
+        registerFunction("fn", "boolean",
                 List.of(anyItemsRequiredInput),
                 typeFactory.boolean_());
 
 
         // // fn:not( as item()*) as xs:boolean
-        register("fn", "not", List.of(argItems), typeFactory.boolean_(),
+        registerFunction("fn", "not", List.of(argItems), typeFactory.boolean_(),
             (args, _, _, typeContext) -> {
                 var scope = typeContext.currentScope();
                 var returned = typeContext.typeInContext(typeFactory.boolean_());
@@ -1017,19 +1019,19 @@ public class XQuerySemanticFunctionManager {
         );
 
         // fn:empty( as item()*) as xs:boolean
-        register("fn", "empty", List.of(anyItemsRequiredInput), typeFactory.boolean_());
+        registerFunction("fn", "empty", List.of(anyItemsRequiredInput), typeFactory.boolean_());
 
         // fn:exists( as item()*) as xs:boolean
-        register("fn", "exists", List.of(anyItemsRequiredInput), typeFactory.boolean_());
+        registerFunction("fn", "exists", List.of(anyItemsRequiredInput), typeFactory.boolean_());
 
         // fn:foot( as item()*) as item()?
-        register("fn", "foot", List.of(anyItemsRequiredInput), optionalItem);
+        registerFunction("fn", "foot", List.of(anyItemsRequiredInput), optionalItem);
 
         // fn:head( as item()*) as item()?
-        register("fn", "head", List.of(anyItemsRequiredInput), optionalItem);
+        registerFunction("fn", "head", List.of(anyItemsRequiredInput), optionalItem);
 
         // fn:identity( as item()*) as item()*
-        register("fn", "identity", List.of(anyItemsRequiredInput), zeroOrMoreItems);
+        registerFunction("fn", "identity", List.of(anyItemsRequiredInput), zeroOrMoreItems);
 
         // fn:insert-before(
         // 	as item()*,
@@ -1038,7 +1040,7 @@ public class XQuerySemanticFunctionManager {
         // ) as item()*
         final ArgumentSpecification position = new ArgumentSpecification("position", typeFactory.number(), null);
         final ArgumentSpecification insert = new ArgumentSpecification("insert", zeroOrMoreItems, null);
-        register("fn", "insert-before",
+        registerFunction("fn", "insert-before",
                 List.of(anyItemsRequiredInput, position, insert),
                 zeroOrMoreItems);
 
@@ -1046,13 +1048,13 @@ public class XQuerySemanticFunctionManager {
         // fn:items-at( as item()*,  as xs:integer*) as item()*
         final ArgumentSpecification at = new ArgumentSpecification("at",
                 zeroOrMoreNumbers, null);
-        register("fn", "items-at",
+        registerFunction("fn", "items-at",
                 List.of(anyItemsRequiredInput, at),
                 zeroOrMoreItems);
 
         // fn:replicate( as item()*,  as xs:nonNegativeInteger) as item()*
         final ArgumentSpecification count = new ArgumentSpecification("count", typeFactory.number(), null);
-        register("fn", "replicate",
+        registerFunction("fn", "replicate",
                 List.of(anyItemsRequiredInput, count),
                 zeroOrMoreItems);
 
@@ -1064,20 +1066,20 @@ public class XQuerySemanticFunctionManager {
         // 	as item()*,
         // 	as xs:integer*
         // ) as item()*
-        register("fn", "remove",
+        registerFunction("fn", "remove",
                 List.of(anyItemsRequiredInput, positions), zeroOrMoreItems);
 
 
         // fn:reverse(
         // 	as item()*
         // ) as item()*
-        register("fn", "reverse",
+        registerFunction("fn", "reverse",
                 List.of(anyItemsRequiredInput),
                 zeroOrMoreItems);
 
         // fn:sequence-join( as item()*,  as item()*) as item()*
         final ArgumentSpecification seqJoinSeparator = new ArgumentSpecification("separator", zeroOrMoreItems, null);
-        register("fn", "sequence-join",
+        registerFunction("fn", "sequence-join",
                 List.of(anyItemsRequiredInput, seqJoinSeparator),
                 zeroOrMoreItems);
 
@@ -1093,7 +1095,7 @@ public class XQuerySemanticFunctionManager {
                 optionalNumber, EMPTY_SEQUENCE);
         final ArgumentSpecification sliceStep = new ArgumentSpecification("step",
                 optionalNumber, EMPTY_SEQUENCE);
-        register("fn", "slice",
+        registerFunction("fn", "slice",
                 List.of(anyItemsRequiredInput, sliceStart, sliceEnd, sliceStep),
                 zeroOrMoreItems);
 
@@ -1103,28 +1105,28 @@ public class XQuerySemanticFunctionManager {
                 typeFactory.number(), null);
         final ArgumentSpecification subLength = new ArgumentSpecification("length",
                 optionalNumber, EMPTY_SEQUENCE);
-        register("fn", "subsequence",
+        registerFunction("fn", "subsequence",
                 List.of(anyItemsRequiredInput, subStart, subLength),
                 zeroOrMoreItems);
 
         // fn:tail( as item()*) as item()*
-        register("fn", "tail",
+        registerFunction("fn", "tail",
                 List.of(anyItemsRequiredInput),
                 zeroOrMoreItems);
 
         // fn:trunk( as item()*) as item()*
-        register("fn", "trunk",
+        registerFunction("fn", "trunk",
                 List.of(anyItemsRequiredInput),
                 zeroOrMoreItems);
 
         // fn:unordered( as item()*) as item()*
-        register("fn", "unordered",
+        registerFunction("fn", "unordered",
                 List.of(anyItemsRequiredInput),
                 zeroOrMoreItems);
 
         // fn:void( as item()* := ()) as empty-sequence()
         final ArgumentSpecification voidInput = new ArgumentSpecification("input", zeroOrMoreItems, EMPTY_SEQUENCE);
-        register("fn", "void",
+        registerFunction("fn", "void",
                 List.of(voidInput),
                 typeFactory.emptySequence());
 
@@ -1132,7 +1134,7 @@ public class XQuerySemanticFunctionManager {
         // xs:boolean
         final ArgumentSpecification arg_value1_anyItem = new ArgumentSpecification("value1", typeFactory.anyItem(), null);
         final ArgumentSpecification arg_value2_anyItem  = new ArgumentSpecification("value2", typeFactory.anyItem(), null);
-        register("fn", "atomic-equal",
+        registerFunction("fn", "atomic-equal",
                 List.of(arg_value1_anyItem, arg_value2_anyItem),
                 typeFactory.boolean_());
 
@@ -1142,13 +1144,13 @@ public class XQuerySemanticFunctionManager {
         final ArgumentSpecification arg_value2_anyItems  = new ArgumentSpecification("value2", zeroOrMoreItems, null);
         final var stringOrMap = typeFactory.zeroOrOne(typeFactory.itemChoice(Set.of(typeFactory.itemString(), typeFactory.itemAnyMap())));
         final ArgumentSpecification optionalOptions = new ArgumentSpecification("options", stringOrMap, EMPTY_MAP);
-        register("fn", "deep-equal",
+        registerFunction("fn", "deep-equal",
                 List.of(arg_value1_anyItems, arg_value2_anyItems, optionalOptions),
                 typeFactory.boolean_());
 
         // fn:compare( as xs:anyAtomicType?,  as xs:anyAtomicType?,
         //  as xs:string? := fn:default-collation()) as xs:integer?
-        register("fn", "compare",
+        registerFunction("fn", "compare",
                 List.of(arg_value1_anyItem, arg_value2_anyItem, optionalCollation),
                 typeFactory.zeroOrOne(typeFactory.itemNumber()));
 
@@ -1157,7 +1159,7 @@ public class XQuerySemanticFunctionManager {
         //  as xs:string? := fn:default-collation()
         // ) as xs:anyAtomicType*
         final ArgumentSpecification required_arg_values_anyItems = new ArgumentSpecification("values", zeroOrMoreItems, null);
-        register("fn", "distinct-values",
+        registerFunction("fn", "distinct-values",
                 List.of(required_arg_values_anyItems, optionalCollation),
                 typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
@@ -1165,7 +1167,7 @@ public class XQuerySemanticFunctionManager {
         //  as xs:anyAtomicType*,
         //  as xs:string? := fn:default-collation()
         // ) as xs:anyAtomicType*
-        register("fn", "duplicate-values",
+        registerFunction("fn", "duplicate-values",
                 List.of(required_arg_values_anyItems, optionalCollation),
                 typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
 
@@ -1175,7 +1177,7 @@ public class XQuerySemanticFunctionManager {
         //  as xs:string? := fn:default-collation()
         // ) as xs:integer*
         final ArgumentSpecification required_arg_target_anyItem = new ArgumentSpecification("target", typeFactory.one(typeFactory.itemAnyItem()), null);
-        register("fn", "index-of",
+        registerFunction("fn", "index-of",
                 List.of(anyItemsRequiredInput, required_arg_target_anyItem, optionalCollation),
                 typeFactory.zeroOrMore(typeFactory.itemNumber()));
 
@@ -1188,7 +1190,7 @@ public class XQuerySemanticFunctionManager {
         final var comparator = typeFactory.zeroOrOne(typeFactory.itemFunction(typeFactory.boolean_(),
                 List.of(typeFactory.anyItem(), typeFactory.anyItem())));
         final ArgumentSpecification optional_arg_compare_comparator = new ArgumentSpecification("compare", comparator, DEFAULT_COMPARATOR);
-        register("fn", "starts-with-subsequence",
+        registerFunction("fn", "starts-with-subsequence",
                 List.of(anyItemsRequiredInput, required_arg_subsequence_anyItems, optional_arg_compare_comparator),
                 typeFactory.boolean_());
 
@@ -1197,7 +1199,7 @@ public class XQuerySemanticFunctionManager {
         //  as item()*,
         //  as (fn(item(),item()) as xs:boolean?)? := fn:deep-equal#2
         // ) as xs:boolean
-        register("fn", "ends-with-subsequence",
+        registerFunction("fn", "ends-with-subsequence",
                 List.of(anyItemsRequiredInput, required_arg_subsequence_anyItems, optional_arg_compare_comparator),
                 typeFactory.boolean_());
 
@@ -1206,22 +1208,22 @@ public class XQuerySemanticFunctionManager {
         //  as item()*,
         //  as (fn(item(),item()) as xs:boolean?)? := fn:deep-equal#2
         // ) as xs:boolean
-        register("fn", "contains-subsequence",
+        registerFunction("fn", "contains-subsequence",
                 List.of(anyItemsRequiredInput, required_arg_subsequence_anyItems, optional_arg_compare_comparator),
                 typeFactory.boolean_());
 
         // fn:count( as item()*) as xs:integer
-        register("fn", "count", List.of(anyItemsRequiredInput), typeFactory.number());
+        registerFunction("fn", "count", List.of(anyItemsRequiredInput), typeFactory.number());
 
         // fn:avg( as xs:anyAtomicType*) as xs:anyAtomicType?
         final ArgumentSpecification anyItemValues = new ArgumentSpecification("values", zeroOrMoreItems, null);
-        register("fn", "avg", List.of(anyItemValues), optionalItem);
+        registerFunction("fn", "avg", List.of(anyItemValues), optionalItem);
 
         // fn:max(
         //  as xs:anyAtomicType*,
         //  as xs:string? := fn:default-collation()
         // ) as xs:anyAtomicType?
-        register("fn", "max",
+        registerFunction("fn", "max",
                 List.of(anyItemValues, optionalCollation),
                 typeFactory.zeroOrOne(typeFactory.itemAnyItem()));
 
@@ -1229,20 +1231,20 @@ public class XQuerySemanticFunctionManager {
         //  as xs:anyAtomicType*,
         //  as xs:string? := fn:default-collation()
         // ) as xs:anyAtomicType?
-        register("fn", "min", List.of(anyItemValues, optionalCollation), optionalItem);
+        registerFunction("fn", "min", List.of(anyItemValues, optionalCollation), optionalItem);
 
         // fn:sum(
         //  as xs:anyAtomicType*,
         //  as xs:anyAtomicType? := 0
         // ) as xs:anyAtomicType?
         final ArgumentSpecification sumZero = new ArgumentSpecification("zero", optionalItem, ZERO_LITERAL);
-        register("fn", "sum", List.of(anyItemValues, sumZero), optionalItem);
+        registerFunction("fn", "sum", List.of(anyItemValues, sumZero), optionalItem);
 
         // fn:all-equal(
         //  as xs:anyAtomicType*,
         //  as xs:string? := fn:default-collation()
         // ) as xs:boolean
-        register("fn", "all-equal",
+        registerFunction("fn", "all-equal",
                 List.of(anyItemValues, optionalCollation),
                 typeFactory.boolean_());
 
@@ -1250,7 +1252,7 @@ public class XQuerySemanticFunctionManager {
         //  as xs:anyAtomicType*,
         //  as xs:string? := fn:default-collation()
         // ) as xs:boolean
-        register("fn", "all-different",
+        registerFunction("fn", "all-different",
                 List.of(anyItemValues, optionalCollation),
                 typeFactory.boolean_());
 
@@ -1265,7 +1267,7 @@ public class XQuerySemanticFunctionManager {
             typeFactory.zeroOrOne(typeFactory.itemAnyMap()),
             EMPTY_MAP
         );
-        register(
+        registerFunction(
             "fn", "doc",
             List.of(sourceArgNonDefault, docOptions),
             typeFactory.zeroOrOne(typeFactory.itemAnyNode())
@@ -1277,7 +1279,7 @@ public class XQuerySemanticFunctionManager {
             typeFactory.zeroOrOne(typeFactory.itemAnyMap()),
             EMPTY_MAP
         );
-        register(
+        registerFunction(
             "fn", "doc-available",
             List.of(sourceArgNonDefault, docAvailOptions),
             typeFactory.boolean_()
@@ -1290,7 +1292,7 @@ public class XQuerySemanticFunctionManager {
             typeFactory.zeroOrOne(typeFactory.itemString()),
             EMPTY_SEQUENCE
         );
-        register(
+        registerFunction(
             "fn", "collection",
             List.of(colSource),
             typeFactory.zeroOrMore(typeFactory.itemAnyItem())
@@ -1303,7 +1305,7 @@ public class XQuerySemanticFunctionManager {
                                                                 typeFactory.itemAnyMap()))),
             EMPTY_SEQUENCE
         );
-        register(
+        registerFunction(
             "fn", "unparsed-text",
             List.of(sourceArgNonDefault, utOptions),
             typeFactory.zeroOrOne(typeFactory.itemString())
@@ -1315,7 +1317,7 @@ public class XQuerySemanticFunctionManager {
             typeFactory.zeroOrOne(typeFactory.itemAnyItem()),
             EMPTY_SEQUENCE
         );
-        register(
+        registerFunction(
             "fn", "unparsed-text-lines",
             List.of(sourceArgNonDefault, utlOptions),
             typeFactory.zeroOrMore(typeFactory.itemString())
@@ -1327,7 +1329,7 @@ public class XQuerySemanticFunctionManager {
             typeFactory.zeroOrOne(typeFactory.itemAnyItem()),
             EMPTY_SEQUENCE
         );
-        register(
+        registerFunction(
             "fn", "unparsed-text-available",
             List.of(sourceArgNonDefault, utaOptions),
             typeFactory.boolean_()
@@ -1339,14 +1341,14 @@ public class XQuerySemanticFunctionManager {
             typeFactory.string(),
             null
         );
-        register(
+        registerFunction(
             "fn", "environment-variable",
             List.of(envName),
             typeFactory.zeroOrOne(typeFactory.itemString())
         );
 
         // fn:available-environment-variables() as xs:string*
-        register(
+        registerFunction(
             "fn", "available-environment-variables",
             List.of(),
             typeFactory.zeroOrMore(typeFactory.itemString())
@@ -1357,52 +1359,52 @@ public class XQuerySemanticFunctionManager {
 
 
         // fn:position() as xs:integer
-        register("fn", "position",
+        registerFunction("fn", "position",
             List.of(), typeFactory.number(),
             null,
             true,
             false, null, null);
 
         // fn:last() as xs:integer
-        register("fn", "last", List.of(), typeFactory.number(), null, false, true, null, null);
+        registerFunction("fn", "last", List.of(), typeFactory.number(), null, false, true, null, null);
 
         // fn:current-dateTime() as xs:dateTimeStamp
-        register(
+        registerFunction(
             "fn", "current-dateTime",
             List.of(),
             typeFactory.string()
         );
 
         // fn:current-date() as xs:date
-        register(
+        registerFunction(
             "fn", "current-date",
             List.of(),
             typeFactory.string()
         );
 
         // fn:current-time() as xs:time
-        register(
+        registerFunction(
             "fn", "current-time",
             List.of(),
             typeFactory.string()
         );
 
         // fn:implicit-timezone() as xs:dayTimeDuration
-        register(
+        registerFunction(
             "fn", "implicit-timezone",
             List.of(),
             typeFactory.string()
         );
 
         // fn:default-collation() as xs:string
-        register(
+        registerFunction(
             "fn", "default-collation",
             List.of(),
             typeFactory.string()
         );
 
         // fn:default-language() as xs:language
-        register(
+        registerFunction(
             "fn", "default-language",
             List.of(),
             typeFactory.string()
@@ -1412,7 +1414,7 @@ public class XQuerySemanticFunctionManager {
 
 
         // fn:function-lookup($name as xs:QName, $arity as xs:integer) as function(*)?
-        register(
+        registerFunction(
             "fn", "function-lookup",
             List.of(
                 new ArgumentSpecification("name", typeFactory.one(typeFactory.itemString()), null),
@@ -1422,7 +1424,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // fn:function-name($function as function(*)) as xs:QName?
-        register(
+        registerFunction(
             "fn", "function-name",
             List.of(
                 new ArgumentSpecification("function", typeFactory.one(typeFactory.itemAnyFunction()), null)
@@ -1431,7 +1433,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // fn:function-arity($function as function(*)) as xs:integer
-        register(
+        registerFunction(
             "fn", "function-arity",
             List.of(
                 new ArgumentSpecification("function", typeFactory.one(typeFactory.itemAnyFunction()), null)
@@ -1440,7 +1442,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // fn:function-identity($function as function(*)) as xs:string
-        register(
+        registerFunction(
             "fn", "function-identity",
             List.of(
                 new ArgumentSpecification("function", typeFactory.one(typeFactory.itemAnyFunction()), null)
@@ -1449,7 +1451,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // fn:function-annotations( $function as fn(*) ) as map(xs:QName, xs:anyAtomicType*)*
-        register(
+        registerFunction(
             "fn", "function-annotations",
             List.of(
                 new ArgumentSpecification(
@@ -1468,7 +1470,7 @@ public class XQuerySemanticFunctionManager {
 
 
         // fn:apply($function as function(*), $arguments as array(*)) as item()*
-        register(
+        registerFunction(
             "fn", "apply",
             List.of(
                 new ArgumentSpecification("function", typeFactory.one(typeFactory.itemAnyFunction()), null),
@@ -1478,7 +1480,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // fn:do-until($input as item()*, $action as function(item()*, xs:integer) as item()*, $predicate as function(item()*, xs:integer) as xs:boolean?) as item()*
-        register(
+        registerFunction(
             "fn", "do-until",
             List.of(
                 new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
@@ -1509,7 +1511,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // fn:every($input as item()*, $predicate as function(item(), xs:integer) as xs:boolean? := fn:boolean#1) as xs:boolean
-        register(
+        registerFunction(
             "fn", "every",
             List.of(
                 new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
@@ -1529,7 +1531,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // fn:filter($input as item()*, $predicate as function(item(), xs:integer) as xs:boolean?) as item()*
-        register(
+        registerFunction(
             "fn", "filter",
             List.of(
                 new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
@@ -1549,7 +1551,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // fn:fold-left($input as item()*, $init as item()*, $action as function(item()*, item()) as item()*) as item()*
-        register(
+        registerFunction(
             "fn", "fold-left",
             List.of(
                 new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
@@ -1570,7 +1572,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // fn:fold-right($input as item()*, $init as item()*, $action as function(item(), item()*) as item()*) as item()*
-        register(
+        registerFunction(
             "fn", "fold-right",
             List.of(
                 new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
@@ -1591,7 +1593,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // fn:for-each($input as item()*, $action as function(item(), item()*) as item()*) as item()*
-        register(
+        registerFunction(
             "fn", "for-each",
             List.of(
                 new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
@@ -1612,7 +1614,7 @@ public class XQuerySemanticFunctionManager {
 
 
         // fn:for-each-pair($input1 as item()*, $input2 as item()*, $action as function(item(), item(), xs:integer) as item()*) as item()*
-        register(
+        registerFunction(
             "fn", "for-each-pair",
             List.of(
                 new ArgumentSpecification("input1", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
@@ -1630,7 +1632,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // fn:highest($input as item()*, $collation as xs:string? := fn:default-collation(), $key as function(item()) as xs:anyAtomicType*)? := fn:data#1) as item()*
-        register(
+        registerFunction(
             "fn", "highest",
             List.of(
                 new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
@@ -1644,7 +1646,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // fn:index-where($input as item()*, $predicate as function(item(), xs:integer) as xs:boolean?) as xs:integer*
-        register(
+        registerFunction(
             "fn", "index-where",
             List.of(
                 new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
@@ -1660,7 +1662,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // fn:lowest($input as item()*, $collation as xs:string? := fn:default-collation(), $key as function(item()) as xs:anyAtomicType*)? := fn:data#1) as item()*
-        register(
+        registerFunction(
             "fn", "lowest",
             List.of(
                 new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
@@ -1674,7 +1676,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // fn:partial-apply($function as function(*), $arguments as map(xs:positiveInteger, item()*)) as function(*)
-        register(
+        registerFunction(
             "fn", "partial-apply",
             List.of(
                 new ArgumentSpecification("function", typeFactory.one(typeFactory.itemAnyFunction()), null),
@@ -1686,7 +1688,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // fn:partition($input as item()*, $split-when as function(item()*, item(), xs:integer) as xs:boolean?) as array(item())*
-        register(
+        registerFunction(
             "fn", "partition",
             List.of(
                 new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
@@ -1703,7 +1705,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // fn:scan-left(...) and fn:scan-right(...) mirror fold-left and fold-right
-        register(
+        registerFunction(
             "fn", "scan-left",
             List.of(
                 new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
@@ -1719,7 +1721,7 @@ public class XQuerySemanticFunctionManager {
             typeFactory.zeroOrMore(typeFactory.itemAnyArray())
         );
 
-        register(
+        registerFunction(
             "fn", "scan-right",
             List.of(
                 new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
@@ -1736,7 +1738,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // fn:some($input as item()*, $predicate as function(item(), xs:integer) as xs:boolean?) := fn:boolean#1) as xs:boolean
-        register(
+        registerFunction(
             "fn", "some",
             List.of(
                 new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
@@ -1755,7 +1757,7 @@ public class XQuerySemanticFunctionManager {
         // $collation as xs:string? := fn:default-collation(),
         // $key as fn(item()) as xs:anyAtomicType* := fn:data#1
         // ) as item()*
-        register(
+        registerFunction(
             "fn", "sort",
             List.of(
                 new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
@@ -1785,7 +1787,7 @@ public class XQuerySemanticFunctionManager {
         //                 )*
         // ) as item()*
 
-        register(
+        registerFunction(
             "fn", "sort-by",
             List.of(
                 new ArgumentSpecification(
@@ -1829,7 +1831,7 @@ public class XQuerySemanticFunctionManager {
 
 
         // fn:sort-with($input as item()*, $comparators as function(item(), item()) as xs:integer*) as item()*
-        register(
+        registerFunction(
             "fn", "sort-with",
             List.of(
                 new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
@@ -1848,7 +1850,7 @@ public class XQuerySemanticFunctionManager {
         //                      $from as fn(item(), xs:integer) as xs:boolean? := true#0,
         //                      $to as fn(item(), xs:integer) as xs:boolean? := false#0
         // ) as item()*
-        register(
+        registerFunction(
             "fn", "subsequence-where",
             List.of(
                 new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
@@ -1879,7 +1881,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // fn:take-while($input as item()*, $predicate as fn(item(), xs:integer) as xs:boolean?) as item()*
-        register(
+        registerFunction(
             "fn", "take-while",
             List.of(
                 new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
@@ -1899,7 +1901,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // fn:transitive-closure($node as node()?, $step as fn(node()) as node()*) as node()*
-        register(
+        registerFunction(
             "fn", "transitive-closure",
             List.of(
                 new ArgumentSpecification("node", typeFactory.zeroOrOne(typeFactory.itemAnyNode()), null),
@@ -1916,7 +1918,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // fn:while-do($input as item()*, $predicate as fn(item()*, xs:integer) as xs:boolean?, $action as fn(item()*, xs:integer) as item()*) as item()*
-        register(
+        registerFunction(
             "fn", "while-do",
             List.of(
                 new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
@@ -1950,7 +1952,7 @@ public class XQuerySemanticFunctionManager {
         //  as xs:string
         // ) as fn(item()*,item()) as item()*
         final ArgumentSpecification opOperator = new ArgumentSpecification("operator", typeFactory.string(), null);
-        register("fn", "op",
+        registerFunction("fn", "op",
                 List.of(opOperator),
                 typeFactory.one(typeFactory.itemFunction(zeroOrMoreItems, List.of(
                     zeroOrMoreItems,
@@ -1971,7 +1973,7 @@ public class XQuerySemanticFunctionManager {
         XQueryItemType mapTransformer = typeFactory.itemFunction(zeroOrMoreItems, List.of(typeFactory.anyItem(), typeFactory.number()));
         ArgumentSpecification mbKey = new ArgumentSpecification( "key", typeFactory.zeroOrOne(mapTransformer), IDENTITY$1);
         ArgumentSpecification mbValue = new ArgumentSpecification( "value", typeFactory.zeroOrOne(mapTransformer), IDENTITY$1);
-        register(
+        registerFunction(
             "map", "build",
             List.of(mbInput, mbKey, mbValue, mapOptionsArg),
             typeFactory.one(typeFactory.itemAnyMap())
@@ -1988,7 +1990,7 @@ public class XQuerySemanticFunctionManager {
             typeFactory.one(typeFactory.itemAnyItem()),
             null
         );
-        register(
+        registerFunction(
             "map", "contains",
             List.of(mcMap, mcKey),
             typeFactory.boolean_()
@@ -2000,7 +2002,7 @@ public class XQuerySemanticFunctionManager {
             typeFactory.one(typeFactory.itemAnyMap()),
             null
         );
-        register(
+        registerFunction(
             "map", "empty",
             List.of(meMap),
             typeFactory.boolean_()
@@ -2012,7 +2014,7 @@ public class XQuerySemanticFunctionManager {
             typeFactory.one(typeFactory.itemAnyMap()),
             null
         );
-        register(
+        registerFunction(
             "map", "entries",
             List.of(mentMap),
             typeFactory.zeroOrMore(typeFactory.itemAnyMap())
@@ -2029,7 +2031,7 @@ public class XQuerySemanticFunctionManager {
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
             null
         );
-        register(
+        registerFunction(
             "map", "entry",
             List.of(mentKey, mentValue),
             typeFactory.one(typeFactory.itemAnyMap())
@@ -2044,7 +2046,7 @@ public class XQuerySemanticFunctionManager {
         final var optionalBoolean = typeFactory.zeroOrOne(typeFactory.itemBoolean());
         final XQueryItemType predicate = typeFactory.itemFunction(optionalBoolean, List.of(typeFactory.anyItem(), zeroOrMoreItems));
         ArgumentSpecification predicateArg = new ArgumentSpecification( "predicate", typeFactory.one(predicate), null);
-        register(
+        registerFunction(
             "map", "filter",
             List.of(mfMap, predicateArg),
             typeFactory.one(typeFactory.itemAnyMap())
@@ -2061,7 +2063,7 @@ public class XQuerySemanticFunctionManager {
             typeFactory.one(typeFactory.itemAnyItem()),
             null
         );
-        register(
+        registerFunction(
             "map", "find",
             List.of(mfindInput, mfindKey),
             typeFactory.one(typeFactory.itemAnyArray())
@@ -2075,7 +2077,7 @@ public class XQuerySemanticFunctionManager {
         );
         XQuerySequenceType action = typeFactory.function(zeroOrMoreItems, List.of(typeFactory.anyItem(), zeroOrMoreItems));
         ArgumentSpecification mfeAction = new ArgumentSpecification( "action", action, null);
-        register(
+        registerFunction(
             "map", "for-each",
             List.of(mfeMap, mfeAction),
             typeFactory.zeroOrMore(typeFactory.itemAnyItem())
@@ -2097,7 +2099,7 @@ public class XQuerySemanticFunctionManager {
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
             EMPTY_SEQUENCE
         );
-        register(
+        registerFunction(
             "map", "get",
             List.of(mgMap, mgKey, mgDefault),
             typeFactory.zeroOrMore(typeFactory.itemAnyItem())
@@ -2109,7 +2111,7 @@ public class XQuerySemanticFunctionManager {
             typeFactory.one(typeFactory.itemAnyMap()),
             null
         );
-        register(
+        registerFunction(
             "map", "items",
             List.of(mitemsMap),
             zeroOrMoreItems
@@ -2121,7 +2123,7 @@ public class XQuerySemanticFunctionManager {
             typeFactory.one(typeFactory.itemAnyMap()),
             null
         );
-        register(
+        registerFunction(
             "map", "keys",
             List.of(mkeysMap),
             typeFactory.zeroOrMore(typeFactory.itemAnyItem())
@@ -2133,7 +2135,7 @@ public class XQuerySemanticFunctionManager {
             typeFactory.one(typeFactory.itemAnyMap()),
             null
         );
-        register(
+        registerFunction(
             "map", "keys-where",
             List.of(kwMap, predicateArg),
             typeFactory.zeroOrMore(typeFactory.itemAnyItem())
@@ -2145,7 +2147,7 @@ public class XQuerySemanticFunctionManager {
             typeFactory.zeroOrMore(typeFactory.itemAnyMap()),
             null
         );
-        register(
+        registerFunction(
             "map", "merge",
             List.of(mmMaps, mapOptionsArg),
             typeFactory.one(typeFactory.itemAnyMap())
@@ -2161,7 +2163,7 @@ public class XQuerySemanticFunctionManager {
             ),
             null
         );
-        register(
+        registerFunction(
             "map", "of-pairs",
             List.of(opInput, mapOptionsArg),
             typeFactory.one(typeFactory.itemAnyMap())
@@ -2178,13 +2180,13 @@ public class XQuerySemanticFunctionManager {
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
             null
         );
-        register(
+        registerFunction(
             "map", "pair",
             List.of(mpKey, mpValue),
             typeFactory.namedType(new QualifiedName("fn", "key-value-pair")).type()
         );
 
-        register(
+        registerFunction(
             "map", "pairs",
             List.of(
                 new ArgumentSpecification(
@@ -2219,7 +2221,7 @@ public class XQuerySemanticFunctionManager {
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
             null
         );
-        register(
+        registerFunction(
             "map", "put",
             List.of(mputMap, mputKey, mputValue),
             typeFactory.one(typeFactory.itemAnyMap())
@@ -2239,7 +2241,7 @@ public class XQuerySemanticFunctionManager {
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
             null
         );
-        register(
+        registerFunction(
             "map", "remove",
             List.of(mremMap, mremKeys),
             typeFactory.one(typeFactory.itemAnyMap())
@@ -2253,7 +2255,7 @@ public class XQuerySemanticFunctionManager {
             typeFactory.one(typeFactory.itemAnyMap()),
             null
         );
-        register(
+        registerFunction(
             "map", "size",
             List.of(msizeMap),
             typeFactory.number() // or typeFactory.integer() if you prefer strict type
@@ -2266,7 +2268,7 @@ public class XQuerySemanticFunctionManager {
         ArgumentSpecification etmpInput = new ArgumentSpecification("input",
                                                                     typeFactory.zeroOrMore(typeFactory.itemAnyNode()),
                                                                     null);
-        register("fn", "element-to-map-plan",
+        registerFunction("fn", "element-to-map-plan",
             List.of(etmpInput), typeFactory.map(typeFactory.itemString(), typeFactory.anyMap())
         );
 
@@ -2276,13 +2278,13 @@ public class XQuerySemanticFunctionManager {
         // ) as map(xs:string, item()?)?
         ArgumentSpecification etmElement = new ArgumentSpecification("element", typeFactory.zeroOrOne(typeFactory.itemAnyNode()), null);
         ArgumentSpecification etmOptions = new ArgumentSpecification("options", typeFactory.zeroOrOne(typeFactory.itemAnyMap()), EMPTY_MAP);
-        register("fn", "element-to-map",
+        registerFunction("fn", "element-to-map",
             List.of(etmElement, etmOptions),
             typeFactory.zeroOrOne(typeFactory.itemMap(typeFactory.itemString(), typeFactory.zeroOrOne(typeFactory.itemAnyItem())))
         );
 
         // array:append($array as array(*), $member as item()*) as array(*)
-        register(
+        registerFunction(
             "array", "append",
             List.of(
                 new ArgumentSpecification(
@@ -2300,7 +2302,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // array:build($input as item()*, $action as function(item(), xs:integer) as item()* := fn:identity#1) as array(*)
-        register(
+        registerFunction(
             "array", "build",
             List.of(
                 new ArgumentSpecification( "input", zeroOrMoreItems, null),
@@ -2314,7 +2316,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // array:empty($array as array(*)) as xs:boolean
-        register(
+        registerFunction(
             "array", "empty",
             List.of(
                 new ArgumentSpecification(
@@ -2328,7 +2330,7 @@ public class XQuerySemanticFunctionManager {
 
         // array:filter($array as array(*), $predicate as function(item(), xs:integer) as xs:boolean?) as array(*)
         final XQueryItemType itemIntegerActionFunction = typeFactory.itemFunction(optionalBoolean, List.of(typeFactory.anyItem(), typeFactory.number()));
-        register(
+        registerFunction(
             "array", "filter",
             List.of(
                 new ArgumentSpecification(
@@ -2346,7 +2348,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // array:flatten($input as item()) as item()*
-        register(
+        registerFunction(
             "array", "flatten",
             List.of(
                 new ArgumentSpecification(
@@ -2360,7 +2362,7 @@ public class XQuerySemanticFunctionManager {
 
         // array:fold-left($array as array(*), $init as item()*, $action as function(item(), item()*) as item()*) as item()*
         final XQueryItemType function_anyItem_zeroOrMoreItems$zeroOrMoreItems = typeFactory.itemFunction(zeroOrMoreItems, List.of(typeFactory.anyItem(), zeroOrMoreItems));
-        register(
+        registerFunction(
             "array", "fold-left",
             List.of(
                 new ArgumentSpecification(
@@ -2383,7 +2385,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // array:fold-right($array as array(*), $init as item()*, $action as function(item(), item()*) as item()*) as item()*
-        register(
+        registerFunction(
             "array", "fold-right",
             List.of(
                 new ArgumentSpecification(
@@ -2406,7 +2408,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // array:foot($array as array(*)) as item()*
-        register(
+        registerFunction(
             "array", "foot",
             List.of(
                 new ArgumentSpecification(
@@ -2422,7 +2424,7 @@ public class XQuerySemanticFunctionManager {
         //                $action as function(item()*, xs:integer) as item()*
         // ) as array(*)
         final XQueryItemType function_zeroOrMoreItems_number$zeroOrMoreItems = typeFactory.itemFunction(zeroOrMoreItems, List.of(zeroOrMoreItems, typeFactory.number()));
-        register(
+        registerFunction(
             "array", "for-each",
             List.of(
                 new ArgumentSpecification(
@@ -2440,7 +2442,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // array:for-each-pair($array1 as array(*), $array2 as array(*), $action as function(item(), item(), xs:integer) as item()*) as array(*)
-        register(
+        registerFunction(
             "array", "for-each-pair",
             List.of(
                 new ArgumentSpecification(
@@ -2463,7 +2465,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // array:get($array as array(*), $position as xs:integer) as item()*
-        register(
+        registerFunction(
             "array", "get",
             List.of(
                 new ArgumentSpecification(
@@ -2481,7 +2483,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // array:get($array as array(*), $position as xs:integer, $default as item()*) as item()*
-        register(
+        registerFunction(
             "array", "get",
             List.of(
                 new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
@@ -2492,7 +2494,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // array:head($array as array(*)) as item()*
-        register(
+        registerFunction(
             "array", "head",
             List.of(
                 new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
@@ -2501,7 +2503,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // array:index-of($array as array(*), $target as item()*, $collation as xs:string? := fn:default-collation()) as xs:integer*
-        register(
+        registerFunction(
             "array", "index-of",
             List.of(
                 new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
@@ -2513,7 +2515,7 @@ public class XQuerySemanticFunctionManager {
 
         final XQueryItemType integerPredicate = typeFactory.itemFunction(optionalBoolean, List.of(zeroOrMoreItems, typeFactory.number()));
         // array:index-where($array as array(*), $predicate as function(item()*, xs:integer) as xs:boolean?) as xs:integer*
-        register(
+        registerFunction(
             "array", "index-where",
             List.of(
                 new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
@@ -2523,7 +2525,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // array:insert-before($array as array(*), $position as xs:integer, $member as item()*) as array(*)
-        register(
+        registerFunction(
             "array", "insert-before",
             List.of(
                 new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
@@ -2534,7 +2536,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // array:items($array as array(*)) as item()*
-        register(
+        registerFunction(
             "array", "items",
             List.of(
                 new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
@@ -2543,7 +2545,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // array:join($arrays as array(*)*, $separator as array(*)? := ()) as array(*)
-        register(
+        registerFunction(
             "array", "join",
             List.of(
                 new ArgumentSpecification("arrays", typeFactory.zeroOrMore(typeFactory.itemAnyArray()), null),
@@ -2552,7 +2554,7 @@ public class XQuerySemanticFunctionManager {
             typeFactory.one(typeFactory.itemAnyArray())
         );
 
-        register(
+        registerFunction(
             "array", "members",
             List.of(
                 new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
@@ -2569,7 +2571,7 @@ public class XQuerySemanticFunctionManager {
             )
         );
 
-        register(
+        registerFunction(
             "array", "of-members",
             List.of(
                 new ArgumentSpecification(
@@ -2590,7 +2592,7 @@ public class XQuerySemanticFunctionManager {
 
 
         // array:put($array as array(*), $position as xs:integer, $member as item()*) as array(*)
-        register(
+        registerFunction(
             "array", "put",
             List.of(
                 new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
@@ -2601,7 +2603,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // array:remove($array as array(*), $positions as xs:integer*) as array(*)
-        register(
+        registerFunction(
             "array", "remove",
             List.of(
                 new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
@@ -2611,7 +2613,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // array:reverse($array as array(*)) as array(*)
-        register(
+        registerFunction(
             "array", "reverse",
             List.of(
                 new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
@@ -2620,7 +2622,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // array:size($array as array(*)) as xs:integer
-        register(
+        registerFunction(
             "array", "size",
             List.of(
                 new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
@@ -2629,7 +2631,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // array:slice($array as array(*), $start as xs:integer? := (), $end as xs:integer? := (), $step as xs:integer? := ()) as array(*)
-        register(
+        registerFunction(
             "array", "slice",
             List.of(
                 new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
@@ -2641,7 +2643,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // array:sort($array as array(*), $collation as xs:string? := fn:default-collation(), $key as function(item()*) as xs:anyAtomicType* := fn:data#1) as array(*)
-        register(
+        registerFunction(
             "array", "sort",
             List.of(
                 new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
@@ -2677,10 +2679,10 @@ public class XQuerySemanticFunctionManager {
                 new ArgumentSpecification("keys", keysType, null));
 
 
-        register("array", "sort-by", sortByArgs, zeroOrMoreItems);
+        registerFunction("array", "sort-by", sortByArgs, zeroOrMoreItems);
 
         // array:split($array as array(*)) as array(*)*
-        register(
+        registerFunction(
             "array", "split",
             List.of(
                 new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
@@ -2689,7 +2691,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // array:subarray($array as array(*), $start as xs:integer, $length as xs:integer? := ()) as array(*)
-        register(
+        registerFunction(
             "array", "subarray",
             List.of(
                 new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
@@ -2700,7 +2702,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // array:tail($array as array(*)) as array(*)
-        register(
+        registerFunction(
             "array", "tail",
             List.of(
                 new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
@@ -2709,7 +2711,7 @@ public class XQuerySemanticFunctionManager {
         );
 
         // array:trunk($array as array(*)) as array(*)
-        register(
+        registerFunction(
             "array", "trunk",
             List.of(
                 new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
@@ -2719,7 +2721,7 @@ public class XQuerySemanticFunctionManager {
 
         // fn:type-of( as item()*) as xs:string
         final ArgumentSpecification typeOfValue = new ArgumentSpecification("value", zeroOrMoreItems, null);
-        register("fn", "type-of",
+        registerFunction("fn", "type-of",
                 List.of(typeOfValue),
                 typeFactory.string());
 
@@ -2741,38 +2743,38 @@ public class XQuerySemanticFunctionManager {
             EMPTY_SEQUENCE
         );
 
-        register(
+        registerFunction(
             "fn", "random-number-generator",
             List.of(rngSeed),
             typeFactory.namedType(new QualifiedName("fn", "random-number-generator-record")).type()
         );
 
 
-        register(
+        registerFunction(
             "antlr", "start",
             List.of(optionalNodeArg),
             optionalNumber
         );
 
-        register(
+        registerFunction(
             "antlr", "stop",
             List.of(optionalNodeArg),
             optionalNumber
         );
 
-        register(
+        registerFunction(
             "antlr", "pos",
             List.of(optionalNodeArg),
             optionalNumber
         );
 
-        register(
+        registerFunction(
             "antlr", "index",
             List.of(optionalNodeArg),
             optionalNumber
         );
 
-        register(
+        registerFunction(
             "antlr", "line",
             List.of(optionalNodeArg),
             optionalNumber
@@ -2780,6 +2782,7 @@ public class XQuerySemanticFunctionManager {
     }
 
     final Map<String, Map<String, List<FunctionSpecification>>> namespaces;
+    final Map<String, QualifiedGrammarAnalysisResult> grammars;
 
     private AnalysisResult handleUnknownNamespace(
         final String namespace,
@@ -3108,47 +3111,47 @@ public class XQuerySemanticFunctionManager {
     }
 
 
-    public XQuerySemanticError register(
+    public XQuerySemanticError registerFunction(
             final String namespace,
             final String functionName,
             final List<ArgumentSpecification> args,
             final XQuerySequenceType returnedType) {
-        return register(namespace, functionName, args, returnedType, null, false, false, null,
+        return registerFunction(namespace, functionName, args, returnedType, null, false, false, null,
             ((_, _, _, ctx) -> ctx.currentScope().typeInContext(returnedType)));
     }
 
-    public XQuerySemanticError register(
+    public XQuerySemanticError registerFunction(
             final String namespace,
             final String functionName,
             final List<ArgumentSpecification> args,
             final XQuerySequenceType returnedType,
             final GrainedAnalysis analysis)
     {
-        return register(namespace, functionName, args, returnedType,
+        return registerFunction(namespace, functionName, args, returnedType,
             null, false,
             false, null, analysis);
     }
 
-    public XQuerySemanticError register(
+    public XQuerySemanticError registerFunction(
             final String namespace,
             final String functionName,
             final List<ArgumentSpecification> args,
             final XQuerySequenceType returnedType,
             final ParseTree body) {
-        return register(namespace, functionName, args, returnedType, null, false, false, body, null);
+        return registerFunction(namespace, functionName, args, returnedType, null, false, false, body, null);
     }
 
-    public XQuerySemanticError register(
+    public XQuerySemanticError registerFunction(
             final String namespace,
             final String functionName,
             final List<ArgumentSpecification> args,
             final XQuerySequenceType returnedType,
             final ParseTree body,
             final GrainedAnalysis analysis) {
-        return register(namespace, functionName, args, returnedType, null, false, false, body, analysis);
+        return registerFunction(namespace, functionName, args, returnedType, null, false, false, body, analysis);
     }
 
-    public XQuerySemanticError register(
+    public XQuerySemanticError registerFunction(
             final String namespace,
             final String functionName,
             final List<ArgumentSpecification> args,
@@ -3193,4 +3196,22 @@ public class XQuerySemanticFunctionManager {
             requiresPosition, requiresLength, body, analysis));
         return null;
     }
+
+    public boolean namespaceExists(String namespace) {
+        return namespaces.containsKey(namespace);
+    }
+
+    public void registerNamespace(String namespace) {
+        namespaces.putIfAbsent(namespace, new HashMap<>());
+    }
+
+    public void registerGrammar(String namespace, QualifiedGrammarAnalysisResult result) {
+        grammars.putIfAbsent(namespace, result);
+    }
+
+    public boolean grammarExists(String namespace) {
+        return grammars.get(namespace) != null;
+    }
+
+
 }

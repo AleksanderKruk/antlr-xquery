@@ -93,12 +93,14 @@ public class ModuleManager {
     }
 
     private ParseTree resolveTree(final Path file) throws IOException {
-        final ParseTree tree = trees.get(file);
-        if (tree != null) {
-            return tree;
+        final ParseTree cachedTree = trees.get(file);
+        if (cachedTree != null) {
+            return cachedTree;
         } else {
             final String text = Files.readString(file);
-            return XQuery.parse(text);
+            var parsedTree = XQuery.parse(text);
+            trees.put(file, parsedTree);
+            return parsedTree;
         }
 
     }
@@ -108,7 +110,8 @@ public class ModuleManager {
     }
 
     public ImportResult defaultPathModuleImport(final String moduleImportQuery) {
-        return resolveImport("./"+moduleImportQuery+".antlrquery");
+        final String pathQuery = moduleImportQuery.replace(":", "/");
+        return resolveImport("./"+pathQuery+".antlrquery");
     }
 
 }

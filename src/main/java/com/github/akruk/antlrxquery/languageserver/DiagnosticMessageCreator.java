@@ -254,7 +254,7 @@ public class DiagnosticMessageCreator {
             case OR__NON_EBV -> {
                 return "Operands of 'or expression' need to have effective boolean value; received: " + error.data().get(0);
             }
-            case PARAM__NAMESPACE -> {
+            case FUNCTION__PARAM_HAS_NAMESPACE -> {
                 return "Parameter " + error.data().get(0) + " cannot have a namespace";
             }
             case PATH_EXPR__CONTEXT_NOT_NODES -> {

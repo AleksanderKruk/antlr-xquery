@@ -12,22 +12,21 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.antlr.v4.runtime.tree.ParseTree;
-
+import com.github.akruk.antlrxquery.AntlrXqueryParser.XqueryContext;
 import com.github.akruk.antlrxquery.evaluator.XQuery;
 
 public class ModuleManager {
     private final Set<Path> modulePaths;
-    private final Map<Path, ParseTree> trees;
+    private final Map<Path, XqueryContext> trees;
 
     enum ImportStatus {
-        OK, MANY_VALID_PATHS, NO_PATH_FOUND
+        OK, MANY_VALID_PATHS, NO_PATH_FOUND, DUPLICATE_IMPORT
     }
     enum ResolvingStatus {
-        OK, FOUND_OTHER_THAN_FILE, UNREADABLE
+        OK, FOUND_OTHER_THAN_FILE, UNREADABLE, FILE_ALREADY_IMPORTED
     }
     public record ImportResult(
-        ParseTree tree,
+        XqueryContext tree,
         Set<Path> validPaths,
         List<Path> resolvedPaths,
         List<ResolvingStatus> resolvingStatuses,
@@ -49,7 +48,11 @@ public class ModuleManager {
             final List<Path> resolvedPaths = new ArrayList<>(modulePaths.size());
             final List<ResolvingStatus> statuses = new ArrayList<>(modulePaths.size());
             for (final Path path : modulePaths) {
-                final var resolved = path.resolve(moduleImportQuery).toAbsolutePath();
+                final Path resolved = path.resolve(moduleImportQuery).toAbsolutePath();
+                if (trees.containsKey(resolved)) {
+                    statuses.add(ResolvingStatus.FILE_ALREADY_IMPORTED);
+                    continue;
+                }
                 final File file = resolved.toFile();
                 if (!file.exists()) {
                     continue;
@@ -72,7 +75,7 @@ public class ModuleManager {
                 .collect(Collectors.toSet());
             if (validFiles.size() == 1) {
                 final Path validFile = validFiles.stream().findFirst().orElse(null);
-                final ParseTree tree = resolveTree(validFile);
+                final XqueryContext tree = resolveTree(validFile);
                 return new ImportResult(tree, validFiles, resolvedPaths, statuses, ImportStatus.OK);
             }
 
@@ -92,8 +95,8 @@ public class ModuleManager {
         }
     }
 
-    private ParseTree resolveTree(final Path file) throws IOException {
-        final ParseTree cachedTree = trees.get(file);
+    private XqueryContext resolveTree(final Path file) throws IOException {
+        final XqueryContext cachedTree = trees.get(file);
         if (cachedTree != null) {
             return cachedTree;
         } else {

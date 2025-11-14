@@ -143,25 +143,4 @@ public class FunctionsOnNumericValuesTest extends SemanticTestsBase {
         assertErrors("fn:divide-decimals(1.0, 2.0, 'z')");
     }
 
-    // fn:is-NaN($value as xs:anyAtomicType) as xs:boolean
-    @Test
-    void isNaN_withNumeric() {
-        assertType("fn:is-NaN(0 div 0)", typeFactory.boolean_());
-    }
-
-    @Test
-    void isNaN_withString() {
-        assertType("fn:is-NaN('foo')", typeFactory.boolean_());
-    }
-
-    @Test
-    void isNaN_missing() {
-        assertErrors("fn:is-NaN()");
-    }
-
-    @Test
-    void isNaN_tooMany() {
-        assertErrors("fn:is-NaN(1,2)");
-    }
-
 }

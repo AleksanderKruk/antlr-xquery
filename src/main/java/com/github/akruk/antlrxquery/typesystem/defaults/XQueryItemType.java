@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
+import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.itemtype.ItemtypeAlternativeMerger;
@@ -31,7 +32,7 @@ public class XQueryItemType {
     public final XQuerySequenceType arrayMemberType;
     public final XQueryItemType mapKeyType;
     public final XQuerySequenceType mapValueType;
-    public final Set<String> elementNames;
+    public final Set<QualifiedName> elementNames;
     public final Map<String, XQueryRecordField> recordFields;
     public final Collection<XQueryItemType> itemTypes;
 
@@ -48,7 +49,7 @@ public class XQueryItemType {
                                 final XQuerySequenceType arrayType,
                                 final XQueryItemType key,
                                 final XQuerySequenceType mapValueType,
-                                final Set<String> elementNames,
+                                final Set<QualifiedName> elementNames,
                                 final XQueryTypeFactory typeFactory,
                                 final Collection<XQueryItemType> itemTypes,
                                 final Map<String, XQueryRecordField> recordFields,
@@ -299,7 +300,7 @@ public class XQueryItemType {
                      null, null, null);
     }
 
-    public static XQueryItemType element(Set<String> elementName, XQueryTypeFactory factory) {
+    public static XQueryItemType element(Set<QualifiedName> elementName, XQueryTypeFactory factory) {
         return new XQueryItemType(XQueryTypes.ELEMENT, null, null, null, null, null, elementName, factory, null, null, null, null);
     }
 

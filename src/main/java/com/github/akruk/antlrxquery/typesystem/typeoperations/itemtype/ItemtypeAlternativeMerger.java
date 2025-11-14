@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 
+import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
@@ -451,7 +452,7 @@ public class ItemtypeAlternativeMerger
     {
         final var els1 = x.elementNames;
         final var els2 = y.elementNames;
-        final Set<String> merged = new HashSet<>(els1.size() + els2.size());
+        final Set<QualifiedName> merged = new HashSet<>(els1.size() + els2.size());
         merged.addAll(els1);
         merged.addAll(els2);
         return typeFactory.itemElement(merged);

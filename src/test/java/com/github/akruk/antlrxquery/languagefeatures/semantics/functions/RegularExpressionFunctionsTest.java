@@ -3,6 +3,7 @@ package com.github.akruk.antlrxquery.languagefeatures.semantics.functions;
 import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
+import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 
 import java.util.Set;
 
@@ -112,26 +113,26 @@ public class RegularExpressionFunctionsTest extends SemanticTestsBase {
     //   $pattern as xs:string,
     //   $flags as xs:string? := ""
     // ) as element(fn:analyze-string-result)
-
+    // fn:analyze-string
     @Test public void analyzeString_minimal() {
         assertType(
             "fn:analyze-string('abc','b')",
             typeFactory.one(typeFactory.itemElement(
-                Set.of("fn:analyze-string-result")))
+                Set.of(new QualifiedName("fn", "analyze-string-result"))))
         );
     }
     @Test public void analyzeString_withFlags() {
         assertType(
             "fn:analyze-string('AbC','b','i')",
             typeFactory.one(typeFactory.itemElement(
-                Set.of("fn:analyze-string-result")))
+                Set.of(new QualifiedName("fn", "analyze-string-result"))))
         );
     }
     @Test public void analyzeString_nullValue() {
         assertType(
             "fn:analyze-string((),'.*')",
             typeFactory.one(typeFactory.itemElement(
-                Set.of("fn:analyze-string-result")))
+                Set.of(new QualifiedName("fn", "analyze-string-result"))))
         );
     }
     @Test public void analyzeString_missingPattern() {

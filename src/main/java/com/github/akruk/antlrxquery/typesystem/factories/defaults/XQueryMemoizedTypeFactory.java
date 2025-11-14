@@ -12,7 +12,7 @@ import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.defaults.*;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
-public class XQueryMemoizedTypeFactory implements XQueryTypeFactory 
+public class XQueryMemoizedTypeFactory implements XQueryTypeFactory
 {
     private final XQueryItemType ERROR_ITEM_TYPE = XQueryItemType.error(this);
     private final XQueryItemType STRING_ITEM_TYPE = XQueryItemType.string(this);
@@ -27,7 +27,7 @@ public class XQueryMemoizedTypeFactory implements XQueryTypeFactory
     private final Map<XQuerySequenceType, XQuerySequenceType> arrays = new HashMap<>();
     private final Map<XQueryItemType, Map<XQuerySequenceType, XQuerySequenceType>> maps=new HashMap<>();
     private final Map<Set<String>, XQueryItemType> enums = new HashMap<>();
-    private final Map<Set<String>, XQueryItemType> elementTypes = new HashMap<>();
+    private final Map<Set<QualifiedName>, XQueryItemType> elementTypes = new HashMap<>();
     private final Map<XQueryItemType, XQuerySequenceType> oneTypes = new HashMap<>();
     private final Map<XQueryItemType, XQuerySequenceType> zeroOrOneTypes = new HashMap<>();
     private final Map<XQueryItemType, XQuerySequenceType> zeroOrMoreTypes = new HashMap<>();
@@ -92,7 +92,7 @@ public class XQueryMemoizedTypeFactory implements XQueryTypeFactory
 
 
     @Override
-    public XQueryItemType itemElement(final Set<String> elementName) {
+    public XQueryItemType itemElement(final Set<QualifiedName> elementName) {
         return elementTypes.computeIfAbsent(elementName, k -> XQueryItemType.element(k, this));
     }
 
@@ -152,7 +152,7 @@ public class XQueryMemoizedTypeFactory implements XQueryTypeFactory
     }
 
     @Override
-    public XQuerySequenceType element(final Set<String> elementName) {
+    public XQuerySequenceType element(final Set<QualifiedName> elementName) {
         return one(itemElement(elementName));
     }
 

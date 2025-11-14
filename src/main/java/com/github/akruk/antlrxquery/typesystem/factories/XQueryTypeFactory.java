@@ -18,7 +18,7 @@ public interface XQueryTypeFactory {
     public XQueryItemType itemAnyNode();
     public XQueryItemType itemAnyArray();
     public XQueryItemType itemAnyMap();
-    public XQueryItemType itemElement(Set<String> elementName);
+    public XQueryItemType itemElement(Set<QualifiedName> elementName);
     public XQueryItemType itemAnyFunction();
     public XQueryItemType itemAnyItem();
     public XQueryItemType itemBoolean();
@@ -28,13 +28,13 @@ public interface XQueryTypeFactory {
     public XQueryItemType itemRecord(Map<String, XQueryRecordField> fields);
     public XQueryItemType itemExtensibleRecord(Map<String, XQueryRecordField> fields);
     public XQueryItemType itemChoice(Collection<XQueryItemType> items);
-    
+
     public enum NamedAccessingStatus {
         OK, UNKNOWN_NAMESPACE, UNKNOWN_NAME
     }
     public record NamedItemAccessingResult(XQueryItemType type, NamedAccessingStatus status) {}
     public NamedItemAccessingResult itemNamedType(QualifiedName name);
-    
+
     public enum RegistrationStatus {
         OK, ALREADY_REGISTERED_SAME, ALREADY_REGISTERED_DIFFERENT
     }
@@ -52,14 +52,14 @@ public interface XQueryTypeFactory {
     public XQuerySequenceType map(XQueryItemType mapKeyType, XQuerySequenceType mapValueType);
     public XQuerySequenceType record(Map<String, XQueryRecordField> fields);
     public XQuerySequenceType extensibleRecord(Map<String, XQueryRecordField> fields);
-    public XQuerySequenceType element(Set<String> elementName);
+    public XQuerySequenceType element(Set<QualifiedName> elementName);
     public XQuerySequenceType anyFunction();
     public XQuerySequenceType function(XQuerySequenceType returnType, List<XQuerySequenceType> argumentTypes);
     public XQuerySequenceType choice(Collection<XQueryItemType> items);
     public XQuerySequenceType anyItem();
     public XQuerySequenceType boolean_();
     public XQuerySequenceType emptySequence();
-    
+
     public record NamedAccessingResult(XQuerySequenceType type, NamedAccessingStatus status) {}
     public NamedAccessingResult namedType(QualifiedName name);
 

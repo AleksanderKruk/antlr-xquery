@@ -24,7 +24,8 @@ public class FunctionSets {
         var fn = FN(typeFactory);
         var op = OP(typeFactory);
         var math = MATH(typeFactory);
-        return List.of(fn, op, math);
+        var antlr = ANTLR(typeFactory);
+        return List.of(fn, op, math, antlr);
     }
     public static List<SimplifiedFunctionSpecification> FN(XQueryTypeFactory typeFactory) {
         List<SimplifiedFunctionSpecification> fn = new ArrayList<>(400);
@@ -1130,7 +1131,13 @@ public class FunctionSets {
             new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "analyze-string"),
             List.of(optionalStringRequiredValue, pattern, flags),
-            typeFactory.one(typeFactory.itemElement(Set.of("fn:analyze-string-result"))),
+            typeFactory.one(
+                typeFactory.itemElement(
+                    Set.of(
+                        new QualifiedName("fn", "analyze-string-result")
+                    )
+                )
+            ),
             null,
             false,
             false,
@@ -3250,48 +3257,6 @@ public class FunctionSets {
             )
         );
 
-        // antlr:start
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("antlr", "start"),
-            List.of(optionalNodeArg),
-            optionalNumber,
-            null, false, false, null, null
-            )
-        );
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("antlr", "stop"),
-            List.of(optionalNodeArg),
-            optionalNumber,
-            null, false, false, null, null
-            )
-        );
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("antlr", "pos"),
-            List.of(optionalNodeArg),
-            optionalNumber,
-            null, false, false, null, null
-            )
-        );
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("antlr", "index"),
-            List.of(optionalNodeArg),
-            optionalNumber,
-            null, false, false, null, null
-            )
-        );
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("antlr", "line"),
-            List.of(optionalNodeArg),
-            optionalNumber,
-            null, false, false, null, null
-            )
-        );
-
         return fn;
     }
 
@@ -3890,4 +3855,66 @@ public class FunctionSets {
         return math;
 
     }
+
+
+
+    public static List<SimplifiedFunctionSpecification> ANTLR(XQueryTypeFactory typeFactory) {
+        final List<SimplifiedFunctionSpecification> antlr = new ArrayList<>(50);
+        final XQuerySequenceType optionalNumber = typeFactory.zeroOrOne(typeFactory.itemNumber());
+        var helperTrees = new HelperTrees();
+        final ParseTree CONTEXT_VALUE = helperTrees.CONTEXT_VALUE;
+        ArgumentSpecification optionalNodeArg = new ArgumentSpecification(
+            "node",
+            typeFactory.zeroOrOne(typeFactory.itemAnyNode()),
+            CONTEXT_VALUE
+        );
+        // antlr:start
+        antlr.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("antlr", "start"),
+            List.of(optionalNodeArg),
+            optionalNumber,
+            null, false, false, null, null
+            )
+        );
+        antlr.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("antlr", "stop"),
+            List.of(optionalNodeArg),
+            optionalNumber,
+            null, false, false, null, null
+            )
+        );
+        antlr.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("antlr", "pos"),
+            List.of(optionalNodeArg),
+            optionalNumber,
+            null, false, false, null, null
+            )
+        );
+        antlr.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("antlr", "index"),
+            List.of(optionalNodeArg),
+            optionalNumber,
+            null, false, false, null, null
+            )
+        );
+        antlr.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("antlr", "line"),
+            List.of(optionalNodeArg),
+            optionalNumber,
+            null, false, false, null, null
+            )
+        );
+
+
+
+
+        return antlr;
+
+    }
+
 }

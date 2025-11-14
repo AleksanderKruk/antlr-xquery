@@ -25,7 +25,9 @@ public class FunctionSets {
         var op = OP(typeFactory);
         var math = MATH(typeFactory);
         var antlr = ANTLR(typeFactory);
-        return List.of(fn, op, math, antlr);
+        var array = ARRAY(typeFactory);
+        var map = MAP(typeFactory);
+        return List.of(fn, op, math, antlr, array, map);
     }
     public static List<SimplifiedFunctionSpecification> FN(XQueryTypeFactory typeFactory) {
         List<SimplifiedFunctionSpecification> fn = new ArrayList<>(400);
@@ -39,7 +41,6 @@ public class FunctionSets {
         final ParseTree STRING_AT_CONTEXT_VALUE = helperTrees.STRING_AT_CONTEXT_VALUE;
         final ParseTree EMPTY_STRING = helperTrees.EMPTY_STRING;
         final ParseTree EMPTY_MAP = helperTrees.EMPTY_MAP;
-        final ParseTree IDENTITY$1 = helperTrees.IDENTITY$1;
         final ParseTree BOOLEAN$1 = helperTrees.BOOLEAN$1;
         final ParseTree DATA$1 = helperTrees.DATA$1;
         final ParseTree TRUE$0 = helperTrees.TRUE$0;
@@ -2312,365 +2313,6 @@ public class FunctionSets {
             null, false, false, null, null
         ));
 
-        // map:build(
-        //   $input   as item()*,
-        //   $key     as (fn($item as item(), $position as xs:integer) as xs:anyAtomicType*)? := fn:identity#1,
-        //   $value   as (fn($item as item(), $position as xs:integer) as item()*)?           := fn:identity#1,
-        //   $options as map(*)? := {}
-        // ) as map(*)
-        ArgumentSpecification mbInput = new ArgumentSpecification(
-            "input",
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            null
-        );
-        XQueryItemType mapTransformer = typeFactory.itemFunction(zeroOrMoreItems, List.of(typeFactory.anyItem(), typeFactory.number()));
-        ArgumentSpecification mbKey = new ArgumentSpecification( "key", typeFactory.zeroOrOne(mapTransformer), IDENTITY$1);
-        ArgumentSpecification mbValue = new ArgumentSpecification( "value", typeFactory.zeroOrOne(mapTransformer), IDENTITY$1);
-        ArgumentSpecification mbOptions = mapOptionsArg;
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("map", "build"),
-            List.of(mbInput, mbKey, mbValue, mbOptions),
-            typeFactory.one(typeFactory.itemAnyMap()),
-            null, false, false, null, null
-            )
-        );
-
-        // map:contains($map as map(*), $key as xs:anyAtomicType) as xs:boolean
-        ArgumentSpecification mcMap = new ArgumentSpecification(
-            "map",
-            typeFactory.one(typeFactory.itemAnyMap()),
-            null
-        );
-        ArgumentSpecification mcKey = new ArgumentSpecification(
-            "key",
-            typeFactory.one(typeFactory.itemAnyItem()),
-            null
-        );
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("map", "contains"),
-            List.of(mcMap, mcKey),
-            typeFactory.boolean_(),
-            null, false, false, null, null
-            )
-        );
-
-        // map:empty($map as map(*)) as xs:boolean
-        ArgumentSpecification meMap = new ArgumentSpecification(
-            "map",
-            typeFactory.one(typeFactory.itemAnyMap()),
-            null
-        );
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("map", "empty"),
-            List.of(meMap),
-            typeFactory.boolean_(),
-            null, false, false, null, null
-            )
-        );
-
-        // map:entries($map as map(*)) as map(*)*
-        ArgumentSpecification mentMap = new ArgumentSpecification(
-            "map",
-            typeFactory.one(typeFactory.itemAnyMap()),
-            null
-        );
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("map", "entries"),
-            List.of(mentMap),
-            typeFactory.zeroOrMore(typeFactory.itemAnyMap()),
-            null, false, false, null, null
-            )
-        );
-
-        // map:entry($key as xs:anyAtomicType, $value as item()*) as map(*)
-        ArgumentSpecification mentKey = new ArgumentSpecification(
-            "key",
-            typeFactory.one(typeFactory.itemAnyItem()),
-            null
-        );
-        ArgumentSpecification mentValue = new ArgumentSpecification(
-            "value",
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            null
-        );
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("map", "entry"),
-            List.of(mentKey, mentValue),
-            typeFactory.one(typeFactory.itemAnyMap()),
-            null, false, false, null, null
-            )
-        );
-
-        // map:filter($map as map(*), $predicate as fn(xs:anyAtomicType, item()*) as xs:boolean?) as map(*)
-        ArgumentSpecification mfMap = new ArgumentSpecification(
-            "map",
-            typeFactory.one(typeFactory.itemAnyMap()),
-            null
-        );
-        final var optionalBoolean = typeFactory.zeroOrOne(typeFactory.itemBoolean());
-        final XQueryItemType predicate = typeFactory.itemFunction(optionalBoolean, List.of(typeFactory.anyItem(), zeroOrMoreItems));
-        ArgumentSpecification predicateArg = new ArgumentSpecification( "predicate", typeFactory.one(predicate), null);
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("map", "filter"),
-            List.of(mfMap, predicateArg),
-            typeFactory.one(typeFactory.itemAnyMap()),
-            null, false, false, null, null
-            )
-        );
-
-        // map:find($input as item()*, $key as xs:anyAtomicType) as array(*)
-        ArgumentSpecification mfindInput = new ArgumentSpecification(
-            "input",
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            null
-        );
-        ArgumentSpecification mfindKey = new ArgumentSpecification(
-            "key",
-            typeFactory.one(typeFactory.itemAnyItem()),
-            null
-        );
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("map", "find"),
-            List.of(mfindInput, mfindKey),
-            typeFactory.one(typeFactory.itemAnyArray()),
-            null, false, false, null, null
-            )
-        );
-
-        // map:for-each($map as map(*), $action as fn(xs:anyAtomicType, item()*) as item()*) as item()*
-        ArgumentSpecification mfeMap = new ArgumentSpecification(
-            "map",
-            typeFactory.one(typeFactory.itemAnyMap()),
-            null
-        );
-        XQuerySequenceType action = typeFactory.function(zeroOrMoreItems, List.of(typeFactory.anyItem(), zeroOrMoreItems));
-        ArgumentSpecification mfeAction = new ArgumentSpecification( "action", action, null);
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("map", "for-each"),
-            List.of(mfeMap, mfeAction),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            null, false, false, null, null
-            )
-        );
-
-        // map:get($map as map(*), $key as xs:anyAtomicType, $default as item()* := ()) as item()*
-        ArgumentSpecification mgMap = new ArgumentSpecification(
-            "map",
-            typeFactory.one(typeFactory.itemAnyMap()),
-            null
-        );
-        ArgumentSpecification mgKey = new ArgumentSpecification(
-            "key",
-            typeFactory.one(typeFactory.itemAnyItem()),
-            null
-        );
-        ArgumentSpecification mgDefault = new ArgumentSpecification(
-            "default",
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            EMPTY_SEQUENCE
-        );
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("map", "get"),
-            List.of(mgMap, mgKey, mgDefault),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            null, false, false, null, null
-            )
-        );
-
-        // map:items($map as map(*)) as item()*
-        ArgumentSpecification mitemsMap = new ArgumentSpecification(
-            "map",
-            typeFactory.one(typeFactory.itemAnyMap()),
-            null
-        );
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("map", "items"),
-            List.of(mitemsMap),
-            zeroOrMoreItems,
-            null, false, false, null, null
-            )
-        );
-
-        // map:keys($map as map(*)) as xs:anyAtomicType*
-        ArgumentSpecification mkeysMap = new ArgumentSpecification(
-            "map",
-            typeFactory.one(typeFactory.itemAnyMap()),
-            null
-        );
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("map", "keys"),
-            List.of(mkeysMap),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            null, false, false, null, null
-            )
-        );
-
-        // map:keys-where($map as map(*), $predicate as fn(xs:anyAtomicType, item()*) as xs:boolean?) as xs:anyAtomicType*
-        ArgumentSpecification kwMap = new ArgumentSpecification(
-            "map",
-            typeFactory.one(typeFactory.itemAnyMap()),
-            null
-        );
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("map", "keys-where"),
-            List.of(kwMap, predicateArg),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            null, false, false, null, null
-            )
-        );
-
-        // map:merge($maps as map(*)*, $options as map(*)? := {}) as map(*)
-        ArgumentSpecification mmMaps = new ArgumentSpecification(
-            "maps",
-            typeFactory.zeroOrMore(typeFactory.itemAnyMap()),
-            null
-        );
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("map", "merge"),
-            List.of(mmMaps, mapOptionsArg),
-            typeFactory.one(typeFactory.itemAnyMap()),
-            null, false, false, null, null
-            )
-        );
-
-        // map:of-pairs($input as key-value-pair*, $options as map(*)? := {}) as map(*)
-        ArgumentSpecification opInput = new ArgumentSpecification(
-            "input",
-            typeFactory.zeroOrMore(
-            typeFactory.itemNamedType(
-                new QualifiedName("fn", "key-value-pair")
-            ).type()
-            ),
-            null
-        );
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("map", "of-pairs"),
-            List.of(opInput, mapOptionsArg),
-            typeFactory.one(typeFactory.itemAnyMap()),
-            null, false, false, null, null
-            )
-        );
-
-        // map:pair($key as xs:anyAtomicType, $value as item()*) as key-value-pair
-        ArgumentSpecification mpKey = new ArgumentSpecification(
-            "key",
-            typeFactory.one(typeFactory.itemAnyItem()),
-            null
-        );
-        ArgumentSpecification mpValue = new ArgumentSpecification(
-            "value",
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            null
-        );
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("map", "pair"),
-            List.of(mpKey, mpValue),
-            typeFactory.namedType(new QualifiedName("fn", "key-value-pair")).type(),
-            null, false, false, null, null
-            )
-        );
-
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("map", "pairs"),
-            List.of(
-                new ArgumentSpecification(
-                "map",
-                typeFactory.one(typeFactory.itemAnyMap()),
-                null
-                )
-            ),
-            typeFactory.zeroOrMore(
-                typeFactory.itemNamedType(new QualifiedName("fn", "key-value-pair")).type()
-            ),
-            null, false, false, null, null
-            )
-        );
-
-        // map:put(
-        //   $map   as map(*),
-        //   $key   as xs:anyAtomicType,
-        //   $value as item()*
-        // ) as map(*)
-        ArgumentSpecification mputMap = new ArgumentSpecification(
-            "map",
-            typeFactory.one(typeFactory.itemAnyMap()),
-            null
-        );
-        ArgumentSpecification mputKey = new ArgumentSpecification(
-            "key",
-            typeFactory.one(typeFactory.itemAnyItem()),
-            null
-        );
-        ArgumentSpecification mputValue = new ArgumentSpecification(
-            "value",
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            null
-        );
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("map", "put"),
-            List.of(mputMap, mputKey, mputValue),
-            typeFactory.one(typeFactory.itemAnyMap()),
-            null, false, false, null, null
-            )
-        );
-
-        // map:remove(
-        //   $map  as map(*),
-        //   $keys as xs:anyAtomicType*
-        // ) as map(*)
-        ArgumentSpecification mremMap = new ArgumentSpecification(
-            "map",
-            typeFactory.one(typeFactory.itemAnyMap()),
-            null
-        );
-        ArgumentSpecification mremKeys = new ArgumentSpecification(
-            "keys",
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            null
-        );
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("map", "remove"),
-            List.of(mremMap, mremKeys),
-            typeFactory.one(typeFactory.itemAnyMap()),
-            null, false, false, null, null
-            )
-        );
-
-        // map:size(
-        //   $map as map(*)
-        // ) as xs:integer
-        ArgumentSpecification msizeMap = new ArgumentSpecification(
-            "map",
-            typeFactory.one(typeFactory.itemAnyMap()),
-            null
-        );
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("map", "size"),
-            List.of(msizeMap),
-            typeFactory.number(),
-            null, false, false, null, null
-            )
-        );
-
         // fn:element-to-map-plan(
         //  as (document-node() | element(*))*
         // ) as map(xs:string, record(*))
@@ -2697,534 +2339,6 @@ public class FunctionSets {
             new QualifiedName("fn", "element-to-map"),
             List.of(etmElement, etmOptions),
             typeFactory.zeroOrOne(typeFactory.itemMap(typeFactory.itemString(), typeFactory.zeroOrOne(typeFactory.itemAnyItem()))),
-            null, false, false, null, null
-            )
-        );
-
-        // array:append($array as array(*), $member as item()*) as array(*)
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "append"),
-            List.of(
-                new ArgumentSpecification(
-                "array",
-                typeFactory.one(typeFactory.itemAnyArray()),
-                null
-                ),
-                new ArgumentSpecification(
-                "member",
-                typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-                null
-                )
-            ),
-            typeFactory.one(typeFactory.itemAnyArray()),
-            null, false, false, null, null
-            )
-        );
-
-        // array:build($input as item()*, $action as function(item(), xs:integer) as item()* := fn:identity#1) as array(*)
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "build"),
-            List.of(
-                new ArgumentSpecification( "input", zeroOrMoreItems, null),
-                new ArgumentSpecification(
-                "action",
-                typeFactory.zeroOrOne(typeFactory.itemFunction(zeroOrMoreItems, List.of(typeFactory.anyItem(), typeFactory.number()))),
-                IDENTITY$1
-                )
-            ),
-            typeFactory.anyArray(),
-            null, false, false, null, null
-            )
-        );
-
-        // array:empty($array as array(*)) as xs:boolean
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "empty"),
-            List.of(
-                new ArgumentSpecification(
-                "array",
-                typeFactory.one(typeFactory.itemAnyArray()),
-                null
-                )
-            ),
-            typeFactory.boolean_(),
-            null, false, false, null, null
-            )
-        );
-
-        // array:filter($array as array(*), $predicate as function(item(), xs:integer) as xs:boolean?) as array(*)
-        final XQueryItemType itemIntegerActionFunction = typeFactory.itemFunction(optionalBoolean, List.of(typeFactory.anyItem(), typeFactory.number()));
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "filter"),
-            List.of(
-                new ArgumentSpecification(
-                "array",
-                typeFactory.one(typeFactory.itemAnyArray()),
-                null
-                ),
-                new ArgumentSpecification(
-                "predicate",
-                typeFactory.one(itemIntegerActionFunction),
-                null
-                )
-            ),
-            typeFactory.one(typeFactory.itemAnyArray()),
-            null, false, false, null, null
-            )
-        );
-
-        // array:flatten($input as item()) as item()*
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "flatten"),
-            List.of(
-                new ArgumentSpecification(
-                "input",
-                typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-                null
-                )
-            ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            null, false, false, null, null
-            )
-        );
-
-        // array:fold-left($array as array(*), $init as item()*, $action as function(item(), item()*) as item()*) as item()*
-        final XQueryItemType function_anyItem_zeroOrMoreItems$zeroOrMoreItems = typeFactory.itemFunction(zeroOrMoreItems, List.of(typeFactory.anyItem(), zeroOrMoreItems));
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "fold-left"),
-            List.of(
-                new ArgumentSpecification(
-                "array",
-                typeFactory.one(typeFactory.itemAnyArray()),
-                null
-                ),
-                new ArgumentSpecification(
-                "init",
-                typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-                null
-                ),
-                new ArgumentSpecification(
-                "action",
-                typeFactory.one(function_anyItem_zeroOrMoreItems$zeroOrMoreItems),
-                null
-                )
-            ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            null, false, false, null, null
-            )
-        );
-
-        // array:fold-right($array as array(*), $init as item()*, $action as function(item(), item()*) as item()*) as item()*
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "fold-right"),
-            List.of(
-                new ArgumentSpecification(
-                "array",
-                typeFactory.one(typeFactory.itemAnyArray()),
-                null
-                ),
-                new ArgumentSpecification(
-                "init",
-                typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-                null
-                ),
-                new ArgumentSpecification(
-                "action",
-                typeFactory.one(function_anyItem_zeroOrMoreItems$zeroOrMoreItems),
-                null
-                )
-            ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            null, false, false, null, null
-            )
-        );
-
-        // array:foot($array as array(*)) as item()*
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "foot"),
-            List.of(
-                new ArgumentSpecification(
-                "array",
-                typeFactory.one(typeFactory.itemAnyArray()),
-                null
-                )
-            ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            null, false, false, null, null
-            )
-        );
-
-        // array:for-each($array as array(*),
-        //                $action as function(item()*, xs:integer) as item()*
-        // ) as array(*)
-        final XQueryItemType function_zeroOrMoreItems_number$zeroOrMoreItems = typeFactory.itemFunction(zeroOrMoreItems, List.of(zeroOrMoreItems, typeFactory.number()));
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "for-each"),
-            List.of(
-                new ArgumentSpecification(
-                "array",
-                typeFactory.one(typeFactory.itemAnyArray()),
-                null
-                ),
-                new ArgumentSpecification(
-                "action",
-                typeFactory.one(function_zeroOrMoreItems_number$zeroOrMoreItems),
-                null
-                )
-            ),
-            typeFactory.one(typeFactory.itemAnyArray()),
-            null, false, false, null, null
-            )
-        );
-
-        // array:for-each-pair($array1 as array(*), $array2 as array(*), $action as function(item(), item(), xs:integer) as item()*) as array(*)
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "for-each-pair"),
-            List.of(
-                new ArgumentSpecification(
-                "array1",
-                typeFactory.one(typeFactory.itemAnyArray()),
-                null
-                ),
-                new ArgumentSpecification(
-                "array2",
-                typeFactory.one(typeFactory.itemAnyArray()),
-                null
-                ),
-                new ArgumentSpecification(
-                "action",
-                typeFactory.one(typeFactory.itemFunction(zeroOrMoreItems, List.of(typeFactory.anyItem(), typeFactory.anyItem(), typeFactory.number()))),
-                null
-                )
-            ),
-            typeFactory.one(typeFactory.itemAnyArray()),
-            null, false, false, null, null
-            )
-        );
-
-        // array:get($array as array(*), $position as xs:integer) as item()*
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "get"),
-            List.of(
-                new ArgumentSpecification(
-                "array",
-                typeFactory.one(typeFactory.itemAnyArray()),
-                null
-                ),
-                new ArgumentSpecification(
-                "position",
-                typeFactory.one(typeFactory.itemNumber()),
-                null
-                )
-            ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            null, false, false, null, null
-            )
-        );
-
-        // array:get($array as array(*), $position as xs:integer, $default as item()*) as item()*
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "get"),
-            List.of(
-                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
-                new ArgumentSpecification("position", typeFactory.one(typeFactory.itemNumber()), null),
-                new ArgumentSpecification("default", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null)
-            ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            null, false, false, null, null
-            )
-        );
-
-        // array:head($array as array(*)) as item()*
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "head"),
-            List.of(
-                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
-            ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            null, false, false, null, null
-            )
-        );
-
-        // array:index-of($array as array(*), $target as item()*, $collation as xs:string? := fn:default-collation()) as xs:integer*
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "index-of"),
-            List.of(
-                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
-                new ArgumentSpecification("target", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
-                new ArgumentSpecification("collation", typeFactory.zeroOrOne(typeFactory.itemString()), DEFAULT_COLLATION)
-            ),
-            typeFactory.zeroOrMore(typeFactory.itemNumber()),
-            null, false, false, null, null
-            )
-        );
-
-        final XQueryItemType integerPredicate = typeFactory.itemFunction(optionalBoolean, List.of(zeroOrMoreItems, typeFactory.number()));
-        // array:index-where($array as array(*), $predicate as function(item()*, xs:integer) as xs:boolean?) as xs:integer*
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "index-where"),
-            List.of(
-                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
-                new ArgumentSpecification("predicate", typeFactory.one(integerPredicate), null)
-            ),
-            typeFactory.zeroOrMore(typeFactory.itemNumber()),
-            null, false, false, null, null
-            )
-        );
-
-        // array:insert-before($array as array(*), $position as xs:integer, $member as item()*) as array(*)
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "insert-before"),
-            List.of(
-                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
-                new ArgumentSpecification("position", typeFactory.one(typeFactory.itemNumber()), null),
-                new ArgumentSpecification("member", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null)
-            ),
-            typeFactory.one(typeFactory.itemAnyArray()),
-            null, false, false, null, null
-            )
-        );
-
-        // array:items($array as array(*)) as item()*
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "items"),
-            List.of(
-                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
-            ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            null, false, false, null, null
-            )
-        );
-
-        // array:join($arrays as array(*)*, $separator as array(*)? := ()) as array(*)
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "join"),
-            List.of(
-                new ArgumentSpecification("arrays", typeFactory.zeroOrMore(typeFactory.itemAnyArray()), null),
-                new ArgumentSpecification("separator", typeFactory.zeroOrOne(typeFactory.itemAnyArray()), EMPTY_SEQUENCE)
-            ),
-            typeFactory.one(typeFactory.itemAnyArray()),
-            null, false, false, null, null
-            )
-        );
-
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "members"),
-            List.of(
-                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
-            ),
-            typeFactory.zeroOrMore(
-                typeFactory.itemRecord(
-                Map.of(
-                    "value", new XQueryRecordField(
-                    typeFactory.anyItem(),
-                    true // field is required
-                    )
-                )
-                )
-            ),
-            null, false, false, null, null
-            )
-        );
-
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "of-members"),
-            List.of(
-                new ArgumentSpecification(
-                "input",
-                typeFactory.zeroOrMore(
-                    typeFactory.itemRecord(
-                    Map.of(
-                        "value", new XQueryRecordField( zeroOrMoreItems, true)
-                    )
-                    )
-                ),
-                null
-                )
-            ),
-            typeFactory.anyArray(),
-            null, false, false, null, null
-            )
-        );
-
-        // array:put($array as array(*), $position as xs:integer, $member as item()*) as array(*)
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "put"),
-            List.of(
-                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
-                new ArgumentSpecification("position", typeFactory.one(typeFactory.itemNumber()), null),
-                new ArgumentSpecification("member", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null)
-            ),
-            typeFactory.one(typeFactory.itemAnyArray()),
-            null, false, false, null, null
-            )
-        );
-
-        // array:remove($array as array(*), $positions as xs:integer*) as array(*)
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "remove"),
-            List.of(
-                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
-                new ArgumentSpecification("positions", typeFactory.zeroOrMore(typeFactory.itemNumber()), null)
-            ),
-            typeFactory.one(typeFactory.itemAnyArray()),
-            null, false, false, null, null
-            )
-        );
-
-        // array:reverse($array as array(*)) as array(*)
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "reverse"),
-            List.of(
-                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
-            ),
-            typeFactory.one(typeFactory.itemAnyArray()),
-            null, false, false, null, null
-            )
-        );
-
-        // array:size($array as array(*)) as xs:integer
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "size"),
-            List.of(
-                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
-            ),
-            typeFactory.one(typeFactory.itemNumber()),
-            null, false, false, null, null
-            )
-        );
-
-        // array:slice($array as array(*), $start as xs:integer? := (), $end as xs:integer? := (), $step as xs:integer? := ()) as array(*)
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "slice"),
-            List.of(
-                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
-                new ArgumentSpecification("start", typeFactory.zeroOrOne(typeFactory.itemNumber()), EMPTY_SEQUENCE),
-                new ArgumentSpecification("end", typeFactory.zeroOrOne(typeFactory.itemNumber()), EMPTY_SEQUENCE),
-                new ArgumentSpecification("step", typeFactory.zeroOrOne(typeFactory.itemNumber()), EMPTY_SEQUENCE)
-            ),
-            typeFactory.one(typeFactory.itemAnyArray()),
-            null, false, false, null, null
-            )
-        );
-
-        // array:sort($array as array(*), $collation as xs:string? := fn:default-collation(), $key as function(item()*) as xs:anyAtomicType* := fn:data#1) as array(*)
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "sort"),
-            List.of(
-                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
-                new ArgumentSpecification("collation", typeFactory.zeroOrOne(typeFactory.itemString()), DEFAULT_COLLATION),
-                new ArgumentSpecification("key",
-                typeFactory.zeroOrOne(typeFactory.itemFunction(zeroOrMoreItems, List.of(zeroOrMoreItems))),
-                DATA$1)
-            ),
-            typeFactory.one(typeFactory.itemAnyArray()),
-            null, false, false, null, null
-            )
-        );
-
-        // array:sort-by(
-        // $array	as item()*,
-        // $keys	as record(key? as (fn(item()*) as xs:anyAtomicType*)?,
-        //                    collation? as xs:string?,
-        //                    order? as enum('ascending', 'descending')?)*
-        // ) as item()*
-        final var keyType = typeFactory.zeroOrOne(typeFactory.itemFunction(zeroOrMoreItems, List.of(zeroOrMoreItems)));
-        final var orderType = typeFactory.zeroOrOne(typeFactory.itemEnum(Set.of("ascending", "descending")));
-        final var keysItemType = typeFactory.itemRecord(
-                Map.of(
-                "key", new XQueryRecordField(keyType, true),
-                "collation", new XQueryRecordField(optionalString, true),
-                "order", new XQueryRecordField(orderType, true)
-                ));
-
-        final var keysType = typeFactory.zeroOrMore(keysItemType);
-
-        List<ArgumentSpecification> sortByArgs = List.of(
-            new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
-            new ArgumentSpecification("keys", keysType, null));
-
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "sort-by"),
-            sortByArgs,
-            zeroOrMoreItems,
-            null, false, false, null, null
-            )
-        );
-
-        // array:split($array as array(*)) as array(*)*
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "split"),
-            List.of(
-                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
-            ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyArray()),
-            null, false, false, null, null
-            )
-        );
-
-        // array:subarray($array as array(*), $start as xs:integer, $length as xs:integer? := ()) as array(*)
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "subarray"),
-            List.of(
-                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
-                new ArgumentSpecification("start", typeFactory.one(typeFactory.itemNumber()), null),
-                new ArgumentSpecification("length", typeFactory.zeroOrOne(typeFactory.itemNumber()), EMPTY_SEQUENCE)
-            ),
-            typeFactory.one(typeFactory.itemAnyArray()),
-            null, false, false, null, null
-            )
-        );
-
-        // array:tail($array as array(*)) as array(*)
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "tail"),
-            List.of(
-                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
-            ),
-            typeFactory.one(typeFactory.itemAnyArray()),
-            null, false, false, null, null
-            )
-        );
-
-        // array:trunk($array as array(*)) as array(*)
-        fn.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "trunk"),
-            List.of(
-                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
-            ),
-            typeFactory.one(typeFactory.itemAnyArray()),
             null, false, false, null, null
             )
         );
@@ -3916,5 +3030,927 @@ public class FunctionSets {
         return antlr;
 
     }
+
+    public static List<SimplifiedFunctionSpecification> ARRAY(XQueryTypeFactory typeFactory) {
+        List<SimplifiedFunctionSpecification> array = new ArrayList<>(100);
+
+        final XQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
+        final XQuerySequenceType optionalBoolean = typeFactory.zeroOrOne(typeFactory.itemBoolean());
+        final XQuerySequenceType optionalString = typeFactory.zeroOrOne(typeFactory.itemString());
+
+
+        var helperTrees = new HelperTrees();
+        final ParseTree DEFAULT_COLLATION = helperTrees.DEFAULT_COLLATION;
+        final ParseTree EMPTY_SEQUENCE = helperTrees.EMPTY_SEQUENCE;
+        final ParseTree IDENTITY$1 = helperTrees.IDENTITY$1;
+        final ParseTree DATA$1 = helperTrees.DATA$1;
+
+        // array:append($array as array(*), $member as item()*) as array(*)
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "append"),
+            List.of(
+                new ArgumentSpecification(
+                "array",
+                typeFactory.one(typeFactory.itemAnyArray()),
+                null
+                ),
+                new ArgumentSpecification(
+                "member",
+                typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                null
+                )
+            ),
+            typeFactory.one(typeFactory.itemAnyArray()),
+            null, false, false, null, null
+            )
+        );
+
+        // array:build($input as item()*, $action as function(item(), xs:integer) as item()* := fn:identity#1) as array(*)
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "build"),
+            List.of(
+                new ArgumentSpecification( "input", zeroOrMoreItems, null),
+                new ArgumentSpecification(
+                "action",
+                typeFactory.zeroOrOne(typeFactory.itemFunction(zeroOrMoreItems, List.of(typeFactory.anyItem(), typeFactory.number()))),
+                IDENTITY$1
+                )
+            ),
+            typeFactory.anyArray(),
+            null, false, false, null, null
+            )
+        );
+
+        // array:empty($array as array(*)) as xs:boolean
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "empty"),
+            List.of(
+                new ArgumentSpecification(
+                "array",
+                typeFactory.one(typeFactory.itemAnyArray()),
+                null
+                )
+            ),
+            typeFactory.boolean_(),
+            null, false, false, null, null
+            )
+        );
+
+        // array:filter($array as array(*), $predicate as function(item(), xs:integer) as xs:boolean?) as array(*)
+        final XQueryItemType itemIntegerActionFunction = typeFactory.itemFunction(optionalBoolean, List.of(typeFactory.anyItem(), typeFactory.number()));
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "filter"),
+            List.of(
+                new ArgumentSpecification(
+                "array",
+                typeFactory.one(typeFactory.itemAnyArray()),
+                null
+                ),
+                new ArgumentSpecification(
+                "predicate",
+                typeFactory.one(itemIntegerActionFunction),
+                null
+                )
+            ),
+            typeFactory.one(typeFactory.itemAnyArray()),
+            null, false, false, null, null
+            )
+        );
+
+        // array:flatten($input as item()) as item()*
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "flatten"),
+            List.of(
+                new ArgumentSpecification(
+                "input",
+                typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                null
+                )
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            null, false, false, null, null
+            )
+        );
+
+        // array:fold-left($array as array(*), $init as item()*, $action as function(item(), item()*) as item()*) as item()*
+        final XQueryItemType function_anyItem_zeroOrMoreItems$zeroOrMoreItems = typeFactory.itemFunction(zeroOrMoreItems, List.of(typeFactory.anyItem(), zeroOrMoreItems));
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "fold-left"),
+            List.of(
+                new ArgumentSpecification(
+                "array",
+                typeFactory.one(typeFactory.itemAnyArray()),
+                null
+                ),
+                new ArgumentSpecification(
+                "init",
+                typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                null
+                ),
+                new ArgumentSpecification(
+                "action",
+                typeFactory.one(function_anyItem_zeroOrMoreItems$zeroOrMoreItems),
+                null
+                )
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            null, false, false, null, null
+            )
+        );
+
+        // array:fold-right($array as array(*), $init as item()*, $action as function(item(), item()*) as item()*) as item()*
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "fold-right"),
+            List.of(
+                new ArgumentSpecification(
+                "array",
+                typeFactory.one(typeFactory.itemAnyArray()),
+                null
+                ),
+                new ArgumentSpecification(
+                "init",
+                typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                null
+                ),
+                new ArgumentSpecification(
+                "action",
+                typeFactory.one(function_anyItem_zeroOrMoreItems$zeroOrMoreItems),
+                null
+                )
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            null, false, false, null, null
+            )
+        );
+
+        // array:foot($array as array(*)) as item()*
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "foot"),
+            List.of(
+                new ArgumentSpecification(
+                "array",
+                typeFactory.one(typeFactory.itemAnyArray()),
+                null
+                )
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            null, false, false, null, null
+            )
+        );
+
+        // array:for-each($array as array(*),
+        //                $action as function(item()*, xs:integer) as item()*
+        // ) as array(*)
+        final XQueryItemType function_zeroOrMoreItems_number$zeroOrMoreItems = typeFactory.itemFunction(zeroOrMoreItems, List.of(zeroOrMoreItems, typeFactory.number()));
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "for-each"),
+            List.of(
+                new ArgumentSpecification(
+                "array",
+                typeFactory.one(typeFactory.itemAnyArray()),
+                null
+                ),
+                new ArgumentSpecification(
+                "action",
+                typeFactory.one(function_zeroOrMoreItems_number$zeroOrMoreItems),
+                null
+                )
+            ),
+            typeFactory.one(typeFactory.itemAnyArray()),
+            null, false, false, null, null
+            )
+        );
+
+        // array:for-each-pair($array1 as array(*), $array2 as array(*), $action as function(item(), item(), xs:integer) as item()*) as array(*)
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "for-each-pair"),
+            List.of(
+                new ArgumentSpecification(
+                "array1",
+                typeFactory.one(typeFactory.itemAnyArray()),
+                null
+                ),
+                new ArgumentSpecification(
+                "array2",
+                typeFactory.one(typeFactory.itemAnyArray()),
+                null
+                ),
+                new ArgumentSpecification(
+                "action",
+                typeFactory.one(typeFactory.itemFunction(zeroOrMoreItems, List.of(typeFactory.anyItem(), typeFactory.anyItem(), typeFactory.number()))),
+                null
+                )
+            ),
+            typeFactory.one(typeFactory.itemAnyArray()),
+            null, false, false, null, null
+            )
+        );
+
+        // array:get($array as array(*), $position as xs:integer) as item()*
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "get"),
+            List.of(
+                new ArgumentSpecification(
+                "array",
+                typeFactory.one(typeFactory.itemAnyArray()),
+                null
+                ),
+                new ArgumentSpecification(
+                "position",
+                typeFactory.one(typeFactory.itemNumber()),
+                null
+                )
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            null, false, false, null, null
+            )
+        );
+
+        // array:get($array as array(*), $position as xs:integer, $default as item()*) as item()*
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "get"),
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
+                new ArgumentSpecification("position", typeFactory.one(typeFactory.itemNumber()), null),
+                new ArgumentSpecification("default", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null)
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            null, false, false, null, null
+            )
+        );
+
+        // array:head($array as array(*)) as item()*
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "head"),
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            null, false, false, null, null
+            )
+        );
+
+        // array:index-of($array as array(*), $target as item()*, $collation as xs:string? := fn:default-collation()) as xs:integer*
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "index-of"),
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
+                new ArgumentSpecification("target", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+                new ArgumentSpecification("collation", typeFactory.zeroOrOne(typeFactory.itemString()), DEFAULT_COLLATION)
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemNumber()),
+            null, false, false, null, null
+            )
+        );
+
+        final XQueryItemType integerPredicate = typeFactory.itemFunction(optionalBoolean, List.of(zeroOrMoreItems, typeFactory.number()));
+        // array:index-where($array as array(*), $predicate as function(item()*, xs:integer) as xs:boolean?) as xs:integer*
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "index-where"),
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
+                new ArgumentSpecification("predicate", typeFactory.one(integerPredicate), null)
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemNumber()),
+            null, false, false, null, null
+            )
+        );
+
+        // array:insert-before($array as array(*), $position as xs:integer, $member as item()*) as array(*)
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "insert-before"),
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
+                new ArgumentSpecification("position", typeFactory.one(typeFactory.itemNumber()), null),
+                new ArgumentSpecification("member", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null)
+            ),
+            typeFactory.one(typeFactory.itemAnyArray()),
+            null, false, false, null, null
+            )
+        );
+
+        // array:items($array as array(*)) as item()*
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "items"),
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            null, false, false, null, null
+            )
+        );
+
+        // array:join($arrays as array(*)*, $separator as array(*)? := ()) as array(*)
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "join"),
+            List.of(
+                new ArgumentSpecification("arrays", typeFactory.zeroOrMore(typeFactory.itemAnyArray()), null),
+                new ArgumentSpecification("separator", typeFactory.zeroOrOne(typeFactory.itemAnyArray()), EMPTY_SEQUENCE)
+            ),
+            typeFactory.one(typeFactory.itemAnyArray()),
+            null, false, false, null, null
+            )
+        );
+
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "members"),
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
+            ),
+            typeFactory.zeroOrMore(
+                typeFactory.itemRecord(
+                Map.of(
+                    "value", new XQueryRecordField(
+                    typeFactory.anyItem(),
+                    true // field is required
+                    )
+                )
+                )
+            ),
+            null, false, false, null, null
+            )
+        );
+
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "of-members"),
+            List.of(
+                new ArgumentSpecification(
+                "input",
+                typeFactory.zeroOrMore(
+                    typeFactory.itemRecord(
+                    Map.of(
+                        "value", new XQueryRecordField( zeroOrMoreItems, true)
+                    )
+                    )
+                ),
+                null
+                )
+            ),
+            typeFactory.anyArray(),
+            null, false, false, null, null
+            )
+        );
+
+        // array:put($array as array(*), $position as xs:integer, $member as item()*) as array(*)
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "put"),
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
+                new ArgumentSpecification("position", typeFactory.one(typeFactory.itemNumber()), null),
+                new ArgumentSpecification("member", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null)
+            ),
+            typeFactory.one(typeFactory.itemAnyArray()),
+            null, false, false, null, null
+            )
+        );
+
+        // array:remove($array as array(*), $positions as xs:integer*) as array(*)
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "remove"),
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
+                new ArgumentSpecification("positions", typeFactory.zeroOrMore(typeFactory.itemNumber()), null)
+            ),
+            typeFactory.one(typeFactory.itemAnyArray()),
+            null, false, false, null, null
+            )
+        );
+
+        // array:reverse($array as array(*)) as array(*)
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "reverse"),
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
+            ),
+            typeFactory.one(typeFactory.itemAnyArray()),
+            null, false, false, null, null
+            )
+        );
+
+        // array:size($array as array(*)) as xs:integer
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "size"),
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
+            ),
+            typeFactory.one(typeFactory.itemNumber()),
+            null, false, false, null, null
+            )
+        );
+
+        // array:slice($array as array(*), $start as xs:integer? := (), $end as xs:integer? := (), $step as xs:integer? := ()) as array(*)
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "slice"),
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
+                new ArgumentSpecification("start", typeFactory.zeroOrOne(typeFactory.itemNumber()), EMPTY_SEQUENCE),
+                new ArgumentSpecification("end", typeFactory.zeroOrOne(typeFactory.itemNumber()), EMPTY_SEQUENCE),
+                new ArgumentSpecification("step", typeFactory.zeroOrOne(typeFactory.itemNumber()), EMPTY_SEQUENCE)
+            ),
+            typeFactory.one(typeFactory.itemAnyArray()),
+            null, false, false, null, null
+            )
+        );
+
+        // array:sort($array as array(*), $collation as xs:string? := fn:default-collation(), $key as function(item()*) as xs:anyAtomicType* := fn:data#1) as array(*)
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "sort"),
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
+                new ArgumentSpecification("collation", typeFactory.zeroOrOne(typeFactory.itemString()), DEFAULT_COLLATION),
+                new ArgumentSpecification("key",
+                typeFactory.zeroOrOne(typeFactory.itemFunction(zeroOrMoreItems, List.of(zeroOrMoreItems))),
+                DATA$1)
+            ),
+            typeFactory.one(typeFactory.itemAnyArray()),
+            null, false, false, null, null
+            )
+        );
+
+        // array:sort-by(
+        // $array	as item()*,
+        // $keys	as record(key? as (fn(item()*) as xs:anyAtomicType*)?,
+        //                    collation? as xs:string?,
+        //                    order? as enum('ascending', 'descending')?)*
+        // ) as item()*
+        final var keyType = typeFactory.zeroOrOne(typeFactory.itemFunction(zeroOrMoreItems, List.of(zeroOrMoreItems)));
+        final var orderType = typeFactory.zeroOrOne(typeFactory.itemEnum(Set.of("ascending", "descending")));
+        final var keysItemType = typeFactory.itemRecord(
+                Map.of(
+                "key", new XQueryRecordField(keyType, true),
+                "collation", new XQueryRecordField(optionalString, true),
+                "order", new XQueryRecordField(orderType, true)
+                ));
+
+        final var keysType = typeFactory.zeroOrMore(keysItemType);
+
+        List<ArgumentSpecification> sortByArgs = List.of(
+            new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
+            new ArgumentSpecification("keys", keysType, null));
+
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "sort-by"),
+            sortByArgs,
+            zeroOrMoreItems,
+            null, false, false, null, null
+            )
+        );
+
+        // array:split($array as array(*)) as array(*)*
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "split"),
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
+            ),
+            typeFactory.zeroOrMore(typeFactory.itemAnyArray()),
+            null, false, false, null, null
+            )
+        );
+
+        // array:subarray($array as array(*), $start as xs:integer, $length as xs:integer? := ()) as array(*)
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "subarray"),
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
+                new ArgumentSpecification("start", typeFactory.one(typeFactory.itemNumber()), null),
+                new ArgumentSpecification("length", typeFactory.zeroOrOne(typeFactory.itemNumber()), EMPTY_SEQUENCE)
+            ),
+            typeFactory.one(typeFactory.itemAnyArray()),
+            null, false, false, null, null
+            )
+        );
+
+        // array:tail($array as array(*)) as array(*)
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "tail"),
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
+            ),
+            typeFactory.one(typeFactory.itemAnyArray()),
+            null, false, false, null, null
+            )
+        );
+
+        // array:trunk($array as array(*)) as array(*)
+        array.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("array", "trunk"),
+            List.of(
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
+            ),
+            typeFactory.one(typeFactory.itemAnyArray()),
+            null, false, false, null, null
+            )
+        );
+        return array;
+    }
+
+    public static List<SimplifiedFunctionSpecification> MAP(XQueryTypeFactory typeFactory) {
+        List<SimplifiedFunctionSpecification> map = new ArrayList<>(100);
+
+        var helperTrees = new HelperTrees();
+        final ParseTree EMPTY_SEQUENCE = helperTrees.EMPTY_SEQUENCE;
+        final ParseTree EMPTY_MAP = helperTrees.EMPTY_MAP;
+        final ParseTree IDENTITY$1 = helperTrees.IDENTITY$1;
+
+        final XQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
+        final ArgumentSpecification mapOptionsArg = new ArgumentSpecification(
+            "options",
+            typeFactory.zeroOrOne(typeFactory.itemAnyMap()),
+            EMPTY_MAP
+        );
+
+
+        // map:build(
+        //   $input   as item()*,
+        //   $key     as (fn($item as item(), $position as xs:integer) as xs:anyAtomicType*)? := fn:identity#1,
+        //   $value   as (fn($item as item(), $position as xs:integer) as item()*)?           := fn:identity#1,
+        //   $options as map(*)? := {}
+        // ) as map(*)
+        ArgumentSpecification mbInput = new ArgumentSpecification(
+            "input",
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            null
+        );
+        XQueryItemType mapTransformer = typeFactory.itemFunction(zeroOrMoreItems, List.of(typeFactory.anyItem(), typeFactory.number()));
+        ArgumentSpecification mbKey = new ArgumentSpecification( "key", typeFactory.zeroOrOne(mapTransformer), IDENTITY$1);
+        ArgumentSpecification mbValue = new ArgumentSpecification( "value", typeFactory.zeroOrOne(mapTransformer), IDENTITY$1);
+        ArgumentSpecification mbOptions = mapOptionsArg;
+        map.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("map", "build"),
+            List.of(mbInput, mbKey, mbValue, mbOptions),
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null, false, false, null, null
+            )
+        );
+
+        // map:contains($map as map(*), $key as xs:anyAtomicType) as xs:boolean
+        ArgumentSpecification mcMap = new ArgumentSpecification(
+            "map",
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null
+        );
+        ArgumentSpecification mcKey = new ArgumentSpecification(
+            "key",
+            typeFactory.one(typeFactory.itemAnyItem()),
+            null
+        );
+        map.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("map", "contains"),
+            List.of(mcMap, mcKey),
+            typeFactory.boolean_(),
+            null, false, false, null, null
+            )
+        );
+
+        // map:empty($map as map(*)) as xs:boolean
+        ArgumentSpecification meMap = new ArgumentSpecification(
+            "map",
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null
+        );
+        map.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("map", "empty"),
+            List.of(meMap),
+            typeFactory.boolean_(),
+            null, false, false, null, null
+            )
+        );
+
+        // map:entries($map as map(*)) as map(*)*
+        ArgumentSpecification mentMap = new ArgumentSpecification(
+            "map",
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null
+        );
+        map.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("map", "entries"),
+            List.of(mentMap),
+            typeFactory.zeroOrMore(typeFactory.itemAnyMap()),
+            null, false, false, null, null
+            )
+        );
+
+        // map:entry($key as xs:anyAtomicType, $value as item()*) as map(*)
+        ArgumentSpecification mentKey = new ArgumentSpecification(
+            "key",
+            typeFactory.one(typeFactory.itemAnyItem()),
+            null
+        );
+        ArgumentSpecification mentValue = new ArgumentSpecification(
+            "value",
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            null
+        );
+        map.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("map", "entry"),
+            List.of(mentKey, mentValue),
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null, false, false, null, null
+            )
+        );
+
+        // map:filter($map as map(*), $predicate as fn(xs:anyAtomicType, item()*) as xs:boolean?) as map(*)
+        ArgumentSpecification mfMap = new ArgumentSpecification(
+            "map",
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null
+        );
+        final var optionalBoolean = typeFactory.zeroOrOne(typeFactory.itemBoolean());
+        final XQueryItemType predicate = typeFactory.itemFunction(optionalBoolean, List.of(typeFactory.anyItem(), zeroOrMoreItems));
+        ArgumentSpecification predicateArg = new ArgumentSpecification( "predicate", typeFactory.one(predicate), null);
+        map.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("map", "filter"),
+            List.of(mfMap, predicateArg),
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null, false, false, null, null
+            )
+        );
+
+        // map:find($input as item()*, $key as xs:anyAtomicType) as array(*)
+        ArgumentSpecification mfindInput = new ArgumentSpecification(
+            "input",
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            null
+        );
+        ArgumentSpecification mfindKey = new ArgumentSpecification(
+            "key",
+            typeFactory.one(typeFactory.itemAnyItem()),
+            null
+        );
+        map.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("map", "find"),
+            List.of(mfindInput, mfindKey),
+            typeFactory.one(typeFactory.itemAnyArray()),
+            null, false, false, null, null
+            )
+        );
+
+        // map:for-each($map as map(*), $action as fn(xs:anyAtomicType, item()*) as item()*) as item()*
+        ArgumentSpecification mfeMap = new ArgumentSpecification(
+            "map",
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null
+        );
+        XQuerySequenceType action = typeFactory.function(zeroOrMoreItems, List.of(typeFactory.anyItem(), zeroOrMoreItems));
+        ArgumentSpecification mfeAction = new ArgumentSpecification( "action", action, null);
+        map.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("map", "for-each"),
+            List.of(mfeMap, mfeAction),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            null, false, false, null, null
+            )
+        );
+
+        // map:get($map as map(*), $key as xs:anyAtomicType, $default as item()* := ()) as item()*
+        ArgumentSpecification mgMap = new ArgumentSpecification(
+            "map",
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null
+        );
+        ArgumentSpecification mgKey = new ArgumentSpecification(
+            "key",
+            typeFactory.one(typeFactory.itemAnyItem()),
+            null
+        );
+        ArgumentSpecification mgDefault = new ArgumentSpecification(
+            "default",
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            EMPTY_SEQUENCE
+        );
+        map.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("map", "get"),
+            List.of(mgMap, mgKey, mgDefault),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            null, false, false, null, null
+            )
+        );
+
+        // map:items($map as map(*)) as item()*
+        ArgumentSpecification mitemsMap = new ArgumentSpecification(
+            "map",
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null
+        );
+        map.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("map", "items"),
+            List.of(mitemsMap),
+            zeroOrMoreItems,
+            null, false, false, null, null
+            )
+        );
+
+        // map:keys($map as map(*)) as xs:anyAtomicType*
+        ArgumentSpecification mkeysMap = new ArgumentSpecification(
+            "map",
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null
+        );
+        map.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("map", "keys"),
+            List.of(mkeysMap),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            null, false, false, null, null
+            )
+        );
+
+        // map:keys-where($map as map(*), $predicate as fn(xs:anyAtomicType, item()*) as xs:boolean?) as xs:anyAtomicType*
+        ArgumentSpecification kwMap = new ArgumentSpecification(
+            "map",
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null
+        );
+        map.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("map", "keys-where"),
+            List.of(kwMap, predicateArg),
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            null, false, false, null, null
+            )
+        );
+
+        // map:merge($maps as map(*)*, $options as map(*)? := {}) as map(*)
+        ArgumentSpecification mmMaps = new ArgumentSpecification(
+            "maps",
+            typeFactory.zeroOrMore(typeFactory.itemAnyMap()),
+            null
+        );
+        map.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("map", "merge"),
+            List.of(mmMaps, mapOptionsArg),
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null, false, false, null, null
+            )
+        );
+
+        // map:of-pairs($input as key-value-pair*, $options as map(*)? := {}) as map(*)
+        ArgumentSpecification opInput = new ArgumentSpecification(
+            "input",
+            typeFactory.zeroOrMore(
+            typeFactory.itemNamedType(
+                new QualifiedName("fn", "key-value-pair")
+            ).type()
+            ),
+            null
+        );
+        map.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("map", "of-pairs"),
+            List.of(opInput, mapOptionsArg),
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null, false, false, null, null
+            )
+        );
+
+        // map:pair($key as xs:anyAtomicType, $value as item()*) as key-value-pair
+        ArgumentSpecification mpKey = new ArgumentSpecification(
+            "key",
+            typeFactory.one(typeFactory.itemAnyItem()),
+            null
+        );
+        ArgumentSpecification mpValue = new ArgumentSpecification(
+            "value",
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            null
+        );
+        map.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("map", "pair"),
+            List.of(mpKey, mpValue),
+            typeFactory.namedType(new QualifiedName("fn", "key-value-pair")).type(),
+            null, false, false, null, null
+            )
+        );
+
+        map.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("map", "pairs"),
+            List.of(
+                new ArgumentSpecification(
+                "map",
+                typeFactory.one(typeFactory.itemAnyMap()),
+                null
+                )
+            ),
+            typeFactory.zeroOrMore(
+                typeFactory.itemNamedType(new QualifiedName("fn", "key-value-pair")).type()
+            ),
+            null, false, false, null, null
+            )
+        );
+
+        // map:put(
+        //   $map   as map(*),
+        //   $key   as xs:anyAtomicType,
+        //   $value as item()*
+        // ) as map(*)
+        ArgumentSpecification mputMap = new ArgumentSpecification(
+            "map",
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null
+        );
+        ArgumentSpecification mputKey = new ArgumentSpecification(
+            "key",
+            typeFactory.one(typeFactory.itemAnyItem()),
+            null
+        );
+        ArgumentSpecification mputValue = new ArgumentSpecification(
+            "value",
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            null
+        );
+        map.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("map", "put"),
+            List.of(mputMap, mputKey, mputValue),
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null, false, false, null, null
+            )
+        );
+
+        // map:remove(
+        //   $map  as map(*),
+        //   $keys as xs:anyAtomicType*
+        // ) as map(*)
+        ArgumentSpecification mremMap = new ArgumentSpecification(
+            "map",
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null
+        );
+        ArgumentSpecification mremKeys = new ArgumentSpecification(
+            "keys",
+            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            null
+        );
+        map.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("map", "remove"),
+            List.of(mremMap, mremKeys),
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null, false, false, null, null
+            )
+        );
+
+        // map:size(
+        //   $map as map(*)
+        // ) as xs:integer
+        ArgumentSpecification msizeMap = new ArgumentSpecification(
+            "map",
+            typeFactory.one(typeFactory.itemAnyMap()),
+            null
+        );
+        map.add(
+            new SimplifiedFunctionSpecification(
+            new QualifiedName("map", "size"),
+            List.of(msizeMap),
+            typeFactory.number(),
+            null, false, false, null, null
+            )
+        );
+        return map;
+    }
+
 
 }

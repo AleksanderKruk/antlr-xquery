@@ -36,8 +36,7 @@ public class InputGrammarAnalyzer {
         // Map<String, Map<String, XQueryCardinality>> followingSiblingOrSelf,
         // Map<String, Map<String, XQueryCardinality>> ancestors,
         // Map<String, Map<String, XQueryCardinality>> ancestorsOrSelf,
-        Map<String, Map<String, XQueryCardinality>> parent
-        // ,
+        Map<String, Map<String, XQueryCardinality>> parent//,
         // Map<String, Map<String, XQueryCardinality>> preceding,
         // Map<String, Map<String, XQueryCardinality>> precedingOrSelf,
         // Map<String, Map<String, XQueryCardinality>> precedingSibling,
@@ -46,7 +45,11 @@ public class InputGrammarAnalyzer {
         // Set<String> simpleRules
     ) {}
 
+
     public record QualifiedGrammarAnalysisResult(
+        /* Element == rule | token */
+        List<String> grammarNames,
+        Set<QualifiedName> elementNames,
         Map<QualifiedName, Map<QualifiedName, XQueryCardinality>> children,
         Map<QualifiedName, Map<QualifiedName, XQueryCardinality>> childrenOrSelf,
         Map<QualifiedName, Map<QualifiedName, XQueryCardinality>> descendants,
@@ -158,16 +161,19 @@ public class InputGrammarAnalyzer {
     public QualifiedGrammarAnalysisResult analyze(String addedNamespace, final List<ParseTree> trees)
     {
         final var antlrParser = new ANTLRv4Parser(null);
-        final Set<QualifiedName> allNodeNames = new HashSet<>();
-        final Set<ParseTree> allLexerRules = new HashSet<>();
-        final Set<ParseTree> allParserRules = new HashSet<>();
+        final Set<QualifiedName> allNodeNames = new HashSet<>(trees.size()*100);
+        final Set<ParseTree> allLexerRules = new HashSet<>(trees.size()*100);
+        final Set<ParseTree> allParserRules = new HashSet<>(trees.size()*100);
+        final Set<String> grammarNames = new HashSet<>(trees.size());
         for (ParseTree tree : trees) {
+            final Collection<ParseTree> name = XPath.findAll(tree, "//grammarSpec/grammarDecl/identifier", antlrParser);
             final Collection<ParseTree> definedNodes = XPath.findAll(tree, "//parserRuleSpec/RULE_REF", antlrParser);
             final Collection<ParseTree> terminalTokens = XPath.findAll(tree, "//parserRuleSpec//TOKEN_REF", antlrParser);
             final Collection<ParseTree> terminalTokenLiterals = XPath.findAll(tree, "//parserRuleSpec//STRING_LITERAL", antlrParser);
             final Collection<ParseTree> definedNodes_ = XPath.findAll(tree, "//lexerRuleSpec/RULE_REF", antlrParser);
             final Collection<ParseTree> terminalTokens_ = XPath.findAll(tree, "//lexerRuleSpec//TOKEN_REF", antlrParser);
             final Collection<ParseTree> terminalTokenLiterals_ = XPath.findAll(tree, "//lexerRuleSpec//STRING_LITERAL", antlrParser);
+            name.stream().findFirst().ifPresent((n)->grammarNames.add(n.getText()));
             allNodeNames.addAll(toQualifiedSet(definedNodes, addedNamespace));
             allNodeNames.addAll(toQualifiedSet(terminalTokens, addedNamespace));
             allNodeNames.addAll(toQualifiedSet(terminalTokenLiterals, addedNamespace));
@@ -211,6 +217,8 @@ public class InputGrammarAnalyzer {
             .collect(Collectors.toSet());
 
         final var gatheredData = new QualifiedGrammarAnalysisResult(
+            grammarNames,
+            childrenMapping.keySet(),
             childrenMapping,
             addSelf(childrenMapping),
             descendants,

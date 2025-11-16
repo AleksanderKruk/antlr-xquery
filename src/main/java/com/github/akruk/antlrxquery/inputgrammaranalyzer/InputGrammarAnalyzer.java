@@ -48,7 +48,7 @@ public class InputGrammarAnalyzer {
 
     public record QualifiedGrammarAnalysisResult(
         /* Element == rule | token */
-        List<String> grammarNames,
+        Set<String> grammarNames,
         Set<QualifiedName> elementNames,
         Map<QualifiedName, Map<QualifiedName, XQueryCardinality>> children,
         Map<QualifiedName, Map<QualifiedName, XQueryCardinality>> childrenOrSelf,

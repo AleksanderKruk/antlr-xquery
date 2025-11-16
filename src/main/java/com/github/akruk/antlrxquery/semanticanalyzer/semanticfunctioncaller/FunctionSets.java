@@ -20,18 +20,18 @@ import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 public class FunctionSets {
-    public static List<List<SimplifiedFunctionSpecification>> ALL(XQueryTypeFactory typeFactory) {
-        var fn = FN(typeFactory);
-        var op = OP(typeFactory);
-        var math = MATH(typeFactory);
-        var antlr = ANTLR(typeFactory);
-        var array = ARRAY(typeFactory);
-        var map = MAP(typeFactory);
+    public static List<List<SimplifiedFunctionSpecification>> ALL(final XQueryTypeFactory typeFactory) {
+        final var fn = FN(typeFactory);
+        final var op = OP(typeFactory);
+        final var math = MATH(typeFactory);
+        final var antlr = ANTLR(typeFactory);
+        final var array = ARRAY(typeFactory);
+        final var map = MAP(typeFactory);
         return List.of(fn, op, math, antlr, array, map);
     }
-    public static List<SimplifiedFunctionSpecification> FN(XQueryTypeFactory typeFactory) {
-        List<SimplifiedFunctionSpecification> fn = new ArrayList<>(400);
-        var helperTrees = new HelperTrees();
+    public static List<SimplifiedFunctionSpecification> FN(final XQueryTypeFactory typeFactory) {
+        final List<SimplifiedFunctionSpecification> fn = new ArrayList<>(400);
+        final var helperTrees = new HelperTrees();
         final ParseTree CONTEXT_VALUE = helperTrees.CONTEXT_VALUE;
         final ParseTree DEFAULT_COLLATION = helperTrees.DEFAULT_COLLATION;
         final ParseTree EMPTY_SEQUENCE = helperTrees.EMPTY_SEQUENCE;
@@ -60,21 +60,27 @@ public class FunctionSets {
         final XQuerySequenceType optionalNumber = typeFactory.zeroOrOne(typeFactory.itemNumber());
         final ArgumentSpecification valueNum = new ArgumentSpecification("value", optionalNumber, null);
         final ArgumentSpecification roundingMode = new ArgumentSpecification("mode",
-            typeFactory.zeroOrOne(typeFactory.itemEnum(Set.of(
-                "floor",
-                "ceiling",
-                "toward-zero",
-                "away-from-zero",
-                "half-to-floor",
-                "half-to-ceiling",
-                "half-toward-zero",
-                "half-away-from-zero",
-                "half-to-even"))),
+            typeFactory.zeroOrOne(
+                typeFactory.itemEnum(
+                    Set.of(
+                            "floor",
+                            "ceiling",
+                            "toward-zero",
+                            "away-from-zero",
+                            "half-to-floor",
+                            "half-to-ceiling",
+                            "half-toward-zero",
+                            "half-away-from-zero",
+                            "half-to-even"
+                        )
+                    )
+                ),
                 DEFAULT_ROUNDING_MODE);
-        final ArgumentSpecification precision = new ArgumentSpecification("precision", optionalNumber, ZERO_LITERAL);
+        final ArgumentSpecification precision
+            = new ArgumentSpecification("precision", optionalNumber, ZERO_LITERAL);
 
-        final ArgumentSpecification optionalCollation = new ArgumentSpecification(
-                "collation", optionalString, DEFAULT_COLLATION);
+        final ArgumentSpecification optionalCollation
+            = new ArgumentSpecification( "collation", optionalString, DEFAULT_COLLATION);
 
 
         // fn:abs(
@@ -129,14 +135,14 @@ public class FunctionSets {
         // 	as xs:numeric?,
         // 	as xs:integer?	:= 0,
         // 	as enum('floor',
-        //                     'ceiling',
-        //                     'toward-zero',
-        //                     'away-from-zero',
-        //                     'half-to-floor',
-        //                     'half-to-ceiling',
-        //                     'half-toward-zero',
-        //                     'half-away-from-zero',
-        //                     'half-to-even')?	:= 'half-to-ceiling'
+        //           'ceiling',
+        //           'toward-zero',
+        //           'away-from-zero',
+        //           'half-to-floor',
+        //           'half-to-ceiling',
+        //           'half-toward-zero',
+        //           'half-away-from-zero',
+        //           'half-to-even')?	:= 'half-to-ceiling'
         // ) as xs:numeric?
         fn.add(
             new SimplifiedFunctionSpecification(
@@ -197,9 +203,9 @@ public class FunctionSets {
         //  as item()*
         // ) as item()?
         final ArgumentSpecification anyItemsRequiredInput = new ArgumentSpecification("input", zeroOrMoreItems, null);
-        GrainedAnalysis zeroOrOneAnalysis = (args, _, _, ctx) -> {
-            TypeInContext unrefinedType = args.get(0).type();
-            var refinedType = typeFactory.zeroOrOne(unrefinedType.type.itemType);
+        final GrainedAnalysis zeroOrOneAnalysis = (args, _, _, ctx) -> {
+            final TypeInContext unrefinedType = args.get(0).type();
+            final var refinedType = typeFactory.zeroOrOne(unrefinedType.type.itemType);
             if (unrefinedType.isSubtypeOf(refinedType)) {
             return unrefinedType;
             }
@@ -221,9 +227,9 @@ public class FunctionSets {
         // fn:one-or-more(
         //  as item()*
         // ) as item()+
-        GrainedAnalysis oneOrMoreAnalysis = (args, _, _, ctx) -> {
-            TypeInContext unrefinedType = args.get(0).type();
-            var refinedType = typeFactory.oneOrMore(unrefinedType.type.itemType);
+        final GrainedAnalysis oneOrMoreAnalysis = (args, _, _, ctx) -> {
+            final TypeInContext unrefinedType = args.get(0).type();
+            final var refinedType = typeFactory.oneOrMore(unrefinedType.type.itemType);
             if (unrefinedType.isSubtypeOf(refinedType)) {
             return unrefinedType;
             }
@@ -245,9 +251,9 @@ public class FunctionSets {
         // fn:exactly-one(
         //  as item()*
         // ) as item()
-        GrainedAnalysis exactlyOneAnalysis = (args, _, _, ctx) -> {
-            TypeInContext unrefinedType = args.get(0).type();
-            var refinedType = typeFactory.one(unrefinedType.type.itemType);
+        final GrainedAnalysis exactlyOneAnalysis = (args, _, _, ctx) -> {
+            final TypeInContext unrefinedType = args.get(0).type();
+            final var refinedType = typeFactory.one(unrefinedType.type.itemType);
             if (unrefinedType.isSubtypeOf(refinedType)) {
             return unrefinedType;
             }
@@ -267,7 +273,7 @@ public class FunctionSets {
         );
 
         // fn:node-name($node as node()? := .) as xs:QName?
-        ArgumentSpecification optionalNodeArg = new ArgumentSpecification(
+        final ArgumentSpecification optionalNodeArg = new ArgumentSpecification(
             "node",
             typeFactory.zeroOrOne(typeFactory.itemAnyNode()),
             CONTEXT_VALUE
@@ -472,17 +478,17 @@ public class FunctionSets {
         );
 
         // fn:error($code as xs:QName? := (), $description as xs:string? := (), $value as item()* := .) as item()*
-        ArgumentSpecification errorCode = new ArgumentSpecification(
+        final ArgumentSpecification errorCode = new ArgumentSpecification(
             "code",
             typeFactory.zeroOrOne(typeFactory.itemString()),
             EMPTY_SEQUENCE
         );
-        ArgumentSpecification errorDescription = new ArgumentSpecification(
+        final ArgumentSpecification errorDescription = new ArgumentSpecification(
             "description",
             typeFactory.zeroOrOne(typeFactory.itemString()),
             EMPTY_SEQUENCE
         );
-        ArgumentSpecification errorValue = new ArgumentSpecification(
+        final ArgumentSpecification errorValue = new ArgumentSpecification(
             "value",
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
             CONTEXT_VALUE
@@ -501,12 +507,12 @@ public class FunctionSets {
         );
 
         // fn:trace($input as item()*, $label as xs:string? := ()) as item()*
-        ArgumentSpecification traceInput = new ArgumentSpecification(
+        final ArgumentSpecification traceInput = new ArgumentSpecification(
             "input",
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
             null
         );
-        ArgumentSpecification traceLabel = new ArgumentSpecification(
+        final ArgumentSpecification traceLabel = new ArgumentSpecification(
             "label",
             typeFactory.zeroOrOne(typeFactory.itemString()),
             EMPTY_SEQUENCE
@@ -525,12 +531,12 @@ public class FunctionSets {
         );
 
         // fn:message($input as item()*, $label as xs:string? := ()) as empty-sequence()
-        ArgumentSpecification messageInput = new ArgumentSpecification(
+        final ArgumentSpecification messageInput = new ArgumentSpecification(
             "input",
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
             null
         );
-        ArgumentSpecification messageLabel = new ArgumentSpecification(
+        final ArgumentSpecification messageLabel = new ArgumentSpecification(
             "label",
             typeFactory.zeroOrOne(typeFactory.itemString()),
             EMPTY_SEQUENCE
@@ -550,12 +556,12 @@ public class FunctionSets {
 
 
         // fn:parse-integer($value as xs:string?, $radix as xs:integer? := 10) as xs:integer?
-        ArgumentSpecification parseIntValue = new ArgumentSpecification(
+        final ArgumentSpecification parseIntValue = new ArgumentSpecification(
             "value",
             typeFactory.zeroOrOne(typeFactory.itemString()),
             null
         );
-        ArgumentSpecification parseIntRadix = new ArgumentSpecification(
+        final ArgumentSpecification parseIntRadix = new ArgumentSpecification(
             "radix",
             typeFactory.zeroOrOne(typeFactory.itemNumber()),
             TEN
@@ -574,17 +580,17 @@ public class FunctionSets {
         );
 
         // fn:format-integer($value as xs:integer?, $picture as xs:string, $language as xs:string? := ()) as xs:string
-        ArgumentSpecification fmtIntValue = new ArgumentSpecification(
+        final ArgumentSpecification fmtIntValue = new ArgumentSpecification(
             "value",
             typeFactory.zeroOrOne(typeFactory.itemNumber()),
             null
         );
-        ArgumentSpecification pictureString = new ArgumentSpecification(
+        final ArgumentSpecification pictureString = new ArgumentSpecification(
             "picture",
             typeFactory.string(),
             null
         );
-        ArgumentSpecification optionalLangugae = new ArgumentSpecification(
+        final ArgumentSpecification optionalLangugae = new ArgumentSpecification(
             "language",
             typeFactory.zeroOrOne(typeFactory.itemString()),
             EMPTY_SEQUENCE
@@ -603,12 +609,12 @@ public class FunctionSets {
         );
 
         // fn:format-number($value as xs:numeric?, $picture as xs:string, $options as (xs:string | map(*))? := ()) as xs:string
-        ArgumentSpecification fmtNumValue = new ArgumentSpecification(
+        final ArgumentSpecification fmtNumValue = new ArgumentSpecification(
             "value",
             typeFactory.zeroOrOne(typeFactory.itemNumber()),
             null
         );
-        ArgumentSpecification fmtNumOptions = new ArgumentSpecification(
+        final ArgumentSpecification fmtNumOptions = new ArgumentSpecification(
             "options",
             typeFactory.zeroOrOne(typeFactory.itemChoice(Set.of(typeFactory.itemString(), typeFactory.itemAnyMap()))),
             EMPTY_SEQUENCE
@@ -740,8 +746,8 @@ public class FunctionSets {
         // fn:char(
         //  as (xs:string | xs:positiveInteger)
         // ) as xs:string
-        XQuerySequenceType stringOrNumber = typeFactory.choice(List.of(typeFactory.itemString(), typeFactory.itemNumber()));
-        ArgumentSpecification charVal = new ArgumentSpecification("value", stringOrNumber, null);
+        final XQuerySequenceType stringOrNumber = typeFactory.choice(List.of(typeFactory.itemString(), typeFactory.itemNumber()));
+        final ArgumentSpecification charVal = new ArgumentSpecification("value", stringOrNumber, null);
         fn.add(
             new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "char"),
@@ -1189,10 +1195,10 @@ public class FunctionSets {
             )
         );
         // fn:not( as item()*) as xs:boolean
-        GrainedAnalysis notAnalysis =
+        final GrainedAnalysis notAnalysis =
             (args, _, _, typeContext) -> {
-                var scope = typeContext.currentScope();
-                var returned = typeContext.typeInContext(typeFactory.boolean_());
+                final var scope = typeContext.currentScope();
+                final var returned = typeContext.typeInContext(typeFactory.boolean_());
                 scope.imply(returned, new NotImplication(returned, args.get(0).type(), false));
                 scope.imply(returned, new NotImplication(returned, args.get(0).type(), true));
                 return returned;
@@ -1581,7 +1587,7 @@ public class FunctionSets {
         ));
 
         // fn:doc-available($source as xs:string?, $options as map(*)? := {}) as xs:boolean
-        ArgumentSpecification docAvailOptions = new ArgumentSpecification(
+        final ArgumentSpecification docAvailOptions = new ArgumentSpecification(
             "options",
             typeFactory.zeroOrOne(typeFactory.itemAnyMap()),
             EMPTY_MAP
@@ -1594,7 +1600,7 @@ public class FunctionSets {
         ));
 
         // fn:collection($source as xs:string? := ()) as item()*
-        ArgumentSpecification colSource = new ArgumentSpecification(
+        final ArgumentSpecification colSource = new ArgumentSpecification(
             "source",
             typeFactory.zeroOrOne(typeFactory.itemString()),
             EMPTY_SEQUENCE
@@ -1607,7 +1613,7 @@ public class FunctionSets {
         ));
 
         // fn:unparsed-text($source as xs:string?, $options as (xs:string|map(*))? := ()) as xs:string?
-        ArgumentSpecification utOptions = new ArgumentSpecification(
+        final ArgumentSpecification utOptions = new ArgumentSpecification(
             "options",
             typeFactory.zeroOrOne(typeFactory.itemChoice(Set.of(typeFactory.itemString(),
                                     typeFactory.itemAnyMap()))),
@@ -1621,7 +1627,7 @@ public class FunctionSets {
         ));
 
         // fn:unparsed-text-lines($source as xs:string?, $options as (xs:string|map(*))? := ()) as xs:string*
-        ArgumentSpecification utlOptions = new ArgumentSpecification(
+        final ArgumentSpecification utlOptions = new ArgumentSpecification(
             "options",
             typeFactory.zeroOrOne(typeFactory.itemAnyItem()),
             EMPTY_SEQUENCE
@@ -1634,7 +1640,7 @@ public class FunctionSets {
         ));
 
         // fn:unparsed-text-available($source as xs:string?, $options as (xs:string|map(*))? := ()) as xs:boolean
-        ArgumentSpecification utaOptions = new ArgumentSpecification(
+        final ArgumentSpecification utaOptions = new ArgumentSpecification(
             "options",
             typeFactory.zeroOrOne(typeFactory.itemAnyItem()),
             EMPTY_SEQUENCE
@@ -1647,7 +1653,7 @@ public class FunctionSets {
         ));
 
         // fn:environment-variable($name as xs:string) as xs:string?
-        ArgumentSpecification envName = new ArgumentSpecification(
+        final ArgumentSpecification envName = new ArgumentSpecification(
             "name",
             typeFactory.string(),
             null
@@ -2316,7 +2322,7 @@ public class FunctionSets {
         // fn:element-to-map-plan(
         //  as (document-node() | element(*))*
         // ) as map(xs:string, record(*))
-        ArgumentSpecification etmpInput = new ArgumentSpecification("input",
+        final ArgumentSpecification etmpInput = new ArgumentSpecification("input",
                                         typeFactory.zeroOrMore(typeFactory.itemAnyNode()),
                                         null);
         fn.add(
@@ -2332,8 +2338,8 @@ public class FunctionSets {
         //  as element()?,
         //  as map(*)? := {}
         // ) as map(xs:string, item()?)?
-        ArgumentSpecification etmElement = new ArgumentSpecification("element", typeFactory.zeroOrOne(typeFactory.itemAnyNode()), null);
-        ArgumentSpecification etmOptions = new ArgumentSpecification("options", typeFactory.zeroOrOne(typeFactory.itemAnyMap()), EMPTY_MAP);
+        final ArgumentSpecification etmElement = new ArgumentSpecification("element", typeFactory.zeroOrOne(typeFactory.itemAnyNode()), null);
+        final ArgumentSpecification etmOptions = new ArgumentSpecification("options", typeFactory.zeroOrOne(typeFactory.itemAnyMap()), EMPTY_MAP);
         fn.add(
             new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "element-to-map"),
@@ -2357,7 +2363,7 @@ public class FunctionSets {
         // fn:random-number-generator(
         //   $seed as xs:anyAtomicType? := ()
         // ) as random-number-generator-record
-        ArgumentSpecification rngSeed = new ArgumentSpecification(
+        final ArgumentSpecification rngSeed = new ArgumentSpecification(
             "seed",
             typeFactory.zeroOrOne(typeFactory.itemAnyItem()),
             EMPTY_SEQUENCE
@@ -2375,16 +2381,16 @@ public class FunctionSets {
     }
 
 
-    public static List<SimplifiedFunctionSpecification> OP(XQueryTypeFactory typeFactory) {
+    public static List<SimplifiedFunctionSpecification> OP(final XQueryTypeFactory typeFactory) {
         final List<SimplifiedFunctionSpecification> op = new ArrayList<>(400);
 
         // op:numeric-add($arg1 as xs:numeric, $arg2 as xs:numeric) as xs:numeric
-        ArgumentSpecification numericArg1 = new ArgumentSpecification(
+        final ArgumentSpecification numericArg1 = new ArgumentSpecification(
             "arg1",
             typeFactory.number(),
             null
         );
-        ArgumentSpecification numericArg2 = new ArgumentSpecification(
+        final ArgumentSpecification numericArg2 = new ArgumentSpecification(
             "arg2",
             typeFactory.number(),
             null
@@ -2473,7 +2479,7 @@ public class FunctionSets {
         );
 
         // op:numeric-unary-plus($arg as xs:numeric) as xs:numeric
-        ArgumentSpecification numericArg = new ArgumentSpecification(
+        final ArgumentSpecification numericArg = new ArgumentSpecification(
             "arg",
             typeFactory.number(),
             null
@@ -2666,7 +2672,7 @@ public class FunctionSets {
 
     }
 
-    public static List<SimplifiedFunctionSpecification> MATH(XQueryTypeFactory typeFactory) {
+    public static List<SimplifiedFunctionSpecification> MATH(final XQueryTypeFactory typeFactory) {
         final List<SimplifiedFunctionSpecification> math = new ArrayList<>(50);
         final XQuerySequenceType optionalNumber = typeFactory.zeroOrOne(typeFactory.itemNumber());
 
@@ -2972,12 +2978,12 @@ public class FunctionSets {
 
 
 
-    public static List<SimplifiedFunctionSpecification> ANTLR(XQueryTypeFactory typeFactory) {
+    public static List<SimplifiedFunctionSpecification> ANTLR(final XQueryTypeFactory typeFactory) {
         final List<SimplifiedFunctionSpecification> antlr = new ArrayList<>(50);
         final XQuerySequenceType optionalNumber = typeFactory.zeroOrOne(typeFactory.itemNumber());
-        var helperTrees = new HelperTrees();
+        final var helperTrees = new HelperTrees();
         final ParseTree CONTEXT_VALUE = helperTrees.CONTEXT_VALUE;
-        ArgumentSpecification optionalNodeArg = new ArgumentSpecification(
+        final ArgumentSpecification optionalNodeArg = new ArgumentSpecification(
             "node",
             typeFactory.zeroOrOne(typeFactory.itemAnyNode()),
             CONTEXT_VALUE
@@ -3031,15 +3037,15 @@ public class FunctionSets {
 
     }
 
-    public static List<SimplifiedFunctionSpecification> ARRAY(XQueryTypeFactory typeFactory) {
-        List<SimplifiedFunctionSpecification> array = new ArrayList<>(100);
+    public static List<SimplifiedFunctionSpecification> ARRAY(final XQueryTypeFactory typeFactory) {
+        final List<SimplifiedFunctionSpecification> array = new ArrayList<>(100);
 
         final XQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         final XQuerySequenceType optionalBoolean = typeFactory.zeroOrOne(typeFactory.itemBoolean());
         final XQuerySequenceType optionalString = typeFactory.zeroOrOne(typeFactory.itemString());
 
 
-        var helperTrees = new HelperTrees();
+        final var helperTrees = new HelperTrees();
         final ParseTree DEFAULT_COLLATION = helperTrees.DEFAULT_COLLATION;
         final ParseTree EMPTY_SEQUENCE = helperTrees.EMPTY_SEQUENCE;
         final ParseTree IDENTITY$1 = helperTrees.IDENTITY$1;
@@ -3510,7 +3516,7 @@ public class FunctionSets {
 
         final var keysType = typeFactory.zeroOrMore(keysItemType);
 
-        List<ArgumentSpecification> sortByArgs = List.of(
+        final List<ArgumentSpecification> sortByArgs = List.of(
             new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
             new ArgumentSpecification("keys", keysType, null));
 
@@ -3575,10 +3581,10 @@ public class FunctionSets {
         return array;
     }
 
-    public static List<SimplifiedFunctionSpecification> MAP(XQueryTypeFactory typeFactory) {
-        List<SimplifiedFunctionSpecification> map = new ArrayList<>(100);
+    public static List<SimplifiedFunctionSpecification> MAP(final XQueryTypeFactory typeFactory) {
+        final List<SimplifiedFunctionSpecification> map = new ArrayList<>(100);
 
-        var helperTrees = new HelperTrees();
+        final var helperTrees = new HelperTrees();
         final ParseTree EMPTY_SEQUENCE = helperTrees.EMPTY_SEQUENCE;
         final ParseTree EMPTY_MAP = helperTrees.EMPTY_MAP;
         final ParseTree IDENTITY$1 = helperTrees.IDENTITY$1;
@@ -3597,15 +3603,15 @@ public class FunctionSets {
         //   $value   as (fn($item as item(), $position as xs:integer) as item()*)?           := fn:identity#1,
         //   $options as map(*)? := {}
         // ) as map(*)
-        ArgumentSpecification mbInput = new ArgumentSpecification(
+        final ArgumentSpecification mbInput = new ArgumentSpecification(
             "input",
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
             null
         );
-        XQueryItemType mapTransformer = typeFactory.itemFunction(zeroOrMoreItems, List.of(typeFactory.anyItem(), typeFactory.number()));
-        ArgumentSpecification mbKey = new ArgumentSpecification( "key", typeFactory.zeroOrOne(mapTransformer), IDENTITY$1);
-        ArgumentSpecification mbValue = new ArgumentSpecification( "value", typeFactory.zeroOrOne(mapTransformer), IDENTITY$1);
-        ArgumentSpecification mbOptions = mapOptionsArg;
+        final XQueryItemType mapTransformer = typeFactory.itemFunction(zeroOrMoreItems, List.of(typeFactory.anyItem(), typeFactory.number()));
+        final ArgumentSpecification mbKey = new ArgumentSpecification( "key", typeFactory.zeroOrOne(mapTransformer), IDENTITY$1);
+        final ArgumentSpecification mbValue = new ArgumentSpecification( "value", typeFactory.zeroOrOne(mapTransformer), IDENTITY$1);
+        final ArgumentSpecification mbOptions = mapOptionsArg;
         map.add(
             new SimplifiedFunctionSpecification(
             new QualifiedName("map", "build"),
@@ -3616,12 +3622,12 @@ public class FunctionSets {
         );
 
         // map:contains($map as map(*), $key as xs:anyAtomicType) as xs:boolean
-        ArgumentSpecification mcMap = new ArgumentSpecification(
+        final ArgumentSpecification mcMap = new ArgumentSpecification(
             "map",
             typeFactory.one(typeFactory.itemAnyMap()),
             null
         );
-        ArgumentSpecification mcKey = new ArgumentSpecification(
+        final ArgumentSpecification mcKey = new ArgumentSpecification(
             "key",
             typeFactory.one(typeFactory.itemAnyItem()),
             null
@@ -3636,7 +3642,7 @@ public class FunctionSets {
         );
 
         // map:empty($map as map(*)) as xs:boolean
-        ArgumentSpecification meMap = new ArgumentSpecification(
+        final ArgumentSpecification meMap = new ArgumentSpecification(
             "map",
             typeFactory.one(typeFactory.itemAnyMap()),
             null
@@ -3651,7 +3657,7 @@ public class FunctionSets {
         );
 
         // map:entries($map as map(*)) as map(*)*
-        ArgumentSpecification mentMap = new ArgumentSpecification(
+        final ArgumentSpecification mentMap = new ArgumentSpecification(
             "map",
             typeFactory.one(typeFactory.itemAnyMap()),
             null
@@ -3666,12 +3672,12 @@ public class FunctionSets {
         );
 
         // map:entry($key as xs:anyAtomicType, $value as item()*) as map(*)
-        ArgumentSpecification mentKey = new ArgumentSpecification(
+        final ArgumentSpecification mentKey = new ArgumentSpecification(
             "key",
             typeFactory.one(typeFactory.itemAnyItem()),
             null
         );
-        ArgumentSpecification mentValue = new ArgumentSpecification(
+        final ArgumentSpecification mentValue = new ArgumentSpecification(
             "value",
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
             null
@@ -3686,14 +3692,14 @@ public class FunctionSets {
         );
 
         // map:filter($map as map(*), $predicate as fn(xs:anyAtomicType, item()*) as xs:boolean?) as map(*)
-        ArgumentSpecification mfMap = new ArgumentSpecification(
+        final ArgumentSpecification mfMap = new ArgumentSpecification(
             "map",
             typeFactory.one(typeFactory.itemAnyMap()),
             null
         );
         final var optionalBoolean = typeFactory.zeroOrOne(typeFactory.itemBoolean());
         final XQueryItemType predicate = typeFactory.itemFunction(optionalBoolean, List.of(typeFactory.anyItem(), zeroOrMoreItems));
-        ArgumentSpecification predicateArg = new ArgumentSpecification( "predicate", typeFactory.one(predicate), null);
+        final ArgumentSpecification predicateArg = new ArgumentSpecification( "predicate", typeFactory.one(predicate), null);
         map.add(
             new SimplifiedFunctionSpecification(
             new QualifiedName("map", "filter"),
@@ -3704,12 +3710,12 @@ public class FunctionSets {
         );
 
         // map:find($input as item()*, $key as xs:anyAtomicType) as array(*)
-        ArgumentSpecification mfindInput = new ArgumentSpecification(
+        final ArgumentSpecification mfindInput = new ArgumentSpecification(
             "input",
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
             null
         );
-        ArgumentSpecification mfindKey = new ArgumentSpecification(
+        final ArgumentSpecification mfindKey = new ArgumentSpecification(
             "key",
             typeFactory.one(typeFactory.itemAnyItem()),
             null
@@ -3724,13 +3730,13 @@ public class FunctionSets {
         );
 
         // map:for-each($map as map(*), $action as fn(xs:anyAtomicType, item()*) as item()*) as item()*
-        ArgumentSpecification mfeMap = new ArgumentSpecification(
+        final ArgumentSpecification mfeMap = new ArgumentSpecification(
             "map",
             typeFactory.one(typeFactory.itemAnyMap()),
             null
         );
-        XQuerySequenceType action = typeFactory.function(zeroOrMoreItems, List.of(typeFactory.anyItem(), zeroOrMoreItems));
-        ArgumentSpecification mfeAction = new ArgumentSpecification( "action", action, null);
+        final XQuerySequenceType action = typeFactory.function(zeroOrMoreItems, List.of(typeFactory.anyItem(), zeroOrMoreItems));
+        final ArgumentSpecification mfeAction = new ArgumentSpecification( "action", action, null);
         map.add(
             new SimplifiedFunctionSpecification(
             new QualifiedName("map", "for-each"),
@@ -3741,17 +3747,17 @@ public class FunctionSets {
         );
 
         // map:get($map as map(*), $key as xs:anyAtomicType, $default as item()* := ()) as item()*
-        ArgumentSpecification mgMap = new ArgumentSpecification(
+        final ArgumentSpecification mgMap = new ArgumentSpecification(
             "map",
             typeFactory.one(typeFactory.itemAnyMap()),
             null
         );
-        ArgumentSpecification mgKey = new ArgumentSpecification(
+        final ArgumentSpecification mgKey = new ArgumentSpecification(
             "key",
             typeFactory.one(typeFactory.itemAnyItem()),
             null
         );
-        ArgumentSpecification mgDefault = new ArgumentSpecification(
+        final ArgumentSpecification mgDefault = new ArgumentSpecification(
             "default",
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
             EMPTY_SEQUENCE
@@ -3766,7 +3772,7 @@ public class FunctionSets {
         );
 
         // map:items($map as map(*)) as item()*
-        ArgumentSpecification mitemsMap = new ArgumentSpecification(
+        final ArgumentSpecification mitemsMap = new ArgumentSpecification(
             "map",
             typeFactory.one(typeFactory.itemAnyMap()),
             null
@@ -3781,7 +3787,7 @@ public class FunctionSets {
         );
 
         // map:keys($map as map(*)) as xs:anyAtomicType*
-        ArgumentSpecification mkeysMap = new ArgumentSpecification(
+        final ArgumentSpecification mkeysMap = new ArgumentSpecification(
             "map",
             typeFactory.one(typeFactory.itemAnyMap()),
             null
@@ -3796,7 +3802,7 @@ public class FunctionSets {
         );
 
         // map:keys-where($map as map(*), $predicate as fn(xs:anyAtomicType, item()*) as xs:boolean?) as xs:anyAtomicType*
-        ArgumentSpecification kwMap = new ArgumentSpecification(
+        final ArgumentSpecification kwMap = new ArgumentSpecification(
             "map",
             typeFactory.one(typeFactory.itemAnyMap()),
             null
@@ -3811,7 +3817,7 @@ public class FunctionSets {
         );
 
         // map:merge($maps as map(*)*, $options as map(*)? := {}) as map(*)
-        ArgumentSpecification mmMaps = new ArgumentSpecification(
+        final ArgumentSpecification mmMaps = new ArgumentSpecification(
             "maps",
             typeFactory.zeroOrMore(typeFactory.itemAnyMap()),
             null
@@ -3826,7 +3832,7 @@ public class FunctionSets {
         );
 
         // map:of-pairs($input as key-value-pair*, $options as map(*)? := {}) as map(*)
-        ArgumentSpecification opInput = new ArgumentSpecification(
+        final ArgumentSpecification opInput = new ArgumentSpecification(
             "input",
             typeFactory.zeroOrMore(
             typeFactory.itemNamedType(
@@ -3845,12 +3851,12 @@ public class FunctionSets {
         );
 
         // map:pair($key as xs:anyAtomicType, $value as item()*) as key-value-pair
-        ArgumentSpecification mpKey = new ArgumentSpecification(
+        final ArgumentSpecification mpKey = new ArgumentSpecification(
             "key",
             typeFactory.one(typeFactory.itemAnyItem()),
             null
         );
-        ArgumentSpecification mpValue = new ArgumentSpecification(
+        final ArgumentSpecification mpValue = new ArgumentSpecification(
             "value",
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
             null
@@ -3886,17 +3892,17 @@ public class FunctionSets {
         //   $key   as xs:anyAtomicType,
         //   $value as item()*
         // ) as map(*)
-        ArgumentSpecification mputMap = new ArgumentSpecification(
+        final ArgumentSpecification mputMap = new ArgumentSpecification(
             "map",
             typeFactory.one(typeFactory.itemAnyMap()),
             null
         );
-        ArgumentSpecification mputKey = new ArgumentSpecification(
+        final ArgumentSpecification mputKey = new ArgumentSpecification(
             "key",
             typeFactory.one(typeFactory.itemAnyItem()),
             null
         );
-        ArgumentSpecification mputValue = new ArgumentSpecification(
+        final ArgumentSpecification mputValue = new ArgumentSpecification(
             "value",
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
             null
@@ -3914,12 +3920,12 @@ public class FunctionSets {
         //   $map  as map(*),
         //   $keys as xs:anyAtomicType*
         // ) as map(*)
-        ArgumentSpecification mremMap = new ArgumentSpecification(
+        final ArgumentSpecification mremMap = new ArgumentSpecification(
             "map",
             typeFactory.one(typeFactory.itemAnyMap()),
             null
         );
-        ArgumentSpecification mremKeys = new ArgumentSpecification(
+        final ArgumentSpecification mremKeys = new ArgumentSpecification(
             "keys",
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
             null
@@ -3936,7 +3942,7 @@ public class FunctionSets {
         // map:size(
         //   $map as map(*)
         // ) as xs:integer
-        ArgumentSpecification msizeMap = new ArgumentSpecification(
+        final ArgumentSpecification msizeMap = new ArgumentSpecification(
             "map",
             typeFactory.one(typeFactory.itemAnyMap()),
             null

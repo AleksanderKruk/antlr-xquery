@@ -24,9 +24,9 @@ public class UnionExpressionSemanticTests extends SemanticTestsBase {
                         $z as element(c)* := ()
                     return $x | $y | $z
                 """, typeFactory.zeroOrMore(typeFactory.itemElement(Set.of(
-                    new QualifiedName("", "x"),
-                    new QualifiedName("", "x"),
-                    new QualifiedName("", "x")
+                    new QualifiedName("", "a"),
+                    new QualifiedName("", "b"),
+                    new QualifiedName("", "c")
                 ))));
 
         assertErrors("""

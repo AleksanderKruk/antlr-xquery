@@ -20,6 +20,7 @@ import com.github.akruk.antlrgrammar.ANTLRv4Parser;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.GrammarSpecContext;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.ParserRuleSpecContext;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.TerminalDefContext;
+import com.github.akruk.antlrxquery.XQueryAxis;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryCardinality;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.BlockCardinalityMerger;
@@ -47,25 +48,11 @@ public class InputGrammarAnalyzer {
 
 
     public record QualifiedGrammarAnalysisResult(
-        /* Element == rule | token */
+        /* element <=> rule | token */
         Set<String> grammarNames,
         Set<QualifiedName> elementNames,
-        Map<QualifiedName, Map<QualifiedName, XQueryCardinality>> children,
-        Map<QualifiedName, Map<QualifiedName, XQueryCardinality>> childrenOrSelf,
-        Map<QualifiedName, Map<QualifiedName, XQueryCardinality>> descendants,
-        Map<QualifiedName, Map<QualifiedName, XQueryCardinality>> descendantsOrSelf,
-        Map<QualifiedName, Map<QualifiedName, XQueryCardinality>> following,
-        Map<QualifiedName, Map<QualifiedName, XQueryCardinality>> followingOrSelf,
-        Map<QualifiedName, Map<QualifiedName, XQueryCardinality>> followingSibling,
-        Map<QualifiedName, Map<QualifiedName, XQueryCardinality>> followingSiblingOrSelf,
-        Map<QualifiedName, Map<QualifiedName, XQueryCardinality>> ancestors,
-        Map<QualifiedName, Map<QualifiedName, XQueryCardinality>> ancestorsOrSelf,
-        Map<QualifiedName, Map<QualifiedName, XQueryCardinality>> parent,
-        Map<QualifiedName, Map<QualifiedName, XQueryCardinality>> parentOrSelf,
-        Map<QualifiedName, Map<QualifiedName, XQueryCardinality>> preceding,
-        Map<QualifiedName, Map<QualifiedName, XQueryCardinality>> precedingOrSelf,
-        Map<QualifiedName, Map<QualifiedName, XQueryCardinality>> precedingSibling,
-        Map<QualifiedName, Map<QualifiedName, XQueryCardinality>> precedingSiblingOrSelf,
+        /* axis -> rulename -> relativerulename -> cardinality */
+        Map<XQueryAxis, Map<QualifiedName, Map<QualifiedName, XQueryCardinality>>> axes,
         Set<QualifiedName> simpleTokens,
         Set<QualifiedName> simpleRules
     ) {}
@@ -203,12 +190,11 @@ public class InputGrammarAnalyzer {
         }
         final var descendants = descendantAnalyzer.analyzeAll();
         final var parents = getQualifiedParentCardinalityMapping(childrenMapping);
-
         final Map<QualifiedName, Map<QualifiedName, XQueryCardinality>> zeroOrMoreMapping
             = getQualifiedMapping(allNodeNames, XQueryCardinality.ZERO_OR_MORE);
 
         final var simpleTokens = getSimpleTokens(antlrParser, allLexerRules);
-        final var simpleRules = getSimpleRules(null, antlrParser, simpleTokens);
+        final var simpleRules = getSimpleRules(allParserRules, antlrParser, simpleTokens);
         final Set<QualifiedName> qualifiedSimpleTokens = simpleTokens.stream()
             .map(t->new QualifiedName(addedNamespace, t))
             .collect(Collectors.toSet());
@@ -216,25 +202,27 @@ public class InputGrammarAnalyzer {
             .map(t->new QualifiedName(addedNamespace, t))
             .collect(Collectors.toSet());
 
+        Map<XQueryAxis, Map<QualifiedName, Map<QualifiedName, XQueryCardinality>>> axes = new HashMap<>(XQueryAxis.values().length, 1);
+        axes.put(XQueryAxis.CHILD, childrenMapping);
+        axes.put(XQueryAxis.DESCENDANT, descendants);
+        axes.put(XQueryAxis.DESCENDANT_OR_SELF, addSelf(descendants));
+        axes.put(XQueryAxis.PARENT, parents);
+        axes.put(XQueryAxis.ANCESTOR, zeroOrMoreMapping);
+        axes.put(XQueryAxis.ANCESTOR_OR_SELF, zeroOrMoreMapping);
+        axes.put(XQueryAxis.FOLLOWING, zeroOrMoreMapping);
+        axes.put(XQueryAxis.FOLLOWING_OR_SELF, zeroOrMoreMapping);
+        axes.put(XQueryAxis.FOLLOWING_SIBLING, zeroOrMoreMapping);
+        axes.put(XQueryAxis.FOLLOWING_SIBLING_OR_SELF, zeroOrMoreMapping);
+        axes.put(XQueryAxis.PRECEDING, zeroOrMoreMapping);
+        axes.put(XQueryAxis.PRECEDING_OR_SELF, zeroOrMoreMapping);
+        axes.put(XQueryAxis.PRECEDING_SIBLING, zeroOrMoreMapping);
+        axes.put(XQueryAxis.PRECEDING_SIBLING_OR_SELF, zeroOrMoreMapping);
+        axes.put(XQueryAxis.SELF, getSelfMapping(allNodeNames));
+
         final var gatheredData = new QualifiedGrammarAnalysisResult(
             grammarNames,
             childrenMapping.keySet(),
-            childrenMapping,
-            addSelf(childrenMapping),
-            descendants,
-            addSelf(descendants),
-            zeroOrMoreMapping,
-            zeroOrMoreMapping,
-            zeroOrMoreMapping,
-            zeroOrMoreMapping,
-            zeroOrMoreMapping,
-            zeroOrMoreMapping,
-            parents,
-            addSelf(parents),
-            zeroOrMoreMapping,
-            zeroOrMoreMapping,
-            zeroOrMoreMapping,
-            zeroOrMoreMapping,
+            axes,
             qualifiedSimpleTokens,
             qualifiedSimpleRules
         );
@@ -352,7 +340,6 @@ public class InputGrammarAnalyzer {
             currentSimpleRuleCount = previousSimpleFragments.size() + previousSimpleRules.size();
         } while (previousSimpleRuleCount != currentSimpleRuleCount);
         return previousSimpleRules.stream().map(this::getLexerRuleName).collect(Collectors.toSet());
-
     }
 
     public Set<String> getSimpleRules(Collection<ParseTree> allParserRules, ANTLRv4Parser antlrParser, Set<String> simpleTokens)
@@ -568,6 +555,17 @@ public class InputGrammarAnalyzer {
             var merged = sequenceCardinalityMerger.merge(XQueryCardinality.ONE.ordinal(), currentCardinality.ordinal());
             cloned.put(node, XQueryCardinality.values()[merged]);
             selfMapping.put(node, cloned);
+        }
+        return selfMapping;
+    }
+
+    private Map<QualifiedName, Map<QualifiedName, XQueryCardinality>>
+        getSelfMapping(final Set<QualifiedName> nodeNames)
+    {
+        final Map<QualifiedName, Map<QualifiedName, XQueryCardinality>> selfMapping
+            = getQualifiedMapping(nodeNames);
+        for (final QualifiedName nodeName : nodeNames) {
+            selfMapping.get(nodeName).put(nodeName, XQueryCardinality.ONE);
         }
         return selfMapping;
     }

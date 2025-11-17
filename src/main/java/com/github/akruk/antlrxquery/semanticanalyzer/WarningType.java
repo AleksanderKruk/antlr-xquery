@@ -3,7 +3,7 @@ package com.github.akruk.antlrxquery.semanticanalyzer;
 public enum WarningType {
     INSTANCE_OF__ALWAYS_TRUE,
     PATH_OPERATOR__EMPTY_SEQUENCE,
-    NODE_TEST__DUPLICATED_NAME,
+    PATH_OPERATOR__DUPLICATED_NAME,
     LOOKUP__TARGET_EMPTY,
     LOOKUP__KEY_EMPTY,
     LOOKUP__RETURNS_ALWAYS_EMPTY,

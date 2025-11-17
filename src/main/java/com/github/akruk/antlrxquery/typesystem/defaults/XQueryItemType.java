@@ -43,18 +43,20 @@ public class XQueryItemType {
     private final ItemtypeIntersectionMerger intersectionMerger;
     private final Function<XQueryItemType, String> representationOp;
 
-    public XQueryItemType(final XQueryTypes type,
-                                final List<XQuerySequenceType> argumentTypes,
-                                final XQuerySequenceType returnedType,
-                                final XQuerySequenceType arrayType,
-                                final XQueryItemType key,
-                                final XQuerySequenceType mapValueType,
-                                final Set<QualifiedName> elementNames,
-                                final XQueryTypeFactory typeFactory,
-                                final Collection<XQueryItemType> itemTypes,
-                                final Map<String, XQueryRecordField> recordFields,
-                                final XQuerySequenceType arrayMemberType,
-                                final Set<String> enumMembers)
+    public XQueryItemType(
+        final XQueryTypes type,
+        final List<XQuerySequenceType> argumentTypes,
+        final XQuerySequenceType returnedType,
+        final XQuerySequenceType arrayType,
+        final XQueryItemType key,
+        final XQuerySequenceType mapValueType,
+        final Set<QualifiedName> elementNames,
+        final XQueryTypeFactory typeFactory,
+        final Collection<XQueryItemType> itemTypes,
+        final Map<String, XQueryRecordField> recordFields,
+        final XQuerySequenceType arrayMemberType,
+        final Set<String> enumMembers
+        )
     {
         this.type = type;
         this.arrayMemberType = arrayMemberType;
@@ -109,7 +111,7 @@ public class XQueryItemType {
             return true;
         if (obj == null)
             return false;
-        if (!(obj instanceof XQueryItemType other))
+        if (!(obj instanceof final XQueryItemType other))
             return false;
         if (type != other.type)
             return false;
@@ -230,11 +232,11 @@ public class XQueryItemType {
         return isValueComparableWith[typeOrdinal][other_.type.ordinal()];
     }
 
-    public XQueryItemType alternativeMerge(XQueryItemType other) {
+    public XQueryItemType alternativeMerge(final XQueryItemType other) {
         return  alternativeMerger.alternativeMerge(this, other);
     }
 
-    public XQuerySequenceType lookup(XQuerySequenceType keySpecifierType) {
+    public XQuerySequenceType lookup(final XQuerySequenceType keySpecifierType) {
         return null;
     }
     private static final ItemtypeStringRepresentation representationProvider = new ItemtypeStringRepresentation();
@@ -246,68 +248,68 @@ public class XQueryItemType {
 
 
 
-    public static XQueryItemType choice(XQueryTypeFactory factory, Collection<XQueryItemType> itemTypes)
+    public static XQueryItemType choice(final XQueryTypeFactory factory, final Collection<XQueryItemType> itemTypes)
     {
         return new XQueryItemType(XQueryTypes.CHOICE,
             null, null, null, null, null, null, factory, itemTypes, null, null, null);
     }
 
-    public static XQueryItemType anyArray(XQueryTypeFactory factory)
+    public static XQueryItemType anyArray(final XQueryTypeFactory factory)
     {
         return new XQueryItemType(XQueryTypes.ANY_ARRAY, null, null, null, null, null, null, factory, null, null, null, null);
     }
 
-    public static XQueryItemType anyFunction(XQueryTypeFactory factory)
+    public static XQueryItemType anyFunction(final XQueryTypeFactory factory)
     {
         return new XQueryItemType(XQueryTypes.ANY_FUNCTION, null, null, null, null, null, null, factory, null, null,
             null, null);
     }
 
-    public static XQueryItemType anyItem(XQueryTypeFactory factory) {
+    public static XQueryItemType anyItem(final XQueryTypeFactory factory) {
         return new XQueryItemType(XQueryTypes.ANY_ITEM, null, null, null, null, null, null, factory, null, null, null, null);
     }
 
-    public static XQueryItemType anyMap(XQueryTypeFactory factory) {
+    public static XQueryItemType anyMap(final XQueryTypeFactory factory) {
         return new XQueryItemType(XQueryTypes.ANY_MAP, null, null, null, null, null, null, factory, null, null, null, null);
     }
 
-    public static XQueryItemType anyNode(XQueryTypeFactory factory) {
+    public static XQueryItemType anyNode(final XQueryTypeFactory factory) {
         return new XQueryItemType(XQueryTypes.ANY_NODE, null, null, null, null, null, null, factory, null, null, null, null);
     }
 
 
-    public static XQueryItemType error(XQueryTypeFactory factory)
+    public static XQueryItemType error(final XQueryTypeFactory factory)
     {
         return new XQueryItemType(XQueryTypes.ERROR, null, null, null, null, null, null, factory, null, null, null, null);
     }
 
 
-    public static XQueryItemType string(XQueryTypeFactory factory)
+    public static XQueryItemType string(final XQueryTypeFactory factory)
     {
         return new XQueryItemType(XQueryTypes.STRING, null, null, null, null, null, null, factory, null, null, null, null);
     }
 
-    public static XQueryItemType boolean_(XQueryTypeFactory factory)
+    public static XQueryItemType boolean_(final XQueryTypeFactory factory)
     {
         return new XQueryItemType(XQueryTypes.BOOLEAN, null, null, null, null, null, null, factory, null, null, null, null);
     }
 
 
-    public static XQueryItemType number(XQueryTypeFactory factory) {
+    public static XQueryItemType number(final XQueryTypeFactory factory) {
         return new XQueryItemType(XQueryTypes.NUMBER, null, null,
             null, null, null,
             null, factory, null,
                      null, null, null);
     }
 
-    public static XQueryItemType element(Set<QualifiedName> elementName, XQueryTypeFactory factory) {
+    public static XQueryItemType element(final Set<QualifiedName> elementName, final XQueryTypeFactory factory) {
         return new XQueryItemType(XQueryTypes.ELEMENT, null, null, null, null, null, elementName, factory, null, null, null, null);
     }
 
 
 
-    public static XQueryItemType function(XQuerySequenceType returnedType, List<XQuerySequenceType> argumentType,
-        XQueryTypeFactory factory)
+    public static XQueryItemType function(final XQuerySequenceType returnedType, final List<XQuerySequenceType> argumentType,
+        final XQueryTypeFactory factory)
     {
         return new XQueryItemType(XQueryTypes.FUNCTION, argumentType, returnedType, null, null, null, null, factory,
             null, null, null, null);
@@ -317,32 +319,32 @@ public class XQueryItemType {
 
 
 
-    public static XQueryItemType map(XQueryItemType key,
-                                    XQuerySequenceType value,
-                                    XQueryTypeFactory factory)
+    public static XQueryItemType map(final XQueryItemType key,
+                                    final XQuerySequenceType value,
+                                    final XQueryTypeFactory factory)
     {
         return new XQueryItemType(XQueryTypes.MAP, null, null, null, key, value, null, factory, null, null, null, null);
     }
 
 
 
-    public static XQueryItemType array(XQuerySequenceType containedType, XQueryTypeFactory factory) {
+    public static XQueryItemType array(final XQuerySequenceType containedType, final XQueryTypeFactory factory) {
         return new XQueryItemType(XQueryTypes.ARRAY, null, null, null, null,
             null, null, factory,
                 null, null, containedType, null);
     }
 
-    public static XQueryItemType extensibleRecord(Map<String, XQueryRecordField> keyValuePairs, XQueryTypeFactory factory ) {
+    public static XQueryItemType extensibleRecord(final Map<String, XQueryRecordField> keyValuePairs, final XQueryTypeFactory factory ) {
         return new XQueryItemType(XQueryTypes.EXTENSIBLE_RECORD, null, null, null, null, null, null, factory, null, keyValuePairs, null, null);
     }
 
-    public static XQueryItemType contrainedRecord(Map<String, XQueryRecordField> keyValuePairs, XQueryTypeFactory factory ) {
+    public static XQueryItemType contrainedRecord(final Map<String, XQueryRecordField> keyValuePairs, final XQueryTypeFactory factory ) {
         return new XQueryItemType(XQueryTypes.RECORD, null, null, null, null, null, null, factory, null, keyValuePairs, null, null);
     }
 
     final public Set<String> enumMembers;
 
-    public static XQueryItemType enum_(Set<String> enumMembers, XQueryTypeFactory factory) {
+    public static XQueryItemType enum_(final Set<String> enumMembers, final XQueryTypeFactory factory) {
         return new XQueryItemType(XQueryTypes.ENUM, null, null, null, null, null, null, factory, null, null, null, enumMembers);
     }
 

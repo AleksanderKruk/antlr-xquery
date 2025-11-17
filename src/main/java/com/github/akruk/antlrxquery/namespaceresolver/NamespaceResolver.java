@@ -3,7 +3,7 @@ package com.github.akruk.antlrxquery.namespaceresolver;
 import java.util.regex.Pattern;
 
 public class NamespaceResolver {
-    public record QualifiedName(String namespace, String name) {
+    public static record QualifiedName(String namespace, String name) {
         @Override
         public final String toString() {
             if (namespace == null || namespace.isEmpty()) {

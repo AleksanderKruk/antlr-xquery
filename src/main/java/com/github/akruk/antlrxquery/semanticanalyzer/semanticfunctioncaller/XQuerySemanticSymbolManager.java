@@ -100,7 +100,7 @@ public class XQuerySemanticSymbolManager {
                     f.grainedAnalysis);
             }
         }
-        this.grammars = null;
+        this.grammars = new HashMap<>();
     }
 
     final Map<String, Map<String, List<FunctionSpecification>>> namespaces;
@@ -109,7 +109,8 @@ public class XQuerySemanticSymbolManager {
     private AnalysisResult handleUnknownNamespace(
         final String namespace,
         final DiagnosticError errorMessageSupplier,
-        final TypeInContext fallbackType)
+        final TypeInContext fallbackType
+        )
     {
         final List<DiagnosticError> errors = List.of(errorMessageSupplier);
         return new AnalysisResult(fallbackType, errors);
@@ -122,8 +123,9 @@ public class XQuerySemanticSymbolManager {
     }
 
     private AnalysisResult handleNoMatchingFunction(
-            final DiagnosticError errorMessageSupplier,
-            final TypeInContext fallbackType)
+        final DiagnosticError errorMessageSupplier,
+        final TypeInContext fallbackType
+        )
     {
         final List<DiagnosticError> errors = List.of(errorMessageSupplier);
         return new AnalysisResult(fallbackType, errors);
@@ -133,15 +135,21 @@ public class XQuerySemanticSymbolManager {
     }
 
     SpecAndErrors getFunctionSpecification(
-        final ParserRuleContext location, final String namespace, final String name,
-        final List<FunctionSpecification> namedFunctions, final long requiredArity)
+        final ParserRuleContext location,
+        final String namespace,
+        final String name,
+        final List<FunctionSpecification> namedFunctions,
+        final long requiredArity
+        )
     {
         final List<String> mismatchReasons = new ArrayList<>();
         for (final FunctionSpecification spec : namedFunctions) {
             final List<String> reasons = new ArrayList<>();
             if (!(spec.minArity() <= requiredArity && requiredArity <= spec.maxArity())) {
-                reasons.add("Arity mismatch: expected between " + spec.minArity() + " and " + spec.maxArity() + ", got "
-                        + requiredArity);
+                reasons.add(
+                    "Arity mismatch: expected between "
+                        + spec.minArity() + " and " + spec.maxArity()
+                        + ", got " + requiredArity);
                 mismatchReasons.add("Function " + name + ": " + String.join("; ", reasons));
                 continue;
             }
@@ -160,7 +168,8 @@ public class XQuerySemanticSymbolManager {
             final List<TypeInContext> positionalargs,
             final Map<String, TypeInContext> keywordArgs,
             final XQueryVisitingSemanticContext context,
-            final XQuerySemanticContext typeContext)
+            final XQuerySemanticContext typeContext
+            )
     {
         final var anyItems = typeContext.currentScope().typeInContext(typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         if (!namespaces.containsKey(namespace)) {

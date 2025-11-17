@@ -14,6 +14,8 @@ import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQue
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.GrainedAnalysis;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.SimplifiedFunctionSpecification;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
+import com.github.akruk.antlrxquery.typesystem.XQueryRecordField.FieldType;
+import com.github.akruk.antlrxquery.typesystem.XQueryRecordField.TypeOrReference;
 import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
@@ -179,9 +181,10 @@ public class FunctionSets {
         // $divisor	as xs:decimal,
         // $precision	as xs:integer?	:= 0
         // ) as record(quotient as xs:decimal, remainder as xs:decimal)
-        final var arg_value_number = new ArgumentSpecification("value", typeFactory.number(), null);
-        final var arg_divisor_number = new ArgumentSpecification("value", typeFactory.number(), null);
-        final XQueryRecordField numericField = new XQueryRecordField(typeFactory.number(), true);
+        final XQuerySequenceType oneNumber = typeFactory.number();
+        final var arg_value_number = new ArgumentSpecification("value", oneNumber, null);
+        final var arg_divisor_number = new ArgumentSpecification("value", oneNumber, null);
+        final XQueryRecordField numericField = new XQueryRecordField(TypeOrReference.type(oneNumber), true);
         final var divisionResult = typeFactory.record(
             Map.of("quotient", numericField,
                "remainder", numericField));
@@ -833,7 +836,7 @@ public class FunctionSets {
         //  as xs:double? := ()
         // ) as xs:string
         final ArgumentSpecification substrValue = new ArgumentSpecification("value", optionalString, null);
-        final ArgumentSpecification substrStart = new ArgumentSpecification("start", typeFactory.number(), null);
+        final ArgumentSpecification substrStart = new ArgumentSpecification("start", oneNumber, null);
         final ArgumentSpecification substrLength = new ArgumentSpecification("length", optionalNumber, new ParenthesizedExprContext(null, 0));
         fn.add(
             new SimplifiedFunctionSpecification(
@@ -855,7 +858,7 @@ public class FunctionSets {
             new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "string-length"),
             List.of(lengthValue),
-            typeFactory.number(),
+            oneNumber,
             null,
             false,
             false,
@@ -1261,7 +1264,7 @@ public class FunctionSets {
         // 	as xs:integer,
         // 	as item()*
         // ) as item()*
-        final ArgumentSpecification position = new ArgumentSpecification("position", typeFactory.number(), null);
+        final ArgumentSpecification position = new ArgumentSpecification("position", oneNumber, null);
         final ArgumentSpecification insert = new ArgumentSpecification("insert", zeroOrMoreItems, null);
         fn.add(new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "insert-before"),
@@ -1281,7 +1284,7 @@ public class FunctionSets {
         ));
 
         // fn:replicate( as item()*,  as xs:nonNegativeInteger) as item()*
-        final ArgumentSpecification count = new ArgumentSpecification("count", typeFactory.number(), null);
+        final ArgumentSpecification count = new ArgumentSpecification("count", oneNumber, null);
         fn.add(new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "replicate"),
             List.of(anyItemsRequiredInput, count),
@@ -1343,7 +1346,7 @@ public class FunctionSets {
         // fn:subsequence( as item()*,  as xs:double,  as xs:double?
         // := ()) as item()*
         final ArgumentSpecification subStart = new ArgumentSpecification("start",
-            typeFactory.number(), null);
+            oneNumber, null);
         final ArgumentSpecification subLength = new ArgumentSpecification("length",
             optionalNumber, EMPTY_SEQUENCE);
         fn.add(new SimplifiedFunctionSpecification(
@@ -1499,7 +1502,7 @@ public class FunctionSets {
         fn.add(new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "count"),
             List.of(anyItemsRequiredInput),
-            typeFactory.number(),
+            oneNumber,
             null, false, false, null, null
         ));
 
@@ -1677,7 +1680,7 @@ public class FunctionSets {
         fn.add(new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "position"),
             List.of(),
-            typeFactory.number(),
+            oneNumber,
             null,
             true,
             false,
@@ -1690,7 +1693,7 @@ public class FunctionSets {
         fn.add(new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "last"),
             List.of(),
-            typeFactory.number(),
+            oneNumber,
             null,
             false,
             true,
@@ -2154,22 +2157,18 @@ public class FunctionSets {
                 typeFactory.itemRecord(
                     Map.of(
                     "key", new XQueryRecordField(
-                        typeFactory.zeroOrOne(
-                        typeFactory.itemFunction(
-                            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-                            List.of(typeFactory.one(typeFactory.itemAnyItem()))
-                        )
-                        ),
+                        new TypeOrReference(
+                            FieldType.TYPE,
+                            typeFactory.zeroOrOne( typeFactory.itemFunction( typeFactory.zeroOrMore(typeFactory.itemAnyItem()), List.of(typeFactory.one(typeFactory.itemAnyItem())))),
+                            null),
                         false
                     ),
                     "collation", new XQueryRecordField(
-                        typeFactory.zeroOrOne(typeFactory.itemString()),
+                        new TypeOrReference(FieldType.TYPE, typeFactory.zeroOrOne(typeFactory.itemString()), null),
                         false
                     ),
                     "order", new XQueryRecordField(
-                        typeFactory.zeroOrOne(
-                        typeFactory.itemEnum(Set.of("ascending", "descending"))
-                        ),
+                        new TypeOrReference(FieldType.TYPE, typeFactory.zeroOrOne(typeFactory.itemEnum(Set.of("ascending", "descending"))), null),
                         false
                     )
                     )
@@ -3385,9 +3384,7 @@ public class FunctionSets {
             typeFactory.zeroOrMore(
                 typeFactory.itemRecord(
                 Map.of(
-                    "value", new XQueryRecordField(
-                    typeFactory.anyItem(),
-                    true // field is required
+                    "value", new XQueryRecordField( TypeOrReference.type(typeFactory.anyItem()), true/* isRequired */
                     )
                 )
                 )
@@ -3405,7 +3402,7 @@ public class FunctionSets {
                 typeFactory.zeroOrMore(
                     typeFactory.itemRecord(
                     Map.of(
-                        "value", new XQueryRecordField( zeroOrMoreItems, true)
+                        "value", new XQueryRecordField( TypeOrReference.type(zeroOrMoreItems), true)
                     )
                     )
                 ),
@@ -3509,16 +3506,18 @@ public class FunctionSets {
         final var orderType = typeFactory.zeroOrOne(typeFactory.itemEnum(Set.of("ascending", "descending")));
         final var keysItemType = typeFactory.itemRecord(
                 Map.of(
-                "key", new XQueryRecordField(keyType, true),
-                "collation", new XQueryRecordField(optionalString, true),
-                "order", new XQueryRecordField(orderType, true)
+                "key", new XQueryRecordField(TypeOrReference.type(keyType), true),
+                "collation", new XQueryRecordField(TypeOrReference.type(optionalString), true),
+                "order", new XQueryRecordField(TypeOrReference.type(orderType), true)
                 ));
 
         final var keysType = typeFactory.zeroOrMore(keysItemType);
 
+        final var anyArray = typeFactory.anyArray();
         final List<ArgumentSpecification> sortByArgs = List.of(
-            new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
-            new ArgumentSpecification("keys", keysType, null));
+                new ArgumentSpecification("array", anyArray, null),
+                new ArgumentSpecification("keys", keysType, null)
+            );
 
         array.add(
             new SimplifiedFunctionSpecification(

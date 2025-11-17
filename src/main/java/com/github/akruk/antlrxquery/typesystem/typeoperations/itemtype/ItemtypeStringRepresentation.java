@@ -112,7 +112,7 @@ public class ItemtypeStringRepresentation extends ItemtypeUnaryOperation<String>
             if (!entry.getValue().isRequired()) {
                 sb.append("?");
             }
-            sb.append(" as ").append(entry.getValue().type());
+            sb.append(" as ").append(entry.getValue());
             first = false;
             }
             sb.append(")");
@@ -129,7 +129,7 @@ public class ItemtypeStringRepresentation extends ItemtypeUnaryOperation<String>
             }
             sb.append(entry.getKey())
               .append(" as ")
-              .append(entry.getValue().type());
+              .append(entry.getValue());
             first = false;
         }
         sb.append(", *)");

@@ -33,10 +33,12 @@ public class ItemtypeSubtyper
     private static final int EXTENSIBLE_RECORD = XQueryTypes.EXTENSIBLE_RECORD.ordinal();
 
     private final Predicate<XQueryItemType>[] itemtypeIsSubtypeOf;
+    private final XQueryTypeFactory typeFactory;
 
     @SuppressWarnings("unchecked")
     public ItemtypeSubtyper(final XQueryItemType x, final XQueryTypeFactory typeFactory)
     {
+        this.typeFactory = typeFactory;
         final int typeOrdinal = x.type.ordinal();
         final Predicate<XQueryItemType> choicesubtype = (y) -> {
             final XQueryItemType y_ = (XQueryItemType) y;
@@ -301,7 +303,12 @@ public class ItemtypeSubtyper
                 for (final var key : x.recordFields.keySet()) {
                     final var xFieldType = x.recordFields.get(key);
                     final var yFieldType = y.recordFields.get(key);
-                    if (!xFieldType.type().isSubtypeOf(yFieldType.type()))
+                    if (xFieldType.equals(yFieldType)) {
+                        continue;
+                    }
+                    final XQuerySequenceType resolvedX = xFieldType.resolveFieldType(typeFactory);
+                    final XQuerySequenceType resolvedY = yFieldType.resolveFieldType(typeFactory);
+                    if (!resolvedX.isSubtypeOf(resolvedY))
                         return false;
                 }
                 return true;
@@ -429,7 +436,7 @@ public class ItemtypeSubtyper
         return this.itemtypeIsSubtypeOf[type2.typeOrdinal].test(type2);
     }
 
-    private static boolean isEveryDeclaredFieldSubtype(final XQueryItemType x_, final XQueryItemType y_) {
+    private boolean isEveryDeclaredFieldSubtype(final XQueryItemType x_, final XQueryItemType y_) {
         final Map<String, XQueryRecordField> recordFieldsX = x_.recordFields;
         final var commonFields = new HashSet<String>(recordFieldsX.keySet());
         final Map<String, XQueryRecordField> recordFieldsY = y_.recordFields;
@@ -437,7 +444,10 @@ public class ItemtypeSubtyper
         for (final String commonField : commonFields) {
             final var xFieldType = recordFieldsX.get(commonField);
             final var yFieldType = recordFieldsY.get(commonField);
-            if (!xFieldType.type().isSubtypeOf(yFieldType.type()))
+            if (xFieldType.equals(yFieldType)) {
+                continue;
+            }
+            if (!xFieldType.resolveFieldType(typeFactory).isSubtypeOf(yFieldType.resolveFieldType(typeFactory)))
                 return false;
         }
         return true;
@@ -462,7 +472,7 @@ public class ItemtypeSubtyper
         }
     }
 
-    private static boolean recordIsSubtypeOfFunction(Object x, Object y) {
+    private boolean recordIsSubtypeOfFunction(Object x, Object y) {
         final var x_ = (XQueryItemType) x;
         final var y_ = (XQueryItemType) y;
         final var yArgumentTypes = y_.argumentTypes;
@@ -476,13 +486,13 @@ public class ItemtypeSubtyper
         final var yReturnedType = y_.returnedType;
         for (final var key : x_.recordFields.keySet()) {
             final var xFieldType = x_.recordFields.get(key);
-            if (!xFieldType.type().isSubtypeOf(yReturnedType))
+            if (!xFieldType.resolveFieldType(typeFactory).isSubtypeOf(yReturnedType))
                 return false;
         }
         return true;
     }
 
-    private static boolean recordIsSubtypeOfMap(Object x, Object y) {
+    private boolean recordIsSubtypeOfMap(Object x, Object y) {
         final var x_ = (XQueryItemType) x;
         final var y_ = (XQueryItemType) y;
         final XQueryItemType keyItemType = (XQueryItemType) y_.mapKeyType;
@@ -492,7 +502,7 @@ public class ItemtypeSubtyper
         final var yFieldType = y_.mapValueType;
         for (final var key : x_.recordFields.keySet()) {
             final XQueryRecordField xFieldType = x_.recordFields.get(key);
-            if (!xFieldType.type().isSubtypeOf(yFieldType))
+            if (!xFieldType.resolveFieldType(typeFactory).isSubtypeOf(yFieldType))
                 return false;
         }
         return true;

@@ -26,8 +26,10 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 public class XQuerySemanticSymbolManager {
     public static record AnalysisResult(
         TypeInContext result,
-        List<DiagnosticError> errors)
-        {}
+        List<DiagnosticError> errors
+        )
+    {}
+
     public static record ArgumentSpecification(String name, XQuerySequenceType type, ParseTree defaultArgument) {}
     public static record UsedArg(TypeInContext type, XQueryValue value, ParseTree tree) {}
     public interface GrainedAnalysis {
@@ -72,7 +74,7 @@ public class XQuerySemanticSymbolManager {
     private final XQueryTypeFactory typeFactory;
     private XQuerySemanticAnalyzer analyzer;
 
-    public void setAnalyzer(XQuerySemanticAnalyzer analyzer)
+    public void setAnalyzer(final XQuerySemanticAnalyzer analyzer)
     {
         this.analyzer = analyzer;
     }
@@ -83,14 +85,17 @@ public class XQuerySemanticSymbolManager {
     {
         this.typeFactory = typeFactory;
         this.namespaces = new HashMap<>(10);
-        for (var fset : functionSets) {
-            for (var f : fset) {
-                var functionname = f.qname();
+        for (final var fset : functionSets) {
+            for (final var f : fset) {
+                final var functionname = f.qname();
                 uncheckedRegisterFunction(
                     functionname.namespace(),
                     functionname.name(),
                     f.args,
                     f.returnedType,
+                    f.requiredContextValueType,
+                    f.requiresPosition,
+                    f.requiresSize,
                     f.body,
                     f.grainedAnalysis);
             }
@@ -143,7 +148,7 @@ public class XQuerySemanticSymbolManager {
             // used positional arguments need to have matching types
             return new SpecAndErrors(spec, List.of());
         }
-        DiagnosticError error = DiagnosticError.of(
+        final DiagnosticError error = DiagnosticError.of(
             location, ErrorType.FUNCTION__NO_MATCHING_FUNCTION, List.of(namespace, name, requiredArity));
         return new SpecAndErrors(null, List.of(error));
     }
@@ -159,7 +164,7 @@ public class XQuerySemanticSymbolManager {
     {
         final var anyItems = typeContext.currentScope().typeInContext(typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
         if (!namespaces.containsKey(namespace)) {
-            DiagnosticError error = DiagnosticError.of(location, ErrorType.FUNCTION__UNKNOWN_NAMESPACE, List.of(namespace));
+            final DiagnosticError error = DiagnosticError.of(location, ErrorType.FUNCTION__UNKNOWN_NAMESPACE, List.of(namespace));
             final DiagnosticError errorMessageSupplier = error;
             final List<DiagnosticError> errors = List.of(errorMessageSupplier);
             return new AnalysisResult(anyItems, errors);
@@ -167,7 +172,7 @@ public class XQuerySemanticSymbolManager {
 
         final var namespaceFunctions = namespaces.get(namespace);
         if (!namespaceFunctions.containsKey(name)) {
-            DiagnosticError error = DiagnosticError.of(location, ErrorType.FUNCTION__UNKNOWN_FUNCTION, List.of(namespace, name));
+            final DiagnosticError error = DiagnosticError.of(location, ErrorType.FUNCTION__UNKNOWN_FUNCTION, List.of(namespace, name));
             return handleUnknownFunction(namespace, name, error, anyItems);
         }
         final var namedFunctions = namespaceFunctions.get(name);
@@ -220,7 +225,7 @@ public class XQuerySemanticSymbolManager {
         }
 
 
-        Map<ArgumentSpecification, TypeInContext> defaultArgTypes = new HashMap<>();
+        final Map<ArgumentSpecification, TypeInContext> defaultArgTypes = new HashMap<>();
         for (final ArgumentSpecification defaultArg : defaultArgs.toList()) {
             final var expectedType = defaultArg.type();
             final var receivedType = defaultArg.defaultArgument().accept(analyzer);
@@ -239,21 +244,21 @@ public class XQuerySemanticSymbolManager {
             if (spec.grainedAnalysis==null) {
                 return new AnalysisResult(typeContext.typeInContext(spec.returnedType), List.of());
             } else {
-                List<UsedArg> args = new ArrayList<>(positionalargs.size() + keywordArgs.size());
-                for (TypeInContext positional : positionalargs) {
+                final List<UsedArg> args = new ArrayList<>(positionalargs.size() + keywordArgs.size());
+                for (final TypeInContext positional : positionalargs) {
                     args.add(new UsedArg(positional, null, null));
                 }
-                for (ArgumentSpecification arg : remainingArgs) {
-                    TypeInContext type = defaultArgTypes.get(arg);
+                for (final ArgumentSpecification arg : remainingArgs) {
+                    final TypeInContext type = defaultArgTypes.get(arg);
                     if (type != null) {
                         args.add(new UsedArg(type, null, null));
                     } else {
-                        TypeInContext keywordType = keywordArgs.get(arg.name);
+                        final TypeInContext keywordType = keywordArgs.get(arg.name);
                         args.add(new UsedArg(keywordType, null, null));
                     }
                 }
 
-                TypeInContext granularType = spec.grainedAnalysis.analyze(
+                final TypeInContext granularType = spec.grainedAnalysis.analyze(
                     args, context, location,typeContext);
                 return new AnalysisResult(granularType, List.of());
             }
@@ -268,7 +273,7 @@ public class XQuerySemanticSymbolManager {
         }
     }
 
-    private void checkIfCorrectContext(FunctionSpecification spec, XQueryVisitingSemanticContext context, List<String> mismatchReasons)
+    private void checkIfCorrectContext(final FunctionSpecification spec, final XQueryVisitingSemanticContext context, final List<String> mismatchReasons)
     {
         if (spec.requiresPosition && context.getPositionType() == null) {
             mismatchReasons.add("Function requires context position");
@@ -279,13 +284,13 @@ public class XQuerySemanticSymbolManager {
         if (spec.requiredContextValueType != null
             && !context.getType().isSubtypeOf(spec.requiredContextValueType))
         {
-            String message = getIncorrectContextValueMessage(spec, context);
+            final String message = getIncorrectContextValueMessage(spec, context);
 			mismatchReasons.add(message);
         }
 	}
 
-    private String getIncorrectContextValueMessage(FunctionSpecification spec, XQueryVisitingSemanticContext context) {
-        StringBuilder stringBuilder = new StringBuilder();
+    private String getIncorrectContextValueMessage(final FunctionSpecification spec, final XQueryVisitingSemanticContext context) {
+        final StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("Invalid context value: ");
         stringBuilder.append(context.getType().toString());
         stringBuilder.append(" is not subtype of ");
@@ -319,9 +324,9 @@ public class XQuerySemanticSymbolManager {
         final boolean missingRequired = unusedArgs.parallelStream()
                 .anyMatch(arg->arg.defaultArgument() == null);
         if (missingRequired) {
-            Stream<ArgumentSpecification> requiredUnusedArgs = unusedArgs.stream().filter(arg->arg.defaultArgument() == null);
-            Stream<String> requiredUnusedArgsNames = requiredUnusedArgs.map(ArgumentSpecification::name);
-            String missingRequiredArguments = requiredUnusedArgsNames.collect(Collectors.joining(", "));
+            final Stream<ArgumentSpecification> requiredUnusedArgs = unusedArgs.stream().filter(arg->arg.defaultArgument() == null);
+            final Stream<String> requiredUnusedArgsNames = requiredUnusedArgs.map(ArgumentSpecification::name);
+            final String missingRequiredArguments = requiredUnusedArgsNames.collect(Collectors.joining(", "));
             reasons.add("Missing required keyword argument(s): " + missingRequiredArguments);
             mismatchReasons.add("Function " + name + ": " + String.join("; ", reasons));
         }
@@ -381,12 +386,12 @@ public class XQuerySemanticSymbolManager {
         // TODO: Verify logic
         final var fallback = context.currentScope().typeInContext(typeFactory.anyFunction());
         if (!namespaces.containsKey(namespace)) {
-            DiagnosticError error = DiagnosticError.of(location, ErrorType.FUNCTION__UNKNOWN_NAMESPACE, List.of(namespace));
+            final DiagnosticError error = DiagnosticError.of(location, ErrorType.FUNCTION__UNKNOWN_NAMESPACE, List.of(namespace));
             return handleUnknownNamespace(namespace, error, fallback);
         }
         final var namespaceFunctions = namespaces.get(namespace);
         if (!namespaceFunctions.containsKey(functionName)) {
-            DiagnosticError error = DiagnosticError.of(location, ErrorType.FUNCTION__UNKNOWN_FUNCTION, List.of(namespace, functionName));
+            final DiagnosticError error = DiagnosticError.of(location, ErrorType.FUNCTION__UNKNOWN_FUNCTION, List.of(namespace, functionName));
             return handleUnknownFunction(namespace, functionName, error, fallback);
         }
 
@@ -394,16 +399,16 @@ public class XQuerySemanticSymbolManager {
         final SpecAndErrors specAndErrors = getFunctionSpecification(
             location, namespace, functionName, namedFunctions, arity);
         if (specAndErrors.spec == null) {
-            DiagnosticError error = DiagnosticError.of(
+            final DiagnosticError error = DiagnosticError.of(
                 location, ErrorType.FUNCTION_REFERENCE__UNKNOWN, List.of(namespace, functionName, arity));
             return new AnalysisResult(fallback, List.of(error));
         }
-        TypeInContext returnedType = context.typeInContext(specAndErrors.spec.returnedType);
-        List<XQuerySequenceType> argTypes = specAndErrors.spec.args.stream()
+        final TypeInContext returnedType = context.typeInContext(specAndErrors.spec.returnedType);
+        final List<XQuerySequenceType> argTypes = specAndErrors.spec.args.stream()
             .map(arg->arg.type())
             .toList()
             .subList(0, arity);
-        var functionItem = typeFactory.function(returnedType.type, argTypes);
+        final var functionItem = typeFactory.function(returnedType.type, argTypes);
         return new AnalysisResult(context.currentScope().typeInContext(functionItem), specAndErrors.errors);
 
     }
@@ -510,7 +515,7 @@ public class XQuerySemanticSymbolManager {
     {
         final long minArity = args.stream().filter(arg -> arg.defaultArgument() == null).collect(Collectors.counting());
         final long maxArity = args.size();
-        FunctionSpecification function = new FunctionSpecification(
+        final FunctionSpecification function = new FunctionSpecification(
             minArity,
             maxArity,
             args,
@@ -521,9 +526,8 @@ public class XQuerySemanticSymbolManager {
             body,
             analysis
             );
-        namespaces
-            .putIfAbsent(namespace, new HashMap<>())
-            .putIfAbsent(functionName, new ArrayList<>())
+        namespaces.computeIfAbsent(namespace, x->new HashMap<>())
+            .computeIfAbsent(functionName, x->new ArrayList<>())
             .add(function);
         return null;
     }
@@ -584,21 +588,25 @@ public class XQuerySemanticSymbolManager {
         return null;
     }
 
-    public boolean namespaceExists(String namespace) {
+    public boolean namespaceExists(final String namespace) {
         return namespaces.containsKey(namespace);
     }
 
-    public void provideNamespace(String namespace) {
+    public void provideNamespace(final String namespace) {
         namespaces.putIfAbsent(namespace, new HashMap<>());
     }
 
-    public void registerGrammar(String namespace, QualifiedGrammarAnalysisResult result) {
+    public void registerGrammar(final String namespace, final QualifiedGrammarAnalysisResult result) {
         grammars.putIfAbsent(namespace, result);
     }
 
-    public boolean grammarExists(String namespace) {
+    public boolean grammarExists(final String namespace) {
         return grammars.get(namespace) != null;
     }
+
+	public QualifiedGrammarAnalysisResult getGrammar(final String grammar) {
+        return grammars.get(grammar);
+	}
 
 
 }

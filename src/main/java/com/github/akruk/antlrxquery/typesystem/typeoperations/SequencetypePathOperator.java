@@ -126,10 +126,10 @@ public class SequencetypePathOperator {
                     if (usesWildcard) {
                         if (analysis == null) {
                             return switch (type.occurence) {
-                                case ONE          -> getResult_SingleGrammar_InputElements_One_NoAnalysis_Wildcard(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
-                                case ONE_OR_MORE  -> getResult_SingleGrammar_InputElements_OneOrMore_NoAnalysis_Wildcard(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
-                                case ZERO_OR_MORE -> getResult_SingleGrammar_InputElements_ZeroOrMore_NoAnalysis_Wildcard(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
-                                case ZERO_OR_ONE  -> getResult_SingleGrammar_InputElements_ZeroOrOne_NoAnalysis_Wildcard(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
+                                case ONE          -> getResult_InputElements_One_NoAnalysis_Wildcard(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
+                                case ONE_OR_MORE  -> getResult_InputElements_OneOrMore_NoAnalysis_Wildcard(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
+                                case ZERO_OR_MORE -> getResult_InputElements_ZeroOrMore_NoAnalysis_Wildcard(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
+                                case ZERO_OR_ONE  -> getResult_InputElements_ZeroOrOne_NoAnalysis_Wildcard(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
                                 case ZERO         -> null; // already excluded
                             };
                         } else {
@@ -138,10 +138,10 @@ public class SequencetypePathOperator {
                     } else {
                         if (analysis == null) {
                             return switch (type.occurence) {
-                                case ONE          -> getResult_SingleGrammar_InputElements_One_NoAnalysis_Elements(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
-                                case ONE_OR_MORE  -> getResult_SingleGrammar_InputElements_OneOrMore_NoAnalysis_Elements(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
-                                case ZERO_OR_MORE -> getResult_SingleGrammar_InputElements_ZeroOrMore_NoAnalysis_Elements(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
-                                case ZERO_OR_ONE  -> getResult_SingleGrammar_InputElements_ZeroOrOne_NoAnalysis_Elements(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
+                                case ONE          -> getResult_InputElements_One_NoAnalysis_Elements(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
+                                case ONE_OR_MORE  -> getResult_InputElements_OneOrMore_NoAnalysis_Elements(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
+                                case ZERO_OR_MORE -> getResult_InputElements_ZeroOrMore_NoAnalysis_Elements(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
+                                case ZERO_OR_ONE  -> getResult_InputElements_ZeroOrOne_NoAnalysis_Elements(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
                                 case ZERO         -> null; // already excluded
                             };
                         } else {
@@ -150,26 +150,48 @@ public class SequencetypePathOperator {
                     }
                 } else { // multigrammar input
                     final ValidateNamesResult validateNamesResult = resolveAndValidateNames(axisElementNames, namespaceResolver);
-                    return switch (type.occurence) {
-                        case ONE          -> getResult_SingleGrammar_InputElements_One_NoAnalysis_Elements(InputStatus.MULTIGRAMMAR, type, axis, validateNamesResult, inputGrammars);
-                        case ONE_OR_MORE  -> getResult_SingleGrammar_InputElements_OneOrMore_NoAnalysis_Elements(InputStatus.MULTIGRAMMAR, type, axis, validateNamesResult, inputGrammars);
-                        case ZERO_OR_MORE -> getResult_SingleGrammar_InputElements_ZeroOrMore_NoAnalysis_Elements(InputStatus.MULTIGRAMMAR, type, axis, validateNamesResult, inputGrammars);
-                        case ZERO_OR_ONE  -> getResult_SingleGrammar_InputElements_ZeroOrOne_NoAnalysis_Elements(InputStatus.MULTIGRAMMAR, type, axis, validateNamesResult, inputGrammars);
-                        case ZERO         -> null; // already excluded
-                    };
+                    if (usesWildcard) {
+                        return switch (type.occurence) {
+                            case ONE          -> getResult_InputElements_One_NoAnalysis_Wildcard(InputStatus.MULTIGRAMMAR, type, axis, validateNamesResult, inputGrammars);
+                            case ONE_OR_MORE  -> getResult_InputElements_OneOrMore_NoAnalysis_WildCard(InputStatus.MULTIGRAMMAR, type, axis, validateNamesResult, inputGrammars);
+                            case ZERO_OR_MORE -> getResult_InputElements_ZeroOrMore_NoAnalysis_Wildcard(InputStatus.MULTIGRAMMAR, type, axis, validateNamesResult, inputGrammars);
+                            case ZERO_OR_ONE  -> getResult_InputElements_ZeroOrOne_NoAnalysis_WildCard(InputStatus.MULTIGRAMMAR, type, axis, validateNamesResult, inputGrammars);
+                            case ZERO         -> null; // already excluded
+                        };
+                    } else {
+                        return switch (type.occurence) {
+                            case ONE          -> getResult_InputElements_One_NoAnalysis_Elements(InputStatus.MULTIGRAMMAR, type, axis, validateNamesResult, inputGrammars);
+                            case ONE_OR_MORE  -> getResult_InputElements_OneOrMore_NoAnalysis_Elements(InputStatus.MULTIGRAMMAR, type, axis, validateNamesResult, inputGrammars);
+                            case ZERO_OR_MORE -> getResult_InputElements_ZeroOrMore_NoAnalysis_Elements(InputStatus.MULTIGRAMMAR, type, axis, validateNamesResult, inputGrammars);
+                            case ZERO_OR_ONE  -> getResult_InputElements_ZeroOrOne_NoAnalysis_Elements(InputStatus.MULTIGRAMMAR, type, axis, validateNamesResult, inputGrammars);
+                            case ZERO         -> null; // already excluded
+                        };
+
+                    }
                 }
 
             }
             case ANY_NODE -> {
                 final ValidateNamesResult validateNamesResult = resolveAndValidateNames(axisElementNames, namespaceResolver);
                 final Map<String, GrammarStatus> inputGrammars = Map.of();
-                return switch (type.occurence) {
-                    case ONE          -> getResult_SingleGrammar_InputElements_One_NoAnalysis_Elements(InputStatus.MULTIGRAMMAR, type, axis, validateNamesResult, inputGrammars);
-                    case ONE_OR_MORE  -> getResult_SingleGrammar_InputElements_OneOrMore_NoAnalysis_Elements(InputStatus.MULTIGRAMMAR, type, axis, validateNamesResult, inputGrammars);
-                    case ZERO_OR_MORE -> getResult_SingleGrammar_InputElements_ZeroOrMore_NoAnalysis_Elements(InputStatus.MULTIGRAMMAR, type, axis, validateNamesResult, inputGrammars);
-                    case ZERO_OR_ONE  -> getResult_SingleGrammar_InputElements_ZeroOrOne_NoAnalysis_Elements(InputStatus.MULTIGRAMMAR, type, axis, validateNamesResult, inputGrammars);
-                    case ZERO         -> null; // already excluded
-                };
+                if (usesWildcard) {
+                    return switch (type.occurence) {
+                        case ONE          -> getResult_InputAny_One_NoAnalysis_Wildcard(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
+                        case ONE_OR_MORE  -> getResult_InputAny_OneOrMore_NoAnalysis_Wildcard(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
+                        case ZERO_OR_MORE -> getResult_InputAny_ZeroOrMore_NoAnalysis_Wildcard(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
+                        case ZERO_OR_ONE  -> getResult_InputAny_ZeroOrOne_NoAnalysis_Wildcard(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
+                        case ZERO         -> null; // already excluded
+                    };
+                } else {
+                    return switch (type.occurence) {
+                        case ONE          -> getResult_InputAny_One_NoAnalysis_Elements(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
+                        case ONE_OR_MORE  -> getResult_InputAny_OneOrMore_NoAnalysis_Elements(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
+                        case ZERO_OR_MORE -> getResult_InputAny_ZeroOrMore_NoAnalysis_Elements(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
+                        case ZERO_OR_ONE  -> getResult_InputAny_ZeroOrOne_NoAnalysis_Elements(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
+                        case ZERO         -> null; // already excluded
+                    };
+
+                }
             }
             case ANY_ARRAY, ANY_FUNCTION, ANY_ITEM, ANY_MAP,
                 ARRAY, BOOLEAN, CHOICE, ENUM, ERROR, EXTENSIBLE_RECORD,
@@ -189,7 +211,460 @@ public class SequencetypePathOperator {
         return null; // unreachable
     }
 
-    private PathOperatorResult getResult_SingleGrammar_InputElements_ZeroOrOne_NoAnalysis_Elements(
+    private PathOperatorResult getResult_InputAny_OneOrMore_NoAnalysis_Elements(
+        InputStatus inputStatus,
+        XQuerySequenceType type,
+        XQueryAxis axis,
+        ValidateNamesResult validateNamesResult,
+        Map<String,GrammarStatus> inputGrammars
+        )
+    {
+        switch(axis) {
+        case ANCESTOR, CHILD, DESCENDANT, FOLLOWING, FOLLOWING_SIBLING, PRECEDING, PRECEDING_SIBLING:
+        case ANCESTOR_OR_SELF, DESCENDANT_OR_SELF, FOLLOWING_OR_SELF, FOLLOWING_SIBLING_OR_SELF, PRECEDING_OR_SELF, PRECEDING_SIBLING_OR_SELF:
+            return new PathOperatorResult(
+                inputStatus,
+                typeFactory.zeroOrMore(typeFactory.itemElement(validateNamesResult.validNames)),
+                inputGrammars,
+                validateNamesResult.grammars,
+                validateNamesResult.invalidNames,
+                validateNamesResult.duplicatedNames,
+                Set.of()
+            );
+        case PARENT:
+        case SELF:
+            return new PathOperatorResult(
+                inputStatus,
+                typeFactory.zeroOrOne(typeFactory.itemElement(validateNamesResult.validNames)),
+                inputGrammars,
+                validateNamesResult.grammars,
+                validateNamesResult.invalidNames,
+                validateNamesResult.duplicatedNames,
+                Set.of()
+            );
+        }
+        return null;
+	}
+
+	private PathOperatorResult getResult_InputAny_One_NoAnalysis_Elements(
+        InputStatus inputStatus,
+        XQuerySequenceType type,
+        XQueryAxis axis,
+        ValidateNamesResult validateNamesResult,
+        Map<String,GrammarStatus> inputGrammars
+        )
+    {
+        switch(axis) {
+        case ANCESTOR, CHILD, DESCENDANT, FOLLOWING, FOLLOWING_SIBLING, PRECEDING, PRECEDING_SIBLING:
+        case ANCESTOR_OR_SELF, DESCENDANT_OR_SELF, FOLLOWING_OR_SELF, FOLLOWING_SIBLING_OR_SELF, PRECEDING_OR_SELF, PRECEDING_SIBLING_OR_SELF:
+            return new PathOperatorResult(
+                inputStatus,
+                typeFactory.zeroOrMore(typeFactory.itemElement(validateNamesResult.validNames)),
+                inputGrammars,
+                validateNamesResult.grammars,
+                validateNamesResult.invalidNames,
+                validateNamesResult.duplicatedNames,
+                Set.of()
+            );
+        case PARENT:
+        case SELF:
+            return new PathOperatorResult(
+                inputStatus,
+                typeFactory.zeroOrOne(typeFactory.itemElement(validateNamesResult.validNames)),
+                inputGrammars,
+                validateNamesResult.grammars,
+                validateNamesResult.invalidNames,
+                validateNamesResult.duplicatedNames,
+                Set.of()
+            );
+        }
+        return null;
+	}
+
+    private PathOperatorResult getResult_InputAny_ZeroOrMore_NoAnalysis_Elements(
+        InputStatus inputStatus,
+        XQuerySequenceType type,
+        XQueryAxis axis,
+        ValidateNamesResult validateNamesResult,
+        Map<String,GrammarStatus> inputGrammars
+        )
+    {
+        return new PathOperatorResult(
+            inputStatus,
+            typeFactory.zeroOrMore(typeFactory.itemElement(validateNamesResult.validNames)),
+            inputGrammars,
+            validateNamesResult.grammars,
+            validateNamesResult.invalidNames,
+            validateNamesResult.duplicatedNames,
+            Set.of()
+        );
+	}
+
+	private PathOperatorResult getResult_InputAny_ZeroOrOne_NoAnalysis_Wildcard(
+        final InputStatus inputStatus,
+        final XQuerySequenceType type,
+        final XQueryAxis axis,
+        final ValidateNamesResult validateNamesResult,
+        final Map<String,GrammarStatus> inputGrammars
+        )
+    {
+        switch(axis) {
+        case ANCESTOR, CHILD, DESCENDANT, FOLLOWING, FOLLOWING_SIBLING, PRECEDING, PRECEDING_SIBLING:
+        case ANCESTOR_OR_SELF, DESCENDANT_OR_SELF, FOLLOWING_OR_SELF, FOLLOWING_SIBLING_OR_SELF, PRECEDING_OR_SELF, PRECEDING_SIBLING_OR_SELF:
+        case PARENT:
+            return new PathOperatorResult(
+                inputStatus,
+                zeroOrMoreNodes,
+                inputGrammars,
+                Map.of(),
+                validateNamesResult.invalidNames,
+                validateNamesResult.duplicatedNames,
+                Set.of()
+            );
+        case SELF:
+            return new PathOperatorResult(
+                inputStatus,
+                type,
+                inputGrammars,
+                Map.of(),
+                validateNamesResult.invalidNames,
+                validateNamesResult.duplicatedNames,
+                Set.of()
+            );
+        }
+        return null;
+	}
+
+	private PathOperatorResult getResult_InputAny_ZeroOrMore_NoAnalysis_Wildcard(
+        InputStatus inputStatus,
+        XQuerySequenceType type,
+        XQueryAxis axis,
+        ValidateNamesResult validateNamesResult,
+        Map<String,GrammarStatus> inputGrammars
+        )
+    {
+        final var elementGrammars = validateNamesResult.grammars;
+        switch(axis) {
+        case ANCESTOR, CHILD, DESCENDANT, FOLLOWING, FOLLOWING_SIBLING, PRECEDING, PRECEDING_SIBLING:
+        case ANCESTOR_OR_SELF, DESCENDANT_OR_SELF, FOLLOWING_OR_SELF, FOLLOWING_SIBLING_OR_SELF, PRECEDING_OR_SELF, PRECEDING_SIBLING_OR_SELF:
+        case PARENT:
+            return new PathOperatorResult(
+                inputStatus,
+                zeroOrMoreNodes,
+                inputGrammars,
+                elementGrammars,
+                validateNamesResult.invalidNames,
+                validateNamesResult.duplicatedNames,
+                Set.of()
+            );
+        case SELF:
+            return new PathOperatorResult(
+                inputStatus,
+                type,
+                inputGrammars,
+                elementGrammars,
+                validateNamesResult.invalidNames,
+                validateNamesResult.duplicatedNames,
+                Set.of()
+            );
+        }
+        return null;
+	}
+
+	private PathOperatorResult getResult_InputAny_OneOrMore_NoAnalysis_Wildcard(
+        InputStatus inputStatus,
+        XQuerySequenceType type,
+		XQueryAxis axis,
+        ValidateNamesResult validateNamesResult,
+        Map<String,GrammarStatus> inputGrammars)
+    {
+        final var elementGrammars = validateNamesResult.grammars;
+        switch(axis) {
+        case ANCESTOR, CHILD, DESCENDANT, FOLLOWING, FOLLOWING_SIBLING, PRECEDING, PRECEDING_SIBLING:
+            return new PathOperatorResult(
+                inputStatus,
+                zeroOrMoreNodes,
+                inputGrammars,
+                elementGrammars,
+                validateNamesResult.invalidNames,
+                validateNamesResult.duplicatedNames,
+                Set.of()
+            );
+        case ANCESTOR_OR_SELF, DESCENDANT_OR_SELF, FOLLOWING_OR_SELF, FOLLOWING_SIBLING_OR_SELF, PRECEDING_OR_SELF, PRECEDING_SIBLING_OR_SELF:
+            return new PathOperatorResult(
+                inputStatus,
+                oneOrMoreNodes,
+                inputGrammars,
+                elementGrammars,
+                validateNamesResult.invalidNames,
+                validateNamesResult.duplicatedNames,
+                Set.of()
+            );
+        case PARENT:
+            return new PathOperatorResult(
+                inputStatus,
+                zeroOrOneNode,
+                inputGrammars,
+                elementGrammars,
+                validateNamesResult.invalidNames,
+                validateNamesResult.duplicatedNames,
+                Set.of()
+            );
+        case SELF:
+            return new PathOperatorResult(
+                inputStatus,
+                type,
+                inputGrammars,
+                elementGrammars,
+                validateNamesResult.invalidNames,
+                validateNamesResult.duplicatedNames,
+                Set.of()
+            );
+        }
+        return null;
+	}
+
+	private PathOperatorResult getResult_InputAny_One_NoAnalysis_Wildcard(
+        final InputStatus inputStatus,
+        final XQuerySequenceType type,
+        final XQueryAxis axis,
+        final ValidateNamesResult validateNamesResult,
+        final Map<String,GrammarStatus> inputGrammars)
+    {
+        final var elementGrammars = validateNamesResult.grammars;
+        switch(axis) {
+        case ANCESTOR, CHILD, DESCENDANT, FOLLOWING, FOLLOWING_SIBLING, PRECEDING, PRECEDING_SIBLING:
+            return new PathOperatorResult(
+                inputStatus,
+                zeroOrMoreNodes,
+                inputGrammars,
+                elementGrammars,
+                validateNamesResult.invalidNames,
+                validateNamesResult.duplicatedNames,
+                Set.of()
+            );
+        case ANCESTOR_OR_SELF, DESCENDANT_OR_SELF, FOLLOWING_OR_SELF, FOLLOWING_SIBLING_OR_SELF, PRECEDING_OR_SELF, PRECEDING_SIBLING_OR_SELF:
+            return new PathOperatorResult(
+                inputStatus,
+                oneOrMoreNodes,
+                inputGrammars,
+                elementGrammars,
+                validateNamesResult.invalidNames,
+                validateNamesResult.duplicatedNames,
+                Set.of()
+            );
+        case PARENT:
+            return new PathOperatorResult(
+                inputStatus,
+                zeroOrOneNode,
+                inputGrammars,
+                elementGrammars,
+                validateNamesResult.invalidNames,
+                validateNamesResult.duplicatedNames,
+                Set.of()
+            );
+        case SELF:
+            return new PathOperatorResult(
+                inputStatus,
+                type,
+                inputGrammars,
+                elementGrammars,
+                validateNamesResult.invalidNames,
+                validateNamesResult.duplicatedNames,
+                Set.of()
+            );
+        }
+        return null;
+	}
+
+	private PathOperatorResult getResult_InputElements_ZeroOrOne_NoAnalysis_WildCard(final InputStatus inputStatus,
+			final XQuerySequenceType type, final XQueryAxis axis, final ValidateNamesResult validateNamesResult,
+			final Map<String,GrammarStatus> inputGrammars)
+    {
+        final var elementGrammars = validateNamesResult.grammars;
+        switch(axis) {
+        case ANCESTOR, CHILD, DESCENDANT, FOLLOWING, FOLLOWING_SIBLING, PRECEDING, PRECEDING_SIBLING:
+        case ANCESTOR_OR_SELF, DESCENDANT_OR_SELF, FOLLOWING_OR_SELF, FOLLOWING_SIBLING_OR_SELF, PRECEDING_OR_SELF, PRECEDING_SIBLING_OR_SELF:
+            return new PathOperatorResult(
+                inputStatus,
+                zeroOrMoreNodes,
+                inputGrammars,
+                elementGrammars,
+                validateNamesResult.invalidNames,
+                validateNamesResult.duplicatedNames,
+                Set.of()
+            );
+        case PARENT:
+            return new PathOperatorResult(
+                inputStatus,
+                zeroOrOneNode,
+                inputGrammars,
+                elementGrammars,
+                validateNamesResult.invalidNames,
+                validateNamesResult.duplicatedNames,
+                Set.of()
+            );
+        case SELF:
+            return new PathOperatorResult(
+                inputStatus,
+                type,
+                inputGrammars,
+                elementGrammars,
+                validateNamesResult.invalidNames,
+                validateNamesResult.duplicatedNames,
+                Set.of()
+            );
+        }
+        return null; // unreachable
+    }
+
+
+	private PathOperatorResult getResult_InputElements_OneOrMore_NoAnalysis_WildCard(
+        final InputStatus inputStatus,
+        final XQuerySequenceType type, final XQueryAxis axis, final ValidateNamesResult validateNamesResult,
+        final Map<String,GrammarStatus> inputGrammars)
+    {
+        switch(axis) {
+        case ANCESTOR_OR_SELF, DESCENDANT_OR_SELF, FOLLOWING_OR_SELF, FOLLOWING_SIBLING_OR_SELF, PRECEDING_OR_SELF, PRECEDING_SIBLING_OR_SELF:
+            return new PathOperatorResult(
+                inputStatus,
+                oneOrMoreNodes,
+                inputGrammars,
+                validateNamesResult.grammars,
+                validateNamesResult.invalidNames,
+                validateNamesResult.duplicatedNames,
+                Set.of()
+            );
+        case ANCESTOR, CHILD, DESCENDANT, FOLLOWING, FOLLOWING_SIBLING, PRECEDING, PRECEDING_SIBLING:
+        case PARENT:
+            return new PathOperatorResult(
+                inputStatus,
+                zeroOrMoreNodes,
+                inputGrammars,
+                validateNamesResult.grammars,
+                validateNamesResult.invalidNames,
+                validateNamesResult.duplicatedNames,
+                Set.of()
+            );
+        case SELF:
+            return new PathOperatorResult(
+                inputStatus,
+                type,
+                inputGrammars,
+                validateNamesResult.grammars,
+                validateNamesResult.invalidNames,
+                validateNamesResult.duplicatedNames,
+                Set.of()
+            );
+        }
+        return null;//unreachable
+
+	}
+
+	private PathOperatorResult getResult_InputAny_ZeroOrOne_NoAnalysis_Elements(
+        final InputStatus inputStatus,
+        final XQuerySequenceType type,
+        final XQueryAxis axis,
+        final ValidateNamesResult validateNamesResult,
+        final Map<String,GrammarStatus> inputGrammars)
+    {
+        switch(axis) {
+        case ANCESTOR, CHILD, DESCENDANT, FOLLOWING, FOLLOWING_SIBLING, PRECEDING, PRECEDING_SIBLING:
+        case ANCESTOR_OR_SELF, DESCENDANT_OR_SELF, FOLLOWING_OR_SELF, FOLLOWING_SIBLING_OR_SELF, PRECEDING_OR_SELF, PRECEDING_SIBLING_OR_SELF:
+            return new PathOperatorResult(
+                inputStatus,
+                typeFactory.zeroOrMore(typeFactory.itemElement(validateNamesResult.validNames)),
+                inputGrammars,
+                validateNamesResult.grammars,
+                validateNamesResult.invalidNames,
+                validateNamesResult.duplicatedNames,
+                Set.of()
+            );
+        case PARENT:
+            return new PathOperatorResult(
+                inputStatus,
+                typeFactory.zeroOrOne(typeFactory.itemElement(validateNamesResult.validNames)),
+                inputGrammars,
+                validateNamesResult.grammars,
+                validateNamesResult.invalidNames,
+                validateNamesResult.duplicatedNames,
+                Set.of()
+            );
+        case SELF:
+            final var constrainedNames = new HashSet<>(validateNamesResult.validNames);
+            final XQuerySequenceType constrainedType = constrainedNames.size() > 0
+                ? typeFactory.zeroOrOne(typeFactory.itemElement(constrainedNames))
+                : emptySequence;
+            // XQuerySequenceType selfType = typeFactory.
+            return new PathOperatorResult(
+                inputStatus,
+                constrainedType,
+                inputGrammars,
+                validateNamesResult.grammars,
+                validateNamesResult.invalidNames,
+                validateNamesResult.duplicatedNames,
+                Set.of()
+            );
+        }
+        return null;//unreachable
+    }
+
+
+    private PathOperatorResult getResult_InputElements_ZeroOrMore_NoAnalysis_Elements(
+        final InputStatus inputStatus,
+        final XQuerySequenceType type,
+        final XQueryAxis axis,
+        final ValidateNamesResult validateNamesResult,
+        final Map<String,GrammarStatus> inputGrammars
+        )
+    {
+        switch(axis) {
+        case ANCESTOR, CHILD, DESCENDANT, FOLLOWING, FOLLOWING_SIBLING, PRECEDING, PRECEDING_SIBLING:
+        case ANCESTOR_OR_SELF, DESCENDANT_OR_SELF, FOLLOWING_OR_SELF, FOLLOWING_SIBLING_OR_SELF, PRECEDING_OR_SELF, PRECEDING_SIBLING_OR_SELF:
+            return new PathOperatorResult(
+                inputStatus,
+                typeFactory.zeroOrMore(typeFactory.itemElement(validateNamesResult.validNames)),
+                inputGrammars,
+                validateNamesResult.grammars,
+                validateNamesResult.invalidNames,
+                validateNamesResult.duplicatedNames,
+                Set.of()
+            );
+        case PARENT:
+            return new PathOperatorResult(
+                inputStatus,
+                typeFactory.oneOrMore(typeFactory.itemElement(validateNamesResult.validNames)),
+                inputGrammars,
+                validateNamesResult.grammars,
+                validateNamesResult.invalidNames,
+                validateNamesResult.duplicatedNames,
+                Set.of()
+            );
+        case SELF:
+            final var unreachableNames = new HashSet<>(type.itemType.elementNames);
+            unreachableNames.removeAll(validateNamesResult.validNames);
+            final var constrainedNames = new HashSet<>(type.itemType.elementNames);
+            constrainedNames.removeAll(unreachableNames);
+            final XQuerySequenceType constrainedType = constrainedNames.size() > 0
+                ? typeFactory.zeroOrMore(typeFactory.itemElement(constrainedNames))
+                : emptySequence;
+            return new PathOperatorResult(
+                inputStatus,
+                constrainedType,
+                inputGrammars,
+                validateNamesResult.grammars,
+                validateNamesResult.invalidNames,
+                validateNamesResult.duplicatedNames,
+                unreachableNames
+            );
+        }
+        return null;//unreachable
+    }
+
+
+
+
+    private PathOperatorResult getResult_InputElements_ZeroOrOne_NoAnalysis_Elements(
         final InputStatus inputStatus,
         final XQuerySequenceType type,
         final XQueryAxis axis,
@@ -239,58 +714,8 @@ public class SequencetypePathOperator {
         }
         return null;//unreachable
     }
-    private PathOperatorResult getResult_SingleGrammar_InputElements_ZeroOrMore_NoAnalysis_Elements(
-        final InputStatus inputStatus,
-        final XQuerySequenceType type,
-        final XQueryAxis axis,
-        final ValidateNamesResult validateNamesResult,
-        final Map<String,GrammarStatus> inputGrammars
-        )
-    {
-        switch(axis) {
-        case ANCESTOR, CHILD, DESCENDANT, FOLLOWING, FOLLOWING_SIBLING, PRECEDING, PRECEDING_SIBLING:
-        case ANCESTOR_OR_SELF, DESCENDANT_OR_SELF, FOLLOWING_OR_SELF, FOLLOWING_SIBLING_OR_SELF, PRECEDING_OR_SELF, PRECEDING_SIBLING_OR_SELF:
-            return new PathOperatorResult(
-                inputStatus,
-                typeFactory.zeroOrMore(typeFactory.itemElement(validateNamesResult.validNames)),
-                inputGrammars,
-                validateNamesResult.grammars,
-                validateNamesResult.invalidNames,
-                validateNamesResult.duplicatedNames,
-                Set.of()
-            );
-        case PARENT:
-            return new PathOperatorResult(
-                inputStatus,
-                typeFactory.oneOrMore(typeFactory.itemElement(validateNamesResult.validNames)),
-                inputGrammars,
-                validateNamesResult.grammars,
-                validateNamesResult.invalidNames,
-                validateNamesResult.duplicatedNames,
-                Set.of()
-            );
-        case SELF:
-            final var unreachableNames = new HashSet<>(type.itemType.elementNames);
-            unreachableNames.removeAll(validateNamesResult.validNames);
-            final var constrainedNames = new HashSet<>(type.itemType.elementNames);
-            constrainedNames.removeAll(unreachableNames);
-            final XQuerySequenceType constrainedType = constrainedNames.size() > 0
-                ? typeFactory.zeroOrMore(typeFactory.itemElement(constrainedNames))
-                : emptySequence;
-            return new PathOperatorResult(
-                inputStatus,
-                constrainedType,
-                inputGrammars,
-                validateNamesResult.grammars,
-                validateNamesResult.invalidNames,
-                validateNamesResult.duplicatedNames,
-                unreachableNames
-            );
-        }
-        return null;//unreachable
-    }
 
-    private PathOperatorResult getResult_SingleGrammar_InputElements_OneOrMore_NoAnalysis_Elements(
+    private PathOperatorResult getResult_InputElements_OneOrMore_NoAnalysis_Elements(
         final InputStatus inputStatus,
         final XQuerySequenceType type,
         final XQueryAxis axis,
@@ -339,7 +764,7 @@ public class SequencetypePathOperator {
         return null;//unreachable
     }
 
-    private PathOperatorResult getResult_SingleGrammar_InputElements_One_NoAnalysis_Elements(
+    private PathOperatorResult getResult_InputElements_One_NoAnalysis_Elements(
         final InputStatus inputStatus,
         final XQuerySequenceType type,
         final XQueryAxis axis,
@@ -362,7 +787,7 @@ public class SequencetypePathOperator {
         case ANCESTOR_OR_SELF, DESCENDANT_OR_SELF, FOLLOWING_OR_SELF, FOLLOWING_SIBLING_OR_SELF, PRECEDING_OR_SELF, PRECEDING_SIBLING_OR_SELF:
             return new PathOperatorResult(
                 inputStatus,
-                typeFactory.oneOrMore(typeFactory.itemElement(validateNamesResult.validNames)),
+                typeFactory.zeroOrMore(typeFactory.itemElement(validateNamesResult.validNames)),
                 inputGrammars,
                 elementGrammars,
                 validateNamesResult.invalidNames,
@@ -530,7 +955,7 @@ public class SequencetypePathOperator {
         return new AnalyzedAxisResult(resultingCardinality, possibleNames, Set.of());
     }
 
-    private PathOperatorResult getResult_SingleGrammar_InputElements_ZeroOrOne_NoAnalysis_Wildcard(
+    private PathOperatorResult getResult_InputElements_ZeroOrOne_NoAnalysis_Wildcard(
         final InputStatus inputStatus,
         final XQuerySequenceType type,
         final XQueryAxis axis,
@@ -574,7 +999,7 @@ public class SequencetypePathOperator {
         return null;//unreachable
     }
 
-    private PathOperatorResult getResult_SingleGrammar_InputElements_ZeroOrMore_NoAnalysis_Wildcard(
+    private PathOperatorResult getResult_InputElements_ZeroOrMore_NoAnalysis_Wildcard(
         final InputStatus inputStatus,
         final XQuerySequenceType type,
         final XQueryAxis axis,
@@ -585,15 +1010,6 @@ public class SequencetypePathOperator {
         switch(axis) {
         case ANCESTOR, CHILD, DESCENDANT, FOLLOWING, FOLLOWING_SIBLING, PRECEDING, PRECEDING_SIBLING:
         case ANCESTOR_OR_SELF, DESCENDANT_OR_SELF, FOLLOWING_OR_SELF, FOLLOWING_SIBLING_OR_SELF, PRECEDING_OR_SELF, PRECEDING_SIBLING_OR_SELF:
-            return new PathOperatorResult(
-                inputStatus,
-                zeroOrMoreNodes,
-                inputGrammars,
-                validateNamesResult.grammars,
-                validateNamesResult.invalidNames,
-                validateNamesResult.duplicatedNames,
-                Set.of()
-            );
         case PARENT:
             return new PathOperatorResult(
                 inputStatus,
@@ -618,7 +1034,7 @@ public class SequencetypePathOperator {
         return null;//unreachable
     }
 
-    private PathOperatorResult getResult_SingleGrammar_InputElements_OneOrMore_NoAnalysis_Wildcard(
+    private PathOperatorResult getResult_InputElements_OneOrMore_NoAnalysis_Wildcard(
         final InputStatus inputStatus,
         final XQuerySequenceType type,
         final XQueryAxis axis,
@@ -661,7 +1077,7 @@ public class SequencetypePathOperator {
         return null;//unreachable
     }
 
-    private PathOperatorResult getResult_SingleGrammar_InputElements_One_NoAnalysis_Wildcard(
+    private PathOperatorResult getResult_InputElements_One_NoAnalysis_Wildcard(
         final InputStatus inputStatus,
         final XQuerySequenceType type,
         final XQueryAxis axis,
@@ -718,7 +1134,7 @@ public class SequencetypePathOperator {
     private GrammarStatus getGrammarStatus(final String grammar)
     {
         GrammarStatus grammarStatus = null;
-        if (!("".equals(grammar))) {
+        if ("".equals(grammar)) {
             grammarStatus = GrammarStatus.UNCHECKED;
         }
         else if (!symbolManager.grammarExists(grammar)) {

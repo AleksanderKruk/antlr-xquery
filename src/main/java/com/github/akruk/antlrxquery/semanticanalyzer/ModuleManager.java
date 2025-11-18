@@ -19,10 +19,10 @@ public class ModuleManager {
     private final Set<Path> modulePaths;
     private final Map<Path, XqueryContext> trees;
 
-    enum ImportStatus {
+    public enum ImportStatus {
         OK, MANY_VALID_PATHS, NO_PATH_FOUND, DUPLICATE_IMPORT
     }
-    enum ResolvingStatus {
+    public enum ResolvingStatus {
         OK, FOUND_OTHER_THAN_FILE, UNREADABLE, FILE_ALREADY_IMPORTED
     }
     public record ImportResult(

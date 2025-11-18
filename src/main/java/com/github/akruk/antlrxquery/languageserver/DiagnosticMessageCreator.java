@@ -1,10 +1,20 @@
 package com.github.akruk.antlrxquery.languageserver;
 
 
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
+import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticWarning;
+import com.github.akruk.antlrxquery.semanticanalyzer.GrammarManager.GrammarImportResult;
+import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager.ImportResult;
+import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager.ResolvingStatus;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypePathOperator.GrammarStatus;
 
 public class DiagnosticMessageCreator {
     public String create(final DiagnosticError error) {
@@ -241,13 +251,10 @@ public class DiagnosticMessageCreator {
             case NODE_COMP__RHS_INVALID -> {
                 return String.format("Operands of node comparison must be of type 'node()?'\n\tinvalid right: %s", error.data().get(0));
             }
-            case NODE_TEST__LHS_INVALID -> {
+            case PATH_OPERATOR__NOT_SEQUENCE_OF_NODES -> {
                 return String.format("Path expression requires left hand side argument to be of type node()*\n\tfound: %s", error.data().get(0));
             }
-            case NODE_TEST__RHS_INVALID -> {
-                return "Node test requires node()*\n\treceived: " + error.data().get(0);
-            }
-            case NODE_TEST__UNRECOGNIZED_RULE_NAMES -> {
+            case PATH_OPERATOR__UNRECOGNIZED_RULE_NAMES -> {
                 final Object joinedNames = error.data().get(0);
                 return "Path expression references unrecognized rule names: " + joinedNames;
             }
@@ -438,8 +445,236 @@ public class DiagnosticMessageCreator {
                 final var i = error.data().get(0);
                 return "Unterminated character reference at " + i;
             }
+
+
+            case RECORD_DECLARATION__INVALID_NAMESPACE -> {
+                var namespace = error.data().get(0);
+                var expectedNamespace = error.data().get(1);
+                return "Record declared in module must be in module's namespace"
+                        + "\n    expected namespace: " + expectedNamespace
+                        + "\n    found namespace   : " + namespace;
+            }
+
+            case RECORD_DECLARATION__ALREADY_REGISTERED_BY_NAME -> {
+                // TODO: add location with file tracking
+                var name = error.data().get(0);
+                // var r1 = error.data().get(1);
+                // var r2 = error.data().get(2);
+                return "Record '"+name+"' already exists";
+            }
+
+            case RECORD_DECLARATION__DUPLICATE_FIELD_NAME -> {
+                var name = error.data().get(0);
+                // var r1 = error.data().get(1);
+                // var r2 = error.data().get(2);
+                return "Field name '"+name+"' used multiple times";
+            }
+
+            case RECORD_DECLARATION__USED_RESERVED_NAME -> {
+                return "Record must not have the name of a built in type";
+            }
+
+            case FUNCTION__INVALID_NAMESPACE -> {
+                var namespace = error.data().get(0);
+                var expectedNamespace = error.data().get(1);
+                return "Function declared in module must be in module's namespace"
+                        + "\n    expected namespace: " + expectedNamespace
+                        + "\n    found namespace   : " + namespace;
+
+            }
+
+
+            case FUNCTION__USED_RESERVED_NAME -> {
+                return "Function must not have the name of a built in type";
+            }
+
+            case NAMESPACE_DECL__INVALID_PREFIX -> {
+                var namespace = error.data().get(0);
+                var expectedNamespace = error.data().get(1);
+                return "Namespace declared in a module must be in module's namespace"
+                        + "\n    expected namespace: " + expectedNamespace
+                        + "\n    found namespace   : " + namespace;
+            }
+
+            case NAMESPACE_DECL__NAMESPACE_REDECLARATION -> {
+                // TODO: add location
+                var name = error.data().get(0);
+                return "Namespace '"+ name + "' has already beend declared";
+            }
+
+            case ITEM_DECLARATION__ALREADY_REGISTERED_BY_NAME -> {
+                // TODO: add location with file tracking
+                var name = error.data().get(0);
+                // var r1 = error.data().get(1);
+                // var r2 = error.data().get(2);
+                return "Item type '"+name+"' already exists";
+            }
+
+            case NAMED_TYPES__RECORD_ITEM_TYPE_CROSS_REFERENCE -> {
+                // TODO: add location with file tracking
+                var name = error.data().get(0);
+                // var r1 = error.data().get(1);
+                // var r2 = error.data().get(2);
+                return "Type '"+name+"' is declared both as a record and as a type";
+            }
+
+            case MODULE_DECL__NAMESPACE_ALREADY_DECLARED -> {
+                // TODO: add location with file tracking
+                var name = error.data().get(0);
+                return "Module namespace '" + name + "' has already been declared";
+            }
+
+            case CONTEXT_VALUE_DECL__MULTIPLE_DECLARATIONS -> {
+                return "There can only be one context value declaration";
+            }
+            case CONTEXT_VALUE_DECL__NOT_IN_MAIN_MODULE -> {
+                return "Context value declaration in module is forbidden";
+            }
+            case CONTEXT_VALUE_DECL__UNCOERSABLE -> {
+                var defaultValueType = error.data().get(0);
+                var declaredType = error.data().get(0);
+                return "Value of type: " + defaultValueType
+                        + "\n    cannot be coerced to type: " + declaredType;
+            }
+            case PATH_OPERATOR__FOUND_UNREGISTERED_GRAMMARS -> {
+                var inputType = error.data().get(0);
+                @SuppressWarnings("unchecked")
+                Map<String, GrammarStatus> invalidInputGrammars = (Map<String, GrammarStatus>) error.data().get(1);
+                StringBuilder sb = new StringBuilder();
+                sb.append("Found unregistered grammars in path expression:");
+                sb.append("    type: " + inputType);
+                for (var g : invalidInputGrammars.keySet()) {
+                    sb.append("\n    " );
+                    sb.append(g);
+                }
+            }
+
+            case DEFAULT_NAMESPACE_DECL__MULTIPLE_ANNOTATION_NAMESPACE_DECLARATIONS -> {
+                return "There can be only one default annotation namespace declaration";
+            }
+            case DEFAULT_NAMESPACE_DECL__MULTIPLE_CONSTRUCTION_NAMESPACE_DECLARATIONS -> {
+                return "There can be only one default construction namespace declaration";
+            }
+            case DEFAULT_NAMESPACE_DECL__MULTIPLE_ELEMENT_NAMESPACE_DECLARATIONS -> {
+                return "There can be only one default element namespace declaration";
+            }
+            case DEFAULT_NAMESPACE_DECL__MULTIPLE_FUNCTION_NAMESPACE_DECLARATIONS -> {
+                return "There can be only one default function namespace declaration";
+            }
+            case DEFAULT_NAMESPACE_DECL__MULTIPLE_TYPE_NAMESPACE_DECLARATIONS -> {
+                return "There can be only one default type namespace declaration";
+            }
+            case GRAMMAR_IMPORT__GRAMMAR_ALREADY_REGISTERED -> {
+                // TODO: location
+                var grammarName = error.data().get(0);
+                return "Grammar '"+grammarName+"' has already been registered";
+            }
+            case GRAMMAR_IMPORT__MANY_VALID_PATHS -> {
+                var importResult = (GrammarImportResult)error.data().get(0);
+                var sb = new StringBuilder("There are many paths that match the import:");
+                for (int i = 0; i < importResult.resolvedPaths().size(); i++) {
+                    sb.append(importResult.resolvedPaths().get(i));
+                    sb.append(": ");
+                    sb.append(importResult.resolvingStatuses().get(i));
+                }
+                return sb.toString();
+            }
+            case GRAMMAR_IMPORT__NO_LEXER -> {
+                var importResult = (GrammarImportResult)error.data().get(0);
+                var sb = new StringBuilder("No lexer file resolved bn import:");
+                for (int i = 0; i < importResult.resolvedPaths().size(); i++) {
+                    sb.append(importResult.resolvedPaths().get(i));
+                    sb.append(": ");
+                    sb.append(importResult.resolvingStatuses().get(i));
+                }
+                return sb.toString();
+
+            }
+            case GRAMMAR_IMPORT__NO_PARSER -> {
+                var importResult = (GrammarImportResult)error.data().get(0);
+                var sb = new StringBuilder("No parser file resolved in import:");
+                for (int i = 0; i < importResult.resolvedPaths().size(); i++) {
+                    sb.append(importResult.resolvedPaths().get(i));
+                    sb.append(": ");
+                    sb.append(importResult.resolvingStatuses().get(i));
+                }
+                return sb.toString();
+
+            }
+            case GRAMMAR_IMPORT__NEITHER_FOUND -> {
+                var importResult = (GrammarImportResult)error.data().get(0);
+                var sb = new StringBuilder("No valid file resolved in import:");
+                for (int i = 0; i < importResult.resolvedPaths().size(); i++) {
+                    sb.append(importResult.resolvedPaths().get(i));
+                    sb.append(": ");
+                    sb.append(importResult.resolvingStatuses().get(i));
+                }
+                return sb.toString();
+
+            }
+
+            case IMPORT_MODULE__DUPLICATE_IMPORT_BY_NAMESPACE -> {
+                // TODO: add separate error for duplicated import itself
+                var namespace = error.data().get(0);
+                return "Module '"+namespace+"'' has already been declared";
+            }
+
+
+            case IMPORT_MODULE__DUPLICATE_IMPORT_BY_PATH -> {
+                ImportResult result = (ImportResult) error.data().get(0);
+                StringBuilder sb = new StringBuilder("Module import has duplicated path imports");
+                for (int i = 0; i < result.resolvingStatuses().size(); i++) {
+                    var status = result.resolvingStatuses().get(i);
+                    var path = result.resolvedPaths().get(i);
+                    switch(status) {
+                    case FILE_ALREADY_IMPORTED:
+                        sb.append("\n    ");
+                        sb.append(path);
+                        break;
+                    case FOUND_OTHER_THAN_FILE, OK, UNREADABLE:
+                    }
+
+                }
+
+            }
+            case IMPORT_MODULE__IMPORTED_MAIN_MODULE -> {
+                ImportResult result = (ImportResult) error.data().get(0);
+                Path main = IntStream.range(0, result.resolvingStatuses().size())
+                    .filter(i->result.resolvingStatuses().get(i) == ResolvingStatus.OK)
+                    .mapToObj(i->result.resolvedPaths().get(i))
+                    .findFirst().get()
+                    ;
+                return "Imported file '"+main+"' is a main module";
+
+            }
+            case ITEM_DECLARATION__INVALID_NAMESPACE -> {
+                var namespace = error.data().get(0);
+                var expectedNamespace = error.data().get(1);
+                return "Item type declared in module must be in module's namespace"
+                        + "\n    expected namespace: " + expectedNamespace
+                        + "\n    found namespace   : " + namespace;
+
+            }
+            case ITEM_DECLARATION__USED_RESERVED_NAME -> {
+                return "Item type must not have the name of a built in type";
+            }
+
+            case PATH_OPERATOR__MULTIGRAMMAR -> {
+                var inputType = error.data().get(0);
+                StringBuilder sb = new StringBuilder();
+                sb.append("Path expression contains many grammars");
+                sb.append("    type: " + inputType);
+                @SuppressWarnings("unchecked")
+                Map<String, GrammarStatus> invalidInputGrammars = (Map<String, GrammarStatus>)error.data().get(1);
+                for (var g : invalidInputGrammars.keySet()) {
+                    sb.append("\n    " );
+                    sb.append(g);
+                }
+
+            }
+
         }
-        return null;
+        return error.toString();
 
     }
 
@@ -496,8 +731,15 @@ public class DiagnosticMessageCreator {
         case LOOKUP__TARGET_EMPTY: {
             return "Target type of lookup expression is an empty sequence";
         }
-        case NODE_TEST__DUPLICATED_NAME: {
+        case PATH_OPERATOR__DUPLICATED_NAME: {
 
+        @SuppressWarnings("unchecked")
+        var invalidNames = (Set<QualifiedName>)warning.data().get(0);
+        final String joinedNames = invalidNames
+            .stream()
+            .map(QualifiedName::toString)
+            .collect(Collectors.joining("\n    "));
+            return "Path expression contains duplicated names:\n" + joinedNames;
         }
         case OTHERWISE__IMPOSSIBLE: {
             return String.format("Unnecessary otherwise expression\n\ttype: %s can never be an empty sequence", warning.data().get(0));
@@ -509,7 +751,7 @@ public class DiagnosticMessageCreator {
             return String.format("Unlikely treat expression\n\ta: %s\n\tb: %s", warning.data().get(0), warning.data().get(1))
                 ;
         }
-        return null;
+        return warning.toString();
 
     }
 

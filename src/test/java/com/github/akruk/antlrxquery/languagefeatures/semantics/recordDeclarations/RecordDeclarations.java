@@ -9,13 +9,45 @@ public class RecordDeclarations extends SemanticTestsBase {
     void unorderedDeclarations() {
         assertType("""
             module m;
-            declare record A(b as B);
-            declare record B(a as string);
-
+            declare record m:A(b as m:B);
+            declare record m:B(a as string);
                 """, null);
 
     }
 
+    @Test
+    void selfRecursion() {
+        assertType("""
+            module m;
+            declare record m:A(a as m:A);
+                """, null);
+
+    }
+
+    @Test
+    void indirectRecursion() {
+        assertType("""
+            module m;
+            declare record m:A(a as m:B);
+            declare record m:B(a as m:A?);
+                """, null);
+        assertType("""
+            module m;
+            declare record m:A(a as m:B);
+            declare record m:B(a as m:A*);
+                """, null);
+        // assertErrors("""
+        //     module m;
+        //     declare record m:A(a as m:B);
+        //     declare record m:B(a as m:A);
+        //         """);
+        // assertErrors("""
+        //     module m;
+        //     declare record m:A(a as m:B);
+        //     declare record m:B(a as m:A+);
+        //         """);
+
+    }
     // @Test
     // void many() {
     //     assertType("""

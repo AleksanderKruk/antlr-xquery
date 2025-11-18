@@ -1,6 +1,7 @@
 package com.github.akruk.antlrxquery.typesystem;
 
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryCardinality;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
@@ -13,14 +14,15 @@ public record XQueryRecordField(TypeOrReference typeOrReference, boolean isRequi
     public static record TypeOrReference(
         FieldType fieldType,
         XQuerySequenceType type,
-        QualifiedName reference
+        QualifiedName reference,
+        XQueryCardinality referenceCardinality
     ) {
         public static TypeOrReference type(XQuerySequenceType type) {
-            return new TypeOrReference(FieldType.TYPE, type, null);
+            return new TypeOrReference(FieldType.TYPE, type, null, null);
         }
 
-        public static TypeOrReference reference(QualifiedName reference) {
-            return new TypeOrReference(FieldType.REFERENCE, null, reference);
+        public static TypeOrReference reference(QualifiedName reference, XQueryCardinality cardinality) {
+            return new TypeOrReference(FieldType.REFERENCE, null, reference, cardinality);
         }
 
 
@@ -45,7 +47,7 @@ public record XQueryRecordField(TypeOrReference typeOrReference, boolean isRequi
                 if (isRequired) {
                     yield typeOrReference.reference.toString();
                 } else {
-                    yield typeOrReference.reference + "?";
+                    yield typeOrReference.reference + typeOrReference.referenceCardinality.occurenceSuffix();
                 }
             }
             case TYPE -> {

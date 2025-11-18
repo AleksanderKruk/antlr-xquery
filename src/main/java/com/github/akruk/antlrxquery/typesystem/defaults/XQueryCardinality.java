@@ -7,7 +7,7 @@ public enum XQueryCardinality {
     ONE_OR_MORE,
     ZERO_OR_MORE;
 
-    String occurenceSuffix() {
+    public String occurenceSuffix() {
         return switch (this) {
             case ZERO -> "";
             case ONE -> "";

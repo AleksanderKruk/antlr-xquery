@@ -4,6 +4,8 @@ package com.github.akruk.antlrxquery.typesystem.typeoperations.itemtype;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.BinaryOperator;
+
+import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
@@ -53,7 +55,7 @@ public class ItemtypeIntersectionMerger
             final var i2_ = (XQueryItemType) y;
             final var i1Elements = i1_.elementNames;
             final var i2ELements = i2_.elementNames;
-            final Set<String> mergedElements = new HashSet<>(i1Elements.size());
+            final Set<QualifiedName> mergedElements = new HashSet<>(i1Elements.size());
             mergedElements.addAll(i1Elements);
             mergedElements.retainAll(i2ELements);
             return typeFactory.itemElement(mergedElements);

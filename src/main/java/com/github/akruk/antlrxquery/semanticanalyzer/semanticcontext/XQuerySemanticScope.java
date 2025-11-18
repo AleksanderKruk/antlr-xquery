@@ -104,7 +104,7 @@ public class XQuerySemanticScope {
     /**
      * Either creates variable with required type
      * or overrides existing variable
-     * @param variableName 
+     * @param variableName
      * @param assignedType
      * @return true if variable was added
      */
@@ -209,6 +209,10 @@ public class XQuerySemanticScope {
 
     public TypeInContext resolveEffectiveBooleanValue(TypeInContext type) {
         return resolveEffectiveBooleanValue(type, type.type.effectiveBooleanValueType());
+    }
+
+    public boolean namespaceExists(String namespace) {
+        return variables.containsKey(namespace);
     }
 
 }

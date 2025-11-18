@@ -142,7 +142,7 @@ public class SequencetypeCastable {
         boolean hasPossible = false;
         for (String member : targetItem.recordFields.keySet()) {
             final var recordField = targetItem.recordFields.get(member);
-            final var expectedType = recordField.type();
+            final var expectedType = recordField.resolveFieldType(typeFactory);
             final var isCastable = isCastable(expectedType, valueType, true);
             switch(isCastable.castability) {
                 case TESTED_EXPRESSION_CAN_BE_EMPTY_SEQUENCE_WITHOUT_FLAG:

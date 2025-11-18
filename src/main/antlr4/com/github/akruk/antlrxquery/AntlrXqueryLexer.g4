@@ -246,6 +246,7 @@ GROUP: 'group';
 
 ORDERED: 'ordered';
 UNORDERED: 'unordered';
+ANNOTATION: 'annotation';
 
 
 TYPESWITCH     : 'typeswitch';

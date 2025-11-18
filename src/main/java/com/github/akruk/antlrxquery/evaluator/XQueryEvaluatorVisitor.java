@@ -1252,7 +1252,13 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return function.functionValue.call(context, visitedPositionalArguments);
     }
 
-    final NamespaceResolver namespaceResolver = new NamespaceResolver("fn", "");
+    final NamespaceResolver namespaceResolver = new NamespaceResolver(
+        "fn",
+        "",
+        "",
+        "",
+        ""
+    );
 
     private String[] resolveNamespace(final String functionName)
     {

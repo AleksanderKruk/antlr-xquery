@@ -8,7 +8,9 @@ import java.util.Set;
 import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 
+import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
+import com.github.akruk.antlrxquery.typesystem.XQueryRecordField.TypeOrReference;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
@@ -451,7 +453,7 @@ public class ItemtypeAlternativeMerger
     {
         final var els1 = x.elementNames;
         final var els2 = y.elementNames;
-        final Set<String> merged = new HashSet<>(els1.size() + els2.size());
+        final Set<QualifiedName> merged = new HashSet<>(els1.size() + els2.size());
         merged.addAll(els1);
         merged.addAll(els2);
         return typeFactory.itemElement(merged);
@@ -492,13 +494,15 @@ public class ItemtypeAlternativeMerger
                     final XQueryRecordField xField = xFields.get(key_);
                     final XQueryRecordField yField = yFields.get(key_);
                     if (xField != null && yField != null) {
-                    final XQuerySequenceType mergedType = xField.type().alternativeMerge(yField.type());
-                    final boolean required = xField.isRequired() && yField.isRequired();
-                    return new XQueryRecordField(mergedType, required);
+                        final XQuerySequenceType resolvedX = xField.resolveFieldType(typeFactory);
+                        final XQuerySequenceType resolvedY = yField.resolveFieldType(typeFactory);
+                        final XQuerySequenceType mergedType = resolvedX.alternativeMerge(resolvedY);
+                        final boolean required = xField.isRequired() && yField.isRequired();
+                        return new XQueryRecordField(TypeOrReference.type(mergedType), required);
                     } else if (xField != null) {
-                    return new XQueryRecordField(xField.type(), false);
+                        return new XQueryRecordField(xField.typeOrReference(), false);
                     } else {
-                    return new XQueryRecordField(yField.type(), false);
+                        return new XQueryRecordField(yField.typeOrReference(), false);
                     }
                 }
                 ),
@@ -524,14 +528,14 @@ public class ItemtypeAlternativeMerger
                     final XQueryRecordField xField = xRecordFields.get(key_);
                     final XQueryRecordField yField = yRecordFields.get(key_);
                     if (xField != null && yField != null) {
-                        final XQuerySequenceType xFieldType = xField.type();
-                        final XQuerySequenceType yFieldType = yField.type();
+                        final XQuerySequenceType xFieldType = xField.resolveFieldType(typeFactory);
+                        final XQuerySequenceType yFieldType = yField.resolveFieldType(typeFactory);
                         final boolean required = xField.isRequired() && yField.isRequired();
-                        return new XQueryRecordField(xFieldType.alternativeMerge(yFieldType), required);
+                        return new XQueryRecordField(TypeOrReference.type(xFieldType.alternativeMerge(yFieldType)), required);
                     } else if (xField != null) {
-                        return new XQueryRecordField(xField.type(), false);
+                        return new XQueryRecordField(xField.typeOrReference(), false);
                     } else {
-                        return new XQueryRecordField(yField.type(), false);
+                        return new XQueryRecordField(yField.typeOrReference(), false);
                     }
                 }
                 ),

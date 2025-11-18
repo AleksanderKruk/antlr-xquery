@@ -17,10 +17,12 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.XqueryContext;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMemoizedValueFactory;
+import com.github.akruk.antlrxquery.semanticanalyzer.GrammarManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionManager;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.FunctionSets;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTypeSets;
 
@@ -39,9 +41,20 @@ public final class XQuery {
         final XQueryMemoizedTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
         final XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory(typeFactory);
         final ModuleManager moduleManager = new ModuleManager(Set.of());
-        final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(parser, new XQuerySemanticContextManager(typeFactory),
-                typeFactory, valueFactory, new XQuerySemanticFunctionManager(typeFactory), null,
-                moduleManager);
+        final GrammarManager grammarManager = new GrammarManager(Set.of());
+        final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
+            parser,
+            new XQuerySemanticContextManager(typeFactory),
+            typeFactory,
+            valueFactory,
+            new XQuerySemanticSymbolManager(
+                typeFactory,
+                FunctionSets.ALL(typeFactory)),
+            null,
+            moduleManager,
+            grammarManager,
+            typeFactory.anyNode()
+            );
         final XQueryEvaluatorVisitor visitor = new XQueryEvaluatorVisitor(root, parser, analyzer, typeFactory, moduleManager);
         final XQueryValue evaluated = visitor.visit(xqueryTree);
         if (tree != null) {
@@ -58,10 +71,18 @@ public final class XQuery {
         final XQueryMemoizedTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
         final XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory(typeFactory);
         final ModuleManager moduleManager = new ModuleManager(Set.of());
+        final GrammarManager grammarManager = new GrammarManager(Set.of());
         final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
-            parser, new XQuerySemanticContextManager(typeFactory), typeFactory, valueFactory,
-            new XQuerySemanticFunctionManager(typeFactory), null,
-            moduleManager);
+            parser,
+            new XQuerySemanticContextManager(typeFactory),
+            typeFactory,
+            valueFactory,
+            new XQuerySemanticSymbolManager(typeFactory, FunctionSets.ALL(typeFactory)),
+            null,
+            moduleManager,
+            grammarManager,
+            typeFactory.anyNode()
+            );
         final XQueryEvaluatorVisitor visitor = new XQueryEvaluatorVisitor(
             tree, parser, analyzer, typeFactory, moduleManager);
         final XQueryValue evaluated = visitor.visit(xqueryTree);
@@ -83,11 +104,18 @@ public final class XQuery {
         final XQueryMemoizedTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
         final XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory(typeFactory);
         final ModuleManager moduleManager = new ModuleManager(Set.of());
+        final GrammarManager grammarManager = new GrammarManager(Set.of());
         final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
-            parser, new XQuerySemanticContextManager(typeFactory), typeFactory, valueFactory,
-            new XQuerySemanticFunctionManager(typeFactory),
+            parser,
+            new XQuerySemanticContextManager(typeFactory),
+            typeFactory,
+            valueFactory,
+            new XQuerySemanticSymbolManager(typeFactory, FunctionSets.ALL(typeFactory)),
             null,
-            moduleManager);
+            moduleManager,
+            grammarManager,
+            typeFactory.anyNode()
+            );
 
 
         return tree -> {

@@ -321,7 +321,8 @@ primaryExpr:
     ;
 
 
-namedFunctionRef:qname HASH IntegerLiteral;
+namedFunctionRef:
+    qname HASH IntegerLiteral;
 
 literal:
   numericLiteral
@@ -363,7 +364,8 @@ itemType: anyItemTest
 kindTest:elementTest
         | anyKindTest;
 
-elementTest:ELEMENT LPAREN nameTestUnion? RPAREN;
+elementTest:
+    ELEMENT LPAREN nameTestUnion? RPAREN;
 
 
 pathNameTestUnion
@@ -372,10 +374,8 @@ pathNameTestUnion
 
 nameTestUnion:
     nameTest (UNION_OP nameTest)*;
-
-nameTest
-    : qname
-    | wildcard;
+nameTest:
+    qname | wildcard;
 
 functionType:
     annotation* (anyFunctionType | typedFunctionType);
@@ -501,7 +501,11 @@ prolog
     ;
 
 defaultNamespaceDecl
-    : DECLARE FIXED? DEFAULT (ELEMENT | FUNCTION) NAMESPACE STRING
+    : DECLARE DEFAULT FUNCTION NAMESPACE qname
+    | DECLARE DEFAULT TYPE NAMESPACE qname
+    | DECLARE DEFAULT ELEMENT NAMESPACE qname
+    | DECLARE DEFAULT ANNOTATION NAMESPACE qname
+    | DECLARE DEFAULT CONSTRUCTION NAMESPACE qname
     ;
 
 setter
@@ -509,7 +513,6 @@ setter
     | defaultCollationDecl
     | baseURIDecl
     | constructionDecl
-    | orderingModeDecl
     | emptyOrderDecl
     | decimalFormatDecl
     ;
@@ -528,10 +531,6 @@ baseURIDecl
 
 constructionDecl
     : DECLARE CONSTRUCTION (STRIP | PRESERVE)
-    ;
-
-orderingModeDecl
-    : DECLARE ORDERING (ORDERED | UNORDERED)
     ;
 
 emptyOrderDecl
@@ -569,8 +568,9 @@ importDecl
     ;
 
 grammarImport
-    : IMPORT GRAMMAR namespacePrefix? STRING (COMMA STRING)* # namespaceGrammarImport
-    | IMPORT GRAMMAR qname # simpleGrammarImport
+    : IMPORT GRAMMAR namespacePrefix STRING (COMMA STRING)* # namespaceGrammarImport
+    | IMPORT GRAMMAR STRING (COMMA STRING)* # pathOnlyGrammarImport
+    | IMPORT GRAMMAR qname # defaultPathGrammarImport
     ;
 
 moduleImport
@@ -629,6 +629,7 @@ anyName: ID
         | AND
         | ANCESTOR
         | ANCESTOR_OR_SELF
+        | ANNOTATION
         | ARRAY
         | AS
         | ASCENDING

@@ -17,10 +17,12 @@ import com.github.akruk.antlrxquery.AntlrXqueryLexer;
 import com.github.akruk.antlrxquery.AntlrXqueryParser;
 import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMemoizedValueFactory;
 import com.github.akruk.antlrxquery.languageserver.DiagnosticMessageCreator;
+import com.github.akruk.antlrxquery.semanticanalyzer.GrammarManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionManager;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.FunctionSets;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
@@ -29,8 +31,11 @@ import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTyp
 public class SemanticTestsBase {
     final protected XQueryTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
 
-    record AnalysisResult(XQuerySemanticAnalyzer analyzer, XQuerySequenceType expressionType) {
-    };
+    record AnalysisResult(
+        XQuerySemanticAnalyzer analyzer,
+        XQuerySequenceType expressionType
+        )
+    {};
 
     protected AnalysisResult analyze(final String text) {
         final CharStream characters = CharStreams.fromString(text);
@@ -40,17 +45,17 @@ public class SemanticTestsBase {
         xqueryParser.addErrorListener(new BaseErrorListener() {
             @Override
             public void syntaxError(
-                Recognizer<?, ?> recognizer, 
-                Object offendingSymbol, 
+                Recognizer<?, ?> recognizer,
+                Object offendingSymbol,
                 int line,
-                int charPositionInLine, 
-                String msg, RecognitionException e) 
+                int charPositionInLine,
+                String msg, RecognitionException e)
             {
                 throw e;
             }
         });
         final ParseTree xqueryTree = xqueryParser.xquery();
-        final XQuerySemanticFunctionManager caller = new XQuerySemanticFunctionManager(typeFactory);
+        final XQuerySemanticSymbolManager caller = new XQuerySemanticSymbolManager(typeFactory, FunctionSets.ALL(typeFactory));
         final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
                 null,
                 new XQuerySemanticContextManager(typeFactory),
@@ -58,9 +63,16 @@ public class SemanticTestsBase {
                 new XQueryMemoizedValueFactory(typeFactory),
                 caller,
                 null,
-                new ModuleManager(Set.of()));
+                new ModuleManager(Set.of()),
+                new GrammarManager(Set.of()),
+                typeFactory.anyNode()
+                );
         final var lastVisitedType = analyzer.visit(xqueryTree);
-        return new AnalysisResult(analyzer, lastVisitedType.type);
+        if (lastVisitedType == null) {
+            return new AnalysisResult(analyzer, null);
+        } else {
+            return new AnalysisResult(analyzer, lastVisitedType.type);
+        }
     }
 
     protected DiagnosticMessageCreator messageCreator = new DiagnosticMessageCreator();

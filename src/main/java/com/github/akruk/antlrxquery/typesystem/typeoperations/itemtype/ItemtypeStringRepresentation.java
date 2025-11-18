@@ -2,6 +2,7 @@ package com.github.akruk.antlrxquery.typesystem.typeoperations.itemtype;
 
 import java.util.Map;
 
+import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
 
@@ -29,7 +30,7 @@ public class ItemtypeStringRepresentation extends ItemtypeUnaryOperation<String>
 
     @Override
     public String elementOperation(XQueryItemType x) {
-        return "element(" + String.join(" | ", x.elementNames) + ")";
+        return "element(" + String.join(" | ", x.elementNames.stream().map(QualifiedName::toString).toList()) + ")";
     }
 
     @Override
@@ -111,7 +112,7 @@ public class ItemtypeStringRepresentation extends ItemtypeUnaryOperation<String>
             if (!entry.getValue().isRequired()) {
                 sb.append("?");
             }
-            sb.append(" as ").append(entry.getValue().type());
+            sb.append(" as ").append(entry.getValue());
             first = false;
             }
             sb.append(")");
@@ -128,7 +129,7 @@ public class ItemtypeStringRepresentation extends ItemtypeUnaryOperation<String>
             }
             sb.append(entry.getKey())
               .append(" as ")
-              .append(entry.getValue().type());
+              .append(entry.getValue());
             first = false;
         }
         sb.append(", *)");

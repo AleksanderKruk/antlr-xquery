@@ -3,10 +3,12 @@ package com.github.akruk.antlrxquery.typing;
 import org.junit.Test;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
+import com.github.akruk.antlrxquery.typesystem.XQueryRecordField.TypeOrReference;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
+import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 
 import java.util.HashMap;
 import java.util.List;
@@ -30,16 +32,22 @@ public class XQueryTypesTest {
     final XQuerySequenceType numberSequenceOneOrMore = typeFactory.oneOrMore(typeFactory.itemNumber());
     final XQuerySequenceType numberSequenceZeroOrMore = typeFactory.zeroOrMore(typeFactory.itemNumber());
     final XQuerySequenceType numberSequenceZeroOrOne = typeFactory.zeroOrOne(typeFactory.itemNumber());
-    final XQuerySequenceType fooElement = typeFactory.element(Set.of("foo"));
-    final XQuerySequenceType barElement = typeFactory.element(Set.of("bar"));
+    final XQuerySequenceType fooElement = typeFactory.element(Set.of(new QualifiedName("", "foo")));
+    final XQuerySequenceType barElement = typeFactory.element(Set.of(new QualifiedName("", "bar")));
     final XQuerySequenceType anyArray = typeFactory.anyArray();
     final XQuerySequenceType anyMap = typeFactory.anyMap();
     final XQuerySequenceType anyItem = typeFactory.anyItem();
     final XQuerySequenceType anyFunction = typeFactory.anyFunction();
 
-    final XQueryRecordField requiredAnyItem = new XQueryRecordField(typeFactory.anyItem(), true);
-    final XQueryRecordField requiredNumber = new XQueryRecordField(typeFactory.number(), true);
-    final XQueryRecordField requiredString = new XQueryRecordField(typeFactory.string(), true);
+    final XQueryRecordField requiredAnyItem =
+        new XQueryRecordField(TypeOrReference.type(typeFactory.anyItem()), true);
+
+    final XQueryRecordField requiredNumber =
+        new XQueryRecordField(TypeOrReference.type(typeFactory.number()), true);
+
+    final XQueryRecordField requiredString =
+        new XQueryRecordField(TypeOrReference.type(typeFactory.string()), true);
+
     final XQuerySequenceType recordAny = typeFactory.record(Map.of("foo", requiredAnyItem, "bar", requiredAnyItem));
 
     final XQueryItemType itemError = typeFactory.itemError();
@@ -51,8 +59,8 @@ public class XQueryTypesTest {
     final XQueryItemType itemAnyNode = typeFactory.itemAnyNode();
     final XQueryItemType itemAnyMap = typeFactory.itemAnyMap();
     final XQueryItemType itemAnyArray = typeFactory.itemAnyArray();
-    final XQueryItemType itemElementFoo = typeFactory.itemElement(Set.of("foo"));
-    final XQueryItemType itemElementBar = typeFactory.itemElement(Set.of("bar"));
+    final XQueryItemType itemElementFoo = typeFactory.itemElement(Set.of(new QualifiedName("", "foo")));
+    final XQueryItemType itemElementBar = typeFactory.itemElement(Set.of(new QualifiedName("", "bar")));
     final XQueryItemType itemABenum = typeFactory.itemEnum(Set.of("A", "B"));
     final XQueryItemType itemABCenum = typeFactory.itemEnum(Set.of("A", "B", "C"));
     final XQueryItemType itemABCDenum = typeFactory.itemEnum(Set.of("A", "B", "C", "D"));
@@ -755,11 +763,18 @@ public class XQueryTypesTest {
         assertEquals($oneOrMore_oneOrMore, nodeOneOrMore);
 
 
-        final var elementFoo = typeFactory.element(Set.of("foo"));
-        final var elementBar = typeFactory.element(Set.of("bar"));
+        final var elementFoo = typeFactory.element(Set.of(new QualifiedName("", "foo")));
+        final var elementBar = typeFactory.element(Set.of(new QualifiedName("", "bar")));
         final var merged$elements = elementFoo.unionMerge(elementBar);
-        assertEquals( typeFactory.oneOrMore(typeFactory.itemElement(Set.of("foo", "bar"))),
-                        merged$elements);
+        assertEquals(
+            typeFactory.oneOrMore(
+                typeFactory.itemElement(Set.of(
+                    new QualifiedName("", "foo"),
+                    new QualifiedName("", "bar")
+                ))
+            ),
+            merged$elements
+        );
 
         final var merged$any = elementFoo.unionMerge(anyNode);
         assertEquals(merged$any, nodeOneOrMore);
@@ -837,16 +852,46 @@ public class XQueryTypesTest {
         assertEquals($oneOrMore_oneOrMore, nodeZeroOrMore);
 
 
-        final var elementFoo = typeFactory.element(Set.of("foo", "x"));
-        final var elementBar = typeFactory.element(Set.of("bar", "x"));
+        final var elementFoo = typeFactory.element(Set.of(
+            new QualifiedName("", "foo"),
+            new QualifiedName("", "x")
+        ));
+
+        final var elementBar = typeFactory.element(Set.of(
+            new QualifiedName("", "bar"),
+            new QualifiedName("", "x")
+        ));
+
         final var merged$elements = elementFoo.intersectionMerge(elementBar);
-        assertEquals(merged$elements, typeFactory.zeroOrOne(typeFactory.itemElement(Set.of("x"))));
+        assertEquals(
+            merged$elements,
+            typeFactory.zeroOrOne(
+                typeFactory.itemElement(Set.of(new QualifiedName("", "x")))
+            )
+        );
 
         final var merged$any = elementFoo.intersectionMerge(anyNode);
-        assertEquals(merged$any, typeFactory.zeroOrOne(typeFactory.itemElement(Set.of("foo", "x"))));
+        assertEquals(
+            merged$any,
+            typeFactory.zeroOrOne(
+                typeFactory.itemElement(Set.of(
+                    new QualifiedName("", "foo"),
+                    new QualifiedName("", "x")
+                ))
+            )
+        );
 
         final var merged$any2 = anyNode.intersectionMerge(elementFoo);
-        assertEquals(merged$any2, typeFactory.zeroOrOne(typeFactory.itemElement(Set.of("foo", "x"))));
+        assertEquals(
+            merged$any2,
+            typeFactory.zeroOrOne(
+                typeFactory.itemElement(Set.of(
+                    new QualifiedName("", "foo"),
+                    new QualifiedName("", "x")
+                ))
+            )
+        );
+
     }
 
     @Test
@@ -916,16 +961,36 @@ public class XQueryTypesTest {
         assertEquals($oneOrMore_zeroOrMore, nodeZeroOrMore);
         assertEquals($oneOrMore_oneOrMore, nodeZeroOrMore);
 
-        final var elementFoo = typeFactory.element(Set.of("foo"));
-        final var elementBar = typeFactory.element(Set.of("bar"));
+        final QualifiedName foo = new QualifiedName("", "foo");
+        final var elementFoo = typeFactory.element(Set.of( foo));
+
+        final QualifiedName bar = new QualifiedName("", "bar");
+        final var elementBar = typeFactory.element(Set.of(bar));
+
         final var merged$elements = elementFoo.exceptionMerge(elementBar);
-        assertEquals(merged$elements, typeFactory.zeroOrOne(typeFactory.itemElement(Set.of("foo"))));
+        assertEquals(
+            merged$elements,
+            typeFactory.zeroOrOne(
+                typeFactory.itemElement(Set.of(foo))
+            )
+        );
 
         final var merged$any = elementFoo.exceptionMerge(anyNode);
-        assertEquals(merged$any, typeFactory.zeroOrOne(typeFactory.itemElement(Set.of("foo"))));
+        assertEquals(
+            merged$any,
+            typeFactory.zeroOrOne(
+                typeFactory.itemElement(Set.of(foo))
+            )
+        );
 
         final var merged$any2 = anyNode.exceptionMerge(elementFoo);
-        assertEquals(merged$any2, typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
+        assertEquals(
+            merged$any2,
+            typeFactory.zeroOrOne(
+                typeFactory.itemAnyNode()
+            )
+        );
+
     }
 
 
@@ -957,7 +1022,7 @@ public class XQueryTypesTest {
 
     @Test
     public void extensibleRecordsSubtyping() {
-        final var numberRequired = new XQueryRecordField(typeFactory.number(), true);
+        final var numberRequired = new XQueryRecordField(TypeOrReference.type(typeFactory.number()), true);
         final var a_number = typeFactory.extensibleRecord( Map.of("a", numberRequired));
         assertTrue(a_number.isSubtypeOf(anyMap));
         //         3.3.2.8 Subtyping Records
@@ -971,7 +1036,7 @@ public class XQueryTypesTest {
         // B is map(*) or record(*).
         assertTrue(a_number.isSubtypeOf(anyMap));
 
-        final var anyItemRequired = new XQueryRecordField(anyItem, true);
+        final var anyItemRequired = new XQueryRecordField(TypeOrReference.type(anyItem), true);
         // Examples:
         // record(longitude, latitude) ⊆ map(*)
         final var longitudeLatitudeRecord = typeFactory.record(Map.of("longitude", anyItemRequired,
@@ -1009,7 +1074,7 @@ public class XQueryTypesTest {
         // For every field that is declared in both A and B, where the declared type in A is T and the declared type in B is U, T ⊑ U .
         // Examples:
         // record(x, y) ⊆ record(x, y, z?)
-        final var anyItemsRequired = new XQueryRecordField(anyItems, true);
+        final var anyItemsRequired = new XQueryRecordField(TypeOrReference.type(anyItems), true);
         final var xyz = typeFactory.record(Map.of("x", anyItemsRequired, "y", anyItemsRequired, "z", anyItemsRequired));
         xy.isSubtypeOf(xyz);
 
@@ -1032,7 +1097,7 @@ public class XQueryTypesTest {
         // Error in documentation?
         // ??? record(x?, y?, z?, *) ⊆ record(x, y, *) ???
         // more likely: record(x, y, z?, *) ⊆ record(x, y, *)
-        final var anyItemsOptional = new XQueryRecordField(anyItems, false);
+        final var anyItemsOptional = new XQueryRecordField(TypeOrReference.type(anyItems), false);
         final var xyzExtensibleOptional = typeFactory.extensibleRecord(
             Map.of("x", anyItemsRequired, "y", anyItemsRequired, "z", anyItemsOptional)
         );
@@ -1043,7 +1108,7 @@ public class XQueryTypesTest {
             Map.of("x", numberRequired, "y", numberRequired)
         );
         final var xyExtensibleIntegers2 = typeFactory.extensibleRecord(
-            Map.of("x", numberRequired, "y", new XQueryRecordField(typeFactory.zeroOrMore(typeFactory.itemNumber()), true))
+            Map.of("x", numberRequired, "y", new XQueryRecordField(TypeOrReference.type(typeFactory.zeroOrMore(typeFactory.itemNumber())), true))
         );
         xyExtensibleIntegers.isSubtypeOf(xyExtensibleIntegers2);
 
@@ -1052,7 +1117,7 @@ public class XQueryTypesTest {
             Map.of("x", numberRequired)
         );
         final var xyExtensibleIntegerItem = typeFactory.extensibleRecord(
-            Map.of("x", numberRequired, "y", new XQueryRecordField(typeFactory.anyItem(), true))
+            Map.of("x", numberRequired, "y", new XQueryRecordField(TypeOrReference.type(typeFactory.anyItem()), true))
         );
         xExtensibleInteger.isSubtypeOf(xyExtensibleIntegerItem);
 

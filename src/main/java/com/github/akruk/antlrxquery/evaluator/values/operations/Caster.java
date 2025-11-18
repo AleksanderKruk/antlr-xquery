@@ -132,9 +132,19 @@ public class Caster {
                     return valueFactory.error(XQueryError.InvalidCastValue,
                         "At casting value: " + v + " to type " + t + " -> missing required field: " + fieldname);
                 }
-                final var result = cast(semanticRecordField.type(), mapEntry);
-                if (result.isError)
-                    return result;
+
+                switch(semanticRecordField.typeOrReference().fieldType()) {
+                    case TYPE -> {
+                        final var result = cast(semanticRecordField.typeOrReference().type(), mapEntry);
+                        if (result.isError)
+                            return result;
+                    }
+                    case REFERENCE -> {
+                        semanticRecordField.typeOrReference().reference();
+
+                    }
+
+                }
             }
 
             final var optionalRecordFields = recordFields.get(false);
@@ -147,7 +157,8 @@ public class Caster {
                 if (mapEntry == null) {
                     continue;
                 }
-                final var result = cast(semanticRecordField.type(), mapEntry);
+
+                final var result = cast(semanticRecordField.resolveFieldType(typeFactory), mapEntry);
                 if (result.isError)
                     return result;
             }
@@ -169,7 +180,7 @@ public class Caster {
                     return valueFactory.error(XQueryError.InvalidCastValue,
                         "At casting value: " + v + " to type " + t + " -> missing required field: " + fieldname);
                 }
-                final var result = cast(semanticRecordField.type(), mapEntry);
+                final var result = cast(semanticRecordField.resolveFieldType(typeFactory), mapEntry);
                 if (result.isError)
                     return result;
                 record.put(fieldname, result);
@@ -185,7 +196,7 @@ public class Caster {
                 if (mapEntry == null) {
                     continue;
                 }
-                final var result = cast(semanticRecordField.type(), mapEntry);
+                final var result = cast(semanticRecordField.resolveFieldType(typeFactory), mapEntry);
                 if (result.isError)
                     return result;
                 record.put(fieldname, result);

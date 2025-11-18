@@ -86,7 +86,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     public interface AnalysisListener {
         void onVariableDeclaration(VarNameContext varName, TypeInContext type);
         void onVariableReference(VarRefContext varRef, TypeInContext type);
-    } 
+    }
 
     private List<AnalysisListener> listeners = new ArrayList<>();
 
@@ -130,17 +130,43 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     {
        if (ctx.libraryModule() != null) {
             var p = ctx.libraryModule().prolog();
+            for (var ctxValueDecl : p.contextValueDecl()) {
+                error(ctxValueDecl, ErrorType.CONTEXT_VALUE_DECL__NOT_IN_MAIN_MODULE, null);
+            }
             namedRecords = p.namedRecordTypeDecl();
             itemTypes = p.itemTypeDecl();
             functions = p.functionDecl();
+            for (var import_ : p.importDecl()) {
+            }
+        //     : ((defaultNamespaceDecl | setter | namespaceDecl | importDecl) SEPARATOR)*
+        // ((... | varDecl | functionDecl | itemTypeDecl | namedRecordTypeDecl | optionDecl) SEPARATOR)*
 
             return visitLibraryModule(ctx.libraryModule());
         } else {
             var p = ctx.mainModule().prolog();
+                    // if (varValue.coerceableTo(type.type) == RelativeCoercability.NEVER) {
+        //     error(ctx, ErrorType.CONTEXT_VALUE__UNCOERSABLE, List.of(varValue, type));
+        // }
+            handleContextValueDeclarations(p);
+
+
+
             namedRecords = p.namedRecordTypeDecl();
             itemTypes = p.itemTypeDecl();
             functions = p.functionDecl();
             return visitMainModule(ctx.mainModule());
+        }
+    }
+
+    private void handleContextValueDeclarations(PrologContext p) {
+        switch (p.contextValueDecl().size()) {
+            case 0 -> {}// set in constructor
+            case 1 -> visitContextValueDecl(p.contextValueDecl(0));
+            default -> {
+                for (var ctxValueDecl : p.contextValueDecl()) {
+                    error(ctxValueDecl, ErrorType.CONTEXT_VALUE_DECL__MULTIPLE_DECLARATIONS, null);
+                }
+            }
         }
     }
 
@@ -152,7 +178,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final XQueryValueFactory valueFactory,
         final XQuerySemanticFunctionManager functionCaller,
         final GrammarAnalysisResult grammarAnalysisResult,
-        final ModuleManager moduleManager)
+        final ModuleManager moduleManager,
+        final XQuerySequenceType contextType)
     {
         this.grammarAnalysisResult = grammarAnalysisResult;
         // this.antlrQueryParser = antlrQueryParser;
@@ -164,7 +191,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         this.contextManager = contextManager;
         this.contextManager.enterContext();
         this.context = new XQueryVisitingSemanticContext();
-        this.context.setType(contextManager.typeInContext(typeFactory.anyNode()));
+        this.context.setType(contextManager.typeInContext(contextType));
         this.context.setPositionType(null);
         this.context.setSizeType(null);
         this.errors = new ArrayList<>();
@@ -242,7 +269,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             declareVariable(type, variableName, varNameAndType.varName());
         }
     }
-    
+
     private void declareVariable(final TypeInContext type, final VarNameContext varNameCtx) {
         final String varName = varNameCtx.qname().getText();
         declareVariable(type, varName, varNameCtx);
@@ -606,14 +633,14 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             default -> {
                 final var visitedQualifiedName = namespaceResolver.resolveType(name);
                 final var type = typeFactory.namedType(visitedQualifiedName);
-                if (type.status() != NamedAccessingStatus.OK)
+                if (type.status() == NamedAccessingStatus.OK)
                     yield type.type();
-                
+
                 for (var i : namedRecords) {
                     var resolved = namespaceResolver.resolveType(i.qname().getText());
                     if (resolved.equals(visitedQualifiedName)) {
                         var namedRecordResult = resolveRecordFromTypeDecl(resolved, i);
-                        yield typeFactory.one(namedRecordResult.registered());
+                        yield typeFactory.one(namedRecordResult.recordItemType);
                     }
                 }
                 for (var i : itemTypes) {
@@ -623,7 +650,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                         yield typeFactory.one(t.registered());
                     }
                 }
-                 
+
                 error(ctx, ErrorType.TYPE_NAME__UNKNOWN, List.of(name));
                 yield zeroOrMoreItems;
             }
@@ -2534,8 +2561,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                 if (defaultValue != null)
                     break;
                 final var argName = getArgName(param);
-                XQuerySequenceType paramType = param.varNameAndType().typeDeclaration() == null 
-                    ? zeroOrMoreItems 
+                XQuerySequenceType paramType = param.varNameAndType().typeDeclaration() == null
+                    ? zeroOrMoreItems
                     : param.varNameAndType().typeDeclaration().accept(this).type;
                 final var argDecl = new ArgumentSpecification(argName, paramType, null);
                 final boolean added = argNames.add(argName);
@@ -2634,14 +2661,18 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             case ALREADY_REGISTERED_SAME ->  {
                 error(ctx, ErrorType.ITEM_DECLARATION__ALREADY_REGISTERED_SAME, List.of(qName));
             }
-            case OK -> { } 
+            case OK -> { }
         }
         return null;
 
     }
 
+    private record RecordResolutionResult(
+        // RegistrationResult registrationResult,
+        XQueryItemType recordItemType,
+        List<ArgumentSpecification> fieldsAsArgs){}
 
-    private RegistrationResult resolveRecordFromTypeDecl(QualifiedName qName, NamedRecordTypeDeclContext ctx) {
+    private RecordResolutionResult resolveRecordFromTypeDecl(QualifiedName qName, NamedRecordTypeDeclContext ctx) {
         final List<ExtendedFieldDeclarationContext> extendedFieldDeclaration = ctx.extendedFieldDeclaration();
         final int size = extendedFieldDeclaration.size();
         final Map<String, XQueryRecordField> fields = new HashMap<>(size);
@@ -2673,9 +2704,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final var itemRecordType = ctx.extensibleFlag() == null
             ? typeFactory.itemRecord(fields)
             : typeFactory.itemExtensibleRecord(fields);
-        functionManager.register(qName.namespace(), qName.name(), mandatoryArgs, typeFactory.one(itemRecordType));
-        final RegistrationResult registrationStatus = typeFactory.registerNamedType(qName, itemRecordType);
-        return registrationStatus;
+        return new RecordResolutionResult(itemRecordType, mandatoryArgs);
     }
 
 
@@ -2684,27 +2713,29 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     {
         final var typeName = ctx.qname().getText();
         final var qName = namespaceResolver.resolveType(typeName);
-        final RegistrationResult registrationStatus = resolveRecordFromTypeDecl(qName, ctx);
-        switch (registrationStatus.status()) {
+        final RecordResolutionResult resolved = resolveRecordFromTypeDecl(qName, ctx);
+        var registrationResult = typeFactory.registerNamedType(qName, resolved.recordItemType);
+        switch (registrationResult.status()) {
             case ALREADY_REGISTERED_DIFFERENT ->  {
-                var expr = registrationStatus.registered();
+                var expr = registrationResult.registered();
                 error(
-                    ctx, 
-                    ErrorType.RECORD_DECLARATION__ALREADY_REGISTERED_DIFFERENT, 
+                    ctx,
+                    ErrorType.RECORD_DECLARATION__ALREADY_REGISTERED_DIFFERENT,
                     List.of(typeName, expr)
                     );
-                return contextManager.typeInContext(typeFactory.one(registrationStatus.registered()));
+                return contextManager.typeInContext(typeFactory.one(registrationResult.registered()));
             }
             case ALREADY_REGISTERED_SAME ->  {
                 error(
-                    ctx, 
-                    ErrorType.RECORD_DECLARATION__ALREADY_REGISTERED_SAME, 
+                    ctx,
+                    ErrorType.RECORD_DECLARATION__ALREADY_REGISTERED_SAME,
                     List.of(typeName)
                     );
-                return contextManager.typeInContext(typeFactory.one(registrationStatus.registered()));
+                return contextManager.typeInContext(typeFactory.one(registrationResult.registered()));
             }
             case OK -> {
-                return contextManager.typeInContext(typeFactory.one(registrationStatus.registered()));
+                functionManager.register(qName.namespace(), qName.name(), resolved.fieldsAsArgs, typeFactory.one(resolved.recordItemType));
+                return contextManager.typeInContext(typeFactory.one(registrationResult.registered()));
             }
         }
         // unreachable
@@ -2857,6 +2888,55 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             .reduce(XQuerySequenceType::alternativeMerge)
             .orElse(zeroOrMoreItems);
         return contextManager.typeInContext(orElse);
+    }
+
+    @Override
+    public TypeInContext visitContextValueDecl(ContextValueDeclContext ctx) {
+        if (ctx.EXTERNAL() != null) {
+            // DECLARE CONTEXT VALUE (AS sequenceType)? EXTERNAL (EQ_OP varDefaultValue)?
+            if (ctx.sequenceType() != null) {
+                // DECLARE CONTEXT VALUE AS sequenceType EXTERNAL (EQ_OP varDefaultValue)?
+                if (ctx.varDefaultValue() != null) {
+                    // DECLARE CONTEXT VALUE AS sequenceType EXTERNAL EQ_OP varDefaultValue
+                    var declaredType = visitSequenceType(ctx.sequenceType());
+                    var defaultValueType = visitVarDefaultValue(ctx.varDefaultValue());
+                    if (defaultValueType.type.coerceableTo(declaredType.type) == RelativeCoercability.NEVER) {
+                        error(ctx, ErrorType.CONTEXT_VALUE_DECL__UNCOERSABLE, List.of(defaultValueType, declaredType));
+                    }
+                    context.setType(declaredType);
+                } else {
+                    // DECLARE CONTEXT VALUE AS sequenceType EXTERNAL
+                    var declaredType = visitSequenceType(ctx.sequenceType());
+                    context.setType(declaredType);
+                }
+            } else {
+                // DECLARE CONTEXT VALUE EXTERNAL (EQ_OP varDefaultValue)?
+                if (ctx.varDefaultValue() != null) {
+                    // DECLARE CONTEXT VALUE EXTERNAL EQ_OP varDefaultValue
+                    var defaultValueType = visitVarDefaultValue(ctx.varDefaultValue());
+                    context.setType(defaultValueType);
+                } else {
+                    // DECLARE CONTEXT VALUE EXTERNAL
+                }
+            }
+        } else {
+            // DECLARE CONTEXT VALUE (AS sequenceType)? EQ_OP varValue
+            if (ctx.sequenceType() != null) {
+                // DECLARE CONTEXT VALUE AS sequenceType EQ_OP varValue
+                var declaredType = visitSequenceType(ctx.sequenceType());
+                var valueType = visitVarValue(ctx.varValue());
+                if (valueType.type.coerceableTo(declaredType.type) == RelativeCoercability.NEVER) {
+                    error(ctx, ErrorType.CONTEXT_VALUE_DECL__UNCOERSABLE, List.of(valueType, declaredType));
+                }
+                context.setType(declaredType);
+            } else {
+                // DECLARE CONTEXT VALUE EQ_OP varValue
+                var valueType = visitVarValue(ctx.varValue());
+                context.setType(valueType);
+            }
+
+        }
+        return null;
     }
 
 }

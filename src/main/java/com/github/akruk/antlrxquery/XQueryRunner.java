@@ -12,10 +12,12 @@ import com.github.akruk.antlrxquery.evaluator.XQueryEvaluatorVisitor;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMemoizedValueFactory;
+import com.github.akruk.antlrxquery.semanticanalyzer.GrammarManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionManager;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.FunctionSets;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTypeSets;
@@ -125,10 +127,12 @@ public class XQueryRunner {
                     new XQuerySemanticContextManager(typeFactory),
                     typeFactory,
                     new XQueryMemoizedValueFactory(typeFactory),
-                    new XQuerySemanticFunctionManager(typeFactory),
+                    new XQuerySemanticSymbolManager(typeFactory, FunctionSets.ALL(typeFactory)),
                     // TODO:
                     null,
-                    new ModuleManager(modulePaths)
+                    new ModuleManager(modulePaths),
+                    new GrammarManager(modulePaths),
+                    typeFactory.anyNode()
                     );
             analyzer.visit(xqueryTree);
             final var querySemanticErrors = analyzer.getErrors();
@@ -141,7 +145,7 @@ public class XQueryRunner {
 
             for (final String file : targetFiles) {
                 final String fileContent = Files.readString(Path.of(file));
-                final XQueryValue results = executeQuery(xqueryTree, lexerClass, parserClass, startingRule, fileContent, modulePaths);
+                final XQueryValue results = executeQuery(xqueryTree, lexerClass, parserClass, startingRule, fileContent, modulePaths, modulePaths);
                 outputStream.println("File: " + file);
                 if (results == null) {
                     errorStream.print("<null>");
@@ -167,21 +171,27 @@ public class XQueryRunner {
             final Class<?> parserClass,
             final String startingRule,
             final String input,
-            final Set<Path> modulePaths)
+            final Set<Path> modulePaths,
+            final Set<Path> grammarPaths
+            )
     {
         try {
             final ParserAndTree parserAndTree = parseTargetFile(input, lexerClass, parserClass, startingRule);
             final XQueryTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
             final XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory(typeFactory);
             final ModuleManager manager = new ModuleManager(modulePaths);
+            final GrammarManager grammarManager = new GrammarManager(grammarPaths);
             final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
                 parserAndTree.parser,
                 new XQuerySemanticContextManager(typeFactory),
                 typeFactory,
                 valueFactory,
-                new XQuerySemanticFunctionManager(typeFactory),
+                new XQuerySemanticSymbolManager(typeFactory, FunctionSets.ALL(typeFactory)),
                 null,
-                manager);
+                manager,
+                grammarManager,
+                typeFactory.anyNode()
+                );
             final XQueryEvaluatorVisitor evaluator = new XQueryEvaluatorVisitor(
                 parserAndTree.tree,
                 parserAndTree.parser,

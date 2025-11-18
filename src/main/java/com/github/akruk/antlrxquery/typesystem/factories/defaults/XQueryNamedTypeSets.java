@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
+import com.github.akruk.antlrxquery.typesystem.XQueryRecordField.TypeOrReference;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 
@@ -18,8 +19,8 @@ public final class XQueryNamedTypeSets {
         DEFAULT_ALL = new HashMap<>(10);
         final XQuerySequenceType anyItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         final XQueryItemType keyValuePair = typeFactory.itemExtensibleRecord(Map.of(
-            "key", new XQueryRecordField(typeFactory.anyItem(), true),
-            "value", new XQueryRecordField(anyItems, true)
+            "key", new XQueryRecordField(TypeOrReference.type(typeFactory.anyItem()), true),
+            "value", new XQueryRecordField(TypeOrReference.type(anyItems), true)
         ));
         DEFAULT_ALL.computeIfAbsent("fn", _->new HashMap<>()).put("key-value-pair", keyValuePair);
 
@@ -27,8 +28,8 @@ public final class XQueryNamedTypeSets {
         final XQuerySequenceType integerToAnyFunction = typeFactory.map(typeFactory.itemNumber(), typeFactory.anyFunction());
         final XQuerySequenceType stringToIntegerToAnyFunction = typeFactory.map(typeFactory.itemString(), integerToAnyFunction);
         final XQueryItemType loadXQueryModuleRecord = typeFactory.itemRecord(Map.of(
-            "variables", new XQueryRecordField(stringToAnyItems, true),
-            "functions", new XQueryRecordField(stringToIntegerToAnyFunction, true)
+            "variables", new XQueryRecordField(TypeOrReference.type(stringToAnyItems), true),
+            "functions", new XQueryRecordField(TypeOrReference.type(stringToIntegerToAnyFunction), true)
         ));
         DEFAULT_ALL.computeIfAbsent("fn", _->new HashMap<>()).put("load-xquery-module-record", loadXQueryModuleRecord);
 
@@ -42,11 +43,11 @@ public final class XQueryNamedTypeSets {
 
 
         final Map<String, XQueryRecordField> fields = new LinkedHashMap<>();
-        fields.put("number", new XQueryRecordField(typeFactory.number(), true));
-        fields.put("permute", new XQueryRecordField(typeFactory.function(anyItems, List.of(anyItems)), true));
+        fields.put("number", new XQueryRecordField(TypeOrReference.type(typeFactory.number()), true));
+        fields.put("permute", new XQueryRecordField(TypeOrReference.type(typeFactory.function(anyItems, List.of(anyItems))), true));
         final XQueryItemType randomNumberGeneratorRecord = typeFactory.itemExtensibleRecord(fields);
         final var oneRandomRef = typeFactory.one(randomNumberGeneratorRecord);
-        fields.put("next", new XQueryRecordField(typeFactory.function(oneRandomRef, List.of()), true));
+        fields.put("next", new XQueryRecordField(TypeOrReference.type(typeFactory.function(oneRandomRef, List.of())), true));
 
         DEFAULT_ALL.computeIfAbsent("fn", _->new HashMap<>()).put("random-number-generator-record", randomNumberGeneratorRecord);
 

@@ -1,10 +1,9 @@
-package com.github.akruk.antlrxquery.grammaranalysis;
+package com.github.akruk.antlrxquery.inputgrammaranalyzer;
 
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.junit.Test;
 
-import com.github.akruk.antlrxquery.inputgrammaranalyzer.InputGrammarAnalyzer;
 import com.github.akruk.antlrxquery.inputgrammaranalyzer.InputGrammarAnalyzer.GrammarAnalysisResult;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryCardinality;
 

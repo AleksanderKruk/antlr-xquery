@@ -3,10 +3,9 @@
 declare function is-simple-property-assignment($rule as element(propertyAssignment)) as boolean
 {
   not($rule/propertyName)
-  and (: TODO: correct 'literal tokens' :) not('(')
-  and not('[')
+  and  not($rule/LPAREN)
+  and not(($rule/LBRACKET))
 };
-
 
 let $registeredCommands := //funccall[funcname=!>string() = 'registerCommand']
 for $command in $registeredCommands

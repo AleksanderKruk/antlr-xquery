@@ -41,7 +41,7 @@ declare function lsp:end-position($node as node()?) as lsp:Position? {
 };
 
 declare function lsp:range($node as node()?) as lsp:Range? {
-    if ($node => exists()) {
+    if ($node) {
         lsp:Range(
             start := lsp:start-position($node) treat as lsp:Position,
             end := lsp:end-position($node) treat as lsp:Position

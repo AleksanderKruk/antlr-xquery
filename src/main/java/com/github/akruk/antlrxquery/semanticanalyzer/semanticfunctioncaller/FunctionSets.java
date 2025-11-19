@@ -14,7 +14,6 @@ import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQue
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.GrainedAnalysis;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.SimplifiedFunctionSpecification;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
-import com.github.akruk.antlrxquery.typesystem.XQueryRecordField.FieldType;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField.TypeOrReference;
 import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
@@ -2157,18 +2156,16 @@ public class FunctionSets {
                 typeFactory.itemRecord(
                     Map.of(
                     "key", new XQueryRecordField(
-                        new TypeOrReference(
-                            FieldType.TYPE,
-                            typeFactory.zeroOrOne( typeFactory.itemFunction( typeFactory.zeroOrMore(typeFactory.itemAnyItem()), List.of(typeFactory.one(typeFactory.itemAnyItem())))),
-                            null),
+                        TypeOrReference.type(
+                            typeFactory.zeroOrOne( typeFactory.itemFunction( typeFactory.zeroOrMore(typeFactory.itemAnyItem()), List.of(typeFactory.one(typeFactory.itemAnyItem()))))),
                         false
                     ),
                     "collation", new XQueryRecordField(
-                        new TypeOrReference(FieldType.TYPE, typeFactory.zeroOrOne(typeFactory.itemString()), null),
+                        TypeOrReference.type(typeFactory.zeroOrOne(typeFactory.itemString())),
                         false
                     ),
                     "order", new XQueryRecordField(
-                        new TypeOrReference(FieldType.TYPE, typeFactory.zeroOrOne(typeFactory.itemEnum(Set.of("ascending", "descending"))), null),
+                        TypeOrReference.type(typeFactory.zeroOrOne(typeFactory.itemEnum(Set.of("ascending", "descending")))),
                         false
                     )
                     )

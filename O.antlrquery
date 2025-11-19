@@ -1,0 +1,1705 @@
+module lsp;
+
+declare record lsp:Message(
+    jsonrpc as string,
+    *
+);
+
+declare record lsp:RequestMessage(
+    (: lsp:Message :)
+    jsonrpc as string,
+    (: lsp:RequestMessage :)
+    id as (number|string),
+    method as string,
+    params? as (array(*)|map(*))
+);
+
+declare record lsp:ResponseMessage(
+    (: lsp:Message :)
+    jsonrpc as string,
+    (: lsp:ResponseMessage :)
+    id as (number|string)?,
+    result? as lsp:LSPAny?,
+    error? as lsp:ResponseError
+);
+
+declare record lsp:ResponseError(
+    code as number,
+    message as string,
+    data? as lsp:LSPAny?
+);
+
+declare record lsp:NotificationMessage(
+    (: lsp:Message :)
+    jsonrpc as string,
+    (: lsp:NotificationMessage :)
+    method as string,
+    params? as (array(*)|map(*))
+);
+
+declare record lsp:CancelParams(
+    id as (number|string)
+);
+
+declare record lsp:ProgressParams(
+    token as lsp:ProgressToken,
+    value as item()*
+);
+
+declare record lsp:HoverParams(
+    textDocument as string,
+    position as false
+);
+
+declare record lsp:HoverResult(
+    value as string
+);
+
+declare record lsp:RegularExpressionsClientCapabilities(
+    engine as string,
+    version? as string
+);
+
+declare record lsp:Position(
+    line as number,
+    character as number
+);
+
+declare record lsp:Range(
+    start as lsp:Position,
+    end as lsp:Position
+);
+
+declare record lsp:TextDocumentItem(
+    uri as lsp:DocumentUri,
+    languageId as string,
+    version as number,
+    text as string
+);
+
+declare record lsp:TextDocumentIdentifier(
+    uri as lsp:DocumentUri,
+    *
+);
+
+declare record lsp:VersionedTextDocumentIdentifier(
+    (: lsp:TextDocumentIdentifier :)
+    uri as lsp:DocumentUri,
+    (: lsp:VersionedTextDocumentIdentifier :)
+    version as number
+);
+
+declare record lsp:WillSaveTextDocumentParams(
+    textDocument as lsp:TextDocumentIdentifier,
+    reason as lsp:TextDocumentSaveReason
+);
+
+declare record lsp:SaveOptions(
+    includeText? as boolean
+);
+
+declare record lsp:TextDocumentSaveRegistrationOptions(
+    (: lsp:TextDocumentRegistrationOptions :)
+    documentSelector as lsp:DocumentSelector?,
+    (: lsp:TextDocumentSaveRegistrationOptions :)
+    includeText? as boolean
+);
+
+declare record lsp:DidSaveTextDocumentParams(
+    textDocument as lsp:TextDocumentIdentifier,
+    text? as string
+);
+
+declare record lsp:DidCloseTextDocumentParams(
+    textDocument as lsp:TextDocumentIdentifier
+);
+
+declare record lsp:TextDocumentSyncClientCapabilities(
+    dynamicRegistration? as boolean,
+    willSave? as boolean,
+    willSaveWaitUntil? as boolean,
+    didSave? as boolean
+);
+
+declare record lsp:TextDocumentSyncOptions(
+    openClose? as boolean,
+    change? as lsp:TextDocumentSyncKind,
+    willSave? as boolean,
+    willSaveWaitUntil? as boolean,
+    save? as (boolean|lsp:SaveOptions)
+);
+
+declare record lsp:NotebookDocument(
+    uri as lsp:URI,
+    notebookType as string,
+    version as number,
+    metadata? as lsp:LSPObject,
+    cells as array(lsp:NotebookCell)
+);
+
+
+declare record lsp:NotebookCell(
+    kind as lsp:NotebookCellKind,
+    document as lsp:DocumentUri,
+    metadata? as lsp:LSPObject,
+    executionSummary? as lsp:ExecutionSummary
+);
+
+declare record lsp:ExecutionSummary(
+    executionOrder as number,
+    success? as boolean
+);
+
+declare record lsp:NotebookCellTextDocumentFilter(
+    notebook as (string|lsp:NotebookDocumentFilter),
+    language? as string
+);
+
+declare record lsp:NotebookDocumentSyncClientCapabilities(
+    dynamicRegistration? as boolean,
+    executionSummarySupport? as boolean
+);
+
+declare record lsp:NotebookDocumentSyncOptions(
+    notebookSelector as (false|false),
+    *
+);
+
+declare record lsp:NotebookDocumentSyncRegistrationOptions(
+    (: lsp:StaticRegistrationOptions :)
+    id? as string,
+    (: lsp:NotebookDocumentSyncOptions :)
+    notebookSelector as (false|false)
+);
+
+declare record lsp:DidOpenNotebookDocumentParams(
+    notebookDocument as lsp:NotebookDocument,
+    cellTextDocuments as array(lsp:TextDocumentItem)
+);
+
+declare record lsp:DidChangeNotebookDocumentParams(
+    notebookDocument as lsp:VersionedNotebookDocumentIdentifier,
+    change as lsp:NotebookDocumentChangeEvent
+);
+
+declare record lsp:VersionedNotebookDocumentIdentifier(
+    version as number,
+    uri as lsp:URI
+);
+
+declare record lsp:NotebookDocumentChangeEvent(
+    metadata? as lsp:LSPObject,
+    cells? as false
+);
+
+declare record lsp:NotebookCellArrayChange(
+    start as number,
+    deleteCount as number,
+    cells? as array(lsp:NotebookCell)
+);
+
+declare record lsp:DidSaveNotebookDocumentParams(
+    notebookDocument as lsp:NotebookDocumentIdentifier
+);
+
+declare record lsp:DidCloseNotebookDocumentParams(
+    notebookDocument as lsp:NotebookDocumentIdentifier,
+    cellTextDocuments as array(lsp:TextDocumentIdentifier)
+);
+
+declare record lsp:NotebookDocumentIdentifier(
+    uri as lsp:URI
+);
+
+declare record lsp:DeclarationClientCapabilities(
+    dynamicRegistration? as boolean,
+    linkSupport? as boolean
+);
+
+declare record lsp:DeclarationOptions(
+    (: lsp:WorkDoneProgressOptions :)
+    workDoneProgress? as boolean,
+    *
+);
+
+declare record lsp:DeclarationRegistrationOptions(
+    (: lsp:StaticRegistrationOptions :)
+    id? as string,
+    (: lsp:TextDocumentRegistrationOptions :)
+    documentSelector as lsp:DocumentSelector?
+);
+
+declare record lsp:DeclarationParams(
+    (: lsp:TextDocumentPositionParams :)
+    textDocument as lsp:TextDocumentIdentifier,
+    position as lsp:Position,
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:PartialResultParams :)
+    partialResultToken? as lsp:ProgressToken
+);
+
+declare record lsp:DefinitionClientCapabilities(
+    dynamicRegistration? as boolean,
+    linkSupport? as boolean
+);
+
+declare record lsp:DefinitionOptions(
+    (: lsp:WorkDoneProgressOptions :)
+    workDoneProgress? as boolean,
+    *
+);
+
+declare record lsp:DefinitionRegistrationOptions(
+    (: lsp:TextDocumentRegistrationOptions :)
+    documentSelector as lsp:DocumentSelector?
+);
+
+declare record lsp:DefinitionParams(
+    (: lsp:TextDocumentPositionParams :)
+    textDocument as lsp:TextDocumentIdentifier,
+    position as lsp:Position,
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:PartialResultParams :)
+    partialResultToken? as lsp:ProgressToken
+);
+
+declare record lsp:TypeDefinitionClientCapabilities(
+    dynamicRegistration? as boolean,
+    linkSupport? as boolean
+);
+
+declare record lsp:TypeDefinitionOptions(
+    (: lsp:WorkDoneProgressOptions :)
+    workDoneProgress? as boolean,
+    *
+);
+
+declare record lsp:TypeDefinitionRegistrationOptions(
+    (: lsp:StaticRegistrationOptions :)
+    id? as string,
+    (: lsp:TextDocumentRegistrationOptions :)
+    documentSelector as lsp:DocumentSelector?
+);
+
+declare record lsp:TypeDefinitionParams(
+    (: lsp:TextDocumentPositionParams :)
+    textDocument as lsp:TextDocumentIdentifier,
+    position as lsp:Position,
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:PartialResultParams :)
+    partialResultToken? as lsp:ProgressToken
+);
+
+declare record lsp:ImplementationClientCapabilities(
+    dynamicRegistration? as boolean,
+    linkSupport? as boolean
+);
+
+declare record lsp:ImplementationOptions(
+    (: lsp:WorkDoneProgressOptions :)
+    workDoneProgress? as boolean,
+    *
+);
+
+declare record lsp:ImplementationRegistrationOptions(
+    (: lsp:StaticRegistrationOptions :)
+    id? as string,
+    (: lsp:TextDocumentRegistrationOptions :)
+    documentSelector as lsp:DocumentSelector?
+);
+
+declare record lsp:ImplementationParams(
+    (: lsp:TextDocumentPositionParams :)
+    textDocument as lsp:TextDocumentIdentifier,
+    position as lsp:Position,
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:PartialResultParams :)
+    partialResultToken? as lsp:ProgressToken
+);
+
+declare record lsp:ReferenceClientCapabilities(
+    dynamicRegistration? as boolean
+);
+
+declare record lsp:ReferenceOptions(
+    (: lsp:WorkDoneProgressOptions :)
+    workDoneProgress? as boolean,
+    *
+);
+
+declare record lsp:ReferenceRegistrationOptions(
+    (: lsp:TextDocumentRegistrationOptions :)
+    documentSelector as lsp:DocumentSelector?
+);
+
+declare record lsp:ReferenceParams(
+    (: lsp:TextDocumentPositionParams :)
+    textDocument as lsp:TextDocumentIdentifier,
+    position as lsp:Position,
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:PartialResultParams :)
+    partialResultToken? as lsp:ProgressToken,
+    (: lsp:ReferenceParams :)
+    context as lsp:ReferenceContext
+);
+
+declare record lsp:ReferenceContext(
+    includeDeclaration as boolean
+);
+
+declare record lsp:CallHierarchyClientCapabilities(
+    dynamicRegistration? as boolean
+);
+
+declare record lsp:CallHierarchyOptions(
+    (: lsp:WorkDoneProgressOptions :)
+    workDoneProgress? as boolean,
+    *
+);
+
+declare record lsp:CallHierarchyRegistrationOptions(
+    (: lsp:StaticRegistrationOptions :)
+    id? as string,
+    (: lsp:TextDocumentRegistrationOptions :)
+    documentSelector as lsp:DocumentSelector?
+);
+
+declare record lsp:CallHierarchyPrepareParams(
+    (: lsp:TextDocumentPositionParams :)
+    textDocument as lsp:TextDocumentIdentifier,
+    position as lsp:Position,
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken
+);
+
+declare record lsp:CallHierarchyItem(
+    name as string,
+    kind as lsp:SymbolKind,
+    tags? as array(lsp:SymbolTag),
+    detail? as string,
+    uri as lsp:DocumentUri,
+    range as lsp:Range,
+    selectionRange as lsp:Range,
+    data? as lsp:LSPAny?
+);
+
+declare record lsp:CallHierarchyIncomingCallsParams(
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:PartialResultParams :)
+    partialResultToken? as lsp:ProgressToken,
+    (: lsp:CallHierarchyIncomingCallsParams :)
+    item as lsp:CallHierarchyItem
+);
+
+declare record lsp:CallHierarchyIncomingCall(
+    from as lsp:CallHierarchyItem,
+    fromRanges as array(lsp:Range)
+);
+
+declare record lsp:CallHierarchyOutgoingCallsParams(
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:PartialResultParams :)
+    partialResultToken? as lsp:ProgressToken,
+    (: lsp:CallHierarchyOutgoingCallsParams :)
+    item as lsp:CallHierarchyItem
+);
+
+declare record lsp:CallHierarchyOutgoingCall(
+    to as lsp:CallHierarchyItem,
+    fromRanges as array(lsp:Range)
+);
+
+declare record lsp:TypeHierarchyOptions(
+    (: lsp:WorkDoneProgressOptions :)
+    workDoneProgress? as boolean,
+    *
+);
+
+declare record lsp:TypeHierarchyRegistrationOptions(
+    (: lsp:StaticRegistrationOptions :)
+    id? as string,
+    (: lsp:TextDocumentRegistrationOptions :)
+    documentSelector as lsp:DocumentSelector?
+);
+
+declare record lsp:TypeHierarchyPrepareParams(
+    (: lsp:TextDocumentPositionParams :)
+    textDocument as lsp:TextDocumentIdentifier,
+    position as lsp:Position,
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken
+);
+
+declare record lsp:TypeHierarchyItem(
+    name as string,
+    kind as lsp:SymbolKind,
+    tags? as array(lsp:SymbolTag),
+    detail? as string,
+    uri as lsp:DocumentUri,
+    range as lsp:Range,
+    selectionRange as lsp:Range,
+    data? as lsp:LSPAny?
+);
+
+declare record lsp:TypeHierarchySupertypesParams(
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:PartialResultParams :)
+    partialResultToken? as lsp:ProgressToken,
+    (: lsp:TypeHierarchySupertypesParams :)
+    item as lsp:TypeHierarchyItem
+);
+
+declare record lsp:TypeHierarchySubtypesParams(
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:PartialResultParams :)
+    partialResultToken? as lsp:ProgressToken,
+    (: lsp:TypeHierarchySubtypesParams :)
+    item as lsp:TypeHierarchyItem
+);
+
+declare record lsp:DocumentHighlightClientCapabilities(
+    dynamicRegistration? as boolean
+);
+
+declare record lsp:DocumentHighlightOptions(
+    (: lsp:WorkDoneProgressOptions :)
+    workDoneProgress? as boolean,
+    *
+);
+
+declare record lsp:DocumentHighlightRegistrationOptions(
+    (: lsp:TextDocumentRegistrationOptions :)
+    documentSelector as lsp:DocumentSelector?
+);
+
+declare record lsp:DocumentHighlightParams(
+    (: lsp:TextDocumentPositionParams :)
+    textDocument as lsp:TextDocumentIdentifier,
+    position as lsp:Position,
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:PartialResultParams :)
+    partialResultToken? as lsp:ProgressToken
+);
+
+declare record lsp:DocumentHighlight(
+    range as lsp:Range,
+    kind? as lsp:DocumentHighlightKind
+);
+
+declare record lsp:DocumentLinkClientCapabilities(
+    dynamicRegistration? as boolean,
+    tooltipSupport? as boolean
+);
+
+declare record lsp:DocumentLinkOptions(
+    (: lsp:WorkDoneProgressOptions :)
+    workDoneProgress? as boolean,
+    (: lsp:DocumentLinkOptions :)
+    resolveProvider? as boolean,
+    *
+);
+
+declare record lsp:DocumentLinkRegistrationOptions(
+    (: lsp:TextDocumentRegistrationOptions :)
+    documentSelector as lsp:DocumentSelector?,
+    (: lsp:DocumentLinkOptions :)
+    resolveProvider? as boolean
+);
+
+declare record lsp:DocumentLinkParams(
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:PartialResultParams :)
+    partialResultToken? as lsp:ProgressToken,
+    (: lsp:DocumentLinkParams :)
+    textDocument as lsp:TextDocumentIdentifier
+);
+
+declare record lsp:DocumentLink(
+    range as lsp:Range,
+    target? as lsp:URI,
+    tooltip? as string,
+    data? as lsp:LSPAny?
+);
+
+declare record lsp:HoverClientCapabilities(
+    dynamicRegistration? as boolean,
+    contentFormat? as array(lsp:MarkupKind)
+);
+
+declare record lsp:HoverOptions(
+    (: lsp:WorkDoneProgressOptions :)
+    workDoneProgress? as boolean,
+    *
+);
+
+declare record lsp:HoverRegistrationOptions(
+    (: lsp:TextDocumentRegistrationOptions :)
+    documentSelector as lsp:DocumentSelector?
+);
+
+declare record lsp:HoverParams(
+    (: lsp:TextDocumentPositionParams :)
+    textDocument as lsp:TextDocumentIdentifier,
+    position as lsp:Position,
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken
+);
+
+declare record lsp:Hover(
+    contents as (lsp:MarkedString|array(lsp:MarkedString)|lsp:MarkupContent),
+    range? as lsp:Range
+);
+
+declare record lsp:CodeLensClientCapabilities(
+    dynamicRegistration? as boolean
+);
+
+declare record lsp:CodeLensOptions(
+    (: lsp:WorkDoneProgressOptions :)
+    workDoneProgress? as boolean,
+    (: lsp:CodeLensOptions :)
+    resolveProvider? as boolean,
+    *
+);
+
+declare record lsp:CodeLensRegistrationOptions(
+    (: lsp:TextDocumentRegistrationOptions :)
+    documentSelector as lsp:DocumentSelector?,
+    (: lsp:CodeLensOptions :)
+    resolveProvider? as boolean
+);
+
+declare record lsp:CodeLensParams(
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:PartialResultParams :)
+    partialResultToken? as lsp:ProgressToken,
+    (: lsp:CodeLensParams :)
+    textDocument as lsp:TextDocumentIdentifier
+);
+
+declare record lsp:CodeLens(
+    range as lsp:Range,
+    command? as lsp:Command,
+    data? as lsp:LSPAny?
+);
+
+declare record lsp:CodeLensWorkspaceClientCapabilities(
+    refreshSupport? as boolean
+);
+
+declare record lsp:FoldingRangeClientCapabilities(
+    dynamicRegistration? as boolean,
+    rangeLimit? as number,
+    lineFoldingOnly? as boolean,
+    foldingRangeKind? as false,
+    foldingRange? as false
+);
+
+declare record lsp:FoldingRangeOptions(
+    (: lsp:WorkDoneProgressOptions :)
+    workDoneProgress? as boolean,
+    *
+);
+
+declare record lsp:FoldingRangeRegistrationOptions(
+    (: lsp:StaticRegistrationOptions :)
+    id? as string,
+    (: lsp:TextDocumentRegistrationOptions :)
+    documentSelector as lsp:DocumentSelector?
+);
+
+declare record lsp:FoldingRangeParams(
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:PartialResultParams :)
+    partialResultToken? as lsp:ProgressToken,
+    (: lsp:FoldingRangeParams :)
+    textDocument as lsp:TextDocumentIdentifier
+);
+
+declare record lsp:FoldingRange(
+    startLine as number,
+    startCharacter? as number,
+    endLine as number,
+    endCharacter? as number,
+    kind? as lsp:FoldingRangeKind,
+    collapsedText? as string
+);
+
+declare record lsp:SelectionRangeClientCapabilities(
+    dynamicRegistration? as boolean
+);
+
+declare record lsp:SelectionRangeOptions(
+    (: lsp:WorkDoneProgressOptions :)
+    workDoneProgress? as boolean,
+    *
+);
+
+declare record lsp:SelectionRangeRegistrationOptions(
+    (: lsp:StaticRegistrationOptions :)
+    id? as string,
+    (: lsp:TextDocumentRegistrationOptions :)
+    documentSelector as lsp:DocumentSelector?
+);
+
+declare record lsp:SelectionRangeParams(
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:PartialResultParams :)
+    partialResultToken? as lsp:ProgressToken,
+    (: lsp:SelectionRangeParams :)
+    textDocument as lsp:TextDocumentIdentifier,
+    positions as array(lsp:Position)
+);
+
+declare record lsp:SelectionRange(
+    range as lsp:Range,
+    parent? as lsp:SelectionRange
+);
+
+declare record lsp:DocumentSymbolClientCapabilities(
+    dynamicRegistration? as boolean,
+    symbolKind? as false,
+    hierarchicalDocumentSymbolSupport? as boolean,
+    tagSupport? as false,
+    labelSupport? as boolean
+);
+
+declare record lsp:DocumentSymbolOptions(
+    (: lsp:WorkDoneProgressOptions :)
+    workDoneProgress? as boolean,
+    (: lsp:DocumentSymbolOptions :)
+    label? as string,
+    *
+);
+
+declare record lsp:DocumentSymbolRegistrationOptions(
+    (: lsp:TextDocumentRegistrationOptions :)
+    documentSelector as lsp:DocumentSelector?,
+    (: lsp:DocumentSymbolOptions :)
+    label? as string
+);
+
+declare record lsp:DocumentSymbolParams(
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:PartialResultParams :)
+    partialResultToken? as lsp:ProgressToken,
+    (: lsp:DocumentSymbolParams :)
+    textDocument as lsp:TextDocumentIdentifier
+);
+
+declare record lsp:DocumentSymbol(
+    name as string,
+    detail? as string,
+    kind as lsp:SymbolKind,
+    tags? as array(lsp:SymbolTag),
+    deprecated? as boolean,
+    range as lsp:Range,
+    selectionRange as lsp:Range,
+    children? as array(lsp:DocumentSymbol)
+);
+
+declare record lsp:SymbolInformation(
+    name as string,
+    kind as lsp:SymbolKind,
+    tags? as array(lsp:SymbolTag),
+    deprecated? as boolean,
+    location as lsp:Location,
+    containerName? as string
+);
+
+declare record lsp:SemanticTokensLegend(
+    tokenTypes as array(string),
+    tokenModifiers as array(string)
+);
+
+declare record lsp:SemanticTokensClientCapabilities(
+    dynamicRegistration? as boolean,
+    requests as false
+);
+
+declare record lsp:SemanticTokensOptions(
+    (: lsp:WorkDoneProgressOptions :)
+    workDoneProgress? as boolean,
+    (: lsp:SemanticTokensOptions :)
+    legend as lsp:SemanticTokensLegend,
+    range? as boolean,
+    *
+);
+
+declare record lsp:SemanticTokensRegistrationOptions(
+    (: lsp:StaticRegistrationOptions :)
+    id? as string,
+    (: lsp:TextDocumentRegistrationOptions :)
+    documentSelector as lsp:DocumentSelector?,
+    (: lsp:SemanticTokensOptions :)
+    legend as lsp:SemanticTokensLegend,
+    range? as boolean
+);
+
+declare record lsp:SemanticTokensParams(
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:PartialResultParams :)
+    partialResultToken? as lsp:ProgressToken,
+    (: lsp:SemanticTokensParams :)
+    textDocument as lsp:TextDocumentIdentifier
+);
+
+declare record lsp:SemanticTokens(
+    resultId? as string,
+    data as array(number)
+);
+
+declare record lsp:SemanticTokensPartialResult(
+    data as array(number)
+);
+
+declare record lsp:SemanticTokensDeltaParams(
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:PartialResultParams :)
+    partialResultToken? as lsp:ProgressToken,
+    (: lsp:SemanticTokensDeltaParams :)
+    textDocument as lsp:TextDocumentIdentifier,
+    previousResultId as string
+);
+
+declare record lsp:SemanticTokensDelta(
+    resultId? as string,
+    edits as array(lsp:SemanticTokensEdit)
+);
+
+declare record lsp:SemanticTokensEdit(
+    start as number,
+    deleteCount as number,
+    data? as array(number)
+);
+
+declare record lsp:SemanticTokensDeltaPartialResult(
+    edits as array(lsp:SemanticTokensEdit)
+);
+
+declare record lsp:SemanticTokensRangeParams(
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:PartialResultParams :)
+    partialResultToken? as lsp:ProgressToken,
+    (: lsp:SemanticTokensRangeParams :)
+    textDocument as lsp:TextDocumentIdentifier,
+    range as lsp:Range
+);
+
+declare record lsp:SemanticTokensWorkspaceClientCapabilities(
+    refreshSupport? as boolean
+);
+
+declare record lsp:InlayHintClientCapabilities(
+    dynamicRegistration? as boolean,
+    resolveSupport? as false
+);
+
+declare record lsp:InlayHintOptions(
+    (: lsp:WorkDoneProgressOptions :)
+    workDoneProgress? as boolean,
+    (: lsp:InlayHintOptions :)
+    resolveProvider? as boolean,
+    *
+);
+
+declare record lsp:InlayHintRegistrationOptions(
+    (: lsp:StaticRegistrationOptions :)
+    id? as string,
+    (: lsp:TextDocumentRegistrationOptions :)
+    documentSelector as lsp:DocumentSelector?,
+    (: lsp:InlayHintOptions :)
+    resolveProvider? as boolean
+);
+
+declare record lsp:InlayHintParams(
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:InlayHintParams :)
+    textDocument as lsp:TextDocumentIdentifier,
+    range as lsp:Range
+);
+
+declare record lsp:InlayHint(
+    position as lsp:Position,
+    label as (string|array(lsp:InlayHintLabelPart)),
+    kind? as lsp:InlayHintKind,
+    textEdits? as array(lsp:TextEdit),
+    tooltip? as (string|lsp:MarkupContent),
+    paddingLeft? as boolean,
+    paddingRight? as boolean,
+    data? as lsp:LSPAny?
+);
+
+declare record lsp:InlayHintLabelPart(
+    value as string,
+    tooltip? as (string|lsp:MarkupContent),
+    location? as lsp:Location,
+    command? as lsp:Command
+);
+
+declare record lsp:InlayHintWorkspaceClientCapabilities(
+    refreshSupport? as boolean
+);
+
+declare record lsp:InlineValueClientCapabilities(
+    dynamicRegistration? as boolean
+);
+
+declare record lsp:InlineValueOptions(
+    (: lsp:WorkDoneProgressOptions :)
+    workDoneProgress? as boolean,
+    *
+);
+
+declare record lsp:InlineValueRegistrationOptions(
+    (: lsp:StaticRegistrationOptions :)
+    id? as string,
+    (: lsp:TextDocumentRegistrationOptions :)
+    documentSelector as lsp:DocumentSelector?
+);
+
+declare record lsp:InlineValueParams(
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:InlineValueParams :)
+    textDocument as lsp:TextDocumentIdentifier,
+    range as lsp:Range,
+    context as lsp:InlineValueContext
+);
+
+declare record lsp:InlineValueContext(
+    frameId as number,
+    stoppedLocation as lsp:Range
+);
+
+declare record lsp:InlineValueText(
+    range as lsp:Range,
+    text as string
+);
+
+declare record lsp:InlineValueVariableLookup(
+    range as lsp:Range,
+    variableName? as string,
+    caseSensitiveLookup as boolean
+);
+
+declare record lsp:InlineValueEvaluatableExpression(
+    range as lsp:Range,
+    expression? as string
+);
+
+declare record lsp:InlineValueWorkspaceClientCapabilities(
+    refreshSupport? as boolean
+);
+
+declare record lsp:MonikerClientCapabilities(
+    dynamicRegistration? as boolean
+);
+
+declare record lsp:MonikerOptions(
+    (: lsp:WorkDoneProgressOptions :)
+    workDoneProgress? as boolean,
+    *
+);
+
+declare record lsp:MonikerRegistrationOptions(
+    (: lsp:TextDocumentRegistrationOptions :)
+    documentSelector as lsp:DocumentSelector?
+);
+
+declare record lsp:MonikerParams(
+    (: lsp:TextDocumentPositionParams :)
+    textDocument as lsp:TextDocumentIdentifier,
+    position as lsp:Position,
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:PartialResultParams :)
+    partialResultToken? as lsp:ProgressToken
+);
+
+declare record lsp:Moniker(
+    scheme as string,
+    identifier as string,
+    unique as lsp:UniquenessLevel,
+    kind? as lsp:MonikerKind
+);
+
+declare record lsp:CompletionClientCapabilities(
+    dynamicRegistration? as boolean,
+    completionItem? as false,
+    completionItemKind? as false,
+    contextSupport? as boolean,
+    insertTextMode? as lsp:InsertTextMode,
+    completionList? as false
+);
+
+declare record lsp:CompletionOptions(
+    (: lsp:WorkDoneProgressOptions :)
+    workDoneProgress? as boolean,
+    (: lsp:CompletionOptions :)
+    triggerCharacters? as array(string),
+    allCommitCharacters? as array(string),
+    resolveProvider? as boolean,
+    completionItem? as false,
+    *
+);
+
+declare record lsp:CompletionRegistrationOptions(
+    (: lsp:TextDocumentRegistrationOptions :)
+    documentSelector as lsp:DocumentSelector?,
+    (: lsp:CompletionOptions :)
+    triggerCharacters? as array(string),
+    allCommitCharacters? as array(string),
+    resolveProvider? as boolean,
+    completionItem? as false
+);
+
+declare record lsp:CompletionParams(
+    (: lsp:TextDocumentPositionParams :)
+    textDocument as lsp:TextDocumentIdentifier,
+    position as lsp:Position,
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:PartialResultParams :)
+    partialResultToken? as lsp:ProgressToken,
+    (: lsp:CompletionParams :)
+    context? as lsp:CompletionContext
+);
+
+declare record lsp:CompletionContext(
+    triggerKind as lsp:CompletionTriggerKind,
+    triggerCharacter? as string
+);
+
+declare record lsp:CompletionList(
+    isIncomplete as boolean,
+    itemDefaults? as false
+);
+
+declare record lsp:InsertReplaceEdit(
+    newText as string,
+    insert as lsp:Range,
+    replace as lsp:Range
+);
+
+declare record lsp:CompletionItemLabelDetails(
+    detail? as string,
+    description? as string
+);
+
+declare record lsp:CompletionItem(
+    label as string,
+    labelDetails? as lsp:CompletionItemLabelDetails,
+    kind? as lsp:CompletionItemKind,
+    tags? as array(lsp:CompletionItemTag),
+    detail? as string,
+    documentation? as (string|lsp:MarkupContent),
+    deprecated? as boolean,
+    preselect? as boolean,
+    sortText? as string,
+    filterText? as string,
+    insertText? as string,
+    insertTextFormat? as lsp:InsertTextFormat,
+    insertTextMode? as lsp:InsertTextMode,
+    textEdit? as (lsp:TextEdit|lsp:InsertReplaceEdit),
+    textEditText? as string,
+    additionalTextEdits? as array(lsp:TextEdit),
+    commitCharacters? as array(string),
+    command? as lsp:Command,
+    data? as lsp:LSPAny?
+);
+
+declare record lsp:PublishDiagnosticsClientCapabilities(
+    relatedInformation? as boolean,
+    tagSupport? as false,
+    versionSupport? as boolean,
+    codeDescriptionSupport? as boolean,
+    dataSupport? as boolean
+);
+
+declare record lsp:PublishDiagnosticsParams(
+    uri as lsp:DocumentUri,
+    version? as number,
+    diagnostics as array(lsp:Diagnostic)
+);
+
+declare record lsp:DiagnosticClientCapabilities(
+    dynamicRegistration? as boolean,
+    relatedDocumentSupport? as boolean,
+    relatedInformation? as boolean,
+    tagSupport? as lsp:ClientDiagnosticsTagOptions,
+    codeDescriptionSupport? as boolean,
+    dataSupport? as boolean
+);
+
+declare record lsp:DiagnosticOptions(
+    (: lsp:WorkDoneProgressOptions :)
+    workDoneProgress? as boolean,
+    (: lsp:DiagnosticOptions :)
+    identifier? as string,
+    interFileDependencies as boolean,
+    workspaceDiagnostics as boolean,
+    *
+);
+
+declare record lsp:DiagnosticRegistrationOptions(
+    (: lsp:StaticRegistrationOptions :)
+    id? as string,
+    (: lsp:TextDocumentRegistrationOptions :)
+    documentSelector as lsp:DocumentSelector?,
+    (: lsp:DiagnosticOptions :)
+    identifier? as string,
+    interFileDependencies as boolean,
+    workspaceDiagnostics as boolean
+);
+
+declare record lsp:DocumentDiagnosticParams(
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:PartialResultParams :)
+    partialResultToken? as lsp:ProgressToken,
+    (: lsp:DocumentDiagnosticParams :)
+    textDocument as lsp:TextDocumentIdentifier,
+    identifier? as string,
+    previousResultId? as string
+);
+
+declare record lsp:FullDocumentDiagnosticReport(
+    kind as lsp:DocumentDiagnosticReportKind,
+    *
+);
+
+declare record lsp:UnchangedDocumentDiagnosticReport(
+    kind as lsp:DocumentDiagnosticReportKind,
+    *
+);
+
+declare record lsp:RelatedFullDocumentDiagnosticReport(
+    (: lsp:FullDocumentDiagnosticReport :)
+    kind as lsp:DocumentDiagnosticReportKind,
+    (: lsp:RelatedFullDocumentDiagnosticReport :)
+    relatedDocuments? as false
+);
+
+declare record lsp:RelatedUnchangedDocumentDiagnosticReport(
+    (: lsp:UnchangedDocumentDiagnosticReport :)
+    kind as lsp:DocumentDiagnosticReportKind,
+    (: lsp:RelatedUnchangedDocumentDiagnosticReport :)
+    relatedDocuments? as false
+);
+
+declare record lsp:DocumentDiagnosticReportPartialResult(
+    relatedDocuments as false
+);
+
+declare record lsp:DiagnosticServerCancellationData(
+    retriggerRequest as boolean
+);
+
+declare record lsp:WorkspaceDiagnosticParams(
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:PartialResultParams :)
+    partialResultToken? as lsp:ProgressToken,
+    (: lsp:WorkspaceDiagnosticParams :)
+    identifier? as string,
+    previousResultIds as array(lsp:PreviousResultId)
+);
+
+declare record lsp:PreviousResultId(
+    uri as lsp:DocumentUri,
+    value as string
+);
+
+declare record lsp:WorkspaceDiagnosticReport(
+    items as array(lsp:WorkspaceDocumentDiagnosticReport)
+);
+
+declare record lsp:WorkspaceFullDocumentDiagnosticReport(
+    (: lsp:FullDocumentDiagnosticReport :)
+    kind as lsp:DocumentDiagnosticReportKind,
+    (: lsp:WorkspaceFullDocumentDiagnosticReport :)
+    uri as lsp:DocumentUri,
+    version as number?
+);
+
+declare record lsp:WorkspaceUnchangedDocumentDiagnosticReport(
+    (: lsp:UnchangedDocumentDiagnosticReport :)
+    kind as lsp:DocumentDiagnosticReportKind,
+    (: lsp:WorkspaceUnchangedDocumentDiagnosticReport :)
+    uri as lsp:DocumentUri,
+    version as number?
+);
+
+declare record lsp:WorkspaceDiagnosticReportPartialResult(
+    items as array(lsp:WorkspaceDocumentDiagnosticReport)
+);
+
+declare record lsp:DiagnosticWorkspaceClientCapabilities(
+    refreshSupport? as boolean
+);
+
+declare record lsp:SignatureHelpClientCapabilities(
+    dynamicRegistration? as boolean,
+    signatureInformation? as false,
+    contextSupport? as boolean
+);
+
+declare record lsp:SignatureHelpOptions(
+    (: lsp:WorkDoneProgressOptions :)
+    workDoneProgress? as boolean,
+    (: lsp:SignatureHelpOptions :)
+    triggerCharacters? as array(string),
+    retriggerCharacters? as array(string),
+    *
+);
+
+declare record lsp:SignatureHelpRegistrationOptions(
+    (: lsp:TextDocumentRegistrationOptions :)
+    documentSelector as lsp:DocumentSelector?,
+    (: lsp:SignatureHelpOptions :)
+    triggerCharacters? as array(string),
+    retriggerCharacters? as array(string)
+);
+
+declare record lsp:SignatureHelpParams(
+    (: lsp:TextDocumentPositionParams :)
+    textDocument as lsp:TextDocumentIdentifier,
+    position as lsp:Position,
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:SignatureHelpParams :)
+    context? as lsp:SignatureHelpContext
+);
+
+declare record lsp:SignatureHelpContext(
+    triggerKind as lsp:SignatureHelpTriggerKind,
+    triggerCharacter? as string,
+    isRetrigger as boolean,
+    activeSignatureHelp? as lsp:SignatureHelp
+);
+
+declare record lsp:SignatureHelp(
+    signatures as array(lsp:SignatureInformation),
+    activeSignature? as number,
+    activeParameter? as number
+);
+
+declare record lsp:SignatureInformation(
+    label as string,
+    documentation? as (string|lsp:MarkupContent),
+    parameters? as array(lsp:ParameterInformation),
+    activeParameter? as number
+);
+
+declare record lsp:ParameterInformation(
+    label as (string|true)
+);
+
+declare record lsp:CodeActionClientCapabilities(
+    dynamicRegistration? as boolean,
+    codeActionLiteralSupport? as false,
+    isPreferredSupport? as boolean,
+    disabledSupport? as boolean,
+    dataSupport? as boolean,
+    resolveSupport? as false,
+    honorsChangeAnnotations? as boolean
+);
+
+declare record lsp:CodeActionOptions(
+    (: lsp:WorkDoneProgressOptions :)
+    workDoneProgress? as boolean,
+    (: lsp:CodeActionOptions :)
+    codeActionKinds? as array(lsp:CodeActionKind),
+    resolveProvider? as boolean,
+    *
+);
+
+declare record lsp:CodeActionRegistrationOptions(
+    (: lsp:TextDocumentRegistrationOptions :)
+    documentSelector as lsp:DocumentSelector?,
+    (: lsp:CodeActionOptions :)
+    codeActionKinds? as array(lsp:CodeActionKind),
+    resolveProvider? as boolean
+);
+
+declare record lsp:CodeActionParams(
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:PartialResultParams :)
+    partialResultToken? as lsp:ProgressToken,
+    (: lsp:CodeActionParams :)
+    textDocument as lsp:TextDocumentIdentifier,
+    range as lsp:Range,
+    context as lsp:CodeActionContext
+);
+
+declare record lsp:CodeActionContext(
+    diagnostics as array(lsp:Diagnostic),
+    only? as array(lsp:CodeActionKind),
+    triggerKind? as lsp:CodeActionTriggerKind
+);
+
+declare record lsp:CodeAction(
+    title as string,
+    kind? as lsp:CodeActionKind,
+    diagnostics? as array(lsp:Diagnostic),
+    isPreferred? as boolean,
+    disabled? as false,
+    edit? as lsp:WorkspaceEdit,
+    command? as lsp:Command,
+    data? as lsp:LSPAny?
+);
+
+declare record lsp:DocumentColorClientCapabilities(
+    dynamicRegistration? as boolean
+);
+
+declare record lsp:DocumentColorOptions(
+    (: lsp:WorkDoneProgressOptions :)
+    workDoneProgress? as boolean,
+    *
+);
+
+declare record lsp:DocumentColorRegistrationOptions(
+    (: lsp:StaticRegistrationOptions :)
+    id? as string,
+    (: lsp:TextDocumentRegistrationOptions :)
+    documentSelector as lsp:DocumentSelector?
+);
+
+declare record lsp:DocumentColorParams(
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:PartialResultParams :)
+    partialResultToken? as lsp:ProgressToken,
+    (: lsp:DocumentColorParams :)
+    textDocument as lsp:TextDocumentIdentifier
+);
+
+declare record lsp:ColorInformation(
+    range as lsp:Range,
+    color as lsp:Color
+);
+
+declare record lsp:Color(
+    red as lsp:decimal,
+    green as lsp:decimal,
+    blue as lsp:decimal,
+    alpha as lsp:decimal
+);
+
+declare record lsp:ColorPresentationParams(
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:PartialResultParams :)
+    partialResultToken? as lsp:ProgressToken,
+    (: lsp:ColorPresentationParams :)
+    textDocument as lsp:TextDocumentIdentifier,
+    color as lsp:Color,
+    range as lsp:Range
+);
+
+declare record lsp:ColorPresentation(
+    label as string,
+    textEdit? as lsp:TextEdit,
+    additionalTextEdits? as array(lsp:TextEdit)
+);
+
+declare record lsp:DocumentFormattingClientCapabilities(
+    dynamicRegistration? as boolean
+);
+
+declare record lsp:DocumentFormattingOptions(
+    (: lsp:WorkDoneProgressOptions :)
+    workDoneProgress? as boolean,
+    *
+);
+
+declare record lsp:DocumentFormattingRegistrationOptions(
+    (: lsp:TextDocumentRegistrationOptions :)
+    documentSelector as lsp:DocumentSelector?
+);
+
+declare record lsp:DocumentFormattingParams(
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:DocumentFormattingParams :)
+    textDocument as lsp:TextDocumentIdentifier,
+    options as lsp:FormattingOptions
+);
+
+declare record lsp:FormattingOptions(
+    tabSize as number,
+    insertSpaces as boolean,
+    trimTrailingWhitespace? as boolean,
+    insertFinalNewline? as boolean,
+    trimFinalNewlines? as boolean,
+    key as map(string, (boolean|number|string))
+);
+
+declare record lsp:DocumentRangeFormattingClientCapabilities(
+    dynamicRegistration? as boolean
+);
+
+declare record lsp:DocumentRangeFormattingOptions(
+    (: lsp:WorkDoneProgressOptions :)
+    workDoneProgress? as boolean,
+    *
+);
+
+declare record lsp:DocumentRangeFormattingRegistrationOptions(
+    (: lsp:TextDocumentRegistrationOptions :)
+    documentSelector as lsp:DocumentSelector?
+);
+
+declare record lsp:DocumentRangeFormattingParams(
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:DocumentRangeFormattingParams :)
+    textDocument as lsp:TextDocumentIdentifier,
+    range as lsp:Range,
+    options as lsp:FormattingOptions
+);
+
+declare record lsp:DocumentOnTypeFormattingClientCapabilities(
+    dynamicRegistration? as boolean
+);
+
+declare record lsp:DocumentOnTypeFormattingOptions(
+    firstTriggerCharacter as string,
+    moreTriggerCharacter? as array(string),
+    *
+);
+
+declare record lsp:DocumentOnTypeFormattingRegistrationOptions(
+    (: lsp:TextDocumentRegistrationOptions :)
+    documentSelector as lsp:DocumentSelector?,
+    (: lsp:DocumentOnTypeFormattingOptions :)
+    firstTriggerCharacter as string,
+    moreTriggerCharacter? as array(string)
+);
+
+declare record lsp:DocumentOnTypeFormattingParams(
+    textDocument as lsp:TextDocumentIdentifier,
+    position as lsp:Position,
+    ch as string,
+    options as lsp:FormattingOptions
+);
+
+declare record lsp:RenameClientCapabilities(
+    dynamicRegistration? as boolean,
+    prepareSupport? as boolean,
+    prepareSupportDefaultBehavior? as lsp:PrepareSupportDefaultBehavior,
+    honorsChangeAnnotations? as boolean
+);
+
+declare record lsp:RenameOptions(
+    (: lsp:WorkDoneProgressOptions :)
+    workDoneProgress? as boolean,
+    (: lsp:RenameOptions :)
+    prepareProvider? as boolean,
+    *
+);
+
+declare record lsp:RenameRegistrationOptions(
+    (: lsp:TextDocumentRegistrationOptions :)
+    documentSelector as lsp:DocumentSelector?,
+    (: lsp:RenameOptions :)
+    prepareProvider? as boolean
+);
+
+declare record lsp:RenameParams(
+    (: lsp:TextDocumentPositionParams :)
+    textDocument as lsp:TextDocumentIdentifier,
+    position as lsp:Position,
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:RenameParams :)
+    newName as string
+);
+
+declare record lsp:PrepareRenameParams(
+    (: lsp:TextDocumentPositionParams :)
+    textDocument as lsp:TextDocumentIdentifier,
+    position as lsp:Position,
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken
+);
+
+declare record lsp:LinkedEditingRangeClientCapabilities(
+    dynamicRegistration? as boolean
+);
+
+declare record lsp:LinkedEditingRangeOptions(
+    (: lsp:WorkDoneProgressOptions :)
+    workDoneProgress? as boolean,
+    *
+);
+
+declare record lsp:LinkedEditingRangeRegistrationOptions(
+    (: lsp:StaticRegistrationOptions :)
+    id? as string,
+    (: lsp:TextDocumentRegistrationOptions :)
+    documentSelector as lsp:DocumentSelector?
+);
+
+declare record lsp:LinkedEditingRangeParams(
+    (: lsp:TextDocumentPositionParams :)
+    textDocument as lsp:TextDocumentIdentifier,
+    position as lsp:Position,
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken
+);
+
+declare record lsp:LinkedEditingRanges(
+    ranges as array(lsp:Range),
+    wordPattern? as string
+);
+
+declare record lsp:WorkspaceSymbolClientCapabilities(
+    dynamicRegistration? as boolean,
+    symbolKind? as false,
+    tagSupport? as false,
+    resolveSupport? as false
+);
+
+declare record lsp:WorkspaceSymbolOptions(
+    (: lsp:WorkDoneProgressOptions :)
+    workDoneProgress? as boolean,
+    (: lsp:WorkspaceSymbolOptions :)
+    resolveProvider? as boolean,
+    *
+);
+
+declare record lsp:WorkspaceSymbolRegistrationOptions(
+    (: lsp:WorkspaceSymbolOptions :)
+    resolveProvider? as boolean
+);
+
+declare record lsp:WorkspaceSymbolParams(
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:PartialResultParams :)
+    partialResultToken? as lsp:ProgressToken,
+    (: lsp:WorkspaceSymbolParams :)
+    query as string
+);
+
+declare record lsp:WorkspaceSymbol(
+    name as string,
+    kind as lsp:SymbolKind,
+    tags? as array(lsp:SymbolTag),
+    containerName? as string,
+    location as (lsp:Location|false)
+);
+
+declare record lsp:ConfigurationParams(
+    items as array(lsp:ConfigurationItem)
+);
+
+declare record lsp:ConfigurationItem(
+    scopeUri? as lsp:URI,
+    section? as string
+);
+
+declare record lsp:DidChangeConfigurationClientCapabilities(
+    dynamicRegistration? as boolean
+);
+
+declare record lsp:DidChangeConfigurationParams(
+    settings as lsp:LSPAny?
+);
+
+declare record lsp:WorkspaceFoldersServerCapabilities(
+    supported? as boolean,
+    changeNotifications? as (string|boolean)
+);
+
+declare record lsp:WorkspaceFolder(
+    uri as lsp:URI,
+    name as string
+);
+
+declare record lsp:DidChangeWorkspaceFoldersParams(
+    event as lsp:WorkspaceFoldersChangeEvent
+);
+
+declare record lsp:WorkspaceFoldersChangeEvent(
+    added as array(lsp:WorkspaceFolder),
+    removed as array(lsp:WorkspaceFolder)
+);
+
+declare record lsp:FileOperationRegistrationOptions(
+    filters as array(lsp:FileOperationFilter)
+);
+
+declare record lsp:FileOperationPatternOptions(
+    ignoreCase? as boolean
+);
+
+declare record lsp:FileOperationPattern(
+    glob as string,
+    matches? as lsp:FileOperationPatternKind,
+    options? as lsp:FileOperationPatternOptions
+);
+
+declare record lsp:FileOperationFilter(
+    scheme? as string,
+    pattern as lsp:FileOperationPattern
+);
+
+declare record lsp:CreateFilesParams(
+    files as array(lsp:FileCreate)
+);
+
+declare record lsp:FileCreate(
+    uri as string
+);
+
+declare record lsp:RenameFilesParams(
+    files as array(lsp:FileRename)
+);
+
+declare record lsp:FileRename(
+    oldUri as string,
+    newUri as string
+);
+
+declare record lsp:DeleteFilesParams(
+    files as array(lsp:FileDelete)
+);
+
+declare record lsp:FileDelete(
+    uri as string
+);
+
+declare record lsp:DidChangeWatchedFilesClientCapabilities(
+    dynamicRegistration? as boolean,
+    relativePatternSupport? as boolean
+);
+
+declare record lsp:DidChangeWatchedFilesRegistrationOptions(
+    watchers as array(lsp:FileSystemWatcher)
+);
+
+declare record lsp:RelativePattern(
+    baseUri as (lsp:WorkspaceFolder|lsp:URI),
+    pattern as lsp:Pattern
+);
+
+declare record lsp:FileSystemWatcher(
+    globPattern as lsp:GlobPattern,
+    kind? as lsp:WatchKind
+);
+
+declare record lsp:DidChangeWatchedFilesParams(
+    changes as array(lsp:FileEvent)
+);
+
+declare record lsp:FileEvent(
+    uri as lsp:DocumentUri,
+    type as lsp:FileChangeType
+);
+
+declare record lsp:ExecuteCommandClientCapabilities(
+    dynamicRegistration? as boolean
+);
+
+declare record lsp:ExecuteCommandOptions(
+    (: lsp:WorkDoneProgressOptions :)
+    workDoneProgress? as boolean,
+    (: lsp:ExecuteCommandOptions :)
+    commands as array(string),
+    *
+);
+
+declare record lsp:ExecuteCommandRegistrationOptions(
+    (: lsp:ExecuteCommandOptions :)
+    commands as array(string)
+);
+
+declare record lsp:ExecuteCommandParams(
+    (: lsp:WorkDoneProgressParams :)
+    workDoneToken? as lsp:ProgressToken,
+    (: lsp:ExecuteCommandParams :)
+    command as string,
+    arguments? as array(lsp:LSPAny?)
+);
+
+declare record lsp:ApplyWorkspaceEditParams(
+    label? as string,
+    edit as lsp:WorkspaceEdit
+);
+
+declare record lsp:ApplyWorkspaceEditResult(
+    applied as boolean,
+    failureReason? as string,
+    failedChange? as number
+);
+
+declare record lsp:ShowMessageParams(
+    type as lsp:MessageType,
+    message as string
+);
+
+declare record lsp:ShowMessageRequestClientCapabilities(
+    messageActionItem? as false
+);
+
+declare record lsp:ShowMessageRequestParams(
+    type as lsp:MessageType,
+    message as string,
+    actions? as array(lsp:MessageActionItem)
+);
+
+declare record lsp:MessageActionItem(
+    title as string
+);
+
+declare record lsp:ShowDocumentClientCapabilities(
+    support as boolean
+);
+
+declare record lsp:ShowDocumentParams(
+    uri as lsp:URI,
+    external? as boolean,
+    takeFocus? as boolean,
+    selection? as lsp:Range
+);
+
+declare record lsp:ShowDocumentResult(
+    success as boolean
+);
+
+declare record lsp:LogMessageParams(
+    type as lsp:MessageType,
+    message as string
+);
+
+declare record lsp:WorkDoneProgressCreateParams(
+    token as lsp:ProgressToken
+);
+
+declare record lsp:WorkDoneProgressCancelParams(
+    token as lsp:ProgressToken
+);

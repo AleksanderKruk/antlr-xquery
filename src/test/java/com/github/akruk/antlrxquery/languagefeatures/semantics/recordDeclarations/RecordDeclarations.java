@@ -9,12 +9,104 @@ public class RecordDeclarations extends SemanticTestsBase {
     void unorderedDeclarations() {
         assertType("""
             module m;
-            declare record A(b as B);
-            declare record B(a as string);
-
+            declare record m:A(b as m:B);
+            declare record m:B(a as string);
                 """, null);
 
     }
+
+    @Test
+    void selfRecursion() {
+        assertType("""
+            module m;
+            declare record m:A(a as m:A);
+                """, null);
+
+    }
+
+    @Test
+    void indirectRecursion() {
+        assertType("""
+            module m;
+            declare record m:A(a as m:B);
+            declare record m:B(a as m:A?);
+                """, null);
+        assertType("""
+            module m;
+            declare record m:A(a as m:B);
+            declare record m:B(a as m:A*);
+                """, null);
+        // assertErrors("""
+        //     module m;
+        //     declare record m:A(a as m:B);
+        //     declare record m:B(a as m:A);
+        //         """);
+        // assertErrors("""
+        //     module m;
+        //     declare record m:A(a as m:B);
+        //     declare record m:B(a as m:A+);
+        //         """);
+
+    }
+
+    @Test
+    void A() {
+        assertNoErrors("""
+module lsp;
+
+declare record lsp:Position(
+	line as number,
+	character as number
+);
+
+declare type lsp:PositionEncodingKind as enum('utf-8', 'utf-16', 'utf-32');
+
+declare record lsp:Range(
+	start as lsp:Position,
+	end as lsp:Position
+);
+
+declare function lsp:start-position($node as node()?) as lsp:Position? {
+    $node ! lsp:Position(
+        line := antlr:line() treat as number - 1, (:TODO: remove treatment after grained call return type analysis :)
+        character := antlr:pos() treat as number
+    )
+};
+
+declare function lsp:end-position($node as node()?) as lsp:Position? {
+    if ($node => empty()) {
+        (:TODO: remove treatment after grained call return type analysis :)
+        let $start-line := antlr:line($node) treat as number - 1
+        let $start-pos := antlr:pos($node) treat as number
+        let $string-node := $node=>string()
+        let $new-lines := $string-node=>characters()=>index-of("\n")
+        let $additional-lines := $new-lines=>count()
+        let $last-line-index := $new-lines[$additional-lines]
+        let $last-line-length := string-length(
+                if ($last-line-index=>exists())
+                    then substring($string-node, $new-lines[$additional-lines] treat as number)
+                    else $string-node
+            )
+        return lsp:Position(
+            line := $start-line + $additional-lines,
+            character := $start-pos + $last-line-length
+        )
+    }
+};
+
+declare function lsp:range($node as node()?) as lsp:Range? {
+    if ($node) {
+        lsp:Range(
+            start := lsp:start-position($node) treat as lsp:Position,
+            end := lsp:end-position($node) treat as lsp:Position
+        )
+    }
+};
+
+                """);
+    }
+
+
 
     // @Test
     // void many() {

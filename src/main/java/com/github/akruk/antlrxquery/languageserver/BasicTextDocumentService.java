@@ -857,17 +857,20 @@ public class BasicTextDocumentService implements TextDocumentService {
         Map<VarNameContext, TypeInContext> varNamesMappedToTypesForFile = varNamesMappedToTypes.getOrDefault(uri, Map.of());
         for (VarNameContext variable : variableDeclarationsWithoutTypeForFile) {
             TypeInContext type = varNamesMappedToTypesForFile.get(variable);
-            Token stop = variable.getStop();
-            Position hintPosition = new Position(stop.getLine() - 1,
-                stop.getCharPositionInLine() + stop.getText().length());
+            if (type != null) {
+                Token stop = variable.getStop();
+                Position hintPosition = new Position(stop.getLine() - 1,
+                    stop.getCharPositionInLine() + stop.getText().length());
 
-            final InlayHint hint = new InlayHint();
-            hint.setPosition(hintPosition);
-            hint.setLabel(Either.forLeft(type.toString()));
-            hint.setKind(InlayHintKind.Type);
-            hint.setPaddingLeft(true);
+                final InlayHint hint = new InlayHint();
+                hint.setPosition(hintPosition);
+                hint.setLabel(Either.forLeft(type.toString()));
+                hint.setKind(InlayHintKind.Type);
+                hint.setPaddingLeft(true);
 
-            hints.add(hint);
+                hints.add(hint);
+
+            }
         }
 
         for (final FunctionNameContext functionName : functionNames.getOrDefault(uri, List.of())) {

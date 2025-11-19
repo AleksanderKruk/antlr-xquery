@@ -10,12 +10,14 @@ import java.util.stream.Stream;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
+
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.inputgrammaranalyzer.InputGrammarAnalyzer.QualifiedGrammarAnalysisResult;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.ErrorType;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
+import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer.UnresolvedFunctionSpecification;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQueryVisitingSemanticContext;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContext;
@@ -268,7 +270,7 @@ public class XQuerySemanticSymbolManager {
                 }
 
                 final TypeInContext granularType = spec.grainedAnalysis.analyze(
-                    args, context, location,typeContext);
+                    args, context, location, typeContext);
                 return new AnalysisResult(granularType, List.of());
             }
         } else {
@@ -442,6 +444,34 @@ public class XQuerySemanticSymbolManager {
         return specAndErrors.spec;
     }
 
+
+    Map<QualifiedName, List<UnresolvedFunctionSpecification>> functionDeclarations;
+
+    public enum DeclarationStatus {
+        OK, COLLISION
+    }
+
+    public record DeclarationResult(
+        DeclarationStatus status,
+        List<ParseTree> collisions
+    ) {}
+
+    public DeclarationResult declareFunction(final UnresolvedFunctionSpecification function)
+    {
+        final var minArity = function.minArity();
+        final var maxArity = function.maxArity();
+        final var alreadyDeclared = functionDeclarations.computeIfAbsent(
+            function.name(), _ -> new ArrayList<UnresolvedFunctionSpecification>());
+        final var overlapping = alreadyDeclared.stream().filter(f ->
+            minArity <= f.maxArity() && f.minArity() <= maxArity
+        ).map(UnresolvedFunctionSpecification::location).toList();
+        if (overlapping.isEmpty()) {
+            return new DeclarationResult(DeclarationStatus.OK, overlapping);
+        } else {
+            return new DeclarationResult(DeclarationStatus.COLLISION, overlapping);
+        }
+    }
+
     public XQuerySemanticError registerFunction(
             final String namespace,
             final String functionName,
@@ -469,7 +499,16 @@ public class XQuerySemanticSymbolManager {
             final List<ArgumentSpecification> args,
             final XQuerySequenceType returnedType,
             final ParseTree body) {
-        return registerFunction(namespace, functionName, args, returnedType, null, false, false, body, null);
+        return registerFunction(
+            namespace,
+            functionName,
+            args,
+            returnedType,
+            null,
+            false,
+            false,
+            body,
+            (_, _, _, _) -> body.accept(analyzer));
     }
 
     public XQuerySemanticError registerFunction(

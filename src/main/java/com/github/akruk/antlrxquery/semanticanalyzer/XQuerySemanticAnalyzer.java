@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
+import org.antlr.v4.parse.ANTLRParser.finallyClause_return;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
@@ -131,7 +132,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
 
     Map<QualifiedName, UnresolvedRecordSpecification> recordsMapped = Map.of();
     Map<QualifiedName, ItemTypeDeclContext> itemsMapped = Map.of();
-    Map<QualifiedName, FunctionDeclContext> functionsMapped = Map.of();
+    Map<QualifiedName, List<UnresolvedFunctionSpecification>> functionsMapped = Map.of();
 
     @Override
     public TypeInContext visitXquery(final XqueryContext ctx)
@@ -271,7 +272,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             = new HashMap<>();
         final Map<QualifiedName, ItemTypeDeclContext> itemsMapped
             = new HashMap<>();
-        final Map<QualifiedName, FunctionDeclContext> functionsMapped
+        final Map<QualifiedName, List<UnresolvedFunctionSpecification>> functionsMapped
             = new HashMap<>();
 
         for (final NamedRecordTypeDeclContext record : records) {
@@ -293,9 +294,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         for (final FunctionDeclContext function : functions) {
             final QualifiedName name = namespaceResolver.resolveType(function.qname().getText());
             validateFunctionNamespace(moduleNamespace, function, name);
-
-
-            functionsMapped.put(name, function);
+            functionsMapped.computeIfAbsent(name, e->(new ArrayList<>()))
+                .add(getUnresolvedFunction(name, function));
         }
 
 
@@ -369,18 +369,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         }
 
 
-        for (final FunctionDeclContext f : importedFunctions) {
-            final QualifiedName qName = namespaceResolver.resolveFunction(f.qname().getText());
-            if (isBuiltInType(qName)) {
-                error(
-                    f.qname(),
-                    ErrorType.FUNCTION__USED_RESERVED_NAME,
-                    List.of(qName, f));
-            }
-            functionsMapped.put(qName, f);
-        }
 
-        this.functionsMapped = functionsMapped;
         this.recordsMapped = recordsMapped;
         this.itemsMapped = itemsMapped;
 
@@ -394,8 +383,20 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                 typeFactory.one(resolved.recordItemType));
         }
 
-        for (var f : functionsMapped.values()) {
-            visitFunctionDecl(f);
+
+        for (final FunctionDeclContext f : importedFunctions) {
+            final QualifiedName qName = namespaceResolver.resolveFunction(f.qname().getText());
+            final UnresolvedFunctionSpecification spec = getUnresolvedFunction(qName, f);
+            boolean isValid = validateUnresolvedFunction(spec);
+            if (isValid) {
+                var declarationResult = symbolManager.declareFunction(spec);
+                switch(declarationResult.status()) {
+                    case COLLISION -> {
+                        error(f, ErrorType.FUNCTION__ARITY_COLLISION, List.of(qName, spec.minArity, spec.maxArity, declarationResult.collisions()) );
+                    }
+                    case OK -> {}
+                }
+            }
         }
 
     }
@@ -3092,6 +3093,174 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         return contextManager.typeInContext(emptySequence);
     }
 
+
+
+    public record UnresolvedFunctionSpecification(
+        ParseTree location,
+        QualifiedName name,
+        List<UnresolvedArgumentSpecification> args,
+        FunctionBodyContext body,
+        ParseTree returnedType,
+        int minArity,
+        int maxArity
+
+    ) {}
+
+    public UnresolvedFunctionSpecification getUnresolvedFunction(
+        final QualifiedName qualifiedName,
+        final FunctionDeclContext ctx
+        )
+    {
+        final var args = new ArrayList<UnresolvedArgumentSpecification>();
+        final var argNameCtx = new ArrayList<VarNameContext>();
+        int minArity = 0;
+        int maxArity = 0;
+        if (ctx.paramListWithDefaults() != null) {
+            final var params = ctx.paramListWithDefaults().paramWithDefault();
+            for (int i = 0; i < params.size(); i++)
+            {
+                final var param = params.get(i);
+                final var argName = getArgName(param);
+                final SequenceTypeContext typeDeclaration = param.varNameAndType().typeDeclaration().sequenceType();
+                final ExprSingleContext defaultValue = param.exprSingle();
+                if (defaultValue == null)
+                    minArity += 1;
+                maxArity += 1;
+
+                final var argDecl = new UnresolvedArgumentSpecification(
+                    param,
+                    argName,
+                    typeDeclaration,
+                    defaultValue);
+                args.add(argDecl);
+                argNameCtx.add(param.varNameAndType().varName());
+            }
+        }
+
+        final FunctionBodyContext functionBody = ctx.functionBody();
+        return new UnresolvedFunctionSpecification(
+            ctx,
+            qualifiedName,
+            args,
+            functionBody,
+            ctx.typeDeclaration(),
+            minArity,
+            maxArity
+            );
+    }
+
+
+    /**
+     * @param function
+     * @return true if function has valid construction apart from type semantics
+     */
+    boolean validateUnresolvedFunction(final UnresolvedFunctionSpecification function) {
+        int i = 0;
+        final Set<String> uniqueNames = new HashSet<>();
+        boolean valid = true;
+        for (UnresolvedArgumentSpecification fArg : function.args) {
+            if (fArg.defaultValue != null)
+                break;
+            if (!uniqueNames.add(fArg.name)) {
+                error(fArg.location, ErrorType.FUNCTION__DUPLICATED_ARG_NAME, List.of(fArg.name));
+                valid = false;
+            }
+            i++;
+        }
+        List<UnresolvedArgumentSpecification> defaultArgs = function.args.subList(i, function.args.size());
+        for (final UnresolvedArgumentSpecification fArg : defaultArgs)
+        {
+            if (fArg.defaultValue != null) {
+                error(fArg.location, ErrorType.FUNCTION__POSITIONAL_ARG_BEFORE_DEFAULT, List.of());
+                valid = false;
+            }
+            if (!uniqueNames.add(fArg.name)) {
+                error(fArg.location, ErrorType.FUNCTION__DUPLICATED_ARG_NAME, List.of(fArg.name));
+                valid = false;
+            }
+        }
+        return valid;
+    }
+
+    public void resolveFunction(final UnresolvedFunctionSpecification spec)
+    {
+        final var args = new ArrayList<ArgumentSpecification>();
+        final var argNameCtx = new ArrayList<VarNameContext>();
+        contextManager.enterContext();
+        for (final var param : spec.args.subList(0, spec.minArity))
+        {
+            final XQuerySequenceType paramType = param.type == null
+                ? zeroOrMoreItems
+                : param.type.accept(this).type;
+            final var argDecl = new ArgumentSpecification(param.name, paramType, param.defaultValue);
+        }
+
+        for (final var defaultParam : spec.args.subList(spec.minArity, spec.maxArity+1))
+        {
+            final var paramType = defaultParam.type.accept(this);
+            final var dvt = defaultParam.defaultValue.accept(this);
+            if (!dvt.isSubtypeOf(paramType)) {
+                error((ParserRuleContext)defaultParam.defaultValue, ErrorType.FUNCTION__INVALID_DEFAULT, List.of(dvt, paramType));
+            }
+            final var argDecl = new ArgumentSpecification(defaultParam.name, paramType.type, defaultParam.defaultValue);
+            args.add(argDecl);
+            argNameCtx.add(defaultParam.location);
+        //
+
+
+            for (final ParamWithDefaultContext param : params.subList(i, params.size())) {
+                final var argName = getArgName(param);
+                final var paramType = param.varNameAndType().typeDeclaration().accept(this);
+                final var defaultValue = param.exprSingle();
+                if (defaultValue == null) {
+                    error(param, ErrorType.FUNCTION__POSITIONAL_ARG_BEFORE_DEFAULT, List.of());
+                    continue;
+                } else {
+                    final var dvt = defaultValue.accept(this);
+                    if (!dvt.isSubtypeOf(paramType)) {
+                        error(defaultValue, ErrorType.FUNCTION__INVALID_DEFAULT, List.of(dvt, paramType));
+                    }
+                }
+                final var argDecl = new ArgumentSpecification(argName, paramType.type, defaultValue);
+                if (!argNames.add(argName)) {
+                    error(param.getParent(), ErrorType.FUNCTION__DUPLICATED_ARG_NAME, List.of(argName));
+                }
+                args.add(argDecl);
+                argNameCtx.add(param.varNameAndType().varName());
+            }
+            for (final var arg : args) {
+                declareVariable(contextManager.typeInContext(arg.type()), arg.name(), argNameCtx.get(i));
+            }
+        }
+
+        final TypeInContext returned = ctx.typeDeclaration() != null
+            ? visitTypeDeclaration(ctx.typeDeclaration())
+            : contextManager.typeInContext(zeroOrMoreItems);
+
+        final FunctionBodyContext functionBody = ctx.functionBody();
+        if (functionBody != null) {
+            final var bodyType = visitEnclosedExpr(functionBody.enclosedExpr());
+            if (!bodyType.isSubtypeOf(returned)) {
+                error(functionBody, ErrorType.FUNCTION__INVALID_RETURNED_TYPE, List.of(bodyType, returned));
+            }
+            symbolManager.registerFunction(
+                resolved.namespace(),
+                resolved.name(),
+                args,
+                returned.type,
+                ctx.functionBody().enclosedExpr());
+        } else {
+            symbolManager.registerFunction(
+                resolved.namespace(),
+                resolved.name(),
+                args,
+                returned.type);
+
+        }
+        contextManager.leaveContext();
+        return null;
+    }
+
     @Override
     public TypeInContext visitFunctionDecl(final FunctionDeclContext ctx)
     {
@@ -3149,16 +3318,30 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             }
         }
 
-        final TypeInContext returned = ctx.typeDeclaration() != null? visitTypeDeclaration(ctx.typeDeclaration()) : contextManager.typeInContext(zeroOrMoreItems);
-        symbolManager.registerFunction(resolved.namespace(), resolved.name(), args, returned.type);
+        final TypeInContext returned = ctx.typeDeclaration() != null
+            ? visitTypeDeclaration(ctx.typeDeclaration())
+            : contextManager.typeInContext(zeroOrMoreItems);
+
         final FunctionBodyContext functionBody = ctx.functionBody();
         if (functionBody != null) {
             final var bodyType = visitEnclosedExpr(functionBody.enclosedExpr());
             if (!bodyType.isSubtypeOf(returned)) {
                 error(functionBody, ErrorType.FUNCTION__INVALID_RETURNED_TYPE, List.of(bodyType, returned));
             }
-        }
+            symbolManager.registerFunction(
+                resolved.namespace(),
+                resolved.name(),
+                args,
+                returned.type,
+                ctx.functionBody().enclosedExpr());
+        } else {
+            symbolManager.registerFunction(
+                resolved.namespace(),
+                resolved.name(),
+                args,
+                returned.type);
 
+        }
         contextManager.leaveContext();
         return null;
     }
@@ -3327,6 +3510,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     ) {}
 
     private record UnresolvedArgumentSpecification(
+        ParserRuleContext location,
         String name,
         SequenceTypeContext type,
         ParseTree defaultValue
@@ -3367,13 +3551,13 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             fields.add(new UnresolvedRecordFieldSpecification(fieldName, fieldTypeCtx, isRequired));
             if (isRequired) {
                 if (defaultExpr == null) {
-                    mandatoryArgs.add(new UnresolvedArgumentSpecification(fieldName, fieldTypeCtx, null));
+                    mandatoryArgs.add(new UnresolvedArgumentSpecification(field, fieldName, fieldTypeCtx, null));
                 }
                 else {
-                    optionalArgs.add(new UnresolvedArgumentSpecification(fieldName, fieldTypeCtx, defaultExpr));
+                    optionalArgs.add(new UnresolvedArgumentSpecification(field, fieldName, fieldTypeCtx, defaultExpr));
                 }
             } else {
-                optionalArgs.add(new UnresolvedArgumentSpecification(fieldName, fieldTypeCtx, new HelperTrees().EMPTY_SEQUENCE));
+                optionalArgs.add(new UnresolvedArgumentSpecification(field, fieldName, fieldTypeCtx, new HelperTrees().EMPTY_SEQUENCE));
             }
         }
         mandatoryArgs.addAll(optionalArgs);
@@ -3408,7 +3592,11 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                 return contextManager.typeInContext(typeFactory.one(registrationResult.registered()));
             }
             case OK -> {
-                symbolManager.registerFunction(qName.namespace(), qName.name(), resolved.fieldsAsArgs, typeFactory.one(resolved.recordItemType));
+                symbolManager.registerFunction(
+                    qName.namespace(),
+                    qName.name(),
+                    resolved.fieldsAsArgs,
+                    typeFactory.one(resolved.recordItemType));
                 return contextManager.typeInContext(typeFactory.one(registrationResult.registered()));
             }
         }

@@ -20,7 +20,7 @@ declare function lsp:start-position($node as node()?) as lsp:Position? {
 };
 
 declare function lsp:end-position($node as node()?) as lsp:Position? {
-    if ($node) {
+    if ($node => empty()) {
         (:TODO: remove treatment after grained call return type analysis :)
         let $start-line := antlr:line($node) treat as number - 1
         let $start-pos := antlr:pos($node) treat as number
@@ -43,8 +43,8 @@ declare function lsp:end-position($node as node()?) as lsp:Position? {
 declare function lsp:range($node as node()?) as lsp:Range? {
     if ($node) {
         lsp:Range(
-            start := lsp:start-position($node),
-            end := lsp:end-position($node)
+            start := lsp:start-position($node) treat as lsp:Position,
+            end := lsp:end-position($node) treat as lsp:Position
         )
     }
 };

@@ -537,16 +537,15 @@ public class DiagnosticMessageCreator {
                         + "\n    cannot be coerced to type: " + declaredType;
             }
             case PATH_OPERATOR__FOUND_UNREGISTERED_GRAMMARS -> {
-                var inputType = error.data().get(0);
                 @SuppressWarnings("unchecked")
-                Map<String, GrammarStatus> invalidInputGrammars = (Map<String, GrammarStatus>) error.data().get(1);
+                List<String> invalidInputGrammars = (List<String>) error.data().get(0);
                 StringBuilder sb = new StringBuilder();
                 sb.append("Found unregistered grammars in path expression:");
-                sb.append("    type: " + inputType);
-                for (var g : invalidInputGrammars.keySet()) {
+                for (var g : invalidInputGrammars) {
                     sb.append("\n    " );
                     sb.append(g);
                 }
+                return sb.toString();
             }
 
             case DEFAULT_NAMESPACE_DECL__MULTIPLE_ANNOTATION_NAMESPACE_DECLARATIONS -> {

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -20,21 +21,25 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.*;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
+import com.github.akruk.antlrxquery.semanticanalyzer.GrammarManager.GrammarFile;
 import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager.ImportResult;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.Assumption;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionManager;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionManager.AnalysisResult;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticFunctionManager.ArgumentSpecification;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.AnalysisResult;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.ArgumentSpecification;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.HelperTrees;
 import com.github.akruk.antlrxquery.XQueryAxis;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper.XQuerySemanticCharEscaperResult;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
-import com.github.akruk.antlrxquery.inputgrammaranalyzer.InputGrammarAnalyzer.GrammarAnalysisResult;
+import com.github.akruk.antlrxquery.inputgrammaranalyzer.InputGrammarAnalyzer;
+import com.github.akruk.antlrxquery.inputgrammaranalyzer.InputGrammarAnalyzer.QualifiedGrammarAnalysisResult;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
+import com.github.akruk.antlrxquery.typesystem.XQueryRecordField.TypeOrReference;
 import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQueryCardinality;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
@@ -49,25 +54,27 @@ import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypeCastab
 import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypePathOperator;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypeCastable.Castability;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypeCastable.IsCastableResult;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypePathOperator.GrammarStatus;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypePathOperator.PathOperatorResult;
 
 
-public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInContext> {
-
+public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInContext>
+{
     private final XQuerySemanticContextManager contextManager;
     private final List<DiagnosticError> errors;
     private final List<DiagnosticWarning> warnings;
     private final XQueryTypeFactory typeFactory;
     private final XQueryValueFactory valueFactory;
-    private final XQuerySemanticFunctionManager functionManager;
+    private final XQuerySemanticSymbolManager symbolManager;
     private final SequencetypePathOperator pathOperator;
     // private final Parser antlrQueryParser;
     // private final List<Path> modulePaths;
     private final ModuleManager moduleManager;
+    private final GrammarManager grammarManager;
+
     private XQueryVisitingSemanticContext context;
     private List<TypeInContext> visitedPositionalArguments;
     private Map<String, TypeInContext> visitedKeywordArguments;
-    private final GrammarAnalysisResult grammarAnalysisResult;
 
     protected final XQuerySequenceType number;
     protected final XQuerySequenceType zeroOrMoreNodes;
@@ -82,6 +89,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     protected final XQuerySequenceType anyArrayOrMap;
     protected final XQuerySequenceType zeroOrMoreItems;
     protected final XQuerySequenceType emptySequence;
+    protected final XQuerySequenceType zeroOrMoreNumbers;
 
     public interface AnalysisListener {
         void onVariableDeclaration(VarNameContext varName, TypeInContext type);
@@ -94,15 +102,15 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         return listeners;
     }
 
-    public void setListeners(List<AnalysisListener> listeners) {
+    public void setListeners(final List<AnalysisListener> listeners) {
         this.listeners = listeners;
     }
 
-    public void addListener(AnalysisListener listener) {
+    public void addListener(final AnalysisListener listener) {
         listeners.add(listener);
     }
 
-    public void removeListener(AnalysisListener listener) {
+    public void removeListener(final AnalysisListener listener) {
         listeners.remove(listener);
     }
 
@@ -116,54 +124,509 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         return warnings;
     }
 
-    public XQuerySemanticFunctionManager getFunctionManager() {
-        return functionManager;
+    public XQuerySemanticSymbolManager getSymbolManager() {
+        return symbolManager;
     }
 
 
-    List<NamedRecordTypeDeclContext> namedRecords = List.of();
-    List<ItemTypeDeclContext> itemTypes = List.of();
-    List<FunctionDeclContext> functions = List.of();
+    Map<QualifiedName, UnresolvedRecordSpecification> recordsMapped = Map.of();
+    Map<QualifiedName, ItemTypeDeclContext> itemsMapped = Map.of();
+    Map<QualifiedName, FunctionDeclContext> functionsMapped = Map.of();
 
     @Override
     public TypeInContext visitXquery(final XqueryContext ctx)
     {
        if (ctx.libraryModule() != null) {
-            var p = ctx.libraryModule().prolog();
-            for (var ctxValueDecl : p.contextValueDecl()) {
-                error(ctxValueDecl, ErrorType.CONTEXT_VALUE_DECL__NOT_IN_MAIN_MODULE, null);
-            }
-            namedRecords = p.namedRecordTypeDecl();
-            itemTypes = p.itemTypeDecl();
-            functions = p.functionDecl();
-            for (var import_ : p.importDecl()) {
-            }
-        //     : ((defaultNamespaceDecl | setter | namespaceDecl | importDecl) SEPARATOR)*
-        // ((... | varDecl | functionDecl | itemTypeDecl | namedRecordTypeDecl | optionDecl) SEPARATOR)*
-
             return visitLibraryModule(ctx.libraryModule());
         } else {
-            var p = ctx.mainModule().prolog();
-                    // if (varValue.coerceableTo(type.type) == RelativeCoercability.NEVER) {
-        //     error(ctx, ErrorType.CONTEXT_VALUE__UNCOERSABLE, List.of(varValue, type));
-        // }
-            handleContextValueDeclarations(p);
-
-
-
-            namedRecords = p.namedRecordTypeDecl();
-            itemTypes = p.itemTypeDecl();
-            functions = p.functionDecl();
             return visitMainModule(ctx.mainModule());
         }
     }
 
-    private void handleContextValueDeclarations(PrologContext p) {
+    @Override
+    public TypeInContext visitQueryBody(final QueryBodyContext ctx)
+    {
+        if (ctx.expr()!=null) {
+            return visitExpr(ctx.expr());
+        }
+        return contextManager.typeInContext(emptySequence);
+    }
+
+
+    @Override
+    public TypeInContext visitMainModule(final MainModuleContext ctx)
+    {
+        final var p = ctx.prolog();
+        symbolManager.provideNamespace("");
+        handleDefaultNamespaceDeclarations(
+            p.defaultNamespaceDecl(),
+            "fn",
+            "",
+            "",
+            "",
+            ""
+            );
+        handleNamespaceDeclarations(p, "");
+        handleContextValueDeclarations(p);
+        final Map<Boolean, List<ImportDeclContext>> groupedByIsGrammarImport =
+            p.importDecl()
+            .stream()
+            .collect(Collectors.groupingBy(c->c.grammarImport() != null));
+        handleGrammarImports(groupedByIsGrammarImport.getOrDefault(true, List.of()));
+        handleSymbolResolution(
+            groupedByIsGrammarImport.getOrDefault(false, List.of()),
+            p.functionDecl(),
+            p.itemTypeDecl(),
+            p.namedRecordTypeDecl(),
+            "");
+
+        return visitQueryBody(ctx.queryBody());
+    }
+
+
+
+
+    @Override
+    public TypeInContext visitLibraryModule(final LibraryModuleContext ctx) {
+        final var p = ctx.prolog();
+        final String moduleNamespace = ctx.moduleDecl().qname().getText();
+        registerUniqueNamespace(ctx.moduleDecl(), moduleNamespace, ErrorType.NAMESPACE_DECL__NAMESPACE_REDECLARATION);
+        handleDefaultNamespaceDeclarations(p.defaultNamespaceDecl(), "fn", "", moduleNamespace, "", "");
+        handleNamespaceDeclarations(p, moduleNamespace);
+        final Map<Boolean, List<ImportDeclContext>> groupedByIsGrammarImport =
+            p.importDecl()
+            .stream()
+            .collect(Collectors.groupingBy(c->c.grammarImport() != null));
+        handleGrammarImports(groupedByIsGrammarImport.getOrDefault(true, List.of()));
+        handleSymbolResolution(
+            groupedByIsGrammarImport.getOrDefault(false, List.of()),
+            p.functionDecl(),
+            p.itemTypeDecl(),
+            p.namedRecordTypeDecl(),
+            moduleNamespace);
+
+
+
+        handleLibraryContextDeclarations(p);
+
+        //     : ((... | setter | ... | importDecl) SEPARATOR)*
+        // ((... | varDecl | functionDecl | itemTypeDecl | namedRecordTypeDecl | optionDecl) SEPARATOR)*
+
+
+        return null;
+    }
+
+
+
+
+
+    private void handleGrammarImports(final List<ImportDeclContext> imports)
+    {
+        for (final ImportDeclContext grammarImport : imports) {
+            grammarImport.grammarImport().accept(this);
+        }
+    }
+
+    @Override
+    public TypeInContext visitNamespaceGrammarImport(final NamespaceGrammarImportContext ctx) {
+        final List<String> paths = ctx.STRING().stream().map(TerminalNode::getText).toList();
+        final var namespace = ctx.namespacePrefix().qname().getText();
+        if (symbolManager.grammarExists(namespace)) {
+            error(ctx, ErrorType.GRAMMAR_IMPORT__GRAMMAR_ALREADY_REGISTERED, List.of(namespace));
+            return null;
+        }
+        final var importResult = grammarManager.namespaceGrammarImport(paths);
+        switch(importResult.status()) {
+            case OK -> {
+                final var trees = importResult.validPaths().values().stream().map(GrammarFile::tree).toList();
+                final var analyzer = new InputGrammarAnalyzer();
+                final var qualifiedResult = analyzer.analyze(namespace, trees);
+                symbolManager.registerGrammar(namespace, qualifiedResult);
+            }
+            case MANY_VALID_PATHS -> {
+                error(ctx, ErrorType.GRAMMAR_IMPORT__MANY_VALID_PATHS, List.of(importResult));
+            }
+            case NO_PATH_FOUND__NEITHER_FOUND -> {
+                error(ctx, ErrorType.GRAMMAR_IMPORT__NEITHER_FOUND, List.of(importResult));
+            }
+            case NO_PATH_FOUND__NO_LEXER -> {
+                error(ctx, ErrorType.GRAMMAR_IMPORT__NO_LEXER, List.of(importResult));
+            }
+            case NO_PATH_FOUND__NO_PARSER -> {
+                error(ctx, ErrorType.GRAMMAR_IMPORT__NO_PARSER, List.of(importResult));
+            }
+        }
+        return null;
+    }
+
+
+    private void handleSymbolResolution(
+        final List<ImportDeclContext> imports,
+        final List<FunctionDeclContext> functions,
+        final List<ItemTypeDeclContext> items,
+        final List<NamedRecordTypeDeclContext> records,
+        final String moduleNamespace)
+    {
+        final Map<QualifiedName, UnresolvedRecordSpecification> recordsMapped
+            = new HashMap<>();
+        final Map<QualifiedName, ItemTypeDeclContext> itemsMapped
+            = new HashMap<>();
+        final Map<QualifiedName, FunctionDeclContext> functionsMapped
+            = new HashMap<>();
+
+        for (final NamedRecordTypeDeclContext record : records) {
+            final QualifiedName name = namespaceResolver.resolveType(record.qname().getText());
+            validateRecordNamespace(moduleNamespace, record, name);
+            final var extendedFieldDeclaration = record.extendedFieldDeclaration();
+            final var fieldDeclarations = extendedFieldDeclaration.stream().map(ExtendedFieldDeclarationContext::fieldDeclaration).toList();
+            validateRecordFieldNames(record, name, fieldDeclarations);
+            final UnresolvedRecordSpecification recordSpecification = getUnresolvedRecord(name, record);
+            recordsMapped.put(name, recordSpecification);
+        }
+
+        for (final ItemTypeDeclContext itemtype : items) {
+            final QualifiedName name = namespaceResolver.resolveType(itemtype.qname().getText());
+            validateItemTypeNamespace(moduleNamespace, itemtype, name);
+            itemsMapped.put(name, itemtype);
+        }
+
+        for (final FunctionDeclContext function : functions) {
+            final QualifiedName name = namespaceResolver.resolveType(function.qname().getText());
+            validateFunctionNamespace(moduleNamespace, function, name);
+
+
+            functionsMapped.put(name, function);
+        }
+
+
+        for (final var import_ : imports) {
+            visitImportDecl(import_);
+        }
+        int importedRecordsCount = 0;
+        int importedItemsCount = 0;
+        int importedFunctionsCount = 0;
+        for (final var module : currentFileImportedModules.keySet()) {
+            final XqueryContext moduleTree = currentFileImportedModules.get(module);
+            final PrologContext moduleProlog = moduleTree.libraryModule().prolog();
+            importedRecordsCount += moduleProlog.namedRecordTypeDecl().size();
+            importedItemsCount += moduleProlog.itemTypeDecl().size();
+            importedFunctionsCount += moduleProlog.functionDecl().size();
+        }
+        final var importedRecords = new ArrayList<NamedRecordTypeDeclContext>(importedRecordsCount);
+        final var importedItems = new ArrayList<ItemTypeDeclContext>(importedItemsCount);
+        final var importedFunctions = new ArrayList<FunctionDeclContext>(importedFunctionsCount);
+        for (final var module : currentFileImportedModules.keySet()) {
+            final XqueryContext moduleTree = currentFileImportedModules.get(module);
+            final PrologContext moduleProlog = moduleTree.libraryModule().prolog();
+            importedRecords.addAll(moduleProlog.namedRecordTypeDecl());
+            importedItems.addAll(moduleProlog.itemTypeDecl());
+            importedFunctions.addAll(moduleProlog.functionDecl());
+        }
+
+        for (final NamedRecordTypeDeclContext r : importedRecords) {
+            final QualifiedName qName = namespaceResolver.resolveType(r.qname().getText());
+            UnresolvedRecordSpecification unresolvedRecord = getUnresolvedRecord(qName, r);
+            if (isBuiltInType(qName)) {
+                error(r.qname(), ErrorType.RECORD_DECLARATION__USED_RESERVED_NAME, List.of(qName, r));
+
+            } else if (recordsMapped.containsKey(qName)) {
+                error(r.qname(), ErrorType.RECORD_DECLARATION__ALREADY_REGISTERED_BY_NAME,
+                    List.of(qName, r, recordsMapped.get(qName)));
+
+            } else {
+                recordsMapped.put(qName, unresolvedRecord);
+            }
+        }
+
+        for (final ItemTypeDeclContext i : importedItems) {
+            final QualifiedName qName = namespaceResolver.resolveType(i.qname().getText());
+            if (isBuiltInType(qName)) {
+                error(
+                    i.qname(),
+                    ErrorType.ITEM_DECLARATION__USED_RESERVED_NAME,
+                    List.of(qName, i));
+            } else if (itemsMapped.containsKey(qName)) {
+                error(
+                    i.qname(),
+                ErrorType.ITEM_DECLARATION__ALREADY_REGISTERED_BY_NAME,
+                    List.of(qName, i, itemsMapped.get(qName))
+                );
+
+            } else {
+                itemsMapped.put(qName, i);
+            }
+        }
+
+        final Set<QualifiedName> crossReferences = new HashSet<>(recordsMapped.keySet());
+        crossReferences.retainAll(itemsMapped.keySet());
+        for (final var cr : crossReferences) {
+            final UnresolvedRecordSpecification whereRecord = recordsMapped.get(cr);
+            final ItemTypeDeclContext whereItem = itemsMapped.get(cr);
+            error(
+                whereItem.qname(),
+                ErrorType.NAMED_TYPES__RECORD_ITEM_TYPE_CROSS_REFERENCE,
+                List.of(cr, whereRecord, whereItem));
+        }
+
+
+        for (final FunctionDeclContext f : importedFunctions) {
+            final QualifiedName qName = namespaceResolver.resolveFunction(f.qname().getText());
+            if (isBuiltInType(qName)) {
+                error(
+                    f.qname(),
+                    ErrorType.FUNCTION__USED_RESERVED_NAME,
+                    List.of(qName, f));
+            }
+            functionsMapped.put(qName, f);
+        }
+
+        this.functionsMapped = functionsMapped;
+        this.recordsMapped = recordsMapped;
+        this.itemsMapped = itemsMapped;
+
+
+        for (var r : recordsMapped.values()) {
+            RecordResolutionResult resolved = resolveRecordFromUnresolved(r.name, r);
+            symbolManager.registerFunction(
+                r.name.namespace(),
+                r.name.name(),
+                resolved.fieldsAsArgs,
+                typeFactory.one(resolved.recordItemType));
+        }
+
+        for (var f : functionsMapped.values()) {
+            visitFunctionDecl(f);
+        }
+
+    }
+
+    private boolean isBuiltInType(final QualifiedName qName) {
+        if (!qName.namespace().equals("")) {
+            return false;
+        }
+        return switch(qName.name()) {
+            case "string" -> true;
+            case "number" -> true;
+            case "boolean" -> true;
+            default -> false;
+        };
+    }
+
+    private void validateFunctionNamespace(final String moduleNamespace, final FunctionDeclContext function, final QualifiedName name) {
+        if (!name.namespace().startsWith(moduleNamespace)) {
+            error(
+                function.qname(),
+                ErrorType.FUNCTION__INVALID_NAMESPACE,
+                List.of(name, moduleNamespace, function));
+        }
+    }
+
+    private void validateItemTypeNamespace(final String moduleNamespace, final ItemTypeDeclContext itemtype, final QualifiedName name) {
+        if (!name.namespace().startsWith(moduleNamespace)) {
+            error(
+                itemtype.qname(),
+                ErrorType.ITEM_DECLARATION__INVALID_NAMESPACE,
+                List.of(name, itemtype));
+        }
+    }
+
+    private void validateRecordFieldNames(final NamedRecordTypeDeclContext record, final QualifiedName name,
+            final List<FieldDeclarationContext> fieldDeclarations) {
+        final Set<String> fieldNames = new HashSet<>();
+        for (final var fD : fieldDeclarations) {
+            if (!fieldNames.add(fD.fieldName().getText())) {
+                error(
+                    fD.fieldName(),
+                    ErrorType.RECORD_DECLARATION__DUPLICATE_FIELD_NAME,
+                    List.of(name, record));
+            }
+        }
+    }
+
+    private void validateRecordNamespace(final String moduleNamespace, final NamedRecordTypeDeclContext record, final QualifiedName name) {
+        if (!name.namespace().startsWith(moduleNamespace)) {
+            error(
+                record.qname(),
+                ErrorType.RECORD_DECLARATION__INVALID_NAMESPACE,
+                List.of(name.namespace(), moduleNamespace, record));
+        }
+    }
+
+    private void registerUniqueNamespace(final ModuleDeclContext ctx, final String moduleNamespace, final ErrorType errorType) {
+        if (symbolManager.namespaceExists(moduleNamespace)) {
+            error(ctx, errorType, List.of(moduleNamespace));
+        } else {
+            symbolManager.provideNamespace(moduleNamespace);
+        }
+    }
+
+    private void handleLibraryContextDeclarations(final PrologContext p) {
+        for (final var ctxValueDecl : p.contextValueDecl()) {
+            error(ctxValueDecl, ErrorType.CONTEXT_VALUE_DECL__NOT_IN_MAIN_MODULE, null);
+        }
+    }
+
+    private void handleNamespaceDeclarations(final PrologContext p, final String moduleNamespace) {
+        for (final var namespaceDecl : p.namespaceDecl()) {
+            final var namespace = namespaceDecl.qname().getText();
+            if (symbolManager.namespaceExists(namespace)) {
+                error(namespaceDecl, ErrorType.NAMESPACE_DECL__NAMESPACE_REDECLARATION, List.of(namespace, namespaceDecl));
+            } else {
+                if (!namespace.startsWith(moduleNamespace)) {
+                    error(namespaceDecl, ErrorType.NAMESPACE_DECL__INVALID_PREFIX, List.of(namespace, moduleNamespace));
+                }
+                symbolManager.provideNamespace(namespace);
+            }
+        }
+    }
+
+
+
+
+    private void handleDefaultNamespaceDeclarations(
+        final List<DefaultNamespaceDeclContext> defaultNamespaceDecls,
+        final String moduleFunctionNamespace,
+        final String moduleElementNamespace,
+        final String moduleTypeNamespace,
+        final String moduleAnnotationNamespace,
+        final String moduleConstructionNamespace
+        )
+    {
+        final Map<Integer, List<DefaultNamespaceDeclContext>> splitByType =
+            defaultNamespaceDecls
+            .stream()
+            .collect(Collectors.groupingBy(DefaultNamespaceDeclContext::getAltNumber));
+        final List<DefaultNamespaceDeclContext> elementDecls = splitByType.getOrDefault(2, List.of());
+        final String defaultElementNamespace = validateDefaultElementNamespace(moduleElementNamespace, elementDecls);
+
+        final List<DefaultNamespaceDeclContext> functionDecls = splitByType.getOrDefault(0, List.of());
+        final String defaultFunctionNamespace = validateDefaultFunctionNamespace(moduleFunctionNamespace, functionDecls);
+        symbolManager.provideNamespace(defaultFunctionNamespace);
+
+        final List<DefaultNamespaceDeclContext> typeDecls = splitByType.getOrDefault(1, List.of());
+        final String defaultTypeNamespace = validateDefaultTypeNamespace(moduleTypeNamespace, typeDecls);
+        symbolManager.provideNamespace(defaultTypeNamespace);
+
+        final List<DefaultNamespaceDeclContext> annotationDecls = splitByType.getOrDefault(3, List.of());
+        final String defaultAnnotationNamespace = validateDefaultAnnotationNamespace(moduleAnnotationNamespace, annotationDecls);
+        symbolManager.provideNamespace(defaultAnnotationNamespace);
+
+        final List<DefaultNamespaceDeclContext> constructionDecls = splitByType.getOrDefault(4, List.of());
+        final String defaultConstructionNamespace = validateDefaultConstructionNamespace(moduleConstructionNamespace, constructionDecls);
+
+
+        namespaceResolver = new NamespaceResolver(
+            defaultFunctionNamespace,
+            defaultElementNamespace,
+            defaultTypeNamespace,
+            defaultConstructionNamespace,
+            defaultAnnotationNamespace
+            );
+    }
+
+    private String validateDefaultFunctionNamespace(
+        final String moduleFunctionNamespace,
+        final List<DefaultNamespaceDeclContext> functionDecls)
+    {
+        final String defaultFunctionNamespace = switch(functionDecls.size())
+        {
+            case 0 -> moduleFunctionNamespace;
+            case 1 -> functionDecls.get(0).qname().getText();
+            default -> {
+                for (final var d : functionDecls) {
+                    error(d, ErrorType.DEFAULT_NAMESPACE_DECL__MULTIPLE_FUNCTION_NAMESPACE_DECLARATIONS, null);
+                }
+                yield moduleFunctionNamespace;
+            }
+        };
+        return defaultFunctionNamespace;
+    }
+
+    private String validateDefaultAnnotationNamespace(
+        final String moduleAnnotationNamespace,
+        final List<DefaultNamespaceDeclContext> AnnotationDecls)
+    {
+        final String defaultAnnotationNamespace = switch(AnnotationDecls.size())
+        {
+            case 0 -> moduleAnnotationNamespace;
+            case 1 -> AnnotationDecls.get(0).qname().getText();
+            default -> {
+                for (final var d : AnnotationDecls) {
+                    error(d, ErrorType.DEFAULT_NAMESPACE_DECL__MULTIPLE_ANNOTATION_NAMESPACE_DECLARATIONS, null);
+                }
+                yield moduleAnnotationNamespace;
+            }
+        };
+        return defaultAnnotationNamespace;
+    }
+
+    private String validateDefaultConstructionNamespace(
+        final String moduleConstructionNamespace,
+        final List<DefaultNamespaceDeclContext> ConstructionDecls)
+    {
+        final String defaultConstructionNamespace = switch(ConstructionDecls.size())
+        {
+            case 0 -> moduleConstructionNamespace;
+            case 1 -> {
+                final var defaultNamespace = ConstructionDecls.get(0).qname().getText();
+                if (symbolManager.grammarExists(defaultNamespace)) {
+
+                }
+                yield defaultNamespace;
+            }
+            default -> {
+                for (final var d : ConstructionDecls) {
+                    error(d, ErrorType.DEFAULT_NAMESPACE_DECL__MULTIPLE_CONSTRUCTION_NAMESPACE_DECLARATIONS, null);
+                }
+                yield moduleConstructionNamespace;
+            }
+        };
+        return defaultConstructionNamespace;
+    }
+
+    private String validateDefaultElementNamespace(
+            final String moduleElementNamespace,
+            final List<DefaultNamespaceDeclContext> elementDecls)
+    {
+        final String defaultElementNamespace = switch(elementDecls.size())
+        {
+            case 0 -> moduleElementNamespace;
+            case 1 -> elementDecls.get(0).qname().getText();
+            default -> {
+                for (final var d : elementDecls) {
+                    error(d, ErrorType.DEFAULT_NAMESPACE_DECL__MULTIPLE_ELEMENT_NAMESPACE_DECLARATIONS, null);
+                }
+                yield moduleElementNamespace;
+            }
+        };
+        return defaultElementNamespace;
+    }
+
+    private String validateDefaultTypeNamespace(
+        final String moduleTypeNamespace,
+        final List<DefaultNamespaceDeclContext> typeDecls
+        )
+    {
+        final String defaultTypeNamespace = switch(typeDecls.size())
+        {
+            case 0 -> moduleTypeNamespace;
+            case 1 -> typeDecls.get(0).qname().getText();
+            default -> {
+                for (final var d : typeDecls) {
+                    error(d, ErrorType.DEFAULT_NAMESPACE_DECL__MULTIPLE_TYPE_NAMESPACE_DECLARATIONS, null);
+                }
+                yield moduleTypeNamespace;
+            }
+        };
+        return defaultTypeNamespace;
+    }
+
+    private void handleContextValueDeclarations(final PrologContext p) {
         switch (p.contextValueDecl().size()) {
             case 0 -> {}// set in constructor
             case 1 -> visitContextValueDecl(p.contextValueDecl(0));
             default -> {
-                for (var ctxValueDecl : p.contextValueDecl()) {
+                for (final var ctxValueDecl : p.contextValueDecl()) {
                     error(ctxValueDecl, ErrorType.CONTEXT_VALUE_DECL__MULTIPLE_DECLARATIONS, null);
                 }
             }
@@ -176,18 +639,18 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final XQuerySemanticContextManager contextManager,
         final XQueryTypeFactory typeFactory,
         final XQueryValueFactory valueFactory,
-        final XQuerySemanticFunctionManager functionCaller,
-        final GrammarAnalysisResult grammarAnalysisResult,
+        final XQuerySemanticSymbolManager functionCaller,
+        final Map<String, QualifiedGrammarAnalysisResult> importedGrammars,
         final ModuleManager moduleManager,
+        final GrammarManager grammarManager,
         final XQuerySequenceType contextType)
     {
-        this.grammarAnalysisResult = grammarAnalysisResult;
         // this.antlrQueryParser = antlrQueryParser;
         // this.modulePaths = modulePaths;
         this.typeFactory = typeFactory;
         this.valueFactory = valueFactory;
-        this.functionManager = functionCaller;
-        this.functionManager.setAnalyzer(this);
+        this.symbolManager = functionCaller;
+        this.symbolManager.setAnalyzer(this);
         this.contextManager = contextManager;
         this.contextManager.enterContext();
         this.context = new XQueryVisitingSemanticContext();
@@ -211,11 +674,22 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         this.anyItem = typeFactory.anyItem();
         this.zeroOrOneItem = typeFactory.zeroOrOne(typeFactory.itemAnyItem());
 
+        if (importedGrammars !=  null) {
+            for (final String grammarname : importedGrammars.keySet()) {
+                symbolManager.registerGrammar(grammarname, importedGrammars.get(grammarname));
+            }
+        }
         this.atomizer = new SequencetypeAtomization(typeFactory);
         this.castability = new SequencetypeCastable(typeFactory, atomizer);
         this.anyNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
-        this.pathOperator = new SequencetypePathOperator(typeFactory, antlrQueryParser);
+        this.pathOperator = new SequencetypePathOperator(
+            typeFactory,
+            symbolManager);
         this.moduleManager = moduleManager;
+        this.grammarManager = grammarManager;
+        zeroOrMoreNumbers = typeFactory.zeroOrMore(typeFactory.itemNumber());
+
+
     }
 
     @Override
@@ -277,7 +751,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
 
     private void declareVariable(final TypeInContext type, final String varName, final VarNameContext varNameCtx) {
         contextManager.entypeVariable(varName, type);
-        for (var listener : listeners) {
+        for (final var listener : listeners) {
             listener.onVariableDeclaration(varNameCtx, type);
         }
     }
@@ -414,7 +888,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             if (gs.exprSingle() != null) {
                 declareVariable(gs, gs.varNameAndType(), gs.exprSingle());
             } else {
-                VarNameContext varName2 = gs.varNameAndType().varName();
+                final VarNameContext varName2 = gs.varNameAndType().varName();
                 final String varname = varName2.qname().getText();
                 TypeInContext variableType = contextManager.getVariable(varname);
                 if (variableType == null) {
@@ -625,7 +1099,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     @Override
     public TypeInContext visitTypeName(final TypeNameContext ctx)
     {
-        var name = ctx.getText();
+        final var name = ctx.getText();
         final XQuerySequenceType result = switch (name) {
             case "number" -> number;
             case "string" -> string;
@@ -636,17 +1110,15 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                 if (type.status() == NamedAccessingStatus.OK)
                     yield type.type();
 
-                for (var i : namedRecords) {
-                    var resolved = namespaceResolver.resolveType(i.qname().getText());
-                    if (resolved.equals(visitedQualifiedName)) {
-                        var namedRecordResult = resolveRecordFromTypeDecl(resolved, i);
+                for (final QualifiedName resolvedName : recordsMapped.keySet()) {
+                    if (resolvedName.equals(visitedQualifiedName)) {
+                        final var namedRecordResult = resolveRecordFromUnresolved(resolvedName, recordsMapped.get(resolvedName));
                         yield typeFactory.one(namedRecordResult.recordItemType);
                     }
                 }
-                for (var i : itemTypes) {
-                    var resolved = namespaceResolver.resolveType(i.qname().getText());
+                for (final var resolved : itemsMapped.keySet()) {
                     if (resolved.equals(visitedQualifiedName)) {
-                        var t = resolveItemTypeFromDecl(resolved, i);
+                        final var t = resolveItemTypeFromDecl(resolved, itemsMapped.get(resolved));
                         yield typeFactory.one(t.registered());
                     }
                 }
@@ -667,7 +1139,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     @Override
     public TypeInContext visitElementTest(final ElementTestContext ctx)
     {
-        final Set<String> elementNames = ctx.nameTestUnion().nameTest().stream().map(e -> e.getText())
+        final Set<QualifiedName> elementNames = ctx.nameTestUnion().nameTest().stream().map(e -> namespaceResolver.resolveElement(e.getText()))
             .collect(Collectors.toSet());
         return contextManager.typeInContext(typeFactory.element(elementNames));
     }
@@ -722,7 +1194,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             final String fieldName = field.fieldName().getText();
             final var fieldType = visitSequenceType(field.sequenceType());
             final boolean isRequired = field.QUESTION_MARK() != null;
-            final XQueryRecordField recordField = new XQueryRecordField(fieldType.type, isRequired);
+            final XQueryRecordField recordField = new XQueryRecordField(TypeOrReference.type(fieldType.type), isRequired);
             fields.put(fieldName, recordField);
         }
         if (record.extensibleFlag() == null) {
@@ -769,7 +1241,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             error(ctx, ErrorType.VAR_REF__UNDECLARED, List.of(variableName));
             return contextManager.typeInContext(zeroOrMoreItems);
         } else {
-            for (var l : listeners) {
+            for (final var l : listeners) {
                 l.onVariableReference(ctx, variableType);
             }
             return variableType;
@@ -955,7 +1427,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         return result.unescaped();
     }
 
-    private final NamespaceResolver namespaceResolver = new NamespaceResolver("fn", "");
+    private NamespaceResolver namespaceResolver = new NamespaceResolver("fn", "", "", "", "");
 
     @Override
     public TypeInContext visitFunctionCall(final FunctionCallContext ctx)
@@ -966,7 +1438,10 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         ctx.argumentList().accept(this);
 
         final TypeInContext callAnalysisResult = callFunction(
-            ctx, ctx.functionName().getText(), visitedPositionalArguments, visitedKeywordArguments);
+            ctx,
+            ctx.functionName().getText(),
+            visitedPositionalArguments,
+            visitedKeywordArguments);
 
         visitedPositionalArguments = savedArgs;
         visitedKeywordArguments = savedKwargs;
@@ -985,12 +1460,16 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final String namespace = resolution.namespace();
         final String functionName = resolution.name();
 
-        final AnalysisResult callAnalysisResult = functionManager.call(
+        final AnalysisResult callAnalysisResult = symbolManager.call(
             ctx, namespace, functionName, args,
             kwargs, context, contextManager.currentContext());
         errors.addAll(callAnalysisResult.errors());
         return callAnalysisResult.result();
     }
+
+
+
+
 
     @Override
     public TypeInContext visitQuantifiedExpr(final QuantifiedExprContext ctx) {
@@ -1107,30 +1586,85 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     public TypeInContext visitNodeTest(final NodeTestContext ctx)
     {
         final XQuerySequenceType nodeType = context.getType().type;
-        if (!nodeType.isSubtypeOf(anyNodes)) {
-            error(ctx, ErrorType.NODE_TEST__LHS_INVALID, List.of(nodeType));
+        final PathOperatorResult result = getOperatorPathResultFromTree(ctx, nodeType);
+
+        // reporting input status
+        switch(result.inputStatus()) {
+            case EMPTY_SEQUENCE -> warn(ctx, WarningType.PATH_OPERATOR__EMPTY_SEQUENCE, List.of());
+            case NON_NODES -> error(ctx, ErrorType.PATH_OPERATOR__NOT_SEQUENCE_OF_NODES, List.of(nodeType));
+            case MULTIGRAMMAR -> error(ctx, ErrorType.PATH_OPERATOR__MULTIGRAMMAR, List.of(nodeType));
+            case OK -> {}
         }
+
+        { // reporting errors in input grammars
+            final var inputGrammars = result.inputGrammars();
+            final Map<GrammarStatus, List<String>> inputGrammarsGroupedByStatus = inputGrammars
+                .keySet()
+                .stream()
+                .collect(Collectors.groupingBy(inputGrammars::get));
+            final var invalidInputGrammars = inputGrammarsGroupedByStatus.get(GrammarStatus.UNREGISTERED);
+            if (invalidInputGrammars != null) {
+                error(
+                    ctx,
+                    ErrorType.PATH_OPERATOR__FOUND_UNREGISTERED_GRAMMARS,
+                    List.of(invalidInputGrammars));
+            }
+        }
+
+        { // validating element grammars
+            final var elementGrammars = result.elementGrammars();
+            final Map<GrammarStatus, List<String>> elementGrammarsGroupedByStatus = elementGrammars
+                .keySet()
+                .stream()
+                .collect(Collectors.groupingBy(elementGrammars::get));
+            final var invalidElementGrammars = elementGrammarsGroupedByStatus.get(GrammarStatus.UNREGISTERED);
+            if (invalidElementGrammars != null) {
+                error(
+                    ctx,
+                    ErrorType.PATH_OPERATOR__FOUND_UNREGISTERED_GRAMMARS,
+                    List.of(invalidElementGrammars));
+            }
+
+        }
+
+        // reporting element invalid names
+        if (!result.invalidElementNames().isEmpty()) {
+            // TODO: move to message
+            final String joinedNames = result
+                .invalidElementNames()
+                .stream()
+                .map(QualifiedName::toString)
+                .collect(Collectors.joining(", "));
+            error(
+                ctx,
+                ErrorType.PATH_OPERATOR__UNRECOGNIZED_RULE_NAMES,
+                List.of(joinedNames));
+        }
+
+        { // reporting duplicated names
+            if (!result.duplicatedNames().isEmpty()) {
+                warn(
+                    ctx,
+                    WarningType.PATH_OPERATOR__DUPLICATED_NAME,
+                    List.of(result.invalidElementNames()));
+            }
+        }
+
+        return contextManager.typeInContext(result.result());
+    }
+
+    private PathOperatorResult getOperatorPathResultFromTree(final NodeTestContext ctx, final XQuerySequenceType nodeType) {
         PathOperatorResult result;
         if (ctx.wildcard() != null) {
-            result = pathOperator.pathOperator(nodeType, currentAxis, null, grammarAnalysisResult);
+            result = pathOperator.pathOperator(nodeType, currentAxis, null, namespaceResolver);
         } else {
-            final Set<String> names = ctx.pathNameTestUnion().qname().stream()
-                .map(t->t.getText())
-                .collect(Collectors.toSet());
-            result = pathOperator.pathOperator(nodeType, currentAxis, names, grammarAnalysisResult);
+            final List<String> names = ctx.pathNameTestUnion().qname()
+                .stream()
+                .map(QnameContext::getText)
+                .toList();
+            result = pathOperator.pathOperator(nodeType, currentAxis, names, namespaceResolver);
         }
-        if (result.isEmptyTarget()) {
-            warn(ctx, WarningType.PATH_OPERATOR__EMPTY_SEQUENCE, List.of());
-        }
-        if (!result.invalidNames().isEmpty()) {
-            final String joinedNames = result.invalidNames().stream().collect(Collectors.joining(", "));
-            error(ctx, ErrorType.NODE_TEST__UNRECOGNIZED_RULE_NAMES, List.of(joinedNames));
-        }
-        if (!result.duplicateNames().isEmpty()) {
-            final String joinedNames = result.invalidNames().stream().collect(Collectors.joining(", "));
-            warn(ctx, WarningType.NODE_TEST__DUPLICATED_NAME, List.of(joinedNames));
-        }
-        return contextManager.typeInContext(result.result());
+        return result;
     }
 
     /**
@@ -1324,7 +1858,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                 if (isWildcard) {
                     return result;
                 }
-                if (!keySpecifierType.type.itemtypeIsSubtypeOf(typeFactory.zeroOrMore(typeFactory.itemNumber())))
+                if (!keySpecifierType.type.itemtypeIsSubtypeOf(zeroOrMoreNumbers))
                 {
                     error(lookup, ErrorType.LOOKUP__ARRAY_INVALID_KEY, List.of(targetType));
                 }
@@ -1468,7 +2002,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final XQuerySequenceType mergedRecordFieldTypes = recordFields
             .values()
             .stream()
-            .map(t -> t.isRequired()? t.type() : t.type().addOptionality())
+            .map(this::resolveRecordFieldType)
             .reduce((x, y)->x.alternativeMerge(y))
             .get();
         if (isWildcard) {
@@ -1486,7 +2020,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                 error(keySpecifier, ErrorType.LOOKUP__INVALID_RECORD_KEY_NAME, List.of(key, targetType));
                 return zeroOrMoreItems;
             }
-            return valueType.type();
+            return resolveRecordFieldType(valueType);
         }
         final XQuerySequenceType expectedKeyItemtype = typeFactory.zeroOrMore(targetKeyItemType);
         if (!keySpecifierType.isSubtypeOf(expectedKeyItemtype)) {
@@ -1496,7 +2030,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             final var members = keySpecifierType.type.itemType.enumMembers;
             final var firstField = members.stream().findFirst().get();
             final var firstRecordField = recordFields.get(firstField);
-            XQuerySequenceType merged = firstRecordField.isRequired() ? firstRecordField.type() : firstRecordField.type().addOptionality();
+            XQuerySequenceType merged = resolveRecordFieldType(firstRecordField);
             for (final var member : members) {
                 if (member.equals(firstField))
                     continue;
@@ -1505,11 +2039,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                     warn(lookup, WarningType.LOOKUP__IMPOSSIBLE_RECORD_FIELD, List.of(member));
                     return zeroOrMoreItems;
                 }
-                if (recordField.isRequired()) {
-                    merged = merged.sequenceMerge(recordField.type());
-                } else {
-                    merged = merged.sequenceMerge(recordField.type().addOptionality());
-                }
+                merged = merged.sequenceMerge(resolveRecordFieldType(recordField));
             }
             return merged;
         }
@@ -1533,7 +2063,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final XQuerySequenceType mergedRecordFieldTypes = recordFields
             .values()
             .stream()
-            .map(t -> t.isRequired()? t.type() : t.type().addOptionality())
+            .map(this::resolveRecordFieldType)
             .reduce((x, y)->x.alternativeMerge(y))
             .get();
         if (isWildcard) {
@@ -1546,11 +2076,11 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final var stringToken = keySpecifier.STRING();
         if (stringToken != null) {
             final String key = processStringLiteral(keySpecifier);
-            final var valueType = recordFields.get(key);
-            if (valueType == null) {
+            final var recordField = recordFields.get(key);
+            if (recordField == null) {
                 return zeroOrMoreItems;
             }
-            return valueType.type();
+            return resolveRecordFieldType(recordField);
         }
         final XQuerySequenceType expectedKeyItemtype = typeFactory.zeroOrMore(targetKeyItemType);
         if (!keySpecifierType.isSubtypeOf(expectedKeyItemtype)) {
@@ -1560,7 +2090,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             final var members = keySpecifierType.type.itemType.enumMembers;
             final var firstField = members.stream().findFirst().get();
             final var firstRecordField = recordFields.get(firstField);
-            XQuerySequenceType merged = firstRecordField.isRequired() ? firstRecordField.type() : firstRecordField.type().addOptionality();
+            XQuerySequenceType merged = resolveRecordFieldType(firstRecordField);
             for (final var member : members) {
                 if (member.equals(firstField))
                     continue;
@@ -1568,16 +2098,24 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                 if (recordField == null)  {
                     return zeroOrMoreItems;
                 }
-                if (recordField.isRequired()) {
-                    merged = merged.alternativeMerge(recordField.type());
-                } else {
-                    merged = merged.alternativeMerge(recordField.type().addOptionality());
-                }
+                merged = merged.alternativeMerge(resolveRecordFieldType(recordField));
             }
             return merged;
         }
         return mergedRecordFieldTypes.addOptionality();
     }
+
+	private XQuerySequenceType resolveRecordFieldType(XQueryRecordField t) {
+		var type = switch(t.typeOrReference().fieldType()) {
+		    case REFERENCE -> {
+		        yield typeFactory.namedType(t.typeOrReference().reference()).type();
+		    }
+		    case TYPE -> {
+		        yield t.typeOrReference().type();
+		    }
+		};
+		return t.isRequired()? type : type.addOptionality();
+	}
 
     TypeInContext getKeySpecifier(final LookupExprContext ctx) {
         final KeySpecifierContext keySpecifier = ctx.lookup().keySpecifier();
@@ -1721,7 +2259,15 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         }
         // TODO: add warning on impossible instance of tests
         final var bool = contextManager.typeInContext(this.boolean_);
-        contextManager.currentScope().imply(bool, new InstanceOfSuccessImplication(bool, true, expression, testedType));
+        contextManager.currentScope().imply(
+            bool,
+            new InstanceOfSuccessImplication(
+                bool,
+                true,
+                expression,
+                testedType
+                )
+            );
         return bool;
     }
 
@@ -1842,7 +2388,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     {
         final int arity = Integer.parseInt(ctx.IntegerLiteral().getText());
         final QualifiedName resolvedName = namespaceResolver.resolveFunction(ctx.qname().getText());
-        final var analysis = functionManager.getFunctionReference(
+        final var analysis = symbolManager.getFunctionReference(
             ctx, resolvedName.namespace(), resolvedName.name(), arity, contextManager.currentContext());
         errors.addAll(analysis.errors());
         return analysis.result();
@@ -2020,7 +2566,9 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             int i = 0;
             for (final var enumMember : enumMembers) {
                 final var valueType = entries.get(i).mapValueExpr().accept(this);
-                recordEntries.add(Map.entry(enumMember, new XQueryRecordField(valueType.type, true)));
+                recordEntries.add(Map.entry(enumMember, new XQueryRecordField(
+                    TypeOrReference.type(valueType.type),
+                    true)));
                 i++;
             }
             return contextManager.typeInContext(typeFactory.record(Map.ofEntries(recordEntries.toArray(Entry[]::new))));
@@ -2523,7 +3071,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         }
         final var inlineType = ctx.functionBody().enclosedExpr().accept(this);
         if (returnTypeDeclaration != null) {
-            var returnedType = returnTypeDeclaration.accept(this);
+            final var returnedType = returnTypeDeclaration.accept(this);
             if (!inlineType.isSubtypeOf(returnedType)) {
                 error(ctx.functionBody(), ErrorType.FUNCTION__INVALID_BODY_TYPE, List.of(inlineType, returnedType));
             }
@@ -2561,9 +3109,10 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                 if (defaultValue != null)
                     break;
                 final var argName = getArgName(param);
-                XQuerySequenceType paramType = param.varNameAndType().typeDeclaration() == null
+                final TypeDeclarationContext typeDeclaration = param.varNameAndType().typeDeclaration();
+                final XQuerySequenceType paramType = typeDeclaration == null
                     ? zeroOrMoreItems
-                    : param.varNameAndType().typeDeclaration().accept(this).type;
+                    : visitTypeDeclaration(typeDeclaration).type;
                 final var argDecl = new ArgumentSpecification(argName, paramType, null);
                 final boolean added = argNames.add(argName);
                 if (!added) {
@@ -2587,8 +3136,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                     }
                 }
                 final var argDecl = new ArgumentSpecification(argName, paramType.type, defaultValue);
-                final boolean added = argNames.add(argName);
-                if (!added) {
+                if (!argNames.add(argName)) {
                     error(param.getParent(), ErrorType.FUNCTION__DUPLICATED_ARG_NAME, List.of(argName));
                 }
                 args.add(argDecl);
@@ -2602,7 +3150,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         }
 
         final TypeInContext returned = ctx.typeDeclaration() != null? visitTypeDeclaration(ctx.typeDeclaration()) : contextManager.typeInContext(zeroOrMoreItems);
-        functionManager.register(resolved.namespace(), resolved.name(), args, returned.type);
+        symbolManager.registerFunction(resolved.namespace(), resolved.name(), args, returned.type);
         final FunctionBodyContext functionBody = ctx.functionBody();
         if (functionBody != null) {
             final var bodyType = visitEnclosedExpr(functionBody.enclosedExpr());
@@ -2620,7 +3168,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final var paramName = param.varNameAndType().varName().qname();
         if (!paramName.namespace().isEmpty())
         {
-            error(param, ErrorType.PARAM__NAMESPACE, List.of(paramName.anyName().getText()));
+            error(param, ErrorType.FUNCTION__PARAM_HAS_NAMESPACE, List.of(paramName.anyName().getText()));
         }
         return paramName.anyName().getText();
     }
@@ -2642,7 +3190,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         return null;
     }
 
-    private RegistrationResult resolveItemTypeFromDecl(QualifiedName qName, ItemTypeDeclContext ctx) {
+    private RegistrationResult resolveItemTypeFromDecl(final QualifiedName qName, final ItemTypeDeclContext ctx) {
         final var itemType = visitItemType(ctx.itemType()).type.itemType;
         return typeFactory.registerNamedType(qName, itemType);
     }
@@ -2652,11 +3200,14 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     {
         final var typeName = ctx.qname().getText();
         final var qName = namespaceResolver.resolveType(typeName);
-        var result = resolveItemTypeFromDecl(qName, ctx);
+        final var result = resolveItemTypeFromDecl(qName, ctx);
         switch (result.status()) {
             case ALREADY_REGISTERED_DIFFERENT ->  {
                 final var expected = result.registered();
-                error(ctx, ErrorType.ITEM_DECLARATION__ALREADY_REGISTERED_DIFFERENT, List.of(qName, expected));
+                error(
+                    ctx,
+                    ErrorType.ITEM_DECLARATION__ALREADY_REGISTERED_DIFFERENT,
+                    List.of(qName, expected));
             }
             case ALREADY_REGISTERED_SAME ->  {
                 error(ctx, ErrorType.ITEM_DECLARATION__ALREADY_REGISTERED_SAME, List.of(qName));
@@ -2672,7 +3223,11 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         XQueryItemType recordItemType,
         List<ArgumentSpecification> fieldsAsArgs){}
 
-    private RecordResolutionResult resolveRecordFromTypeDecl(QualifiedName qName, NamedRecordTypeDeclContext ctx) {
+    private RecordResolutionResult resolveRecordFromTypeDecl(
+        final QualifiedName qName,
+        final NamedRecordTypeDeclContext ctx
+        )
+    {
         final List<ExtendedFieldDeclarationContext> extendedFieldDeclaration = ctx.extendedFieldDeclaration();
         final int size = extendedFieldDeclaration.size();
         final Map<String, XQueryRecordField> fields = new HashMap<>(size);
@@ -2687,7 +3242,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             }
             final boolean isRequired = field.fieldDeclaration().QUESTION_MARK() == null;
             final ExprSingleContext defaultExpr = field.exprSingle();
-            fields.put(fieldName, new XQueryRecordField(fieldType, isRequired));
+            fields.put(fieldName, new XQueryRecordField(TypeOrReference.type(fieldType), isRequired));
             if (isRequired) {
                 if (defaultExpr == null) {
                     mandatoryArgs.add(new ArgumentSpecification(fieldName, fieldType, null));
@@ -2707,6 +3262,125 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         return new RecordResolutionResult(itemRecordType, mandatoryArgs);
     }
 
+    private RecordResolutionResult resolveRecordFromUnresolved(
+        final QualifiedName qName,
+        final UnresolvedRecordSpecification recordSpecification
+        )
+    {
+
+        final int size = recordSpecification.fields.size();
+        final Map<String, XQueryRecordField> fields = new LinkedHashMap<>(size);
+        final List<ArgumentSpecification> mandatoryArgs = new ArrayList<>(size);
+        final List<ArgumentSpecification> optionalArgs = new ArrayList<>(size);
+        for (final UnresolvedRecordFieldSpecification field : recordSpecification.fields) {
+            final var fieldName = field.name;
+            final SequenceTypeContext fieldTypeCtx = field.typeOrReferenceCtx;
+            if (fieldTypeCtx == null) {
+                fields.put(fieldName, new XQueryRecordField(TypeOrReference.type(zeroOrMoreItems), field.isRequired));
+                continue;
+            }
+            if (fieldTypeCtx.itemType() == null || fieldTypeCtx.itemType().typeName() == null) {
+                fields.put(fieldName, new XQueryRecordField(TypeOrReference.type(visitSequenceType(fieldTypeCtx).type), field.isRequired));
+                continue;
+            }
+            QualifiedName reference = namespaceResolver.resolveType(fieldTypeCtx.itemType().typeName().getText());
+            if (fieldTypeCtx.occurrenceIndicator() == null) {
+                TypeOrReference typeOrReference = TypeOrReference.reference(reference, XQueryCardinality.ONE);
+                fields.put(fieldName, new XQueryRecordField(typeOrReference, field.isRequired));
+            } else {
+                XQueryCardinality cardinality = switch(fieldTypeCtx.occurrenceIndicator().getText()) {
+                    case "?" -> XQueryCardinality.ZERO_OR_ONE;
+                    case "*" -> XQueryCardinality.ZERO_OR_MORE;
+                    default -> XQueryCardinality.ONE_OR_MORE;
+                };
+                TypeOrReference typeOrReference = TypeOrReference.reference(qName, cardinality);
+                fields.put(fieldName, new XQueryRecordField(typeOrReference, field.isRequired));
+            }
+
+        }
+        for (var mandatoryArgSpec : recordSpecification.mandatoryFieldsAsArgs) {
+            mandatoryArgs.add(new ArgumentSpecification(
+                mandatoryArgSpec.name,
+                visitSequenceType(mandatoryArgSpec.type).type,
+                mandatoryArgSpec.defaultValue));
+        }
+        for (var optionalArgSpec : recordSpecification.optionalfieldsAsArgs) {
+            mandatoryArgs.add(new ArgumentSpecification(
+                optionalArgSpec.name,
+                visitSequenceType(optionalArgSpec.type).type,
+                optionalArgSpec.defaultValue));
+        }
+
+        mandatoryArgs.addAll(optionalArgs);
+        final var itemRecordType = recordSpecification.isExtensible
+            ? typeFactory.itemExtensibleRecord(fields)
+            : typeFactory.itemRecord(fields);
+        return new RecordResolutionResult(itemRecordType, mandatoryArgs);
+    }
+
+
+
+    private record UnresolvedRecordFieldSpecification(
+        String name,
+        SequenceTypeContext typeOrReferenceCtx,
+        boolean isRequired
+    ) {}
+
+    private record UnresolvedArgumentSpecification(
+        String name,
+        SequenceTypeContext type,
+        ParseTree defaultValue
+    ) {}
+
+    // private record UnresolvedFunctionSpecification(
+    //     QualifiedName name,
+    //     List<UnresolvedArgumentSpecification> mandatoryArgs,
+    //     List<UnresolvedArgumentSpecification> optionalArgs,
+    //     SequenceTypeContext returnedType
+    // ){}
+
+
+    private record UnresolvedRecordSpecification(
+        NamedRecordTypeDeclContext location,
+        QualifiedName name,
+        List<UnresolvedRecordFieldSpecification> fields,
+        List<UnresolvedArgumentSpecification> mandatoryFieldsAsArgs,
+        List<UnresolvedArgumentSpecification> optionalfieldsAsArgs,
+        boolean isExtensible
+    ){}
+
+    private UnresolvedRecordSpecification getUnresolvedRecord(
+        final QualifiedName qName,
+        final NamedRecordTypeDeclContext ctx
+        )
+    {
+        final List<ExtendedFieldDeclarationContext> extendedFieldDeclaration = ctx.extendedFieldDeclaration();
+        final int size = extendedFieldDeclaration.size();
+        final List<UnresolvedRecordFieldSpecification> fields = new ArrayList<>(size);
+        final List<UnresolvedArgumentSpecification> mandatoryArgs = new ArrayList<>(size);
+        final List<UnresolvedArgumentSpecification> optionalArgs = new ArrayList<>(size);
+        for (final ExtendedFieldDeclarationContext field : extendedFieldDeclaration) {
+            final var fieldName = field.fieldDeclaration().fieldName().getText();
+            final var fieldTypeCtx = field.fieldDeclaration().sequenceType();
+            final boolean isRequired = field.fieldDeclaration().QUESTION_MARK() == null;
+            final ExprSingleContext defaultExpr = field.exprSingle();
+            fields.add(new UnresolvedRecordFieldSpecification(fieldName, fieldTypeCtx, isRequired));
+            if (isRequired) {
+                if (defaultExpr == null) {
+                    mandatoryArgs.add(new UnresolvedArgumentSpecification(fieldName, fieldTypeCtx, null));
+                }
+                else {
+                    optionalArgs.add(new UnresolvedArgumentSpecification(fieldName, fieldTypeCtx, defaultExpr));
+                }
+            } else {
+                optionalArgs.add(new UnresolvedArgumentSpecification(fieldName, fieldTypeCtx, new HelperTrees().EMPTY_SEQUENCE));
+            }
+        }
+        mandatoryArgs.addAll(optionalArgs);
+        boolean isExtensible = ctx.extensibleFlag() != null;
+        return new UnresolvedRecordSpecification(ctx, qName, fields, mandatoryArgs, optionalArgs, isExtensible);
+    }
+
 
     @Override
     public TypeInContext visitNamedRecordTypeDecl(final NamedRecordTypeDeclContext ctx)
@@ -2714,10 +3388,10 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final var typeName = ctx.qname().getText();
         final var qName = namespaceResolver.resolveType(typeName);
         final RecordResolutionResult resolved = resolveRecordFromTypeDecl(qName, ctx);
-        var registrationResult = typeFactory.registerNamedType(qName, resolved.recordItemType);
+        final var registrationResult = typeFactory.registerNamedType(qName, resolved.recordItemType);
         switch (registrationResult.status()) {
             case ALREADY_REGISTERED_DIFFERENT ->  {
-                var expr = registrationResult.registered();
+                final var expr = registrationResult.registered();
                 error(
                     ctx,
                     ErrorType.RECORD_DECLARATION__ALREADY_REGISTERED_DIFFERENT,
@@ -2734,14 +3408,13 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                 return contextManager.typeInContext(typeFactory.one(registrationResult.registered()));
             }
             case OK -> {
-                functionManager.register(qName.namespace(), qName.name(), resolved.fieldsAsArgs, typeFactory.one(resolved.recordItemType));
+                symbolManager.registerFunction(qName.namespace(), qName.name(), resolved.fieldsAsArgs, typeFactory.one(resolved.recordItemType));
                 return contextManager.typeInContext(typeFactory.one(registrationResult.registered()));
             }
         }
         // unreachable
         return null;
     }
-
 
 
     XQueryAxis currentAxis;
@@ -2753,56 +3426,77 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         return saved;
     }
 
-
-    // @Override
-    // public TypeInContext visitGrammarImport(GrammarImportContext ctx)
-    // {
-    //     var strings = ctx.STRING();
-    //     var grammarAnalysisResult = analyzeGrammar(ctx, strings.get(0).getText());
-    //     this.grammarAnalysisResult = grammarAnalysisResult;
-    //     return null;
-    // }
-
-
-
-
     @Override
     public TypeInContext visitPathModuleImport(final PathModuleImportContext ctx) {
         final String pathQuery = stringContents(ctx.STRING());
         final var result = moduleManager.pathModuleImport(pathQuery);
-        return handleModuleImport(ctx, result);
+        return handleModuleImport(ctx, result, "");
     }
 
 
     @Override
-    public TypeInContext visitDefaultPathModuleImport(final DefaultPathModuleImportContext ctx) {
-        final String pathQuery = ctx.qname().getText().replace(":", "/");
-        final var result = moduleManager.defaultPathModuleImport(pathQuery);
-        return handleModuleImport(ctx, result);
+    public TypeInContext visitDefaultPathModuleImport(final DefaultPathModuleImportContext ctx)
+    {
+        final String namespace = ctx.qname().getText();
+        if (symbolManager.namespaceExists(namespace)) {
+            error(
+                ctx,
+                ErrorType.IMPORT_MODULE__DUPLICATE_IMPORT_BY_NAMESPACE,
+                List.of(namespace)
+                );
+            return null;
+        }
+        final var result = moduleManager.defaultPathModuleImport(namespace);
+        return handleModuleImport(ctx, result, namespace);
     }
 
     @Override
     public TypeInContext visitNamespaceModuleImport(final NamespaceModuleImportContext ctx) {
+        final String namespace = ctx.namespacePrefix().qname().getText();
+        if (symbolManager.namespaceExists(namespace)) {
+            error(
+                ctx,
+                ErrorType.IMPORT_MODULE__DUPLICATE_IMPORT_BY_NAMESPACE,
+                List.of(namespace)
+                );
+            return null;
+        }
         final String pathQuery = stringContents(ctx.STRING());
         final var result = moduleManager.namespaceModuleImport(pathQuery);
-        return handleModuleImport(ctx, result);
+        return handleModuleImport(ctx, result, namespace);
     }
 
 
-    private TypeInContext handleModuleImport(final ParserRuleContext ctx, final ImportResult result) {
+    Map<String, XqueryContext> currentFileImportedModules = new HashMap<>();
+    Map<String, XqueryContext> globalImportedModules = new HashMap<>();
+
+    private TypeInContext handleModuleImport(final ParserRuleContext ctx, final ImportResult result, final String namespace) {
         switch (result.status()) {
             case NO_PATH_FOUND -> {
                 final StringBuilder message = getNoPathMessageFromImport(result);
                 error(ctx, ErrorType.IMPORT_MODULE__NO_PATH_FOUND, List.of(message));
-                return null;
-
+            }
+            case DUPLICATE_IMPORT -> {
+                error(
+                    ctx,
+                    ErrorType.IMPORT_MODULE__DUPLICATE_IMPORT_BY_PATH,
+                    List.of(result)
+                    );
             }
             case MANY_VALID_PATHS -> {
                 warn(ctx, WarningType.IMPORT_MODULE__MANY_VALID_PATHS, List.of(result.validPaths()));
-                return result.tree().accept(this);
+                currentFileImportedModules.put(namespace, result.tree());
             }
             case OK -> {
-                return result.tree().accept(this);
+                final var library = result.tree().libraryModule();
+                if (library == null) {
+                    error(
+                        ctx,
+                        ErrorType.IMPORT_MODULE__IMPORTED_MAIN_MODULE,
+                        List.of(result));
+                } else {
+                    currentFileImportedModules.put(namespace, result.tree());
+                }
             }
         }
         return null;
@@ -2823,7 +3517,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                     message.append(p);
                     message.append(" cannot be read");
                 }
-                case OK -> {
+                case OK, FILE_ALREADY_IMPORTED -> {
                 }
             }
             i++;
@@ -2837,18 +3531,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         return text.substring(1, text.length() - 1);
     }
 
-
-    // private GrammarAnalysisResult analyzeGrammar(ParserRuleContext ctx, String path)
-    // {
-    //     Path target = Path.of(path);
-    //     var grammarAnalyzer = new InputGrammarAnalyzer();
-    //     try {
-    //         return grammarAnalyzer.analyze(CharStreams.fromPath(target.toAbsolutePath()));
-    //     } catch (IOException e) {
-    //         error(ctx, "Invalid grammar import path: " + e.getMessage());
-    //     }
-    //     return null;
-    // }
 
 
 
@@ -2891,29 +3573,29 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     }
 
     @Override
-    public TypeInContext visitContextValueDecl(ContextValueDeclContext ctx) {
+    public TypeInContext visitContextValueDecl(final ContextValueDeclContext ctx) {
         if (ctx.EXTERNAL() != null) {
             // DECLARE CONTEXT VALUE (AS sequenceType)? EXTERNAL (EQ_OP varDefaultValue)?
             if (ctx.sequenceType() != null) {
                 // DECLARE CONTEXT VALUE AS sequenceType EXTERNAL (EQ_OP varDefaultValue)?
                 if (ctx.varDefaultValue() != null) {
                     // DECLARE CONTEXT VALUE AS sequenceType EXTERNAL EQ_OP varDefaultValue
-                    var declaredType = visitSequenceType(ctx.sequenceType());
-                    var defaultValueType = visitVarDefaultValue(ctx.varDefaultValue());
+                    final var declaredType = visitSequenceType(ctx.sequenceType());
+                    final var defaultValueType = visitVarDefaultValue(ctx.varDefaultValue());
                     if (defaultValueType.type.coerceableTo(declaredType.type) == RelativeCoercability.NEVER) {
                         error(ctx, ErrorType.CONTEXT_VALUE_DECL__UNCOERSABLE, List.of(defaultValueType, declaredType));
                     }
                     context.setType(declaredType);
                 } else {
                     // DECLARE CONTEXT VALUE AS sequenceType EXTERNAL
-                    var declaredType = visitSequenceType(ctx.sequenceType());
+                    final var declaredType = visitSequenceType(ctx.sequenceType());
                     context.setType(declaredType);
                 }
             } else {
                 // DECLARE CONTEXT VALUE EXTERNAL (EQ_OP varDefaultValue)?
                 if (ctx.varDefaultValue() != null) {
                     // DECLARE CONTEXT VALUE EXTERNAL EQ_OP varDefaultValue
-                    var defaultValueType = visitVarDefaultValue(ctx.varDefaultValue());
+                    final var defaultValueType = visitVarDefaultValue(ctx.varDefaultValue());
                     context.setType(defaultValueType);
                 } else {
                     // DECLARE CONTEXT VALUE EXTERNAL
@@ -2923,15 +3605,15 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             // DECLARE CONTEXT VALUE (AS sequenceType)? EQ_OP varValue
             if (ctx.sequenceType() != null) {
                 // DECLARE CONTEXT VALUE AS sequenceType EQ_OP varValue
-                var declaredType = visitSequenceType(ctx.sequenceType());
-                var valueType = visitVarValue(ctx.varValue());
+                final var declaredType = visitSequenceType(ctx.sequenceType());
+                final var valueType = visitVarValue(ctx.varValue());
                 if (valueType.type.coerceableTo(declaredType.type) == RelativeCoercability.NEVER) {
                     error(ctx, ErrorType.CONTEXT_VALUE_DECL__UNCOERSABLE, List.of(valueType, declaredType));
                 }
                 context.setType(declaredType);
             } else {
                 // DECLARE CONTEXT VALUE EQ_OP varValue
-                var valueType = visitVarValue(ctx.varValue());
+                final var valueType = visitVarValue(ctx.varValue());
                 context.setType(valueType);
             }
 

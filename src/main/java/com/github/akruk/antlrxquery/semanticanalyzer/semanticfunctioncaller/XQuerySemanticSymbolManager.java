@@ -316,8 +316,9 @@ public class XQuerySemanticSymbolManager {
         for (final ArgumentSpecification arg : partitioned.get(true)) {
             final XQuerySequenceType passedType = keywordArgs.get(arg.name()).type;
             if (!passedType.isSubtypeOf(arg.type())) {
-                reasons.add("Keyword argument '" + arg.name() + "' type mismatch: expected " + arg.type() + ", got "
-                        + passedType);
+                reasons.add("Keyword argument '" + arg.name() + "' type mismatch:"
+                        + "\n        expected: " + arg.type()
+                        + "\n        found   : " + passedType);
                 keywordTypeMismatch = true;
             }
         }

@@ -103,6 +103,7 @@ public class XQuerySemanticSymbolManager {
             }
         }
         this.grammars = new HashMap<>();
+        this.functionDeclarations = new HashMap<>();
     }
 
     final Map<String, Map<String, List<FunctionSpecification>>> namespaces;
@@ -453,7 +454,7 @@ public class XQuerySemanticSymbolManager {
 
     public record DeclarationResult(
         DeclarationStatus status,
-        List<ParseTree> collisions
+        List<ParserRuleContext> collisions
     ) {}
 
     public DeclarationResult declareFunction(final UnresolvedFunctionSpecification function)

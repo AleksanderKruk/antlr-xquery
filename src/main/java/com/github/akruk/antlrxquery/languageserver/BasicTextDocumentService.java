@@ -265,18 +265,18 @@ public class BasicTextDocumentService implements TextDocumentService {
             final Map<VarNameContext, TypeInContext> varNamesMappedToTypes_ = new HashMap<>();
             analyzer.addListener(new AnalysisListener() {
                 @Override
-                public void onVariableDeclaration(VarNameContext varName, TypeInContext type) {
+                public void onVariableDeclaration(final VarNameContext varName, final TypeInContext type) {
                     varNamesMappedToTypes_.put(varName, type);
                 }
 
                 @Override
-                public void onVariableReference(VarRefContext varRef, TypeInContext type) {
+                public void onVariableReference(final VarRefContext varRef, final TypeInContext type) {
                     varRefsMappedToTypes_.put(varRef, type);
                 }
             });
             try {
                 analyzer.visit(tree);
-            } catch(Exception e) {
+            } catch(final Exception e) {
 
             }
             semanticAnalyzers.put(uri, analyzer);
@@ -327,10 +327,10 @@ public class BasicTextDocumentService implements TextDocumentService {
             variableDeclarations.put(uri, declarationContexts);
 
             final List<XQueryValue> windowVars = XQuery.evaluateWithMockRoot(tree, "//windowVars//varName", _parser).sequence;
-            var windowVarVarRefs = windowVars.stream().map(t -> (VarNameContext) t.node);
-            List<VarNameContext> combinedVarRefs = Stream
+            final var windowVarVarRefs = windowVars.stream().map(t -> (VarNameContext) t.node);
+            final List<VarNameContext> combinedVarRefs = Stream
                 .of(declarationWithoutTypeContexts, windowVarVarRefs)
-                .flatMap((Stream<VarNameContext> x)->x)
+                .flatMap((final Stream<VarNameContext> x)->x)
                 .toList();
             variableDeclarationsWithoutType.put(uri, combinedVarRefs);
             }
@@ -518,51 +518,60 @@ public class BasicTextDocumentService implements TextDocumentService {
             return CompletableFuture.completedFuture(null);
         }
 
-
-        final List<FunctionNameContext> names = functionNames.get(uri);
-        final List<NamedFunctionRefContext> namedRefs = namedFunctionRefs.get(uri);
-        if (names.isEmpty() && namedRefs.isEmpty()) {
-            return CompletableFuture.completedFuture(null);
+        {
+            final List<FunctionNameContext> names = functionNames.get(uri);
+            if (names != null && !names.isEmpty()) {
+                final FunctionNameContext foundName = findRuleUsingPosition(position, names);
+                if (foundName != null) {
+                    final int arity = getArity(foundName);
+                    final QualifiedName qname = resolver.resolveFunction(foundName.getText());
+                    return getFunctionHover(foundName, analyzer, qname, arity);
+                }
+            }
         }
 
-        final FunctionNameContext foundName = findRuleUsingPosition(position, names);
-        if (foundName != null) {
-            final int arity = getArity(foundName);
-            final QualifiedName qname = resolver.resolveFunction(foundName.getText());
-            return getFunctionHover(foundName, analyzer, qname, arity);
-        }
-        final NamedFunctionRefContext foundNamedRef = findRuleUsingPosition(position, namedRefs);
-        if (foundNamedRef != null) {
-            final QualifiedName qname = resolver.resolveFunction(foundNamedRef.qname().getText());
-            final int arity = getArity(foundNamedRef);
-
-            return getFunctionHover(foundNamedRef, analyzer, qname, arity);
+        {
+            final List<NamedFunctionRefContext> namedRefs = namedFunctionRefs.get(uri);
+            if (namedRefs != null && !namedRefs.isEmpty()) {
+                final NamedFunctionRefContext foundNamedRef = findRuleUsingPosition(position, namedRefs);
+                if (foundNamedRef != null) {
+                    final QualifiedName qname = resolver.resolveFunction(foundNamedRef.qname().getText());
+                    final int arity = getArity(foundNamedRef);
+                    return getFunctionHover(foundNamedRef, analyzer, qname, arity);
+                }
+            }
         }
 
+        {
+            final List<VarRefContext> varRefs = variableReferences.get(uri);
+            if (varRefs != null && !varRefs.isEmpty()) {
+                final VarRefContext foundVarRef = findRuleUsingPosition(position, varRefs);
+                if (foundVarRef != null) {
+                    final var type = varRefsMappedToTypes.get(uri).get(foundVarRef);
+                    final String hoverText = "```antlrquery\n" + type + "\n```";
+                    final MarkupContent content = new MarkupContent(MarkupKind.MARKDOWN, hoverText);
+                    final Hover hover = new Hover(content);
+                    hover.setRange(getContextRange(foundVarRef));
+                    return CompletableFuture.completedFuture(hover);
+                }
 
-        {VarRefContext foundVarRef = findRuleUsingPosition(position, variableReferences.get(uri));
-        if (foundVarRef != null) {
-            var type = varRefsMappedToTypes.get(uri).get(foundVarRef);
-            String hoverText = "```antlrquery\n" + type + "\n```";
-            MarkupContent content = new MarkupContent(MarkupKind.MARKDOWN, hoverText);
-            Hover hover = new Hover(content);
-            hover.setRange(getContextRange(foundVarRef));
-            return CompletableFuture.completedFuture(hover);
-        }}
-
-        {final List<ParserRuleContext> ts = types.get(uri);
-        if (ts.isEmpty()) {
-            return CompletableFuture.completedFuture(null);
+            }
         }
-        final ParserRuleContext foundType = findRuleUsingPosition(position, ts);
-        if (foundType != null) {
-            final String hoverText = "```antlrquery\n" + foundType.accept(analyzer) + "\n```";
 
-            final MarkupContent content = new MarkupContent(MarkupKind.MARKDOWN, hoverText);
-            final Hover hover = new Hover(content);
-            hover.setRange(getContextRange(foundType));
-            return CompletableFuture.completedFuture(hover);
-        }}
+        {
+            final List<ParserRuleContext> ts = types.get(uri);
+            if (ts != null && !ts.isEmpty()) {
+                final ParserRuleContext foundType = findRuleUsingPosition(position, ts);
+                if (foundType != null) {
+                    final String hoverText = "```antlrquery\n" + foundType.accept(analyzer) + "\n```";
+
+                    final MarkupContent content = new MarkupContent(MarkupKind.MARKDOWN, hoverText);
+                    final Hover hover = new Hover(content);
+                    hover.setRange(getContextRange(foundType));
+                    return CompletableFuture.completedFuture(hover);
+                }
+            }
+        }
 
         return CompletableFuture.completedFuture(null);
     }
@@ -616,7 +625,7 @@ public class BasicTextDocumentService implements TextDocumentService {
             return CompletableFuture.completedFuture(Either3.forFirst(range));
         }
 
-        XQuerySemanticAnalyzer analyzer = semanticAnalyzers.get(uri);
+        final XQuerySemanticAnalyzer analyzer = semanticAnalyzers.get(uri);
         {
             final var foundFunctionName = findRuleUsingPosition(position, functionNames.get(uri));
             if (foundFunctionName != null) {
@@ -853,13 +862,13 @@ public class BasicTextDocumentService implements TextDocumentService {
             return CompletableFuture.completedFuture(List.of());
         }
 
-        List<VarNameContext> variableDeclarationsWithoutTypeForFile = variableDeclarationsWithoutType.getOrDefault(uri, List.of());
-        Map<VarNameContext, TypeInContext> varNamesMappedToTypesForFile = varNamesMappedToTypes.getOrDefault(uri, Map.of());
-        for (VarNameContext variable : variableDeclarationsWithoutTypeForFile) {
-            TypeInContext type = varNamesMappedToTypesForFile.get(variable);
+        final List<VarNameContext> variableDeclarationsWithoutTypeForFile = variableDeclarationsWithoutType.getOrDefault(uri, List.of());
+        final Map<VarNameContext, TypeInContext> varNamesMappedToTypesForFile = varNamesMappedToTypes.getOrDefault(uri, Map.of());
+        for (final VarNameContext variable : variableDeclarationsWithoutTypeForFile) {
+            final TypeInContext type = varNamesMappedToTypesForFile.get(variable);
             if (type != null) {
-                Token stop = variable.getStop();
-                Position hintPosition = new Position(stop.getLine() - 1,
+                final Token stop = variable.getStop();
+                final Position hintPosition = new Position(stop.getLine() - 1,
                     stop.getCharPositionInLine() + stop.getText().length());
 
                 final InlayHint hint = new InlayHint();
@@ -1053,15 +1062,15 @@ public class BasicTextDocumentService implements TextDocumentService {
 
     private CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
         handleVariableReferenceDefinition(
-            String document,
-            VarRefContext foundVarRef)
+            final String document,
+            final VarRefContext foundVarRef)
     {
         final String varname = foundVarRef.getText();
         final int foundOffset = foundVarRef.getStart().getStartIndex();
         VarNameAndTypeContext previousDecl = null;
 
-        for (VarNameAndTypeContext vdef : variableDeclarations.getOrDefault(document, List.of())) {
-            int declOffset = vdef.varName().getStart().getStartIndex();
+        for (final VarNameAndTypeContext vdef : variableDeclarations.getOrDefault(document, List.of())) {
+            final int declOffset = vdef.varName().getStart().getStartIndex();
             if (declOffset > foundOffset) {
                 break;
             }
@@ -1074,8 +1083,8 @@ public class BasicTextDocumentService implements TextDocumentService {
             return CompletableFuture.completedFuture(Either.forLeft(List.of()));
         }
 
-        var declaringVarRef = previousDecl.varName();
-        Location location = new Location(document, getContextRange(declaringVarRef));
+        final var declaringVarRef = previousDecl.varName();
+        final Location location = new Location(document, getContextRange(declaringVarRef));
         return CompletableFuture.completedFuture(Either.forLeft(List.of(location)));
     }
 

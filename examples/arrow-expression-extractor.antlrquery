@@ -1,0 +1,5 @@
+for $a in //arrowExpr
+	let $seq := $a/(sequenceArrowTarget|mappingArrowTarget)
+	let $start := lsp:start-position($a/unaryExpr)
+	for $x in $seq
+		return [ $start, lsp:end-position($x) ]

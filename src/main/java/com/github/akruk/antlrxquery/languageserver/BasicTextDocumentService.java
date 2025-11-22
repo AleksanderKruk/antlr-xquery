@@ -20,7 +20,6 @@ import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.TerminalNode;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionParams;
@@ -386,6 +385,12 @@ public class BasicTextDocumentService implements TextDocumentService {
     private final TreeEvaluator constructorBoundaries = XQuery.compile("//(STRING_CONSTRUCTION_START|STRING_CONSTRUCTION_END)", _parser);
     private final TreeEvaluator properties = XQuery.compile("//extendedFieldDeclaration//fieldDeclaration/fieldName", _parser);
     private final TreeEvaluator annotations = XQuery.compile("//annotation", _parser);
+    private final TreeEvaluator typeValues = XQuery.compile(
+        """
+            //(sequenceType|castTarget)
+            | //itemTypeDecl/(qname|itemType)
+            | //namedRecordTypeDecl/qname
+        """, _parser);
 
     record SemanticToken(int line, int charPos, int length, int typeIndex, int modifierBitmask) {}
 
@@ -398,109 +403,100 @@ public class BasicTextDocumentService implements TextDocumentService {
             return CompletableFuture.completedFuture(new SemanticTokens(List.of()));
         }
 
+        try {
+            // final String source = Files.readString(Path.of(uri));
+            // final List<Integer> lineOffsets = new ArrayList<>(500);
+            // lineOffsets.add(0);
+            // for (int i = 0; i < source.length(); i++) {
+            //     if (source.charAt(i) == '\n') {
+            //         lineOffsets.add(i + 1);
+            //     }
+            // }
 
-        final List<SemanticToken> tokens = new ArrayList<>();
+            final List<SemanticToken> tokens = new ArrayList<>(500);
 
-        final List<XQueryValue> typeValues = XQuery.evaluateWithMockRoot(
-            tree, """
-                    //(sequenceType|castTarget)
-                    | //itemTypeDecl/(qname|itemType)
-                    | //namedRecordTypeDecl/qname
-            """, _parser).sequence;
-        for (final XQueryValue val : typeValues) {
-            final ParseTree node = val.node;
-            if (!(node instanceof final ParserRuleContext ctx)) continue;
-            final Token start = ctx.getStart();
-            final Token stop = ctx.getStop();
-            final int line = start.getLine() - 1;
-            final int charPos = start.getCharPositionInLine();
-            final int length = stop.getStopIndex() - start.getStartIndex() + 1;
-            tokens.add(new SemanticToken(line, charPos, length, typeIndex, 0));
+            final XQueryValue foundTypes = typeValues.evaluate(tree);
+            markTokens(tokens, foundTypes, typeIndex);
+            types.put(uri, foundTypes.sequence.stream().map(v->(ParserRuleContext) v.node).toList());
+
+
+            final List<VarRefContext> variableReferencesForUri = variableReferences.getOrDefault(uri, List.of());
+            markTokens(tokens, variableReferencesForUri, variableIndex);
+
+            final List<FunctionNameContext> functionNamesInCalls = functionNames.getOrDefault(uri, List.of());
+            markTokens(tokens, functionNamesInCalls, functionIndex);
+
+            final List<NamedFunctionRefContext> namedFunctionRefsForUri = namedFunctionRefs.getOrDefault(uri, List.of());
+            markTokens(tokens, namedFunctionRefsForUri, functionIndex);
+
+            markTokens(tokens, constructors.evaluate(tree), stringIndex);
+            markTokens(tokens, constructorBoundaries.evaluate(tree), stringIndex);
+            markTokens(tokens, properties.evaluate(tree), propertyIndex);
+            markTokens(tokens, annotations.evaluate(tree), decoratorIndex);
+
+
+            tokens.sort(Comparator
+                .comparingInt(SemanticToken::line)
+                .thenComparingInt(SemanticToken::charPos));
+
+            final List<Integer> data = new ArrayList<>();
+            int lastLine = 0;
+            int lastChar = 0;
+
+            for (final SemanticToken token : tokens) {
+                final int deltaLine = token.line() - lastLine;
+                final int deltaChar = (deltaLine == 0) ? (token.charPos() - lastChar) : token.charPos();
+
+                data.add(deltaLine);
+                data.add(deltaChar);
+                data.add(token.length());
+                data.add(token.typeIndex());
+                data.add(token.modifierBitmask());
+
+                lastLine = token.line();
+                lastChar = token.charPos();
+            }
+
+            return CompletableFuture.completedFuture(new SemanticTokens(data));
+        } catch (final Exception e) { // TODO: change to IO exception
+            return CompletableFuture.completedFuture(null);
         }
-        types.put(uri, typeValues.stream().map(v->(ParserRuleContext) v.node).toList());
-
-
-        for (final var ctx : variableReferences.getOrDefault(uri, List.of())) {
-            final Token start = ctx.getStart();
-            final Token stop = ctx.qname().getStop();
-            final int line = start.getLine() - 1;
-            final int charPos = start.getCharPositionInLine();
-            final int length = stop.getStopIndex() - start.getStartIndex() + 1;
-            final SemanticToken semTok = new SemanticToken(line, charPos, length, variableIndex, 0);
-            tokens.add(semTok);
-        }
-
-        for (final var val : functionNames.getOrDefault(uri, List.of())) {
-            final SemanticToken functionToken = getFunctionSemanticToken(val);
-            tokens.add(functionToken);
-        }
-        for (final var val : namedFunctionRefs.getOrDefault(uri, List.of())) {
-            final SemanticToken functionToken = getFunctionSemanticToken(val);
-            tokens.add(functionToken);
-        }
-
-        markTokens(tree, tokens, constructors, stringIndex);
-
-        for (final XQueryValue val : constructorBoundaries.evaluate(tree).sequence) {
-            final TerminalNode ctx = (TerminalNode) val.node;
-            final Token start = ctx.getSymbol();
-            final int line = start.getLine() - 1;
-            final int charPos = start.getCharPositionInLine();
-            final SemanticToken semTok = new SemanticToken(line, charPos, 3, stringIndex, 0);
-            tokens.add(semTok);
-        }
-
-        markTokens(tree, tokens, properties, propertyIndex);
-        markTokens(tree, tokens, annotations, decoratorIndex);
-
-
-        tokens.sort(Comparator
-            .comparingInt(SemanticToken::line)
-            .thenComparingInt(SemanticToken::charPos));
-
-        final List<Integer> data = new ArrayList<>();
-        int lastLine = 0;
-        int lastChar = 0;
-
-        for (final SemanticToken token : tokens) {
-            final int deltaLine = token.line() - lastLine;
-            final int deltaChar = (deltaLine == 0) ? (token.charPos() - lastChar) : token.charPos();
-
-            data.add(deltaLine);
-            data.add(deltaChar);
-            data.add(token.length());
-            data.add(token.typeIndex());
-            data.add(token.modifierBitmask());
-
-            lastLine = token.line();
-            lastChar = token.charPos();
-        }
-
-        return CompletableFuture.completedFuture(new SemanticTokens(data));
     }
 
-    private void markTokens(final ParseTree tree, final List<SemanticToken> tokens, final TreeEvaluator contextQuery, final int typeIndex)
+    private void markTokens(
+        final List<SemanticToken> tokens,
+        final List<? extends ParserRuleContext> variableReferencesForUri,
+        final int tokenTypeIndex
+        )
     {
-        for (final XQueryValue val : contextQuery.evaluate(tree).sequence) {
+        for (final var ctx : variableReferencesForUri) {
+            final SemanticToken semanticToken = getSemanticToken(ctx, tokenTypeIndex);
+            tokens.add(semanticToken);
+        }
+    }
+
+    private void markTokens(
+        final List<SemanticToken> tokens,
+        final XQueryValue sequence,
+        final int tokenTypeIndex
+        )
+    {
+        for (final XQueryValue val : sequence.sequence) {
             final ParserRuleContext ctx = (ParserRuleContext) val.node;
-            final Token start = ctx.getStart();
-            final Token stop = ctx.getStop();
-            final int line = start.getLine() - 1;
-            final int charPos = start.getCharPositionInLine();
-            final int length = stop.getStopIndex() - start.getStartIndex() + 1;
-            final SemanticToken semTok = new SemanticToken(line, charPos, length, typeIndex, 0);
+            final SemanticToken semTok = getSemanticToken(ctx, tokenTypeIndex);
             tokens.add(semTok);
         }
     }
 
-    private SemanticToken getFunctionSemanticToken(final ParserRuleContext ctx)
+
+    private SemanticToken getSemanticToken(final ParserRuleContext ctx, final int tokenTypeIndex)
     {
         final Token start = ctx.getStart();
         final Token stop = ctx.getStop();
-        final int line = start.getLine() - 1;
+        final int startline = start.getLine() - 1;
         final int charPos = start.getCharPositionInLine();
         final int length = stop.getStopIndex() - start.getStartIndex() + 1;
-        final SemanticToken functionToken = new SemanticToken(line, charPos, length, functionIndex, 0);
+        final SemanticToken functionToken = new SemanticToken(startline, charPos, length, tokenTypeIndex, 0);
         return functionToken;
     }
 

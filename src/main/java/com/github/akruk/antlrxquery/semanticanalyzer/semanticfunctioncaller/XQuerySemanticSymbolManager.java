@@ -32,8 +32,16 @@ public class XQuerySemanticSymbolManager {
         )
     {}
 
-    public static record ArgumentSpecification(String name, XQuerySequenceType type, ParseTree defaultArgument) {}
-    public static record UsedArg(TypeInContext type, XQueryValue value, ParseTree tree) {}
+    public static record ArgumentSpecification(
+        String name,
+        XQuerySequenceType type,
+        ParseTree defaultArgument) {}
+
+    public static record UsedArg(
+        TypeInContext type,
+        XQueryValue value,
+        ParseTree tree
+        ) {}
     public interface GrainedAnalysis {
         TypeInContext analyze(
             List<UsedArg> args,
@@ -76,7 +84,9 @@ public class XQuerySemanticSymbolManager {
     private final XQueryTypeFactory typeFactory;
     private XQuerySemanticAnalyzer analyzer;
 
-    public void setAnalyzer(final XQuerySemanticAnalyzer analyzer)
+    public void setAnalyzer(
+        final XQuerySemanticAnalyzer analyzer
+        )
     {
         this.analyzer = analyzer;
     }
@@ -119,8 +129,8 @@ public class XQuerySemanticSymbolManager {
         return new AnalysisResult(fallbackType, errors);
     }
 
-    private AnalysisResult handleUnknownFunction(final String namespace, final String name,
-            final DiagnosticError errorMessageSupplier, final TypeInContext fallbackType) {
+    private AnalysisResult handleUnknownFunction(final DiagnosticError errorMessageSupplier, final TypeInContext fallbackType)
+    {
         final List<DiagnosticError> errors = List.of(errorMessageSupplier);
         return new AnalysisResult(fallbackType, errors);
     }
@@ -139,12 +149,13 @@ public class XQuerySemanticSymbolManager {
 
     SpecAndErrors getFunctionSpecification(
         final ParserRuleContext location,
-        final String namespace,
-        final String name,
+        final QualifiedName qName,
         final List<FunctionSpecification> namedFunctions,
         final long requiredArity
         )
     {
+        final var namespace = qName.namespace();
+        final var name = qName.name();
         final List<String> mismatchReasons = new ArrayList<>();
         for (final FunctionSpecification spec : namedFunctions) {
             final List<String> reasons = new ArrayList<>();
@@ -166,8 +177,7 @@ public class XQuerySemanticSymbolManager {
 
     public AnalysisResult call(
             final ParserRuleContext location,
-            final String namespace,
-            final String name,
+            final QualifiedName qName,
             final List<TypeInContext> positionalargs,
             final Map<String, TypeInContext> keywordArgs,
             final XQueryVisitingSemanticContext context,
@@ -175,25 +185,45 @@ public class XQuerySemanticSymbolManager {
             )
     {
         final var anyItems = typeContext.currentScope().typeInContext(typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
-        if (!namespaces.containsKey(namespace)) {
-            final DiagnosticError error = DiagnosticError.of(location, ErrorType.FUNCTION__UNKNOWN_NAMESPACE, List.of(namespace));
+        final var namespace = qName.namespace();
+        final var name = qName.name();
+        if (!namespaces.containsKey(qName.namespace())) {
+            final DiagnosticError error = DiagnosticError.of(location, ErrorType.FUNCTION__UNKNOWN_NAMESPACE, List.of(qName.namespace()));
             final DiagnosticError errorMessageSupplier = error;
             final List<DiagnosticError> errors = List.of(errorMessageSupplier);
             return new AnalysisResult(anyItems, errors);
         }
 
-        final var namespaceFunctions = namespaces.get(namespace);
-        if (!namespaceFunctions.containsKey(name)) {
-            final DiagnosticError error = DiagnosticError.of(location, ErrorType.FUNCTION__UNKNOWN_FUNCTION, List.of(namespace, name));
-            return handleUnknownFunction(namespace, name, error, anyItems);
+        final var namespaceFunctions = namespaces.get(qName.namespace());
+        final boolean noFunctions = !namespaceFunctions.containsKey(qName.name());
+        final List<UnresolvedFunctionSpecification> declarations = functionDeclarations.get(qName);
+
+        if (noFunctions && (declarations == null || declarations.isEmpty())) {
+            final DiagnosticError error = DiagnosticError.of(location, ErrorType.FUNCTION__UNKNOWN_FUNCTION, List.of(qName.namespace(), qName.name()));
+            return handleUnknownFunction(error, anyItems);
+        } else if (noFunctions) {
+            // final int positionalArgsCount = positionalargs.size();
+            // final var requiredArity = positionalArgsCount + keywordArgs.size();
+            // for (var decl : declarations ) {
+            //     if (decl.maxArity() >= requiredArity && decl.minArity() <= requiredArity) {
+            //         if (decl.name().equals(qName)) {
+
+            //         }
+            //     }
+            // }
+
         }
-        final var namedFunctions = namespaceFunctions.get(name);
+
+
+        final var namedFunctions = namespaceFunctions.get(qName.name());
         final int positionalArgsCount = positionalargs.size();
         final var requiredArity = positionalArgsCount + keywordArgs.size();
-
         final List<String> mismatchReasons = new ArrayList<>();
-
-        final SpecAndErrors specAndErrors = getFunctionSpecification(location, namespace, name, namedFunctions, requiredArity);
+        final SpecAndErrors specAndErrors = getFunctionSpecification(
+            location,
+            qName,
+            namedFunctions,
+            requiredArity);
         if (specAndErrors.spec == null) {
             return new AnalysisResult(anyItems, specAndErrors.errors);
         }
@@ -250,7 +280,6 @@ public class XQuerySemanticSymbolManager {
             }
             defaultArgTypes.put(defaultArg, receivedType);
         }
-
 
         if (mismatchReasons.isEmpty()) {
             if (spec.grainedAnalysis==null) {
@@ -391,12 +420,13 @@ public class XQuerySemanticSymbolManager {
     }
 
     public AnalysisResult getFunctionReference(final ParserRuleContext location,
-                                                final String namespace,
-                                                final String functionName,
+                                                final QualifiedName qName,
                                                 final int arity,
                                                 final XQuerySemanticContext context)
     {
         // TODO: Verify logic
+        var namespace = qName.namespace();
+        var functionName = qName.name();
         final var fallback = context.currentScope().typeInContext(typeFactory.anyFunction());
         if (!namespaces.containsKey(namespace)) {
             final DiagnosticError error = DiagnosticError.of(location, ErrorType.FUNCTION__UNKNOWN_NAMESPACE, List.of(namespace));
@@ -405,12 +435,12 @@ public class XQuerySemanticSymbolManager {
         final var namespaceFunctions = namespaces.get(namespace);
         if (!namespaceFunctions.containsKey(functionName)) {
             final DiagnosticError error = DiagnosticError.of(location, ErrorType.FUNCTION__UNKNOWN_FUNCTION, List.of(namespace, functionName));
-            return handleUnknownFunction(namespace, functionName, error, fallback);
+            return handleUnknownFunction(error, fallback);
         }
 
         final var namedFunctions = namespaceFunctions.get(functionName);
         final SpecAndErrors specAndErrors = getFunctionSpecification(
-            location, namespace, functionName, namedFunctions, arity);
+            location, qName, namedFunctions, arity);
         if (specAndErrors.spec == null) {
             final DiagnosticError error = DiagnosticError.of(
                 location, ErrorType.FUNCTION_REFERENCE__UNKNOWN, List.of(namespace, functionName, arity));
@@ -426,22 +456,22 @@ public class XQuerySemanticSymbolManager {
 
     }
 
-    public FunctionSpecification getNamedFunctionSpecification(final ParserRuleContext location,
-                                                final String namespace,
-                                                final String functionName,
-                                                final int arity)
+    public FunctionSpecification getNamedFunctionSpecification(
+        final ParserRuleContext location,
+        final QualifiedName qName,
+        final int arity)
     {
-        if (!namespaces.containsKey(namespace)) {
+        if (!namespaces.containsKey(qName.namespace())) {
             return null;
         }
-        final var namespaceFunctions = namespaces.get(namespace);
-        if (!namespaceFunctions.containsKey(functionName)) {
+        final var namespaceFunctions = namespaces.get(qName.namespace());
+        if (!namespaceFunctions.containsKey(qName.name())) {
             return null;
         }
 
-        final var namedFunctions = namespaceFunctions.get(functionName);
+        final var namedFunctions = namespaceFunctions.get(qName.name());
         final SpecAndErrors specAndErrors = getFunctionSpecification(
-            location, namespace, functionName, namedFunctions, arity);
+            location, qName, namedFunctions, arity);
         return specAndErrors.spec;
     }
 
@@ -509,7 +539,18 @@ public class XQuerySemanticSymbolManager {
             false,
             false,
             body,
-            (_, _, _, _) -> body.accept(analyzer));
+            (List<UsedArg> arguments, XQueryVisitingSemanticContext _, ParseTree _, XQuerySemanticContext typeCtx) -> defaultGrainedFunctionAnalysis(args, body, arguments, typeCtx)
+            );
+    }
+
+    private TypeInContext defaultGrainedFunctionAnalysis(final List<ArgumentSpecification> args, final ParseTree body,
+            List<UsedArg> arguments, XQuerySemanticContext typeCtx) {
+        for (int i = 0 ; i < args.size(); i++) {
+            ArgumentSpecification argSpec = args.get(i);
+            UsedArg usedArg = arguments.get(i);
+            typeCtx.entypeVariable(argSpec.name, usedArg.type);
+        }
+        return body.accept(analyzer);
     }
 
     public XQuerySemanticError registerFunction(
@@ -581,6 +622,7 @@ public class XQuerySemanticSymbolManager {
             .add(function);
         return null;
     }
+
 
     public XQuerySemanticError registerFunction(
             final String namespace,

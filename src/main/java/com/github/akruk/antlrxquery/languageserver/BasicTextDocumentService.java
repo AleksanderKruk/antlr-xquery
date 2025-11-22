@@ -614,9 +614,9 @@ public class BasicTextDocumentService implements TextDocumentService {
             ))
         );
         final String uri = params.getTextDocument().getUri();
-        final var vars = variableReferences.get(uri);
+        final List<VarRefContext> vars = variableReferences.get(uri);
         final Position position = params.getPosition();
-        final var foundVar = findRuleUsingPosition(position, vars);
+        final VarRefContext foundVar = findRuleUsingPosition(position, vars);
         if (foundVar != null) {
             // TODO: Add variable char validation
             final var range = getContextRange(foundVar.qname());
@@ -735,7 +735,7 @@ public class BasicTextDocumentService implements TextDocumentService {
     private CompletableFuture<Hover> getFunctionHover(final ParserRuleContext foundCtx, final XQuerySemanticAnalyzer analyzer,
             final QualifiedName qname, final int arity) {
         final FunctionSpecification specification = analyzer.getSymbolManager().getNamedFunctionSpecification(
-            foundCtx, qname.namespace(), qname.name(), arity);
+            foundCtx, qname, arity);
         if (specification == null)
             return CompletableFuture.completedFuture(null);
         final String hoverText = createFunctionSpecificationMarkdown(qname.namespace(), qname.name(), arity, specification);
@@ -886,7 +886,7 @@ public class BasicTextDocumentService implements TextDocumentService {
             final int arity = getArity(functionName);
             final QualifiedName resolvedName = resolver.resolveFunction(functionName.qname().getText());
             final FunctionSpecification spec = analyzer.getSymbolManager().getNamedFunctionSpecification(
-                functionName, resolvedName.namespace(), resolvedName.name(), arity);
+                functionName, resolvedName, arity);
             if (spec == null)
                 continue;
             final FunctionCallContext functionCall = (FunctionCallContext) functionName.getParent();
@@ -930,7 +930,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         final int arity = getArity(namedFunctionRef);
         final FunctionSpecification spec = analyzer
             .getSymbolManager()
-            .getNamedFunctionSpecification(namedFunctionRef, qname.namespace(), qname.name(), arity);
+            .getNamedFunctionSpecification(namedFunctionRef, qname, arity);
         if (spec == null) {
             return null;
         }
@@ -952,7 +952,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         final int arity = getArity(namedFunctionRef);
         final FunctionSpecification spec = analyzer
             .getSymbolManager()
-            .getNamedFunctionSpecification(namedFunctionRef, qname.namespace(), qname.name(), arity);
+            .getNamedFunctionSpecification(namedFunctionRef, qname, arity);
         if (spec == null) {
             return null;
         }
@@ -993,7 +993,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         final var analyzer = semanticAnalyzers.get(document);
         final var qname = resolver.resolveFunction(functionName.getText());
         final FunctionSpecification spec = analyzer.getSymbolManager().getNamedFunctionSpecification(
-            functionName, qname.namespace(), qname.name(), arity);
+            functionName, qname, arity);
         if (spec == null) {
             return CompletableFuture.completedFuture(Either.forLeft(List.of()));
         }

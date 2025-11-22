@@ -64,10 +64,11 @@ public class XQuerySemanticScope {
 
         for (var entry : previousScope.scopedAssumptions.entrySet()) {
             var originalType = entry.getKey();
+            var assumptionsForType = entry.getValue();
             var copiedType = typeMapping.getOrDefault(originalType, originalType);
-            for (var assumption : entry.getValue()) {
-            var copiedAssumption = new Assumption(copiedType, assumption.value);
-            scopedAssumptions.computeIfAbsent(copiedType, _ -> new ArrayList<>()).add(copiedAssumption);
+            for (var assumption : assumptionsForType) {
+                var copiedAssumption = new Assumption(copiedType, assumption.value);
+                scopedAssumptions.computeIfAbsent(copiedType, _ -> new ArrayList<>()).add(copiedAssumption);
             }
         }
 
@@ -109,9 +110,29 @@ public class XQuerySemanticScope {
      * @return true if variable was added
      */
     public boolean entypeVariable(String variableName, TypeInContext assignedType) {
-        boolean addedVariable = variables.containsKey(variableName);
-        variables.put(variableName, assignedType);
-        return addedVariable;
+        if (assignedType.context != context)
+        {
+            final TypeInContext copiedType = typeMapping.computeIfAbsent(assignedType, t->typeInContext(t.type));
+            ebvs.put(copiedType, assignedType.scope.ebvs.get(assignedType));
+            for (var implication : assignedType.scope.scopedImplications.getOrDefault(assignedType, List.of()))
+            {
+                var remappedImplication = implication.remapTypes(typeMapping);
+                scopedImplications.computeIfAbsent(copiedType, _ -> new ArrayList<>()).add(remappedImplication);
+            }
+            for (var assumption : assignedType.scope.scopedAssumptions.getOrDefault(assignedType, List.of()))
+            {
+                var copiedAssumption = new Assumption(copiedType, assumption.value);
+                scopedAssumptions.computeIfAbsent(copiedType, _ -> new ArrayList<>()).add(copiedAssumption);
+            }
+            boolean addedVariable = variables.containsKey(variableName);
+            variables.put(variableName, copiedType);
+            return addedVariable;
+        } else {
+            boolean addedVariable = variables.containsKey(variableName);
+            variables.put(variableName, assignedType);
+            return addedVariable;
+
+        }
     }
 
 
@@ -165,7 +186,7 @@ public class XQuerySemanticScope {
 
     public TypeInContext typeInContext(XQuerySequenceType type)
     {
-        var tic = new TypeInContext(type);
+        var tic = new TypeInContext(type, context, this);
         scopedTypes.add(tic);
         var ebvType = type.effectiveBooleanValueType();
         if (ebvType != EffectiveBooleanValueType.NO_EBV) {

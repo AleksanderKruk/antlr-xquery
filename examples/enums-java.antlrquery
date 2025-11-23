@@ -1,11 +1,16 @@
 
-declare function java:semantics:analyze() as java:type external;
+declare type java:type as enum('null', 'type');
+
+declare function java:semantics:analyze($node as node()?) as java:type external;
+declare function java:semantics:is-subtype-of($type as java:type) as boolean external;
+declare function java:semantics:enum-members($node as java:type?) as boolean external;
+declare function java:semantics:any-enum() as java:type external;
 
 for $s in //switchStmt
-let $switchedtype := switchedExpr=>java:semantics:analyze()
+let $switchedtype := switchedExpr=!>java:semantics:analyze()
 let $is-enum := java:semantics:is-subtype-of(java:semantics:any-enum())
 return
 	if ($is-enum) {
-		let $members := $switchedtype=>enum-members()
+		let $members := $switchedtype =!> java:semantics:enum-members()
         return ()
 	}

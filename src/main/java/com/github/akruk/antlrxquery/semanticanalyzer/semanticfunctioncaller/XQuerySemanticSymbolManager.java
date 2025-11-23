@@ -171,7 +171,7 @@ public class XQuerySemanticSymbolManager {
             return new SpecAndErrors(spec, List.of());
         }
         final DiagnosticError error = DiagnosticError.of(
-            location, ErrorType.FUNCTION__NO_MATCHING_FUNCTION, List.of(namespace, name, requiredArity));
+            location, ErrorType.FUNCTION__NO_MATCHING_FUNCTION, List.of(namespace, name, requiredArity, mismatchReasons));
         return new SpecAndErrors(null, List.of(error));
     }
 
@@ -350,7 +350,7 @@ public class XQuerySemanticSymbolManager {
             if (!passedType.isSubtypeOf(arg.type())) {
                 reasons.add("Keyword argument '" + arg.name() + "' type mismatch:"
                         + "\n        expected: " + arg.type()
-                        + "\n        found   : " + passedType);
+                        + "\n        received: " + passedType);
                 keywordTypeMismatch = true;
             }
         }
@@ -411,8 +411,9 @@ public class XQuerySemanticSymbolManager {
             final var positionalArg = positionalargs.get(i);
             final var expectedArg = spec.args.get(i);
             if (!positionalArg.isSubtypeOf(expectedArg.type())) {
-                reasons.add("Positional argument " + (i + 1) + " type mismatch: expected " + expectedArg.type()
-                        + ", got " + positionalArg);
+                reasons.add("Positional argument " + (i + 1) + " type mismatch:"
+                        + "\n    expected: " + expectedArg.type()
+                        + "\n    received: " + positionalArg);
                 positionalTypeMismatch = true;
             }
         }

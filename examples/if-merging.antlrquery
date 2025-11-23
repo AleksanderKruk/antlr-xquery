@@ -10,8 +10,8 @@ array {
 return if (($innerTrue, $innerFalse) => exists()) {
     {
       "range": lsp:Range(
-        $if=>lsp:start-position() treat as lsp:Position, (:TODO: refine asumptions:)
-        $ending=>lsp:end-position() treat as lsp:Position),
+        $if=>lsp:start-position(),
+        $ending=>lsp:end-position() treat as lsp:Position), (:TODO: refine asumptions:)
       target-expression: $if,
       "merged-expression-true": $innerTrue,
       "merged-expression-false": $innerFalse

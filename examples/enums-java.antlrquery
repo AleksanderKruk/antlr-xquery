@@ -1,0 +1,11 @@
+
+declare function java:semantics:analyze() as java:type external;
+
+for $s in //switchStmt
+let $switchedtype := switchedExpr=>java:semantics:analyze()
+let $is-enum := java:semantics:is-subtype-of(java:semantics:any-enum())
+return
+	if ($is-enum) {
+		let $members := $switchedtype=>enum-members()
+        return ()
+	}

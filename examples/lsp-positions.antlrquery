@@ -14,16 +14,16 @@ declare record lsp:Range(
 
 declare function lsp:start-position($node as node()?) as lsp:Position? {
     $node ! lsp:Position(
-        line := antlr:line() treat as number - 1, (:TODO: remove treatment after grained call return type analysis :)
-        character := antlr:pos() treat as number
+        line := antlr:line() - 1,
+        character := antlr:pos()
     )
 };
 
 declare function lsp:end-position($node as node()?) as lsp:Position? {
-    if ($node => empty()) {
+    $node ! (
         (:TODO: remove treatment after grained call return type analysis :)
-        let $start-line := antlr:line($node) treat as number - 1
-        let $start-pos := antlr:pos($node) treat as number
+        let $start-line := antlr:line(.) - 1
+        let $start-pos := antlr:pos(.)
         let $string-node := $node=>string()
         let $new-lines := $string-node=>characters()=>index-of("\n")
         let $additional-lines := $new-lines=>count()
@@ -37,14 +37,14 @@ declare function lsp:end-position($node as node()?) as lsp:Position? {
             line := $start-line + $additional-lines,
             character := $start-pos + $last-line-length
         )
-    }
+    )
 };
 
 declare function lsp:range($node as node()?) as lsp:Range? {
     if ($node) {
         lsp:Range(
-            start := lsp:start-position($node) treat as lsp:Position,
-            end := lsp:end-position($node) treat as lsp:Position
+            start := lsp:start-position($node),
+            end := lsp:end-position($node)
         )
     }
 };

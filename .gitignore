@@ -5,3 +5,4 @@ dependency-reduced-pom.xml
 *.html
 
 hs_err_pid*
+replay_pid*

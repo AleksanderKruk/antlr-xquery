@@ -9,15 +9,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import org.antlr.v4.parse.ANTLRParser.finallyClause_return;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.antlr.v4.runtime.tree.xpath.XPath;
 
 import com.github.akruk.antlrxquery.AntlrXqueryParser.*;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
@@ -29,6 +30,7 @@ import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySeman
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.AnalysisResult;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.ArgumentSpecification;
+import com.github.akruk.antlrxquery.AntlrXqueryParser;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.HelperTrees;
 import com.github.akruk.antlrxquery.XQueryAxis;
@@ -272,8 +274,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             = new HashMap<>();
         final Map<QualifiedName, ItemTypeDeclContext> itemsMapped
             = new HashMap<>();
-        final Map<QualifiedName, List<UnresolvedFunctionSpecification>> functionsMapped
-            = new HashMap<>();
 
         for (final NamedRecordTypeDeclContext record : records) {
             final QualifiedName name = namespaceResolver.resolveType(record.qname().getText());
@@ -289,13 +289,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             final QualifiedName name = namespaceResolver.resolveType(itemtype.qname().getText());
             validateItemTypeNamespace(moduleNamespace, itemtype, name);
             itemsMapped.put(name, itemtype);
-        }
-
-        for (final FunctionDeclContext function : functions) {
-            final QualifiedName name = namespaceResolver.resolveType(function.qname().getText());
-            validateFunctionNamespace(moduleNamespace, function, name);
-            functionsMapped.computeIfAbsent(name, e->(new ArrayList<>()))
-                .add(getUnresolvedFunction(name, function));
         }
 
 
@@ -325,7 +318,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
 
         for (final NamedRecordTypeDeclContext r : importedRecords) {
             final QualifiedName qName = namespaceResolver.resolveType(r.qname().getText());
-            UnresolvedRecordSpecification unresolvedRecord = getUnresolvedRecord(qName, r);
+            final UnresolvedRecordSpecification unresolvedRecord = getUnresolvedRecord(qName, r);
             if (isBuiltInType(qName)) {
                 error(r.qname(), ErrorType.RECORD_DECLARATION__USED_RESERVED_NAME, List.of(qName, r));
 
@@ -374,8 +367,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         this.itemsMapped = itemsMapped;
 
 
-        for (var r : recordsMapped.values()) {
-            RecordResolutionResult resolved = resolveRecordFromUnresolved(r.name, r);
+        for (final var r : recordsMapped.values()) {
+            final RecordResolutionResult resolved = resolveRecord(r.name, r);
             symbolManager.registerFunction(
                 r.name.namespace(),
                 r.name.name(),
@@ -384,20 +377,53 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         }
 
 
+        final List<UnresolvedFunctionSpecification> unresolvedFunctions = new ArrayList<>(importedFunctions.size());
+
+        for (final FunctionDeclContext function : functions) {
+            final QualifiedName qName = namespaceResolver.resolveFunction(function.qname().getText());
+            validateFunctionNamespace(moduleNamespace, function, qName);
+            final UnresolvedFunctionSpecification spec = getUnresolvedFunction(qName, function);
+            final boolean isValid = validateUnresolvedFunction(spec);
+            if (isValid) {
+                final var declarationResult = symbolManager.declareFunction(spec);
+                switch(declarationResult.status()) {
+                    case COLLISION -> {
+                        error(
+                            function,
+                            ErrorType.FUNCTION__ARITY_COLLISION,
+                            List.of(qName, spec.minArity, spec.maxArity, declarationResult.collisions())
+                        );
+                    }
+                    case OK -> {
+                    }
+                }
+            }
+            unresolvedFunctions.add(spec);
+        }
+
+
         for (final FunctionDeclContext f : importedFunctions) {
             final QualifiedName qName = namespaceResolver.resolveFunction(f.qname().getText());
             final UnresolvedFunctionSpecification spec = getUnresolvedFunction(qName, f);
-            boolean isValid = validateUnresolvedFunction(spec);
+            final boolean isValid = validateUnresolvedFunction(spec);
             if (isValid) {
-                var declarationResult = symbolManager.declareFunction(spec);
+                final var declarationResult = symbolManager.declareFunction(spec);
                 switch(declarationResult.status()) {
                     case COLLISION -> {
                         error(f, ErrorType.FUNCTION__ARITY_COLLISION, List.of(qName, spec.minArity, spec.maxArity, declarationResult.collisions()) );
                     }
-                    case OK -> {}
+                    case OK -> {
+                    }
                 }
             }
+            unresolvedFunctions.add(spec);
         }
+
+        for (final UnresolvedFunctionSpecification spec : unresolvedFunctions) {
+            resolveFunction(spec);
+        }
+
+
 
     }
 
@@ -483,6 +509,13 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
 
 
 
+    private enum DefaultNamespaceDeclType {
+        FUNCTION,
+        TYPE,
+        ELEMENT,
+        CONSTRUCTION,
+        ANNOTATION
+    }
 
     private void handleDefaultNamespaceDeclarations(
         final List<DefaultNamespaceDeclContext> defaultNamespaceDecls,
@@ -493,33 +526,48 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final String moduleConstructionNamespace
         )
     {
-        final Map<Integer, List<DefaultNamespaceDeclContext>> splitByType =
+        final Map<DefaultNamespaceDeclType, List<DefaultNamespaceDeclContext>> splitByType =
             defaultNamespaceDecls
             .stream()
-            .collect(Collectors.groupingBy(DefaultNamespaceDeclContext::getAltNumber));
-        final List<DefaultNamespaceDeclContext> elementDecls = splitByType.getOrDefault(2, List.of());
-        final String defaultElementNamespace = validateDefaultElementNamespace(moduleElementNamespace, elementDecls);
+            .collect(Collectors.groupingBy(
+                (final DefaultNamespaceDeclContext t) -> {
+                    if (t.FUNCTION() != null) {
+                        return DefaultNamespaceDeclType.FUNCTION;
+                    } else if (t.ELEMENT() != null) {
+                        return DefaultNamespaceDeclType.ELEMENT;
+                    } else if (t.TYPE() != null) {
+                        return DefaultNamespaceDeclType.TYPE;
+                    } else if (t.CONSTRUCTION() != null) {
+                        return DefaultNamespaceDeclType.CONSTRUCTION;
+                    } else {
+                        return DefaultNamespaceDeclType.ANNOTATION;
+                    }
+                }
+            ));
 
-        final List<DefaultNamespaceDeclContext> functionDecls = splitByType.getOrDefault(0, List.of());
+        final List<DefaultNamespaceDeclContext> functionDecls = splitByType.getOrDefault(DefaultNamespaceDeclType.FUNCTION, List.of());
         final String defaultFunctionNamespace = validateDefaultFunctionNamespace(moduleFunctionNamespace, functionDecls);
         symbolManager.provideNamespace(defaultFunctionNamespace);
 
-        final List<DefaultNamespaceDeclContext> typeDecls = splitByType.getOrDefault(1, List.of());
+        final List<DefaultNamespaceDeclContext> typeDecls = splitByType.getOrDefault(DefaultNamespaceDeclType.TYPE, List.of());
         final String defaultTypeNamespace = validateDefaultTypeNamespace(moduleTypeNamespace, typeDecls);
         symbolManager.provideNamespace(defaultTypeNamespace);
 
-        final List<DefaultNamespaceDeclContext> annotationDecls = splitByType.getOrDefault(3, List.of());
+        final List<DefaultNamespaceDeclContext> elementDecls = splitByType.getOrDefault(DefaultNamespaceDeclType.ELEMENT, List.of());
+        final String defaultElementNamespace = validateDefaultElementNamespace(moduleElementNamespace, elementDecls);
+
+        final List<DefaultNamespaceDeclContext> annotationDecls = splitByType.getOrDefault(DefaultNamespaceDeclType.ANNOTATION, List.of());
         final String defaultAnnotationNamespace = validateDefaultAnnotationNamespace(moduleAnnotationNamespace, annotationDecls);
         symbolManager.provideNamespace(defaultAnnotationNamespace);
 
-        final List<DefaultNamespaceDeclContext> constructionDecls = splitByType.getOrDefault(4, List.of());
+        final List<DefaultNamespaceDeclContext> constructionDecls = splitByType.getOrDefault(DefaultNamespaceDeclType.CONSTRUCTION, List.of());
         final String defaultConstructionNamespace = validateDefaultConstructionNamespace(moduleConstructionNamespace, constructionDecls);
 
 
         namespaceResolver = new NamespaceResolver(
             defaultFunctionNamespace,
-            defaultElementNamespace,
             defaultTypeNamespace,
+            defaultElementNamespace,
             defaultConstructionNamespace,
             defaultAnnotationNamespace
             );
@@ -1055,6 +1103,69 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         declareVariable(declaredType, variableName, varNameAndType.varName());
     }
 
+    public TypeOrReference resolveSequenceTypeOrReference(final SequenceTypeContext ctx)
+    {
+        if (ctx.emptySequence() != null) {
+            return TypeOrReference.type(emptySequence);
+        }
+        final ItemTypeContext itemTypeCtx = ctx.itemType();
+        final XQueryCardinality cardinality = getCardinality(ctx);
+        if (itemTypeCtx.typeName() != null)
+        { // type reference or builtin type
+            return switch (itemTypeCtx.getText())
+            {
+                case "boolean" -> TypeOrReference.type(
+                    typeByCardinality(
+                        typeFactory.itemBoolean(), cardinality));
+                case "string"  -> TypeOrReference.type(
+                    typeByCardinality(
+                        typeFactory.itemString(), cardinality));
+                case "number"  -> TypeOrReference.type(
+                    typeByCardinality(
+                        typeFactory.itemNumber(), cardinality));
+                default ->
+                    TypeOrReference.reference(
+                        namespaceResolver.resolveType(
+                            itemTypeCtx.typeName().getText()), cardinality
+                            );
+            };
+        } else { // literal type
+            final XQuerySequenceType type = typeByCardinality(
+                visitItemType(itemTypeCtx).type.itemType,
+                cardinality
+                );
+            return TypeOrReference.type(type);
+        }
+
+    }
+
+    XQuerySequenceType typeByCardinality(final XQueryItemType itemType, final XQueryCardinality cardinality) {
+        return switch (cardinality) {
+            case ONE -> typeFactory.one(itemType);
+            case ZERO_OR_ONE -> typeFactory.zeroOrOne(itemType);
+            case ZERO_OR_MORE -> typeFactory.zeroOrMore(itemType);
+            case ONE_OR_MORE -> typeFactory.oneOrMore(itemType);
+            default -> null;
+        };
+    }
+
+
+    XQueryCardinality getCardinality(final SequenceTypeContext ctx) {
+        if (ctx.occurrenceIndicator() == null) {
+            return XQueryCardinality.ONE;
+        }
+        if (ctx.occurrenceIndicator().QUESTION_MARK() != null) {
+            return XQueryCardinality.ZERO_OR_ONE;
+        }
+        if (ctx.occurrenceIndicator().STAR() != null) {
+            return XQueryCardinality.ZERO_OR_MORE;
+        }
+        // PLUS
+        return XQueryCardinality.ONE_OR_MORE;
+    }
+
+
+
 
     @Override
     public TypeInContext visitSequenceType(final SequenceTypeContext ctx)
@@ -1113,7 +1224,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
 
                 for (final QualifiedName resolvedName : recordsMapped.keySet()) {
                     if (resolvedName.equals(visitedQualifiedName)) {
-                        final var namedRecordResult = resolveRecordFromUnresolved(resolvedName, recordsMapped.get(resolvedName));
+                        final var namedRecordResult = resolveRecord(resolvedName, recordsMapped.get(resolvedName));
                         yield typeFactory.one(namedRecordResult.recordItemType);
                     }
                 }
@@ -1406,7 +1517,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         // Only one expression
         // e.g. 13
         if (ctx.exprSingle().size() == 1) {
-            return ctx.exprSingle(0).accept(this);
+            return visitExprSingle(ctx.exprSingle(0));
         }
         // More than one expression
         final var previousExpr = ctx.exprSingle(0);
@@ -1458,12 +1569,12 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     {
         final String fullName = functionQname;
         final var resolution = namespaceResolver.resolveFunction(fullName);
-        final String namespace = resolution.namespace();
-        final String functionName = resolution.name();
 
+        contextManager.enterContext();
         final AnalysisResult callAnalysisResult = symbolManager.call(
-            ctx, namespace, functionName, args,
+            ctx, resolution, args,
             kwargs, context, contextManager.currentContext());
+        contextManager.leaveContext();
         errors.addAll(callAnalysisResult.errors());
         return callAnalysisResult.result();
     }
@@ -1525,7 +1636,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     public TypeInContext visitOrExpr(final OrExprContext ctx)
     {
         if (ctx.OR().isEmpty()) {
-            return ctx.andExpr(0).accept(this);
+            return visitAndExpr(ctx.andExpr(0));
         }
         final var orCount = ctx.OR().size();
         for (int i = 0; i <= orCount; i++) {
@@ -1580,7 +1691,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             currentAxis = savedAxis;
             return resultingNodeSequence;
         }
-        return ctx.relativePathExpr().accept(this);
+        return visitRelativePathExpr(ctx.relativePathExpr());
     }
 
     @Override
@@ -1591,9 +1702,18 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
 
         // reporting input status
         switch(result.inputStatus()) {
-            case EMPTY_SEQUENCE -> warn(ctx, WarningType.PATH_OPERATOR__EMPTY_SEQUENCE, List.of());
-            case NON_NODES -> error(ctx, ErrorType.PATH_OPERATOR__NOT_SEQUENCE_OF_NODES, List.of(nodeType));
-            case MULTIGRAMMAR -> error(ctx, ErrorType.PATH_OPERATOR__MULTIGRAMMAR, List.of(nodeType));
+            case EMPTY_SEQUENCE -> warn(
+                ctx,
+                WarningType.PATH_OPERATOR__EMPTY_SEQUENCE,
+                List.of());
+            case NON_NODES -> error(
+                ctx,
+                ErrorType.PATH_OPERATOR__NOT_SEQUENCE_OF_NODES,
+                List.of(nodeType));
+            case MULTIGRAMMAR -> error(
+                ctx,
+                ErrorType.PATH_OPERATOR__MULTIGRAMMAR,
+                List.of(nodeType, result.inputGrammars()));
             case OK -> {}
         }
 
@@ -1689,7 +1809,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     public TypeInContext visitRelativePathExpr(final RelativePathExprContext ctx)
     {
         if (ctx.pathOperator().isEmpty()) {
-            return ctx.stepExpr(0).accept(this);
+            return visitStepExpr(ctx.stepExpr(0));
         }
         final var savedContext = saveContext();
         context.setType(savedContext.getType());
@@ -2106,8 +2226,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         return mergedRecordFieldTypes.addOptionality();
     }
 
-	private XQuerySequenceType resolveRecordFieldType(XQueryRecordField t) {
-		var type = switch(t.typeOrReference().fieldType()) {
+	private XQuerySequenceType resolveRecordFieldType(final XQueryRecordField t) {
+		final var type = switch(t.typeOrReference().fieldType()) {
 		    case REFERENCE -> {
 		        yield typeFactory.namedType(t.typeOrReference().reference()).type();
 		    }
@@ -2390,7 +2510,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final int arity = Integer.parseInt(ctx.IntegerLiteral().getText());
         final QualifiedName resolvedName = namespaceResolver.resolveFunction(ctx.qname().getText());
         final var analysis = symbolManager.getFunctionReference(
-            ctx, resolvedName.namespace(), resolvedName.name(), arity, contextManager.currentContext());
+            ctx, resolvedName, arity, contextManager.currentContext());
         errors.addAll(analysis.errors());
         return analysis.result();
     }
@@ -2678,7 +2798,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     public TypeInContext visitAndExpr(final AndExprContext ctx)
     {
         if (ctx.AND().isEmpty()) {
-            return ctx.comparisonExpr(0).accept(this);
+            return visitComparisonExpr(ctx.comparisonExpr(0));
         }
         final var operatorCount = ctx.AND().size();
         final List<ParseTree> exprs = new ArrayList<>(operatorCount+1);
@@ -3096,7 +3216,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
 
 
     public record UnresolvedFunctionSpecification(
-        ParseTree location,
+        ParserRuleContext location,
         QualifiedName name,
         List<UnresolvedArgumentSpecification> args,
         FunctionBodyContext body,
@@ -3155,22 +3275,22 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
      * @return true if function has valid construction apart from type semantics
      */
     boolean validateUnresolvedFunction(final UnresolvedFunctionSpecification function) {
-        int i = 0;
         final Set<String> uniqueNames = new HashSet<>();
         boolean valid = true;
-        for (UnresolvedArgumentSpecification fArg : function.args) {
+        int i = 0;
+        for (i = 0; i < function.args.size(); i++) {
+            final UnresolvedArgumentSpecification fArg = function.args.get(i);
             if (fArg.defaultValue != null)
                 break;
             if (!uniqueNames.add(fArg.name)) {
                 error(fArg.location, ErrorType.FUNCTION__DUPLICATED_ARG_NAME, List.of(fArg.name));
                 valid = false;
             }
-            i++;
         }
-        List<UnresolvedArgumentSpecification> defaultArgs = function.args.subList(i, function.args.size());
+        final List<UnresolvedArgumentSpecification> defaultArgs = function.args.subList(i, function.args.size());
         for (final UnresolvedArgumentSpecification fArg : defaultArgs)
         {
-            if (fArg.defaultValue != null) {
+            if (fArg.defaultValue == null) {
                 error(fArg.location, ErrorType.FUNCTION__POSITIONAL_ARG_BEFORE_DEFAULT, List.of());
                 valid = false;
             }
@@ -3193,157 +3313,75 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                 ? zeroOrMoreItems
                 : param.type.accept(this).type;
             final var argDecl = new ArgumentSpecification(param.name, paramType, param.defaultValue);
+            args.add(argDecl);
+            argNameCtx.add(((ParamWithDefaultContext)param.location).varNameAndType().varName());
         }
 
-        for (final var defaultParam : spec.args.subList(spec.minArity, spec.maxArity+1))
+        for (final var defaultParam : spec.args.subList(spec.minArity, spec.maxArity))
         {
-            final var paramType = defaultParam.type.accept(this);
+            final XQuerySequenceType paramType = defaultParam.type == null
+                ? zeroOrMoreItems
+                : defaultParam.type.accept(this).type;
             final var dvt = defaultParam.defaultValue.accept(this);
             if (!dvt.isSubtypeOf(paramType)) {
-                error((ParserRuleContext)defaultParam.defaultValue, ErrorType.FUNCTION__INVALID_DEFAULT, List.of(dvt, paramType));
+                error((ParserRuleContext)defaultParam.defaultValue,
+                    ErrorType.FUNCTION__INVALID_DEFAULT,
+                    List.of(dvt, paramType));
             }
-            final var argDecl = new ArgumentSpecification(defaultParam.name, paramType.type, defaultParam.defaultValue);
+            final var argDecl = new ArgumentSpecification(defaultParam.name, paramType, defaultParam.defaultValue);
             args.add(argDecl);
-            argNameCtx.add(defaultParam.location);
-        //
-
-
-            for (final ParamWithDefaultContext param : params.subList(i, params.size())) {
-                final var argName = getArgName(param);
-                final var paramType = param.varNameAndType().typeDeclaration().accept(this);
-                final var defaultValue = param.exprSingle();
-                if (defaultValue == null) {
-                    error(param, ErrorType.FUNCTION__POSITIONAL_ARG_BEFORE_DEFAULT, List.of());
-                    continue;
-                } else {
-                    final var dvt = defaultValue.accept(this);
-                    if (!dvt.isSubtypeOf(paramType)) {
-                        error(defaultValue, ErrorType.FUNCTION__INVALID_DEFAULT, List.of(dvt, paramType));
-                    }
-                }
-                final var argDecl = new ArgumentSpecification(argName, paramType.type, defaultValue);
-                if (!argNames.add(argName)) {
-                    error(param.getParent(), ErrorType.FUNCTION__DUPLICATED_ARG_NAME, List.of(argName));
-                }
-                args.add(argDecl);
-                argNameCtx.add(param.varNameAndType().varName());
-            }
-            for (final var arg : args) {
-                declareVariable(contextManager.typeInContext(arg.type()), arg.name(), argNameCtx.get(i));
-            }
+            argNameCtx.add(((ParamWithDefaultContext)defaultParam.location).varNameAndType().varName());
+        }
+        for (int i = 0; i < args.size(); i++) {
+            final var arg = args.get(i);
+            declareVariable(
+                contextManager.typeInContext(arg.type()),
+                arg.name(),
+                argNameCtx.get(i));
         }
 
-        final TypeInContext returned = ctx.typeDeclaration() != null
-            ? visitTypeDeclaration(ctx.typeDeclaration())
+        final TypeInContext returned = spec.returnedType != null
+            ? spec.returnedType.accept(this)
             : contextManager.typeInContext(zeroOrMoreItems);
 
-        final FunctionBodyContext functionBody = ctx.functionBody();
-        if (functionBody != null) {
+        final FunctionBodyContext functionBody = spec.body();
+        if (functionBody != null) { // function body is present (non-external)
+            final var calledFunctions = XPath.findAll(functionBody, "//functionName", new AntlrXqueryParser(null));
+            // TODO: refine to graphs or to cover arity range
+            final Predicate<? super ParseTree> isRecursive
+                = nameCtx->namespaceResolver.resolveFunction(nameCtx.getText()).equals(spec.name);
+            // Registration should occur before function body validation due to recursion
+            if (calledFunctions.stream().anyMatch(isRecursive))
+            { // if called function is recursive we have to skip grained body analysis
+                symbolManager.registerFunction(
+                    spec.name.namespace(),
+                    spec.name.name(),
+                    args,
+                    returned.type);
+
+            } else { // if called function is NOT recursive we have to skip grained body analysis
+                symbolManager.registerFunction(
+                    spec.name.namespace(),
+                    spec.name.name(),
+                    args,
+                    returned.type,
+                    functionBody.enclosedExpr());
+            }
             final var bodyType = visitEnclosedExpr(functionBody.enclosedExpr());
             if (!bodyType.isSubtypeOf(returned)) {
                 error(functionBody, ErrorType.FUNCTION__INVALID_RETURNED_TYPE, List.of(bodyType, returned));
             }
+
+
+        } else { // external function
             symbolManager.registerFunction(
-                resolved.namespace(),
-                resolved.name(),
-                args,
-                returned.type,
-                ctx.functionBody().enclosedExpr());
-        } else {
-            symbolManager.registerFunction(
-                resolved.namespace(),
-                resolved.name(),
+                spec.name.namespace(),
+                spec.name.name(),
                 args,
                 returned.type);
 
         }
         contextManager.leaveContext();
-        return null;
-    }
-
-    @Override
-    public TypeInContext visitFunctionDecl(final FunctionDeclContext ctx)
-    {
-        final String qname = ctx.qname().getText();
-        final QualifiedName resolved = namespaceResolver.resolveFunction(qname);
-        int i = 0;
-        final var args = new ArrayList<ArgumentSpecification>();
-        final var argNameCtx = new ArrayList<VarNameContext>();
-        contextManager.enterContext();
-        if (ctx.paramListWithDefaults() != null) {
-            final Set<String> argNames = new HashSet<>();
-            final var params = ctx.paramListWithDefaults().paramWithDefault();
-            for (final var param : params) {
-                final var defaultValue = param.exprSingle();
-                if (defaultValue != null)
-                    break;
-                final var argName = getArgName(param);
-                final TypeDeclarationContext typeDeclaration = param.varNameAndType().typeDeclaration();
-                final XQuerySequenceType paramType = typeDeclaration == null
-                    ? zeroOrMoreItems
-                    : visitTypeDeclaration(typeDeclaration).type;
-                final var argDecl = new ArgumentSpecification(argName, paramType, null);
-                final boolean added = argNames.add(argName);
-                if (!added) {
-                    error(param, ErrorType.FUNCTION__DUPLICATED_ARG_NAME, List.of(argName));
-                }
-                args.add(argDecl);
-                argNameCtx.add(param.varNameAndType().varName());
-                i++;
-            }
-            for (final ParamWithDefaultContext param : params.subList(i, params.size())) {
-                final var argName = getArgName(param);
-                final var paramType = param.varNameAndType().typeDeclaration().accept(this);
-                final var defaultValue = param.exprSingle();
-                if (defaultValue == null) {
-                    error(param, ErrorType.FUNCTION__POSITIONAL_ARG_BEFORE_DEFAULT, List.of());
-                    continue;
-                } else {
-                    final var dvt = defaultValue.accept(this);
-                    if (!dvt.isSubtypeOf(paramType)) {
-                        error(defaultValue, ErrorType.FUNCTION__INVALID_DEFAULT, List.of(dvt, paramType));
-                    }
-                }
-                final var argDecl = new ArgumentSpecification(argName, paramType.type, defaultValue);
-                if (!argNames.add(argName)) {
-                    error(param.getParent(), ErrorType.FUNCTION__DUPLICATED_ARG_NAME, List.of(argName));
-                }
-                args.add(argDecl);
-                argNameCtx.add(param.varNameAndType().varName());
-            }
-            i = 0;
-            for (final var arg : args) {
-                declareVariable(contextManager.typeInContext(arg.type()), arg.name(), argNameCtx.get(i));
-                i++;
-            }
-        }
-
-        final TypeInContext returned = ctx.typeDeclaration() != null
-            ? visitTypeDeclaration(ctx.typeDeclaration())
-            : contextManager.typeInContext(zeroOrMoreItems);
-
-        final FunctionBodyContext functionBody = ctx.functionBody();
-        if (functionBody != null) {
-            final var bodyType = visitEnclosedExpr(functionBody.enclosedExpr());
-            if (!bodyType.isSubtypeOf(returned)) {
-                error(functionBody, ErrorType.FUNCTION__INVALID_RETURNED_TYPE, List.of(bodyType, returned));
-            }
-            symbolManager.registerFunction(
-                resolved.namespace(),
-                resolved.name(),
-                args,
-                returned.type,
-                ctx.functionBody().enclosedExpr());
-        } else {
-            symbolManager.registerFunction(
-                resolved.namespace(),
-                resolved.name(),
-                args,
-                returned.type);
-
-        }
-        contextManager.leaveContext();
-        return null;
     }
 
     private String getArgName(final ParamWithDefaultContext param)
@@ -3406,99 +3444,60 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         XQueryItemType recordItemType,
         List<ArgumentSpecification> fieldsAsArgs){}
 
-    private RecordResolutionResult resolveRecordFromTypeDecl(
-        final QualifiedName qName,
-        final NamedRecordTypeDeclContext ctx
-        )
-    {
-        final List<ExtendedFieldDeclarationContext> extendedFieldDeclaration = ctx.extendedFieldDeclaration();
-        final int size = extendedFieldDeclaration.size();
-        final Map<String, XQueryRecordField> fields = new HashMap<>(size);
-        final List<ArgumentSpecification> mandatoryArgs = new ArrayList<>(size);
-        final List<ArgumentSpecification> optionalArgs = new ArrayList<>(size);
-        for (final ExtendedFieldDeclarationContext field : extendedFieldDeclaration) {
-            final var fieldName = field.fieldDeclaration().fieldName().getText();
-            final var fieldTypeCtx = field.fieldDeclaration().sequenceType();
-            XQuerySequenceType fieldType = zeroOrMoreItems;
-            if (fieldTypeCtx != null) {
-                fieldType = visitSequenceType(fieldTypeCtx).type;
-            }
-            final boolean isRequired = field.fieldDeclaration().QUESTION_MARK() == null;
-            final ExprSingleContext defaultExpr = field.exprSingle();
-            fields.put(fieldName, new XQueryRecordField(TypeOrReference.type(fieldType), isRequired));
-            if (isRequired) {
-                if (defaultExpr == null) {
-                    mandatoryArgs.add(new ArgumentSpecification(fieldName, fieldType, null));
-                }
-                else {
-                    optionalArgs.add(new ArgumentSpecification(fieldName, fieldType, defaultExpr));
-                }
-            } else {
-                optionalArgs
-                    .add(new ArgumentSpecification(fieldName, fieldType, new HelperTrees().EMPTY_SEQUENCE));
-            }
-        }
-        mandatoryArgs.addAll(optionalArgs);
-        final var itemRecordType = ctx.extensibleFlag() == null
-            ? typeFactory.itemRecord(fields)
-            : typeFactory.itemExtensibleRecord(fields);
-        return new RecordResolutionResult(itemRecordType, mandatoryArgs);
-    }
-
-    private RecordResolutionResult resolveRecordFromUnresolved(
+    private RecordResolutionResult resolveRecord(
         final QualifiedName qName,
         final UnresolvedRecordSpecification recordSpecification
         )
     {
-
         final int size = recordSpecification.fields.size();
         final Map<String, XQueryRecordField> fields = new LinkedHashMap<>(size);
-        final List<ArgumentSpecification> mandatoryArgs = new ArrayList<>(size);
-        final List<ArgumentSpecification> optionalArgs = new ArrayList<>(size);
+        final List<ArgumentSpecification> args = new ArrayList<>(size);
         for (final UnresolvedRecordFieldSpecification field : recordSpecification.fields) {
             final var fieldName = field.name;
             final SequenceTypeContext fieldTypeCtx = field.typeOrReferenceCtx;
             if (fieldTypeCtx == null) {
-                fields.put(fieldName, new XQueryRecordField(TypeOrReference.type(zeroOrMoreItems), field.isRequired));
+                fields.put(
+                    fieldName,
+                    new XQueryRecordField(
+                        TypeOrReference.type(zeroOrMoreItems),
+                        field.isRequired
+                        )
+                    );
                 continue;
             }
-            if (fieldTypeCtx.itemType() == null || fieldTypeCtx.itemType().typeName() == null) {
-                fields.put(fieldName, new XQueryRecordField(TypeOrReference.type(visitSequenceType(fieldTypeCtx).type), field.isRequired));
+            if (fieldTypeCtx.itemType() == null
+                || fieldTypeCtx.itemType().typeName() == null)
+            {
+                fields.put(
+                    fieldName,
+                    new XQueryRecordField(
+                        TypeOrReference.type(
+                            visitSequenceType(fieldTypeCtx).type),
+                            field.isRequired));
                 continue;
             }
-            QualifiedName reference = namespaceResolver.resolveType(fieldTypeCtx.itemType().typeName().getText());
-            if (fieldTypeCtx.occurrenceIndicator() == null) {
-                TypeOrReference typeOrReference = TypeOrReference.reference(reference, XQueryCardinality.ONE);
-                fields.put(fieldName, new XQueryRecordField(typeOrReference, field.isRequired));
-            } else {
-                XQueryCardinality cardinality = switch(fieldTypeCtx.occurrenceIndicator().getText()) {
-                    case "?" -> XQueryCardinality.ZERO_OR_ONE;
-                    case "*" -> XQueryCardinality.ZERO_OR_MORE;
-                    default -> XQueryCardinality.ONE_OR_MORE;
-                };
-                TypeOrReference typeOrReference = TypeOrReference.reference(qName, cardinality);
-                fields.put(fieldName, new XQueryRecordField(typeOrReference, field.isRequired));
-            }
-
+            TypeOrReference typeOrReference = resolveSequenceTypeOrReference(fieldTypeCtx);
+            fields.put(fieldName, new XQueryRecordField(typeOrReference, field.isRequired));
         }
-        for (var mandatoryArgSpec : recordSpecification.mandatoryFieldsAsArgs) {
-            mandatoryArgs.add(new ArgumentSpecification(
-                mandatoryArgSpec.name,
-                visitSequenceType(mandatoryArgSpec.type).type,
-                mandatoryArgSpec.defaultValue));
+        for (final var mandatoryArgSpec : recordSpecification.mandatoryFieldsAsArgs) {
+            args.add(
+                new ArgumentSpecification(
+                    mandatoryArgSpec.name,
+                    visitSequenceType(mandatoryArgSpec.type).type,
+                    mandatoryArgSpec.defaultValue));
         }
-        for (var optionalArgSpec : recordSpecification.optionalfieldsAsArgs) {
-            mandatoryArgs.add(new ArgumentSpecification(
-                optionalArgSpec.name,
-                visitSequenceType(optionalArgSpec.type).type,
-                optionalArgSpec.defaultValue));
+        for (final var optionalArgSpec : recordSpecification.optionalfieldsAsArgs) {
+            args.add(
+                new ArgumentSpecification(
+                    optionalArgSpec.name,
+                    visitSequenceType(optionalArgSpec.type).type,
+                    optionalArgSpec.defaultValue));
         }
 
-        mandatoryArgs.addAll(optionalArgs);
         final var itemRecordType = recordSpecification.isExtensible
             ? typeFactory.itemExtensibleRecord(fields)
             : typeFactory.itemRecord(fields);
-        return new RecordResolutionResult(itemRecordType, mandatoryArgs);
+        return new RecordResolutionResult(itemRecordType, args);
     }
 
 
@@ -3515,13 +3514,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         SequenceTypeContext type,
         ParseTree defaultValue
     ) {}
-
-    // private record UnresolvedFunctionSpecification(
-    //     QualifiedName name,
-    //     List<UnresolvedArgumentSpecification> mandatoryArgs,
-    //     List<UnresolvedArgumentSpecification> optionalArgs,
-    //     SequenceTypeContext returnedType
-    // ){}
 
 
     private record UnresolvedRecordSpecification(
@@ -3561,47 +3553,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             }
         }
         mandatoryArgs.addAll(optionalArgs);
-        boolean isExtensible = ctx.extensibleFlag() != null;
+        final boolean isExtensible = ctx.extensibleFlag() != null;
         return new UnresolvedRecordSpecification(ctx, qName, fields, mandatoryArgs, optionalArgs, isExtensible);
-    }
-
-
-    @Override
-    public TypeInContext visitNamedRecordTypeDecl(final NamedRecordTypeDeclContext ctx)
-    {
-        final var typeName = ctx.qname().getText();
-        final var qName = namespaceResolver.resolveType(typeName);
-        final RecordResolutionResult resolved = resolveRecordFromTypeDecl(qName, ctx);
-        final var registrationResult = typeFactory.registerNamedType(qName, resolved.recordItemType);
-        switch (registrationResult.status()) {
-            case ALREADY_REGISTERED_DIFFERENT ->  {
-                final var expr = registrationResult.registered();
-                error(
-                    ctx,
-                    ErrorType.RECORD_DECLARATION__ALREADY_REGISTERED_DIFFERENT,
-                    List.of(typeName, expr)
-                    );
-                return contextManager.typeInContext(typeFactory.one(registrationResult.registered()));
-            }
-            case ALREADY_REGISTERED_SAME ->  {
-                error(
-                    ctx,
-                    ErrorType.RECORD_DECLARATION__ALREADY_REGISTERED_SAME,
-                    List.of(typeName)
-                    );
-                return contextManager.typeInContext(typeFactory.one(registrationResult.registered()));
-            }
-            case OK -> {
-                symbolManager.registerFunction(
-                    qName.namespace(),
-                    qName.name(),
-                    resolved.fieldsAsArgs,
-                    typeFactory.one(resolved.recordItemType));
-                return contextManager.typeInContext(typeFactory.one(registrationResult.registered()));
-            }
-        }
-        // unreachable
-        return null;
     }
 
 

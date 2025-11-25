@@ -16,6 +16,7 @@ exprSingle
     | quantifiedExpr
     | ifExpr
     | switchExpr
+    | typeswitchExpr
     | tryCatchExpr
     | orExpr;
 

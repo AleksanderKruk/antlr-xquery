@@ -13,6 +13,7 @@ import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.Qualifie
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.ArgumentSpecification;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.GrainedAnalysis;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.SimplifiedFunctionSpecification;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.UsedArg;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField.TypeOrReference;
 import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
@@ -209,7 +210,7 @@ public class FunctionSets {
             final TypeInContext unrefinedType = args.get(0).type();
             final var refinedType = typeFactory.zeroOrOne(unrefinedType.type.itemType);
             if (unrefinedType.isSubtypeOf(refinedType)) {
-            return unrefinedType;
+                return unrefinedType;
             }
             return ctx.currentScope().typeInContext(refinedType);
         };
@@ -2977,6 +2978,7 @@ public class FunctionSets {
     public static List<SimplifiedFunctionSpecification> ANTLR(final XQueryTypeFactory typeFactory) {
         final List<SimplifiedFunctionSpecification> antlr = new ArrayList<>(50);
         final XQuerySequenceType optionalNumber = typeFactory.zeroOrOne(typeFactory.itemNumber());
+        final XQuerySequenceType number = typeFactory.number();
         final var helperTrees = new HelperTrees();
         final ParseTree CONTEXT_VALUE = helperTrees.CONTEXT_VALUE;
         final ArgumentSpecification optionalNodeArg = new ArgumentSpecification(
@@ -2984,13 +2986,25 @@ public class FunctionSets {
             typeFactory.zeroOrOne(typeFactory.itemAnyNode()),
             CONTEXT_VALUE
         );
+        GrainedAnalysis ifNodePresentThenNumber = (args, context, functionBody, typeContext) -> {
+            UsedArg node = args.get(0);
+            if (node.type().type.isOne) {
+                return typeContext.typeInContext(number);
+            }
+            return node.type();
+        };
+
         // antlr:start
         antlr.add(
             new SimplifiedFunctionSpecification(
             new QualifiedName("antlr", "start"),
             List.of(optionalNodeArg),
             optionalNumber,
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            ifNodePresentThenNumber
             )
         );
         antlr.add(
@@ -2998,7 +3012,11 @@ public class FunctionSets {
             new QualifiedName("antlr", "stop"),
             List.of(optionalNodeArg),
             optionalNumber,
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            ifNodePresentThenNumber
             )
         );
         antlr.add(
@@ -3006,7 +3024,8 @@ public class FunctionSets {
             new QualifiedName("antlr", "pos"),
             List.of(optionalNodeArg),
             optionalNumber,
-            null, false, false, null, null
+            null, false, false, null,
+            ifNodePresentThenNumber
             )
         );
         antlr.add(
@@ -3014,7 +3033,11 @@ public class FunctionSets {
             new QualifiedName("antlr", "index"),
             List.of(optionalNodeArg),
             optionalNumber,
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            ifNodePresentThenNumber
             )
         );
         antlr.add(
@@ -3022,7 +3045,8 @@ public class FunctionSets {
             new QualifiedName("antlr", "line"),
             List.of(optionalNodeArg),
             optionalNumber,
-            null, false, false, null, null
+            null, false, false, null,
+            ifNodePresentThenNumber
             )
         );
 

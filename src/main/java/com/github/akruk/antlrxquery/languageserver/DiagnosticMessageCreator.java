@@ -8,6 +8,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.antlr.v4.runtime.tree.ParseTree;
+
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticWarning;
@@ -670,6 +672,30 @@ public class DiagnosticMessageCreator {
                     sb.append(g);
                 }
 
+            }
+
+
+            case FUNCTION__ARITY_COLLISION -> {
+                var qName = error.data().get(0);
+                var minArity =error.data().get(1);
+                var maxArity =error.data().get(2);
+                @SuppressWarnings("unchecked")
+                var collisions =(List<ParseTree>)error.data().get(3);
+                StringBuilder sb = new StringBuilder();
+                sb.append("Function '");
+                sb.append(qName);
+                sb.append("' arity range [");
+                sb.append(minArity);
+                sb.append(";");
+                sb.append(maxArity);
+                sb.append("] collides with functions defined at:");
+                for (var c : collisions) {
+                    sb.append("\n    [");
+                    sb.append(c.getSourceInterval().a);
+                    sb.append(";");
+                    sb.append(c.getSourceInterval().b);
+                    sb.append("]");
+                }
             }
 
         }

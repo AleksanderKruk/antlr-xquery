@@ -20,6 +20,7 @@ import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.TerminalNode;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionParams;
@@ -120,7 +121,7 @@ public class BasicTextDocumentService implements TextDocumentService {
 
     private Set<Path> modulePaths = Set.of();
 
-	private final int variableIndex;
+    private final int variableIndex;
     private final int functionIndex;
     private final int typeIndex;
     // private final int parameterIndex;
@@ -128,8 +129,7 @@ public class BasicTextDocumentService implements TextDocumentService {
     private final int propertyIndex;
     private final int decoratorIndex;
 
-    BasicTextDocumentService(final List<String> tokenLegend)
-    {
+    BasicTextDocumentService(final List<String> tokenLegend) {
         variableIndex = tokenLegend.indexOf("variable");
         functionIndex = tokenLegend.indexOf("function");
         typeIndex = tokenLegend.indexOf("type");
@@ -137,26 +137,19 @@ public class BasicTextDocumentService implements TextDocumentService {
         stringIndex = tokenLegend.indexOf("string");
         propertyIndex = tokenLegend.indexOf("property");
         decoratorIndex = tokenLegend.indexOf("decorator");
-        resolver = new NamespaceResolver(
-            "fn",
-            "",
-            "",
-            "",
-            "");
+        resolver = new NamespaceResolver("fn", "", "", "", "");
     }
 
     public void setModulePaths(final Set<Path> modulePaths) {
-		this.modulePaths = modulePaths;
-	}
+        this.modulePaths = modulePaths;
+    }
 
-    public void setClient(final LanguageClient client)
-    {
+    public void setClient(final LanguageClient client) {
         this.client = client;
     }
 
     @Override
-    public void didOpen(final DidOpenTextDocumentParams params)
-    {
+    public void didOpen(final DidOpenTextDocumentParams params) {
         final String uri = params.getTextDocument().getUri();
         final String text = params.getTextDocument().getText();
         System.err.println("[didOpen] " + uri);
@@ -167,8 +160,7 @@ public class BasicTextDocumentService implements TextDocumentService {
     }
 
     @Override
-    public void didChange(final DidChangeTextDocumentParams params)
-    {
+    public void didChange(final DidChangeTextDocumentParams params) {
         final String uri = params.getTextDocument().getUri();
         if (params.getContentChanges().isEmpty()) {
             System.err.println("[didChange] No content changes for: " + uri);
@@ -180,23 +172,20 @@ public class BasicTextDocumentService implements TextDocumentService {
     }
 
     @Override
-    public void didClose(final DidCloseTextDocumentParams params)
-    {
+    public void didClose(final DidCloseTextDocumentParams params) {
         final String uri = params.getTextDocument().getUri();
         parseTreeStore.remove(uri);
         System.err.println("[didClose] Document closed: " + uri);
     }
 
     @Override
-    public void didSave(final DidSaveTextDocumentParams params)
-    {
+    public void didSave(final DidSaveTextDocumentParams params) {
         final String uri = params.getTextDocument().getUri();
         System.err.println("[didSave] Document saved: " + uri);
         parseAndAnalyze(uri, params.getText());
     }
 
-    public void parseAndAnalyze(final String uri, final String text)
-    {
+    public void parseAndAnalyze(final String uri, final String text) {
         System.err.println("[parseAndAnalyze] Starting for: " + uri);
         System.err.println("[parseAndAnalyze] Text length: " + text.length());
 
@@ -210,22 +199,13 @@ public class BasicTextDocumentService implements TextDocumentService {
             parser.removeErrorListeners();
             parser.addErrorListener(new BaseErrorListener() {
                 @Override
-                public void syntaxError(
-                    final Recognizer<?, ?> recognizer,
-                    final Object offendingSymbol,
-                    final int line,
-                    final int charPositionInLine,
-                    final String msg,
-                    final RecognitionException e)
-                {
+                public void syntaxError(final Recognizer<?, ?> recognizer, final Object offendingSymbol, final int line,
+                        final int charPositionInLine, final String msg, final RecognitionException e) {
                     System.err.println("[syntaxError] Line " + line + ":" + charPositionInLine + " " + msg);
                     final Diagnostic diagnostic = new Diagnostic(
-                        new Range(
-                            new Position(line - 1, charPositionInLine),
-                            new Position(line - 1, charPositionInLine + 1)),
-                        "Syntax error: " + msg,
-                        DiagnosticSeverity.Error,
-                        "antlr-xquery");
+                            new Range(new Position(line - 1, charPositionInLine),
+                                    new Position(line - 1, charPositionInLine + 1)),
+                            "Syntax error: " + msg, DiagnosticSeverity.Error, "antlr-xquery");
                     diagnostics.add(diagnostic);
                 }
             });
@@ -248,17 +228,11 @@ public class BasicTextDocumentService implements TextDocumentService {
             paths.addAll(modulePaths);
             final Path currentPath = Path.of(URI.create(uri));
             paths.add(currentPath.getParent());
-            final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
-                null,
-                new XQuerySemanticContextManager(typeFactory),
-                typeFactory,
-                new XQueryMemoizedValueFactory(typeFactory),
-                new XQuerySemanticSymbolManager(typeFactory, FunctionSets.ALL(typeFactory)),
-                null,
-                new ModuleManager(paths),
-                new GrammarManager(paths),
-                typeFactory.anyNode()
-                );
+            final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(null,
+                    new XQuerySemanticContextManager(typeFactory), typeFactory,
+                    new XQueryMemoizedValueFactory(typeFactory),
+                    new XQuerySemanticSymbolManager(typeFactory, FunctionSets.ALL(typeFactory)), null,
+                    new ModuleManager(paths), new GrammarManager(paths), typeFactory.anyNode());
 
             final Map<VarRefContext, TypeInContext> varRefsMappedToTypes_ = new HashMap<>();
             final Map<VarNameContext, TypeInContext> varNamesMappedToTypes_ = new HashMap<>();
@@ -275,37 +249,30 @@ public class BasicTextDocumentService implements TextDocumentService {
             });
             try {
                 analyzer.visit(tree);
-            } catch(final Exception e) {
+            } catch (final Exception e) {
 
             }
             semanticAnalyzers.put(uri, analyzer);
             varRefsMappedToTypes.put(uri, varRefsMappedToTypes_);
             varNamesMappedToTypes.put(uri, varNamesMappedToTypes_);
 
-
             final List<DiagnosticError> errors = analyzer.getErrors();
             final List<DiagnosticWarning> warnings = analyzer.getWarnings();
             System.err
-                .println("[parseAndAnalyze] Semantic Errors: " + errors.size() + ", Warnings: " + warnings.size());
+                    .println("[parseAndAnalyze] Semantic Errors: " + errors.size() + ", Warnings: " + warnings.size());
 
             for (final var error : errors) {
                 diagnostics.add(new Diagnostic(
-                    new Range(
-                        new Position(error.startLine() - 1, error.charPositionInLine()),
-                        new Position(error.endLine() - 1, error.endCharPositionInLine())),
-                    diagnosticMessageCreator.create(error),
-                    DiagnosticSeverity.Error,
-                    "antlr-xquery"));
+                        new Range(new Position(error.startLine() - 1, error.charPositionInLine()),
+                                new Position(error.endLine() - 1, error.endCharPositionInLine())),
+                        diagnosticMessageCreator.create(error), DiagnosticSeverity.Error, "antlr-xquery"));
             }
 
             for (final var warning : warnings) {
                 diagnostics.add(new Diagnostic(
-                    new Range(
-                        new Position(warning.startLine() - 1, warning.charPositionInLine()),
-                        new Position(warning.endLine() - 1, warning.endCharPositionInLine())),
-                    diagnosticMessageCreator.create(warning),
-                    DiagnosticSeverity.Warning,
-                    "antlr-xquery"));
+                        new Range(new Position(warning.startLine() - 1, warning.charPositionInLine()),
+                                new Position(warning.endLine() - 1, warning.endCharPositionInLine())),
+                        diagnosticMessageCreator.create(warning), DiagnosticSeverity.Warning, "antlr-xquery"));
             }
 
             if (client != null) {
@@ -315,57 +282,56 @@ public class BasicTextDocumentService implements TextDocumentService {
             }
 
             {
-            final var declarations = XQuery.evaluateWithMockRoot(tree, "//varNameAndType", _parser).sequence;
-            final List<VarNameAndTypeContext> declarationContexts = declarations.stream()
-                .map(x->(VarNameAndTypeContext) x.node)
-                .toList();
+                final var declarations = XQuery.evaluateWithMockRoot(tree, "//varNameAndType", _parser).sequence;
+                final List<VarNameAndTypeContext> declarationContexts = declarations.stream()
+                        .map(x -> (VarNameAndTypeContext) x.node).toList();
 
-            final Stream<VarNameContext> declarationWithoutTypeContexts = declarationContexts.stream()
-                .filter(x->x.typeDeclaration() == null)
-                .map(x->x.varName());
-            variableDeclarations.put(uri, declarationContexts);
+                final Stream<VarNameContext> declarationWithoutTypeContexts = declarationContexts.stream()
+                        .filter(x -> x.typeDeclaration() == null).map(x -> x.varName());
+                variableDeclarations.put(uri, declarationContexts);
 
-            final List<XQueryValue> windowVars = XQuery.evaluateWithMockRoot(tree, "//windowVars//varName", _parser).sequence;
-            final var windowVarVarRefs = windowVars.stream().map(t -> (VarNameContext) t.node);
-            final List<VarNameContext> combinedVarRefs = Stream
-                .of(declarationWithoutTypeContexts, windowVarVarRefs)
-                .flatMap((final Stream<VarNameContext> x)->x)
-                .toList();
-            variableDeclarationsWithoutType.put(uri, combinedVarRefs);
+                final List<XQueryValue> windowVars = XQuery.evaluateWithMockRoot(tree, "//windowVars//varName",
+                        _parser).sequence;
+                final var windowVarVarRefs = windowVars.stream().map(t -> (VarNameContext) t.node);
+                final List<VarNameContext> combinedVarRefs = Stream.of(declarationWithoutTypeContexts, windowVarVarRefs)
+                        .flatMap((final Stream<VarNameContext> x) -> x).toList();
+                variableDeclarationsWithoutType.put(uri, combinedVarRefs);
             }
 
             {
-            final var typeNames = XQuery.evaluateWithMockRoot(tree, "//typeName", _parser).sequence;
-            final List<TypeNameContext> typeNameContexts = typeNames.stream()
-                .map(x->(TypeNameContext) x.node)
-                .toList();
-            namedTypes.put(uri, typeNameContexts);
+                final var typeNames = XQuery.evaluateWithMockRoot(tree, "//typeName", _parser).sequence;
+                final List<TypeNameContext> typeNameContexts = typeNames.stream().map(x -> (TypeNameContext) x.node)
+                        .toList();
+                namedTypes.put(uri, typeNameContexts);
             }
 
             {
-            final List<XQueryValue> recordDecls = XQuery.evaluateWithMockRoot(tree, "//namedRecordTypeDecl", _parser).sequence;
-            final List<NamedRecordTypeDeclContext> rdecls = recordDecls.stream().map(v->(NamedRecordTypeDeclContext)v.node).toList();
-            recordDeclarations.put(uri, rdecls);
+                final List<XQueryValue> recordDecls = XQuery.evaluateWithMockRoot(tree, "//namedRecordTypeDecl",
+                        _parser).sequence;
+                final List<NamedRecordTypeDeclContext> rdecls = recordDecls.stream()
+                        .map(v -> (NamedRecordTypeDeclContext) v.node).toList();
+                recordDeclarations.put(uri, rdecls);
             }
 
             {
-            final List<XQueryValue> variableRefs = XQuery.evaluateWithMockRoot(tree, "//varRef", _parser).sequence;
-            variableReferences.put(uri, variableRefs.stream().map(v->(VarRefContext)v.node).toList());
+                final List<XQueryValue> variableRefs = XQuery.evaluateWithMockRoot(tree, "//varRef", _parser).sequence;
+                variableReferences.put(uri, variableRefs.stream().map(v -> (VarRefContext) v.node).toList());
             }
 
             {
-            final List<XQueryValue> fNames = XQuery.evaluateWithMockRoot(tree, "//functionName", _parser).sequence;
-            functionNames.put(uri, fNames.stream().map(v -> (FunctionNameContext) v.node).toList());
+                final List<XQueryValue> fNames = XQuery.evaluateWithMockRoot(tree, "//functionName", _parser).sequence;
+                functionNames.put(uri, fNames.stream().map(v -> (FunctionNameContext) v.node).toList());
             }
 
             {
-            final List<XQueryValue> namedRefs = XQuery.evaluateWithMockRoot(tree, "//namedFunctionRef", _parser).sequence;
-            namedFunctionRefs.put(uri, namedRefs.stream().map(v -> (NamedFunctionRefContext) v.node).toList());
+                final List<XQueryValue> namedRefs = XQuery.evaluateWithMockRoot(tree, "//namedFunctionRef",
+                        _parser).sequence;
+                namedFunctionRefs.put(uri, namedRefs.stream().map(v -> (NamedFunctionRefContext) v.node).toList());
             }
 
             {
-            final List<XQueryValue> fDecls = XQuery.evaluateWithMockRoot(tree, "//functionDecl", _parser).sequence;
-            functionDecls.put(uri, fDecls.stream().map(t -> (FunctionDeclContext)t.node).toList());
+                final List<XQueryValue> fDecls = XQuery.evaluateWithMockRoot(tree, "//functionDecl", _parser).sequence;
+                functionDecls.put(uri, fDecls.stream().map(t -> (FunctionDeclContext) t.node).toList());
             }
 
         } catch (final Exception e) {
@@ -382,8 +348,10 @@ public class BasicTextDocumentService implements TextDocumentService {
     private final NamespaceResolver resolver;
 
     private final TreeEvaluator constructors = XQuery.compile("//constructorChars", _parser);
-    private final TreeEvaluator constructorBoundaries = XQuery.compile("//(STRING_CONSTRUCTION_START|STRING_CONSTRUCTION_END)", _parser);
-    private final TreeEvaluator properties = XQuery.compile("//extendedFieldDeclaration//fieldDeclaration/fieldName", _parser);
+    private final TreeEvaluator constructorBoundaries = XQuery
+            .compile("//(STRING_CONSTRUCTION_START|STRING_CONSTRUCTION_END)", _parser);
+    private final TreeEvaluator properties = XQuery.compile("//extendedFieldDeclaration//fieldDeclaration/fieldName",
+            _parser);
     private final TreeEvaluator annotations = XQuery.compile("//annotation", _parser);
     private final TreeEvaluator typeValuesEvaluator = XQuery.compile("""
                 //(sequenceType|castTarget)
@@ -391,7 +359,8 @@ public class BasicTextDocumentService implements TextDocumentService {
                 | //namedRecordTypeDecl/qname
             """, _parser);
 
-    record SemanticToken(int line, int charPos, int length, int typeIndex, int modifierBitmask) {}
+    record SemanticToken(int line, int charPos, int length, int typeIndex, int modifierBitmask) {
+    }
 
     @Override
     public CompletableFuture<SemanticTokens> semanticTokensFull(final SemanticTokensParams params) {
@@ -402,32 +371,19 @@ public class BasicTextDocumentService implements TextDocumentService {
             return CompletableFuture.completedFuture(new SemanticTokens(List.of()));
         }
 
-        try {
-            // final String source = Files.readString(Path.of(uri));
-            // final List<Integer> lineOffsets = new ArrayList<>(500);
-            // lineOffsets.add(0);
-            // for (int i = 0; i < source.length(); i++) {
-            //     if (source.charAt(i) == '\n') {
-            //         lineOffsets.add(i + 1);
-            //     }
-            // }
-
-            final List<SemanticToken> tokens = new ArrayList<>(500);
+        final List<SemanticToken> tokens = new ArrayList<>(500);
 
         final XQueryValue typeValuesVal = typeValuesEvaluator.evaluate(tree);
         final List<XQueryValue> typeValues = typeValuesEvaluator.evaluate(tree).sequence;
         markTokens(tokens, typeValuesVal, typeIndex);
 
-        types.put(uri, typeValues.stream().map(v->(ParserRuleContext) v.node).toList());
-
+        types.put(uri, typeValues.stream().map(v -> (ParserRuleContext) v.node).toList());
 
         markTokens(uri, tokens, variableIndex, variableReferences.getOrDefault(uri, List.of()));
         markTokens(uri, tokens, functionIndex, functionNames.getOrDefault(uri, List.of()));
         markTokens(uri, tokens, functionIndex, namedFunctionRefs.getOrDefault(uri, List.of()));
 
-
-        for (final XQueryValue val : constructorBoundaries.evaluate(tree).sequence)
-        {
+        for (final XQueryValue val : constructorBoundaries.evaluate(tree).sequence) {
             final TerminalNode ctx = (TerminalNode) val.node;
             final var token = getSemanticToken(ctx, stringIndex);
             tokens.add(token);
@@ -437,10 +393,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         markTokens(tokens, properties.evaluate(tree), propertyIndex);
         markTokens(tokens, annotations.evaluate(tree), decoratorIndex);
 
-
-        tokens.sort(Comparator
-            .comparingInt(SemanticToken::line)
-            .thenComparingInt(SemanticToken::charPos));
+        tokens.sort(Comparator.comparingInt(SemanticToken::line).thenComparingInt(SemanticToken::charPos));
 
         final List<Integer> data = new ArrayList<>();
         int lastLine = 0;
@@ -463,15 +416,15 @@ public class BasicTextDocumentService implements TextDocumentService {
         return CompletableFuture.completedFuture(new SemanticTokens(data));
     }
 
-    private void markTokens(final String uri, final List<SemanticToken> tokens, final int tokenTypeIndex, List<? extends ParserRuleContext> trees) {
+    private void markTokens(final String uri, final List<SemanticToken> tokens, final int tokenTypeIndex,
+            List<? extends ParserRuleContext> trees) {
         for (final var val : trees) {
             final SemanticToken functionToken = getSemanticToken(val, tokenTypeIndex);
             tokens.add(functionToken);
         }
     }
 
-    private void markTokens(final List<SemanticToken> tokens, final XQueryValue values, final int typeIndex)
-    {
+    private void markTokens(final List<SemanticToken> tokens, final XQueryValue values, final int typeIndex) {
         for (final XQueryValue val : values.sequence) {
             if (val.node instanceof final ParserRuleContext ctx) {
                 tokens.add(getSemanticToken(ctx, typeIndex));
@@ -481,19 +434,17 @@ public class BasicTextDocumentService implements TextDocumentService {
         }
     }
 
-    private SemanticToken getSemanticToken(final ParserRuleContext ctx, int tokenTypeIndex)
-    {
+    private SemanticToken getSemanticToken(final ParserRuleContext ctx, int tokenTypeIndex) {
         final Token start = ctx.getStart();
         final Token stop = ctx.getStop();
         final int startline = start.getLine() - 1;
         final int charPos = start.getCharPositionInLine();
         final int length = stop.getStopIndex() - start.getStartIndex() + 1;
-        final SemanticToken token = new SemanticToken(line, charPos, length, tokenTypeIndex, 0);
+        final SemanticToken token = new SemanticToken(startline, charPos, length, tokenTypeIndex, 0);
         return token;
     }
 
-    private SemanticToken getSemanticToken(final TerminalNode ctx, int tokenTypeIndex)
-    {
+    private SemanticToken getSemanticToken(final TerminalNode ctx, int tokenTypeIndex) {
         final Token start = ctx.getSymbol();
         final int line = start.getLine() - 1;
         final int charPos = start.getCharPositionInLine();
@@ -502,10 +453,8 @@ public class BasicTextDocumentService implements TextDocumentService {
         return token;
     }
 
-
     @Override
-    public CompletableFuture<Hover> hover(final HoverParams params)
-    {
+    public CompletableFuture<Hover> hover(final HoverParams params) {
         final String uri = params.getTextDocument().getUri();
         final Position position = params.getPosition();
 
@@ -574,8 +523,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         return CompletableFuture.completedFuture(null);
     }
 
-    private int getArity(final ParserRuleContext foundCtx)
-    {
+    private int getArity(final ParserRuleContext foundCtx) {
         final FunctionCallContext functionCall = (FunctionCallContext) foundCtx.getParent();
         final boolean isArrowCall = isArrowCall(functionCall);
         final PositionalArgumentsContext positionalArguments = functionCall.argumentList().positionalArguments();
@@ -586,31 +534,23 @@ public class BasicTextDocumentService implements TextDocumentService {
         return arity;
     }
 
-    private boolean isArrowCall(final FunctionCallContext functionCall)
-    {
+    private boolean isArrowCall(final FunctionCallContext functionCall) {
         return functionCall.getParent() instanceof ArrowTargetContext;
     }
 
-    private int getArity(final NamedFunctionRefContext ctx)
-    {
+    private int getArity(final NamedFunctionRefContext ctx) {
         return Integer.parseInt(ctx.IntegerLiteral().getText());
     }
 
-
-
     private String varBeingRenamed = null;
     private FunctionDeclData functionBeingRenamed = null;
+
     @Override
-    public CompletableFuture<Either3<Range, PrepareRenameResult, PrepareRenameDefaultBehavior>>
-        prepareRename(final PrepareRenameParams params)
-    {
-        final CompletableFuture<Either3<Range, PrepareRenameResult, PrepareRenameDefaultBehavior>> failedFuture = CompletableFuture.failedFuture(
-            new ResponseErrorException(new ResponseError(
-                ResponseErrorCode.InvalidRequest,
-                "This element cannot be renamed",
-                null
-            ))
-        );
+    public CompletableFuture<Either3<Range, PrepareRenameResult, PrepareRenameDefaultBehavior>> prepareRename(
+            final PrepareRenameParams params) {
+        final CompletableFuture<Either3<Range, PrepareRenameResult, PrepareRenameDefaultBehavior>> failedFuture = CompletableFuture
+                .failedFuture(new ResponseErrorException(
+                        new ResponseError(ResponseErrorCode.InvalidRequest, "This element cannot be renamed", null)));
         final String uri = params.getTextDocument().getUri();
         final List<VarRefContext> vars = variableReferences.get(uri);
         final Position position = params.getPosition();
@@ -683,14 +623,14 @@ public class BasicTextDocumentService implements TextDocumentService {
         return CompletableFuture.completedFuture(new WorkspaceEdit(edits));
     }
 
-    private void handleFunctionRenamingFileEdits(final String uri, final String newName, final Map<String, List<TextEdit>> edits)
-    {
+    private void handleFunctionRenamingFileEdits(final String uri, final String newName,
+            final Map<String, List<TextEdit>> edits) {
         for (final var functionUri : functionNames.keySet()) {
-            final List<TextEdit> fileEdits = edits.computeIfAbsent(functionUri, (_)->new ArrayList<>());
+            final List<TextEdit> fileEdits = edits.computeIfAbsent(functionUri, (_) -> new ArrayList<>());
             for (final var functionName : functionNames.get(functionUri)) {
                 final var qname = resolver.resolveFunction(functionName.qname().getText());
-                final FunctionDeclData functionDeclaration = getFunctionDeclaration(
-                    functionName, qname, semanticAnalyzers.get(functionUri));
+                final FunctionDeclData functionDeclaration = getFunctionDeclaration(functionName, qname,
+                        semanticAnalyzers.get(functionUri));
                 if (functionDeclaration == null)
                     continue;
                 if (functionDeclaration.context == functionBeingRenamed.context) {
@@ -701,11 +641,11 @@ public class BasicTextDocumentService implements TextDocumentService {
 
         }
         for (final var namedUri : namedFunctionRefs.keySet()) {
-            final List<TextEdit> fileEdits = edits.computeIfAbsent(namedUri, (_)->new ArrayList<>());
+            final List<TextEdit> fileEdits = edits.computeIfAbsent(namedUri, (_) -> new ArrayList<>());
             for (final var namedRef : namedFunctionRefs.getOrDefault(namedUri, List.of())) {
                 final var qname = resolver.resolveFunction(namedRef.qname().getText());
-                final FunctionDeclData functionDeclaration = getFunctionDeclaration(
-                    namedRef, qname, semanticAnalyzers.get(namedUri));
+                final FunctionDeclData functionDeclaration = getFunctionDeclaration(namedRef, qname,
+                        semanticAnalyzers.get(namedUri));
                 if (functionDeclaration == null)
                     continue;
                 if (functionDeclaration.context == functionBeingRenamed.context) {
@@ -716,9 +656,9 @@ public class BasicTextDocumentService implements TextDocumentService {
         }
     }
 
-    private void handleVarRenamingFileEdits(final String uri, final String newName, final Map<String, List<TextEdit>> edits)
-    {
-        final List<TextEdit> fileEdits = edits.computeIfAbsent(uri, (_)->new ArrayList<>());
+    private void handleVarRenamingFileEdits(final String uri, final String newName,
+            final Map<String, List<TextEdit>> edits) {
+        final List<TextEdit> fileEdits = edits.computeIfAbsent(uri, (_) -> new ArrayList<>());
         for (final var variable : variableReferences.getOrDefault(uri, List.of())) {
             if (variable.qname().getText().equals(varBeingRenamed)) {
                 final Range range = getContextRange(variable.qname());
@@ -727,16 +667,14 @@ public class BasicTextDocumentService implements TextDocumentService {
         }
     }
 
-
-
-
-    private CompletableFuture<Hover> getFunctionHover(final ParserRuleContext foundCtx, final XQuerySemanticAnalyzer analyzer,
-            final QualifiedName qname, final int arity) {
-        final FunctionSpecification specification = analyzer.getSymbolManager().getNamedFunctionSpecification(
-            foundCtx, qname, arity);
+    private CompletableFuture<Hover> getFunctionHover(final ParserRuleContext foundCtx,
+            final XQuerySemanticAnalyzer analyzer, final QualifiedName qname, final int arity) {
+        final FunctionSpecification specification = analyzer.getSymbolManager().getNamedFunctionSpecification(foundCtx,
+                qname, arity);
         if (specification == null)
             return CompletableFuture.completedFuture(null);
-        final String hoverText = createFunctionSpecificationMarkdown(qname.namespace(), qname.name(), arity, specification);
+        final String hoverText = createFunctionSpecificationMarkdown(qname.namespace(), qname.name(), arity,
+                specification);
         final MarkupContent content = new MarkupContent(MarkupKind.MARKDOWN, hoverText);
         final Hover hover = new Hover(content);
 
@@ -744,9 +682,8 @@ public class BasicTextDocumentService implements TextDocumentService {
         return CompletableFuture.completedFuture(hover);
     }
 
-    private <Rule extends ParserRuleContext>
-        Rule findRuleUsingPosition(final Position position, final List<Rule> elements)
-    {
+    private <Rule extends ParserRuleContext> Rule findRuleUsingPosition(final Position position,
+            final List<Rule> elements) {
         if (position == null || elements == null)
             return null;
         final int low = 0;
@@ -754,9 +691,8 @@ public class BasicTextDocumentService implements TextDocumentService {
         return findRuleUsingPosition(position, elements, low, high);
     }
 
-    private <Rule extends ParserRuleContext>
-        Rule findRuleUsingPosition(final Position position, final List<Rule> calls, int low, int high)
-    {
+    private <Rule extends ParserRuleContext> Rule findRuleUsingPosition(final Position position, final List<Rule> calls,
+            int low, int high) {
         Rule foundCtx = null;
 
         while (low <= high) {
@@ -769,12 +705,10 @@ public class BasicTextDocumentService implements TextDocumentService {
             }
 
             if (position.getLine() + 1 < candidateCtx.getStart().getLine()
-                || (position.getLine() + 1 == candidateCtx.getStart().getLine()
-                    && position.getCharacter() < candidateCtx.getStart().getCharPositionInLine()))
-            {
+                    || (position.getLine() + 1 == candidateCtx.getStart().getLine()
+                            && position.getCharacter() < candidateCtx.getStart().getCharPositionInLine())) {
                 high = mid - 1;
-            }
-            else {
+            } else {
                 low = mid + 1;
             }
         }
@@ -788,8 +722,10 @@ public class BasicTextDocumentService implements TextDocumentService {
         final int cursorLine = position.getLine() + 1;
         final int cursorChar = position.getCharacter();
 
-        if (cursorLine < startToken.getLine()) return false;
-        if (cursorLine > stopToken.getLine()) return false;
+        if (cursorLine < startToken.getLine())
+            return false;
+        if (cursorLine > stopToken.getLine())
+            return false;
 
         if (cursorLine == startToken.getLine() && cursorChar < startToken.getCharPositionInLine()) {
             return false;
@@ -808,42 +744,32 @@ public class BasicTextDocumentService implements TextDocumentService {
         final Token stopToken = ctx.getStop();
 
         final Position start = new Position(startToken.getLine() - 1, startToken.getCharPositionInLine());
-        final Position end = new Position(stopToken.getLine() - 1, stopToken.getCharPositionInLine() + stopToken.getText().length());
+        final Position end = new Position(stopToken.getLine() - 1,
+                stopToken.getCharPositionInLine() + stopToken.getText().length());
 
         return new Range(start, end);
     }
 
-
-    private static String createFunctionSpecificationMarkdown(
-        final String namespace, final String name, final int arity, final FunctionSpecification specification)
-    {
+    private static String createFunctionSpecificationMarkdown(final String namespace, final String name,
+            final int arity, final FunctionSpecification specification) {
         try {
             final StringBuilder sb = new StringBuilder();
 
-            sb.append("```antlrquery\n")
-                .append(namespace)
-                .append(":")
-                .append(name)
-                .append("(");
+            sb.append("```antlrquery\n").append(namespace).append(":").append(name).append("(");
 
             final List<ArgumentSpecification> args = specification.args().subList(0, arity);
             if (!args.isEmpty()) {
                 sb.append("\n");
                 for (int i = 0; i < args.size(); i++) {
                     final ArgumentSpecification arg = args.get(i);
-                    sb.append("    ")
-                        .append("$")
-                        .append(arg.name())
-                        .append(" as ")
-                        .append(arg.type());
+                    sb.append("    ").append("$").append(arg.name()).append(" as ").append(arg.type());
                     if (i < args.size() - 1) {
                         sb.append(",\n");
                     }
                 }
                 sb.append("\n");
             }
-            sb.append(") as ")
-                .append(specification.returnedType());
+            sb.append(") as ").append(specification.returnedType());
             return sb.toString();
         } catch (final Exception e) {
             return null;
@@ -851,8 +777,7 @@ public class BasicTextDocumentService implements TextDocumentService {
     }
 
     @Override
-    public CompletableFuture<List<InlayHint>> inlayHint(final InlayHintParams params)
-    {
+    public CompletableFuture<List<InlayHint>> inlayHint(final InlayHintParams params) {
         final String uri = params.getTextDocument().getUri();
         final List<InlayHint> hints = new ArrayList<>();
         final var analyzer = semanticAnalyzers.get(uri);
@@ -860,14 +785,16 @@ public class BasicTextDocumentService implements TextDocumentService {
             return CompletableFuture.completedFuture(List.of());
         }
 
-        final List<VarNameContext> variableDeclarationsWithoutTypeForFile = variableDeclarationsWithoutType.getOrDefault(uri, List.of());
-        final Map<VarNameContext, TypeInContext> varNamesMappedToTypesForFile = varNamesMappedToTypes.getOrDefault(uri, Map.of());
+        final List<VarNameContext> variableDeclarationsWithoutTypeForFile = variableDeclarationsWithoutType
+                .getOrDefault(uri, List.of());
+        final Map<VarNameContext, TypeInContext> varNamesMappedToTypesForFile = varNamesMappedToTypes.getOrDefault(uri,
+                Map.of());
         for (final VarNameContext variable : variableDeclarationsWithoutTypeForFile) {
             final TypeInContext type = varNamesMappedToTypesForFile.get(variable);
             if (type != null) {
                 final Token stop = variable.getStop();
                 final Position hintPosition = new Position(stop.getLine() - 1,
-                    stop.getCharPositionInLine() + stop.getText().length());
+                        stop.getCharPositionInLine() + stop.getText().length());
 
                 final InlayHint hint = new InlayHint();
                 hint.setPosition(hintPosition);
@@ -883,8 +810,8 @@ public class BasicTextDocumentService implements TextDocumentService {
         for (final FunctionNameContext functionName : functionNames.getOrDefault(uri, List.of())) {
             final int arity = getArity(functionName);
             final QualifiedName resolvedName = resolver.resolveFunction(functionName.qname().getText());
-            final FunctionSpecification spec = analyzer.getSymbolManager().getNamedFunctionSpecification(
-                functionName, resolvedName, arity);
+            final FunctionSpecification spec = analyzer.getSymbolManager().getNamedFunctionSpecification(functionName,
+                    resolvedName, arity);
             if (spec == null)
                 continue;
             final FunctionCallContext functionCall = (FunctionCallContext) functionName.getParent();
@@ -918,17 +845,14 @@ public class BasicTextDocumentService implements TextDocumentService {
         return CompletableFuture.completedFuture(hints);
     }
 
-
     record FunctionDeclData(String uri, FunctionDeclContext context) {
     }
 
     FunctionDeclData getFunctionDeclaration(final NamedFunctionRefContext namedFunctionRef, final QualifiedName qname,
-        final XQuerySemanticAnalyzer analyzer)
-    {
+            final XQuerySemanticAnalyzer analyzer) {
         final int arity = getArity(namedFunctionRef);
-        final FunctionSpecification spec = analyzer
-            .getSymbolManager()
-            .getNamedFunctionSpecification(namedFunctionRef, qname, arity);
+        final FunctionSpecification spec = analyzer.getSymbolManager().getNamedFunctionSpecification(namedFunctionRef,
+                qname, arity);
         if (spec == null) {
             return null;
         }
@@ -945,12 +869,10 @@ public class BasicTextDocumentService implements TextDocumentService {
     }
 
     FunctionDeclData getFunctionDeclaration(final FunctionNameContext namedFunctionRef, final QualifiedName qname,
-        final XQuerySemanticAnalyzer analyzer)
-    {
+            final XQuerySemanticAnalyzer analyzer) {
         final int arity = getArity(namedFunctionRef);
-        final FunctionSpecification spec = analyzer
-            .getSymbolManager()
-            .getNamedFunctionSpecification(namedFunctionRef, qname, arity);
+        final FunctionSpecification spec = analyzer.getSymbolManager().getNamedFunctionSpecification(namedFunctionRef,
+                qname, arity);
         if (spec == null) {
             return null;
         }
@@ -982,42 +904,35 @@ public class BasicTextDocumentService implements TextDocumentService {
         return null;
     }
 
-
-
-    CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
-        handleFunctionCallDefinition(final FunctionNameContext functionName, final String document)
-    {
+    CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> handleFunctionCallDefinition(
+            final FunctionNameContext functionName, final String document) {
         final int arity = getArity(functionName);
         final var analyzer = semanticAnalyzers.get(document);
         final var qname = resolver.resolveFunction(functionName.getText());
-        final FunctionSpecification spec = analyzer.getSymbolManager().getNamedFunctionSpecification(
-            functionName, qname, arity);
+        final FunctionSpecification spec = analyzer.getSymbolManager().getNamedFunctionSpecification(functionName,
+                qname, arity);
         if (spec == null) {
             return CompletableFuture.completedFuture(Either.forLeft(List.of()));
         }
         final var functionDeclaration = getFunctionDeclaration(functionName, qname, analyzer);
         if (functionDeclaration != null) {
-            return CompletableFuture.completedFuture(Either.forLeft(List.of(
-                new Location(functionDeclaration.uri, getContextRange(functionDeclaration.context.qname())))));
+            return CompletableFuture.completedFuture(Either.forLeft(List
+                    .of(new Location(functionDeclaration.uri, getContextRange(functionDeclaration.context.qname())))));
         }
 
         final var recordDeclaration = getRecordDeclaration(qname, analyzer);
         if (recordDeclaration != null) {
-            return CompletableFuture.completedFuture(Either.forLeft(List.of(
-                new Location(recordDeclaration.uri, getContextRange(recordDeclaration.context.qname()))
-            )));
+            return CompletableFuture.completedFuture(Either.forLeft(
+                    List.of(new Location(recordDeclaration.uri, getContextRange(recordDeclaration.context.qname())))));
         }
 
         return CompletableFuture.completedFuture(Either.forLeft(List.of()));
 
     }
 
-
-
     @Override
-    public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
-        definition(final DefinitionParams params)
-    {
+    public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(
+            final DefinitionParams params) {
         final var position = params.getPosition();
         final var document = params.getTextDocument().getUri();
         final var varRefs = variableReferences.getOrDefault(document, List.of());
@@ -1040,17 +955,15 @@ public class BasicTextDocumentService implements TextDocumentService {
         return CompletableFuture.completedFuture(Either.forLeft(List.of()));
     }
 
-    private CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
-        handleTypeName(final TypeNameContext foundNamedType)
-    {
+    private CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> handleTypeName(
+            final TypeNameContext foundNamedType) {
         final var resolvedName = resolver.resolveType(foundNamedType.qname().getText());
         for (final var recordDeclUrl : recordDeclarations.keySet()) {
             for (final var recordDecl : recordDeclarations.get(recordDeclUrl)) {
                 final var recordName = resolver.resolveType(recordDecl.qname().getText());
                 if (recordName.equals(resolvedName)) {
-                    return CompletableFuture.completedFuture(Either.forLeft(List.of(
-                        new Location(recordDeclUrl, getContextRange(recordDecl.qname()))
-                    )));
+                    return CompletableFuture.completedFuture(
+                            Either.forLeft(List.of(new Location(recordDeclUrl, getContextRange(recordDecl.qname())))));
                 }
             }
 
@@ -1058,11 +971,8 @@ public class BasicTextDocumentService implements TextDocumentService {
         return CompletableFuture.completedFuture(Either.forLeft(List.of()));
     }
 
-    private CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
-        handleVariableReferenceDefinition(
-            final String document,
-            final VarRefContext foundVarRef)
-    {
+    private CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> handleVariableReferenceDefinition(
+            final String document, final VarRefContext foundVarRef) {
         final String varname = foundVarRef.getText();
         final int foundOffset = foundVarRef.getStart().getStartIndex();
         VarNameAndTypeContext previousDecl = null;
@@ -1109,32 +1019,22 @@ public class BasicTextDocumentService implements TextDocumentService {
         }
         resolvedVarExtractionData.put(actionId, new ResolvedVarExtractionInfo(ranges, indices));
 
-        unresolved.setCommand(new Command(
-            "AntlrQuery: Select value to extract",
-            "extension.selectExtractionTarget",
-            List.of(ranges, indices, actionId)
-        ));
+        unresolved.setCommand(new Command("AntlrQuery: Select value to extract", "extension.selectExtractionTarget",
+                List.of(ranges, indices, actionId)));
         return CompletableFuture.completedFuture(unresolved);
     }
 
-    record VarExtractionInfo(
-        String uri,
-        Position position,
-        List<ParserRuleContext> contextStack
-    ) {}
+    record VarExtractionInfo(String uri, Position position, List<ParserRuleContext> contextStack) {
+    }
 
-    record ResolvedVarExtractionInfo(
-        List<Range> ranges,
-        List<Integer> indices
-    ) {}
-
+    record ResolvedVarExtractionInfo(List<Range> ranges, List<Integer> indices) {
+    }
 
     private int codeActionId = 0;
     final Map<Integer, VarExtractionInfo> varExtractionData = new HashMap<>();
     final Map<Integer, ResolvedVarExtractionInfo> resolvedVarExtractionData = new HashMap<>();
 
-    synchronized int codeActionId()
-    {
+    synchronized int codeActionId() {
         if (codeActionId == Integer.MAX_VALUE) {
             codeActionId = 0;
         } else {
@@ -1144,50 +1044,49 @@ public class BasicTextDocumentService implements TextDocumentService {
     }
 
     private final TreeEvaluator extractableExpressions = XQuery.compile("""
-        /ancestor-or-self::(exprSingle
-            | fLWORExpr
-            | quantifiedExpr
-            | ifExpr
-            | switchExpr
-            | tryCatchExpr
-            | orExpr
-            | comparisonExpr
-            | otherwiseExpr
-            | stringConcatExpr
-            | rangeExpr
-            | additiveExpr
-            | multiplicativeExpr
-            | unionExpr
-            | intersectExpr
-            | instanceofExpr
-            | treatExpr
-            | castableExpr
-            | castExpr
-            | pipelineExpr
-            | arrowExpr
-            | postfixExpr
-            | axisStep
-            | reverseStep
-            | forwardStep
-            | functionItemExpr
-            | mapConstructor
-            | arrayConstructor
-            | primaryExpr
-            | literal
-            | varRef
-            | parenthesizedExpr
-            | contextValueRef
-            | functionCall
-            | functionItemExpr
-            | mapConstructor
-            | arrayConstructor
-            | stringConstructor
-            | unaryLookup)
-    """, _parser);
+                /ancestor-or-self::(exprSingle
+                    | fLWORExpr
+                    | quantifiedExpr
+                    | ifExpr
+                    | switchExpr
+                    | tryCatchExpr
+                    | orExpr
+                    | comparisonExpr
+                    | otherwiseExpr
+                    | stringConcatExpr
+                    | rangeExpr
+                    | additiveExpr
+                    | multiplicativeExpr
+                    | unionExpr
+                    | intersectExpr
+                    | instanceofExpr
+                    | treatExpr
+                    | castableExpr
+                    | castExpr
+                    | pipelineExpr
+                    | arrowExpr
+                    | postfixExpr
+                    | axisStep
+                    | reverseStep
+                    | forwardStep
+                    | functionItemExpr
+                    | mapConstructor
+                    | arrayConstructor
+                    | primaryExpr
+                    | literal
+                    | varRef
+                    | parenthesizedExpr
+                    | contextValueRef
+                    | functionCall
+                    | functionItemExpr
+                    | mapConstructor
+                    | arrayConstructor
+                    | stringConstructor
+                    | unaryLookup)
+            """, _parser);
 
     @Override
-    public CompletableFuture<List<Either<Command, CodeAction>>> codeAction(final CodeActionParams params)
-    {
+    public CompletableFuture<List<Either<Command, CodeAction>>> codeAction(final CodeActionParams params) {
         final Position start = params.getRange().getStart();
         final PositionAnalyzer positionAnalyzer = new PositionAnalyzer(start);
         final String uri = params.getTextDocument().getUri();
@@ -1197,9 +1096,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         }
         final PositionAnalysis analysis = positionAnalyzer.visit(tree);
         final List<ParserRuleContext> extractableExpressionNodes = extractableExpressions
-            .evaluate(analysis.innerMostContext())
-            .sequence.stream().map(v -> (ParserRuleContext) v.node)
-            .toList();
+                .evaluate(analysis.innerMostContext()).sequence.stream().map(v -> (ParserRuleContext) v.node).toList();
         final CodeAction action = new CodeAction();
         action.setTitle("Extract variable");
         action.setKind(CodeActionKind.RefactorExtract);
@@ -1210,27 +1107,29 @@ public class BasicTextDocumentService implements TextDocumentService {
         return CompletableFuture.completedFuture(List.of(Either.forRight(action)));
     }
 
-    final TreeEvaluator innermostFlworQuery = XQuery.compile("/ancestor::(initialClause|intermediateClause|returnClause)", _parser);
+    final TreeEvaluator innermostFlworQuery = XQuery
+            .compile("/ancestor::(initialClause|intermediateClause|returnClause)", _parser);
     final TreeEvaluator outermostExpr = XQuery.compile("/ancestor::expr", _parser);
     final String x = """
-        let $expr := .
-        let $dependentVariables := .//varRef except .//varNameAndType/varRef
-        let $dependentVariableStrings := $dependentVariables =!> string()
-        let $dependentDeclaration := ./ancestor::varNameAndType/varRef[string() = $dependentVariableStrings][last()]
-        let $clauses := ./ancestor::(initialClause|intermediateClause|returnClause)[. follows $dependentDeclaration]
-        let $exprs := ./ancestor::expr[. follows $dependentDeclaration]
-        return (
-            array { $clauses, $exprs },
-            array {
-                $clauses ! `let ${$variableText} := {$variableText}\n`,
-                $exprs ! `let ${$variableText} := ({$variableText}) return\n`
-            }
-        )
-    """;
+                let $expr := .
+                let $dependentVariables := .//varRef except .//varNameAndType/varRef
+                let $dependentVariableStrings := $dependentVariables =!> string()
+                let $dependentDeclaration := ./ancestor::varNameAndType/varRef[string() = $dependentVariableStrings][last()]
+                let $clauses := ./ancestor::(initialClause|intermediateClause|returnClause)[. follows $dependentDeclaration]
+                let $exprs := ./ancestor::expr[. follows $dependentDeclaration]
+                return (
+                    array { $clauses, $exprs },
+                    array {
+                        $clauses ! `let ${$variableText} := {$variableText}\n`,
+                        $exprs ! `let ${$variableText} := ({$variableText}) return\n`
+                    }
+                )
+            """;
 
     Map<ParserRuleContext, ExtractLocationInfo> extractVariableLocationsCache = new HashMap<>();
 
-    public CompletableFuture<ExtractLocationInfo> extractVariableLocations(final ExtractVariableLocationsParams params) {
+    public CompletableFuture<ExtractLocationInfo> extractVariableLocations(
+            final ExtractVariableLocationsParams params) {
         final List<Range> ranges = new ArrayList<>();
         final List<String> texts = new ArrayList<>();
         final VarExtractionInfo info = varExtractionData.get(params.actionId());
@@ -1245,7 +1144,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         }
         final XQueryValue expression = outermostExpr.evaluate(selectedContext);
         final String letBindingWithReturn = getLetBindingWithReturn(params);
-        for (final var location: expression.sequence) {
+        for (final var location : expression.sequence) {
             final ParserRuleContext ctx = (ParserRuleContext) location.node;
             final Range ctxRange = getContextRange(ctx);
             ranges.add(ctxRange);
@@ -1259,24 +1158,23 @@ public class BasicTextDocumentService implements TextDocumentService {
 
     private String getLetBindingWithoutReturn(final ExtractVariableLocationsParams params) {
         final StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.append("let $");
-		stringBuilder.append(params.variableName());
-		stringBuilder.append(" := ");
-		stringBuilder.append(params.variableText());
-		stringBuilder.append("\n");
-		return stringBuilder.toString();
+        stringBuilder.append("let $");
+        stringBuilder.append(params.variableName());
+        stringBuilder.append(" := ");
+        stringBuilder.append(params.variableText());
+        stringBuilder.append("\n");
+        return stringBuilder.toString();
     }
 
     private String getLetBindingWithReturn(final ExtractVariableLocationsParams params) {
         final StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.append("let $");
-		stringBuilder.append(params.variableName());
-		stringBuilder.append(" := (");
-		stringBuilder.append(params.variableText());
-		stringBuilder.append(") return ");
-		return stringBuilder.toString();
+        stringBuilder.append("let $");
+        stringBuilder.append(params.variableName());
+        stringBuilder.append(" := (");
+        stringBuilder.append(params.variableText());
+        stringBuilder.append(") return ");
+        return stringBuilder.toString();
     }
-
 
     public CompletableFuture<WorkspaceEdit> extractVariable(final ExtractVariableParams params) {
         final Map<String, List<TextEdit>> changes = new HashMap<>();
@@ -1288,9 +1186,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         final var chosenBinding = varLocInfo.getTexts().get(params.chosenPositionIndex());
 
         final TextEdit varInserted = new TextEdit(selectedContextRange, "$" + params.variableName());
-        final TextEdit valueExtracted = new TextEdit(
-            new Range(chosenPosition, chosenPosition), chosenBinding
-        );
+        final TextEdit valueExtracted = new TextEdit(new Range(chosenPosition, chosenPosition), chosenBinding);
         changes.put(info.uri(), List.of(varInserted, valueExtracted));
         return CompletableFuture.completedFuture(new WorkspaceEdit(changes));
     }

@@ -148,5 +148,37 @@ public class AntlrFunctions {
         return valueFactory.emptySequence();
     }
 
+    public XQueryValue isToken(
+            final XQueryVisitingContext context,
+            final List<XQueryValue> args)
+    {
+        final var input = args.get(0);
+        if (input.isEmptySequence)
+            return input;
+        if (!input.isNode)
+            return valueFactory.error(XQueryError.InvalidArgumentType,
+                """
+                antlr:is-token($node as node()? := .) as number?
+                    expected: argument must be a 'node()?'
+                    received: """ + input);
+        return valueFactory.bool(input.node instanceof TerminalNode);
+    }
+
+
+    public XQueryValue isRule(
+            final XQueryVisitingContext context,
+            final List<XQueryValue> args)
+    {
+        final var input = args.get(0);
+        if (input.isEmptySequence)
+            return input;
+        if (!input.isNode)
+            return valueFactory.error(XQueryError.InvalidArgumentType,
+                """
+                antlr:is-rule($node as node()? := .) as number?
+                    expected: argument must be a 'node()?'
+                    received: """ + input);
+        return valueFactory.bool(input.node instanceof ParserRuleContext);
+    }
 
 }

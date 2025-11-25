@@ -16,7 +16,7 @@ import com.github.akruk.antlrxquery.semanticanalyzer.GrammarManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.FunctionSets;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.SemanticFunctionSets;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
@@ -127,7 +127,7 @@ public class XQueryRunner {
                     new XQuerySemanticContextManager(typeFactory),
                     typeFactory,
                     new XQueryMemoizedValueFactory(typeFactory),
-                    new XQuerySemanticSymbolManager(typeFactory, FunctionSets.ALL(typeFactory)),
+                    new XQuerySemanticSymbolManager(typeFactory, SemanticFunctionSets.ALL(typeFactory)),
                     // TODO:
                     null,
                     new ModuleManager(modulePaths),
@@ -186,7 +186,7 @@ public class XQueryRunner {
                 new XQuerySemanticContextManager(typeFactory),
                 typeFactory,
                 valueFactory,
-                new XQuerySemanticSymbolManager(typeFactory, FunctionSets.ALL(typeFactory)),
+                new XQuerySemanticSymbolManager(typeFactory, SemanticFunctionSets.ALL(typeFactory)),
                 null,
                 manager,
                 grammarManager,

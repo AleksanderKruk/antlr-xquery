@@ -91,7 +91,7 @@ import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer.AnalysisListener;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
-import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.FunctionSets;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.SemanticFunctionSets;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.ArgumentSpecification;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.FunctionSpecification;
@@ -231,7 +231,7 @@ public class BasicTextDocumentService implements TextDocumentService {
             final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(null,
                     new XQuerySemanticContextManager(typeFactory), typeFactory,
                     new XQueryMemoizedValueFactory(typeFactory),
-                    new XQuerySemanticSymbolManager(typeFactory, FunctionSets.ALL(typeFactory)), null,
+                    new XQuerySemanticSymbolManager(typeFactory, SemanticFunctionSets.ALL(typeFactory)), null,
                     new ModuleManager(paths), new GrammarManager(paths), typeFactory.anyNode());
 
             final Map<VarRefContext, TypeInContext> varRefsMappedToTypes_ = new HashMap<>();

@@ -21,7 +21,7 @@ import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
-public class FunctionSets {
+public class SemanticFunctionSets {
     public static List<List<SimplifiedFunctionSpecification>> ALL(final XQueryTypeFactory typeFactory) {
         final var fn = FN(typeFactory);
         final var op = OP(typeFactory);
@@ -2978,7 +2978,9 @@ public class FunctionSets {
     public static List<SimplifiedFunctionSpecification> ANTLR(final XQueryTypeFactory typeFactory) {
         final List<SimplifiedFunctionSpecification> antlr = new ArrayList<>(50);
         final XQuerySequenceType optionalNumber = typeFactory.zeroOrOne(typeFactory.itemNumber());
+        final XQuerySequenceType optionalBoolean = typeFactory.zeroOrOne(typeFactory.itemBoolean());
         final XQuerySequenceType number = typeFactory.number();
+        final XQuerySequenceType boolean_ = typeFactory.boolean_();
         final var helperTrees = new HelperTrees();
         final ParseTree CONTEXT_VALUE = helperTrees.CONTEXT_VALUE;
         final ArgumentSpecification optionalNodeArg = new ArgumentSpecification(
@@ -2986,13 +2988,28 @@ public class FunctionSets {
             typeFactory.zeroOrOne(typeFactory.itemAnyNode()),
             CONTEXT_VALUE
         );
-        GrainedAnalysis ifNodePresentThenNumber = (args, context, functionBody, typeContext) -> {
+        final GrainedAnalysis ifNodePresentThenNumber = (args, context, functionBody, typeContext) -> {
             UsedArg node = args.get(0);
             if (node.type().type.isOne) {
                 return typeContext.typeInContext(number);
             }
             return node.type();
         };
+
+        final GrainedAnalysis ifNodePresentThenBoolean = (args, context, functionBody, typeContext) -> {
+            UsedArg node = args.get(0);
+            if (node.type().type.isOne) {
+                return typeContext.typeInContext(boolean_);
+            }
+            return node.type();
+        };
+
+        // final GrainedAnalysis sameCardinalityAsArg = (args, context, functionBody, typeContext) -> {
+        //     final UsedArg node = args.get(0);
+        //     final XQuerySequenceType typeitself = node.type().type;
+        //     final XQuerySequenceType t = new XQuerySequenceType(typeFactory, typeitself.itemType, typeitself.occurence);
+        //     return typeContext.typeInContext(t);
+        // };
 
         // antlr:start
         antlr.add(
@@ -3007,6 +3024,8 @@ public class FunctionSets {
             ifNodePresentThenNumber
             )
         );
+
+        // antlr:stop
         antlr.add(
             new SimplifiedFunctionSpecification(
             new QualifiedName("antlr", "stop"),
@@ -3019,6 +3038,8 @@ public class FunctionSets {
             ifNodePresentThenNumber
             )
         );
+
+        // antlr:pos
         antlr.add(
             new SimplifiedFunctionSpecification(
             new QualifiedName("antlr", "pos"),
@@ -3028,6 +3049,8 @@ public class FunctionSets {
             ifNodePresentThenNumber
             )
         );
+
+        // antlr:index
         antlr.add(
             new SimplifiedFunctionSpecification(
             new QualifiedName("antlr", "index"),
@@ -3040,13 +3063,37 @@ public class FunctionSets {
             ifNodePresentThenNumber
             )
         );
+
+        // antlr:line
         antlr.add(
             new SimplifiedFunctionSpecification(
-            new QualifiedName("antlr", "line"),
-            List.of(optionalNodeArg),
-            optionalNumber,
-            null, false, false, null,
-            ifNodePresentThenNumber
+                new QualifiedName("antlr", "line"),
+                List.of(optionalNodeArg),
+                optionalNumber,
+                null, false, false, null,
+                ifNodePresentThenNumber
+            )
+        );
+
+        // antlr:is-token
+        antlr.add(
+            new SimplifiedFunctionSpecification(
+                new QualifiedName("antlr", "is-token"),
+                List.of(optionalNodeArg),
+                optionalBoolean,
+                null, false, false, null,
+                ifNodePresentThenBoolean
+            )
+        );
+
+        // antlr:is-rule
+        antlr.add(
+            new SimplifiedFunctionSpecification(
+                new QualifiedName("antlr", "is-rule"),
+                List.of(optionalNodeArg),
+                optionalNumber,
+                null, false, false, null,
+                ifNodePresentThenBoolean
             )
         );
 

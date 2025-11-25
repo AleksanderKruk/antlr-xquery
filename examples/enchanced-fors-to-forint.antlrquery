@@ -1,0 +1,11 @@
+for $for in //enchancedForStatement
+	let $requiredStrategy := $for/localVariableDeclaration/expression=>strategy()
+	let $variables := $for/localVariableDeclaration//variableDeclaratorId
+	let $ := switch($requiredStartegy)
+		case "iterable" return ()
+		case "collections" return ()
+		default return ()
+
+
+
+(: forStatementNoShortIf :)

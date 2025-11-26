@@ -42,6 +42,14 @@ let $simpleVariants := /ancestor-or-self::
 		| unaryLookup
 	) ! [., .]
 
+
+(:
+string() => characters() => x() => y()
+        ^
+                        ^
+                               ^
+                                      ^
+:)
 let $arrowExpressionVariants = (
 	for $arrow in //arrowExpr
 		let $seq := $arrow/(sequenceArrowTarget|mappingArrowTarget)

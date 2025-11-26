@@ -276,16 +276,17 @@ public class SemanticFunctionSets {
         );
 
         // fn:node-name($node as node()? := .) as xs:QName?
+        final XQuerySequenceType optionalNode = typeFactory.zeroOrOne(typeFactory.itemAnyNode());
         final ArgumentSpecification optionalNodeArg = new ArgumentSpecification(
             "node",
-            typeFactory.zeroOrOne(typeFactory.itemAnyNode()),
+            optionalNode,
             CONTEXT_VALUE
         );
         fn.add(
             new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "node-name"),
             List.of(optionalNodeArg),
-            typeFactory.zeroOrOne(typeFactory.itemString()),
+            optionalString,
             null,
             false,
             false,
@@ -295,11 +296,12 @@ public class SemanticFunctionSets {
         );
 
         // fn:nilled($node as node()? := .) as xs:boolean?
+        final XQuerySequenceType optionalBoolean = typeFactory.zeroOrOne(typeFactory.itemBoolean());
         fn.add(
             new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "nilled"),
             List.of(optionalNodeArg),
-            typeFactory.zeroOrOne(typeFactory.itemBoolean()),
+            optionalBoolean,
             null,
             false,
             false,
@@ -376,7 +378,7 @@ public class SemanticFunctionSets {
             new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "root"),
             List.of(optionalNodeArg),
-            typeFactory.zeroOrOne(typeFactory.itemAnyNode()),
+            optionalNode,
             null,
             false,
             false,
@@ -679,7 +681,7 @@ public class SemanticFunctionSets {
             new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "codepoint-equal"),
             List.of(cpEq1, cpEq2),
-            typeFactory.zeroOrOne(typeFactory.itemBoolean()),
+            optionalBoolean,
             null,
             false,
             false,
@@ -1305,6 +1307,13 @@ public class SemanticFunctionSets {
             null, false, false, null, null
         ));
 
+        final GrainedAnalysis sameCardinalityAsArg = (args, context, functionBody, typeContext) -> {
+            final UsedArg node = args.get(0);
+            final XQuerySequenceType typeitself = node.type().type;
+            final XQuerySequenceType t = new XQuerySequenceType(typeFactory, typeitself.itemType, typeitself.occurence);
+            return typeContext.typeInContext(t);
+        };
+
         // fn:reverse(
         // 	as item()*
         // ) as item()*
@@ -1312,7 +1321,11 @@ public class SemanticFunctionSets {
             new QualifiedName("fn", "reverse"),
             List.of(anyItemsRequiredInput),
             zeroOrMoreItems,
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            sameCardinalityAsArg
         ));
 
         // fn:sequence-join( as item()*,  as item()*) as item()*
@@ -1386,7 +1399,11 @@ public class SemanticFunctionSets {
             new QualifiedName("fn", "void"),
             List.of(voidInput),
             typeFactory.emptySequence(),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:atomic-equal( as xs:anyAtomicType,  as xs:anyAtomicType) as
@@ -1397,11 +1414,19 @@ public class SemanticFunctionSets {
             new QualifiedName("fn", "atomic-equal"),
             List.of(arg_value1_anyItem, arg_value2_anyItem),
             typeFactory.boolean_(),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
-        // fn:deep-equal( as item()*,  as item()*,  as
-        // (xs:string|map(*))? := {}) as xs:boolean
+        // fn:deep-equal(
+        //      as item()*,
+        //      as item()*,
+        //      as (xs:string|map(*))? := {}
+        // )
+        // as xs:boolean
         final ArgumentSpecification arg_value1_anyItems = new ArgumentSpecification("value1", zeroOrMoreItems, null);
         final ArgumentSpecification arg_value2_anyItems  = new ArgumentSpecification("value2", zeroOrMoreItems, null);
         final var stringOrMap = typeFactory.zeroOrOne(typeFactory.itemChoice(Set.of(typeFactory.itemString(), typeFactory.itemAnyMap())));
@@ -1471,7 +1496,11 @@ public class SemanticFunctionSets {
             new QualifiedName("fn", "starts-with-subsequence"),
             List.of(anyItemsRequiredInput, required_arg_subsequence_anyItems, optional_arg_compare_comparator),
             typeFactory.boolean_(),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:ends-with-subsequence(
@@ -1483,7 +1512,11 @@ public class SemanticFunctionSets {
             new QualifiedName("fn", "ends-with-subsequence"),
             List.of(anyItemsRequiredInput, required_arg_subsequence_anyItems, optional_arg_compare_comparator),
             typeFactory.boolean_(),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:contains-subsequence(
@@ -1495,7 +1528,11 @@ public class SemanticFunctionSets {
             new QualifiedName("fn", "contains-subsequence"),
             List.of(anyItemsRequiredInput, required_arg_subsequence_anyItems, optional_arg_compare_comparator),
             typeFactory.boolean_(),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:count( as item()*) as xs:integer
@@ -1503,7 +1540,11 @@ public class SemanticFunctionSets {
             new QualifiedName("fn", "count"),
             List.of(anyItemsRequiredInput),
             oneNumber,
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:avg( as xs:anyAtomicType*) as xs:anyAtomicType?
@@ -1512,7 +1553,11 @@ public class SemanticFunctionSets {
             new QualifiedName("fn", "avg"),
             List.of(anyItemValues),
             optionalItem,
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:max(
@@ -1523,7 +1568,11 @@ public class SemanticFunctionSets {
             new QualifiedName("fn", "max"),
             List.of(anyItemValues, optionalCollation),
             typeFactory.zeroOrOne(typeFactory.itemAnyItem()),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:min(
@@ -1534,7 +1583,11 @@ public class SemanticFunctionSets {
             new QualifiedName("fn", "min"),
             List.of(anyItemValues, optionalCollation),
             optionalItem,
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:sum(
@@ -1546,7 +1599,11 @@ public class SemanticFunctionSets {
             new QualifiedName("fn", "sum"),
             List.of(anyItemValues, sumZero),
             optionalItem,
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:all-equal(
@@ -1557,7 +1614,11 @@ public class SemanticFunctionSets {
             new QualifiedName("fn", "all-equal"),
             List.of(anyItemValues, optionalCollation),
             typeFactory.boolean_(),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:all-different(
@@ -1568,7 +1629,11 @@ public class SemanticFunctionSets {
             new QualifiedName("fn", "all-different"),
             List.of(anyItemValues, optionalCollation),
             typeFactory.boolean_(),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:doc($source as xs:string?, $options as map(*)? := {}) as document-node()?
@@ -1585,8 +1650,12 @@ public class SemanticFunctionSets {
         fn.add(new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "doc"),
             List.of(sourceArgNonDefault, docOptions),
-            typeFactory.zeroOrOne(typeFactory.itemAnyNode()),
-            null, false, false, null, null
+            optionalNode,
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:doc-available($source as xs:string?, $options as map(*)? := {}) as xs:boolean
@@ -1599,7 +1668,11 @@ public class SemanticFunctionSets {
             new QualifiedName("fn", "doc-available"),
             List.of(sourceArgNonDefault, docAvailOptions),
             typeFactory.boolean_(),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:collection($source as xs:string? := ()) as item()*
@@ -1612,7 +1685,11 @@ public class SemanticFunctionSets {
             new QualifiedName("fn", "collection"),
             List.of(colSource),
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:unparsed-text($source as xs:string?, $options as (xs:string|map(*))? := ()) as xs:string?
@@ -1626,7 +1703,11 @@ public class SemanticFunctionSets {
             new QualifiedName("fn", "unparsed-text"),
             List.of(sourceArgNonDefault, utOptions),
             typeFactory.zeroOrOne(typeFactory.itemString()),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:unparsed-text-lines($source as xs:string?, $options as (xs:string|map(*))? := ()) as xs:string*
@@ -1639,7 +1720,11 @@ public class SemanticFunctionSets {
             new QualifiedName("fn", "unparsed-text-lines"),
             List.of(sourceArgNonDefault, utlOptions),
             typeFactory.zeroOrMore(typeFactory.itemString()),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:unparsed-text-available($source as xs:string?, $options as (xs:string|map(*))? := ()) as xs:boolean
@@ -1652,7 +1737,11 @@ public class SemanticFunctionSets {
             new QualifiedName("fn", "unparsed-text-available"),
             List.of(sourceArgNonDefault, utaOptions),
             typeFactory.boolean_(),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:environment-variable($name as xs:string) as xs:string?
@@ -1665,7 +1754,11 @@ public class SemanticFunctionSets {
             new QualifiedName("fn", "environment-variable"),
             List.of(envName),
             typeFactory.zeroOrOne(typeFactory.itemString()),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:available-environment-variables() as xs:string*
@@ -1673,7 +1766,11 @@ public class SemanticFunctionSets {
             new QualifiedName("fn", "available-environment-variables"),
             List.of(),
             typeFactory.zeroOrMore(typeFactory.itemString()),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:position() as xs:integer
@@ -1707,7 +1804,11 @@ public class SemanticFunctionSets {
             new QualifiedName("fn", "current-dateTime"),
             List.of(),
             typeFactory.string(),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:current-date() as xs:date
@@ -1715,7 +1816,11 @@ public class SemanticFunctionSets {
             new QualifiedName("fn", "current-date"),
             List.of(),
             typeFactory.string(),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:current-time() as xs:time
@@ -1723,7 +1828,11 @@ public class SemanticFunctionSets {
             new QualifiedName("fn", "current-time"),
             List.of(),
             typeFactory.string(),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:implicit-timezone() as xs:dayTimeDuration
@@ -1731,7 +1840,11 @@ public class SemanticFunctionSets {
             new QualifiedName("fn", "implicit-timezone"),
             List.of(),
             typeFactory.string(),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:default-collation() as xs:string
@@ -1739,7 +1852,11 @@ public class SemanticFunctionSets {
             new QualifiedName("fn", "default-collation"),
             List.of(),
             typeFactory.string(),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:default-language() as xs:language
@@ -1747,7 +1864,11 @@ public class SemanticFunctionSets {
             new QualifiedName("fn", "default-language"),
             List.of(),
             typeFactory.string(),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:function-lookup($name as xs:QName, $arity as xs:integer) as function(*)?
@@ -1768,7 +1889,11 @@ public class SemanticFunctionSets {
             new ArgumentSpecification("function", typeFactory.one(typeFactory.itemAnyFunction()), null)
             ),
             typeFactory.zeroOrOne(typeFactory.itemString()),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:function-arity($function as function(*)) as xs:integer
@@ -1778,7 +1903,11 @@ public class SemanticFunctionSets {
             new ArgumentSpecification("function", typeFactory.one(typeFactory.itemAnyFunction()), null)
             ),
             typeFactory.one(typeFactory.itemNumber()),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:function-identity($function as function(*)) as xs:string
@@ -1788,7 +1917,11 @@ public class SemanticFunctionSets {
             new ArgumentSpecification("function", typeFactory.one(typeFactory.itemAnyFunction()), null)
             ),
             typeFactory.string(),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:function-annotations( $function as fn(*) ) as map(xs:QName, xs:anyAtomicType*)*
@@ -1818,7 +1951,11 @@ public class SemanticFunctionSets {
             new ArgumentSpecification("arguments", typeFactory.one(typeFactory.itemAnyArray()), null)
             ),
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:do-until($input as item()*, $action as function(item()*, xs:integer) as item()*, $predicate as function(item()*, xs:integer) as xs:boolean?) as item()*
@@ -1840,7 +1977,7 @@ public class SemanticFunctionSets {
             new ArgumentSpecification(
                 "predicate",
                 typeFactory.one(typeFactory.itemFunction(
-                typeFactory.zeroOrOne(typeFactory.itemBoolean()),
+                optionalBoolean,
                 List.of(
                     typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
                     typeFactory.one(typeFactory.itemNumber())
@@ -1861,7 +1998,7 @@ public class SemanticFunctionSets {
             new ArgumentSpecification(
                 "predicate",
                 typeFactory.zeroOrOne(typeFactory.itemFunction(
-                typeFactory.zeroOrOne(typeFactory.itemBoolean()),
+                optionalBoolean,
                 List.of(
                     typeFactory.one(typeFactory.itemAnyItem()),
                     typeFactory.one(typeFactory.itemNumber())
@@ -1871,7 +2008,11 @@ public class SemanticFunctionSets {
             )
             ),
             typeFactory.boolean_(),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:filter($input as item()*, $predicate as function(item(), xs:integer) as xs:boolean?) as item()*
@@ -1882,7 +2023,7 @@ public class SemanticFunctionSets {
             new ArgumentSpecification(
                 "predicate",
                 typeFactory.one(typeFactory.itemFunction(
-                typeFactory.zeroOrOne(typeFactory.itemBoolean()),
+                optionalBoolean,
                 List.of(
                     typeFactory.one(typeFactory.itemAnyItem()),
                     typeFactory.one(typeFactory.itemNumber())
@@ -1892,7 +2033,11 @@ public class SemanticFunctionSets {
             )
             ),
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:fold-left($input as item()*, $init as item()*, $action as function(item()*, item()) as item()*) as item()*
@@ -1914,7 +2059,11 @@ public class SemanticFunctionSets {
             )
             ),
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:fold-right($input as item()*, $init as item()*, $action as function(item(), item()*) as item()*) as item()*
@@ -1936,7 +2085,11 @@ public class SemanticFunctionSets {
             )
             ),
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:for-each($input as item()*, $action as function(item(), item()*) as item()*) as item()*
@@ -1957,7 +2110,11 @@ public class SemanticFunctionSets {
             )
             ),
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:for-each-pair($input1 as item()*, $input2 as item()*, $action as function(item(), item(), xs:integer) as item()*) as item()*
@@ -1976,7 +2133,11 @@ public class SemanticFunctionSets {
             )), null)
             ),
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:highest($input as item()*, $collation as xs:string? := fn:default-collation(), $key as function(item()) as xs:anyAtomicType*)? := fn:data#1) as item()*
@@ -1991,7 +2152,11 @@ public class SemanticFunctionSets {
             )), DATA$1)
             ),
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:index-where($input as item()*, $predicate as function(item(), xs:integer) as xs:boolean?) as xs:integer*
@@ -2000,7 +2165,7 @@ public class SemanticFunctionSets {
             List.of(
             new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
             new ArgumentSpecification("predicate", typeFactory.one(typeFactory.itemFunction(
-                typeFactory.zeroOrOne(typeFactory.itemBoolean()),
+                optionalBoolean,
                 List.of(
                 typeFactory.one(typeFactory.itemAnyItem()),
                 typeFactory.one(typeFactory.itemNumber())
@@ -2008,7 +2173,11 @@ public class SemanticFunctionSets {
             )), null)
             ),
             typeFactory.zeroOrMore(typeFactory.itemNumber()),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:lowest($input as item()*, $collation as xs:string? := fn:default-collation(), $key as function(item()) as xs:anyAtomicType*)? := fn:data#1) as item()*
@@ -2022,8 +2191,12 @@ public class SemanticFunctionSets {
                 List.of(typeFactory.one(typeFactory.itemAnyItem()))
             )), DATA$1)
             ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            null, false, false, null, null
+            zeroOrMoreItems,
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:partial-apply($function as function(*), $arguments as map(xs:positiveInteger, item()*)) as function(*)
@@ -2036,7 +2209,11 @@ public class SemanticFunctionSets {
             ), null)
             ),
             typeFactory.one(typeFactory.itemAnyFunction()),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:partition($input as item()*, $split-when as function(item()*, item(), xs:integer) as xs:boolean?) as array(item())*
@@ -2045,7 +2222,7 @@ public class SemanticFunctionSets {
             List.of(
             new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
             new ArgumentSpecification("split-when", typeFactory.one(typeFactory.itemFunction(
-                typeFactory.zeroOrOne(typeFactory.itemBoolean()),
+                optionalBoolean,
                 List.of(
                 typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
                 typeFactory.one(typeFactory.itemAnyItem()),
@@ -2054,7 +2231,11 @@ public class SemanticFunctionSets {
             )), null)
             ),
             typeFactory.zeroOrMore(typeFactory.itemAnyArray()),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:scan-left(...) and fn:scan-right(...) mirror fold-left and fold-right
@@ -2072,7 +2253,11 @@ public class SemanticFunctionSets {
             )), null)
             ),
             typeFactory.zeroOrMore(typeFactory.itemAnyArray()),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         fn.add(new SimplifiedFunctionSpecification(
@@ -2089,7 +2274,11 @@ public class SemanticFunctionSets {
             )), null)
             ),
             typeFactory.zeroOrMore(typeFactory.itemAnyArray()),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:some($input as item()*, $predicate as function(item(), xs:integer) as xs:boolean?) := fn:boolean#1) as xs:boolean
@@ -2098,7 +2287,7 @@ public class SemanticFunctionSets {
             List.of(
             new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
             new ArgumentSpecification("predicate", typeFactory.zeroOrOne(typeFactory.itemFunction(
-                typeFactory.zeroOrOne(typeFactory.itemBoolean()),
+                optionalBoolean,
                 List.of(
                 typeFactory.one(typeFactory.itemAnyItem()),
                 typeFactory.one(typeFactory.itemNumber())
@@ -2106,7 +2295,11 @@ public class SemanticFunctionSets {
             )), BOOLEAN$1)
             ),
             typeFactory.boolean_(),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:sort( $input as item()*,
@@ -2132,7 +2325,11 @@ public class SemanticFunctionSets {
             )
             ),
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // TODO: refine parser name tokenization
@@ -2176,7 +2373,11 @@ public class SemanticFunctionSets {
             )
             ),
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
-            null, false, false, null, null
+            null,
+            false,
+            false,
+            null,
+            null
         ));
 
         // fn:sort-with($input as item()*, $comparators as function(item(), item()) as xs:integer*) as item()*
@@ -2207,7 +2408,7 @@ public class SemanticFunctionSets {
             new ArgumentSpecification(
                 "from",
                 typeFactory.zeroOrOne(typeFactory.itemFunction(
-                typeFactory.zeroOrOne(typeFactory.itemBoolean()),
+                optionalBoolean,
                 List.of(
                     typeFactory.one(typeFactory.itemAnyItem()),
                     typeFactory.one(typeFactory.itemNumber())
@@ -2218,7 +2419,7 @@ public class SemanticFunctionSets {
             new ArgumentSpecification(
                 "to",
                 typeFactory.zeroOrOne(typeFactory.itemFunction(
-                typeFactory.zeroOrOne(typeFactory.itemBoolean()),
+                optionalBoolean,
                 List.of(
                     typeFactory.one(typeFactory.itemAnyItem()),
                     typeFactory.one(typeFactory.itemNumber())
@@ -2239,7 +2440,7 @@ public class SemanticFunctionSets {
             new ArgumentSpecification(
                 "predicate",
                 typeFactory.one(typeFactory.itemFunction(
-                typeFactory.zeroOrOne(typeFactory.itemBoolean()),
+                optionalBoolean,
                 List.of(
                     typeFactory.one(typeFactory.itemAnyItem()),
                     typeFactory.one(typeFactory.itemNumber())
@@ -2256,7 +2457,7 @@ public class SemanticFunctionSets {
         fn.add(new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "transitive-closure"),
             List.of(
-            new ArgumentSpecification("node", typeFactory.zeroOrOne(typeFactory.itemAnyNode()), null),
+            new ArgumentSpecification("node", optionalNode, null),
             new ArgumentSpecification(
                 "step",
                 typeFactory.one(typeFactory.itemFunction(
@@ -2278,7 +2479,7 @@ public class SemanticFunctionSets {
             new ArgumentSpecification(
                 "predicate",
                 typeFactory.one(typeFactory.itemFunction(
-                typeFactory.zeroOrOne(typeFactory.itemBoolean()),
+                optionalBoolean,
                 List.of(
                     typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
                     typeFactory.one(typeFactory.itemNumber())
@@ -2335,7 +2536,7 @@ public class SemanticFunctionSets {
         //  as element()?,
         //  as map(*)? := {}
         // ) as map(xs:string, item()?)?
-        final ArgumentSpecification etmElement = new ArgumentSpecification("element", typeFactory.zeroOrOne(typeFactory.itemAnyNode()), null);
+        final ArgumentSpecification etmElement = new ArgumentSpecification("element", optionalNode, null);
         final ArgumentSpecification etmOptions = new ArgumentSpecification("options", typeFactory.zeroOrOne(typeFactory.itemAnyMap()), EMPTY_MAP);
         fn.add(
             new SimplifiedFunctionSpecification(
@@ -2989,7 +3190,7 @@ public class SemanticFunctionSets {
             CONTEXT_VALUE
         );
         final GrainedAnalysis ifNodePresentThenNumber = (args, context, functionBody, typeContext) -> {
-            UsedArg node = args.get(0);
+            final UsedArg node = args.get(0);
             if (node.type().type.isOne) {
                 return typeContext.typeInContext(number);
             }
@@ -2997,7 +3198,7 @@ public class SemanticFunctionSets {
         };
 
         final GrainedAnalysis ifNodePresentThenBoolean = (args, context, functionBody, typeContext) -> {
-            UsedArg node = args.get(0);
+            final UsedArg node = args.get(0);
             if (node.type().type.isOne) {
                 return typeContext.typeInContext(boolean_);
             }
@@ -3613,11 +3814,11 @@ public class SemanticFunctionSets {
             new SimplifiedFunctionSpecification(
             new QualifiedName("array", "subarray"),
             List.of(
-                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
+                new ArgumentSpecification("array", anyArray, null),
                 new ArgumentSpecification("start", typeFactory.one(typeFactory.itemNumber()), null),
                 new ArgumentSpecification("length", typeFactory.zeroOrOne(typeFactory.itemNumber()), EMPTY_SEQUENCE)
             ),
-            typeFactory.one(typeFactory.itemAnyArray()),
+            anyArray,
             null, false, false, null, null
             )
         );

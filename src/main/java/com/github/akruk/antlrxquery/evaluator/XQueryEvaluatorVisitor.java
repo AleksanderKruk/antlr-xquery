@@ -82,20 +82,6 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     record Variable(String name, XQueryValue value) {
     }
 
-    public XQueryEvaluatorVisitor(
-        final ParseTree tree,
-        final Parser parser,
-        final XQuerySemanticAnalyzer analyzer,
-        final XQueryTypeFactory typeFactory,
-        final ModuleManager moduleManager) {
-        this(
-            tree,
-            parser,
-            new XQueryMemoizedValueFactory(typeFactory),
-            analyzer,
-            typeFactory,
-            moduleManager);
-    }
 
     public XQueryEvaluatorVisitor(
         final ParseTree tree,
@@ -103,7 +89,8 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         final XQueryValueFactory valueFactory,
         final XQuerySemanticAnalyzer analyzer,
         final XQueryTypeFactory typeFactory,
-        final ModuleManager moduleManager)
+        final ModuleManager moduleManager,
+        final Map<String,XQueryValue> externalVariables)
     {
         this.semanticAnalyzer = analyzer;
         this.moduleManager = moduleManager;

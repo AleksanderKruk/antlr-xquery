@@ -145,7 +145,14 @@ public class XQueryRunner {
 
             for (final String file : targetFiles) {
                 final String fileContent = Files.readString(Path.of(file));
-                final XQueryValue results = executeQuery(xqueryTree, lexerClass, parserClass, startingRule, fileContent, modulePaths, modulePaths);
+                final XQueryValue results = executeQuery(
+                    xqueryTree,
+                    lexerClass,
+                    parserClass,
+                    startingRule,
+                    fileContent,
+                    modulePaths,
+                    modulePaths);
                 outputStream.println("File: " + file);
                 if (results == null) {
                     errorStream.print("<null>");
@@ -172,7 +179,8 @@ public class XQueryRunner {
             final String startingRule,
             final String input,
             final Set<Path> modulePaths,
-            final Set<Path> grammarPaths
+            final Set<Path> grammarPaths,
+            final Map<String, XQueryValue> vars
             )
     {
         try {
@@ -195,14 +203,29 @@ public class XQueryRunner {
             final XQueryEvaluatorVisitor evaluator = new XQueryEvaluatorVisitor(
                 parserAndTree.tree,
                 parserAndTree.parser,
+                valueFactory,
                 analyzer,
                 typeFactory,
-                manager
+                manager,
+                vars
                 );
             return evaluator.visit(query);
         } catch (final Exception e) {
             return null;
         }
+    }
+
+    static XQueryValue executeQuery(
+            final ParseTree query,
+            final Class<?> lexerClass,
+            final Class<?> parserClass,
+            final String startingRule,
+            final String input,
+            final Set<Path> modulePaths,
+            final Set<Path> grammarPaths
+            )
+    {
+        return executeQuery(query, lexerClass, parserClass, startingRule, input, modulePaths, grammarPaths, Map.of());
     }
 
     record ParserAndTree(Parser parser, ParseTree tree) {

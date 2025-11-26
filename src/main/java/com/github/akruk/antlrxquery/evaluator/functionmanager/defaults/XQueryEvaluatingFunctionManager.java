@@ -92,9 +92,9 @@ public class XQueryEvaluatingFunctionManager {
                 collators, Locale.getDefault(), atomizer, ebv);
         this.processingBooleans = new ProcessingBooleans(valueFactory, parser, ebv);
         this.aggregateFunctions = new AggregateFunctions(valueFactory, parser, collators, atomizer, valueComparisonOperator);
-        this.antlrFunctions = new AntlrFunctions(valueFactory, parser, collators, atomizer, valueComparisonOperator);
+        this.antlrFunctions = new AntlrFunctions(valueFactory);
 
-        var helperTrees = new HelperTrees();
+        final HelperTrees helperTrees = new HelperTrees();
         final ParseTree CONTEXT_VALUE = helperTrees.CONTEXT_VALUE;
         final ParseTree DEFAULT_COLLATION = helperTrees.DEFAULT_COLLATION;
         final ParseTree EMPTY_SEQUENCE = helperTrees.EMPTY_SEQUENCE;
@@ -370,8 +370,8 @@ public class XQueryEvaluatingFunctionManager {
                 List.of("arg1", "arg2"), Map.of());
 
 
-        var nodearg = List.of("node");
-        var nodeargdefault = Map.of("node", CONTEXT_VALUE);
+        final List<String> nodearg = List.of("node");
+        final Map<String, ParseTree> nodeargdefault = Map.of("node", CONTEXT_VALUE);
         registerFunction("antlr", "start", antlrFunctions::start, nodearg, nodeargdefault);
         registerFunction("antlr", "stop", antlrFunctions::stop, nodearg, nodeargdefault);
         registerFunction("antlr", "pos", antlrFunctions::pos, nodearg, nodeargdefault);
@@ -470,8 +470,8 @@ public class XQueryEvaluatingFunctionManager {
 
     public void registerFunction(final String namespace, final String localName, final XQueryFunction function,
             final List<String> argNames, final Map<String, ParseTree> defaultArguments) {
-        final var maxArity = argNames.size();
-        final var minArity = maxArity - defaultArguments.size();
+        final int maxArity = argNames.size();
+        final int minArity = maxArity - defaultArguments.size();
         final FunctionEntry functionEntry = new FunctionEntry(function, minArity, maxArity, argNames, defaultArguments,
                 null, null);
         final Map<String, List<FunctionEntry>> namespaceFunctions = namespaces.computeIfAbsent(namespace,
@@ -529,11 +529,11 @@ public class XQueryEvaluatingFunctionManager {
         if (functionEntry.variadicArg != null) {
             return callVariadicFunction(functionEntry, context, args, keywordArgs);
         }
-        final var function = functionEntry.function;
-        final var defaultArgs = functionEntry.defaultArguments;
+        final XQueryFunction function = functionEntry.function;
+        final Map<String, ParseTree> defaultArgs = functionEntry.defaultArguments;
 
         // Additional positional args are ignored as per function coersion rules
-        final var positionalSize = Math.min(argsCount, functionEntry.maxArity);
+        final long positionalSize = Math.min(argsCount, functionEntry.maxArity);
         // Too few args are however an error
         if (positionalSize < functionEntry.minArity)
             return error(XQueryError.WrongNumberOfArguments, "", typeFactory.error());
@@ -547,7 +547,7 @@ public class XQueryEvaluatingFunctionManager {
                     return default_.accept(evaluator);
                 }));
         keywordArgs_.putAll(defaultedArguments);
-        final var rearranged = rearrangeArguments(remainingArgs, context, args, keywordArgs_);
+        final List<XQueryValue> rearranged = rearrangeArguments(remainingArgs, context, args, keywordArgs_);
         return function.call(context, rearranged);
     }
 

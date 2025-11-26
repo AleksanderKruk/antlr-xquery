@@ -147,9 +147,9 @@ public class SequenceFunctionsTest extends SemanticTestsBase {
     public void reverse_various()
     {
         assertType("fn:reverse(())",
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+            typeFactory.emptySequence());
         assertType("fn:reverse((1,2,3))",
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+            typeFactory.oneOrMore(typeFactory.itemNumber()));
     }
 
     // fn:sequence-join($input as item()*, $separator as item()*) as item()*

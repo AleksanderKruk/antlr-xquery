@@ -5,7 +5,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public class NodeStreamGetter {
+public class StreamNodeGetter {
 
     public Stream<ParseTree> getPrecedingSiblingsOrSelf(final ParseTree node) {
         return Stream.concat(Stream.of(node), getPrecedingSiblings(node));

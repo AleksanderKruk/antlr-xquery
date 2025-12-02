@@ -1350,7 +1350,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final String variableName = ctx.qname().getText();
         final TypeInContext variableType = contextManager.getVariable(variableName);
         if (variableType == null) {
-            error(ctx, ErrorType.VAR_REF__UNDECLARED, List.of(variableName));
+            error(ctx.qname(), ErrorType.VAR_REF__UNDECLARED, List.of(variableName));
             return contextManager.typeInContext(zeroOrMoreItems);
         } else {
             for (final var l : listeners) {
@@ -1508,7 +1508,10 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             valueFactory.sequence(List.of());
             return contextManager.typeInContext(emptySequence);
         }
-        return ctx.expr().accept(this);
+        contextManager.enterScope();
+        var x = ctx.expr().accept(this);
+        contextManager.leaveScope();
+        return x;
     }
 
     @Override

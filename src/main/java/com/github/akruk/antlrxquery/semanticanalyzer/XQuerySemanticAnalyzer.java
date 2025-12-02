@@ -1508,10 +1508,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             valueFactory.sequence(List.of());
             return contextManager.typeInContext(emptySequence);
         }
-        contextManager.enterScope();
-        var x = ctx.expr().accept(this);
-        contextManager.leaveScope();
-        return x;
+        return ctx.expr().accept(this);
     }
 
     @Override

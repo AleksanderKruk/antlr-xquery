@@ -250,6 +250,8 @@ pathOperator: SLASH | SLASHES;
 
 exceptOrIntersect: EXCEPT | INTERSECT;
 
+
+// TODO: add remaining combinations of axes
 forwardAxis: CHILD COLONS
         | DESCENDANT COLONS
         | SELF COLONS
@@ -370,11 +372,12 @@ elementTest:
 
 
 pathNameTestUnion
-    : qname (UNION_OP qname)*
-    | LPAREN  qname (UNION_OP qname)* RPAREN;
+    : qname
+    | LPAREN qname (UNION_OP qname)* RPAREN;
 
 nameTestUnion:
     nameTest (UNION_OP nameTest)*;
+
 nameTest:
     qname | wildcard;
 

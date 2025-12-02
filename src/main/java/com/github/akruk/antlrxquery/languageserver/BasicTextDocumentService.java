@@ -235,7 +235,9 @@ public class BasicTextDocumentService implements TextDocumentService {
                     new ModuleManager(paths), new GrammarManager(paths), typeFactory.anyNode());
 
             final Map<VarRefContext, TypeInContext> varRefsMappedToTypes_ = new HashMap<>();
+            // final Map<VarRefContext, VarNameContext> varRefsMappedToDeclarations = new HashMap<>();
             final Map<VarNameContext, TypeInContext> varNamesMappedToTypes_ = new HashMap<>();
+            // final TreeEvaluator defGetter = XQuery.compile(  "./preceding::varName[varRef=>string() = ''][last()]", parser);
             analyzer.addListener(new AnalysisListener() {
                 @Override
                 public void onVariableDeclaration(final VarNameContext varName, final TypeInContext type) {
@@ -245,6 +247,8 @@ public class BasicTextDocumentService implements TextDocumentService {
                 @Override
                 public void onVariableReference(final VarRefContext varRef, final TypeInContext type) {
                     varRefsMappedToTypes_.put(varRef, type);
+                    // final XQueryValue declaration = defGetter.evaluate(varRef);
+                    // varRefsMappedToDeclarations.put(varRef, (VarNameContext) declaration.node);
                 }
             });
             try {
@@ -258,8 +262,9 @@ public class BasicTextDocumentService implements TextDocumentService {
 
             final List<DiagnosticError> errors = analyzer.getErrors();
             final List<DiagnosticWarning> warnings = analyzer.getWarnings();
-            System.err
-                    .println("[parseAndAnalyze] Semantic Errors: " + errors.size() + ", Warnings: " + warnings.size());
+            System.err.println(
+                "[parseAndAnalyze] Semantic Errors: " + errors.size() + ", Warnings: " + warnings.size()
+                );
 
             for (final var error : errors) {
                 diagnostics.add(new Diagnostic(
@@ -348,8 +353,8 @@ public class BasicTextDocumentService implements TextDocumentService {
     private final NamespaceResolver resolver;
 
     private final TreeEvaluator constructors = XQuery.compile("//constructorChars", _parser);
-    private final TreeEvaluator constructorBoundaries = XQuery
-            .compile("//(STRING_CONSTRUCTION_START|STRING_CONSTRUCTION_END)", _parser);
+    private final TreeEvaluator constructorBoundaries = XQuery.compile(
+        "//(STRING_CONSTRUCTION_START|STRING_CONSTRUCTION_END)", _parser);
     private final TreeEvaluator properties = XQuery.compile("//extendedFieldDeclaration//fieldDeclaration/fieldName",
             _parser);
     private final TreeEvaluator annotations = XQuery.compile("//annotation", _parser);
@@ -542,55 +547,75 @@ public class BasicTextDocumentService implements TextDocumentService {
         return Integer.parseInt(ctx.IntegerLiteral().getText());
     }
 
-    private String varBeingRenamed = null;
+    private VarRefContext varRefBeingRenamed = null;
+    private VarNameAndTypeContext varDeclBeingRenamed = null;
     private FunctionDeclData functionBeingRenamed = null;
 
     @Override
-    public CompletableFuture<Either3<Range, PrepareRenameResult, PrepareRenameDefaultBehavior>> prepareRename(
-            final PrepareRenameParams params) {
+    public CompletableFuture<
+                Either3<
+                    Range,
+                    PrepareRenameResult,
+                    PrepareRenameDefaultBehavior
+                >
+            >
+        prepareRename(final PrepareRenameParams params)
+    {
         final CompletableFuture<Either3<Range, PrepareRenameResult, PrepareRenameDefaultBehavior>> failedFuture = CompletableFuture
                 .failedFuture(new ResponseErrorException(
                         new ResponseError(ResponseErrorCode.InvalidRequest, "This element cannot be renamed", null)));
         final String uri = params.getTextDocument().getUri();
         final List<VarRefContext> vars = variableReferences.get(uri);
         final Position position = params.getPosition();
-        final VarRefContext foundVar = findRuleUsingPosition(position, vars);
-        if (foundVar != null) {
-            // TODO: Add variable char validation
-            final var range = getContextRange(foundVar.qname());
-            varBeingRenamed = foundVar.qname().getText();
-            functionBeingRenamed = null;
-            return CompletableFuture.completedFuture(Either3.forFirst(range));
+        { // request on variable reference?
+            final VarRefContext foundVarRef = findRuleUsingPosition(position, vars);
+            if (foundVarRef != null) {
+                // TODO: Add variable char validation
+                final var range = getContextRange(foundVarRef.qname());
+                varRefBeingRenamed = foundVarRef;
+                functionBeingRenamed = null;
+                return CompletableFuture.completedFuture(Either3.forFirst(range));
+            }
+        }
+        { // request on variable declaration?
+            final VarNameAndTypeContext foundVariableName = findRuleUsingPosition(position, variableDeclarations.get(uri));
+            if (foundVariableName != null) {
+                functionBeingRenamed = null;
+                varDeclBeingRenamed = foundVariableName;
+                final Range contextRange = getContextRange(foundVariableName.varName().qname());
+                return CompletableFuture.completedFuture(Either3.forFirst(contextRange));
+            }
         }
 
         final XQuerySemanticAnalyzer analyzer = semanticAnalyzers.get(uri);
-        {
+        { // request on function call?
             final var foundFunctionName = findRuleUsingPosition(position, functionNames.get(uri));
             if (foundFunctionName != null) {
                 final var fName = resolver.resolveFunction(foundFunctionName.qname().getText());
                 final var functionDeclaration = getFunctionDeclaration(foundFunctionName, fName, analyzer);
                 if (functionDeclaration != null) {
                     functionBeingRenamed = functionDeclaration;
-                    varBeingRenamed = null;
+                    varRefBeingRenamed = null;
                     final Range contextRange = getContextRange(foundFunctionName.qname());
                     return CompletableFuture.completedFuture(Either3.forFirst(contextRange));
                 }
             }
         }
-        {
+
+        { // request on function reference 'namespace:name#arity'?
             final var foundFunctionRef = findRuleUsingPosition(position, namedFunctionRefs.get(uri));
             if (foundFunctionRef != null) {
                 final var fName = resolver.resolveFunction(foundFunctionRef.qname().getText());
                 final var functionDeclaration = getFunctionDeclaration(foundFunctionRef, fName, analyzer);
                 if (functionDeclaration != null) {
                     functionBeingRenamed = functionDeclaration;
-                    varBeingRenamed = null;
+                    varRefBeingRenamed = null;
                     final Range contextRange = getContextRange(foundFunctionRef.qname());
                     return CompletableFuture.completedFuture(Either3.forFirst(contextRange));
                 }
             }
         }
-        {
+        { // request on function declaration?
             for (final var fDecl : functionDecls.get(uri)) {
                 if (isPositionInsideContext(position, fDecl.qname())) {
                     functionBeingRenamed = new FunctionDeclData(uri, fDecl);
@@ -599,7 +624,7 @@ public class BasicTextDocumentService implements TextDocumentService {
                 }
             }
         }
-        varBeingRenamed = null;
+        varRefBeingRenamed = null;
         functionBeingRenamed = null;
         return failedFuture;
     }
@@ -611,43 +636,118 @@ public class BasicTextDocumentService implements TextDocumentService {
 
         final Map<String, List<TextEdit>> edits = new HashMap<>();
 
-        if (varBeingRenamed != null) {
-            handleVarRenamingFileEdits(uri, newName, edits);
+        if (varRefBeingRenamed != null) {
+            fillVarRefRenamingFileEdits(uri, newName, edits);
         }
-        if (functionBeingRenamed != null) {
+
+        if (varDeclBeingRenamed != null) {
+            handleVarDeclRenamingFileEdits(uri, newName, edits);
+        }
+
+        // TODO: constructor function rename
+        // TODO: method call rename
+        if (functionBeingRenamed != null) { // function definition name
             handleFunctionRenamingFileEdits(uri, newName, edits);
             final TextEdit fDeclNameEdit = new TextEdit(getContextRange(functionBeingRenamed.context.qname()), newName);
             edits.get(uri).add(fDeclNameEdit);
         }
 
+        // TODO: rename function parameter name
+        // rename at declaration
+        // rename at call
+        // TODO: code action -> make parameter optional
+        // TODO: code action -> make parameter default
+
+        // TODO: rename item type
+        // - rename at declaration
+        // - rename all references
+
+        // TODO: rename named record
+        // - rename at declaration
+        // - rename all references
+        // - rename all constructor call references
+
+        // TODO: rename named record field
+
+        // TODO: rename type record field
+
+
+        // TODO: partial function application renaming
+
+        // TODO: renaming path rule names
+        // + renaming in grammar file if specified
+
+        // TODO: renaming namespace
+        // TODO: type test //type(element(x))
+
+        // TODO: Direct element constructors
+
+        // TODO: module name
+        // TODO: grammar import namespace
+        // TODO: module import namespace
+        // TODO: namespace declaration
+        // TODO: default namespace declaration
+        // TODO: soft annotation renaming
+
         return CompletableFuture.completedFuture(new WorkspaceEdit(edits));
     }
 
-    private void handleFunctionRenamingFileEdits(final String uri, final String newName,
-            final Map<String, List<TextEdit>> edits) {
+    /**
+     * Renames variable at the following locations:
+     * <ul>
+     *   <li> all variable references</li>
+     *   <li> variable name at declaration, which is one of the following:</li>
+     *   <ul>
+     *     <li> clauses of FLWOR expression</li>
+     *     <li> variable declaration in prolog</li>
+     *   </ul>
+     * </ul>
+     * @param newName
+     * @param uri
+     *
+     * @param edits
+    */
+    private void handleVarDeclRenamingFileEdits(String uri, String newName, Map<String,List<TextEdit>> edits) {
+        // TODO Auto-generated method stub
+        // throw new UnsupportedOperationException("Unimplemented method 'handleVarDeclRenamingFileEdits'");
+    }
+
+    private void handleFunctionRenamingFileEdits(
+        final String uri,
+        final String newName,
+        final Map<String, List<TextEdit>> edits
+        )
+    {
+        /*
+        declare function <function-name>(<function-argument>)
+        <function-name>(...)
+        <function-name>#<arity>
+        TODO: methods
+        */
         for (final var functionUri : functionNames.keySet()) {
             final List<TextEdit> fileEdits = edits.computeIfAbsent(functionUri, (_) -> new ArrayList<>());
             for (final var functionName : functionNames.get(functionUri)) {
                 final var qname = resolver.resolveFunction(functionName.qname().getText());
                 final FunctionDeclData functionDeclaration = getFunctionDeclaration(functionName, qname,
                         semanticAnalyzers.get(functionUri));
-                if (functionDeclaration == null)
+                if (functionDeclaration == null) {
                     continue;
+                }
                 if (functionDeclaration.context == functionBeingRenamed.context) {
                     final Range range = getContextRange(functionName.qname());
                     fileEdits.add(new TextEdit(range, newName));
                 }
             }
-
         }
         for (final var namedUri : namedFunctionRefs.keySet()) {
             final List<TextEdit> fileEdits = edits.computeIfAbsent(namedUri, (_) -> new ArrayList<>());
             for (final var namedRef : namedFunctionRefs.getOrDefault(namedUri, List.of())) {
                 final var qname = resolver.resolveFunction(namedRef.qname().getText());
-                final FunctionDeclData functionDeclaration = getFunctionDeclaration(namedRef, qname,
-                        semanticAnalyzers.get(namedUri));
-                if (functionDeclaration == null)
+                final FunctionDeclData functionDeclaration
+                    = getFunctionDeclaration(namedRef, qname, semanticAnalyzers.get(namedUri));
+                if (functionDeclaration == null) {
                     continue;
+                }
                 if (functionDeclaration.context == functionBeingRenamed.context) {
                     final Range range = getContextRange(namedRef.qname());
                     fileEdits.add(new TextEdit(range, newName));
@@ -656,15 +756,31 @@ public class BasicTextDocumentService implements TextDocumentService {
         }
     }
 
-    private void handleVarRenamingFileEdits(final String uri, final String newName,
-            final Map<String, List<TextEdit>> edits) {
+
+    // TreeEvaluator var
+
+    private void fillVarRefRenamingFileEdits(
+        final String uri,
+        final String newName,
+        final Map<String, List<TextEdit>> edits
+        )
+    {
         final List<TextEdit> fileEdits = edits.computeIfAbsent(uri, (_) -> new ArrayList<>());
-        for (final var variable : variableReferences.getOrDefault(uri, List.of())) {
-            if (variable.qname().getText().equals(varBeingRenamed)) {
+        // final String x = """
+        //     ./preceding::varName[1]
+
+        //     """;
+
+
+        for (final VarRefContext variable : variableReferences.getOrDefault(uri, List.of())) {
+            if (variable == varRefBeingRenamed) {
                 final Range range = getContextRange(variable.qname());
                 fileEdits.add(new TextEdit(range, newName));
             }
         }
+
+
+
     }
 
     private CompletableFuture<Hover> getFunctionHover(final ParserRuleContext foundCtx,

@@ -2,6 +2,7 @@ package com.github.akruk.antlrxquery.languagefeatures.evaluation.varia;
 
 import java.nio.file.Path;
 import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
@@ -44,49 +45,46 @@ public class T extends EvaluationTestsBase {
                 }
             """,
             """
-                                    for $lvd in //localVariableDeclaration
-                                let $declarators := $lvd//variableDeclarator
-                                for $declarator at $declaratori in $declarators
-                                let $conditionalExpression := $declarator/variableInitializer/expression/assignmentExpression/conditionalExpression[./expression]
-                                return if ($conditionalExpression) {
-                                    let $moved-type := $lvd/localVariableType
-                                    let $moved-modifiers := $lvd/variableModifier
-                                    let $moved-declarators := $declarators[1 to $declaratori - 1]
-                                    let $remaining-declarators := $declarators[$declaratori + 1 to fn:count($declarators)]
-                                    let $varname := $declarators/variableDeclaratorId
-                                    let $previous-decl-line := if ($moved-declarators) {
-                                        ``[`{($moved-modifiers=!>string(), $moved-type=!>string()) => string-join(" ")}` `{$moved-declarators=>string-join(", ")}`;]``
-                                    }
-                                    let $if-part :=
-                ``[
-                `{($moved-modifiers[. != 'final']=!>string(), $moved-type=!>string()) => string-join(" ")}` `{$varname}`;
-                if (`{$conditionalExpression/conditionalOrExpression}`) {
-                    `{$varname}` = `{$conditionalExpression/expression}`;
-                } else {
-                    `{$varname}` = `{$conditionalExpression/lambdaexpression otherwise $conditionalExpression/conditionalExpression}`;
+            for $lvd in //localVariableDeclaration
+            let $declarators := $lvd//variableDeclarator
+            for $declarator at $declaratori in $declarators
+            let $conditionalExpression := $declarator/variableInitializer/expression/assignmentExpression/conditionalExpression[./expression]
+            return if ($conditionalExpression) {
+                let $moved-type := $lvd/localVariableType
+                let $moved-modifiers := $lvd/variableModifier
+                let $moved-declarators := $declarators[1 to $declaratori - 1]
+                let $remaining-declarators := $declarators[$declaratori + 1 to fn:count($declarators)]
+                let $varname := $declarators/variableDeclaratorId
+                let $previous-decl-line := if ($moved-declarators) {
+                    ``[`{($moved-modifiers=!>string(), $moved-type=!>string()) => string-join(" ")}` `{$moved-declarators=>string-join(", ")}`;]``
                 }
-                ]``
-                                    let $remaining-decl-line := if ($remaining-declarators) {
-                                        ``[`{($moved-modifiers=!>string(), $moved-type=!>string()) => string-join(" ")}` `{$remaining-declarators=>string-join(", ")}`;]``
-                                    }
-                                        return
-                                            ($previous-decl-line, $if-part, remaining-decl-line) => string-join("\n")
-                                }
-
-
-                                                                """,
+                let $if-part :=
+``[
+`{($moved-modifiers[. != 'final']=!>string(), $moved-type=!>string()) => string-join(" ")}` `{$varname}`;
+if (`{$conditionalExpression/conditionalOrExpression}`) {
+    `{$varname}` = `{$conditionalExpression/expression}`;
+} else {
+    `{$varname}` = `{$conditionalExpression/lambdaexpression otherwise $conditionalExpression/conditionalExpression}`;
+}
+]``
+                let $remaining-decl-line := if ($remaining-declarators) {
+                    ``[`{($moved-modifiers=!>string(), $moved-type=!>string()) => string-join(" ")}` `{$remaining-declarators=>string-join(", ")}`;]``
+                }
+                    return
+                        ($previous-decl-line, $if-part, remaining-decl-line) => string-join("\n")
+            }
+            """,
             XQueryValue.sequence(
                 List.of(XQueryValue.string(
-                    """
+            """
 
-                    String x;
-                    if (args.length==0) {
-                        x = "a";
-                    } else {
-                        x = "b";
-                    }
-                    """.stripIndent(),
-                        typeFactory.string())),
+            String x;
+            if (args.length==0) {
+                x = "a";
+            } else {
+                x = "b";
+            }
+            """.stripIndent(), typeFactory.string())),
                 typeFactory.zeroOrMore(typeFactory.itemString())
             )
         );

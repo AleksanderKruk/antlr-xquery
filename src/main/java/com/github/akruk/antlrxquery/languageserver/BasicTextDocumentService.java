@@ -228,11 +228,16 @@ public class BasicTextDocumentService implements TextDocumentService {
             paths.addAll(modulePaths);
             final Path currentPath = Path.of(URI.create(uri));
             paths.add(currentPath.getParent());
-            final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(null,
-                    new XQuerySemanticContextManager(typeFactory), typeFactory,
+            final XQuerySemanticContextManager contextManager = new XQuerySemanticContextManager(typeFactory);
+            final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
+                    null,
+                    typeFactory,
                     new XQueryMemoizedValueFactory(typeFactory),
-                    new XQuerySemanticSymbolManager(typeFactory, SemanticFunctionSets.ALL(typeFactory)), null,
-                    new ModuleManager(paths), new GrammarManager(paths), typeFactory.anyNode());
+                    new XQuerySemanticSymbolManager(typeFactory, contextManager, SemanticFunctionSets.ALL(typeFactory)),
+                    null,
+                    new ModuleManager(paths),
+                    new GrammarManager(paths),
+                    typeFactory.anyNode());
 
             final Map<VarRefContext, TypeInContext> varRefsMappedToTypes_ = new HashMap<>();
             // final Map<VarRefContext, VarNameContext> varRefsMappedToDeclarations = new HashMap<>();
@@ -641,13 +646,13 @@ public class BasicTextDocumentService implements TextDocumentService {
         }
 
         if (varDeclBeingRenamed != null) {
-            handleVarDeclRenamingFileEdits(uri, newName, edits);
+            fillVarDeclRenamingFileEdits(uri, newName, edits);
         }
 
         // TODO: constructor function rename
         // TODO: method call rename
         if (functionBeingRenamed != null) { // function definition name
-            handleFunctionRenamingFileEdits(uri, newName, edits);
+            fillFunctionRenamingFileEdits(uri, newName, edits);
             final TextEdit fDeclNameEdit = new TextEdit(getContextRange(functionBeingRenamed.context.qname()), newName);
             edits.get(uri).add(fDeclNameEdit);
         }
@@ -707,12 +712,12 @@ public class BasicTextDocumentService implements TextDocumentService {
      *
      * @param edits
     */
-    private void handleVarDeclRenamingFileEdits(String uri, String newName, Map<String,List<TextEdit>> edits) {
+    private void fillVarDeclRenamingFileEdits(String uri, String newName, Map<String,List<TextEdit>> edits) {
         // TODO Auto-generated method stub
         // throw new UnsupportedOperationException("Unimplemented method 'handleVarDeclRenamingFileEdits'");
     }
 
-    private void handleFunctionRenamingFileEdits(
+    private void fillFunctionRenamingFileEdits(
         final String uri,
         final String newName,
         final Map<String, List<TextEdit>> edits

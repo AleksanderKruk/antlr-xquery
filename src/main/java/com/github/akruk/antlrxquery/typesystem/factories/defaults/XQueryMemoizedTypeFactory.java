@@ -262,9 +262,9 @@ public class XQueryMemoizedTypeFactory implements XQueryTypeFactory
     @Override
     public NamedItemAccessingResult itemNamedType(final QualifiedName name)
     {
-        var namespace = namedTypes.get(name.namespace());
+        final var namespace = namedTypes.get(name.namespace());
         if (namespace!=null) {
-            var type = namespace.get(name.name());
+            final var type = namespace.get(name.name());
             if (type != null) {
                 return new NamedItemAccessingResult(type, NamedAccessingStatus.OK);
             }
@@ -276,10 +276,10 @@ public class XQueryMemoizedTypeFactory implements XQueryTypeFactory
 
 
     @Override
-    public RegistrationResult registerNamedType(QualifiedName name, XQueryItemType itemType)
+    public RegistrationResult registerNamedType(final QualifiedName name, final XQueryItemType itemType)
     {
-        var namespace = namedTypes.computeIfAbsent(name.namespace(), _ -> new HashMap<>());
-        var existing = namespace.put(name.name(), itemType);
+        final var namespace = namedTypes.computeIfAbsent(name.namespace(), _ -> new HashMap<>());
+        final var existing = namespace.put(name.name(), itemType);
         if (existing == null) {
             return new RegistrationResult(itemType, RegistrationStatus.OK);
         } else if (existing.equals(itemType)) {
@@ -290,7 +290,7 @@ public class XQueryMemoizedTypeFactory implements XQueryTypeFactory
 
     @Override
     public NamedAccessingResult namedType(final QualifiedName name) {
-        var item = itemNamedType(name);
+        final var item = itemNamedType(name);
         switch(item.status()) {
         case OK:
             return new NamedAccessingResult(one(item.type()), NamedAccessingStatus.OK);

@@ -21,11 +21,58 @@ import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer.Unre
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQueryVisitingSemanticContext;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContext;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticScope;
 import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType.EffectiveBooleanValueType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 public class XQuerySemanticSymbolManager {
+    public void enterContext() {
+        contextManager.enterContext();
+    }
+
+    public void enterScope() {
+        contextManager.enterScope();
+    }
+
+    public void leaveContext() {
+        contextManager.leaveContext();
+    }
+
+    public void leaveScope() {
+        contextManager.leaveScope();
+    }
+
+    public XQuerySemanticContext currentContext() {
+        return contextManager.currentContext();
+    }
+
+    public XQuerySemanticScope currentScope() {
+        return contextManager.currentScope();
+    }
+
+    public boolean entypeVariable(String variableName, TypeInContext assignedType) {
+        return contextManager.entypeVariable(variableName, assignedType);
+    }
+
+    public TypeInContext getVariable(String variableName) {
+        return contextManager.getVariable(variableName);
+    }
+
+    public TypeInContext typeInContext(XQuerySequenceType type) {
+        return contextManager.typeInContext(type);
+    }
+
+    public TypeInContext resolveEffectiveBooleanValue(TypeInContext type) {
+        return contextManager.resolveEffectiveBooleanValue(type);
+    }
+
+    public TypeInContext resolveEffectiveBooleanValue(TypeInContext type, EffectiveBooleanValueType ebvType) {
+        return contextManager.resolveEffectiveBooleanValue(type, ebvType);
+    }
+
     public static record AnalysisResult(
         TypeInContext result,
         List<DiagnosticError> errors
@@ -81,8 +128,6 @@ public class XQuerySemanticSymbolManager {
                 final XQueryVisitingSemanticContext context,
                 final List<XQuerySequenceType> types);
     }
-    private final XQueryTypeFactory typeFactory;
-    private XQuerySemanticAnalyzer analyzer;
 
     public void setAnalyzer(
         final XQuerySemanticAnalyzer analyzer
@@ -91,8 +136,17 @@ public class XQuerySemanticSymbolManager {
         this.analyzer = analyzer;
     }
 
+    private final XQueryTypeFactory typeFactory;
+    private XQuerySemanticAnalyzer analyzer;
+    private final Map<String, Map<String, List<FunctionSpecification>>> namespaces;
+    private final Map<String, QualifiedGrammarAnalysisResult> grammars;
+    private final XQuerySemanticContextManager contextManager;
+    private final XQuerySequenceType zeroOrMoreItems;
+
+
     public XQuerySemanticSymbolManager(
         final XQueryTypeFactory typeFactory,
+        final XQuerySemanticContextManager contextManager,
         final List<List<SimplifiedFunctionSpecification>> functionSets)
     {
         this.typeFactory = typeFactory;
@@ -114,10 +168,9 @@ public class XQuerySemanticSymbolManager {
         }
         this.grammars = new HashMap<>();
         this.functionDeclarations = new HashMap<>();
+        this.contextManager = contextManager;
+        this.zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
     }
-
-    final Map<String, Map<String, List<FunctionSpecification>>> namespaces;
-    final Map<String, QualifiedGrammarAnalysisResult> grammars;
 
     private AnalysisResult handleUnknownNamespace(
         final String namespace,
@@ -184,7 +237,7 @@ public class XQuerySemanticSymbolManager {
             final XQuerySemanticContext typeContext
             )
     {
-        final var anyItems = typeContext.currentScope().typeInContext(typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+        final var anyItems = typeContext.currentScope().typeInContext(zeroOrMoreItems);
         final var namespace = qName.namespace();
         final var name = qName.name();
         if (!namespaces.containsKey(qName.namespace())) {

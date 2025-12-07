@@ -189,7 +189,7 @@ public enum XQuerySemanticError {
     private final String errorCode;
     private final String defaultMessage;
 
-    XQuerySemanticError(String errorCode, String defaultMessage) {
+    XQuerySemanticError(final String errorCode, final String defaultMessage) {
         this.errorCode = errorCode;
         this.defaultMessage = defaultMessage;
     }

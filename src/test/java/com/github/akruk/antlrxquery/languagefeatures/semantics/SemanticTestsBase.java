@@ -55,10 +55,10 @@ public class SemanticTestsBase {
             }
         });
         final ParseTree xqueryTree = xqueryParser.xquery();
-        final XQuerySemanticSymbolManager caller = new XQuerySemanticSymbolManager(typeFactory, SemanticFunctionSets.ALL(typeFactory));
+        final var contextManager = new XQuerySemanticContextManager(typeFactory);
+        final XQuerySemanticSymbolManager caller = new XQuerySemanticSymbolManager(typeFactory, contextManager, SemanticFunctionSets.ALL(typeFactory));
         final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
                 null,
-                new XQuerySemanticContextManager(typeFactory),
                 typeFactory,
                 new XQueryMemoizedValueFactory(typeFactory),
                 caller,

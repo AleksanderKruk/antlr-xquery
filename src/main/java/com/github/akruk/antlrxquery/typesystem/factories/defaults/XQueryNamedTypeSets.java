@@ -13,18 +13,18 @@ import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 public final class XQueryNamedTypeSets {
     private Map<String, Map<String, XQueryItemType>> DEFAULT_ALL;
     public Map<String, Map<String, XQueryItemType>> all() {
-        XQueryMemoizedTypeFactory typeFactory = new XQueryMemoizedTypeFactory(Map.of());
+        final XQueryMemoizedTypeFactory typeFactory = new XQueryMemoizedTypeFactory(Map.of());
         if (DEFAULT_ALL != null)
             return DEFAULT_ALL;
         DEFAULT_ALL = new HashMap<>(10);
-        final XQuerySequenceType anyItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
+        final XQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         final XQueryItemType keyValuePair = typeFactory.itemExtensibleRecord(Map.of(
             "key", new XQueryRecordField(TypeOrReference.type(typeFactory.anyItem()), true),
-            "value", new XQueryRecordField(TypeOrReference.type(anyItems), true)
+            "value", new XQueryRecordField(TypeOrReference.type(zeroOrMoreItems), true)
         ));
         DEFAULT_ALL.computeIfAbsent("fn", _->new HashMap<>()).put("key-value-pair", keyValuePair);
 
-        final XQuerySequenceType stringToAnyItems = typeFactory.map(typeFactory.itemString(), anyItems);
+        final XQuerySequenceType stringToAnyItems = typeFactory.map(typeFactory.itemString(), zeroOrMoreItems);
         final XQuerySequenceType integerToAnyFunction = typeFactory.map(typeFactory.itemNumber(), typeFactory.anyFunction());
         final XQuerySequenceType stringToIntegerToAnyFunction = typeFactory.map(typeFactory.itemString(), integerToAnyFunction);
         final XQueryItemType loadXQueryModuleRecord = typeFactory.itemRecord(Map.of(
@@ -44,7 +44,7 @@ public final class XQueryNamedTypeSets {
 
         final Map<String, XQueryRecordField> fields = new LinkedHashMap<>();
         fields.put("number", new XQueryRecordField(TypeOrReference.type(typeFactory.number()), true));
-        fields.put("permute", new XQueryRecordField(TypeOrReference.type(typeFactory.function(anyItems, List.of(anyItems))), true));
+        fields.put("permute", new XQueryRecordField(TypeOrReference.type(typeFactory.function(zeroOrMoreItems, List.of(zeroOrMoreItems))), true));
         final XQueryItemType randomNumberGeneratorRecord = typeFactory.itemExtensibleRecord(fields);
         final var oneRandomRef = typeFactory.one(randomNumberGeneratorRecord);
         fields.put("next", new XQueryRecordField(TypeOrReference.type(typeFactory.function(oneRandomRef, List.of())), true));

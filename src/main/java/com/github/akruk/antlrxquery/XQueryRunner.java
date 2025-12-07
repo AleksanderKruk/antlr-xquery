@@ -122,12 +122,12 @@ public class XQueryRunner {
             final XQueryTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
             final Path cwd = Path.of(System.getProperty("user.dir"));
             modulePaths.add(cwd);
+            var contextManager = new XQuerySemanticContextManager(typeFactory);
             final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
                     parserAndTree.parser,
-                    new XQuerySemanticContextManager(typeFactory),
                     typeFactory,
                     new XQueryMemoizedValueFactory(typeFactory),
-                    new XQuerySemanticSymbolManager(typeFactory, SemanticFunctionSets.ALL(typeFactory)),
+                    new XQuerySemanticSymbolManager(typeFactory, contextManager, SemanticFunctionSets.ALL(typeFactory)),
                     // TODO:
                     null,
                     new ModuleManager(modulePaths),
@@ -189,12 +189,16 @@ public class XQueryRunner {
             final XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory(typeFactory);
             final ModuleManager manager = new ModuleManager(modulePaths);
             final GrammarManager grammarManager = new GrammarManager(grammarPaths);
+            XQuerySemanticContextManager contextManager = new XQuerySemanticContextManager(typeFactory);
             final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
                 parserAndTree.parser,
-                new XQuerySemanticContextManager(typeFactory),
                 typeFactory,
                 valueFactory,
-                new XQuerySemanticSymbolManager(typeFactory, SemanticFunctionSets.ALL(typeFactory)),
+                new XQuerySemanticSymbolManager(
+                    typeFactory,
+                    contextManager,
+                    SemanticFunctionSets.ALL(typeFactory)
+                ),
                 null,
                 manager,
                 grammarManager,

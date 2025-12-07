@@ -495,14 +495,14 @@ public class SemanticFunctionSets {
         );
         final ArgumentSpecification errorValue = new ArgumentSpecification(
             "value",
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             CONTEXT_VALUE
         );
         fn.add(
             new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "error"),
             List.of(errorCode, errorDescription, errorValue),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null,
             false,
             false,
@@ -514,7 +514,7 @@ public class SemanticFunctionSets {
         // fn:trace($input as item()*, $label as xs:string? := ()) as item()*
         final ArgumentSpecification traceInput = new ArgumentSpecification(
             "input",
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null
         );
         final ArgumentSpecification traceLabel = new ArgumentSpecification(
@@ -526,7 +526,7 @@ public class SemanticFunctionSets {
             new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "trace"),
             List.of(traceInput, traceLabel),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null,
             false,
             false,
@@ -538,7 +538,7 @@ public class SemanticFunctionSets {
         // fn:message($input as item()*, $label as xs:string? := ()) as empty-sequence()
         final ArgumentSpecification messageInput = new ArgumentSpecification(
             "input",
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null
         );
         final ArgumentSpecification messageLabel = new ArgumentSpecification(
@@ -1455,7 +1455,7 @@ public class SemanticFunctionSets {
         fn.add(new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "distinct-values"),
             List.of(required_arg_values_anyItems, optionalCollation),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null, false, false, null, null
         ));
 
@@ -1466,7 +1466,7 @@ public class SemanticFunctionSets {
         fn.add(new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "duplicate-values"),
             List.of(required_arg_values_anyItems, optionalCollation),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null, false, false, null, null
         ));
 
@@ -1684,7 +1684,7 @@ public class SemanticFunctionSets {
         fn.add(new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "collection"),
             List.of(colSource),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null,
             false,
             false,
@@ -1937,7 +1937,7 @@ public class SemanticFunctionSets {
             typeFactory.zeroOrMore(
             typeFactory.itemMap(
                 typeFactory.itemString(), // xs:QName treated as atomic string
-                typeFactory.zeroOrMore(typeFactory.itemAnyItem()) // xs:anyAtomicType*
+                zeroOrMoreItems // xs:anyAtomicType*
             )
             ),
             null, false, false, null, null
@@ -1950,7 +1950,7 @@ public class SemanticFunctionSets {
             new ArgumentSpecification("function", typeFactory.one(typeFactory.itemAnyFunction()), null),
             new ArgumentSpecification("arguments", typeFactory.one(typeFactory.itemAnyArray()), null)
             ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null,
             false,
             false,
@@ -1962,13 +1962,13 @@ public class SemanticFunctionSets {
         fn.add(new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "do-until"),
             List.of(
-            new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+            new ArgumentSpecification("input", zeroOrMoreItems, null),
             new ArgumentSpecification(
                 "action",
                 typeFactory.one(typeFactory.itemFunction(
-                typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                zeroOrMoreItems,
                 List.of(
-                    typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                    zeroOrMoreItems,
                     typeFactory.one(typeFactory.itemNumber())
                 )
                 )),
@@ -1979,14 +1979,14 @@ public class SemanticFunctionSets {
                 typeFactory.one(typeFactory.itemFunction(
                 optionalBoolean,
                 List.of(
-                    typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                    zeroOrMoreItems,
                     typeFactory.one(typeFactory.itemNumber())
                 )
                 )),
                 null
             )
             ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null, false, false, null, null
         ));
 
@@ -1994,7 +1994,7 @@ public class SemanticFunctionSets {
         fn.add(new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "every"),
             List.of(
-            new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+            new ArgumentSpecification("input", zeroOrMoreItems, null),
             new ArgumentSpecification(
                 "predicate",
                 typeFactory.zeroOrOne(typeFactory.itemFunction(
@@ -2019,7 +2019,7 @@ public class SemanticFunctionSets {
         fn.add(new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "filter"),
             List.of(
-            new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+            new ArgumentSpecification("input", zeroOrMoreItems, null),
             new ArgumentSpecification(
                 "predicate",
                 typeFactory.one(typeFactory.itemFunction(
@@ -2032,7 +2032,7 @@ public class SemanticFunctionSets {
                 null
             )
             ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null,
             false,
             false,
@@ -2044,21 +2044,21 @@ public class SemanticFunctionSets {
         fn.add(new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "fold-left"),
             List.of(
-            new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
-            new ArgumentSpecification("init", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+            new ArgumentSpecification("input", zeroOrMoreItems, null),
+            new ArgumentSpecification("init", zeroOrMoreItems, null),
             new ArgumentSpecification(
                 "action",
                 typeFactory.one(typeFactory.itemFunction(
-                typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                zeroOrMoreItems,
                 List.of(
-                    typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                    zeroOrMoreItems,
                     typeFactory.one(typeFactory.itemAnyItem())
                 )
                 )),
                 null
             )
             ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null,
             false,
             false,
@@ -2070,21 +2070,21 @@ public class SemanticFunctionSets {
         fn.add(new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "fold-right"),
             List.of(
-            new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
-            new ArgumentSpecification("init", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+            new ArgumentSpecification("input", zeroOrMoreItems, null),
+            new ArgumentSpecification("init", zeroOrMoreItems, null),
             new ArgumentSpecification(
                 "action",
                 typeFactory.one(typeFactory.itemFunction(
-                typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                zeroOrMoreItems,
                 List.of(
                     typeFactory.one(typeFactory.itemAnyItem()),
-                    typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+                    zeroOrMoreItems
                 )
                 )),
                 null
             )
             ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null,
             false,
             false,
@@ -2096,20 +2096,20 @@ public class SemanticFunctionSets {
         fn.add(new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "for-each"),
             List.of(
-            new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+            new ArgumentSpecification("input", zeroOrMoreItems, null),
             new ArgumentSpecification(
                 "action",
                 typeFactory.one(typeFactory.itemFunction(
-                typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                zeroOrMoreItems,
                 List.of(
                     typeFactory.one(typeFactory.itemAnyItem()),
-                    typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+                    zeroOrMoreItems
                 )
                 )),
                 null
             )
             ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null,
             false,
             false,
@@ -2121,10 +2121,10 @@ public class SemanticFunctionSets {
         fn.add(new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "for-each-pair"),
             List.of(
-            new ArgumentSpecification("input1", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
-            new ArgumentSpecification("input2", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+            new ArgumentSpecification("input1", zeroOrMoreItems, null),
+            new ArgumentSpecification("input2", zeroOrMoreItems, null),
             new ArgumentSpecification("action", typeFactory.one(typeFactory.itemFunction(
-                typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                zeroOrMoreItems,
                 List.of(
                 typeFactory.one(typeFactory.itemAnyItem()),
                 typeFactory.one(typeFactory.itemAnyItem()),
@@ -2132,7 +2132,7 @@ public class SemanticFunctionSets {
                 )
             )), null)
             ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null,
             false,
             false,
@@ -2144,14 +2144,14 @@ public class SemanticFunctionSets {
         fn.add(new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "highest"),
             List.of(
-            new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+            new ArgumentSpecification("input", zeroOrMoreItems, null),
             new ArgumentSpecification("collation", typeFactory.zeroOrOne(typeFactory.itemString()), DEFAULT_COLLATION),
             new ArgumentSpecification("key", typeFactory.zeroOrOne(typeFactory.itemFunction(
-                typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                zeroOrMoreItems,
                 List.of(typeFactory.one(typeFactory.itemAnyItem()))
             )), DATA$1)
             ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null,
             false,
             false,
@@ -2163,7 +2163,7 @@ public class SemanticFunctionSets {
         fn.add(new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "index-where"),
             List.of(
-            new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+            new ArgumentSpecification("input", zeroOrMoreItems, null),
             new ArgumentSpecification("predicate", typeFactory.one(typeFactory.itemFunction(
                 optionalBoolean,
                 List.of(
@@ -2184,10 +2184,10 @@ public class SemanticFunctionSets {
         fn.add(new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "lowest"),
             List.of(
-            new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+            new ArgumentSpecification("input", zeroOrMoreItems, null),
             new ArgumentSpecification("collation", typeFactory.zeroOrOne(typeFactory.itemString()), DEFAULT_COLLATION),
             new ArgumentSpecification("key", typeFactory.zeroOrOne(typeFactory.itemFunction(
-                typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                zeroOrMoreItems,
                 List.of(typeFactory.one(typeFactory.itemAnyItem()))
             )), DATA$1)
             ),
@@ -2205,7 +2205,7 @@ public class SemanticFunctionSets {
             List.of(
             new ArgumentSpecification("function", typeFactory.one(typeFactory.itemAnyFunction()), null),
             new ArgumentSpecification("arguments", typeFactory.one(
-                typeFactory.itemMap(typeFactory.itemNumber(), typeFactory.zeroOrMore(typeFactory.itemAnyItem()))
+                typeFactory.itemMap(typeFactory.itemNumber(), zeroOrMoreItems)
             ), null)
             ),
             typeFactory.one(typeFactory.itemAnyFunction()),
@@ -2220,11 +2220,11 @@ public class SemanticFunctionSets {
         fn.add(new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "partition"),
             List.of(
-            new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+            new ArgumentSpecification("input", zeroOrMoreItems, null),
             new ArgumentSpecification("split-when", typeFactory.one(typeFactory.itemFunction(
                 optionalBoolean,
                 List.of(
-                typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                zeroOrMoreItems,
                 typeFactory.one(typeFactory.itemAnyItem()),
                 typeFactory.one(typeFactory.itemNumber())
                 )
@@ -2242,12 +2242,12 @@ public class SemanticFunctionSets {
         fn.add(new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "scan-left"),
             List.of(
-            new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
-            new ArgumentSpecification("init", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+            new ArgumentSpecification("input", zeroOrMoreItems, null),
+            new ArgumentSpecification("init", zeroOrMoreItems, null),
             new ArgumentSpecification("action", typeFactory.one(typeFactory.itemFunction(
-                typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                zeroOrMoreItems,
                 List.of(
-                typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                zeroOrMoreItems,
                 typeFactory.one(typeFactory.itemAnyItem())
                 )
             )), null)
@@ -2263,13 +2263,13 @@ public class SemanticFunctionSets {
         fn.add(new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "scan-right"),
             List.of(
-            new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
-            new ArgumentSpecification("init", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+            new ArgumentSpecification("input", zeroOrMoreItems, null),
+            new ArgumentSpecification("init", zeroOrMoreItems, null),
             new ArgumentSpecification("action", typeFactory.one(typeFactory.itemFunction(
-                typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                zeroOrMoreItems,
                 List.of(
                 typeFactory.one(typeFactory.itemAnyItem()),
-                typeFactory.zeroOrMore(typeFactory.itemAnyItem())
+                zeroOrMoreItems
                 )
             )), null)
             ),
@@ -2285,7 +2285,7 @@ public class SemanticFunctionSets {
         fn.add(new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "some"),
             List.of(
-            new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+            new ArgumentSpecification("input", zeroOrMoreItems, null),
             new ArgumentSpecification("predicate", typeFactory.zeroOrOne(typeFactory.itemFunction(
                 optionalBoolean,
                 List.of(
@@ -2309,7 +2309,7 @@ public class SemanticFunctionSets {
         fn.add(new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "sort"),
             List.of(
-            new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+            new ArgumentSpecification("input", zeroOrMoreItems, null),
             new ArgumentSpecification(
                 "collation",
                 typeFactory.zeroOrOne(typeFactory.itemString()),
@@ -2318,13 +2318,13 @@ public class SemanticFunctionSets {
             new ArgumentSpecification(
                 "key",
                 typeFactory.one(typeFactory.itemFunction(
-                typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                zeroOrMoreItems,
                 List.of(typeFactory.one(typeFactory.itemAnyItem()))
                 )),
                 DATA$1
             )
             ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null,
             false,
             false,
@@ -2345,7 +2345,7 @@ public class SemanticFunctionSets {
             List.of(
             new ArgumentSpecification(
                 "input",
-                typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                zeroOrMoreItems,
                 null
             ),
             new ArgumentSpecification(
@@ -2355,7 +2355,7 @@ public class SemanticFunctionSets {
                     Map.of(
                     "key", new XQueryRecordField(
                         TypeOrReference.type(
-                            typeFactory.zeroOrOne( typeFactory.itemFunction( typeFactory.zeroOrMore(typeFactory.itemAnyItem()), List.of(typeFactory.one(typeFactory.itemAnyItem()))))),
+                            typeFactory.zeroOrOne( typeFactory.itemFunction( zeroOrMoreItems, List.of(typeFactory.one(typeFactory.itemAnyItem()))))),
                         false
                     ),
                     "collation", new XQueryRecordField(
@@ -2372,7 +2372,7 @@ public class SemanticFunctionSets {
                 null
             )
             ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null,
             false,
             false,
@@ -2384,7 +2384,7 @@ public class SemanticFunctionSets {
         fn.add(new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "sort-with"),
             List.of(
-            new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+            new ArgumentSpecification("input", zeroOrMoreItems, null),
             new ArgumentSpecification("comparators", typeFactory.zeroOrMore(typeFactory.itemFunction(
                 typeFactory.one(typeFactory.itemNumber()),
                 List.of(
@@ -2393,7 +2393,7 @@ public class SemanticFunctionSets {
                 )
             )), null)
             ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null, false, false, null, null
         ));
 
@@ -2404,7 +2404,7 @@ public class SemanticFunctionSets {
         fn.add(new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "subsequence-where"),
             List.of(
-            new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+            new ArgumentSpecification("input", zeroOrMoreItems, null),
             new ArgumentSpecification(
                 "from",
                 typeFactory.zeroOrOne(typeFactory.itemFunction(
@@ -2428,7 +2428,7 @@ public class SemanticFunctionSets {
                 FALSE$0
             )
             ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null, false, false, null, null
         ));
 
@@ -2436,7 +2436,7 @@ public class SemanticFunctionSets {
         fn.add(new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "take-while"),
             List.of(
-            new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+            new ArgumentSpecification("input", zeroOrMoreItems, null),
             new ArgumentSpecification(
                 "predicate",
                 typeFactory.one(typeFactory.itemFunction(
@@ -2449,7 +2449,7 @@ public class SemanticFunctionSets {
                 null
             )
             ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null, false, false, null, null
         ));
 
@@ -2475,13 +2475,13 @@ public class SemanticFunctionSets {
         fn.add(new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "while-do"),
             List.of(
-            new ArgumentSpecification("input", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+            new ArgumentSpecification("input", zeroOrMoreItems, null),
             new ArgumentSpecification(
                 "predicate",
                 typeFactory.one(typeFactory.itemFunction(
                 optionalBoolean,
                 List.of(
-                    typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                    zeroOrMoreItems,
                     typeFactory.one(typeFactory.itemNumber())
                 )
                 )),
@@ -2490,16 +2490,16 @@ public class SemanticFunctionSets {
             new ArgumentSpecification(
                 "action",
                 typeFactory.one(typeFactory.itemFunction(
-                typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                zeroOrMoreItems,
                 List.of(
-                    typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                    zeroOrMoreItems,
                     typeFactory.one(typeFactory.itemNumber())
                 )
                 )),
                 null
             )
             ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null, false, false, null, null
         ));
 
@@ -3331,7 +3331,7 @@ public class SemanticFunctionSets {
                 ),
                 new ArgumentSpecification(
                 "member",
-                typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                zeroOrMoreItems,
                 null
                 )
             ),
@@ -3402,11 +3402,11 @@ public class SemanticFunctionSets {
             List.of(
                 new ArgumentSpecification(
                 "input",
-                typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                zeroOrMoreItems,
                 null
                 )
             ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null, false, false, null, null
             )
         );
@@ -3424,7 +3424,7 @@ public class SemanticFunctionSets {
                 ),
                 new ArgumentSpecification(
                 "init",
-                typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                zeroOrMoreItems,
                 null
                 ),
                 new ArgumentSpecification(
@@ -3433,7 +3433,7 @@ public class SemanticFunctionSets {
                 null
                 )
             ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null, false, false, null, null
             )
         );
@@ -3450,7 +3450,7 @@ public class SemanticFunctionSets {
                 ),
                 new ArgumentSpecification(
                 "init",
-                typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+                zeroOrMoreItems,
                 null
                 ),
                 new ArgumentSpecification(
@@ -3459,7 +3459,7 @@ public class SemanticFunctionSets {
                 null
                 )
             ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null, false, false, null, null
             )
         );
@@ -3475,7 +3475,7 @@ public class SemanticFunctionSets {
                 null
                 )
             ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null, false, false, null, null
             )
         );
@@ -3546,7 +3546,7 @@ public class SemanticFunctionSets {
                 null
                 )
             ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null, false, false, null, null
             )
         );
@@ -3558,9 +3558,9 @@ public class SemanticFunctionSets {
             List.of(
                 new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
                 new ArgumentSpecification("position", typeFactory.one(typeFactory.itemNumber()), null),
-                new ArgumentSpecification("default", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null)
+                new ArgumentSpecification("default", zeroOrMoreItems, null)
             ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null, false, false, null, null
             )
         );
@@ -3572,7 +3572,7 @@ public class SemanticFunctionSets {
             List.of(
                 new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
             ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null, false, false, null, null
             )
         );
@@ -3583,7 +3583,7 @@ public class SemanticFunctionSets {
             new QualifiedName("array", "index-of"),
             List.of(
                 new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
-                new ArgumentSpecification("target", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null),
+                new ArgumentSpecification("target", zeroOrMoreItems, null),
                 new ArgumentSpecification("collation", typeFactory.zeroOrOne(typeFactory.itemString()), DEFAULT_COLLATION)
             ),
             typeFactory.zeroOrMore(typeFactory.itemNumber()),
@@ -3612,7 +3612,7 @@ public class SemanticFunctionSets {
             List.of(
                 new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
                 new ArgumentSpecification("position", typeFactory.one(typeFactory.itemNumber()), null),
-                new ArgumentSpecification("member", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null)
+                new ArgumentSpecification("member", zeroOrMoreItems, null)
             ),
             typeFactory.one(typeFactory.itemAnyArray()),
             null, false, false, null, null
@@ -3626,7 +3626,7 @@ public class SemanticFunctionSets {
             List.of(
                 new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
             ),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null, false, false, null, null
             )
         );
@@ -3690,7 +3690,7 @@ public class SemanticFunctionSets {
             List.of(
                 new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
                 new ArgumentSpecification("position", typeFactory.one(typeFactory.itemNumber()), null),
-                new ArgumentSpecification("member", typeFactory.zeroOrMore(typeFactory.itemAnyItem()), null)
+                new ArgumentSpecification("member", zeroOrMoreItems, null)
             ),
             typeFactory.one(typeFactory.itemAnyArray()),
             null, false, false, null, null
@@ -3873,7 +3873,7 @@ public class SemanticFunctionSets {
         // ) as map(*)
         final ArgumentSpecification mbInput = new ArgumentSpecification(
             "input",
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null
         );
         final XQueryItemType mapTransformer = typeFactory.itemFunction(zeroOrMoreItems, List.of(typeFactory.anyItem(), typeFactory.number()));
@@ -3947,7 +3947,7 @@ public class SemanticFunctionSets {
         );
         final ArgumentSpecification mentValue = new ArgumentSpecification(
             "value",
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null
         );
         map.add(
@@ -3980,7 +3980,7 @@ public class SemanticFunctionSets {
         // map:find($input as item()*, $key as xs:anyAtomicType) as array(*)
         final ArgumentSpecification mfindInput = new ArgumentSpecification(
             "input",
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null
         );
         final ArgumentSpecification mfindKey = new ArgumentSpecification(
@@ -4009,7 +4009,7 @@ public class SemanticFunctionSets {
             new SimplifiedFunctionSpecification(
             new QualifiedName("map", "for-each"),
             List.of(mfeMap, mfeAction),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null, false, false, null, null
             )
         );
@@ -4027,14 +4027,14 @@ public class SemanticFunctionSets {
         );
         final ArgumentSpecification mgDefault = new ArgumentSpecification(
             "default",
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             EMPTY_SEQUENCE
         );
         map.add(
             new SimplifiedFunctionSpecification(
             new QualifiedName("map", "get"),
             List.of(mgMap, mgKey, mgDefault),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null, false, false, null, null
             )
         );
@@ -4064,7 +4064,7 @@ public class SemanticFunctionSets {
             new SimplifiedFunctionSpecification(
             new QualifiedName("map", "keys"),
             List.of(mkeysMap),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null, false, false, null, null
             )
         );
@@ -4079,7 +4079,7 @@ public class SemanticFunctionSets {
             new SimplifiedFunctionSpecification(
             new QualifiedName("map", "keys-where"),
             List.of(kwMap, predicateArg),
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null, false, false, null, null
             )
         );
@@ -4126,7 +4126,7 @@ public class SemanticFunctionSets {
         );
         final ArgumentSpecification mpValue = new ArgumentSpecification(
             "value",
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null
         );
         map.add(
@@ -4172,7 +4172,7 @@ public class SemanticFunctionSets {
         );
         final ArgumentSpecification mputValue = new ArgumentSpecification(
             "value",
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null
         );
         map.add(
@@ -4195,7 +4195,7 @@ public class SemanticFunctionSets {
         );
         final ArgumentSpecification mremKeys = new ArgumentSpecification(
             "keys",
-            typeFactory.zeroOrMore(typeFactory.itemAnyItem()),
+            zeroOrMoreItems,
             null
         );
         map.add(

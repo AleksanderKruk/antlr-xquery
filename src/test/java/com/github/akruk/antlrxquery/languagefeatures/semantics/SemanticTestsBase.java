@@ -1,6 +1,7 @@
 package com.github.akruk.antlrxquery.languagefeatures.semantics;
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -65,7 +66,8 @@ public class SemanticTestsBase {
                 null,
                 new ModuleManager(Set.of()),
                 new GrammarManager(Set.of()),
-                typeFactory.anyNode()
+                typeFactory.anyNode(),
+                Map.of()
                 );
         final var lastVisitedType = analyzer.visit(xqueryTree);
         if (lastVisitedType == null) {

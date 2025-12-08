@@ -10,6 +10,7 @@ import org.antlr.v4.runtime.CharStreams;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.CharStream;
 import com.github.akruk.antlrxquery.AntlrXqueryLexer;
@@ -24,6 +25,7 @@ import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.SemanticFunctionSets;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager;
+import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTypeSets;
 
@@ -76,6 +78,7 @@ public final class XQuery {
         final ModuleManager moduleManager = new ModuleManager(Set.of());
         final GrammarManager grammarManager = new GrammarManager(Set.of());
         final XQuerySemanticContextManager contextManager = new XQuerySemanticContextManager(typeFactory);
+        final Map<String, XQuerySequenceType> varTypes = vars.entrySet().stream().collect(Collectors.toMap(e->e.getKey(), e->e.getValue().type));
         final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
             parser,
             typeFactory,
@@ -88,7 +91,8 @@ public final class XQuery {
             null,
             moduleManager,
             grammarManager,
-            typeFactory.anyNode()
+            typeFactory.anyNode(),
+            varTypes
             );
         final XQueryEvaluatorVisitor visitor = new XQueryEvaluatorVisitor(
             tree, parser, valueFactory, analyzer, typeFactory, moduleManager, vars);
@@ -146,7 +150,8 @@ public final class XQuery {
             null,
             moduleManager,
             grammarManager,
-            typeFactory.anyNode()
+            typeFactory.anyNode(),
+            Map.of()
             );
 
 

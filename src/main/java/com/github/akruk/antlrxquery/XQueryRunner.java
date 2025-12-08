@@ -132,7 +132,8 @@ public class XQueryRunner {
                     null,
                     new ModuleManager(modulePaths),
                     new GrammarManager(modulePaths),
-                    typeFactory.anyNode()
+                    typeFactory.anyNode(),
+                    Map.of()
                     );
             analyzer.visit(xqueryTree);
             final var querySemanticErrors = analyzer.getErrors();
@@ -202,7 +203,8 @@ public class XQueryRunner {
                 null,
                 manager,
                 grammarManager,
-                typeFactory.anyNode()
+                typeFactory.anyNode(),
+                Map.of()
                 );
             final XQueryEvaluatorVisitor evaluator = new XQueryEvaluatorVisitor(
                 parserAndTree.tree,

@@ -74,6 +74,7 @@ if (`{$conditionalExpression/conditionalOrExpression}`) {
                         ($previous-decl-line, $if-part, remaining-decl-line) => string-join("\n")
             }
             """,
+            "",
             XQueryValue.sequence(
                 List.of(XQueryValue.string(
             """

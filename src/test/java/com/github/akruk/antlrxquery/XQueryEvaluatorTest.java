@@ -21,7 +21,7 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
     @Test
     public void atomization() {
         final String xquery = "(1, (2,3,4), ((5, 6), 7))";
-        final var value = XQuery.evaluateWithMockRoot(null, xquery, null);
+        final var value = XQuery.evaluateWithMockRoot(null, xquery, "", null);
         final List<XQueryValue> expected = List.of(
                 valueFactory.number(1),
                 valueFactory.number(2),
@@ -131,48 +131,98 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
     @Test
     public void rootPath() throws Exception {
         // assert false;
-        assertSameResultsAsAntlrXPath(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "/test");
+        assertSameResultsAsAntlrXPath(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "/test", null);
     }
 
     @Test
     public void rulePath() throws Exception {
         // assert false;
-        assertSameResultsAsAntlrXPath(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "/test/rule");
-        assertSameResultsAsAntlrXPath(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "/test//rule");
+        assertSameResultsAsAntlrXPath(
+            TEST_GRAMMAR_NAME,
+            TEST_GRAMMAR,
+            "test",
+            "a bc a d",
+            "/test/rule",
+            null);
+        assertSameResultsAsAntlrXPath(
+            TEST_GRAMMAR_NAME,
+            TEST_GRAMMAR,
+            "test",
+            "a bc a d",
+            "/test//rule",
+            null);
     }
 
     @Test
     public void tokenPath() throws Exception {
         // assert false;
-        assertSameResultsAsAntlrXPath(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "//A");
-        assertSameResultsAsAntlrXPath(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "//B");
-        assertSameResultsAsAntlrXPath(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "//C");
-        assertSameResultsAsAntlrXPath(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "//D");
+        assertSameResultsAsAntlrXPath(
+            TEST_GRAMMAR_NAME,
+            TEST_GRAMMAR,
+            "test",
+            "a bc a d",
+            "//A",
+            null
+        );
+        assertSameResultsAsAntlrXPath(
+            TEST_GRAMMAR_NAME,
+            TEST_GRAMMAR,
+            "test",
+            "a bc a d",
+            "//B",
+            null
+        );
+        assertSameResultsAsAntlrXPath(
+            TEST_GRAMMAR_NAME,
+            TEST_GRAMMAR,
+            "test",
+            "a bc a d",
+            "//C",
+            null
+        );
+        assertSameResultsAsAntlrXPath(
+            TEST_GRAMMAR_NAME,
+            TEST_GRAMMAR,
+            "test",
+            "a bc a d",
+            "//D",
+            null
+        );
     }
 
     @Test
     public void identityNodeComparison() throws Exception {
-        assertDynamicGrammarQuery(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "/test is /test",
+        assertDynamicGrammarQuery(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "/test is /test", "",
                                     valueFactory.bool(true));
     }
 
     @Test
     public void beforeNode() throws Exception {
-        assertDynamicGrammarQuery(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "/test << /test",
-                                    valueFactory.bool(false));
-        assertDynamicGrammarQuery(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test",
-                    "a bc a d", "/test << /test/A[1]", valueFactory.bool(true));
+        assertDynamicGrammarQuery(
+            TEST_GRAMMAR_NAME,
+            TEST_GRAMMAR, "test",
+            "a bc a d",
+            "/test << /test",
+            null,
+            valueFactory.bool(false));
+        assertDynamicGrammarQuery(
+            TEST_GRAMMAR_NAME,
+            TEST_GRAMMAR, "test",
+            "a bc a d",
+            "/test << /test/A[1]",
+            null,
+            valueFactory.bool(true));
     }
 
     @Test
     public void afterNode() throws Exception {
-        assertDynamicGrammarQuery(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "/test >> /test", valueFactory.bool(false));
-        assertDynamicGrammarQuery(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "/test/A[1] >> /test", valueFactory.bool(true));
+        assertDynamicGrammarQuery(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "/test >> /test", "", valueFactory.bool(false));
+        assertDynamicGrammarQuery(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "/test/A[1] >> /test", "", valueFactory.bool(true));
     }
 
     @Test
     public void ancestors() throws Exception {
-        String grammarString = """
+        final String grammarString = """
             grammar K;
             a: b;
             b: c;
@@ -185,13 +235,30 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
             "a",
             "x",
             "/a/b/c/D/ancestor::* => count()",
+            "",
             valueFactory.number(4));
         assertDynamicGrammarQuery("K",
-            grammarString, "a", "x", "/a/b/c/D/ancestor::(b|c) => count()", valueFactory.number(2));
-        var tree = executeDynamicGrammarQueryWithTree("K",
-            grammarString, "a", "x", "/a/b/c/D");
-        var nodeD = tree.value().node;
-        var result = XQuery.evaluateWithMockRoot(nodeD, "/ancestor::*", tree.parser());
+            grammarString,
+            "a",
+            "x",
+            "/a/b/c/D/ancestor::(b|c) => count()",
+            "",
+            valueFactory.number(2));
+        final var tree = executeDynamicGrammarQueryWithTree(
+            "K",
+            grammarString,
+            "a",
+            "x",
+            "/a/b/c/D",
+            ""
+            );
+        final var nodeD = tree.value().node;
+        final var result = XQuery.evaluateWithMockRoot(
+            nodeD,
+            "/ancestor::*",
+            "",
+            tree.parser()
+            );
         assertEquals(result.size, 3);
 
     }
@@ -201,7 +268,13 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
         final String textualTree = "a bc a d";
         final String xquery = "//*";
         final ValueParserAndTree parserAndTree = executeDynamicGrammarQueryWithTree(
-            TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", textualTree, xquery);
+            TEST_GRAMMAR_NAME,
+            TEST_GRAMMAR,
+            "test",
+            textualTree,
+            xquery,
+            ""
+            );
         final ParseTree[] nodes = XPath.findAll(parserAndTree.tree(), xquery, parserAndTree.parser())
                 .toArray(ParseTree[]::new);
         final ParseTree[] xqueryNodes = parserAndTree.value().sequence.stream().map(val -> val.node)
@@ -299,7 +372,7 @@ public class XQueryEvaluatorTest extends EvaluationTestsBase {
 
     @Test
     public void arrowMappingExpression() {
-        XQueryValue one = valueFactory.number(1);
+        final XQueryValue one = valueFactory.number(1);
         assertResult("('a', 'b', 'c') =!> string-length()", List.of(one, one, one));
     }
 

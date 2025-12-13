@@ -68,9 +68,11 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionCallContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionDeclContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionNameContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.KeywordArgumentsContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.ModuleDeclContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.NamedFunctionRefContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.NamedRecordTypeDeclContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.PositionalArgumentsContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.QnameContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.TypeNameContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameAndTypeContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameContext;
@@ -96,6 +98,7 @@ import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.Sema
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.ArgumentSpecification;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.FunctionSpecification;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.ModuleInfo;
 import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
@@ -104,21 +107,21 @@ import com.google.gson.JsonPrimitive;
 
 public class BasicTextDocumentService implements TextDocumentService {
     private LanguageClient client;
-    private final Map<String, List<Token>> tokenStore = new HashMap<>();
-    private final Map<String, ParseTree> parseTreeStore = new HashMap<>();
-    private final Map<String, XQuerySemanticAnalyzer> semanticAnalyzers = new HashMap<>();
-    private final Map<String, List<NamedFunctionRefContext>> namedFunctionRefs = new HashMap<>();
-    private final Map<String, List<FunctionNameContext>> functionNames = new HashMap<>();
-    private final Map<String, List<ParserRuleContext>> types = new HashMap<>();
-    private final Map<String, List<TypeNameContext>> namedTypes = new HashMap<>();
-    private final Map<String, List<VarRefContext>> variableReferences = new HashMap<>();
-    private final Map<String, List<VarNameContext>> variableDeclarationsWithoutType = new HashMap<>();
-    private final Map<String, List<FunctionDeclContext>> functionDecls = new HashMap<>();
-    private final Map<String, List<NamedRecordTypeDeclContext>> recordDeclarations = new HashMap<>();
-    private final Map<String, List<VarNameAndTypeContext>> variableDeclarations = new HashMap<>();
-    private final Map<String, Map<VarRefContext, TypeInContext>> varRefsMappedToTypes = new HashMap<>();
-    private final Map<String, Map<VarNameContext, TypeInContext>> varNamesMappedToTypes = new HashMap<>();
-    private final DiagnosticMessageCreator diagnosticMessageCreator = new DiagnosticMessageCreator();
+    private final Map<String, List<Token>> tokenStore;
+    private final Map<String, ParseTree> parseTreeStore;
+    private final Map<String, XQuerySemanticAnalyzer> semanticAnalyzers;
+    private final Map<String, List<NamedFunctionRefContext>> namedFunctionRefs;
+    private final Map<String, List<FunctionNameContext>> functionNames;
+    private final Map<String, List<ParserRuleContext>> types;
+    private final Map<String, List<TypeNameContext>> namedTypes;
+    private final Map<String, List<VarRefContext>> variableReferences;
+    private final Map<String, List<VarNameContext>> variableDeclarationsWithoutType;
+    private final Map<String, List<FunctionDeclContext>> functionDecls;
+    private final Map<String, List<NamedRecordTypeDeclContext>> recordDeclarations;
+    private final Map<String, List<VarNameAndTypeContext>> variableDeclarations;
+    private final Map<String, Map<VarRefContext, TypeInContext>> varRefsMappedToTypes;
+    private final Map<String, Map<VarNameContext, TypeInContext>> varNamesMappedToTypes;
+    private final DiagnosticMessageCreator diagnosticMessageCreator;
 
     private Set<Path> modulePaths = Set.of();
 
@@ -138,7 +141,29 @@ public class BasicTextDocumentService implements TextDocumentService {
         stringIndex = tokenLegend.indexOf("string");
         propertyIndex = tokenLegend.indexOf("property");
         decoratorIndex = tokenLegend.indexOf("decorator");
-        resolver = new NamespaceResolver("fn", "", "", "", "");
+        resolver = new NamespaceResolver(
+            "fn",
+            "",
+            "",
+            "",
+            ""
+            );
+        tokenStore = new HashMap<>();
+        parseTreeStore = new HashMap<>();
+        semanticAnalyzers = new HashMap<>();
+        namedFunctionRefs = new HashMap<>();
+        functionNames = new HashMap<>();
+        types = new HashMap<>();
+        namedTypes = new HashMap<>();
+        variableReferences = new HashMap<>();
+        variableDeclarationsWithoutType = new HashMap<>();
+        functionDecls = new HashMap<>();
+        recordDeclarations = new HashMap<>();
+        variableDeclarations = new HashMap<>();
+        varRefsMappedToTypes = new HashMap<>();
+        varNamesMappedToTypes = new HashMap<>();
+        diagnosticMessageCreator = new DiagnosticMessageCreator();
+
     }
 
     public void setModulePaths(final Set<Path> modulePaths) {
@@ -246,18 +271,31 @@ public class BasicTextDocumentService implements TextDocumentService {
             final Map<VarRefContext, TypeInContext> varRefsMappedToTypes_ = new HashMap<>();
             final Map<VarRefContext, VarNameContext> varRefsMappedToDeclarations = new HashMap<>();
             final Map<VarNameContext, TypeInContext> varNamesMappedToTypes_ = new HashMap<>();
+            // final Map<ModuleDeclContext, ModuleInfo> moduleDeclarations = new HashMap<>();
+            // final Map<QnameContext, ModuleInfo> moduleReferences = new HashMap<>();
             // final TreeEvaluator defGetter = XQuery.compile("./preceding::varName[string() = $variableNameWithDollar][last()]", parser);
             analyzer.addListener(new AnalysisListener() {
                 @Override
-                public void onVariableDeclaration(VariableInfo variableInfo) {
+                public void onVariableDeclaration(final VariableInfo variableInfo) {
                     varNamesMappedToTypes_.put(variableInfo.definition(), variableInfo.type());
                 }
 
                 @Override
-                public void onVariableReference(VarRefContext varRef, VariableInfo variableInfo) {
+                public void onVariableReference(final VarRefContext varRef, final VariableInfo variableInfo) {
                     varRefsMappedToTypes_.put(varRef, variableInfo.type());
                     varRefsMappedToDeclarations.put(varRef, variableInfo.definition());
                 }
+
+                // @Override
+                // public void onModuleDeclaration(final ModuleInfo moduleInfo) {
+                //     moduleDeclarations.put(moduleInfo.declaration(), moduleInfo);
+                // }
+
+                // @Override
+                // public void onModuleReference(QnameContext reference, ModuleInfo moduleInfo) {
+                //     moduleReferences.put(reference, moduleInfo);
+                // }
+
             });
             try {
                 analyzer.visit(tree);
@@ -463,7 +501,7 @@ public class BasicTextDocumentService implements TextDocumentService {
     }
 
     private void markTokens(final String uri, final List<SemanticToken> tokens, final int tokenTypeIndex,
-            List<? extends ParserRuleContext> trees) {
+            final List<? extends ParserRuleContext> trees) {
         for (final var val : trees) {
             final SemanticToken functionToken = getSemanticToken(val, tokenTypeIndex);
             tokens.add(functionToken);
@@ -480,7 +518,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         }
     }
 
-    private SemanticToken getSemanticToken(final ParserRuleContext ctx, int tokenTypeIndex) {
+    private SemanticToken getSemanticToken(final ParserRuleContext ctx, final int tokenTypeIndex) {
         final Token start = ctx.getStart();
         final Token stop = ctx.getStop();
         final int startline = start.getLine() - 1;
@@ -490,7 +528,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         return token;
     }
 
-    private SemanticToken getSemanticToken(final TerminalNode ctx, int tokenTypeIndex) {
+    private SemanticToken getSemanticToken(final TerminalNode ctx, final int tokenTypeIndex) {
         final Token start = ctx.getSymbol();
         final int line = start.getLine() - 1;
         final int charPos = start.getCharPositionInLine();
@@ -748,7 +786,7 @@ public class BasicTextDocumentService implements TextDocumentService {
      *
      * @param edits
     */
-    private void fillVarDeclRenamingFileEdits(String uri, String newName, Map<String,List<TextEdit>> edits) {
+    private void fillVarDeclRenamingFileEdits(final String uri, final String newName, final Map<String,List<TextEdit>> edits) {
         // TODO Auto-generated method stub
         // throw new UnsupportedOperationException("Unimplemented method 'handleVarDeclRenamingFileEdits'");
     }

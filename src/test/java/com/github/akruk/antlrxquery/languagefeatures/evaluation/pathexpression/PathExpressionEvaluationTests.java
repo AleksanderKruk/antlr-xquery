@@ -21,6 +21,7 @@ public class PathExpressionEvaluationTests extends EvaluationTestsBase {
             "a",
             "ABC",
             "//B/string()",
+            "",
             valueFactory.sequence(List.of(valueFactory.string("B")))
         );
     }

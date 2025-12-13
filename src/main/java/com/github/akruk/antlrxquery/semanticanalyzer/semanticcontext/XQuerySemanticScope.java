@@ -5,6 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.lsp4j.Location;
+
+import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameContext;
 import com.github.akruk.antlrxquery.semanticanalyzer.EffectiveBooleanValueTrue;
 import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
@@ -14,7 +17,8 @@ import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 
 
 public class XQuerySemanticScope {
-    final Map<String, TypeInContext> variables;
+    public static record VariableInfo(String name, TypeInContext type, VarNameContext definition, Location location) {}
+    final Map<String, VariableInfo> variables;
     final List<TypeInContext> scopedTypes;
     final Map<TypeInContext, List<Assumption>> scopedAssumptions;
     final Map<TypeInContext, List<Implication>> scopedImplications;
@@ -57,9 +61,9 @@ public class XQuerySemanticScope {
 
         for (var variableEntry : previousScope.variables.entrySet()) {
             var variableName = variableEntry.getKey();
-            var variableType = variableEntry.getValue();
-            var copiedType = typeMapping.get(variableType);
-            variables.put(variableName, copiedType);
+            VariableInfo variableInfo = variableEntry.getValue();
+            var copiedType = typeMapping.get(variableInfo.type);
+            variables.put(variableName, new VariableInfo(variableName, copiedType, variableInfo.definition, variableInfo.location));
         }
 
         for (var entry : previousScope.scopedAssumptions.entrySet()) {
@@ -98,18 +102,29 @@ public class XQuerySemanticScope {
         this.typeFactory = typeFactory;
     }
 
-    public Map<String, TypeInContext> getVariables() {
+    public Map<String, VariableInfo> getVariables() {
         return variables;
     }
+
+    public final record EntypingResult(VariableInfo oldVariable, VariableInfo newVariable){}
 
     /**
      * Either creates variable with required type
      * or overrides existing variable
      * @param variableName
+     * @param variableDefinition
      * @param assignedType
-     * @return true if variable was added
+     * @return EntypingResult {
+     *      VariableInfo? oldVariable;
+     *      VariableInfo  newVariable;
+     * }
      */
-    public boolean entypeVariable(String variableName, TypeInContext assignedType) {
+    public EntypingResult entypeVariable(
+        String variableName,
+        VarNameContext variableDefinition,
+        Location variableLocation,
+        TypeInContext assignedType)
+    {
         if (assignedType.context != context)
         {
             final TypeInContext copiedType = typeMapping.computeIfAbsent(assignedType, t->typeInContext(t.type));
@@ -124,20 +139,50 @@ public class XQuerySemanticScope {
                 var copiedAssumption = new Assumption(copiedType, assumption.value);
                 scopedAssumptions.computeIfAbsent(copiedType, _ -> new ArrayList<>()).add(copiedAssumption);
             }
-            boolean addedVariable = variables.containsKey(variableName);
-            variables.put(variableName, copiedType);
-            return addedVariable;
+            if (variableDefinition == null) { // called by redeclaration or undeclared external variable
+                final VariableInfo variableInfo = variables.get(variableName);
+                if (variableInfo == null) { // new variable
+                    VariableInfo newVariable = new VariableInfo(variableName, copiedType, null, null);
+                    variables.put(variableName, newVariable);
+                    return new EntypingResult(variableInfo, newVariable);
+                } else { // redeclaration
+                    VariableInfo newVariable = new VariableInfo(variableName, copiedType, variableInfo.definition, variableInfo.location);
+                    variables.put(variableName, newVariable);
+                    return new EntypingResult(variableInfo, newVariable);
+                }
+            } else { // use given location
+                VariableInfo newVariable = new VariableInfo(variableName, copiedType, variableDefinition, variableLocation);
+                variables.put(variableName, newVariable);
+                return new EntypingResult(null, newVariable);
+            }
         } else {
-            boolean addedVariable = variables.containsKey(variableName);
-            variables.put(variableName, assignedType);
-            return addedVariable;
-
+            if (variableDefinition == null) { // called by redeclaration or external variable
+                final VariableInfo variableInfo = variables.get(variableName);
+                if (variableInfo == null) { // new variable
+                    VariableInfo newVariable = new VariableInfo(variableName, assignedType, null, null);
+                    variables.put(variableName, newVariable);
+                    return new EntypingResult(variableInfo, newVariable);
+                } else { // redeclaration
+                    VariableInfo newVariable = new VariableInfo(variableName, assignedType, variableInfo.definition, variableInfo.location);
+                    variables.put(variableName, newVariable);
+                    return new EntypingResult(variableInfo, newVariable);
+                }
+            } else { // use given location
+                VariableInfo newVariable = new VariableInfo(variableName, assignedType, variableDefinition, variableLocation);
+                variables.put(variableName, newVariable);
+                return new EntypingResult(null, newVariable);
+            }
         }
     }
 
 
-    public TypeInContext getVariable(String variableName) {
-        return variables.getOrDefault(variableName, null);
+    public VariableInfo getVariable(String variableName) {
+        var variableInfo = variables.get(variableName);
+        if (variableInfo == null) {
+            return null;
+        } else {
+            return variableInfo;
+        }
     }
 
     public void assume(TypeInContext type, Assumption assumption) {

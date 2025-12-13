@@ -19,6 +19,9 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.tree.xpath.XPath;
+import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
 
 import com.github.akruk.antlrxquery.AntlrXqueryParser.*;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
@@ -26,9 +29,15 @@ import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.Qualifie
 import com.github.akruk.antlrxquery.semanticanalyzer.GrammarManager.GrammarFile;
 import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager.ImportResult;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.Assumption;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticScope.EntypingResult;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticScope.VariableInfo;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.AnalysisResult;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.ArgumentSpecification;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.FunctionInfo;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.ModuleInfo;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.NamespaceInfo;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.RecordInfo;
 import com.github.akruk.antlrxquery.AntlrXqueryParser;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.HelperTrees;
@@ -93,8 +102,34 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     protected final XQuerySequenceType zeroOrMoreNumbers;
 
     public interface AnalysisListener {
-        void onVariableDeclaration(VarNameContext varName, TypeInContext type);
-        void onVariableReference(VarRefContext varRef, TypeInContext type);
+        default void onModuleDeclaration(ModuleInfo moduleInfo) {};
+        default void onModuleReference(QnameContext reference, ModuleInfo moduleInfo) {};
+
+        default void onVariableDeclaration(VariableInfo variableInfo){}
+        default void onVariableReference(VarRefContext varRef, VariableInfo variableInfo){}
+
+        default void onNamespaceDeclaration(NamespaceInfo namespaceInfo){}
+        default void onNamespaceReference(QnameContext reference, NamespaceInfo namespaceInfo){}
+
+        default void onFunctionDeclaration(FunctionInfo functionInfo){}
+        default void onFunctionNamedReference(NamedFunctionRefContext reference, FunctionInfo functionInfo){}
+        default void onFunctionCall(FunctionCallContext reference, FunctionInfo functionInfo){}
+        default void onConstructorCall(FunctionCallContext reference, RecordInfo recordInfo, FunctionInfo functionInfo){}
+        default void onFunctionArrowCall(ArrowExprContext reference, FunctionInfo functionInfo){}
+        default void onMethodCall(ArrowExprContext reference, RecordInfo recordInfo, FunctionInfo functionInfo){}
+        // TODO: partial function application renaming
+
+        default void onNamedItemTypeDeclaration(){}
+        default void onNamedItemTypeReference(){}
+
+        default void onNamedRecordTypeDeclaration(){}
+        default void onNamedRecordTypeReference(){}
+
+        default void onGrammarDeclaration(){}
+        default void onGrammarReference(){}
+        default void onPathRuleReference(){}
+        // TODO: Direct element constructors
+
     }
 
     private List<AnalysisListener> listeners = new ArrayList<>();
@@ -641,7 +676,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             case 1 -> elementDecls.get(0).qname().getText();
             default -> {
                 for (final var d : elementDecls) {
-                    error(d, ErrorType.DEFAULT_NAMESPACE_DECL__MULTIPLE_ELEMENT_NAMESPACE_DECLARATIONS, null);
+                    error( d, ErrorType.DEFAULT_NAMESPACE_DECL__MULTIPLE_ELEMENT_NAMESPACE_DECLARATIONS, null);
                 }
                 yield moduleElementNamespace;
             }
@@ -681,6 +716,14 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     }
 
 
+    String currentUri;
+
+    // private String saveCurrentUri() {
+    //     var saved = currentUri;
+    //     currentUri = null;
+    //     return saved;
+    // }
+
     public XQuerySemanticAnalyzer(
         final Parser antlrQueryParser,
         final XQueryTypeFactory typeFactory,
@@ -689,10 +732,14 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final Map<String, QualifiedGrammarAnalysisResult> importedGrammars,
         final ModuleManager moduleManager,
         final GrammarManager grammarManager,
-        final XQuerySequenceType contextType)
+        final XQuerySequenceType contextType,
+        final String startingUri,
+        final Map<String, XQuerySequenceType> variables
+        )
     {
         // this.antlrQueryParser = antlrQueryParser;
         // this.modulePaths = modulePaths;
+        this.currentUri = startingUri;
         this.typeFactory = typeFactory;
         this.valueFactory = valueFactory;
         this.symbolManager = symbolManager;
@@ -733,6 +780,15 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         this.moduleManager = moduleManager;
         this.grammarManager = grammarManager;
         zeroOrMoreNumbers = typeFactory.zeroOrMore(typeFactory.itemNumber());
+        for (final String variableName : variables.keySet()) {
+            final XQuerySequenceType variableType = variables.get(variableName);
+            symbolManager.entypeVariable(
+                variableName,
+                null,
+                null,
+                symbolManager.typeInContext(variableType)
+                );
+        }
 
 
     }
@@ -795,11 +851,34 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     }
 
     private void declareVariable(final TypeInContext type, final String varName, final VarNameContext varNameCtx) {
-        symbolManager.entypeVariable(varName, type);
+        EntypingResult entypingresult = symbolManager.entypeVariable(
+            varName,
+            varNameCtx,
+            new Location(currentUri, getContextRange(varNameCtx)),
+            type
+            );
         for (final var listener : listeners) {
-            listener.onVariableDeclaration(varNameCtx, type);
+            listener.onVariableDeclaration(entypingresult.newVariable());
         }
     }
+
+
+    Range getContextRange(final ParserRuleContext ctx) {
+        final Token startToken = ctx.getStart();
+        final Token stopToken = ctx.getStop();
+
+        final Position start = new Position(
+            startToken.getLine() - 1,
+            startToken.getCharPositionInLine()
+            );
+        final Position end = new Position(
+            stopToken.getLine() - 1,
+            stopToken.getCharPositionInLine() + stopToken.getText().length()
+            );
+
+        return new Range(start, end);
+    }
+
 
 
     @Override
@@ -935,7 +1014,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             } else {
                 final VarNameContext varName2 = gs.varNameAndType().varName();
                 final String varname = varName2.qname().getText();
-                TypeInContext variableType = symbolManager.getVariable(varname);
+                final VariableInfo variable = symbolManager.getVariable(varname);
+                TypeInContext variableType = variable.type();
                 if (variableType == null) {
                     error(
                         varName2,
@@ -962,7 +1042,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                 }
             }
         }
-        final Set<Entry<String, TypeInContext>> variablesInContext = symbolManager.currentContext().getVariables().entrySet();
+        final Set<Entry<String, VariableInfo>> variablesInContext = symbolManager.currentContext().getVariables().entrySet();
         int i = 0;
         for (final var variableNameAndType : variablesInContext) {
             final String varName = variableNameAndType.getKey();
@@ -970,7 +1050,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                 continue;
             }
             final var varType = variableNameAndType.getValue();
-            declareVariable(symbolManager.typeInContext(varType.type.addOptionality()), varName, groupingVarsCtx.get(i));
+            declareVariable(symbolManager.typeInContext(varType.type().type.addOptionality()), varName, groupingVarsCtx.get(i));
             i++;
         }
         return null;
@@ -1344,13 +1424,14 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     public TypeInContext visitVarRef(final VarRefContext ctx)
     {
         final String variableName = ctx.qname().getText();
-        final TypeInContext variableType = symbolManager.getVariable(variableName);
+        final VariableInfo variable = symbolManager.getVariable(variableName);
+        final TypeInContext variableType = variable.type();
         if (variableType == null) {
             error(ctx.qname(), ErrorType.VAR_REF__UNDECLARED, List.of(variableName));
             return symbolManager.typeInContext(zeroOrMoreItems);
         } else {
             for (final var l : listeners) {
-                l.onVariableReference(ctx, variableType);
+                l.onVariableReference(ctx, variable);
             }
             return variableType;
         }

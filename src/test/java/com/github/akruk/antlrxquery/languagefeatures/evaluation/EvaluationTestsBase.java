@@ -40,7 +40,7 @@ public class EvaluationTestsBase {
 
     }
 
-    public boolean deepEquals(XQueryValue sequence1, XQueryValue sequence2) {
+    public boolean deepEquals(final XQueryValue sequence1, final XQueryValue sequence2) {
         if (sequence1 == sequence2) {
             return true;
         }
@@ -49,16 +49,16 @@ public class EvaluationTestsBase {
             return false;
         }
 
-        List<XQueryValue> seq1 = atomizer.atomize(sequence1);
-        List<XQueryValue> seq2 = atomizer.atomize(sequence2);
+        final List<XQueryValue> seq1 = atomizer.atomize(sequence1);
+        final List<XQueryValue> seq2 = atomizer.atomize(sequence2);
 
         if (seq1.size() != seq2.size()) {
             return false;
         }
 
         for (int i = 0; i < seq1.size(); i++) {
-            XQueryValue element1 = seq1.get(i);
-            XQueryValue element2 = seq2.get(i);
+            final XQueryValue element1 = seq1.get(i);
+            final XQueryValue element2 = seq2.get(i);
 
             if (!valueOperator.valueEquals(element1, element2).booleanValue) {
                 return false;
@@ -68,30 +68,30 @@ public class EvaluationTestsBase {
         return true;
     }
 
-    public void assertResult(String xquery, String result) {
-        var value = XQuery.evaluateWithMockRoot(null, xquery, null);
+    public void assertResult(final String xquery, final String result) {
+        final var value = XQuery.evaluateWithMockRoot(null, xquery, null, null);
         assertNotNull(value);
         assertEquals(result, value.stringValue);
     }
 
-    public void assertResult(String xquery, BigDecimal result) {
-        var value = XQuery.evaluateWithMockRoot(null, xquery, null);
+    public void assertResult(final String xquery, final BigDecimal result) {
+        final var value = XQuery.evaluateWithMockRoot(null, xquery, null, null);
         assertNotNull(value);
         assertTrue(result.compareTo(value.numericValue) == 0);
     }
 
-    public void assertResult(String xquery, List<XQueryValue> result) {
-        XQueryValue value = XQuery.evaluateWithMockRoot(null, xquery, null);
+    public void assertResult(final String xquery, final List<XQueryValue> result) {
+        final XQueryValue value = XQuery.evaluateWithMockRoot(null, xquery, null, null);
         assertNotNull(value);
         assertEquals(result.size(), value.size);
         for (int i = 0; i < result.size(); i++) {
-            var expected = result.get(i);
-            var received = value.sequence.get(i);
+            final var expected = result.get(i);
+            final var received = value.sequence.get(i);
             assertTrue(valueOperator.valueEquals(expected, received).booleanValue);
         }
     }
 
-    public void assertResult(XQueryValue value, XQueryValue result) {
+    public void assertResult(final XQueryValue value, final XQueryValue result) {
         assertNotNull(value);
         assertFalse(value.isError, () -> "Value is error: " + value.error.getDescription());
         if (result.size != 1)
@@ -102,13 +102,13 @@ public class EvaluationTestsBase {
             assertEquals(result, value);
     }
 
-    public void assertResult(String xquery, XQueryValue result) {
-        XQueryValue value = XQuery.evaluateWithMockRoot(null, xquery, null);
+    public void assertResult(final String xquery, final XQueryValue result) {
+        final XQueryValue value = XQuery.evaluateWithMockRoot(null, xquery, null, null);
         assertResult(value, result);
     }
 
-    public void assertError(String xquery, XQueryValue result) {
-        XQueryValue value = XQuery.evaluateWithMockRoot(null, xquery, null);
+    public void assertError(final String xquery, final XQueryValue result) {
+        final XQueryValue value = XQuery.evaluateWithMockRoot(null, xquery, null, null);
         assertNotNull(value);
         assertTrue(result.error == value.error);
     }
@@ -119,13 +119,24 @@ public class EvaluationTestsBase {
      * Generates grammar and parser/lexer classes in a dedicated directory structure.
      * Each grammar gets its own folder under a common temp directory.
      */
-    public XQueryValue executeDynamicGrammarQuery(String grammarName,
-                                                  String grammarString,
-                                                  String startRuleName,
-                                                  String textualTree,
-                                                  String xquery) throws Exception
+    public XQueryValue executeDynamicGrammarQuery(
+        final String grammarName,
+        final String grammarString,
+        final String startRuleName,
+        final String textualTree,
+        final String xquery,
+        final String uri
+        )
+        throws Exception
     {
-        var valueParserAndTree = executeDynamicGrammarQueryWithTree(grammarName, grammarString, startRuleName, textualTree, xquery);
+        final var valueParserAndTree = executeDynamicGrammarQueryWithTree(
+            grammarName,
+            grammarString,
+            startRuleName,
+            textualTree,
+            xquery,
+            uri
+            );
         return valueParserAndTree.value;
     }
 
@@ -135,64 +146,66 @@ public class EvaluationTestsBase {
      * Each grammar gets its own folder under a common temp directory.
      */
     public ValueParserAndTree executeDynamicGrammarQueryWithTree(
-        String grammarName,
-        String grammarString,
-        String startRuleName,
-        String textualTree,
-        String xquery)
-    throws Exception
+        final String grammarName,
+        final String grammarString,
+        final String startingRuleName,
+        final String textualTree,
+        final String xquery,
+        final String uri
+        )
+        throws Exception
     {
         // Create a dedicated temp directory for this grammar
-        Path baseTmpDir = Files.createTempDirectory("antlr-dyn-grammars");
-        Path grammarDir = baseTmpDir.resolve(grammarName);
+        final Path baseTmpDir = Files.createTempDirectory("antlr-dyn-grammars");
+        final Path grammarDir = baseTmpDir.resolve(grammarName);
         Files.createDirectories(grammarDir);
 
         // Save grammar file
-        Path grammarFile = grammarDir.resolve(grammarName + ".g4");
+        final Path grammarFile = grammarDir.resolve(grammarName + ".g4");
         Files.writeString(grammarFile, grammarString);
 
         // Generate sources into grammarDir/src
-        Path sourceDir = grammarDir.resolve("src");
+        final Path sourceDir = grammarDir.resolve("src");
         Files.createDirectories(sourceDir);
 
-        Tool antlrTool = new Tool(new String[] {
+        final Tool antlrTool = new Tool(new String[] {
             grammarFile.toString(), "-visitor", "-no-listener", "-o", sourceDir.toString()
         });
         antlrTool.processGrammarsOnCommandLine();
 
         // Compile generated Java sources into grammarDir/classes
-        Path outputDir = grammarDir.resolve("classes");
+        final Path outputDir = grammarDir.resolve("classes");
         Files.createDirectories(outputDir);
 
-        List<Path> javaFiles = Files.walk(sourceDir)
+        final List<Path> javaFiles = Files.walk(sourceDir)
             .filter(p -> p.toString().endsWith(".java"))
             .toList();
-        javax.tools.JavaCompiler compiler = javax.tools.ToolProvider.getSystemJavaCompiler();
-        List<String> compileArgs = new ArrayList<>();
+        final javax.tools.JavaCompiler compiler = javax.tools.ToolProvider.getSystemJavaCompiler();
+        final List<String> compileArgs = new ArrayList<>();
         compileArgs.add("-d");
         compileArgs.add(outputDir.toString());
-        for (Path javaFile : javaFiles) {
+        for (final Path javaFile : javaFiles) {
             compileArgs.add(javaFile.toString());
         }
         compiler.run(null, null, null, compileArgs.toArray(new String[0]));
 
         // Load classes using URLClassLoader
-        java.net.URLClassLoader classLoader = java.net.URLClassLoader
+        final java.net.URLClassLoader classLoader = java.net.URLClassLoader
             .newInstance(new java.net.URL[] { outputDir.toUri().toURL() });
 
-        Class<?> lexerClass = classLoader.loadClass(grammarName + "Lexer");
-        Class<?> parserClass = classLoader.loadClass(grammarName + "Parser");
+        final Class<?> lexerClass = classLoader.loadClass(grammarName + "Lexer");
+        final Class<?> parserClass = classLoader.loadClass(grammarName + "Parser");
 
-        CharStream input = CharStreams.fromString(textualTree);
-        Lexer lexer = (Lexer) lexerClass.getConstructor(CharStream.class).newInstance(input);
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        Parser parser = (Parser) parserClass.getConstructor(TokenStream.class).newInstance(tokens);
+        final CharStream input = CharStreams.fromString(textualTree);
+        final Lexer lexer = (Lexer) lexerClass.getConstructor(CharStream.class).newInstance(input);
+        final CommonTokenStream tokens = new CommonTokenStream(lexer);
+        final Parser parser = (Parser) parserClass.getConstructor(TokenStream.class).newInstance(tokens);
 
-        Method startRule = parser.getClass().getMethod(startRuleName);
-        ParseTree tree = (ParseTree) startRule.invoke(parser);
+        final Method startRule = parser.getClass().getMethod(startingRuleName);
+        final ParseTree tree = (ParseTree) startRule.invoke(parser);
 
 
-        var value = XQuery.evaluateWithMockRoot(tree, xquery, parser);
+        final var value = XQuery.evaluateWithMockRoot(tree, xquery, uri, parser);
         assertNotNull(value);
         return new ValueParserAndTree(value, parser, tree);
     }
@@ -200,38 +213,74 @@ public class EvaluationTestsBase {
 
 
 
-    public void assertDynamicGrammarQuery(String grammarName, String grammarString, String startRuleName, String textualTree, String xquery, XQueryValue expected) throws Exception {
-        var value = executeDynamicGrammarQuery(grammarName, grammarString, startRuleName, textualTree, xquery);
-        assertNotNull(value);;
+    public void assertDynamicGrammarQuery(
+        final String grammarName,
+        final String grammarString,
+        final String startRuleName,
+        final String textualTree,
+        final String xquery,
+        final String uri,
+        final XQueryValue expected
+        )
+        throws Exception
+    {
+        final var value = executeDynamicGrammarQuery(
+            grammarName,
+            grammarString,
+            startRuleName,
+            textualTree,
+            xquery,
+            uri
+            );
+        assertNotNull(value);
         assertResult(value, expected);
     }
 
     public void assertDynamicGrammarQuery(
-        String grammarName,
-        Path grammar,
-        String startRuleName,
-        String textualTree,
-        String xquery,
-        XQueryValue expected)
+        final String grammarName,
+        final Path grammar,
+        final String startRuleName,
+        final String textualTree,
+        final String xquery,
+        final String uri,
+        final XQueryValue expected
+        )
             throws Exception
     {
-        var value = executeDynamicGrammarQuery(grammarName, Files.readString(grammar), startRuleName, textualTree, xquery);
+        final var value = executeDynamicGrammarQuery(
+            grammarName,
+            Files.readString(grammar),
+            startRuleName,
+            textualTree,
+            xquery,
+            uri
+            );
         assertNotNull(value);;
         assertResult(value, expected);
     }
 
 
-    public void assertSameResultsAsAntlrXPath(String grammarname,
-                                                String grammar,
-                                                String startingRule,
-                                                String textualTree,
-                                                String xquery)
+    public void assertSameResultsAsAntlrXPath(
+        final String grammarname,
+        final String grammar,
+        final String startingRuleName,
+        final String textualTree,
+        final String xquery,
+        final String uri
+        )
         throws Exception
     {
-        ValueParserAndTree results = executeDynamicGrammarQueryWithTree(grammarname, grammar, startingRule, textualTree, xquery);
-        ParseTree[] nodes = XPath.findAll(results.tree(), xquery, results.parser())
+        final ValueParserAndTree results = executeDynamicGrammarQueryWithTree(
+            grammarname,
+            grammar,
+            startingRuleName,
+            textualTree,
+            xquery,
+            uri
+            );
+        final ParseTree[] nodes = XPath.findAll(results.tree(), xquery, results.parser())
                 .toArray(ParseTree[]::new);
-        ParseTree[] xqueryNodes = results.value().sequence.stream().map(val -> val.node)
+        final ParseTree[] xqueryNodes = results.value().sequence.stream().map(val -> val.node)
                 .toArray(ParseTree[]::new);
         assertArrayEquals(nodes, xqueryNodes);
     }

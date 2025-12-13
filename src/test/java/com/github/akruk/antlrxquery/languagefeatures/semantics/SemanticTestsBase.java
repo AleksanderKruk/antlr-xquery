@@ -67,6 +67,7 @@ public class SemanticTestsBase {
                 new ModuleManager(Set.of()),
                 new GrammarManager(Set.of()),
                 typeFactory.anyNode(),
+                "",
                 Map.of()
                 );
         final var lastVisitedType = analyzer.visit(xqueryTree);

@@ -4,6 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
+import org.eclipse.lsp4j.Location;
+
+import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameContext;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticScope.EntypingResult;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticScope.VariableInfo;
 import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType.EffectiveBooleanValueType;
@@ -51,16 +56,25 @@ public class XQuerySemanticContextManager {
 
     /**
      * Either creates variable with required type
-     * or overrides existing variable in the current scope
+     * or overrides existing variable
      * @param variableName
+     * @param variableDefinition
      * @param assignedType
-     * @return true if variable was added
+     * @return EntypingResult {
+     *      VariableInfo? oldVariable;
+     *      VariableInfo  newVariable;
+     * }
      */
-    public boolean entypeVariable(String variableName, TypeInContext assignedType) {
-        return currentContext().entypeVariable(variableName, assignedType);
+    public EntypingResult entypeVariable(
+        String variableName,
+        VarNameContext locationCtx,
+        Location location,
+        TypeInContext assignedType)
+    {
+        return currentContext().entypeVariable(variableName, locationCtx, location, assignedType);
     }
 
-    public TypeInContext getVariable(String variableName) {
+    public VariableInfo getVariable(String variableName) {
         return currentContext().getVariable(variableName);
     }
 

@@ -123,7 +123,7 @@ public class XQueryRunner {
             final XQueryTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
             final Path cwd = Path.of(System.getProperty("user.dir"));
             modulePaths.add(cwd);
-            var contextManager = new XQuerySemanticContextManager(typeFactory);
+            final var contextManager = new XQuerySemanticContextManager(typeFactory);
             final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
                     parserAndTree.parser,
                     typeFactory,
@@ -195,7 +195,7 @@ public class XQueryRunner {
             final XQueryValueFactory valueFactory = new XQueryMemoizedValueFactory(typeFactory);
             final ModuleManager manager = new ModuleManager(modulePaths);
             final GrammarManager grammarManager = new GrammarManager(grammarPaths);
-            XQuerySemanticContextManager contextManager = new XQuerySemanticContextManager(typeFactory);
+            final XQuerySemanticContextManager contextManager = new XQuerySemanticContextManager(typeFactory);
             final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
                 parserAndTree.parser,
                 typeFactory,

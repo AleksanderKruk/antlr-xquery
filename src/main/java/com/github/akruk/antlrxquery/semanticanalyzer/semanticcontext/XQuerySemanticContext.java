@@ -4,6 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.lsp4j.Location;
+
+import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameContext;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticScope.EntypingResult;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticScope.VariableInfo;
 import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType.EffectiveBooleanValueType;
@@ -35,7 +40,7 @@ public class XQuerySemanticContext {
         return scopes.getLast();
     }
 
-    public TypeInContext getVariable(String variableName) {
+    public VariableInfo getVariable(String variableName) {
         return currentScope().getVariable(variableName);
     }
 
@@ -50,12 +55,22 @@ public class XQuerySemanticContext {
         }
     }
 
-    public Map<String, TypeInContext> getVariables() {
+    public Map<String, VariableInfo> getVariables() {
         return currentScope().variables;
     }
 
-    public boolean entypeVariable(String variableName, TypeInContext assignedType) {
-        return currentScope().entypeVariable(variableName, assignedType);
+    public EntypingResult entypeVariable(
+        final String variableName,
+        final VarNameContext locationCtx,
+        final Location location,
+        final TypeInContext assignedType)
+    {
+        return currentScope().entypeVariable(
+            variableName,
+            locationCtx,
+            location,
+            assignedType
+            );
     }
 
     public TypeInContext typeInContext(XQuerySequenceType type) {

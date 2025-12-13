@@ -20,7 +20,7 @@ public class Accessors extends EvaluationTestsBase {
         String textualTree = "x";
         String xquery = "fn:node-name(/x)";
         XQueryValue expected = valueFactory.string("x");
-        assertDynamicGrammarQuery(grammarName, grammar, startRuleName, textualTree, xquery, expected);
+        assertDynamicGrammarQuery(grammarName, grammar, startRuleName, textualTree, xquery, "", expected);
     }
 
     @Test
@@ -35,7 +35,7 @@ public class Accessors extends EvaluationTestsBase {
         String textualTree = "x";
         String xquery = "fn:node-name(())";
         XQueryValue expected = valueFactory.string("");
-        assertDynamicGrammarQuery(grammarName, grammar, startRuleName, textualTree, xquery, expected);
+        assertDynamicGrammarQuery(grammarName, grammar, startRuleName, textualTree, xquery, "", expected);
     }
 
     @Test

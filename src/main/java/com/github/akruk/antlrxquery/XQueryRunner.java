@@ -12,6 +12,7 @@ import com.github.akruk.antlrxquery.evaluator.XQueryEvaluatorVisitor;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMemoizedValueFactory;
+import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.semanticanalyzer.GrammarManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
@@ -133,6 +134,7 @@ public class XQueryRunner {
                     new ModuleManager(modulePaths),
                     new GrammarManager(modulePaths),
                     typeFactory.anyNode(),
+                    config.queryUri,
                     Map.of()
                     );
             analyzer.visit(xqueryTree);
@@ -151,9 +153,11 @@ public class XQueryRunner {
                     lexerClass,
                     parserClass,
                     startingRule,
+                    new QualifiedName(null, startingRule),
                     fileContent,
                     modulePaths,
-                    modulePaths);
+                    modulePaths
+                    );
                 outputStream.println("File: " + file);
                 if (results == null) {
                     errorStream.print("<null>");
@@ -178,6 +182,7 @@ public class XQueryRunner {
             final Class<?> lexerClass,
             final Class<?> parserClass,
             final String startingRule,
+            final QualifiedName startingRuleQname,
             final String input,
             final Set<Path> modulePaths,
             final Set<Path> grammarPaths,
@@ -203,7 +208,8 @@ public class XQueryRunner {
                 null,
                 manager,
                 grammarManager,
-                typeFactory.anyNode(),
+                typeFactory.element(Set.of(startingRuleQname)),
+                null,
                 Map.of()
                 );
             final XQueryEvaluatorVisitor evaluator = new XQueryEvaluatorVisitor(
@@ -226,12 +232,23 @@ public class XQueryRunner {
             final Class<?> lexerClass,
             final Class<?> parserClass,
             final String startingRule,
+            final QualifiedName startingRuleQName,
             final String input,
             final Set<Path> modulePaths,
             final Set<Path> grammarPaths
             )
     {
-        return executeQuery(query, lexerClass, parserClass, startingRule, input, modulePaths, grammarPaths, Map.of());
+        return executeQuery(
+            query,
+            lexerClass,
+            parserClass,
+            startingRule,
+            startingRuleQName,
+            input,
+            modulePaths,
+            grammarPaths,
+            Map.of()
+            );
     }
 
     record ParserAndTree(Parser parser, ParseTree tree) {
@@ -375,6 +392,7 @@ public class XQueryRunner {
         String lexerName,
         String parserName,
         String query,
+        String queryUri,
         InputStream inputStream,
         PrintStream outputStream,
         PrintStream errorStream,
@@ -581,11 +599,14 @@ private static ValidationResult validateStartingRule(final Map<String, List<Stri
         // Handle query extraction
         final Set<Path> modulePaths = new HashSet<>();
         String query;
+        String queryUri;
         if (args.containsKey(QUERY_ARG)) {
             query = String.join(" ", args.get(QUERY_ARG));
+            queryUri = null;
         } else {
             final String queryFile = args.get(QUERY_FILE_ARG).get(0);
             final Path queryFilePath = Path.of(queryFile);
+            queryUri = queryFile;
             query = Files.readString(queryFilePath);
             final Path parent = queryFilePath.getParent();
             if (parent != null)
@@ -615,10 +636,12 @@ private static ValidationResult validateStartingRule(final Map<String, List<Stri
             lexerName,
             parserName,
             query,
+            queryUri,
             inputStream,
             outputStream,
             errorStream,
-            modulePaths);
+            modulePaths
+            );
     }
     record ValidationResult(InputStatus status, String message, ExtractionResult extractedArgs) {
         ValidationResult(final InputStatus status, final String message) {

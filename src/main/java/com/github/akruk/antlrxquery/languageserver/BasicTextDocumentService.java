@@ -91,6 +91,7 @@ import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer.AnalysisListener;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
+import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticScope.VariableInfo;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.SemanticFunctionSets;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.ArgumentSpecification;
@@ -237,23 +238,25 @@ public class BasicTextDocumentService implements TextDocumentService {
                     null,
                     new ModuleManager(paths),
                     new GrammarManager(paths),
-                    typeFactory.anyNode());
+                    typeFactory.anyNode(),
+                    "",
+                    Map.of()
+            );
 
             final Map<VarRefContext, TypeInContext> varRefsMappedToTypes_ = new HashMap<>();
-            // final Map<VarRefContext, VarNameContext> varRefsMappedToDeclarations = new HashMap<>();
+            final Map<VarRefContext, VarNameContext> varRefsMappedToDeclarations = new HashMap<>();
             final Map<VarNameContext, TypeInContext> varNamesMappedToTypes_ = new HashMap<>();
-            // final TreeEvaluator defGetter = XQuery.compile(  "./preceding::varName[varRef=>string() = ''][last()]", parser);
+            // final TreeEvaluator defGetter = XQuery.compile("./preceding::varName[string() = $variableNameWithDollar][last()]", parser);
             analyzer.addListener(new AnalysisListener() {
                 @Override
-                public void onVariableDeclaration(final VarNameContext varName, final TypeInContext type) {
-                    varNamesMappedToTypes_.put(varName, type);
+                public void onVariableDeclaration(VariableInfo variableInfo) {
+                    varNamesMappedToTypes_.put(variableInfo.definition(), variableInfo.type());
                 }
 
                 @Override
-                public void onVariableReference(final VarRefContext varRef, final TypeInContext type) {
-                    varRefsMappedToTypes_.put(varRef, type);
-                    // final XQueryValue declaration = defGetter.evaluate(varRef);
-                    // varRefsMappedToDeclarations.put(varRef, (VarNameContext) declaration.node);
+                public void onVariableReference(VarRefContext varRef, VariableInfo variableInfo) {
+                    varRefsMappedToTypes_.put(varRef, variableInfo.type());
+                    varRefsMappedToDeclarations.put(varRef, variableInfo.definition());
                 }
             });
             try {
@@ -292,7 +295,12 @@ public class BasicTextDocumentService implements TextDocumentService {
             }
 
             {
-                final var declarations = XQuery.evaluateWithMockRoot(tree, "//varNameAndType", _parser).sequence;
+                final var declarations = XQuery.evaluateWithMockRoot(
+                    tree,
+                    "//varNameAndType",
+                    "",
+                    _parser)
+                    .sequence;
                 final List<VarNameAndTypeContext> declarationContexts = declarations.stream()
                         .map(x -> (VarNameAndTypeContext) x.node).toList();
 
@@ -300,8 +308,12 @@ public class BasicTextDocumentService implements TextDocumentService {
                         .filter(x -> x.typeDeclaration() == null).map(x -> x.varName());
                 variableDeclarations.put(uri, declarationContexts);
 
-                final List<XQueryValue> windowVars = XQuery.evaluateWithMockRoot(tree, "//windowVars//varName",
-                        _parser).sequence;
+                final List<XQueryValue> windowVars = XQuery.evaluateWithMockRoot(
+                    tree,
+                    "//windowVars//varName",
+                    "",
+                    _parser)
+                    .sequence;
                 final var windowVarVarRefs = windowVars.stream().map(t -> (VarNameContext) t.node);
                 final List<VarNameContext> combinedVarRefs = Stream.of(declarationWithoutTypeContexts, windowVarVarRefs)
                         .flatMap((final Stream<VarNameContext> x) -> x).toList();
@@ -309,38 +321,56 @@ public class BasicTextDocumentService implements TextDocumentService {
             }
 
             {
-                final var typeNames = XQuery.evaluateWithMockRoot(tree, "//typeName", _parser).sequence;
+                final var typeNames = XQuery.evaluateWithMockRoot(
+                    tree,
+                    "//typeName",
+                    "",
+                    _parser)
+                    .sequence;
                 final List<TypeNameContext> typeNameContexts = typeNames.stream().map(x -> (TypeNameContext) x.node)
                         .toList();
                 namedTypes.put(uri, typeNameContexts);
             }
 
             {
-                final List<XQueryValue> recordDecls = XQuery.evaluateWithMockRoot(tree, "//namedRecordTypeDecl",
-                        _parser).sequence;
+                final List<XQueryValue> recordDecls = XQuery.evaluateWithMockRoot(
+                    tree,
+                    "//namedRecordTypeDecl",
+                    null,
+                    _parser)
+                    .sequence;
                 final List<NamedRecordTypeDeclContext> rdecls = recordDecls.stream()
                         .map(v -> (NamedRecordTypeDeclContext) v.node).toList();
                 recordDeclarations.put(uri, rdecls);
             }
 
             {
-                final List<XQueryValue> variableRefs = XQuery.evaluateWithMockRoot(tree, "//varRef", _parser).sequence;
+                final List<XQueryValue> variableRefs = XQuery.evaluateWithMockRoot(tree, "//varRef", null, _parser).sequence;
                 variableReferences.put(uri, variableRefs.stream().map(v -> (VarRefContext) v.node).toList());
             }
 
             {
-                final List<XQueryValue> fNames = XQuery.evaluateWithMockRoot(tree, "//functionName", _parser).sequence;
+                final List<XQueryValue> fNames = XQuery.evaluateWithMockRoot(
+                    tree,
+                    "//functionName",
+                    "",
+                    _parser)
+                    .sequence;
                 functionNames.put(uri, fNames.stream().map(v -> (FunctionNameContext) v.node).toList());
             }
 
             {
-                final List<XQueryValue> namedRefs = XQuery.evaluateWithMockRoot(tree, "//namedFunctionRef",
-                        _parser).sequence;
+                final List<XQueryValue> namedRefs = XQuery.evaluateWithMockRoot(
+                    tree,
+                    "//namedFunctionRef",
+                    "",
+                    _parser)
+                    .sequence;
                 namedFunctionRefs.put(uri, namedRefs.stream().map(v -> (NamedFunctionRefContext) v.node).toList());
             }
 
             {
-                final List<XQueryValue> fDecls = XQuery.evaluateWithMockRoot(tree, "//functionDecl", _parser).sequence;
+                final List<XQueryValue> fDecls = XQuery.evaluateWithMockRoot(tree, "//functionDecl", null, _parser).sequence;
                 functionDecls.put(uri, fDecls.stream().map(t -> (FunctionDeclContext) t.node).toList());
             }
 
@@ -357,17 +387,23 @@ public class BasicTextDocumentService implements TextDocumentService {
     final AntlrXqueryParser _parser = new AntlrXqueryParser(_tokens);
     private final NamespaceResolver resolver;
 
-    private final TreeEvaluator constructors = XQuery.compile("//constructorChars", _parser);
+    private final TreeEvaluator constructors = XQuery.compile("//constructorChars", null, _parser);
     private final TreeEvaluator constructorBoundaries = XQuery.compile(
-        "//(STRING_CONSTRUCTION_START|STRING_CONSTRUCTION_END)", _parser);
-    private final TreeEvaluator properties = XQuery.compile("//extendedFieldDeclaration//fieldDeclaration/fieldName",
-            _parser);
-    private final TreeEvaluator annotations = XQuery.compile("//annotation", _parser);
+        "//(STRING_CONSTRUCTION_START|STRING_CONSTRUCTION_END)",
+        null,
+        _parser);
+    private final TreeEvaluator properties = XQuery.compile(
+        "//extendedFieldDeclaration//fieldDeclaration/fieldName",
+        null,
+        _parser);
+    private final TreeEvaluator annotations = XQuery.compile("//annotation", null, _parser);
     private final TreeEvaluator typeValuesEvaluator = XQuery.compile("""
                 //(sequenceType|castTarget)
                 | //itemTypeDecl/(qname|itemType)
                 | //namedRecordTypeDecl/qname
-            """, _parser);
+            """,
+            null,
+            _parser);
 
     record SemanticToken(int line, int charPos, int length, int typeIndex, int modifierBitmask) {
     }
@@ -1052,8 +1088,9 @@ public class BasicTextDocumentService implements TextDocumentService {
     }
 
     @Override
-    public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(
-            final DefinitionParams params) {
+    public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
+        definition(final DefinitionParams params)
+    {
         final var position = params.getPosition();
         final var document = params.getTextDocument().getUri();
         final var varRefs = variableReferences.getOrDefault(document, List.of());
@@ -1092,12 +1129,22 @@ public class BasicTextDocumentService implements TextDocumentService {
         return CompletableFuture.completedFuture(Either.forLeft(List.of()));
     }
 
-    private CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> handleVariableReferenceDefinition(
-            final String document, final VarRefContext foundVarRef) {
+    private
+    CompletableFuture<
+        Either<
+            List<? extends Location>,
+            List<? extends LocationLink>
+        >
+    >
+        handleVariableReferenceDefinition(
+            final String document,
+            final VarRefContext foundVarRef
+        )
+    {
         final String varname = foundVarRef.getText();
         final int foundOffset = foundVarRef.getStart().getStartIndex();
-        VarNameAndTypeContext previousDecl = null;
 
+        VarNameAndTypeContext previousDecl = null;
         for (final VarNameAndTypeContext vdef : variableDeclarations.getOrDefault(document, List.of())) {
             final int declOffset = vdef.varName().getStart().getStartIndex();
             if (declOffset > foundOffset) {
@@ -1204,7 +1251,7 @@ public class BasicTextDocumentService implements TextDocumentService {
                     | arrayConstructor
                     | stringConstructor
                     | unaryLookup)
-            """, _parser);
+            """, "", _parser);
 
     @Override
     public CompletableFuture<List<Either<Command, CodeAction>>> codeAction(final CodeActionParams params) {
@@ -1229,8 +1276,8 @@ public class BasicTextDocumentService implements TextDocumentService {
     }
 
     final TreeEvaluator innermostFlworQuery = XQuery
-            .compile("/ancestor::(initialClause|intermediateClause|returnClause)", _parser);
-    final TreeEvaluator outermostExpr = XQuery.compile("/ancestor::expr", _parser);
+            .compile("/ancestor::(initialClause|intermediateClause|returnClause)", "", _parser);
+    final TreeEvaluator outermostExpr = XQuery.compile("/ancestor::expr", "",  _parser);
     final String x = """
                 let $expr := .
                 let $dependentVariables := .//varRef except .//varNameAndType/varRef

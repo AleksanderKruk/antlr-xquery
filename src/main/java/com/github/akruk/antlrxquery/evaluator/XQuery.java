@@ -33,15 +33,17 @@ public final class XQuery {
     public static XQueryValue evaluateWithMockRoot(
         final ParseTree tree,
         final String xquery,
+        final String uri,
         final Parser parser
         )
     {
-        return evaluateWithMockRoot(tree, xquery, parser, Map.of());
+        return evaluateWithMockRoot(tree, xquery, uri, parser, Map.of());
     }
 
     public static XQueryValue evaluateWithMockRoot(
         final ParseTree tree,
         final String xquery,
+        final String uri,
         final Parser parser,
         final Map<String, XQueryValue> vars)
     {
@@ -55,6 +57,7 @@ public final class XQuery {
         final XQueryValue evaluated = evaluateWithoutMockRoot(
             root,
             xquery,
+            uri,
             parser,
             vars);
         if (tree != null) {
@@ -68,6 +71,7 @@ public final class XQuery {
     public static XQueryValue evaluateWithoutMockRoot(
         final ParseTree tree,
         final String xquery,
+        final String uri,
         final Parser parser,
         final Map<String,XQueryValue> vars
         )
@@ -92,6 +96,7 @@ public final class XQuery {
             moduleManager,
             grammarManager,
             typeFactory.anyNode(),
+            uri,
             varTypes
             );
         final XQueryEvaluatorVisitor visitor = new XQueryEvaluatorVisitor(
@@ -104,20 +109,22 @@ public final class XQuery {
     public static XQueryValue evaluate(
         final ParseTree tree,
         final String xquery,
+        final String uri,
         final Parser parser
         )
     {
-        return evaluate(tree, xquery, parser, Map.of());
+        return evaluate(tree, xquery, uri, parser, Map.of());
     }
 
     public static XQueryValue evaluate(
         final ParseTree tree,
         final String xquery,
+        final String baseUri,
         final Parser parser,
         final Map<String, XQueryValue> vars
         )
     {
-        return evaluateWithoutMockRoot(tree, xquery, parser, vars);
+        return evaluateWithoutMockRoot(tree, xquery, baseUri, parser, vars);
     }
 
     public interface TreeEvaluator {
@@ -129,6 +136,7 @@ public final class XQuery {
 
     public static TreeEvaluator compile(
         final String xquery,
+        final String uri,
         final Parser parser
         )
     {
@@ -151,6 +159,7 @@ public final class XQuery {
             moduleManager,
             grammarManager,
             typeFactory.anyNode(),
+            uri,
             Map.of()
             );
 

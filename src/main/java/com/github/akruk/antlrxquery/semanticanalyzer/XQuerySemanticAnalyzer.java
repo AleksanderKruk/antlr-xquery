@@ -227,7 +227,33 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final var p = ctx.prolog();
         final String moduleNamespace = ctx.moduleDecl().qname().getText();
         registerUniqueNamespace(ctx.moduleDecl(), moduleNamespace, ErrorType.NAMESPACE_DECL__NAMESPACE_REDECLARATION);
-        handleDefaultNamespaceDeclarations(p.defaultNamespaceDecl(), "fn", "", moduleNamespace, "", "");
+        final ModuleInfo moduleInfo = new ModuleInfo(moduleNamespace, ctx.moduleDecl());
+        for (var listener : listeners) {
+            listener.onModuleDeclaration(moduleInfo);
+        }
+        handleDefaultNamespaceDeclarations(
+            p.defaultNamespaceDecl(),
+            moduleNamespace,
+            "",
+            moduleNamespace,
+            "",
+            "");
+        for (final DefaultNamespaceDeclContext defaultDeclaration : p.defaultNamespaceDecl()) {
+            for (var listener : listeners) {
+                if (defaultDeclaration.qname().getText().startsWith(moduleNamespace)) {
+                    listener.onModuleReference(
+                        defaultDeclaration.qname(),
+                        moduleInfo
+                    );
+                } else {
+                    listener.onNamespaceReference(
+                        defaultDeclaration.qname(),
+                        symbolManager.getNamespace(defaultDeclaration.qname().getText())
+                    );
+                }
+            }
+        }
+
         handleNamespaceDeclarations(p, moduleNamespace);
         final Map<Boolean, List<ImportDeclContext>> groupedByIsGrammarImport =
             p.importDecl()

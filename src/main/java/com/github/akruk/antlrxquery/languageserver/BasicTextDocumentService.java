@@ -271,8 +271,8 @@ public class BasicTextDocumentService implements TextDocumentService {
             final Map<VarRefContext, TypeInContext> varRefsMappedToTypes_ = new HashMap<>();
             final Map<VarRefContext, VarNameContext> varRefsMappedToDeclarations = new HashMap<>();
             final Map<VarNameContext, TypeInContext> varNamesMappedToTypes_ = new HashMap<>();
-            // final Map<ModuleDeclContext, ModuleInfo> moduleDeclarations = new HashMap<>();
-            // final Map<QnameContext, ModuleInfo> moduleReferences = new HashMap<>();
+            final Map<ModuleDeclContext, ModuleInfo> moduleDeclarations = new HashMap<>();
+            final Map<QnameContext, ModuleInfo> moduleReferences = new HashMap<>();
             // final TreeEvaluator defGetter = XQuery.compile("./preceding::varName[string() = $variableNameWithDollar][last()]", parser);
             analyzer.addListener(new AnalysisListener() {
                 @Override
@@ -286,15 +286,15 @@ public class BasicTextDocumentService implements TextDocumentService {
                     varRefsMappedToDeclarations.put(varRef, variableInfo.definition());
                 }
 
-                // @Override
-                // public void onModuleDeclaration(final ModuleInfo moduleInfo) {
-                //     moduleDeclarations.put(moduleInfo.declaration(), moduleInfo);
-                // }
+                @Override
+                public void onModuleDeclaration(final ModuleInfo moduleInfo) {
+                    moduleDeclarations.put(moduleInfo.declaration(), moduleInfo);
+                }
 
-                // @Override
-                // public void onModuleReference(QnameContext reference, ModuleInfo moduleInfo) {
-                //     moduleReferences.put(reference, moduleInfo);
-                // }
+                @Override
+                public void onModuleReference(QnameContext reference, ModuleInfo moduleInfo) {
+                    moduleReferences.put(reference, moduleInfo);
+                }
 
             });
             try {

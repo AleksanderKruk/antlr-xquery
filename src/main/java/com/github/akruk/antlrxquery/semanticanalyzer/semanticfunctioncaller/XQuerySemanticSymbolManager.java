@@ -18,7 +18,7 @@ import org.eclipse.lsp4j.Range;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.FunctionDeclContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.ModuleDeclContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.NamedRecordTypeDeclContext;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.NamespaceDeclContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.QnameContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameContext;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.inputgrammaranalyzer.InputGrammarAnalyzer.QualifiedGrammarAnalysisResult;
@@ -96,7 +96,7 @@ public class XQuerySemanticSymbolManager {
                 final List<XQuerySequenceType> types);
     }
 
-    public static record NamespaceInfo(String name, NamespaceDeclContext declaration) {}
+    public static record NamespaceInfo(String name, QnameContext declaration) {}
     public static record ModuleInfo(String name, ModuleDeclContext declaration) {}
     public static record FunctionInfo(String name, FunctionDeclContext declaration) {}
     public static record RecordInfo(String name, NamedRecordTypeDeclContext declaration) {}
@@ -119,6 +119,8 @@ public class XQuerySemanticSymbolManager {
     private XQuerySemanticAnalyzer analyzer;
 
     private final Map<String, Map<String, List<FunctionSpecification>>> functionNamespaces;
+
+    private final Map<String, NamespaceInfo> namespaces;
 
     private final Map<String, QualifiedGrammarAnalysisResult> grammars;
     private final XQuerySemanticContextManager contextManager;
@@ -157,7 +159,8 @@ public class XQuerySemanticSymbolManager {
     public XQuerySemanticSymbolManager(
         final XQueryTypeFactory typeFactory,
         final XQuerySemanticContextManager contextManager,
-        final List<List<SimplifiedFunctionSpecification>> functionSets)
+        final List<List<SimplifiedFunctionSpecification>> functionSets
+        )
     {
         this.typeFactory = typeFactory;
         this.functionNamespaces = new HashMap<>(10);
@@ -178,6 +181,7 @@ public class XQuerySemanticSymbolManager {
         }
         this.grammars = new HashMap<>();
         this.functionDeclarations = new HashMap<>();
+        this.namespaces = new HashMap<>();
         this.contextManager = contextManager;
         this.zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
     }
@@ -206,7 +210,8 @@ public class XQuerySemanticSymbolManager {
         final String variableName,
         final VarNameContext locationCtx,
         final Location location,
-        final TypeInContext assignedType)
+        final TypeInContext assignedType
+        )
     {
         return contextManager.entypeVariable(
             variableName,
@@ -253,13 +258,13 @@ public class XQuerySemanticSymbolManager {
     }
 
     public AnalysisResult call(
-            final ParserRuleContext location,
-            final QualifiedName qName,
-            final List<TypeInContext> positionalargs,
-            final Map<String, TypeInContext> keywordArgs,
-            final XQueryVisitingSemanticContext context,
-            final XQuerySemanticContext typeContext
-            )
+        final ParserRuleContext location,
+        final QualifiedName qName,
+        final List<TypeInContext> positionalargs,
+        final Map<String, TypeInContext> keywordArgs,
+        final XQueryVisitingSemanticContext context,
+        final XQuerySemanticContext typeContext
+        )
     {
         final var anyItems = typeContext.currentScope().typeInContext(zeroOrMoreItems);
         final var namespace = qName.namespace();
@@ -618,6 +623,11 @@ public class XQuerySemanticSymbolManager {
     public QualifiedGrammarAnalysisResult getGrammar(final String grammar) {
         return grammars.get(grammar);
 	}
+
+    public NamespaceInfo getNamespace(final String namespace) {
+        return namespaces.get(namespace);
+	}
+
 
     SpecAndErrors getFunctionSpecification(
         final ParserRuleContext location,

@@ -320,7 +320,7 @@ primaryExpr:
     | unaryLookup
     // | orderedExpr
     // | unorderedExpr
-    // | nodeConstructor
+    | nodeConstructor
     ;
 
 
@@ -865,5 +865,16 @@ paramList
 //     ('`'? (multilineInterpolationChars|multilineInterpolationInterpolation)*  NL?)*
 //     '#`'
 //     ;
+
+
+nodeConstructor:
+    directConstructor
+    // | computedConstructor
+    ;
+
+directConstructor:
+    (TAG_OPEN | ELEMENT_TAG_OPEN) (ELEMENT_CHARS | directConstructor)* (EXIT_ELEMENT_SIMPLE | EXIT_ELEMENT_FULL)
+    // | LT qname
+    ;
 
 

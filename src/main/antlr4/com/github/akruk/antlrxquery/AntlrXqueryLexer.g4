@@ -175,6 +175,7 @@ MINUS: '-';
 ARROW: '=>';
 EQ_OP: '=';
 NE_OP: '!=';
+TAG_OPEN: '<' [\p{Alpha}]([:\p{Alnum}_-]*[\p{Alpha}_])? '>' -> pushMode(INSIDE_ELEMENT);
 LT_OP: '<';
 GT_OP: '>';
 GE_OP: '>=';
@@ -203,6 +204,7 @@ FN: 'fn';
 MEMBER : 'member' ;
 KEY : 'key' ;
 VALUE : 'value' ;
+
 
 
 
@@ -298,4 +300,10 @@ CONSTRUCTOR_CHARS:
 BACKTICK: '`';
 BRACKET: ']';
 
-// mode XML;
+mode INSIDE_ELEMENT;
+
+EXIT_ELEMENT_SIMPLE: '</>' -> popMode;
+EXIT_ELEMENT_FULL: '</' [\p{Alpha}]([:\p{Alnum}_-]*[\p{Alpha}_])? '>' -> popMode;
+ELEMENT_TAG_OPEN: '<' [\p{Alpha}]([:\p{Alnum}_-]*[\p{Alpha}_])? '>' -> pushMode(INSIDE_ELEMENT);
+ELEMENT_INTERPOLATION_START: '{' -> pushMode(DEFAULT_MODE);
+ELEMENT_CHARS: ~[<{]+;

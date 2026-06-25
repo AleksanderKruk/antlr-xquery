@@ -873,13 +873,15 @@ nodeConstructor:
     ;
 
 directConstructor:
-    LT_OP anyName attribute* GT_OP (enclosedExpr | directConstructor | ~(LCURLY | LT_OP | CLOSE_LONG_CONSTRUCTOR)+)* CLOSE_LONG_CONSTRUCTOR anyName GT_OP #longElementConstructor
+    openingTag (enclosedExpr | directConstructor | ~(LCURLY | LT_OP | CLOSE_LONG_CONSTRUCTOR)+)* closingTag #longElementConstructor
     | LT_OP anyName attribute* CLOSE_SHORT_CONSTRUCTOR #shortElementConstructor
     ;
 
-    // (TAG_OPEN | ELEMENT_TAG_OPEN) (ELEMENT_CHARS | directConstructor)* (EXIT_ELEMENT_SIMPLE | EXIT_ELEMENT_FULL)
-    // | LT qname
-    // ;
+openingTag:
+    LT_OP anyName attribute* GT_OP;
+
+closingTag:
+    LT_OP SLASH anyName GT_OP;
 
 attribute:
     anyName EQ_OP (STRING | enclosedExpr)

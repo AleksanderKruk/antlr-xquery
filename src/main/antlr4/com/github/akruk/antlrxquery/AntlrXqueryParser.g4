@@ -873,9 +873,14 @@ nodeConstructor:
     ;
 
 directConstructor:
-    openingTag (enclosedExpr | directConstructor | ~(LCURLY | LT_OP | CLOSE_LONG_CONSTRUCTOR)+)* closingTag #longElementConstructor
+    openingTag (directConstructor* | directConstructorTextContent) closingTag #longElementConstructor
     | LT_OP anyName attribute* CLOSE_SHORT_CONSTRUCTOR #shortElementConstructor
     ;
+
+directConstructorTextContent:
+    (enclosedExpr | ~(LCURLY | LT_OP | CLOSE_LONG_CONSTRUCTOR)+ )+
+    ;
+
 
 openingTag:
     LT_OP anyName attribute* GT_OP;

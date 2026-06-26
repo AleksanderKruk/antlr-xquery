@@ -874,11 +874,10 @@ nodeConstructor:
 
 directConstructor:
     openingTag (directConstructor* | directConstructorTextContent) closingTag #longElementConstructor
-    | LT_OP anyName attribute* CLOSE_SHORT_CONSTRUCTOR #shortElementConstructor
+    | LT_OP anyName attribute* SLASH GT_OP #shortElementConstructor
     ;
-
 directConstructorTextContent:
-    (enclosedExpr | ~(LCURLY | LT_OP | CLOSE_LONG_CONSTRUCTOR)+ )+
+    (enclosedExpr | ~(LCURLY | LT_OP  | GT_OP | RCURLY)+ )+
     ;
 
 
@@ -886,7 +885,9 @@ openingTag:
     LT_OP anyName attribute* GT_OP;
 
 closingTag:
-    LT_OP SLASH anyName GT_OP;
+    LT_OP SLASH anyName? GT_OP
+    ;
+
 
 attribute:
     anyName EQ_OP (STRING | enclosedExpr)

@@ -8,7 +8,7 @@ import org.antlr.v4.runtime.tree.xpath.XPath;
 import com.github.akruk.antlrgrammar.ANTLRv4Lexer;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.ParserRuleSpecContext;
-import com.github.akruk.antlrxquery.evaluator.XQueryEvaluatorVisitor;
+import com.github.akruk.antlrxquery.evaluator.XQueryEvaluator;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMemoizedValueFactory;
@@ -212,7 +212,7 @@ public class XQueryRunner {
                 null,
                 Map.of()
                 );
-            final XQueryEvaluatorVisitor evaluator = new XQueryEvaluatorVisitor(
+            final XQueryEvaluator evaluator = new XQueryEvaluator(
                 parserAndTree.tree,
                 parserAndTree.parser,
                 valueFactory,

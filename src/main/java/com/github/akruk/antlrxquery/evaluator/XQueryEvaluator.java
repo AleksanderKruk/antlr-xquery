@@ -31,7 +31,7 @@ import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.nodegetter.NodeGetter;
 
-public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
+public class XQueryEvaluator extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     private final XQueryValue root;
     private final Parser parser;
     private final XQueryDynamicContextManager contextManager;
@@ -82,7 +82,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     }
 
 
-    public XQueryEvaluatorVisitor(
+    public XQueryEvaluator(
         final ParseTree tree,
         final Parser parser,
         final XQueryValueFactory valueFactory,

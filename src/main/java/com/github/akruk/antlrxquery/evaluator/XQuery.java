@@ -99,7 +99,7 @@ public final class XQuery {
             uri,
             varTypes
             );
-        final XQueryEvaluatorVisitor visitor = new XQueryEvaluatorVisitor(
+        final XQueryEvaluator visitor = new XQueryEvaluator(
             tree, parser, valueFactory, analyzer, typeFactory, moduleManager, vars);
 
         final XQueryValue evaluated = visitor.visit(xqueryTree);
@@ -165,7 +165,7 @@ public final class XQuery {
 
 
         return (tree, variables) -> {
-            final XQueryEvaluatorVisitor visitor = new XQueryEvaluatorVisitor(
+            final XQueryEvaluator visitor = new XQueryEvaluator(
                 tree,
                 parser,
                 valueFactory,

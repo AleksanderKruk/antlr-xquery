@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import com.github.akruk.antlrxquery.evaluator.XQueryEvaluatorVisitor;
+import com.github.akruk.antlrxquery.evaluator.XQueryEvaluator;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 
@@ -12,9 +12,9 @@ public class ValueBooleanOperator {
 
     private final XQueryValueFactory valueFactory;
     private final EffectiveBooleanValue ebv;
-    private final XQueryEvaluatorVisitor evaluator;
+    private final XQueryEvaluator evaluator;
 
-    public ValueBooleanOperator(final XQueryEvaluatorVisitor evaluator, final XQueryValueFactory valueFactory, final EffectiveBooleanValue ebv) {
+    public ValueBooleanOperator(final XQueryEvaluator evaluator, final XQueryValueFactory valueFactory, final EffectiveBooleanValue ebv) {
         this.evaluator = evaluator;
         this.valueFactory = valueFactory;
         this.ebv = ebv;

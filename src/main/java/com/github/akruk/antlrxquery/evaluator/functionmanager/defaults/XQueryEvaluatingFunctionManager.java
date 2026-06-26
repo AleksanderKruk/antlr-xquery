@@ -19,7 +19,7 @@ import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import com.github.akruk.antlrxquery.HelperTrees;
-import com.github.akruk.antlrxquery.evaluator.XQueryEvaluatorVisitor;
+import com.github.akruk.antlrxquery.evaluator.XQueryEvaluator;
 import com.github.akruk.antlrxquery.evaluator.XQueryVisitingContext;
 import com.github.akruk.antlrxquery.evaluator.collations.Collations;
 import com.github.akruk.antlrxquery.evaluator.functionmanager.defaults.functions.*;
@@ -44,7 +44,7 @@ public class XQueryEvaluatingFunctionManager {
     private final XQueryValueFactory valueFactory;
     private final MathFunctions mathFunctions;
     private final FunctionsOnStringValues functionsOnStringValues;
-    private final XQueryEvaluatorVisitor evaluator;
+    private final XQueryEvaluator evaluator;
     private final FunctionsBasedOnSubstringMatching functionsBasedOnSubstringMatching;
     private final FunctionsOnNumericValues functionsOnNumericValues;
     private final CardinalityFunctions cardinalityFunctions;
@@ -61,7 +61,7 @@ public class XQueryEvaluatingFunctionManager {
     private final XQueryTypeFactory typeFactory;
 
     public XQueryEvaluatingFunctionManager(
-        final XQueryEvaluatorVisitor evaluator,
+        final XQueryEvaluator evaluator,
         final Parser parser,
         final XQueryValueFactory valueFactory,
         final NodeGetter nodeGetter,

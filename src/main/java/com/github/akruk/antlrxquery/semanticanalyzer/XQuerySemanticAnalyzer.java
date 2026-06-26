@@ -3865,4 +3865,53 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         return null;
     }
 
+
+
+    @Override
+    public TypeInContext visitLongElementConstructor(final LongElementConstructorContext ctx)
+    {
+        // TODO: right now the attributes of the element constructor are ignored,
+        // until specifying what exactly they should do
+
+        final QualifiedName openingName = namespaceResolver.resolveElement(ctx.openingTag().anyName().getText());
+        final AnyNameContext closingName = ctx.closingTag().anyName();
+        XQuerySequenceType type = null;
+        if (closingName != null) {
+            var resolvedClosingName = namespaceResolver.resolveElement(closingName.getText());
+            if (!openingName.equals(resolvedClosingName)) {
+                error(ctx,
+                    ErrorType.ELEMENT_CONSTRUCTOR__MISMATCHED_TAGS,
+                    List.of(openingName, resolvedClosingName));
+                type = typeFactory.anyNode();
+            } else {
+                type = typeFactory.element(Set.of(openingName));
+            }
+        }
+        if (ctx.directConstructor().size() > 0) {
+            for (final var directConstructor : ctx.directConstructor()) {
+                // TODO: add to context of type the elements that are within
+                // TODO: add grammar based semantic analysis for the direct constructor
+                directConstructor.accept(this);
+
+            }
+        } else { // text content
+            // (enclosedExpr | ~(LCURLY | LT_OP  | GT_OP | RCURLY)+ )+
+            var textContent = ctx.directConstructorTextContent();
+            for (final EnclosedExprContext enclosedExprCtx : textContent.enclosedExpr()) {
+                // Evaluate the enclosed expression
+                TypeInContext evaluated = enclosedExprCtx.accept(this);
+                if (evaluated.type.coerceableTo(typeFactory.string()) == RelativeCoercability.NEVER) {
+                    error(
+                        enclosedExprCtx,
+                        ErrorType.ELEMENT_CONSTRUCTOR__INVALID_INTERPOLATION,
+                        List.of(evaluated));
+                }
+            }
+        }
+
+
+        return symbolManager.typeInContext(typeFactory.anyNode());
+
+
+    }
 }

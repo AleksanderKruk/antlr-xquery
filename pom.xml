@@ -79,7 +79,7 @@
           <target>22</target>
         </configuration>
       </plugin>
-      <!-- Uber-jar dla 'antlrxquery-tool' -->
+      <!-- Uber-jar for 'antlrxquery-tool' -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
@@ -149,7 +149,7 @@
         <execution>
           <?m2e execute onConfiguration?>
           <id>cleanup-dot-antlr</id>
-          <phase>initialize</phase> <!-- Wykonuje się przed compile -->
+          <phase>initialize</phase> <!-- Runs before compile -->
           <configuration>
             <target>
               <delete includeemptydirs="true" quiet="true">

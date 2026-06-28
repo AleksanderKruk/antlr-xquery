@@ -346,11 +346,38 @@ parenthesizedExpr: LPAREN expr? RPAREN;
 contextValueRef: DOT;
 functionCall: functionName argumentList;
 typeDeclaration: AS sequenceType;
-occurrenceIndicator: QUESTION_MARK | STAR | PLUS;
+
+cardinality
+    : HAT cardinalityTerm
+    | HAT LPAREN cardinalitySet RPAREN
+    ;
+
+cardinalitySet
+    : cardinalityTerm (UNION_OP cardinalityTerm)*
+    ;
+
+cardinalityTerm
+    : IntegerLiteral                                              # singleCardinality
+
+    | IntegerLiteral DOTS IntegerLiteral                          # inclusiveRangeCardinality
+    | IntegerLiteral DOTS                                         # minimumCardinality
+    | DOTS IntegerLiteral                                         # maximumCardinality
+
+    | DOT GT IntegerLiteral                                       # greaterThanCardinality
+    | DOT GE IntegerLiteral                                       # greaterOrEqualCardinality
+    | DOT LT IntegerLiteral                                       # lessThanCardinality
+    | DOT LE IntegerLiteral                                       # lessOrEqualCardinality
+
+    | IntegerLiteral LT DOT LT IntegerLiteral                     # openRangeCardinality
+    | IntegerLiteral LE DOT LE IntegerLiteral                     # closedRangeCardinality
+    | IntegerLiteral LT DOT LE IntegerLiteral                     # leftOpenRangeCardinality
+    | IntegerLiteral LE DOT LT IntegerLiteral                     # rightOpenRangeCardinality
+    ;
+
 sequenceTypeUnion: sequenceType (UNION_OP sequenceType)*;
 
 sequenceType: emptySequence
-              | itemType occurrenceIndicator?;
+              | itemType cardinality?;
 
 emptySequence: EMPTY_SEQUENCE LPAREN RPAREN;
 
@@ -364,7 +391,7 @@ itemType: anyItemTest
         | enumerationType
         | choiceItemType;
 
-kindTest:elementTest
+kindTest: elementTest
         | anyKindTest;
 
 elementTest:

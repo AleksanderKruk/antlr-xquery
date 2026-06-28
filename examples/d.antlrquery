@@ -1,0 +1,9 @@
+import module lsp-positions;
+
+let $current := .
+let $arrowExpr := ancestor-or-self::arrowExpr
+let $leftmost :=  $arrowExpr/unaryExpr
+let $to-right := $arrowExpr/sequenceArrowTarget[. precedes $current]
+return {
+	"range": lsp:range(fn:exactly-one($leftmost))
+}

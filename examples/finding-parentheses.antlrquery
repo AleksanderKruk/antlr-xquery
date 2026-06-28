@@ -1,0 +1,51 @@
+
+(:
+(1)
+expr: or: and: not: parenthesis: expr: or: and: not: literal: 1
+2 * (3 + 4)
+expr: add:
+		mul: unary: literal: 2
+
+		mul: unary: paren: expr: add:
+                                    mul:
+                                        unary:
+                                            literal: 3
+                                    mul:
+                                        unary:
+                                            literal: 4
+
+:)
+
+declare variable $mapping = map {
+    "parenthesis": function($node) { $node/expr },
+    "expr": function($node) { $node/expr },
+    "or": function($node) { $node/or },
+    "and": function($node) { $node/and },
+    "not": function($node) { $node/not },
+    "add": function($node) { $node/add },
+    "mul": function($node) { $node/mul },
+    "unary": function($node) { $node/unary },
+    "literal": function($node) { () }
+};
+
+declare function local:has-simple-expr-path($target) {
+	let $v := local:self(false(), (), $target)
+	let $has-found-path := $v?1, $good-path:=$v?2, $prev-node:=$v?3
+	return $has-found-path
+};
+
+declare function local:self($found-good-path, $good-path, $prev-node) {
+	let $parent := $prev-node/..
+	let $is-simple-predicate := $mapping ? fn:node-name($parent)
+	let $merged-path := ($parent, $good-path)
+	return
+		if ($is-simple-predicate($parent))
+		then
+			if ($parent=>node-name() = "expr")
+			then [true(), $merged-path, ()]
+			else local:self(false(), $merged-path, $parent)
+		else
+			[false(), (), ()]
+};
+
+//parenthesis[count(expr) = 1][local:has-simple-expr-path(.)]

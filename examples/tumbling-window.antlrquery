@@ -1,0 +1,9 @@
+(: tumbling window :)
+for $block in //statementblock
+	for $declaration in $block/variableDeclaration
+		let $assignments := $declaration/following-sibling::*//assignment,
+			$names := $assignments//ID,
+			$declaredName := $declaration//ID,
+			$noassignment := every $name in $names
+							satisfies $name!string() != $declaredName!string()
+		return if ($noassignment) { $declaration }

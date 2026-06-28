@@ -1,0 +1,21 @@
+import module lsp-positions;
+
+declare function is-literal-declaration($block as node())
+	as boolean
+{
+	true()
+};
+
+
+(: Finds magic constants in code :)
+declare function get-magic-constants($block as element(block))
+	as element(literal)*
+{
+	let $literalsOutsideOfDeclarations := $block//statement//literal
+	let $localDeclarations := $block//localVariableDeclarationExpression
+	let $nonLiteralDeclarations := $localDeclarations[. => is-literal-declaration() => not()]
+	let $literalsWithinDeclarations := $nonLiteralDeclarations//literal
+	return  $literalsOutsideOfDeclarations | $literalsWithinDeclarations
+};
+
+//block =!> get-magic-constants() =!> lsp:range()

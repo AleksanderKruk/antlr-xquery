@@ -1,0 +1,14 @@
+module local;
+(:
+declare function local:paths($node as node()) as array(node()+)* {
+	let $children := $node/*
+	return
+		if (empty($children))
+		then [ $node ]
+		else
+			for $child in $children
+			for $path in local:paths($child)
+			return
+				array:append([ $node ], $path?*)
+};
+ :)

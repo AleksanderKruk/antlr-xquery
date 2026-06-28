@@ -1,0 +1,7 @@
+
+(: all qualified class names :)
+for $class in //classDecl
+	let $name := $class/name/ID =!> string()
+	let $ancestor-names := $class/ancestor::classDecl =!> string()
+	let $qname := string-join(($ancestor-names, $name), ".")
+	return $qname

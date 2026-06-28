@@ -1,0 +1,18 @@
+
+(: simplest case
+	no ++ -- function calls
+	and no membership access
+:)
+for $block in //block
+	for $declaredVariable in ($block//declaredVariable/ID ! string(), $ARGUMENTS) => unique()
+		let $incrementations := $block//(postincrementation|preincrementation)
+		let $declaredVariableIncremented := $incrementations[.//varname/ID => text() eq $declaredVariable]
+		return
+			if ($declaredVariableIncremented ne 0) {
+				let $leftHandSides := $block//assignment/target
+				let $isTarget := $leftHandSides/ID =!> text() = $declaredVariable
+                return
+                    if (not($isTarget)) {
+                        $declaredVariable
+                    }
+			}

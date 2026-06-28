@@ -1,0 +1,15 @@
+for $block in //statementblock
+	let $declarations := $block//declaration
+	let $uniqueCount := $declarations => distinct-values() => count()
+	let $declarationCount := $declarations => count()
+	let $thereAreRedeclarations := $uniqueCount ne $declarationCount
+	return
+		if ($thereAreRedeclarations) {
+			for $declaration in $block//declaration
+				let $declaredName := $declaration//ID => exactly-one() => string()
+				for $following in $declaration/following-sibling::*//declaration//ID
+					let $followingName := string($following)
+						return if ($declaredName eq $followingName) {
+							$declaration
+						}
+		}

@@ -24,13 +24,13 @@ declare function lsp:end-position($node as node()?) as lsp:Position? {
         (:TODO: remove treatment after grained call return type analysis :)
         let $start-line := antlr:line(.) - 1
         let $start-pos := antlr:pos(.)
-        let $string-node := $node=>string()
-        let $new-lines := $string-node=>characters()=>index-of("\n")
-        let $additional-lines := $new-lines=>count()
+        let $string-node := $node=>fn:string()
+        let $new-lines := $string-node=>fn:characters()=>fn:index-of("\n")
+        let $additional-lines := $new-lines=>fn:count()
         let $last-line-index := $new-lines[$additional-lines]
-        let $last-line-length := string-length(
-                if ($last-line-index=>exists())
-                    then substring($string-node, $new-lines[$additional-lines] treat as number)
+        let $last-line-length := fn:string-length(
+                if ($last-line-index=>fn:exists())
+                    then fn:substring($string-node, $new-lines[$additional-lines] treat as number)
                     else $string-node
             )
         return lsp:Position(

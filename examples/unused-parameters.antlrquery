@@ -1,0 +1,8 @@
+(: unused parameters :)
+for $func in //funcdecls
+	let $args := $func//argDecl
+	let $argnames := $args//ID =!> string()
+	let $used-vars := $func/body//varref//ID =!> string()
+	return
+		map { 	'functionname': $func/funcname//ID,
+				'args': array{ $argnames[. != $used-vars] }  }

@@ -1,0 +1,12 @@
+
+for $block in //blocks
+	for $varref in $block//varref
+		let $varname := $varref => string()
+		let $assignmentsWithinBlock := $varref/preceding::assignment
+										intersect $block//assignment
+		let $previous := some $assignment in $assignmentsWithinBlock/ID
+							satisfies $assignment/ID => exactly-one() => string() eq $varname
+		return
+			if ($previous => not()) {
+				varref
+			}

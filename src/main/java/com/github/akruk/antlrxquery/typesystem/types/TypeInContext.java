@@ -1,4 +1,4 @@
-package com.github.akruk.antlrxquery.typesystem.defaults;
+package com.github.akruk.antlrxquery.typesystem.types;
 
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContext;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticScope;

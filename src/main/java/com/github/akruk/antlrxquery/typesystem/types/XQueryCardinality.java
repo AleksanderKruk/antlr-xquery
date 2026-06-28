@@ -1,4 +1,4 @@
-package com.github.akruk.antlrxquery.typesystem.defaults;
+package com.github.akruk.antlrxquery.typesystem.types;
 
 public enum XQueryCardinality {
     ONE,

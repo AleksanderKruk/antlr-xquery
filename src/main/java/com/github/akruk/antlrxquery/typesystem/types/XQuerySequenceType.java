@@ -1,4 +1,4 @@
-package com.github.akruk.antlrxquery.typesystem.defaults;
+package com.github.akruk.antlrxquery.typesystem.types;
 
 import java.util.Set;
 import java.util.function.Function;

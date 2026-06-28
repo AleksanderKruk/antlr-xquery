@@ -1,4 +1,4 @@
-package com.github.akruk.antlrxquery.typesystem.defaults;
+package com.github.akruk.antlrxquery.typesystem.types;
 
 import java.util.Collection;
 import java.util.List;

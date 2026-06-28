@@ -348,8 +348,12 @@ functionCall: functionName argumentList;
 typeDeclaration: AS sequenceType;
 
 cardinality
-    : HAT cardinalityTerm
-    | HAT LPAREN cardinalitySet RPAREN
+    : HAT cardinalityTerm              # singleTermCardinality
+    | HAT LPAREN cardinalitySet RPAREN # parenthesizedCardinality
+    | STAR                             # zeroOrMoreCardinality
+    | PLUS                             # oneOrMoreCardinality
+    | QUESTION_MARK                    # zeroOrOneCardinality
+    |                                  # exactlyOneCardinality
     ;
 
 cardinalitySet
@@ -357,27 +361,27 @@ cardinalitySet
     ;
 
 cardinalityTerm
-    : IntegerLiteral                                              # singleCardinality
+    : IntegerLiteral # singleNumberCardinality
+    
+    | IntegerLiteral DOTS IntegerLiteral # inclusiveRangeCardinality
+    | IntegerLiteral DOTS                # minimumCardinality
+    | DOTS IntegerLiteral                # maximumCardinality
 
-    | IntegerLiteral DOTS IntegerLiteral                          # inclusiveRangeCardinality
-    | IntegerLiteral DOTS                                         # minimumCardinality
-    | DOTS IntegerLiteral                                         # maximumCardinality
+    | DOT GT IntegerLiteral # greaterThanCardinality
+    | DOT GE IntegerLiteral # greaterOrEqualCardinality
+    | DOT LT IntegerLiteral # lessThanCardinality
+    | DOT LE IntegerLiteral # lessOrEqualCardinality
 
-    | DOT GT IntegerLiteral                                       # greaterThanCardinality
-    | DOT GE IntegerLiteral                                       # greaterOrEqualCardinality
-    | DOT LT IntegerLiteral                                       # lessThanCardinality
-    | DOT LE IntegerLiteral                                       # lessOrEqualCardinality
-
-    | IntegerLiteral LT DOT LT IntegerLiteral                     # openRangeCardinality
-    | IntegerLiteral LE DOT LE IntegerLiteral                     # closedRangeCardinality
-    | IntegerLiteral LT DOT LE IntegerLiteral                     # leftOpenRangeCardinality
-    | IntegerLiteral LE DOT LT IntegerLiteral                     # rightOpenRangeCardinality
+    | IntegerLiteral LT DOT LT IntegerLiteral # openRangeCardinality
+    | IntegerLiteral LE DOT LE IntegerLiteral # closedRangeCardinality
+    | IntegerLiteral LT DOT LE IntegerLiteral # leftOpenRangeCardinality
+    | IntegerLiteral LE DOT LT IntegerLiteral # rightOpenRangeCardinality
     ;
 
 sequenceTypeUnion: sequenceType (UNION_OP sequenceType)*;
 
 sequenceType: emptySequence
-              | itemType cardinality?;
+              | itemType cardinality;
 
 emptySequence: EMPTY_SEQUENCE LPAREN RPAREN;
 

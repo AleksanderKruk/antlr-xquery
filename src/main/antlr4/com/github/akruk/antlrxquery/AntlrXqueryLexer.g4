@@ -252,12 +252,11 @@ ANNOTATION: 'annotation';
 
 TYPESWITCH     : 'typeswitch';
 
-
-
-
+NUMBER : 'boolean';
+BOOLEAN: 'number';
 
 ID: NAME_START (DASH NAME_MIDDLE)*
-    ; /* Replace with antlr compatible */
+    ; /* TODO: Replace with antlr compatible */
 
 fragment NAME_START:  [\p{Alpha}_][\p{Alpha}\p{Alnum}_]*;
 fragment NAME_MIDDLE: [\p{Alpha}_][\p{Alpha}\p{Alnum}_]*;

@@ -661,27 +661,25 @@ qname: (namespace COLON)* anyName;
 namespace: anyName;
 anyName: ID
         | ALLOWING
-        | AND
         | ANCESTOR
         | ANCESTOR_OR_SELF
+        | AND
         | ANNOTATION
         | ARRAY
         | AS
         | ASCENDING
         | AT
-
         | BASE_URI
+        | BOOLEAN
         | BY
-
         | CASE
         | CAST
         | CASTABLE
         | CATCH
         | CHILD
         | COLLATION
-        | COUNT
         | CONTEXT
-
+        | COUNT
         | DECIMAL_FORMAT
         | DECIMAL_SEPARATOR
         | DECLARE
@@ -690,114 +688,100 @@ anyName: ID
         | DESCENDANT_OR_SELF
         | DESCENDING
         | DIGIT
-
-        | ENCODING
         | ELEMENT
         | ELSE
         | EMPTY
         | EMPTY_SEQUENCE
+        | ENCODING
         | END
         | ENUM
-        | EXPONENT_SEPARATOR
-        | EXTERNAL
         | EQ
         | EVERY
         | EXCEPT
-
+        | EXPONENT_SEPARATOR
+        | EXTERNAL
         | FINALLY
         | FIXED
-        | FOLLOWS
+        | FN
         | FOLLOWING
         | FOLLOWING_OR_SELF
         | FOLLOWING_SIBLING
         | FOLLOWING_SIBLING_OR_SELF
-        | FN
+        | FOLLOWS
         | FOR
         | FUNCTION
-
-        | GRAMMAR
-        | GROUPING_SEPARATOR
         | GE
+        | GRAMMAR
         | GREATEST
+        | GROUPING_SEPARATOR
         | GT
-
         | IDIV
         | IF
+        | IMPORT
         | IN
+        | INFINITY
         | INSTANCE
         | INTERSECT
         | IS
         | ITEM
-        | INFINITY
-        | IMPORT
-
         | KEY
-
         | LE
         | LEAST
         | LET
         | LT
-
         | MAP
         | MEMBER
         | MOD
         | MULTIPLICATION
-
+        | NAMESPACE
+        | NAN
         | NE
         | NEXT
         | NODE
-        | NAMESPACE
-        | NAN
-
+        | NUMBER
         | OF
         | ONLY
         | OPTION
         | OR
-
         | PARENT
+        | PATTERN_SEPARATOR
+        | PER_MILLE
+        | PERCENT
+        | PERCENTAGE
         | PRECEDES
         | PRECEDING
         | PRECEDING_OR_SELF
         | PRECEDING_SIBLING
         | PRECEDING_SIBLING_OR_SELF
-        | PATTERN_SEPARATOR
-        | PER_MILLE
-        | PERCENT
-        | PERCENTAGE
         | PRESERVE
         | PREVIOUS
-
         | RECORD
         | RETURN
-
         | SATISFIES
         | SELF
         | SLIDING
         | SOME
         | STABLE
         | START
+        | STRING
         | STRIP
         | SWITCH
-
         | THEN
         | TO
         | TREAT
-        | TUMBLING
         | TRY
+        | TUMBLING
         | TYPE
-
         | UNION
         | UNORDERED
-
+        | VALUE
+        | VERSION
         | WHEN
         | WHERE
         | WHILE
         | WINDOW
-
-        | VALUE
-        | VERSION
-        | ZERO_DIGIT
         | XQUERY
+        | ZERO_DIGIT
         ;
 
 stringConstructor:

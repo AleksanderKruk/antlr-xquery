@@ -385,9 +385,12 @@ sequenceType: emptySequence
 
 emptySequence: EMPTY_SEQUENCE LPAREN RPAREN;
 
-itemType: anyItemTest
+itemType: anyItem
+        | stringType
+        | numberType
+        | booleanType
         | typeName
-        | kindTest
+        | kindType
         | functionType
         | mapType
         | arrayType
@@ -395,18 +398,23 @@ itemType: anyItemTest
         | enumerationType
         | choiceItemType;
 
-kindTest: elementTest
-        | anyKindTest;
+stringType: STRING;
+booleanType: BOOLEAN;
+numberType: NUMBER;
 
-elementTest:
-    ELEMENT LPAREN nameTestUnion? RPAREN;
+
+kindType: elementType
+        | anyKindType;
+
+elementType:
+    ELEMENT LPAREN nameTypeUnion? RPAREN;
 
 
 pathNameTestUnion
     : qname
     | LPAREN qname (UNION_OP qname)* RPAREN;
 
-nameTestUnion:
+nameTypeUnion:
     nameTest (UNION_OP nameTest)*;
 
 nameTest:
@@ -462,9 +470,9 @@ enumerationType:ENUM LPAREN STRING (COMMA STRING)* RPAREN;
 
 choiceItemType:LPAREN itemType (UNION_OP itemType)* RPAREN;
 
-anyItemTest:ITEM LPAREN RPAREN;
+anyItem:ITEM LPAREN RPAREN;
 
-anyKindTest:NODE LPAREN RPAREN;
+anyKindType:NODE LPAREN RPAREN;
 
 functionName: qname;
 

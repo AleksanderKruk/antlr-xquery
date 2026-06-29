@@ -252,22 +252,24 @@ exceptOrIntersect: EXCEPT | INTERSECT;
 
 
 // TODO: add remaining combinations of axes
-forwardAxis: CHILD COLONS
-        | DESCENDANT COLONS
-        | SELF COLONS
-        | DESCENDANT_OR_SELF COLONS
-        | FOLLOWING_SIBLING COLONS
-        | FOLLOWING COLONS
-        | FOLLOWING_SIBLING_OR_SELF COLONS
-        | FOLLOWING_OR_SELF COLONS;
+forwardAxis: CHILD COLONS                  # childAxis
+        | DESCENDANT COLONS                # descendantAxis
+        | SELF COLONS                      # selfAxis
+        | DESCENDANT_OR_SELF COLONS        # descendantOrSelfAxis
+        | FOLLOWING_SIBLING COLONS         # followingSiblingAxis
+        | FOLLOWING COLONS                 # followingAxis
+        | FOLLOWING_SIBLING_OR_SELF COLONS # followingSiblingOrSelfAxis
+        | FOLLOWING_OR_SELF COLONS         # followingOrSelfAxis;
+
 reverseStep: (reverseAxis nodeTest) | abbrevReverseStep;
-reverseAxis: PARENT COLONS
-        | PRECEDING_SIBLING_OR_SELF COLONS
-        | PRECEDING_OR_SELF COLONS
-        | ANCESTOR COLONS
-        | PRECEDING_SIBLING COLONS
-        | PRECEDING COLONS
-        | ANCESTOR_OR_SELF COLONS;
+reverseAxis: PARENT COLONS                 # parentAxis
+        | PRECEDING_SIBLING_OR_SELF COLONS # precedingSiblingOrSelfAxis
+        | PRECEDING_OR_SELF COLONS         # precedingOrSelfAxis
+        | ANCESTOR COLONS                  # ancestorAxis
+        | PRECEDING_SIBLING COLONS         # precedingSiblingAxis
+        | PRECEDING COLONS                 # precedingAxis
+        | ANCESTOR_OR_SELF COLONS          # ancestorOrSelfAxis;
+
 abbrevReverseStep: DOTS;
 nodeTest: pathNameTestUnion | wildcard;
 wildcard: STAR

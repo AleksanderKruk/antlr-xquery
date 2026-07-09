@@ -26,10 +26,11 @@ import com.github.akruk.antlrxquery.evaluator.values.operations.*;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager;
-import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
+import com.github.akruk.antlrxquery.semanticanalyzer.visitors.AntlrQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 import com.github.akruk.nodegetter.NodeGetter;
+import com.github.akruk.antlrxquery.AxisVisitor;
 
 public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryValue> {
     private final XQueryValue root;
@@ -66,7 +67,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
 
     private final XQueryValue emptySequence;
 
-    private final XQuerySemanticAnalyzer semanticAnalyzer;
+    private final AntlrQuerySemanticAnalyzer semanticAnalyzer;
     // private final XQueryTypeFactory typeFactory;
 
     private XQueryAxis currentAxis;
@@ -86,7 +87,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         final ParseTree tree,
         final Parser parser,
         final XQueryValueFactory valueFactory,
-        final XQuerySemanticAnalyzer analyzer,
+        final AntlrQuerySemanticAnalyzer analyzer,
         final XQueryTypeFactory typeFactory,
         final ModuleManager moduleManager,
         final Map<String,XQueryValue> externalVariables)
@@ -967,11 +968,13 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         return context.getValue();
     }
 
+    AxisVisitor axisVisitor = new AxisVisitor();
+
     @Override
     public XQueryValue visitForwardStep(final ForwardStepContext ctx)
     {
         if (ctx.forwardAxis() != null) {
-            visitForwardAxis(ctx.forwardAxis());
+            currentAxis = axisVisitor.visit(ctx.forwardAxis());
         } else {
             // the first slash will work
             // because of the fake root
@@ -989,7 +992,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         if (ctx.abbrevReverseStep() != null) {
             return visitAbbrevReverseStep(ctx.abbrevReverseStep());
         }
-        visitReverseAxis(ctx.reverseAxis());
+        currentAxis = axisVisitor.visit(ctx.reverseAxis());
         return visitNodeTest(ctx.nodeTest());
     }
 
@@ -1063,7 +1066,6 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         @SuppressWarnings("unchecked")
         final Function<NodeGetter, Function<List<ParseTree>, List<ParseTree>>>[] table = (Function<NodeGetter, Function<List<ParseTree>, List<ParseTree>>>[]) new Function[XQueryAxis
             .values().length];
-
         table[XQueryAxis.ANCESTOR.ordinal()] = nodeGetter -> nodeGetter::getAllAncestors;
         table[XQueryAxis.ANCESTOR_OR_SELF.ordinal()] = nodeGetter -> nodeGetter::getAllAncestorsOrSelf;
         table[XQueryAxis.CHILD.ordinal()] = nodeGetter -> nodeGetter::getAllChildren;
@@ -1079,31 +1081,9 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         table[XQueryAxis.PRECEDING_OR_SELF.ordinal()] = nodeGetter -> nodeGetter::getAllPrecedingOrSelf;
         table[XQueryAxis.PRECEDING_SIBLING_OR_SELF.ordinal()] = nodeGetter -> nodeGetter::getAllPrecedingSiblingsOrSelf;
         table[XQueryAxis.SELF.ordinal()] = _ -> nodes -> nodes; // identity for SELF
-
         AXIS_DISPATCH_TABLE = table;
     }
 
-    @Override
-    public XQueryValue visitForwardAxis(final ForwardAxisContext ctx)
-    {
-        if (ctx.CHILD() != null)
-            currentAxis = XQueryAxis.CHILD;
-        if (ctx.DESCENDANT() != null)
-            currentAxis = XQueryAxis.DESCENDANT;
-        if (ctx.SELF() != null)
-            currentAxis = XQueryAxis.SELF;
-        if (ctx.DESCENDANT_OR_SELF() != null)
-            currentAxis = XQueryAxis.DESCENDANT_OR_SELF;
-        if (ctx.FOLLOWING_SIBLING() != null)
-            currentAxis = XQueryAxis.FOLLOWING_SIBLING;
-        if (ctx.FOLLOWING() != null)
-            currentAxis = XQueryAxis.FOLLOWING;
-        if (ctx.FOLLOWING_SIBLING_OR_SELF() != null)
-            currentAxis = XQueryAxis.FOLLOWING_SIBLING_OR_SELF;
-        if (ctx.FOLLOWING_OR_SELF() != null)
-            currentAxis = XQueryAxis.FOLLOWING_OR_SELF;
-        return null;
-    }
 
     @Override
     public XQueryValue visitGroupByClause(final GroupByClauseContext ctx)
@@ -1195,26 +1175,6 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
                 }
             }
         }
-        return null;
-    }
-
-    @Override
-    public XQueryValue visitReverseAxis(final ReverseAxisContext ctx)
-    {
-        if (ctx.PARENT() != null)
-            currentAxis = XQueryAxis.PARENT;
-        if (ctx.ANCESTOR() != null)
-            currentAxis = XQueryAxis.ANCESTOR;
-        if (ctx.PRECEDING_SIBLING_OR_SELF() != null)
-            currentAxis = XQueryAxis.PRECEDING_SIBLING_OR_SELF;
-        if (ctx.PRECEDING_OR_SELF() != null)
-            currentAxis = XQueryAxis.PRECEDING_OR_SELF;
-        if (ctx.PRECEDING_SIBLING() != null)
-            currentAxis = XQueryAxis.PRECEDING_SIBLING;
-        if (ctx.PRECEDING() != null)
-            currentAxis = XQueryAxis.PRECEDING;
-        if (ctx.ANCESTOR_OR_SELF() != null)
-            currentAxis = XQueryAxis.ANCESTOR_OR_SELF;
         return null;
     }
 
@@ -2405,7 +2365,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     {
         if (ctx.CASTABLE() == null)
             return visitCastExpr(ctx.castExpr());
-        final XQuerySequenceType targetType = semanticAnalyzer.visitCastTarget(ctx.castTarget()).type;
+        final AntlrQuerySequenceType targetType = semanticAnalyzer.visitCastTarget(ctx.castTarget()).type;
         final XQueryValue testedValue = visitCastExpr(ctx.castExpr());
         final boolean isCastable = !caster.cast(targetType, testedValue).isError;
         return valueFactory.bool(isCastable);
@@ -2416,7 +2376,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
     {
         if (ctx.CAST() == null)
             return visitPipelineExpr(ctx.pipelineExpr());
-        final XQuerySequenceType targetType = semanticAnalyzer.visitCastTarget(ctx.castTarget()).type;
+        final AntlrQuerySequenceType targetType = semanticAnalyzer.visitCastTarget(ctx.castTarget()).type;
         final XQueryValue testedValue = visitPipelineExpr(ctx.pipelineExpr());
         final XQueryValue cast = caster.cast(targetType, testedValue);
         return cast;

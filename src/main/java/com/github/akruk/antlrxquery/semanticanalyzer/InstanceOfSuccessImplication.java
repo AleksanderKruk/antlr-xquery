@@ -5,15 +5,15 @@ import java.util.Map;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.Implication;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.ValueImplication;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContext;
-import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
+import com.github.akruk.antlrxquery.typesystem.types.TypeInContext;
 
-final class InstanceOfSuccessImplication extends ValueImplication<Boolean> {
+public final class InstanceOfSuccessImplication extends ValueImplication<Boolean> {
     private final TypeInContext target;
     private final Boolean value;
     private final TypeInContext expression;
     private final TypeInContext testedType;
 
-    InstanceOfSuccessImplication(
+    public InstanceOfSuccessImplication(
         TypeInContext target, Boolean value, TypeInContext expression, TypeInContext testedType) {
         super(target, value);
         this.target = target;

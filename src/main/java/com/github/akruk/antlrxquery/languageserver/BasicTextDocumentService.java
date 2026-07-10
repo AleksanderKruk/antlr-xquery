@@ -77,6 +77,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParser.TypeNameContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameAndTypeContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarRefContext;
+import com.github.akruk.antlrxquery.AxisVisitor;
 import com.github.akruk.antlrxquery.evaluator.XQuery;
 import com.github.akruk.antlrxquery.evaluator.XQuery.TreeEvaluator;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
@@ -90,8 +91,6 @@ import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticWarning;
 import com.github.akruk.antlrxquery.semanticanalyzer.GrammarManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager;
-import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
-import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer.AnalysisListener;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticScope.VariableInfo;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.SemanticFunctionSets;
@@ -99,17 +98,22 @@ import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQue
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.ArgumentSpecification;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.FunctionSpecification;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.ModuleInfo;
-import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
+import com.github.akruk.antlrxquery.semanticanalyzer.visitors.AntlrQuerySemanticAnalyzer;
+import com.github.akruk.antlrxquery.semanticanalyzer.visitors.AntlrQuerySemanticAnalyzer.AnalysisListener;
+import com.github.akruk.antlrxquery.semanticanalyzer.visitors.CardinalityVisitor;
+import com.github.akruk.antlrxquery.semanticanalyzer.visitors.TypeVisitor;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.defaults.BaseCardinalityFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTypeSets;
+import com.github.akruk.antlrxquery.typesystem.types.TypeInContext;
 import com.google.gson.JsonPrimitive;
 
 public class BasicTextDocumentService implements TextDocumentService {
     private LanguageClient client;
     private final Map<String, List<Token>> tokenStore;
     private final Map<String, ParseTree> parseTreeStore;
-    private final Map<String, XQuerySemanticAnalyzer> semanticAnalyzers;
+    private final Map<String, AntlrQuerySemanticAnalyzer> semanticAnalyzers;
     private final Map<String, List<NamedFunctionRefContext>> namedFunctionRefs;
     private final Map<String, List<FunctionNameContext>> functionNames;
     private final Map<String, List<ParserRuleContext>> types;
@@ -255,7 +259,8 @@ public class BasicTextDocumentService implements TextDocumentService {
             final Path currentPath = Path.of(URI.create(uri));
             paths.add(currentPath.getParent());
             final XQuerySemanticContextManager contextManager = new XQuerySemanticContextManager(typeFactory);
-            final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
+            final BaseCardinalityFactory cardinalityFactory = new BaseCardinalityFactory();
+            final AntlrQuerySemanticAnalyzer analyzer = new AntlrQuerySemanticAnalyzer(
                     null,
                     typeFactory,
                     new XQueryMemoizedValueFactory(typeFactory),
@@ -265,7 +270,10 @@ public class BasicTextDocumentService implements TextDocumentService {
                     new GrammarManager(paths),
                     typeFactory.anyNode(),
                     "",
-                    Map.of()
+                    Map.of(), 
+                    new AxisVisitor(),
+                    cardinalityFactory,
+                    new TypeVisitor(typeFactory, new CardinalityVisitor(cardinalityFactory))
             );
 
             final Map<VarRefContext, TypeInContext> varRefsMappedToTypes_ = new HashMap<>();
@@ -543,7 +551,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         final Position position = params.getPosition();
 
         final ParseTree tree = parseTreeStore.get(uri);
-        final XQuerySemanticAnalyzer analyzer = semanticAnalyzers.get(uri);
+        final AntlrQuerySemanticAnalyzer analyzer = semanticAnalyzers.get(uri);
 
         if (tree == null || analyzer == null) {
             return CompletableFuture.completedFuture(null);
@@ -666,7 +674,7 @@ public class BasicTextDocumentService implements TextDocumentService {
             }
         }
 
-        final XQuerySemanticAnalyzer analyzer = semanticAnalyzers.get(uri);
+        final AntlrQuerySemanticAnalyzer analyzer = semanticAnalyzers.get(uri);
         { // request on function call?
             final var foundFunctionName = findRuleUsingPosition(position, functionNames.get(uri));
             if (foundFunctionName != null) {
@@ -863,7 +871,7 @@ public class BasicTextDocumentService implements TextDocumentService {
     }
 
     private CompletableFuture<Hover> getFunctionHover(final ParserRuleContext foundCtx,
-            final XQuerySemanticAnalyzer analyzer, final QualifiedName qname, final int arity) {
+            final AntlrQuerySemanticAnalyzer analyzer, final QualifiedName qname, final int arity) {
         final FunctionSpecification specification = analyzer.getSymbolManager().getNamedFunctionSpecification(foundCtx,
                 qname, arity);
         if (specification == null)
@@ -1044,7 +1052,7 @@ public class BasicTextDocumentService implements TextDocumentService {
     }
 
     FunctionDeclData getFunctionDeclaration(final NamedFunctionRefContext namedFunctionRef, final QualifiedName qname,
-            final XQuerySemanticAnalyzer analyzer) {
+            final AntlrQuerySemanticAnalyzer analyzer) {
         final int arity = getArity(namedFunctionRef);
         final FunctionSpecification spec = analyzer.getSymbolManager().getNamedFunctionSpecification(namedFunctionRef,
                 qname, arity);
@@ -1064,7 +1072,7 @@ public class BasicTextDocumentService implements TextDocumentService {
     }
 
     FunctionDeclData getFunctionDeclaration(final FunctionNameContext namedFunctionRef, final QualifiedName qname,
-            final XQuerySemanticAnalyzer analyzer) {
+            final AntlrQuerySemanticAnalyzer analyzer) {
         final int arity = getArity(namedFunctionRef);
         final FunctionSpecification spec = analyzer.getSymbolManager().getNamedFunctionSpecification(namedFunctionRef,
                 qname, arity);
@@ -1086,7 +1094,7 @@ public class BasicTextDocumentService implements TextDocumentService {
     record RecordDeclData(String uri, NamedRecordTypeDeclContext context) {
     }
 
-    RecordDeclData getRecordDeclaration(final QualifiedName qname, final XQuerySemanticAnalyzer analyzer) {
+    RecordDeclData getRecordDeclaration(final QualifiedName qname, final AntlrQuerySemanticAnalyzer analyzer) {
         for (final var recordUrl : recordDeclarations.keySet()) {
             for (final var record : recordDeclarations.get(recordUrl)) {
                 final var name = record.qname().getText();

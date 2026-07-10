@@ -7,10 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.types.XQueryItemType;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.types.XQueryTypes;
 
 public class ItemtypeSubtyper
 {
@@ -124,7 +124,7 @@ public class ItemtypeSubtyper
                     final XQueryItemType y_ = (XQueryItemType) y;
                     if (y_.argumentTypes.size() != 1)
                         return false;
-                    final var onlyArg =  (XQuerySequenceType) y_.argumentTypes.get(0);
+                    final var onlyArg =  (AntlrQuerySequenceType) y_.argumentTypes.get(0);
                     final var onlyArgItem =  (XQueryItemType) onlyArg.itemType;
                     final boolean correctOccurence = onlyArg.isOne;
                     return correctOccurence
@@ -140,7 +140,7 @@ public class ItemtypeSubtyper
                 itemtypeIsSubtypeOf[ANY_ARRAY] = alwaysTrue;
                 itemtypeIsSubtypeOf[CHOICE] = choicesubtype;
                 itemtypeIsSubtypeOf[ARRAY] = (y) -> {
-                    final XQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
+                    final AntlrQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
                     return y.arrayMemberType.equals(zeroOrMoreItems);
                 };
                 itemtypeIsSubtypeOf[ANY_FUNCTION] = alwaysTrue;
@@ -148,7 +148,7 @@ public class ItemtypeSubtyper
                     final var argumentTypes = y.argumentTypes;
                     if (argumentTypes.size() != 1)
                         return false;
-                    final var onlyArg =  (XQuerySequenceType) argumentTypes.get(0);
+                    final var onlyArg =  (AntlrQuerySequenceType) argumentTypes.get(0);
                     final var onlyArgItem =  (XQueryItemType) onlyArg.itemType;
                     final boolean correctOccurence = onlyArg.isOne || onlyArg.isOneOrMore;
                     return correctOccurence
@@ -182,8 +182,8 @@ public class ItemtypeSubtyper
                     final boolean isSubtypeOfAnyArray = itemtypeIsSubtypeOf[ANY_ARRAY].test(y);
                     if (!isSubtypeOfAnyArray)
                         return false;
-                    final XQuerySequenceType xArrayItemType = x_.arrayMemberType;
-                    final XQuerySequenceType yArrayItemType = y_.arrayMemberType;
+                    final AntlrQuerySequenceType xArrayItemType = x_.arrayMemberType;
+                    final AntlrQuerySequenceType yArrayItemType = y_.arrayMemberType;
                     return xArrayItemType.isSubtypeOf(yArrayItemType);
                 };
                 itemtypeIsSubtypeOf[ANY_FUNCTION] = alwaysTrue;
@@ -192,7 +192,7 @@ public class ItemtypeSubtyper
                     final XQueryItemType y_ = (XQueryItemType) y;
                     if (y_.argumentTypes.size() != 1)
                         return false;
-                    final var onlyArg =  (XQuerySequenceType) y_.argumentTypes.get(0);
+                    final var onlyArg =  (AntlrQuerySequenceType) y_.argumentTypes.get(0);
                     final var onlyArgItem = (XQueryItemType) onlyArg.itemType;
                     if (onlyArgItem.type == XQueryTypes.NUMBER) {
 
@@ -228,7 +228,7 @@ public class ItemtypeSubtyper
             itemtypeIsSubtypeOf[MAP] = (y) -> {
                 if (!itemtypeIsSubtypeOf[ANY_MAP].test(y))
                     return false;
-                final var onlyArg =  (XQuerySequenceType) x.argumentTypes.get(0);
+                final var onlyArg =  (AntlrQuerySequenceType) x.argumentTypes.get(0);
                 final var onlyArgItem =  (XQueryItemType) onlyArg.itemType;
                 final boolean argCanBeKey = onlyArgItem.itemtypeIsSubtypeOf(y.mapKeyType);
                 final boolean returnedCanBeValue = x.returnedType.isSubtypeOf(y.mapValueType);
@@ -243,7 +243,7 @@ public class ItemtypeSubtyper
                 // function must have one argument
                 if (x.argumentTypes.size() != 1)
                     return false;
-                final var onlyArg =  (XQuerySequenceType) x.argumentTypes.get(0);
+                final var onlyArg =  (AntlrQuerySequenceType) x.argumentTypes.get(0);
                 final var onlyArgItem =  (XQueryItemType) onlyArg.itemType;
                 // this one argument must be either number or number+
                 final boolean correctOccurence = onlyArg.isOne || onlyArg.isOneOrMore;
@@ -260,8 +260,8 @@ public class ItemtypeSubtyper
             };
             itemtypeIsSubtypeOf[ANY_FUNCTION] = alwaysTrue;
             itemtypeIsSubtypeOf[FUNCTION] = (y) -> {
-                final List<XQuerySequenceType> aArgs = x.argumentTypes;
-                final List<XQuerySequenceType> bArgs = y.argumentTypes;
+                final List<AntlrQuerySequenceType> aArgs = x.argumentTypes;
+                final List<AntlrQuerySequenceType> bArgs = y.argumentTypes;
                 final int aArgCount = aArgs.size();
 
                 if (aArgCount > bArgs.size())
@@ -306,8 +306,8 @@ public class ItemtypeSubtyper
                     if (xFieldType.equals(yFieldType)) {
                         continue;
                     }
-                    final XQuerySequenceType resolvedX = xFieldType.resolveFieldType(typeFactory);
-                    final XQuerySequenceType resolvedY = yFieldType.resolveFieldType(typeFactory);
+                    final AntlrQuerySequenceType resolvedX = xFieldType.resolveFieldType(typeFactory);
+                    final AntlrQuerySequenceType resolvedY = yFieldType.resolveFieldType(typeFactory);
                     if (!resolvedX.isSubtypeOf(resolvedY))
                         return false;
                 }
@@ -478,7 +478,7 @@ public class ItemtypeSubtyper
         final var yArgumentTypes = y_.argumentTypes;
         if (yArgumentTypes.size() != 1)
             return false;
-        final var yFieldType = (XQuerySequenceType) yArgumentTypes.get(0);
+        final var yFieldType = (AntlrQuerySequenceType) yArgumentTypes.get(0);
         final XQueryItemType yFieldItemType = (XQueryItemType) yFieldType.itemType;
         if (yFieldItemType.type != XQueryTypes.STRING
             && yFieldItemType.type != XQueryTypes.ANY_ITEM)

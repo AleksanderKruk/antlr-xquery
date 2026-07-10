@@ -2,7 +2,7 @@ package com.github.akruk.antlrxquery.languagefeatures.semantics.functions;
 
 import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 
 import org.junit.jupiter.api.Test;
 
@@ -11,7 +11,7 @@ public class RandomNumberGeneratorFunctionTest extends SemanticTestsBase {
     /**
      * Helper to get the expected return type of fn:random-number-generator(...)
      */
-    private XQuerySequenceType expectedRngType() {
+    private AntlrQuerySequenceType expectedRngType() {
         // random-number-generator-record wrapped in a single-occurrence sequence
         return typeFactory.namedType(
             new QualifiedName("fn", "random-number-generator-record")

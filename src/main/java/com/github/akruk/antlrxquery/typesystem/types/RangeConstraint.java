@@ -37,12 +37,8 @@ public final class Cardinality {
     }
 
     public static final Cardinality ZERO = new Cardinality();
-    public static final Cardinality ONE = new Cardinality(new Event[]{ new Event(new FiniteBound(BigDecimal.ONE), Type.START), new Event(new FiniteBound(BigDecimal.ONE), Type.END) });
-    public static final Cardinality ZERO_OR_ONE = new Cardinality(new Event[]{ new Event(new FiniteBound(BigDecimal.ZERO), Type.START), new Event(new FiniteBound(BigDecimal.ONE), Type.END) });
-    public static final Cardinality ZERO_OR_MORE = new Cardinality(new Event[]{ new Event(new FiniteBound(BigDecimal.ZERO), Type.START) });
-    public static final Cardinality ONE_OR_MORE = new Cardinality(new Event[]{ new Event(new FiniteBound(BigDecimal.ONE), Type.START), new Event(new FiniteBound(BigDecimal.ONE), Type.END) });
 
-    public static Cardinality of(@NonNull CardinalityInterval... input) {
+    public static Cardinality of(@NonNull Interval... input) {
         if (input.length == 0) {
             return ZERO;
         } else {
@@ -68,17 +64,20 @@ public final class Cardinality {
     public static enum Type { START, END }
 
     public static record Event(
-            CardinalityValue value,
-            Type type
+            BoundValue value,
+            Type type,
+            boolean inclusive
     ) {}
 
     /**
      * Helper record for easier inline Cardinality creation
      * @apiNote BoundValues cannot be null
      */
-    public record CardinalityInterval(
-            @NonNull CardinalityValue lowerBound,
-            @NonNull CardinalityValue upperBound
+    public record Interval(
+            @NonNull BoundValue lowerBound,
+            boolean lowerInclusive,
+            @NonNull BoundValue upperBound,
+            boolean upperInclusive
     ) {
 
     }
@@ -86,30 +85,35 @@ public final class Cardinality {
     /**
      * Converts arbitrary intervals into canonical event stream.
      */
-    private static Event[] normalize(CardinalityInterval[] input) {
+    private static Event[] normalize(Interval[] input) {
 
         List<Event> events = new ArrayList<>(input.length * 2);
 
-        for (CardinalityInterval i : input) {
-            events.add(new Event(i.lowerBound(), Type.START));
-            events.add(new Event(i.upperBound(), Type.END));
+        for (Interval i : input) {
+            events.add(new Event(i.lowerBound(), Type.START, i.lowerInclusive()));
+            events.add(new Event(i.upperBound(), Type.END, i.upperInclusive()));
         }
 
         events.sort((a, b) -> {
             int cmp = a.value.compareTo(b.value);
-            if (cmp != 0) {
-                return cmp;
+            if (cmp != 0) return cmp;
+
+            // Same value: prioritize by type (START before END)
+            if (a.type != b.type) {
+                return a.type == Type.START ? -1 : 1;
             }
 
-            return a.type == b.type
-                    ? 0
-                    : (a.type == Type.START ? -1 : 1);
+            // Same value and type: inclusive bounds have priority over exclusive
+            return a.inclusive == b.inclusive ? 0
+                    : (a.inclusive ? -1 : 1);
         });
+
         List<Event> canonical = new ArrayList<>();
 
         int active = 0;
 
-        CardinalityValue segmentStart = null;
+        BoundValue segmentStart = null;
+        boolean segmentStartInclusive = false;
 
         for (Event e : events) {
 
@@ -117,6 +121,7 @@ public final class Cardinality {
 
                 if (active == 0) {
                     segmentStart = e.value;
+                    segmentStartInclusive = e.inclusive;
                 }
 
                 active++;
@@ -127,12 +132,14 @@ public final class Cardinality {
                 if (active == 0) {
                     canonical.add(new Event(
                             segmentStart,
-                            Type.START
+                            Type.START,
+                            segmentStartInclusive
                     ));
 
                     canonical.add(new Event(
                             e.value,
-                            Type.END
+                            Type.END,
+                            e.inclusive
                     ));
                 }
             }
@@ -153,32 +160,35 @@ public final class Cardinality {
 
         java.util.Arrays.sort(events, (a, b) -> {
             int cmp = a.value.compareTo(b.value);
-            if (cmp != 0) {
-                return cmp;
+            if (cmp != 0) return cmp;
+
+            if (a.type != b.type) {
+                return a.type == Type.START ? -1 : 1;
             }
 
-            return a.type == b.type
-                    ? 0
-                    : (a.type == Type.START ? -1 : 1);
+            return a.inclusive == b.inclusive ? 0
+                    : (a.inclusive ? -1 : 1);
         });
 
         List<Event> canonical = new ArrayList<>();
 
         int active = 0;
 
-        CardinalityValue segmentStart = null;
+        BoundValue segmentStart = null;
+        boolean segmentStartInclusive = false;
 
         for (Event e : events) {
             if (e.type == Type.START) {
                 if (active == 0) {
                     segmentStart = e.value;
+                    segmentStartInclusive = e.inclusive;
                 }
                 active++;
             } else {
                 active--;
                 if (active == 0) {
-                    canonical.add(new Event(segmentStart, Type.START));
-                    canonical.add(new Event(e.value, Type.END));
+                    canonical.add(new Event(segmentStart, Type.START, segmentStartInclusive));
+                    canonical.add(new Event(e.value, Type.END, e.inclusive));
                 }
             }
         }
@@ -189,13 +199,14 @@ public final class Cardinality {
     /**
      * Reconstructs interval view (derived, not canonical storage).
      */
-    public List<CardinalityInterval> toIntervals() {
+    public List<Interval> toIntervals() {
 
-        List<CardinalityInterval> out = new ArrayList<>();
+        List<Interval> out = new ArrayList<>();
 
         int active = 0;
 
-        CardinalityValue start = null;
+        BoundValue start = null;
+        boolean startInc = false;
 
         for (Event e : events) {
 
@@ -203,6 +214,7 @@ public final class Cardinality {
 
                 if (active == 0) {
                     start = e.value;
+                    startInc = e.inclusive;
                 }
 
                 active++;
@@ -211,9 +223,11 @@ public final class Cardinality {
                 active--;
 
                 if (active == 0) {
-                    out.add(new CardinalityInterval(
+                    out.add(new Interval(
                             start,
-                            e.value
+                            startInc,
+                            e.value,
+                            e.inclusive
                     ));
                 }
             }
@@ -222,57 +236,45 @@ public final class Cardinality {
         return out;
     }
 
-    public sealed interface CardinalityValue
-            extends Comparable<CardinalityValue>
-            permits FiniteBound, PositiveInfinity {
+    public sealed interface BoundValue
+            extends Comparable<BoundValue>
+            permits FiniteBound, NegativeInfinity, PositiveInfinity {
 
-        Cardinality.CardinalityValue POSITIVE_INFINITY = new Cardinality.PositiveInfinity();
+        Cardinality.BoundValue NEGATIVE_INFINITY = new Cardinality.NegativeInfinity();
+        Cardinality.BoundValue POSITIVE_INFINITY = new Cardinality.PositiveInfinity();
 
-        public int compareTo(CardinalityValue other);
-        public int compareTo(BigDecimal other);
-        public CardinalityValue multiply(CardinalityValue other);
+        int compareTo(BoundValue other);
     }
 
-    public record FiniteBound(BigDecimal value) implements CardinalityValue {
+    // TODO: Switch to using sealed interface for inclusive/exclusive bounds instead of boolean flag in Event
+    public record FiniteBound(BigDecimal value) implements BoundValue {
         public FiniteBound {
             value = value.stripTrailingZeros();
         }
 
         @Override
-        public int compareTo(CardinalityValue other) {
+        public int compareTo(BoundValue other) {
             return switch (other) {
                 case FiniteBound f -> value.compareTo(f.value);
+                case NegativeInfinity _ -> 1;
                 case PositiveInfinity _ -> -1;
-            };
-        }
-
-        @Override
-        public int compareTo(BigDecimal other) {
-            return value.compareTo(other);
-        }
-
-        @Override
-        public CardinalityValue multiply(CardinalityValue other) {
-            return switch (other) {
-                case FiniteBound f -> new FiniteBound(value.multiply(f.value));
-                case PositiveInfinity inf -> inf;
             };
         }
     }
 
-    public static final class PositiveInfinity implements CardinalityValue {
+    public static final class NegativeInfinity implements BoundValue {
+        private NegativeInfinity() {}
+        @Override
+        public int compareTo(BoundValue o) {
+            return (o == this) ? 0 : -1;
+        }
+    }
+
+    public static final class PositiveInfinity implements BoundValue {
         private PositiveInfinity() {}
         @Override
-        public int compareTo(CardinalityValue o) {
+        public int compareTo(BoundValue o) {
             return (o == this) ? 0 : 1;
-        }
-        @Override
-        public int compareTo(BigDecimal other) {
-            return 1; // +inf > any finite value
-        }
-        @Override
-        public CardinalityValue multiply(CardinalityValue other) {
-            return this;
         }
     }
     
@@ -281,33 +283,8 @@ public final class Cardinality {
     }
 
     public boolean isOne() { // TODO: simplify
-        return events.length == 2 
-            && events[0].value instanceof FiniteBound f && f.value().compareTo(BigDecimal.ONE) == 0 
-            && events[1].value instanceof FiniteBound f2 && f2.value().compareTo(BigDecimal.ONE) == 0 
-            ;
-    }
-
-    /** 
-     * Returns true if the cardinality is a singular value, i.e. it has exactly one possible value. 
-    */
-    public boolean isSingular() {
-        if (events.length != 2) {
-            return false;
-        }
-        if (!(events[0].value instanceof FiniteBound f1)) {
-            return false;
-        }
-        if (!(events[1].value instanceof FiniteBound f2)) {
-            return false;
-        }
-        return f1.value().compareTo(f2.value()) == 0;
-    }
-
-    public boolean isZeroOrOne() {
-        return events.length == 2 
-            && events[0].value instanceof FiniteBound f && f.value().compareTo(BigDecimal.ZERO) == 0
-            && events[1].value instanceof FiniteBound f2 && f2.value().compareTo(BigDecimal.ONE) == 0 
-            ;
+        return events.length == 1 && events[0].value instanceof FiniteBound f && f.value().compareTo(BigDecimal.ONE) == 0 
+            && events[0].inclusive == true && events[1].value instanceof FiniteBound f2 && f2.value().compareTo(BigDecimal.ONE) == 0 && events[1].inclusive == true;
     }
 
 }

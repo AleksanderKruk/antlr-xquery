@@ -1,6 +1,6 @@
 package com.github.akruk.antlrxquery.typesystem.typeoperations.itemtype;
 
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
+import com.github.akruk.antlrxquery.typesystem.types.XQueryTypes;
 
 public abstract class ItemtypeBinaryDirectPredicate
 {

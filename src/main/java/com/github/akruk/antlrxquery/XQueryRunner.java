@@ -15,10 +15,10 @@ import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMe
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.semanticanalyzer.GrammarManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager;
-import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.SemanticFunctionSets;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager;
+import com.github.akruk.antlrxquery.semanticanalyzer.visitors.AntlrQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTypeSets;
@@ -124,7 +124,7 @@ public class XQueryRunner {
             final Path cwd = Path.of(System.getProperty("user.dir"));
             modulePaths.add(cwd);
             final var contextManager = new XQuerySemanticContextManager(typeFactory);
-            final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
+            final AntlrQuerySemanticAnalyzer analyzer = new AntlrQuerySemanticAnalyzer(
                     parserAndTree.parser,
                     typeFactory,
                     new XQueryMemoizedValueFactory(typeFactory),
@@ -196,7 +196,7 @@ public class XQueryRunner {
             final ModuleManager manager = new ModuleManager(modulePaths);
             final GrammarManager grammarManager = new GrammarManager(grammarPaths);
             final XQuerySemanticContextManager contextManager = new XQuerySemanticContextManager(typeFactory);
-            final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
+            final AntlrQuerySemanticAnalyzer analyzer = new AntlrQuerySemanticAnalyzer(
                 parserAndTree.parser,
                 typeFactory,
                 valueFactory,

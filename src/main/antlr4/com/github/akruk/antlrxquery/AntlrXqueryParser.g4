@@ -364,21 +364,41 @@ cardinalitySet
 
 cardinalityTerm
     : IntegerLiteral # singleNumberCardinality
-    
     | IntegerLiteral DOTS IntegerLiteral # inclusiveRangeCardinality
     | IntegerLiteral DOTS                # minimumCardinality
     | DOTS IntegerLiteral                # maximumCardinality
-
-    | DOT GT IntegerLiteral # greaterThanCardinality
-    | DOT GE IntegerLiteral # greaterOrEqualCardinality
-    | DOT LT IntegerLiteral # lessThanCardinality
-    | DOT LE IntegerLiteral # lessOrEqualCardinality
-
-    | IntegerLiteral LT DOT LT IntegerLiteral # openRangeCardinality
-    | IntegerLiteral LE DOT LE IntegerLiteral # closedRangeCardinality
-    | IntegerLiteral LT DOT LE IntegerLiteral # leftOpenRangeCardinality
-    | IntegerLiteral LE DOT LT IntegerLiteral # rightOpenRangeCardinality
     ;
+
+// cardinality
+//     : HAT cardinalityTerm              # singleTermCardinality
+//     | HAT LPAREN cardinalitySet RPAREN # parenthesizedCardinality
+//     | STAR                             # zeroOrMoreCardinality
+//     | PLUS                             # oneOrMoreCardinality
+//     | QUESTION_MARK                    # zeroOrOneCardinality
+//     |                                  # exactlyOneCardinality
+//     ;
+
+// cardinalitySet
+//     : cardinalityTerm (UNION_OP cardinalityTerm)*
+//     ;
+
+// cardinalityTerm
+//     : IntegerLiteral # singleNumberCardinality
+    
+//     | IntegerLiteral DOTS IntegerLiteral # inclusiveRangeCardinality
+//     | IntegerLiteral DOTS                # minimumCardinality
+//     | DOTS IntegerLiteral                # maximumCardinality
+
+//     | DOT GT IntegerLiteral # greaterThanCardinality
+//     | DOT GE IntegerLiteral # greaterOrEqualCardinality
+//     | DOT LT IntegerLiteral # lessThanCardinality
+//     | DOT LE IntegerLiteral # lessOrEqualCardinality
+
+//     | IntegerLiteral LT DOT LT IntegerLiteral # openRangeCardinality
+//     | IntegerLiteral LE DOT LE IntegerLiteral # closedRangeCardinality
+//     | IntegerLiteral LT DOT LE IntegerLiteral # leftOpenRangeCardinality
+//     | IntegerLiteral LE DOT LT IntegerLiteral # rightOpenRangeCardinality
+//     ;
 
 sequenceTypeUnion: sequenceType (UNION_OP sequenceType)*;
 

@@ -13,19 +13,18 @@ import com.github.akruk.antlrxquery.inputgrammaranalyzer.InputGrammarAnalyzer.Qu
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryCardinality;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.BlockCardinalityMerger;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.SequenceCardinalityMerger;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 
 public class SequencetypePathOperator {
     private final XQueryTypeFactory typeFactory;
 	private final XQuerySemanticSymbolManager symbolManager;
-    private final XQuerySequenceType zeroOrOneNode;
-    private final XQuerySequenceType zeroOrMoreNodes;
-    private final XQuerySequenceType oneOrMoreNodes;
-    private final XQuerySequenceType emptySequence;
+    private final AntlrQuerySequenceType zeroOrOneNode;
+    private final AntlrQuerySequenceType zeroOrMoreNodes;
+    private final AntlrQuerySequenceType oneOrMoreNodes;
+    private final AntlrQuerySequenceType emptySequence;
 
     public SequencetypePathOperator(
         final XQueryTypeFactory typeFactory,
@@ -65,7 +64,7 @@ public class SequencetypePathOperator {
 
     public record PathOperatorResult(
         InputStatus inputStatus,
-        XQuerySequenceType result,
+        AntlrQuerySequenceType result,
         Map<String, GrammarStatus> inputGrammars,
         Map<String, GrammarStatus> elementGrammars,
         Set<QualifiedName> invalidElementNames,
@@ -99,13 +98,13 @@ public class SequencetypePathOperator {
      * </ul>
      */
     public PathOperatorResult pathOperator(
-        final XQuerySequenceType type,
+        final AntlrQuerySequenceType type,
         final XQueryAxis axis,
         final List<String> axisElementNames,
         final NamespaceResolver namespaceResolver
         )
     {
-        if (type.occurence == XQueryCardinality.ZERO)
+        if (type.cardinality == XQueryCardinality.ZERO)
             return zeroResult;
         final boolean usesWildcard = axisElementNames == null;
 
@@ -125,7 +124,7 @@ public class SequencetypePathOperator {
                     final ValidateNamesResult validateNamesResult = resolveAndValidateNames(axisElementNames, namespaceResolver);
                     if (usesWildcard) {
                         if (analysis == null) {
-                            return switch (type.occurence) {
+                            return switch (type.cardinality) {
                                 case ONE          -> getResult_InputElements_One_NoAnalysis_Wildcard(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
                                 case ONE_OR_MORE  -> getResult_InputElements_OneOrMore_NoAnalysis_Wildcard(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
                                 case ZERO_OR_MORE -> getResult_InputElements_ZeroOrMore_NoAnalysis_Wildcard(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
@@ -137,7 +136,7 @@ public class SequencetypePathOperator {
                         }
                     } else {
                         if (analysis == null) {
-                            return switch (type.occurence) {
+                            return switch (type.cardinality) {
                                 case ONE          -> getResult_InputElements_One_NoAnalysis_Elements(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
                                 case ONE_OR_MORE  -> getResult_InputElements_OneOrMore_NoAnalysis_Elements(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
                                 case ZERO_OR_MORE -> getResult_InputElements_ZeroOrMore_NoAnalysis_Elements(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
@@ -151,7 +150,7 @@ public class SequencetypePathOperator {
                 } else { // multigrammar input
                     final ValidateNamesResult validateNamesResult = resolveAndValidateNames(axisElementNames, namespaceResolver);
                     if (usesWildcard) {
-                        return switch (type.occurence) {
+                        return switch (type.cardinality) {
                             case ONE          -> getResult_InputElements_One_NoAnalysis_Wildcard(InputStatus.MULTIGRAMMAR, type, axis, validateNamesResult, inputGrammars);
                             case ONE_OR_MORE  -> getResult_InputElements_OneOrMore_NoAnalysis_WildCard(InputStatus.MULTIGRAMMAR, type, axis, validateNamesResult, inputGrammars);
                             case ZERO_OR_MORE -> getResult_InputElements_ZeroOrMore_NoAnalysis_Wildcard(InputStatus.MULTIGRAMMAR, type, axis, validateNamesResult, inputGrammars);
@@ -159,7 +158,7 @@ public class SequencetypePathOperator {
                             case ZERO         -> null; // already excluded
                         };
                     } else {
-                        return switch (type.occurence) {
+                        return switch (type.cardinality) {
                             case ONE          -> getResult_InputElements_One_NoAnalysis_Elements(InputStatus.MULTIGRAMMAR, type, axis, validateNamesResult, inputGrammars);
                             case ONE_OR_MORE  -> getResult_InputElements_OneOrMore_NoAnalysis_Elements(InputStatus.MULTIGRAMMAR, type, axis, validateNamesResult, inputGrammars);
                             case ZERO_OR_MORE -> getResult_InputElements_ZeroOrMore_NoAnalysis_Elements(InputStatus.MULTIGRAMMAR, type, axis, validateNamesResult, inputGrammars);
@@ -175,7 +174,7 @@ public class SequencetypePathOperator {
                 final ValidateNamesResult validateNamesResult = resolveAndValidateNames(axisElementNames, namespaceResolver);
                 final Map<String, GrammarStatus> inputGrammars = Map.of();
                 if (usesWildcard) {
-                    return switch (type.occurence) {
+                    return switch (type.cardinality) {
                         case ONE          -> getResult_InputAny_One_NoAnalysis_Wildcard(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
                         case ONE_OR_MORE  -> getResult_InputAny_OneOrMore_NoAnalysis_Wildcard(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
                         case ZERO_OR_MORE -> getResult_InputAny_ZeroOrMore_NoAnalysis_Wildcard(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
@@ -183,7 +182,7 @@ public class SequencetypePathOperator {
                         case ZERO         -> null; // already excluded
                     };
                 } else {
-                    return switch (type.occurence) {
+                    return switch (type.cardinality) {
                         case ONE          -> getResult_InputAny_One_NoAnalysis_Elements(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
                         case ONE_OR_MORE  -> getResult_InputAny_OneOrMore_NoAnalysis_Elements(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
                         case ZERO_OR_MORE -> getResult_InputAny_ZeroOrMore_NoAnalysis_Elements(InputStatus.OK, type, axis, validateNamesResult, inputGrammars);
@@ -213,7 +212,7 @@ public class SequencetypePathOperator {
 
     private PathOperatorResult getResult_InputAny_OneOrMore_NoAnalysis_Elements(
         InputStatus inputStatus,
-        XQuerySequenceType type,
+        AntlrQuerySequenceType type,
         XQueryAxis axis,
         ValidateNamesResult validateNamesResult,
         Map<String,GrammarStatus> inputGrammars
@@ -248,7 +247,7 @@ public class SequencetypePathOperator {
 
 	private PathOperatorResult getResult_InputAny_One_NoAnalysis_Elements(
         InputStatus inputStatus,
-        XQuerySequenceType type,
+        AntlrQuerySequenceType type,
         XQueryAxis axis,
         ValidateNamesResult validateNamesResult,
         Map<String,GrammarStatus> inputGrammars
@@ -283,7 +282,7 @@ public class SequencetypePathOperator {
 
     private PathOperatorResult getResult_InputAny_ZeroOrMore_NoAnalysis_Elements(
         InputStatus inputStatus,
-        XQuerySequenceType type,
+        AntlrQuerySequenceType type,
         XQueryAxis axis,
         ValidateNamesResult validateNamesResult,
         Map<String,GrammarStatus> inputGrammars
@@ -302,7 +301,7 @@ public class SequencetypePathOperator {
 
 	private PathOperatorResult getResult_InputAny_ZeroOrOne_NoAnalysis_Wildcard(
         final InputStatus inputStatus,
-        final XQuerySequenceType type,
+        final AntlrQuerySequenceType type,
         final XQueryAxis axis,
         final ValidateNamesResult validateNamesResult,
         final Map<String,GrammarStatus> inputGrammars
@@ -337,7 +336,7 @@ public class SequencetypePathOperator {
 
 	private PathOperatorResult getResult_InputAny_ZeroOrMore_NoAnalysis_Wildcard(
         InputStatus inputStatus,
-        XQuerySequenceType type,
+        AntlrQuerySequenceType type,
         XQueryAxis axis,
         ValidateNamesResult validateNamesResult,
         Map<String,GrammarStatus> inputGrammars
@@ -373,7 +372,7 @@ public class SequencetypePathOperator {
 
 	private PathOperatorResult getResult_InputAny_OneOrMore_NoAnalysis_Wildcard(
         InputStatus inputStatus,
-        XQuerySequenceType type,
+        AntlrQuerySequenceType type,
 		XQueryAxis axis,
         ValidateNamesResult validateNamesResult,
         Map<String,GrammarStatus> inputGrammars)
@@ -426,7 +425,7 @@ public class SequencetypePathOperator {
 
 	private PathOperatorResult getResult_InputAny_One_NoAnalysis_Wildcard(
         final InputStatus inputStatus,
-        final XQuerySequenceType type,
+        final AntlrQuerySequenceType type,
         final XQueryAxis axis,
         final ValidateNamesResult validateNamesResult,
         final Map<String,GrammarStatus> inputGrammars)
@@ -478,7 +477,7 @@ public class SequencetypePathOperator {
 	}
 
 	private PathOperatorResult getResult_InputElements_ZeroOrOne_NoAnalysis_WildCard(final InputStatus inputStatus,
-			final XQuerySequenceType type, final XQueryAxis axis, final ValidateNamesResult validateNamesResult,
+			final AntlrQuerySequenceType type, final XQueryAxis axis, final ValidateNamesResult validateNamesResult,
 			final Map<String,GrammarStatus> inputGrammars)
     {
         final var elementGrammars = validateNamesResult.grammars;
@@ -521,7 +520,7 @@ public class SequencetypePathOperator {
 
 	private PathOperatorResult getResult_InputElements_OneOrMore_NoAnalysis_WildCard(
         final InputStatus inputStatus,
-        final XQuerySequenceType type, final XQueryAxis axis, final ValidateNamesResult validateNamesResult,
+        final AntlrQuerySequenceType type, final XQueryAxis axis, final ValidateNamesResult validateNamesResult,
         final Map<String,GrammarStatus> inputGrammars)
     {
         switch(axis) {
@@ -563,7 +562,7 @@ public class SequencetypePathOperator {
 
 	private PathOperatorResult getResult_InputAny_ZeroOrOne_NoAnalysis_Elements(
         final InputStatus inputStatus,
-        final XQuerySequenceType type,
+        final AntlrQuerySequenceType type,
         final XQueryAxis axis,
         final ValidateNamesResult validateNamesResult,
         final Map<String,GrammarStatus> inputGrammars)
@@ -592,7 +591,7 @@ public class SequencetypePathOperator {
             );
         case SELF:
             final var constrainedNames = new HashSet<>(validateNamesResult.validNames);
-            final XQuerySequenceType constrainedType = constrainedNames.size() > 0
+            final AntlrQuerySequenceType constrainedType = constrainedNames.size() > 0
                 ? typeFactory.zeroOrOne(typeFactory.itemElement(constrainedNames))
                 : emptySequence;
             // XQuerySequenceType selfType = typeFactory.
@@ -612,7 +611,7 @@ public class SequencetypePathOperator {
 
     private PathOperatorResult getResult_InputElements_ZeroOrMore_NoAnalysis_Elements(
         final InputStatus inputStatus,
-        final XQuerySequenceType type,
+        final AntlrQuerySequenceType type,
         final XQueryAxis axis,
         final ValidateNamesResult validateNamesResult,
         final Map<String,GrammarStatus> inputGrammars
@@ -645,7 +644,7 @@ public class SequencetypePathOperator {
             unreachableNames.removeAll(validateNamesResult.validNames);
             final var constrainedNames = new HashSet<>(type.itemType.elementNames);
             constrainedNames.removeAll(unreachableNames);
-            final XQuerySequenceType constrainedType = constrainedNames.size() > 0
+            final AntlrQuerySequenceType constrainedType = constrainedNames.size() > 0
                 ? typeFactory.zeroOrMore(typeFactory.itemElement(constrainedNames))
                 : emptySequence;
             return new PathOperatorResult(
@@ -666,7 +665,7 @@ public class SequencetypePathOperator {
 
     private PathOperatorResult getResult_InputElements_ZeroOrOne_NoAnalysis_Elements(
         final InputStatus inputStatus,
-        final XQuerySequenceType type,
+        final AntlrQuerySequenceType type,
         final XQueryAxis axis,
         final ValidateNamesResult validateNamesResult,
         final Map<String,GrammarStatus> inputGrammars)
@@ -698,7 +697,7 @@ public class SequencetypePathOperator {
             unreachableNames.removeAll(validateNamesResult.validNames);
             final var constrainedNames = new HashSet<>(type.itemType.elementNames);
             constrainedNames.removeAll(unreachableNames);
-            final XQuerySequenceType constrainedType = constrainedNames.size() > 0
+            final AntlrQuerySequenceType constrainedType = constrainedNames.size() > 0
                 ? typeFactory.zeroOrOne(typeFactory.itemElement(constrainedNames))
                 : emptySequence;
             // XQuerySequenceType selfType = typeFactory.
@@ -717,7 +716,7 @@ public class SequencetypePathOperator {
 
     private PathOperatorResult getResult_InputElements_OneOrMore_NoAnalysis_Elements(
         final InputStatus inputStatus,
-        final XQuerySequenceType type,
+        final AntlrQuerySequenceType type,
         final XQueryAxis axis,
         final ValidateNamesResult validateNamesResult,
         final Map<String,GrammarStatus> inputGrammars)
@@ -748,7 +747,7 @@ public class SequencetypePathOperator {
             unreachableNames.removeAll(validateNamesResult.validNames);
             final var constrainedNames = new HashSet<>(type.itemType.elementNames);
             constrainedNames.removeAll(unreachableNames);
-            final XQuerySequenceType constrainedType = constrainedNames.size() > 0
+            final AntlrQuerySequenceType constrainedType = constrainedNames.size() > 0
                 ? typeFactory.zeroOrMore(typeFactory.itemElement(constrainedNames))
                 : emptySequence;
             return new PathOperatorResult(
@@ -766,7 +765,7 @@ public class SequencetypePathOperator {
 
     private PathOperatorResult getResult_InputElements_One_NoAnalysis_Elements(
         final InputStatus inputStatus,
-        final XQuerySequenceType type,
+        final AntlrQuerySequenceType type,
         final XQueryAxis axis,
         final ValidateNamesResult validateNamesResult,
         final Map<String,GrammarStatus> inputGrammars
@@ -809,7 +808,7 @@ public class SequencetypePathOperator {
             unreachableNames.removeAll(validateNamesResult.validNames);
             final var constrainedNames = new HashSet<>(type.itemType.elementNames);
             constrainedNames.removeAll(unreachableNames);
-            final XQuerySequenceType constrainedType = constrainedNames.size() > 0
+            final AntlrQuerySequenceType constrainedType = constrainedNames.size() > 0
                 ? typeFactory.zeroOrOne(typeFactory.itemElement(constrainedNames))
                 : emptySequence;
             return new PathOperatorResult(
@@ -826,14 +825,14 @@ public class SequencetypePathOperator {
     }
 
     private PathOperatorResult getResult_SingleGrammar_InputElements_Analyzed_Elements(
-        final XQuerySequenceType type,
+        final AntlrQuerySequenceType type,
         final XQueryAxis axis, final ValidateNamesResult validateNamesResult, final QualifiedGrammarAnalysisResult analysis,
         final Map<String,GrammarStatus> inputGrammars)
     {
         final Map<String, GrammarStatus> elementGrammars = validateNamesResult.grammars;
         final AnalyzedAxisResult analyzedAxis = analyzeAxisPathElements(type, axis, validateNamesResult, analysis);
         final var names = analyzedAxis.possibleNames;
-        final var returnedType = getAnalyzedReturnedType(analyzedAxis, names, type.occurence);
+        final var returnedType = getAnalyzedReturnedType(analyzedAxis, names, type.cardinality);
         return new PathOperatorResult(
             InputStatus.OK,
             returnedType,
@@ -846,7 +845,7 @@ public class SequencetypePathOperator {
     }
 
     private PathOperatorResult getResult_SingleGrammar_InputElements_Analyzed_Wildcard(
-        final XQuerySequenceType type,
+        final AntlrQuerySequenceType type,
         final XQueryAxis axis,
         final ValidateNamesResult validateNamesResult,
         final QualifiedGrammarAnalysisResult analysis,
@@ -856,7 +855,7 @@ public class SequencetypePathOperator {
         final var elementGrammars = validateNamesResult.grammars;
         final var analyzedAxis = analyzeAxisWithWildcard(type, axis, analysis);
         final var names = analyzedAxis.possibleNames;
-        final var returnedType = getAnalyzedReturnedType(analyzedAxis, names, type.occurence);
+        final var returnedType = getAnalyzedReturnedType(analyzedAxis, names, type.cardinality);
         return new PathOperatorResult(
             InputStatus.OK,
             returnedType,
@@ -868,7 +867,7 @@ public class SequencetypePathOperator {
         );
     }
 
-    private XQuerySequenceType getAnalyzedReturnedType(
+    private AntlrQuerySequenceType getAnalyzedReturnedType(
         final AnalyzedAxisResult analyzedAxis,
         final Set<QualifiedName> names,
         final XQueryCardinality inputTypeCardinality)
@@ -897,7 +896,7 @@ public class SequencetypePathOperator {
         ){}
 
     private AnalyzedAxisResult analyzeAxisPathElements(
-        final XQuerySequenceType type,
+        final AntlrQuerySequenceType type,
         final XQueryAxis axis,
         final ValidateNamesResult validateNamesResult,
         final QualifiedGrammarAnalysisResult analysis
@@ -930,7 +929,7 @@ public class SequencetypePathOperator {
 
 
     private AnalyzedAxisResult analyzeAxisWithWildcard(
-        final XQuerySequenceType type,
+        final AntlrQuerySequenceType type,
         final XQueryAxis axis,
         final QualifiedGrammarAnalysisResult analysis
         )
@@ -957,7 +956,7 @@ public class SequencetypePathOperator {
 
     private PathOperatorResult getResult_InputElements_ZeroOrOne_NoAnalysis_Wildcard(
         final InputStatus inputStatus,
-        final XQuerySequenceType type,
+        final AntlrQuerySequenceType type,
         final XQueryAxis axis,
         final ValidateNamesResult validateNamesResult,
         final Map<String, GrammarStatus> inputGrammars
@@ -1001,7 +1000,7 @@ public class SequencetypePathOperator {
 
     private PathOperatorResult getResult_InputElements_ZeroOrMore_NoAnalysis_Wildcard(
         final InputStatus inputStatus,
-        final XQuerySequenceType type,
+        final AntlrQuerySequenceType type,
         final XQueryAxis axis,
         final ValidateNamesResult validateNamesResult,
         final Map<String, GrammarStatus> inputGrammars
@@ -1036,7 +1035,7 @@ public class SequencetypePathOperator {
 
     private PathOperatorResult getResult_InputElements_OneOrMore_NoAnalysis_Wildcard(
         final InputStatus inputStatus,
-        final XQuerySequenceType type,
+        final AntlrQuerySequenceType type,
         final XQueryAxis axis,
         final ValidateNamesResult validateNamesResult,
         final Map<String, GrammarStatus> inputGrammars
@@ -1079,7 +1078,7 @@ public class SequencetypePathOperator {
 
     private PathOperatorResult getResult_InputElements_One_NoAnalysis_Wildcard(
         final InputStatus inputStatus,
-        final XQuerySequenceType type,
+        final AntlrQuerySequenceType type,
         final XQueryAxis axis,
         final ValidateNamesResult validateNamesResult,
         final Map<String, GrammarStatus> inputGrammars

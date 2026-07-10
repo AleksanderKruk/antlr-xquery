@@ -23,26 +23,26 @@ public class GrammarManager {
     private final Map<Path, ParseTree> trees;
     private final Map<Path, ANTLRv4Parser> parsers;
 
-    enum ImportStatus {
+    public enum ImportStatus {
         OK,
         MANY_VALID_PATHS,
         NO_PATH_FOUND__NEITHER_FOUND,
         NO_PATH_FOUND__NO_LEXER,
         NO_PATH_FOUND__NO_PARSER,
     }
-    enum ResolvingStatus {
+    public enum ResolvingStatus {
         OK,
         FOUND_OTHER_THAN_FILE,
         UNREADABLE,
         FAILED_TO_PARSE
     }
 
-    record ResolveTreeResult(
+    public record ResolveTreeResult(
         ParseTree tree,
         ANTLRv4Parser parser
     ){}
 
-    record GrammarFile(
+    public record GrammarFile(
         ParseTree tree,
         GrammarFileType type
     ){}
@@ -61,14 +61,14 @@ public class GrammarManager {
         this.parsers = new HashMap<>();
     }
 
-    enum GrammarFileType {
+    public enum GrammarFileType {
         MIXED,
         PARSER,
         LEXER
         // TOKENS
     }
 
-    record ResolvePathsResult(
+    public record ResolvePathsResult(
         Map<Path, GrammarFile> validPaths,
         List<Path> resolvedPaths,
         List<ResolvingStatus> statuses,

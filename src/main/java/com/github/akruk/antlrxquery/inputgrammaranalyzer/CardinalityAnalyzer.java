@@ -25,74 +25,69 @@ import com.github.akruk.antlrgrammar.ANTLRv4Parser.ParserRuleSpecContext;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.RulerefContext;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.TerminalDefContext;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.WildcardContext;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryCardinality;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.cardinality.Cardinalities;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.AlternativeCardinalityMerger;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.BlockCardinalityMerger;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.RecursiveCardinalityMerger;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.SequenceCardinalityMerger;
+import com.github.akruk.antlrxquery.typesystem.types.Cardinality;
 
 
 
-class CardinalityAnalyzer extends ANTLRv4ParserBaseVisitor<Map<String, Map<String, XQueryCardinality>>> {
-    final Map<String, Map<String, XQueryCardinality>> childrenMapping;
+class CardinalityAnalyzer extends ANTLRv4ParserBaseVisitor<Map<String, Map<String, Cardinality>>> {
+    final Map<String, Map<String, Cardinality>> childrenMapping;
     final AlternativeCardinalityMerger alternativeCardinalityMerger;
-    final SequenceCardinalityMerger sequenceCardinalityMerger;
     final BlockCardinalityMerger blockCardinalityMerger;
-    final RecursiveCardinalityMerger recursiveCardinalityMerger;
     final Set<String> nodeNames;
 
-    Map<String, Map<String, XQueryCardinality>> currentMapping;
-    Map<String, XQueryCardinality> currentSubMapping;
+    Map<String, Map<String, Cardinality>> currentMapping;
+    Map<String, Cardinality> currentSubMapping;
 
     public CardinalityAnalyzer(final Set<String> nodeNames, final ANTLRv4Parser antlrParser) {
         this.nodeNames = nodeNames;
         this.childrenMapping = getMapping(nodeNames);
         alternativeCardinalityMerger = new AlternativeCardinalityMerger();
-        sequenceCardinalityMerger = new SequenceCardinalityMerger();
         blockCardinalityMerger = new BlockCardinalityMerger();
-        recursiveCardinalityMerger = new RecursiveCardinalityMerger();
     }
 
 
-    private Map<String, Map<String, XQueryCardinality>> getMapping(final Set<String> nodeNames) {
-        final var map = new HashMap<String, Map<String, XQueryCardinality>>(nodeNames.size(), 1);
+    private Map<String, Map<String, Cardinality>> getMapping(final Set<String> nodeNames) {
+        final var map = new HashMap<String, Map<String, Cardinality>>(nodeNames.size(), 1);
         for (final var nodename : nodeNames) {
-            final var subhashmap =  new HashMap<String, XQueryCardinality>(nodeNames.size(), 1);
+            final var subhashmap =  new HashMap<String, Cardinality>(nodeNames.size(), 1);
             for (final var sub : nodeNames) {
-                subhashmap.put(sub, XQueryCardinality.ZERO);
+                subhashmap.put(sub, Cardinality.ZERO);
             }
             map.put(nodename, subhashmap);
         }
         return map;
     }
 
-    private Map<String, XQueryCardinality> getSubMapping(final Set<String> elements) {
-        final var subhashmap =  new HashMap<String, XQueryCardinality>(nodeNames.size(), 1);
+    private Map<String, Cardinality> getSubMapping(final Set<String> elements) {
+        final var subhashmap =  new HashMap<String, Cardinality>(nodeNames.size(), 1);
         for (final var sub : elements) {
-            subhashmap.put(sub, XQueryCardinality.ZERO);
+            subhashmap.put(sub, Cardinality.ZERO);
         }
         return subhashmap;
     }
 
 
-    XQueryCardinality visitedCardinality;
+    Cardinality visitedCardinality;
     @Override
-    public Map<String, Map<String, XQueryCardinality>> visitEbnfSuffix(final EbnfSuffixContext ctx) {
+    public Map<String, Map<String, Cardinality>> visitEbnfSuffix(final EbnfSuffixContext ctx) {
         if (ctx.STAR() != null)
-            visitedCardinality = XQueryCardinality.ZERO_OR_MORE;
+            visitedCardinality = Cardinality.ZERO_OR_MORE;
         else if (ctx.PLUS() != null)
-            visitedCardinality = XQueryCardinality.ONE_OR_MORE;
+            visitedCardinality = Cardinality.ONE_OR_MORE;
         else if (ctx.QUESTION().size() == 1)
-            visitedCardinality = XQueryCardinality.ZERO_OR_ONE;
+            visitedCardinality = Cardinality.ZERO_OR_ONE;
         else
-            visitedCardinality = XQueryCardinality.ONE;
+            visitedCardinality = Cardinality.ONE;
         return null;
     }
 
 
     String currentRuleRef;
     @Override
-    public Map<String, Map<String, XQueryCardinality>> visitLexerRuleSpec(LexerRuleSpecContext ctx) {
+    public Map<String, Map<String, Cardinality>> visitLexerRuleSpec(LexerRuleSpecContext ctx) {
         currentRuleRef = ctx.TOKEN_REF().getText();
         super.visitLexerRuleSpec(ctx);
         childrenMapping.put(currentRuleRef, currentSubMapping);
@@ -100,7 +95,7 @@ class CardinalityAnalyzer extends ANTLRv4ParserBaseVisitor<Map<String, Map<Strin
     }
 
     @Override
-    public Map<String, Map<String, XQueryCardinality>> visitParserRuleSpec(final ParserRuleSpecContext ctx) {
+    public Map<String, Map<String, Cardinality>> visitParserRuleSpec(final ParserRuleSpecContext ctx) {
         currentRuleRef = ctx.RULE_REF().getText();
         super.visitParserRuleSpec(ctx);
         childrenMapping.put(currentRuleRef, currentSubMapping);
@@ -109,12 +104,12 @@ class CardinalityAnalyzer extends ANTLRv4ParserBaseVisitor<Map<String, Map<Strin
 
 
     @Override
-    public Map<String, Map<String, XQueryCardinality>> visitLexerElement(LexerElementContext ctx) {
+    public Map<String, Map<String, Cardinality>> visitLexerElement(LexerElementContext ctx) {
         if (ctx.actionBlock() != null)
             return null;
-        XQueryCardinality declaredCardinality = null;
+        Cardinality declaredCardinality = null;
         if (ctx.ebnfSuffix() == null) {
-            declaredCardinality = XQueryCardinality.ONE;
+            declaredCardinality = Cardinality.ONE;
         } else {
             ctx.ebnfSuffix().accept(this);
             declaredCardinality = visitedCardinality;
@@ -133,23 +128,22 @@ class CardinalityAnalyzer extends ANTLRv4ParserBaseVisitor<Map<String, Map<Strin
         if (visitedRef == null)
             return null;
         // if (visitedRef == currentRu)
-        XQueryCardinality current = currentSubMapping.get(visitedRef);
-        byte mergedOrdinal = sequenceCardinalityMerger.merge(declaredCardinality.ordinal(), current.ordinal());
-        XQueryCardinality merged = XQueryCardinality.values()[mergedOrdinal];
+        Cardinality current = currentSubMapping.get(visitedRef);
+        Cardinality merged = Cardinalities.sequenceMerge(declaredCardinality, current);
         currentSubMapping.put(visitedRef, merged);
         return null;
     }
 
 
     @Override
-    public Map<String, Map<String, XQueryCardinality>> visitElement(final ElementContext ctx) {
+    public Map<String, Map<String, Cardinality>> visitElement(final ElementContext ctx) {
         if (ctx.actionBlock() != null)
             return null;
         if (ctx.ebnf() != null)
             return ctx.ebnf().accept(this);
-        XQueryCardinality declaredCardinality = null;
+        Cardinality declaredCardinality = null;
         if (ctx.ebnfSuffix() == null) {
-            declaredCardinality = XQueryCardinality.ONE;
+            declaredCardinality = Cardinality.ONE;
         } else {
             ctx.ebnfSuffix().accept(this);
             declaredCardinality = visitedCardinality;
@@ -171,44 +165,43 @@ class CardinalityAnalyzer extends ANTLRv4ParserBaseVisitor<Map<String, Map<Strin
         if (visitedRef == null)
             return null;
         if (visitedRef.equals(currentRuleRef)) {
-            XQueryCardinality current = currentSubMapping.get(visitedRef);
-            // XQueryCardinality blockMerged = sequenceCardinalityMerger.merge(currentSubMapping.get(visitedRef), declaredCardinality);
-            XQueryCardinality merged = recursiveCardinalityMerger.merge(current, declaredCardinality);
+            Cardinality current = currentSubMapping.get(visitedRef);
+            // Cardinality blockMerged = sequenceCardinalityMerger.merge(currentSubMapping.get(visitedRef), declaredCardinality);
+            Cardinality merged = Cardinalities.recursionMerge(declaredCardinality, current);
             currentSubMapping.put(visitedRef, merged);
         } else {
-            XQueryCardinality current = currentSubMapping.get(visitedRef);
-            byte mergedOrdinal = sequenceCardinalityMerger.merge(declaredCardinality.ordinal(), current.ordinal());
-            XQueryCardinality merged = XQueryCardinality.values()[mergedOrdinal];
+            Cardinality current = currentSubMapping.get(visitedRef);
+            Cardinality merged = Cardinalities.sequenceMerge(declaredCardinality, current);
             currentSubMapping.put(visitedRef, merged);
         }
         return null;
     }
 
 
-    private void blockMergeSubmapping(XQueryCardinality declaredCardinality) {
+    private void blockMergeSubmapping(Cardinality declaredCardinality) {
         for (final var entry : currentSubMapping.entrySet()) {
             final String ruleName = entry.getKey();
-            final XQueryCardinality currentCardinality = currentSubMapping.get(ruleName);
-            final XQueryCardinality merged = blockCardinalityMerger.merge(declaredCardinality, currentCardinality);
+            final Cardinality currentCardinality = currentSubMapping.get(ruleName);
+            final Cardinality merged = Cardinalities.blockMerge(declaredCardinality, currentCardinality);
             currentSubMapping.put(ruleName, merged);
         }
     }
 
-    private Map<String, XQueryCardinality> alternativeMergeSubmapping(Map<String, XQueryCardinality> previous, Map<String, XQueryCardinality> currentSubMapping2) {
+    private Map<String, Cardinality> alternativeMergeSubmapping(Map<String, Cardinality> previous, Map<String, Cardinality> currentSubMapping2) {
         for (final var entry : previous.entrySet()) {
             final String ruleName = entry.getKey();
-            final XQueryCardinality cardinality = entry.getValue();
-            final XQueryCardinality currentCardinality = currentSubMapping.get(ruleName);
-            final XQueryCardinality merged = alternativeCardinalityMerger.merge(cardinality, currentCardinality);
+            final Cardinality cardinality = entry.getValue();
+            final Cardinality currentCardinality = currentSubMapping.get(ruleName);
+            final Cardinality merged = Cardinalities.alternativeMerge(cardinality, currentCardinality);
             currentSubMapping.put(ruleName, merged);
         }
         return null;
     }
 
     @Override
-    public Map<java.lang.String, Map<java.lang.String, XQueryCardinality>> visitEbnf(EbnfContext ctx) {
+    public Map<java.lang.String, Map<java.lang.String, Cardinality>> visitEbnf(EbnfContext ctx) {
         if (ctx.blockSuffix() == null)
-            visitedCardinality = XQueryCardinality.ONE;
+            visitedCardinality = Cardinality.ONE;
         else
             ctx.blockSuffix().accept(this);
 
@@ -219,7 +212,7 @@ class CardinalityAnalyzer extends ANTLRv4ParserBaseVisitor<Map<String, Map<Strin
 
 
     @Override
-    public Map<String, Map<String, XQueryCardinality>> visitLexerAltList(LexerAltListContext ctx) {
+    public Map<String, Map<String, Cardinality>> visitLexerAltList(LexerAltListContext ctx) {
         ctx.lexerAlt(0).accept(this);
         var previous = currentSubMapping;
         for (var alternative : ctx.lexerAlt().subList(1, ctx.lexerAlt().size())) {
@@ -231,7 +224,7 @@ class CardinalityAnalyzer extends ANTLRv4ParserBaseVisitor<Map<String, Map<Strin
     }
 
     @Override
-    public Map<java.lang.String, Map<java.lang.String, XQueryCardinality>> visitAltList(AltListContext ctx) {
+    public Map<java.lang.String, Map<java.lang.String, Cardinality>> visitAltList(AltListContext ctx) {
         ctx.alternative(0).accept(this);
         var previous = currentSubMapping;
         for (var alternative : ctx.alternative().subList(1, ctx.alternative().size())) {
@@ -243,13 +236,13 @@ class CardinalityAnalyzer extends ANTLRv4ParserBaseVisitor<Map<String, Map<Strin
     }
 
     @Override
-    public Map<String, Map<String, XQueryCardinality>> visitLexerAlt(LexerAltContext ctx) {
+    public Map<String, Map<String, Cardinality>> visitLexerAlt(LexerAltContext ctx) {
         currentSubMapping = getSubMapping(nodeNames);
         return super.visitLexerAlt(ctx);
     }
 
     @Override
-    public Map<java.lang.String, Map<java.lang.String, XQueryCardinality>> visitAlternative(AlternativeContext ctx) {
+    public Map<java.lang.String, Map<java.lang.String, Cardinality>> visitAlternative(AlternativeContext ctx) {
         currentSubMapping = getSubMapping(nodeNames);
         return super.visitAlternative(ctx);
     }
@@ -258,7 +251,7 @@ class CardinalityAnalyzer extends ANTLRv4ParserBaseVisitor<Map<String, Map<Strin
     String visitedRef;
 
     @Override
-    public Map<String, Map<String, XQueryCardinality>> visitTerminalDef(final TerminalDefContext ctx) {
+    public Map<String, Map<String, Cardinality>> visitTerminalDef(final TerminalDefContext ctx) {
         if (ctx.TOKEN_REF() != null)
             visitedRef = ctx.TOKEN_REF().getText();
         else
@@ -268,19 +261,19 @@ class CardinalityAnalyzer extends ANTLRv4ParserBaseVisitor<Map<String, Map<Strin
 
 
     @Override
-    public Map<String, Map<String, XQueryCardinality>> visitRuleref(final RulerefContext ctx) {
+    public Map<String, Map<String, Cardinality>> visitRuleref(final RulerefContext ctx) {
         visitedRef = ctx.RULE_REF().getText();
         return null;
     }
 
     @Override
-    public Map<String, Map<String, XQueryCardinality>> visitNotSet(final NotSetContext ctx) {
+    public Map<String, Map<String, Cardinality>> visitNotSet(final NotSetContext ctx) {
         visitedRef = null;
         return null;
     }
 
     @Override
-    public Map<String, Map<String, XQueryCardinality>> visitWildcard(final WildcardContext ctx) {
+    public Map<String, Map<String, Cardinality>> visitWildcard(final WildcardContext ctx) {
         visitedRef = null;
         return null;
     }

@@ -8,12 +8,12 @@ import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import com.github.akruk.antlrxquery.evaluator.values.operations.ValueEquality;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 
 public class XQueryValue {
     public final XQueryValues valueType;
     public final int valueTypeOrdinal;
-    public final XQuerySequenceType type;
+    public final AntlrQuerySequenceType type;
     public final ParseTree node;
     public final BigDecimal numericValue;
     public final String stringValue;
@@ -61,7 +61,7 @@ public class XQueryValue {
     }
 
 
-    public static XQueryValue functionReference(XQueryFunction v, XQuerySequenceType type) {
+    public static XQueryValue functionReference(XQueryFunction v, AntlrQuerySequenceType type) {
         return new XQueryValue(
             XQueryValues.FUNCTION,
             type,
@@ -79,7 +79,7 @@ public class XQueryValue {
     }
 
 
-    public static XQueryValue boolean_(boolean v, XQuerySequenceType type) {
+    public static XQueryValue boolean_(boolean v, AntlrQuerySequenceType type) {
         return new XQueryValue(
             XQueryValues.BOOLEAN,
             type,
@@ -96,7 +96,7 @@ public class XQueryValue {
         );
     }
 
-    public static XQueryValue string(String v, XQuerySequenceType type) {
+    public static XQueryValue string(String v, AntlrQuerySequenceType type) {
         return new XQueryValue(
             XQueryValues.STRING,
             type,
@@ -113,7 +113,7 @@ public class XQueryValue {
         );
     }
 
-    public static XQueryValue number(BigDecimal v, XQuerySequenceType type) {
+    public static XQueryValue number(BigDecimal v, AntlrQuerySequenceType type) {
         return new XQueryValue(
             XQueryValues.NUMBER,
             type,
@@ -130,7 +130,7 @@ public class XQueryValue {
         );
     }
 
-    public static XQueryValue number(int v, XQuerySequenceType type) {
+    public static XQueryValue number(int v, AntlrQuerySequenceType type) {
         return new XQueryValue(
             XQueryValues.NUMBER,
             type,
@@ -147,7 +147,7 @@ public class XQueryValue {
         );
     }
 
-    public static XQueryValue node(ParseTree node, XQuerySequenceType type) {
+    public static XQueryValue node(ParseTree node, AntlrQuerySequenceType type) {
         return new XQueryValue(
             XQueryValues.ELEMENT,
             type,
@@ -164,7 +164,7 @@ public class XQueryValue {
         );
     }
 
-    public static XQueryValue sequence(List<XQueryValue> sequence, XQuerySequenceType type) {
+    public static XQueryValue sequence(List<XQueryValue> sequence, AntlrQuerySequenceType type) {
         if (sequence.size() == 0) {
             return emptySequence(type);
         }
@@ -187,7 +187,7 @@ public class XQueryValue {
         );
     }
 
-    public static XQueryValue emptySequence(XQuerySequenceType type) {
+    public static XQueryValue emptySequence(AntlrQuerySequenceType type) {
         return new XQueryValue(
             XQueryValues.EMPTY_SEQUENCE,
             type,
@@ -204,7 +204,7 @@ public class XQueryValue {
         );
     }
 
-    public static XQueryValue array(List<XQueryValue> arrayMembers, XQuerySequenceType type) {
+    public static XQueryValue array(List<XQueryValue> arrayMembers, AntlrQuerySequenceType type) {
         return new XQueryValue(
             XQueryValues.ARRAY,
             type,
@@ -221,7 +221,7 @@ public class XQueryValue {
         );
     }
 
-    public static XQueryValue map(Map<XQueryValue, XQueryValue> mapEntries, XQuerySequenceType type) {
+    public static XQueryValue map(Map<XQueryValue, XQueryValue> mapEntries, AntlrQuerySequenceType type) {
         return new XQueryValue(
             XQueryValues.MAP,
             type,
@@ -238,7 +238,7 @@ public class XQueryValue {
         );
     }
 
-    public static XQueryValue error(XQueryError error, String message, XQuerySequenceType type) {
+    public static XQueryValue error(XQueryError error, String message, AntlrQuerySequenceType type) {
         return new XQueryValue(
             XQueryValues.ERROR,
             type,
@@ -257,7 +257,7 @@ public class XQueryValue {
 
     private XQueryValue(
         XQueryValues valueType,
-        XQuerySequenceType type,
+        AntlrQuerySequenceType type,
         ParseTree node,
         BigDecimal numericValue,
         String stringValue,

@@ -16,10 +16,10 @@ import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQue
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.UsedArg;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField.TypeOrReference;
-import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.types.TypeInContext;
+import com.github.akruk.antlrxquery.typesystem.types.XQueryItemType;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 
 public class SemanticFunctionSets {
     public static List<List<SimplifiedFunctionSpecification>> ALL(final XQueryTypeFactory typeFactory) {
@@ -51,15 +51,15 @@ public class SemanticFunctionSets {
         final ParseTree TEN = helperTrees.TEN;
 
 
-        final XQuerySequenceType optionalString = typeFactory.zeroOrOne(typeFactory.itemString());
-        final XQuerySequenceType zeroOrMoreNumbers = typeFactory.zeroOrMore(typeFactory.itemNumber());
-        final XQuerySequenceType optionalItem = typeFactory.zeroOrOne(typeFactory.itemAnyItem());
-        final XQuerySequenceType zeroOrMoreNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
+        final AntlrQuerySequenceType optionalString = typeFactory.zeroOrOne(typeFactory.itemString());
+        final AntlrQuerySequenceType zeroOrMoreNumbers = typeFactory.zeroOrMore(typeFactory.itemNumber());
+        final AntlrQuerySequenceType optionalItem = typeFactory.zeroOrOne(typeFactory.itemAnyItem());
+        final AntlrQuerySequenceType zeroOrMoreNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
 
-        final XQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
+        final AntlrQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         final ArgumentSpecification argItems = new ArgumentSpecification("input", zeroOrMoreItems, null);
 
-        final XQuerySequenceType optionalNumber = typeFactory.zeroOrOne(typeFactory.itemNumber());
+        final AntlrQuerySequenceType optionalNumber = typeFactory.zeroOrOne(typeFactory.itemNumber());
         final ArgumentSpecification valueNum = new ArgumentSpecification("value", optionalNumber, null);
         final ArgumentSpecification roundingMode = new ArgumentSpecification("mode",
             typeFactory.zeroOrOne(
@@ -181,10 +181,10 @@ public class SemanticFunctionSets {
         // $divisor	as xs:decimal,
         // $precision	as xs:integer?	:= 0
         // ) as record(quotient as xs:decimal, remainder as xs:decimal)
-        final XQuerySequenceType oneNumber = typeFactory.number();
+        final AntlrQuerySequenceType oneNumber = typeFactory.number();
         final var arg_value_number = new ArgumentSpecification("value", oneNumber, null);
         final var arg_divisor_number = new ArgumentSpecification("value", oneNumber, null);
-        final XQueryRecordField numericField = new XQueryRecordField(TypeOrReference.type(oneNumber), true);
+        final XQueryRecordField numericField = new XQueryRecordField(new TypeOrReference.Type(oneNumber), true);
         final var divisionResult = typeFactory.record(
             Map.of("quotient", numericField,
                "remainder", numericField));
@@ -276,7 +276,7 @@ public class SemanticFunctionSets {
         );
 
         // fn:node-name($node as node()? := .) as xs:QName?
-        final XQuerySequenceType optionalNode = typeFactory.zeroOrOne(typeFactory.itemAnyNode());
+        final AntlrQuerySequenceType optionalNode = typeFactory.zeroOrOne(typeFactory.itemAnyNode());
         final ArgumentSpecification optionalNodeArg = new ArgumentSpecification(
             "node",
             optionalNode,
@@ -296,7 +296,7 @@ public class SemanticFunctionSets {
         );
 
         // fn:nilled($node as node()? := .) as xs:boolean?
-        final XQuerySequenceType optionalBoolean = typeFactory.zeroOrOne(typeFactory.itemBoolean());
+        final AntlrQuerySequenceType optionalBoolean = typeFactory.zeroOrOne(typeFactory.itemBoolean());
         fn.add(
             new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "nilled"),
@@ -751,7 +751,7 @@ public class SemanticFunctionSets {
         // fn:char(
         //  as (xs:string | xs:positiveInteger)
         // ) as xs:string
-        final XQuerySequenceType stringOrNumber = typeFactory.choice(List.of(typeFactory.itemString(), typeFactory.itemNumber()));
+        final AntlrQuerySequenceType stringOrNumber = typeFactory.choice(List.of(typeFactory.itemString(), typeFactory.itemNumber()));
         final ArgumentSpecification charVal = new ArgumentSpecification("value", stringOrNumber, null);
         fn.add(
             new SimplifiedFunctionSpecification(
@@ -1309,8 +1309,8 @@ public class SemanticFunctionSets {
 
         final GrainedAnalysis sameCardinalityAsArg = (args, context, functionBody, typeContext) -> {
             final UsedArg node = args.get(0);
-            final XQuerySequenceType typeitself = node.type().type;
-            final XQuerySequenceType t = new XQuerySequenceType(typeFactory, typeitself.itemType, typeitself.occurence);
+            final AntlrQuerySequenceType typeitself = node.type().type;
+            final AntlrQuerySequenceType t = new AntlrQuerySequenceType(typeFactory, typeitself.itemType, typeitself.cardinality);
             return typeContext.typeInContext(t);
         };
 
@@ -2354,16 +2354,16 @@ public class SemanticFunctionSets {
                 typeFactory.itemRecord(
                     Map.of(
                     "key", new XQueryRecordField(
-                        TypeOrReference.type(
+                        new TypeOrReference.Type(
                             typeFactory.zeroOrOne( typeFactory.itemFunction( zeroOrMoreItems, List.of(typeFactory.one(typeFactory.itemAnyItem()))))),
                         false
                     ),
                     "collation", new XQueryRecordField(
-                        TypeOrReference.type(typeFactory.zeroOrOne(typeFactory.itemString())),
+                        new TypeOrReference.Type(typeFactory.zeroOrOne(typeFactory.itemString())),
                         false
                     ),
                     "order", new XQueryRecordField(
-                        TypeOrReference.type(typeFactory.zeroOrOne(typeFactory.itemEnum(Set.of("ascending", "descending")))),
+                        new TypeOrReference.Type(typeFactory.zeroOrOne(typeFactory.itemEnum(Set.of("ascending", "descending")))),
                         false
                     )
                     )
@@ -2872,7 +2872,7 @@ public class SemanticFunctionSets {
 
     public static List<SimplifiedFunctionSpecification> MATH(final XQueryTypeFactory typeFactory) {
         final List<SimplifiedFunctionSpecification> math = new ArrayList<>(50);
-        final XQuerySequenceType optionalNumber = typeFactory.zeroOrOne(typeFactory.itemNumber());
+        final AntlrQuerySequenceType optionalNumber = typeFactory.zeroOrOne(typeFactory.itemNumber());
 
         // math:pi() as xs:double
         math.add(
@@ -3178,10 +3178,10 @@ public class SemanticFunctionSets {
 
     public static List<SimplifiedFunctionSpecification> ANTLR(final XQueryTypeFactory typeFactory) {
         final List<SimplifiedFunctionSpecification> antlr = new ArrayList<>(50);
-        final XQuerySequenceType optionalNumber = typeFactory.zeroOrOne(typeFactory.itemNumber());
-        final XQuerySequenceType optionalBoolean = typeFactory.zeroOrOne(typeFactory.itemBoolean());
-        final XQuerySequenceType number = typeFactory.number();
-        final XQuerySequenceType boolean_ = typeFactory.boolean_();
+        final AntlrQuerySequenceType optionalNumber = typeFactory.zeroOrOne(typeFactory.itemNumber());
+        final AntlrQuerySequenceType optionalBoolean = typeFactory.zeroOrOne(typeFactory.itemBoolean());
+        final AntlrQuerySequenceType number = typeFactory.number();
+        final AntlrQuerySequenceType boolean_ = typeFactory.boolean_();
         final var helperTrees = new HelperTrees();
         final ParseTree CONTEXT_VALUE = helperTrees.CONTEXT_VALUE;
         final ArgumentSpecification optionalNodeArg = new ArgumentSpecification(
@@ -3191,7 +3191,7 @@ public class SemanticFunctionSets {
         );
         final GrainedAnalysis ifNodePresentThenNumber = (args, context, functionBody, typeContext) -> {
             final UsedArg node = args.get(0);
-            if (node.type().type.isOne) {
+            if (node.type().type.cardinality.isOne()) {
                 return typeContext.typeInContext(number);
             }
             return node.type();
@@ -3199,7 +3199,7 @@ public class SemanticFunctionSets {
 
         final GrainedAnalysis ifNodePresentThenBoolean = (args, context, functionBody, typeContext) -> {
             final UsedArg node = args.get(0);
-            if (node.type().type.isOne) {
+            if (node.type().type.cardinality.isOne()) {
                 return typeContext.typeInContext(boolean_);
             }
             return node.type();
@@ -3308,9 +3308,9 @@ public class SemanticFunctionSets {
     public static List<SimplifiedFunctionSpecification> ARRAY(final XQueryTypeFactory typeFactory) {
         final List<SimplifiedFunctionSpecification> array = new ArrayList<>(100);
 
-        final XQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
-        final XQuerySequenceType optionalBoolean = typeFactory.zeroOrOne(typeFactory.itemBoolean());
-        final XQuerySequenceType optionalString = typeFactory.zeroOrOne(typeFactory.itemString());
+        final AntlrQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
+        final AntlrQuerySequenceType optionalBoolean = typeFactory.zeroOrOne(typeFactory.itemBoolean());
+        final AntlrQuerySequenceType optionalString = typeFactory.zeroOrOne(typeFactory.itemString());
 
 
         final var helperTrees = new HelperTrees();
@@ -3653,7 +3653,7 @@ public class SemanticFunctionSets {
             typeFactory.zeroOrMore(
                 typeFactory.itemRecord(
                 Map.of(
-                    "value", new XQueryRecordField( TypeOrReference.type(typeFactory.anyItem()), true/* isRequired */
+                    "value", new XQueryRecordField( new TypeOrReference.Type(typeFactory.anyItem()), true/* isRequired */
                     )
                 )
                 )
@@ -3671,7 +3671,7 @@ public class SemanticFunctionSets {
                 typeFactory.zeroOrMore(
                     typeFactory.itemRecord(
                     Map.of(
-                        "value", new XQueryRecordField( TypeOrReference.type(zeroOrMoreItems), true)
+                        "value", new XQueryRecordField( new TypeOrReference.Type(zeroOrMoreItems), true)
                     )
                     )
                 ),
@@ -3775,9 +3775,9 @@ public class SemanticFunctionSets {
         final var orderType = typeFactory.zeroOrOne(typeFactory.itemEnum(Set.of("ascending", "descending")));
         final var keysItemType = typeFactory.itemRecord(
                 Map.of(
-                "key", new XQueryRecordField(TypeOrReference.type(keyType), true),
-                "collation", new XQueryRecordField(TypeOrReference.type(optionalString), true),
-                "order", new XQueryRecordField(TypeOrReference.type(orderType), true)
+                "key", new XQueryRecordField(new TypeOrReference.Type(keyType), true),
+                "collation", new XQueryRecordField(new TypeOrReference.Type(optionalString), true),
+                "order", new XQueryRecordField(new TypeOrReference.Type(orderType), true)
                 ));
 
         final var keysType = typeFactory.zeroOrMore(keysItemType);
@@ -3857,7 +3857,7 @@ public class SemanticFunctionSets {
         final ParseTree EMPTY_MAP = helperTrees.EMPTY_MAP;
         final ParseTree IDENTITY$1 = helperTrees.IDENTITY$1;
 
-        final XQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
+        final AntlrQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         final ArgumentSpecification mapOptionsArg = new ArgumentSpecification(
             "options",
             typeFactory.zeroOrOne(typeFactory.itemAnyMap()),
@@ -4003,7 +4003,7 @@ public class SemanticFunctionSets {
             typeFactory.one(typeFactory.itemAnyMap()),
             null
         );
-        final XQuerySequenceType action = typeFactory.function(zeroOrMoreItems, List.of(typeFactory.anyItem(), zeroOrMoreItems));
+        final AntlrQuerySequenceType action = typeFactory.function(zeroOrMoreItems, List.of(typeFactory.anyItem(), zeroOrMoreItems));
         final ArgumentSpecification mfeAction = new ArgumentSpecification( "action", action, null);
         map.add(
             new SimplifiedFunctionSpecification(

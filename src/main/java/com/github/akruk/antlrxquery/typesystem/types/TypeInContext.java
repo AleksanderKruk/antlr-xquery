@@ -4,11 +4,11 @@ import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySeman
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticScope;
 
 public class TypeInContext {
-    public XQuerySequenceType type;
+    public AntlrQuerySequenceType type;
     public final XQuerySemanticContext context;
     public final XQuerySemanticScope scope;
 
-    public TypeInContext(XQuerySequenceType type, XQuerySemanticContext context, XQuerySemanticScope scope)
+    public TypeInContext(AntlrQuerySequenceType type, XQuerySemanticContext context, XQuerySemanticScope scope)
     {
         this.type = type;
         this.scope = scope;
@@ -20,7 +20,7 @@ public class TypeInContext {
         return type.isSubtypeOf(other.type);
     }
 
-    public boolean isSubtypeOf(XQuerySequenceType other)
+    public boolean isSubtypeOf(AntlrQuerySequenceType other)
     {
         return type.isSubtypeOf(other);
     }
@@ -30,12 +30,12 @@ public class TypeInContext {
         return type.itemtypeIsSubtypeOf(obj.type);
     }
 
-    public boolean itemtypeIsSubtypeOf(XQuerySequenceType obj)
+    public boolean itemtypeIsSubtypeOf(AntlrQuerySequenceType obj)
     {
         return type.itemtypeIsSubtypeOf(obj);
     }
 
-    public XQuerySequenceType iteratorType()
+    public AntlrQuerySequenceType iteratorType()
     {
         return type.iteratorType();
     }

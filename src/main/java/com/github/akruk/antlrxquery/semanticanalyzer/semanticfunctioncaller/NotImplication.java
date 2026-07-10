@@ -6,7 +6,7 @@ import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.Assumption;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.Implication;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.ValueImplication;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContext;
-import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
+import com.github.akruk.antlrxquery.typesystem.types.TypeInContext;
 
 class NotImplication extends ValueImplication<Boolean> {
     private Boolean value;

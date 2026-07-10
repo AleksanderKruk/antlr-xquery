@@ -5,8 +5,8 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.types.XQueryItemType;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 
 public class FilterExpressionSemanticTests extends SemanticTestsBase {
 
@@ -17,8 +17,8 @@ public class FilterExpressionSemanticTests extends SemanticTestsBase {
                     ("a", "b", "c")[()]
                 """, typeFactory.emptySequence());
         final XQueryItemType abcEnum = typeFactory.itemEnum(Set.of("a", "b", "c"));
-        final XQuerySequenceType zeroOrOneABC = typeFactory.zeroOrOne(abcEnum);
-        final XQuerySequenceType zeroOrMoreABC = typeFactory.zeroOrMore(abcEnum);
+        final AntlrQuerySequenceType zeroOrOneABC = typeFactory.zeroOrOne(abcEnum);
+        final AntlrQuerySequenceType zeroOrMoreABC = typeFactory.zeroOrMore(abcEnum);
         assertType("""
                     ("a", "b", "c")[1]
                 """, zeroOrOneABC);

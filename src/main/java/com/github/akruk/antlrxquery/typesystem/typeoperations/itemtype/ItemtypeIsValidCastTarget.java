@@ -1,6 +1,6 @@
 package com.github.akruk.antlrxquery.typesystem.typeoperations.itemtype;
 
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
+import com.github.akruk.antlrxquery.typesystem.types.XQueryItemType;
 
 public class ItemtypeIsValidCastTarget extends ItemtypeUnaryDirectPredicate
 {

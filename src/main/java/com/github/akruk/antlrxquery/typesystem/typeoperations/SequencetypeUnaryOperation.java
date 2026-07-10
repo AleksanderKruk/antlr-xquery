@@ -2,9 +2,9 @@ package com.github.akruk.antlrxquery.typesystem.typeoperations;
 
 import java.util.function.Function;
 
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryCardinality;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
+import com.github.akruk.antlrxquery.typesystem.types.XQueryCardinality;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.types.XQueryTypes;
 
 public abstract class SequencetypeUnaryOperation<Returned>
 {
@@ -32,7 +32,7 @@ public abstract class SequencetypeUnaryOperation<Returned>
     private static final int RECORD = XQueryTypes.RECORD.ordinal();
     private static final int EXTENSIBLE_RECORD = XQueryTypes.EXTENSIBLE_RECORD.ordinal();
 
-    protected final Function<XQuerySequenceType, Returned>[][] automaton;
+    protected final Function<AntlrQuerySequenceType, Returned>[][] automaton;
 
     // private final int occurenceCount = XQueryOccurence.values().length;
 
@@ -41,8 +41,8 @@ public abstract class SequencetypeUnaryOperation<Returned>
         this.automaton = getAutomaton();
     }
 
-    private Function<XQuerySequenceType, Returned>[][] getAutomaton() {
-        final Function<XQuerySequenceType, Returned>[][] automaton = allocateArray();
+    private Function<AntlrQuerySequenceType, Returned>[][] getAutomaton() {
+        final Function<AntlrQuerySequenceType, Returned>[][] automaton = allocateArray();
 
         automaton[ZERO][STRING] = this::zeroStringOperation;
         automaton[ZERO][ELEMENT] = this::zeroElementOperation;
@@ -143,96 +143,96 @@ public abstract class SequencetypeUnaryOperation<Returned>
     }
 
 
-    protected abstract Function<XQuerySequenceType, Returned>[][] allocateArray();
-    public abstract Returned zeroStringOperation(XQuerySequenceType x);
-    public abstract Returned zeroElementOperation(XQuerySequenceType x);
-    public abstract Returned zeroEnumOperation(XQuerySequenceType x);
-    public abstract Returned zeroBooleanOperation(XQuerySequenceType x);
-    public abstract Returned zeroNumberOperation(XQuerySequenceType x);
-    public abstract Returned zeroErrorOperation(XQuerySequenceType x);
-    public abstract Returned zeroAnyItemOperation(XQuerySequenceType x);
-    public abstract Returned zeroAnyNodeOperation(XQuerySequenceType x);
-    public abstract Returned zeroAnyMapOperation(XQuerySequenceType x);
-    public abstract Returned zeroMapOperation(XQuerySequenceType x);
-    public abstract Returned zeroChoiceOperation(XQuerySequenceType x);
-    public abstract Returned zeroAnyArrayOperation(XQuerySequenceType x);
-    public abstract Returned zeroArrayOperation(XQuerySequenceType x);
-    public abstract Returned zeroAnyFunctionOperation(XQuerySequenceType x);
-    public abstract Returned zeroFunctionOperation(XQuerySequenceType x);
-    public abstract Returned zeroRecordOperation(XQuerySequenceType x);
-    public abstract Returned zeroExtensibleRecordOperation(XQuerySequenceType x);
+    protected abstract Function<AntlrQuerySequenceType, Returned>[][] allocateArray();
+    public abstract Returned zeroStringOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroElementOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroEnumOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroBooleanOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroNumberOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroErrorOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroAnyItemOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroAnyNodeOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroAnyMapOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroMapOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroChoiceOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroAnyArrayOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroArrayOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroAnyFunctionOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroFunctionOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroRecordOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroExtensibleRecordOperation(AntlrQuerySequenceType x);
 
-    public abstract Returned oneStringOperation(XQuerySequenceType x);
-    public abstract Returned oneElementOperation(XQuerySequenceType x);
-    public abstract Returned oneEnumOperation(XQuerySequenceType x);
-    public abstract Returned oneBooleanOperation(XQuerySequenceType x);
-    public abstract Returned oneNumberOperation(XQuerySequenceType x);
-    public abstract Returned oneErrorOperation(XQuerySequenceType x);
-    public abstract Returned oneAnyItemOperation(XQuerySequenceType x);
-    public abstract Returned oneAnyNodeOperation(XQuerySequenceType x);
-    public abstract Returned oneAnyMapOperation(XQuerySequenceType x);
-    public abstract Returned oneMapOperation(XQuerySequenceType x);
-    public abstract Returned oneChoiceOperation(XQuerySequenceType x);
-    public abstract Returned oneAnyArrayOperation(XQuerySequenceType x);
-    public abstract Returned oneArrayOperation(XQuerySequenceType x);
-    public abstract Returned oneAnyFunctionOperation(XQuerySequenceType x);
-    public abstract Returned oneFunctionOperation(XQuerySequenceType x);
-    public abstract Returned oneRecordOperation(XQuerySequenceType x);
-    public abstract Returned oneExtensibleRecordOperation(XQuerySequenceType x);
+    public abstract Returned oneStringOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneElementOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneEnumOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneBooleanOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneNumberOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneErrorOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneAnyItemOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneAnyNodeOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneAnyMapOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneMapOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneChoiceOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneAnyArrayOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneArrayOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneAnyFunctionOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneFunctionOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneRecordOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneExtensibleRecordOperation(AntlrQuerySequenceType x);
 
-    public abstract Returned zeroOrOneStringOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrOneElementOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrOneEnumOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrOneBooleanOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrOneNumberOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrOneErrorOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrOneAnyItemOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrOneAnyNodeOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrOneAnyMapOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrOneMapOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrOneChoiceOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrOneAnyArrayOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrOneArrayOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrOneAnyFunctionOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrOneFunctionOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrOneRecordOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrOneExtensibleRecordOperation(XQuerySequenceType x);
+    public abstract Returned zeroOrOneStringOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrOneElementOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrOneEnumOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrOneBooleanOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrOneNumberOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrOneErrorOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrOneAnyItemOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrOneAnyNodeOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrOneAnyMapOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrOneMapOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrOneChoiceOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrOneAnyArrayOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrOneArrayOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrOneAnyFunctionOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrOneFunctionOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrOneRecordOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrOneExtensibleRecordOperation(AntlrQuerySequenceType x);
 
-    public abstract Returned oneOrMoreStringOperation(XQuerySequenceType x);
-    public abstract Returned oneOrMoreElementOperation(XQuerySequenceType x);
-    public abstract Returned oneOrMoreEnumOperation(XQuerySequenceType x);
-    public abstract Returned oneOrMoreBooleanOperation(XQuerySequenceType x);
-    public abstract Returned oneOrMoreNumberOperation(XQuerySequenceType x);
-    public abstract Returned oneOrMoreErrorOperation(XQuerySequenceType x);
-    public abstract Returned oneOrMoreAnyItemOperation(XQuerySequenceType x);
-    public abstract Returned oneOrMoreAnyNodeOperation(XQuerySequenceType x);
-    public abstract Returned oneOrMoreAnyMapOperation(XQuerySequenceType x);
-    public abstract Returned oneOrMoreMapOperation(XQuerySequenceType x);
-    public abstract Returned oneOrMoreChoiceOperation(XQuerySequenceType x);
-    public abstract Returned oneOrMoreAnyArrayOperation(XQuerySequenceType x);
-    public abstract Returned oneOrMoreArrayOperation(XQuerySequenceType x);
-    public abstract Returned oneOrMoreAnyFunctionOperation(XQuerySequenceType x);
-    public abstract Returned oneOrMoreFunctionOperation(XQuerySequenceType x);
-    public abstract Returned oneOrMoreRecordOperation(XQuerySequenceType x);
-    public abstract Returned oneOrMoreExtensibleRecordOperation(XQuerySequenceType x);
+    public abstract Returned oneOrMoreStringOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneOrMoreElementOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneOrMoreEnumOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneOrMoreBooleanOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneOrMoreNumberOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneOrMoreErrorOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneOrMoreAnyItemOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneOrMoreAnyNodeOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneOrMoreAnyMapOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneOrMoreMapOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneOrMoreChoiceOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneOrMoreAnyArrayOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneOrMoreArrayOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneOrMoreAnyFunctionOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneOrMoreFunctionOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneOrMoreRecordOperation(AntlrQuerySequenceType x);
+    public abstract Returned oneOrMoreExtensibleRecordOperation(AntlrQuerySequenceType x);
 
-    public abstract Returned zeroOrMoreStringOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrMoreElementOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrMoreEnumOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrMoreBooleanOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrMoreNumberOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrMoreErrorOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrMoreAnyItemOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrMoreAnyNodeOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrMoreAnyMapOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrMoreMapOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrMoreChoiceOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrMoreAnyArrayOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrMoreArrayOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrMoreAnyFunctionOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrMoreFunctionOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrMoreRecordOperation(XQuerySequenceType x);
-    public abstract Returned zeroOrMoreExtensibleRecordOperation(XQuerySequenceType x);
+    public abstract Returned zeroOrMoreStringOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrMoreElementOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrMoreEnumOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrMoreBooleanOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrMoreNumberOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrMoreErrorOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrMoreAnyItemOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrMoreAnyNodeOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrMoreAnyMapOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrMoreMapOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrMoreChoiceOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrMoreAnyArrayOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrMoreArrayOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrMoreAnyFunctionOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrMoreFunctionOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrMoreRecordOperation(AntlrQuerySequenceType x);
+    public abstract Returned zeroOrMoreExtensibleRecordOperation(AntlrQuerySequenceType x);
 
 
 }

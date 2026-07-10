@@ -1,11 +1,11 @@
 package com.github.akruk.antlrxquery.typesystem.typeoperations;
 
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.types.XQueryItemType;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 
 public class SequencetypeAtomization {
-    private final XQuerySequenceType anyItems;
+    private final AntlrQuerySequenceType anyItems;
     private final XQueryTypeFactory typeFactory;
 
     public SequencetypeAtomization(XQueryTypeFactory typeFactory) {
@@ -13,7 +13,7 @@ public class SequencetypeAtomization {
         this.anyItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
     }
 
-    public XQuerySequenceType atomize(XQuerySequenceType type) {
+    public AntlrQuerySequenceType atomize(AntlrQuerySequenceType type) {
         if (type.isZero)
             return type;
         final XQueryItemType itemType = type.itemType;
@@ -22,7 +22,7 @@ public class SequencetypeAtomization {
             case ANY_ITEM -> anyItems;
             case ARRAY -> typeFactory.zeroOrMore(itemType.arrayMemberType.itemType);
             case CHOICE ->{
-                XQuerySequenceType result = null;
+                AntlrQuerySequenceType result = null;
                 for (var membertype : itemType.itemTypes) {
                     result = switch(membertype.type) {
                         case ARRAY -> {

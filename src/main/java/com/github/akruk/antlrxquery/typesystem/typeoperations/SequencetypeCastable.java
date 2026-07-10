@@ -8,15 +8,14 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.itemtype.ItemtypeIsValidCastTarget;
+import com.github.akruk.antlrxquery.typesystem.types.XQueryItemType;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.types.XQueryTypes;
 
 public class SequencetypeCastable {
-    private final XQuerySequenceType anyItems;
+    private final AntlrQuerySequenceType anyItems;
     private final XQueryTypeFactory typeFactory;
 
     public SequencetypeCastable(XQueryTypeFactory typeFactory, SequencetypeAtomization atomizer) {
@@ -27,11 +26,11 @@ public class SequencetypeCastable {
 
     // TODO: simplyfy by adding unified list of errors for both itemtypes and sequence types
     public static record IsCastableResult(
-        XQuerySequenceType resultingType,
-        XQuerySequenceType atomizedType,
+        AntlrQuerySequenceType resultingType,
+        AntlrQuerySequenceType atomizedType,
         Castability castability,
         XQueryItemType[] wrongItemtypes,
-        XQuerySequenceType[] wrongSequenceTypes,
+        AntlrQuerySequenceType[] wrongSequenceTypes,
         Castability[] problems
     ) {}
 
@@ -52,12 +51,12 @@ public class SequencetypeCastable {
     private final static ItemtypeIsValidCastTarget isValidCastTarget = new ItemtypeIsValidCastTarget();
     private final SequencetypeAtomization atomizer;
 
-    public IsCastableResult isCastable(XQuerySequenceType targetType, XQuerySequenceType tested, boolean emptyAllowed) {
+    public IsCastableResult isCastable(AntlrQuerySequenceType targetType, AntlrQuerySequenceType tested, boolean emptyAllowed) {
         if (!isValidCastTarget.test(targetType.itemType)) {
             return new IsCastableResult(anyItems, tested, null, null, null, null);
         }
         final var atomized = atomizer.atomize(tested);
-        return switch (atomized.occurence) {
+        return switch (atomized.cardinality) {
             case ZERO -> new IsCastableResult(targetType, atomized, Castability.TESTED_EXPRESSION_IS_EMPTY_SEQUENCE, null, null, null);
             case ZERO_OR_ONE -> {
                 if (!emptyAllowed) {
@@ -71,9 +70,9 @@ public class SequencetypeCastable {
     }
 
     IsCastableResult handleCastable(
-            XQuerySequenceType atomized,
-            XQuerySequenceType type,
-            XQuerySequenceType result)
+            AntlrQuerySequenceType atomized,
+            AntlrQuerySequenceType type,
+            AntlrQuerySequenceType result)
     {
         if (atomized.itemtypeIsSubtypeOf(atomized)) {
             return new IsCastableResult(result, atomized, Castability.ALWAYS_POSSIBLE_CASTING_TO_SUBTYPE, null, null, null);
@@ -82,7 +81,7 @@ public class SequencetypeCastable {
     }
 
     Pattern digit = Pattern.compile("(\\d+)?\\.\\d+");
-    IsCastableResult handleItemTypeCastable(XQueryItemType targetItem, XQueryItemType testedItem, XQuerySequenceType result, XQuerySequenceType atomized) {
+    IsCastableResult handleItemTypeCastable(XQueryItemType targetItem, XQueryItemType testedItem, AntlrQuerySequenceType result, AntlrQuerySequenceType atomized) {
         final IsCastableResult impossible = new IsCastableResult(result, atomized, Castability.IMPOSSIBLE, null, null, null);
         final IsCastableResult castingtosame = new IsCastableResult(result, atomized, Castability.ALWAYS_POSSIBLE_CASTING_TO_SAME, null, null, null);
         final IsCastableResult possible = new IsCastableResult(result, atomized, Castability.POSSIBLE, null, null, null);
@@ -113,8 +112,8 @@ public class SequencetypeCastable {
         return null; // unreachable
     }
 
-    private IsCastableResult handleMapToRecordCastability(XQueryItemType targetItem, XQueryItemType testedItem, XQuerySequenceType result,
-            XQuerySequenceType atomized, final IsCastableResult impossible, final IsCastableResult possible) {
+    private IsCastableResult handleMapToRecordCastability(XQueryItemType targetItem, XQueryItemType testedItem, AntlrQuerySequenceType result,
+            AntlrQuerySequenceType atomized, final IsCastableResult impossible, final IsCastableResult possible) {
         if (testedItem.mapKeyType.type != XQueryTypes.STRING) {
             if (testedItem.mapKeyType.type != XQueryTypes.ENUM) {
                 return impossible;
@@ -133,11 +132,11 @@ public class SequencetypeCastable {
     }
 
     private IsCastableResult recordFieldsMustMatchMapValue(XQueryItemType targetItem, XQueryItemType testedItem,
-            XQuerySequenceType result, XQuerySequenceType atomized, final IsCastableResult possible) {
+            AntlrQuerySequenceType result, AntlrQuerySequenceType atomized, final IsCastableResult possible) {
         final var valueType = testedItem.mapValueType;
         final int recordFieldCount = targetItem.recordFields.size();
         final Castability[] wrong = new Castability[recordFieldCount];
-        final XQuerySequenceType[] wrongSequenceTypes = new XQuerySequenceType[recordFieldCount];
+        final AntlrQuerySequenceType[] wrongSequenceTypes = new AntlrQuerySequenceType[recordFieldCount];
         int i = 0;
         boolean hasPossible = false;
         for (String member : targetItem.recordFields.keySet()) {
@@ -171,8 +170,8 @@ public class SequencetypeCastable {
 
     private IsCastableResult choiceCasting(
             final XQueryItemType targetItemType,
-            final XQuerySequenceType result,
-            final XQuerySequenceType atomized,
+            final AntlrQuerySequenceType result,
+            final AntlrQuerySequenceType atomized,
             final IsCastableResult impossible)
     {
         final Collection<XQueryItemType> itemTypes = atomized.itemType.itemTypes;
@@ -205,7 +204,7 @@ public class SequencetypeCastable {
         XQueryItemType testedItem,
         IsCastableResult impossible,
         IsCastableResult possible,
-        IsCastableResult always, XQuerySequenceType result, XQuerySequenceType atomized)
+        IsCastableResult always, AntlrQuerySequenceType result, AntlrQuerySequenceType atomized)
     {
         return switch (testedItem.type) {
             case ANY_ARRAY, ARRAY, MAP, ANY_MAP, RECORD, EXTENSIBLE_RECORD, ANY_FUNCTION, FUNCTION, ERROR ->
@@ -250,8 +249,8 @@ public class SequencetypeCastable {
         IsCastableResult impossible,
         IsCastableResult possible,
         IsCastableResult castingtosame,
-        XQuerySequenceType result,
-        XQuerySequenceType atomized)
+        AntlrQuerySequenceType result,
+        AntlrQuerySequenceType atomized)
     {
         return switch (testedItem.type) {
         case BOOLEAN -> castingtosame;
@@ -270,8 +269,8 @@ public class SequencetypeCastable {
         IsCastableResult impossible,
         IsCastableResult possible,
         IsCastableResult castingtosame,
-        XQuerySequenceType result,
-        XQuerySequenceType atomized,
+        AntlrQuerySequenceType result,
+        AntlrQuerySequenceType atomized,
         IsCastableResult always)
     {
         switch (testedItem.type) {
@@ -303,8 +302,8 @@ public class SequencetypeCastable {
         IsCastableResult impossible,
         IsCastableResult possible,
         IsCastableResult castingtosame,
-        XQuerySequenceType result,
-        XQuerySequenceType atomized,
+        AntlrQuerySequenceType result,
+        AntlrQuerySequenceType atomized,
         IsCastableResult always)
     {
         return switch(testedItem.type) {
@@ -328,8 +327,8 @@ public class SequencetypeCastable {
         IsCastableResult impossible,
         IsCastableResult possible,
         IsCastableResult castingtosame,
-        XQuerySequenceType result,
-        XQuerySequenceType atomized,
+        AntlrQuerySequenceType result,
+        AntlrQuerySequenceType atomized,
         IsCastableResult always)
     {
         return switch(testedItem.type) {

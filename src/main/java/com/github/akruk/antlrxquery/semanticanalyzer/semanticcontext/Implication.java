@@ -2,7 +2,7 @@ package com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext;
 
 import java.util.Map;
 
-import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
+import com.github.akruk.antlrxquery.typesystem.types.TypeInContext;
 
 public interface Implication
 {

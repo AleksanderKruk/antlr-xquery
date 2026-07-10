@@ -15,19 +15,24 @@ import java.util.stream.Collectors;
 import org.antlr.v4.runtime.CharStream;
 import com.github.akruk.antlrxquery.AntlrXqueryLexer;
 import com.github.akruk.antlrxquery.AntlrXqueryParser;
+import com.github.akruk.antlrxquery.AxisVisitor;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.XqueryContext;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMemoizedValueFactory;
 import com.github.akruk.antlrxquery.semanticanalyzer.GrammarManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager;
-import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.SemanticFunctionSets;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
+import com.github.akruk.antlrxquery.semanticanalyzer.visitors.AntlrQuerySemanticAnalyzer;
+import com.github.akruk.antlrxquery.semanticanalyzer.visitors.CardinalityVisitor;
+import com.github.akruk.antlrxquery.semanticanalyzer.visitors.TypeVisitor;
+import com.github.akruk.antlrxquery.typesystem.factories.CardinalityFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.defaults.BaseCardinalityFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTypeSets;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 
 public final class XQuery {
     public static XQueryValue evaluateWithMockRoot(
@@ -82,8 +87,9 @@ public final class XQuery {
         final ModuleManager moduleManager = new ModuleManager(Set.of());
         final GrammarManager grammarManager = new GrammarManager(Set.of());
         final XQuerySemanticContextManager contextManager = new XQuerySemanticContextManager(typeFactory);
-        final Map<String, XQuerySequenceType> varTypes = vars.entrySet().stream().collect(Collectors.toMap(e->e.getKey(), e->e.getValue().type));
-        final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
+        final Map<String, AntlrQuerySequenceType> varTypes = vars.entrySet().stream().collect(Collectors.toMap(e->e.getKey(), e->e.getValue().type));
+        final BaseCardinalityFactory cardinalityFactory = new BaseCardinalityFactory();
+        final AntlrQuerySemanticAnalyzer analyzer = new AntlrQuerySemanticAnalyzer(
             parser,
             typeFactory,
             valueFactory,
@@ -97,7 +103,10 @@ public final class XQuery {
             grammarManager,
             typeFactory.anyNode(),
             uri,
-            varTypes
+            varTypes,
+            new AxisVisitor(),
+            cardinalityFactory,
+            new TypeVisitor(typeFactory, new CardinalityVisitor(cardinalityFactory))
             );
         final XQueryEvaluatorVisitor visitor = new XQueryEvaluatorVisitor(
             tree, parser, valueFactory, analyzer, typeFactory, moduleManager, vars);
@@ -146,7 +155,8 @@ public final class XQuery {
         final ModuleManager moduleManager = new ModuleManager(Set.of());
         final GrammarManager grammarManager = new GrammarManager(Set.of());
         final XQuerySemanticContextManager contextManager = new XQuerySemanticContextManager(typeFactory);
-        final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
+        final BaseCardinalityFactory cardinalityFactory = new BaseCardinalityFactory();
+        final AntlrQuerySemanticAnalyzer analyzer = new AntlrQuerySemanticAnalyzer(
             parser,
             typeFactory,
             valueFactory,
@@ -160,7 +170,10 @@ public final class XQuery {
             grammarManager,
             typeFactory.anyNode(),
             uri,
-            Map.of()
+            Map.of(),
+            new AxisVisitor(),
+            cardinalityFactory,
+            new TypeVisitor(typeFactory, new CardinalityVisitor(cardinalityFactory))
             );
 
 

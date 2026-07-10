@@ -15,10 +15,12 @@ import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValues;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
+import com.github.akruk.antlrxquery.typesystem.XQueryRecordField.TypeOrReference;
+import com.github.akruk.antlrxquery.typesystem.XQueryRecordField.TypeOrReference.Reference;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.types.XQueryItemType;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.types.XQueryTypes;
 
 public class Caster {
     @SuppressWarnings("unchecked")
@@ -27,7 +29,7 @@ public class Caster {
     private final Stringifier stringifier;
     private final XQueryValueFactory valueFactory;
 
-    public XQueryValue cast(final XQuerySequenceType targetType, final XQueryValue testedValue)
+    public XQueryValue cast(final AntlrQuerySequenceType targetType, final XQueryValue testedValue)
     {
         if (testedValue.type.isSubtypeOf(targetType))
             return valueFactory.bool(true);
@@ -133,15 +135,13 @@ public class Caster {
                         "At casting value: " + v + " to type " + t + " -> missing required field: " + fieldname);
                 }
 
-                switch(semanticRecordField.typeOrReference().fieldType()) {
-                    case TYPE -> {
-                        final var result = cast(semanticRecordField.typeOrReference().type(), mapEntry);
+                switch(semanticRecordField.typeOrReference()) {
+                    case final TypeOrReference.Type type -> {
+                        final var result = cast(type.type(), mapEntry);
                         if (result.isError)
                             return result;
                     }
-                    case REFERENCE -> {
-                        semanticRecordField.typeOrReference().reference();
-
+                    case final Reference r -> {// TODO: finish casting
                     }
 
                 }

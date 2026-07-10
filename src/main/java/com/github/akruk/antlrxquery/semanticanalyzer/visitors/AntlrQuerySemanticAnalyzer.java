@@ -1,4 +1,4 @@
-package com.github.akruk.antlrxquery.semanticanalyzer;
+package com.github.akruk.antlrxquery.semanticanalyzer.visitors;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -26,8 +26,17 @@ import org.eclipse.lsp4j.Range;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.*;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
+import com.github.akruk.antlrxquery.semanticanalyzer.AndTrueImplication;
+import com.github.akruk.antlrxquery.semanticanalyzer.InstanceOfSuccessImplication;
+import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticError;
+import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticWarning;
+import com.github.akruk.antlrxquery.semanticanalyzer.ErrorType;
+import com.github.akruk.antlrxquery.semanticanalyzer.GrammarManager;
+import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager;
+import com.github.akruk.antlrxquery.semanticanalyzer.XQueryVisitingSemanticContext;
 import com.github.akruk.antlrxquery.semanticanalyzer.GrammarManager.GrammarFile;
 import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager.ImportResult;
+import com.github.akruk.antlrxquery.semanticanalyzer.WarningType;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.Assumption;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticScope.EntypingResult;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticScope.VariableInfo;
@@ -40,6 +49,7 @@ import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQue
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.RecordInfo;
 import com.github.akruk.antlrxquery.AntlrXqueryParser;
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
+import com.github.akruk.antlrxquery.AxisVisitor;
 import com.github.akruk.antlrxquery.HelperTrees;
 import com.github.akruk.antlrxquery.XQueryAxis;
 import com.github.akruk.antlrxquery.charescaper.XQuerySemanticCharEscaper;
@@ -49,13 +59,7 @@ import com.github.akruk.antlrxquery.inputgrammaranalyzer.InputGrammarAnalyzer;
 import com.github.akruk.antlrxquery.inputgrammaranalyzer.InputGrammarAnalyzer.QualifiedGrammarAnalysisResult;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField.TypeOrReference;
-import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryCardinality;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType.EffectiveBooleanValueType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType.RelativeCoercability;
+import com.github.akruk.antlrxquery.typesystem.factories.CardinalityFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory.NamedAccessingStatus;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory.NamedItemAccessingResult;
@@ -67,13 +71,24 @@ import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypeCastab
 import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypeCastable.IsCastableResult;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypePathOperator.GrammarStatus;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypePathOperator.PathOperatorResult;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.cardinality.Cardinalities;
+import com.github.akruk.antlrxquery.typesystem.types.Cardinality;
+import com.github.akruk.antlrxquery.typesystem.types.TypeInContext;
+import com.github.akruk.antlrxquery.typesystem.types.XQueryItemType;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.types.XQueryTypes;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType.EffectiveBooleanValueType;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType.RelativeCoercability;
 
 
-public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInContext>
+public class AntlrQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInContext>
 {
     private final List<DiagnosticError> errors;
     private final List<DiagnosticWarning> warnings;
     private final XQueryTypeFactory typeFactory;
+    private final CardinalityVisitor cardinalityVisitor;
+    private final AxisVisitor axisVisitor;
+    private final TypeVisitor typeVisitor;
     private final XQueryValueFactory valueFactory;
     private final XQuerySemanticSymbolManager symbolManager;
     private final SequencetypePathOperator pathOperator;
@@ -86,20 +101,20 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     private List<TypeInContext> visitedPositionalArguments;
     private Map<String, TypeInContext> visitedKeywordArguments;
 
-    protected final XQuerySequenceType number;
-    protected final XQuerySequenceType zeroOrMoreNodes;
-    protected final XQuerySequenceType anyArray;
-    protected final XQuerySequenceType anyMap;
-    protected final XQuerySequenceType boolean_;
-    protected final XQuerySequenceType string;
-    protected final XQuerySequenceType optionalNumber;
-    protected final XQuerySequenceType anyNumbers;
-    protected final XQuerySequenceType optionalString;
-    protected final XQuerySequenceType anyItem;
-    protected final XQuerySequenceType anyArrayOrMap;
-    protected final XQuerySequenceType zeroOrMoreItems;
-    protected final XQuerySequenceType emptySequence;
-    protected final XQuerySequenceType zeroOrMoreNumbers;
+    protected final AntlrQuerySequenceType number;
+    protected final AntlrQuerySequenceType zeroOrMoreNodes;
+    protected final AntlrQuerySequenceType anyArray;
+    protected final AntlrQuerySequenceType anyMap;
+    protected final AntlrQuerySequenceType boolean_;
+    protected final AntlrQuerySequenceType string;
+    protected final AntlrQuerySequenceType optionalNumber;
+    protected final AntlrQuerySequenceType anyNumbers;
+    protected final AntlrQuerySequenceType optionalString;
+    protected final AntlrQuerySequenceType anyItem;
+    protected final AntlrQuerySequenceType anyArrayOrMap;
+    protected final AntlrQuerySequenceType zeroOrMoreItems;
+    protected final AntlrQuerySequenceType emptySequence;
+    protected final AntlrQuerySequenceType zeroOrMoreNumbers;
 
     public interface AnalysisListener {
         default void onModuleDeclaration(ModuleInfo moduleInfo) {};
@@ -750,7 +765,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     //     return saved;
     // }
 
-    public XQuerySemanticAnalyzer(
+    public AntlrQuerySemanticAnalyzer(
         final Parser antlrQueryParser,
         final XQueryTypeFactory typeFactory,
         final XQueryValueFactory valueFactory,
@@ -758,15 +773,21 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final Map<String, QualifiedGrammarAnalysisResult> importedGrammars,
         final ModuleManager moduleManager,
         final GrammarManager grammarManager,
-        final XQuerySequenceType contextType,
+        final AntlrQuerySequenceType contextType,
         final String startingUri,
-        final Map<String, XQuerySequenceType> variables
+        final Map<String, AntlrQuerySequenceType> variables, 
+        final AxisVisitor axisVisitor, 
+        final CardinalityFactory cardinalityFactory, 
+        final TypeVisitor typeVisitor
         )
     {
         // this.antlrQueryParser = antlrQueryParser;
         // this.modulePaths = modulePaths;
         this.currentUri = startingUri;
         this.typeFactory = typeFactory;
+        this.cardinalityVisitor = null;
+        this.axisVisitor = axisVisitor;
+        this.typeVisitor = typeVisitor;
         this.valueFactory = valueFactory;
         this.symbolManager = symbolManager;
         this.symbolManager.setAnalyzer(this);
@@ -777,6 +798,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         this.context.setSizeType(null);
         this.errors = new ArrayList<>();
         this.warnings = new ArrayList<>();
+        
         this.anyArrayOrMap = typeFactory.zeroOrMore(typeFactory.itemChoice(Set.of(typeFactory.itemAnyMap(), typeFactory.itemAnyArray())));
         this.zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         this.emptySequence = typeFactory.emptySequence();
@@ -807,7 +829,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         this.grammarManager = grammarManager;
         zeroOrMoreNumbers = typeFactory.zeroOrMore(typeFactory.itemNumber());
         for (final String variableName : variables.keySet()) {
-            final XQuerySequenceType variableType = variables.get(variableName);
+            final AntlrQuerySequenceType variableType = variables.get(variableName);
             symbolManager.entypeVariable(
                 variableName,
                 null,
@@ -822,7 +844,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     @Override
     public TypeInContext visitFLWORExpr(final FLWORExprContext ctx)
     {
-        final var saveReturnedOccurence = saveReturnedOccurence();
+        final var saveReturnedOccurence = saveReturnedCardinality();
         symbolManager.enterScope();
         visitInitialClause(ctx.initialClause());
         for (final var clause : ctx.intermediateClause()) {
@@ -831,16 +853,16 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         // at this point visitedTupleStream should contain all tuples
         final var expressionValue = visitReturnClause(ctx.returnClause());
         symbolManager.leaveScope();
-        returnedOccurrence = saveReturnedOccurence;
+        returnedCardinality = saveReturnedOccurence;
         return expressionValue;
     }
 
-    private int returnedOccurrence = 1;
+    private Cardinality returnedCardinality = Cardinality.ONE;
 
-    private int saveReturnedOccurence()
+    private Cardinality saveReturnedCardinality()
     {
-        final var saved = returnedOccurrence;
-        returnedOccurrence = 1;
+        final var saved = returnedCardinality;
+        returnedCardinality = Cardinality.ONE;
         return saved;
     }
 
@@ -930,7 +952,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final String windowVariableName = ctx.varNameAndType().varName().qname().getText();
         final TypeInContext windowSequenceType = symbolManager.typeInContext(typeFactory.oneOrMore(iterator.type.itemType));
 
-        returnedOccurrence = arrayMergeFLWOROccurence();
+        returnedCardinality = Cardinalities.multiply(returnedCardinality, Cardinality.ZERO_OR_MORE); // TODO: use array cardinality instead of zero_or_more
         handleWindowStartClause(ctx.windowStartCondition(), iterator, optionalIterator);
         handleWindowEndClause(ctx.windowEndCondition(), iterator, optionalIterator);
         handleWindowIterator(ctx.varNameAndType(), windowVariableName, windowSequenceType);
@@ -968,7 +990,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final String windowVariableName = ctx.varNameAndType().varName().qname().getText();
         final TypeInContext windowSequenceType = symbolManager.typeInContext(typeFactory.oneOrMore(iterator.type.itemType));
 
-        returnedOccurrence = arrayMergeFLWOROccurence();
+        returnedCardinality = Cardinalities.multiply(returnedCardinality, Cardinality.ZERO_OR_MORE); // TODO: use array cardinality instead of zero_or_more
         handleWindowStartClause(ctx.windowStartCondition(), iterator, optionalIterator);
         handleWindowEndClause(ctx.windowEndCondition(), iterator, optionalIterator);
         handleWindowIterator(ctx.varNameAndType(), windowVariableName, windowSequenceType);
@@ -1050,7 +1072,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                         );
                     variableType = symbolManager.typeInContext(zeroOrMoreItems);
                 }
-                final XQuerySequenceType atomizedType = atomizer.atomize(variableType.type);
+                final AntlrQuerySequenceType atomizedType = atomizer.atomize(variableType.type);
                 if (!atomizedType.isSubtypeOf(zeroOrOneItem)) {
                     error(
                         varName2,
@@ -1085,12 +1107,12 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     public void processForItemBinding(final ForItemBindingContext ctx) {
         final String variableName = ctx.varNameAndType().varName().qname().getText();
         final TypeInContext sequenceType = ctx.exprSingle().accept(this);
-        returnedOccurrence = mergeFLWOROccurrence(sequenceType.type);
+        returnedCardinality = Cardinalities.multiply(sequenceType.type.cardinality, returnedCardinality);
 
         checkPositionalVariableDistinct(ctx.positionalVar(), variableName, ctx);
 
         final XQueryItemType itemType = sequenceType.type.itemType;
-        final XQuerySequenceType iteratorType = (ctx.allowingEmpty() != null)
+        final AntlrQuerySequenceType iteratorType = (ctx.allowingEmpty() != null)
                 ? typeFactory.zeroOrOne(itemType)
                 : typeFactory.one(itemType);
 
@@ -1105,7 +1127,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     public void processForMemberBinding(final ForMemberBindingContext ctx) {
         final String variableName = ctx.varNameAndType().varName().qname().getText();
         final TypeInContext arrayType = ctx.exprSingle().accept(this);
-        returnedOccurrence = arrayMergeFLWOROccurence();
+        returnedCardinality = Cardinalities.multiply(returnedCardinality, Cardinality.ZERO_OR_MORE); // TODO: use array cardinality instead of zero_or_more
 
         if (!arrayType.type.isSubtypeOf(anyArray)) {
             error(ctx, ErrorType.FOR_MEMBER__WRONG_ITERABLE_TYPE, List.of(arrayType));
@@ -1113,7 +1135,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
 
         checkPositionalVariableDistinct(ctx.positionalVar(), variableName, ctx);
 
-        final XQuerySequenceType memberType = arrayType.type.itemType.arrayMemberType;
+        final AntlrQuerySequenceType memberType = arrayType.type.itemType.arrayMemberType;
 
         processVariableTypeDeclaration(ctx.varNameAndType(), symbolManager.typeInContext(memberType), variableName, ctx);
 
@@ -1125,7 +1147,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
 
     public void processForEntryBinding(final ForEntryBindingContext ctx) {
         final TypeInContext mapType = ctx.exprSingle().accept(this);
-        returnedOccurrence = arrayMergeFLWOROccurence();
+        returnedCardinality = Cardinalities.multiply(returnedCardinality, Cardinality.ZERO_OR_MORE); // TODO: use array cardinality instead of zero_or_more
 
         if (!mapType.type.isSubtypeOf(anyMap)) {
             error(
@@ -1151,7 +1173,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         if (keyBinding != null) {
             final String keyVariableName = keyBinding.varNameAndType().varName().qname().getText();
             final XQueryItemType keyType = mapType.type.itemType.mapKeyType;
-            final XQuerySequenceType keyIteratorType = typeFactory.one(keyType);
+            final AntlrQuerySequenceType keyIteratorType = typeFactory.one(keyType);
 
             checkPositionalVariableDistinct(ctx.positionalVar(), keyVariableName, ctx);
             processVariableTypeDeclaration(keyBinding.varNameAndType(), symbolManager.typeInContext(keyIteratorType), keyVariableName, ctx);
@@ -1160,7 +1182,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         // Process value binding
         if (valueBinding != null) {
             final String valueVariableName = valueBinding.varNameAndType().varName().qname().getText();
-            final XQuerySequenceType valueType = mapType.type.itemType.mapValueType;
+            final AntlrQuerySequenceType valueType = mapType.type.itemType.mapValueType;
 
             checkPositionalVariableDistinct(ctx.positionalVar(), valueVariableName, ctx);
             processVariableTypeDeclaration(valueBinding.varNameAndType(), symbolManager.typeInContext(valueType), valueVariableName, ctx);
@@ -1208,225 +1230,37 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     public TypeOrReference resolveSequenceTypeOrReference(final SequenceTypeContext ctx)
     {
         if (ctx.emptySequence() != null) {
-            return TypeOrReference.type(emptySequence);
+            return new TypeOrReference.Type(emptySequence);
         }
         final ItemTypeContext itemTypeCtx = ctx.itemType();
-        final XQueryCardinality cardinality = getCardinality(ctx);
+        final Cardinality cardinality = cardinalityVisitor.visitSequenceType(ctx);
         if (itemTypeCtx.typeName() != null)
         { // type reference or builtin type
             return switch (itemTypeCtx.getText())
             {
-                case "boolean" -> TypeOrReference.type(
-                    typeByCardinality(
-                        typeFactory.itemBoolean(), cardinality));
-                case "string"  -> TypeOrReference.type(
-                    typeByCardinality(
-                        typeFactory.itemString(), cardinality));
-                case "number"  -> TypeOrReference.type(
-                    typeByCardinality(
-                        typeFactory.itemNumber(), cardinality));
                 default ->
-                    TypeOrReference.reference(
+                    new TypeOrReference.Reference(
                         namespaceResolver.resolveType(
                             itemTypeCtx.typeName().getText()), cardinality
                             );
             };
         } else { // literal type
-            final XQuerySequenceType type = typeByCardinality(
+            final AntlrQuerySequenceType type = typeFactory.sequence(
                 visitItemType(itemTypeCtx).type.itemType,
                 cardinality
                 );
-            return TypeOrReference.type(type);
+            return new TypeOrReference.Type(type);
         }
 
     }
-
-    XQuerySequenceType typeByCardinality(final XQueryItemType itemType, final XQueryCardinality cardinality) {
-        return switch (cardinality) {
-            case ONE -> typeFactory.one(itemType);
-            case ZERO_OR_ONE -> typeFactory.zeroOrOne(itemType);
-            case ZERO_OR_MORE -> typeFactory.zeroOrMore(itemType);
-            case ONE_OR_MORE -> typeFactory.oneOrMore(itemType);
-            default -> null;
-        };
-    }
-
-
-    XQueryCardinality getCardinality(final SequenceTypeContext ctx) {
-        if (ctx.occurrenceIndicator() == null) {
-            return XQueryCardinality.ONE;
-        }
-        if (ctx.occurrenceIndicator().QUESTION_MARK() != null) {
-            return XQueryCardinality.ZERO_OR_ONE;
-        }
-        if (ctx.occurrenceIndicator().STAR() != null) {
-            return XQueryCardinality.ZERO_OR_MORE;
-        }
-        // PLUS
-        return XQueryCardinality.ONE_OR_MORE;
-    }
-
-
-
 
     @Override
     public TypeInContext visitSequenceType(final SequenceTypeContext ctx)
     {
-        if (ctx.emptySequence() != null) {
-            return symbolManager.typeInContext(emptySequence);
-        }
-        final var itemType = ctx.itemType().accept(this).type.itemType;
-        if (ctx.occurrenceIndicator() == null) {
-            return symbolManager.typeInContext(typeFactory.one(itemType));
-        }
-        return switch (ctx.occurrenceIndicator().getText()) {
-            case "?" -> symbolManager.typeInContext(typeFactory.zeroOrOne(itemType));
-            case "*" -> symbolManager.typeInContext(typeFactory.zeroOrMore(itemType));
-            case "+" -> symbolManager.typeInContext(typeFactory.oneOrMore(itemType));
-            default -> null;
-        };
+        AntlrQuerySequenceType sequenceType = typeVisitor.visitSequenceType(ctx);
+        return symbolManager.typeInContext(sequenceType);
     }
-
-    @Override
-    public TypeInContext visitAnyItemTest(final AnyItemTestContext ctx)
-    {
-        return symbolManager.typeInContext(typeFactory.anyItem());
-    }
-
-    @Override
-    public TypeInContext visitChoiceItemType(final ChoiceItemTypeContext ctx)
-    {
-        final List<ItemTypeContext> itemTypes = ctx.itemType();
-        if (itemTypes.size() == 1) {
-            return ctx.itemType(0).accept(this);
-        }
-        final var choiceItemNames = itemTypes.stream().map(i -> i.getText()).collect(Collectors.toSet());
-        if (choiceItemNames.size() != itemTypes.size()) {
-            error(ctx, ErrorType.CHOICE_ITEM_TYPE__DUPLICATED, List.of());
-        }
-        final List<XQueryItemType> choiceItems = itemTypes.stream().map(i -> i.accept(this))
-            .map(sequenceType -> sequenceType.type.itemType)
-            .toList();
-        return symbolManager.typeInContext(typeFactory.choice(choiceItems));
-    }
-
-    @Override
-    public TypeInContext visitTypeName(final TypeNameContext ctx)
-    {
-        final var name = ctx.getText();
-        final XQuerySequenceType result = switch (name) {
-            case "number" -> number;
-            case "string" -> string;
-            case "boolean" -> boolean_;
-            default -> {
-                final var visitedQualifiedName = namespaceResolver.resolveType(name);
-                final var type = typeFactory.namedType(visitedQualifiedName);
-                if (type.status() == NamedAccessingStatus.OK)
-                    yield type.type();
-
-                for (final QualifiedName resolvedName : recordsMapped.keySet()) {
-                    if (resolvedName.equals(visitedQualifiedName)) {
-                        final var namedRecordResult = resolveRecord(resolvedName, recordsMapped.get(resolvedName));
-                        yield typeFactory.one(namedRecordResult.recordItemType);
-                    }
-                }
-                for (final var resolved : itemsMapped.keySet()) {
-                    if (resolved.equals(visitedQualifiedName)) {
-                        final var t = resolveItemTypeFromDecl(resolved, itemsMapped.get(resolved));
-                        yield typeFactory.one(t.registered());
-                    }
-                }
-
-                error(ctx, ErrorType.TYPE_NAME__UNKNOWN, List.of(name));
-                yield zeroOrMoreItems;
-            }
-        };
-        return symbolManager.typeInContext(result);
-    }
-
-    @Override
-    public TypeInContext visitAnyKindTest(final AnyKindTestContext ctx)
-    {
-        return symbolManager.typeInContext(typeFactory.anyNode());
-    }
-
-    @Override
-    public TypeInContext visitElementTest(final ElementTestContext ctx)
-    {
-        final Set<QualifiedName> elementNames = ctx.nameTestUnion().nameTest().stream().map(e -> namespaceResolver.resolveElement(e.getText()))
-            .collect(Collectors.toSet());
-        return symbolManager.typeInContext(typeFactory.element(elementNames));
-    }
-
-    @Override
-    public TypeInContext visitFunctionType(final FunctionTypeContext ctx)
-    {
-        if (ctx.anyFunctionType() != null) {
-            return symbolManager.typeInContext(typeFactory.anyFunction());
-        }
-        final var func = ctx.typedFunctionType();
-        final List<XQuerySequenceType> parameterTypes = func.typedFunctionParam().stream()
-            .map(p -> visitSequenceType(p.sequenceType()).type)
-            .collect(Collectors.toList());
-        final var function =  typeFactory.function(visitSequenceType(func.sequenceType()).type, parameterTypes);
-        return symbolManager.typeInContext(function);
-    }
-
-    @Override
-    public TypeInContext visitMapType(final MapTypeContext ctx)
-    {
-        if (ctx.anyMapType() != null) {
-            return symbolManager.typeInContext(typeFactory.anyMap());
-        }
-        final var map = ctx.typedMapType();
-        final XQueryItemType keyType = map.itemType().accept(this).type.itemType;
-        final TypeInContext valueType = visitSequenceType(map.sequenceType());
-        return symbolManager.typeInContext(typeFactory.map(keyType, valueType.type));
-    }
-
-    @Override
-    public TypeInContext visitArrayType(final ArrayTypeContext ctx)
-    {
-        if (ctx.anyArrayType() != null) {
-            return symbolManager.typeInContext(typeFactory.anyArray());
-        }
-        final var array = ctx.typedArrayType();
-        final var sequenceType = visitSequenceType(array.sequenceType());
-        return symbolManager.typeInContext(typeFactory.array(sequenceType.type));
-    }
-
-    @Override
-    public TypeInContext visitRecordType(final RecordTypeContext ctx)
-    {
-        if (ctx.anyRecordType() != null) {
-            return symbolManager.typeInContext(typeFactory.anyMap());
-        }
-        final var record = ctx.typedRecordType();
-        final var fieldDeclarations = record.fieldDeclaration();
-        final Map<String, XQueryRecordField> fields = new HashMap<>(fieldDeclarations.size());
-        for (final var field : fieldDeclarations) {
-            final String fieldName = field.fieldName().getText();
-            final var fieldType = visitSequenceType(field.sequenceType());
-            final boolean isRequired = field.QUESTION_MARK() != null;
-            final XQueryRecordField recordField = new XQueryRecordField(TypeOrReference.type(fieldType.type), isRequired);
-            fields.put(fieldName, recordField);
-        }
-        if (record.extensibleFlag() == null) {
-            return symbolManager.typeInContext(typeFactory.extensibleRecord(fields));
-        }
-        return symbolManager.typeInContext(typeFactory.record(fields));
-    }
-
-    @Override
-    public TypeInContext visitEnumerationType(final EnumerationTypeContext ctx)
-    {
-        final Set<String> enumMembers = ctx.STRING().stream()
-            .map(TerminalNode::getText)
-            .map(s->s.substring(1, s.length()-1))
-            .collect(Collectors.toSet());
-        return symbolManager.typeInContext(typeFactory.enum_(enumMembers));
-    }
-
+    
     @Override
     public TypeInContext visitCountClause(final CountClauseContext ctx)
     {
@@ -1442,7 +1276,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         if (!filteringExpressionType.type.hasEffectiveBooleanValue()) {
             error(filteringExpression, ErrorType.FILTERING__EXPR_NOT_EBV, List.of(filteringExpressionType));
         }
-        returnedOccurrence = addOptionality(returnedOccurrence);
+        returnedCardinality = Cardinalities.addOptionality(returnedCardinality);
         return null;
     }
 
@@ -1462,58 +1296,15 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             return variableType;
         }
     }
-
-    private static final int[][] OCCURRENCE_MERGE_AUTOMATA = {
-        // returnedOccurrence 0 (Zero)
-        { 0, 0, 0, 0, 0 },
-        // returnedOccurrence 1 (One)
-        { 0, 1, 2, 3, 4 },
-        // returnedOccurrence 2 (ZeroOrOne)
-        { 0, 2, 2, 3, 3 },
-        // returnedOccurrence 3 (ZeroOrMore)
-        { 0, 3, 3, 3, 3 },
-        // returnedOccurrence 4 (OneOrMore/Other)
-        { 0, 4, 3, 3, 4 }
-    };
-
-    private int occurrence(final XQuerySequenceType type)
-    {
-        if (type.isZero)
-            return 0;
-        if (type.isOne)
-            return 1;
-        if (type.isZeroOrOne)
-            return 2;
-        if (type.isZeroOrMore)
-            return 3;
-        return 4;
-    }
-
-    private int mergeFLWOROccurrence(final XQuerySequenceType type)
-    {
-        final int typeOccurrence = occurrence(type);
-        return OCCURRENCE_MERGE_AUTOMATA[returnedOccurrence][typeOccurrence];
-    }
-
-    private int arrayMergeFLWOROccurence() {
-        if (returnedOccurrence == 0)
-            return 0;
-        return 3;
-    }
-
+    
     @Override
     public TypeInContext visitReturnClause(final ReturnClauseContext ctx)
     {
         final var type = ctx.exprSingle().accept(this);
         final var itemType = type.type.itemType;
-        returnedOccurrence = mergeFLWOROccurrence(type.type);
-        final var sequenceType = switch (returnedOccurrence) {
-            case 0 -> emptySequence;
-            case 1 -> typeFactory.one(itemType);
-            case 2 -> typeFactory.zeroOrOne(itemType);
-            case 3 -> typeFactory.zeroOrMore(itemType);
-            default -> typeFactory.oneOrMore(itemType);
-        };
+        returnedCardinality = Cardinalities.multiply(returnedCardinality, type.type.cardinality);
+        // returnedOccurrence = mergeFLWOROccurrence(type.type);
+        final var sequenceType = typeFactory.sequence(itemType, returnedCardinality);
         return symbolManager.typeInContext(sequenceType);
     }
 
@@ -1525,20 +1316,10 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         if (!filteringExpressionType.type.hasEffectiveBooleanValue()) {
             error(filteringExpression, ErrorType.FILTERING__EXPR_NOT_EBV, List.of(filteringExpressionType));
         }
-        returnedOccurrence = addOptionality(returnedOccurrence);
+        returnedCardinality = Cardinalities.addOptionality(returnedCardinality);
         return null;
     }
-
-    private int addOptionality(final int occurence)
-    {
-        return switch (occurence) {
-            case 0 -> 0;
-            case 1 -> 2;
-            case 2 -> 2;
-            default -> 3;
-        };
-    }
-
+    
     @Override
     public TypeInContext visitLiteral(final LiteralContext ctx)
     {
@@ -1698,14 +1479,14 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                 .map(binding -> binding.varNameAndType().varName())
                 .toList();
 
-        final List<XQuerySequenceType> coercedTypes = quantifierBindings.stream()
+        final List<AntlrQuerySequenceType> coercedTypes = quantifierBindings.stream()
                 .map(binding -> {
                     final TypeDeclarationContext typeDeclaration = binding.varNameAndType().typeDeclaration();
                     return typeDeclaration != null? typeDeclaration.accept(this).type : null;
                 })
                 .toList();
 
-        final List<XQuerySequenceType> variableTypes = quantifierBindings.stream()
+        final List<AntlrQuerySequenceType> variableTypes = quantifierBindings.stream()
                 .map(binding -> binding.exprSingle().accept(this).type)
                 .toList();
 
@@ -1727,7 +1508,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             declareVariable(symbolManager.typeInContext(assignedType), variableNames.get(i), variableNameCtxs.get(i));
         }
 
-        final XQuerySequenceType queriedType = criterionNode.accept(this).type;
+        final AntlrQuerySequenceType queriedType = criterionNode.accept(this).type;
         if (!queriedType.hasEffectiveBooleanValue()) {
             error(criterionNode, ErrorType.QUANTIFIED__CRITERION_NON_EBV, List.of(queriedType));
         }
@@ -1800,7 +1581,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     @Override
     public TypeInContext visitNodeTest(final NodeTestContext ctx)
     {
-        final XQuerySequenceType nodeType = context.getType().type;
+        final AntlrQuerySequenceType nodeType = context.getType().type;
         final PathOperatorResult result = getOperatorPathResultFromTree(ctx, nodeType);
 
         // reporting input status
@@ -1877,7 +1658,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         return symbolManager.typeInContext(result.result());
     }
 
-    private PathOperatorResult getOperatorPathResultFromTree(final NodeTestContext ctx, final XQuerySequenceType nodeType) {
+    private PathOperatorResult getOperatorPathResultFromTree(final NodeTestContext ctx, final AntlrQuerySequenceType nodeType) {
         PathOperatorResult result;
         if (ctx.wildcard() != null) {
             result = pathOperator.pathOperator(nodeType, currentAxis, null, namespaceResolver);
@@ -1898,7 +1679,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
      */
     private void contextTypeMustBeAnyNodes(final PathExprContext ctx)
     {
-        final XQuerySequenceType contexttype = context.getType().type;
+        final AntlrQuerySequenceType contexttype = context.getType().type;
         if (contexttype == null) {
             error(ctx, ErrorType.PATH_EXPR__CONTEXT_TYPE_ABSENT, List.of());
             context.setType(symbolManager.typeInContext(anyNodes));
@@ -1946,7 +1727,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     @Override
     public TypeInContext visitAxisStep(final AxisStepContext ctx)
     {
-        XQuerySequenceType stepResult = zeroOrMoreItems;
+        AntlrQuerySequenceType stepResult = zeroOrMoreItems;
         if (ctx.reverseStep() != null)
             stepResult = visitReverseStep(ctx.reverseStep()).type;
         else if (ctx.forwardStep() != null)
@@ -1977,7 +1758,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     @Override
     public TypeInContext visitFilterExpr(final FilterExprContext ctx)
     {
-        final XQuerySequenceType expr = ctx.postfixExpr().accept(this).type;
+        final AntlrQuerySequenceType expr = ctx.postfixExpr().accept(this).type;
         final var savedContext = saveContext();
         context.setType(symbolManager.typeInContext(expr.iteratorType()));
         final var filtered = visitPredicate(ctx.predicate());
@@ -2022,7 +1803,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         context.setType(savedContext.getType());
         context.setPositionType(symbolManager.typeInContext(number));
         context.setSizeType(symbolManager.typeInContext(number));
-        final XQuerySequenceType value = ctx.postfixExpr().accept(this).type;
+        final AntlrQuerySequenceType value = ctx.postfixExpr().accept(this).type;
         final boolean isCallable = value.isSubtypeOf(typeFactory.anyFunction());
         if (!isCallable) {
             error(ctx.postfixExpr(), ErrorType.PREDICATE__NON_EBV, List.of(value));
@@ -2051,19 +1832,19 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     }
 
 
-    private XQuerySequenceType typecheckLookup(
+    private AntlrQuerySequenceType typecheckLookup(
         final ParserRuleContext ctx,
         final LookupContext lookup,
         final KeySpecifierContext keySpecifier,
         final TypeInContext targetType,
         final TypeInContext keySpecifierType)
     {
-        if (targetType.type.isZero) {
+        if (targetType.type.cardinality.isZero()) {
             warn(ctx, WarningType.LOOKUP__TARGET_EMPTY, List.of());
             return emptySequence;
         }
         final boolean isWildcard = keySpecifierType == null;
-        if (!isWildcard && keySpecifierType.type.isZero) {
+        if (!isWildcard && keySpecifierType.type.cardinality.isZero()) {
             warn(ctx, WarningType.LOOKUP__KEY_EMPTY, List.of());
             return emptySequence;
         }
@@ -2075,10 +1856,10 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
 
         switch (targetType.type.itemType.type) {
             case ARRAY -> {
-                final XQuerySequenceType targetItemType = targetType.type.itemType.arrayMemberType;
+                final AntlrQuerySequenceType targetItemType = targetType.type.itemType.arrayMemberType;
                 if (targetItemType == null)
                     return zeroOrMoreItems;
-                final XQuerySequenceType result = targetItemType.sequenceMerge(targetItemType).addOptionality();
+                final AntlrQuerySequenceType result = targetItemType.sequenceMerge(targetItemType).addOptionality();
                 if (isWildcard) {
                     return result;
                 }
@@ -2117,60 +1898,6 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     }
 
 
-    XQuerySequenceType getAnyArrayOrMapLookupType(
-        final LookupContext ctx,
-        final boolean isWildcard,
-        final TypeInContext targetType,
-        final TypeInContext keySpecifierType)
-    {
-        if (isWildcard) {
-            return null;
-        }
-        final XQueryItemType targetItemType = targetType.type.itemType;
-        final Collection<XQueryItemType> choiceItemTypes = targetItemType.itemTypes;
-        XQueryItemType targetKeyItemType = null;
-        XQuerySequenceType resultingType = null;
-        for (final var itemType : choiceItemTypes) {
-            if (resultingType == null) {
-                if (!isWildcard)
-                    resultingType = switch(keySpecifierType.type.occurence) {
-                        case ONE -> typeFactory.zeroOrOne(itemType);
-                        default -> typeFactory.zeroOrMore(itemType);
-                    };
-                else {
-                    resultingType = typeFactory.zeroOrMore(itemType);
-                }
-                continue;
-            }
-
-            switch (itemType.type) {
-                case ARRAY -> {
-                    resultingType = resultingType.alternativeMerge(itemType.arrayMemberType);
-                    targetKeyItemType = targetItemType.alternativeMerge(typeFactory.itemNumber());
-                }
-                case MAP -> {
-                    resultingType = resultingType.alternativeMerge(itemType.mapValueType);
-                    targetKeyItemType = targetItemType.alternativeMerge(itemType.mapKeyType);
-                }
-                default -> {
-                    resultingType = zeroOrMoreItems;
-                    targetKeyItemType = typeFactory.itemAnyItem();
-                }
-            }
-        }
-        resultingType = resultingType.addOptionality();
-        if (isWildcard) {
-            return resultingType;
-        }
-        final XQueryItemType numberOrKey = targetKeyItemType.alternativeMerge(typeFactory.itemNumber());
-
-        final XQuerySequenceType expectedKeyItemtype = typeFactory.zeroOrMore(numberOrKey);
-        if (!keySpecifierType.itemtypeIsSubtypeOf(expectedKeyItemtype)) {
-            error(ctx, ErrorType.LOOKUP__ARRAY_OR_MAP_INVALID_KEY, List.of(targetType, expectedKeyItemtype));
-        }
-        return resultingType;
-    }
-
     @Override
     public TypeInContext visitUnaryLookup(final UnaryLookupContext ctx) {
         final var contextType = context.getType();
@@ -2181,170 +1908,11 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
 
 
 
-    private  XQuerySequenceType getMapLookuptype(
-            final ParserRuleContext target,
-            final LookupContext lookup,
-            final KeySpecifierContext keySpecifier,
-            final TypeInContext targetType,
-            final TypeInContext keySpecifierType,
-            final boolean isWildcard)
-    {
-        final XQueryItemType targetKeyItemType = targetType.type.itemType.mapKeyType;
-        final XQuerySequenceType targetValueType = targetType.type.itemType.mapValueType;
-        final XQueryItemType targetValueItemtype = targetValueType.itemType;
-        if (isWildcard) {
-            return typeFactory.zeroOrMore(targetValueItemtype);
-        }
-        final XQuerySequenceType result = switch(keySpecifierType.type.occurence) {
-                case ONE -> typeFactory.zeroOrOne(targetValueItemtype);
-                default -> typeFactory.zeroOrMore(targetValueItemtype);
-            };
-        final XQuerySequenceType expectedKeyItemtype = typeFactory.zeroOrMore(targetKeyItemType);
-        if (!keySpecifierType.isSubtypeOf(expectedKeyItemtype)) {
-            error(lookup, ErrorType.LOOKUP__MAP_INVALID_KEY, List.of(targetType, expectedKeyItemtype));
-        }
-        if (targetValueItemtype.type == XQueryTypes.RECORD) {
-            return result;
-        }
-        return result.addOptionality();
-    }
-
-    private XQuerySequenceType getRecordLookupType(
-        final ParserRuleContext target,
-        final LookupContext lookup,
-        final KeySpecifierContext keySpecifier,
-        final TypeInContext targetType,
-        final TypeInContext keySpecifierType,
-        final boolean isWildcard)
-    {
-        final XQueryItemType targetKeyItemType = typeFactory.itemString();
-        final Map<String, XQueryRecordField> recordFields = targetType.type.itemType.recordFields;
-        if (recordFields.isEmpty()) {
-            warn(target, WarningType.LOOKUP__EMPTY_RECORD, List.of());
-            return emptySequence;
-        }
-        final XQuerySequenceType mergedRecordFieldTypes = recordFields
-            .values()
-            .stream()
-            .map(this::resolveRecordFieldType)
-            .reduce((x, y)->x.alternativeMerge(y))
-            .get();
-        if (isWildcard) {
-            return mergedRecordFieldTypes;
-        }
-        if (!keySpecifierType.isSubtypeOf(typeFactory.zeroOrMore(typeFactory.itemString()))) {
-            error(keySpecifier, ErrorType.LOOKUP__INVALID_RECORD_KEY_TYPE, List.of(targetType, keySpecifierType));
-            return zeroOrMoreItems;
-        }
-        final var string = keySpecifier.STRING();
-        if (string != null) {
-            final String key = processStringLiteral(keySpecifier);
-            final var valueType = recordFields.get(key);
-            if (valueType == null) {
-                error(keySpecifier, ErrorType.LOOKUP__INVALID_RECORD_KEY_NAME, List.of(key, targetType));
-                return zeroOrMoreItems;
-            }
-            return resolveRecordFieldType(valueType);
-        }
-        final XQuerySequenceType expectedKeyItemtype = typeFactory.zeroOrMore(targetKeyItemType);
-        if (!keySpecifierType.isSubtypeOf(expectedKeyItemtype)) {
-            error(lookup, ErrorType.LOOKUP__INVALID_RECORD_KEY_TYPE, List.of(targetType, expectedKeyItemtype));
-        }
-        if (keySpecifierType.type.itemType.type == XQueryTypes.ENUM) {
-            final var members = keySpecifierType.type.itemType.enumMembers;
-            final var firstField = members.stream().findFirst().get();
-            final var firstRecordField = recordFields.get(firstField);
-            XQuerySequenceType merged = resolveRecordFieldType(firstRecordField);
-            for (final var member : members) {
-                if (member.equals(firstField))
-                    continue;
-                final var recordField = recordFields.get(member);
-                if (recordField == null) {
-                    warn(lookup, WarningType.LOOKUP__IMPOSSIBLE_RECORD_FIELD, List.of(member));
-                    return zeroOrMoreItems;
-                }
-                merged = merged.sequenceMerge(resolveRecordFieldType(recordField));
-            }
-            return merged;
-        }
-        return mergedRecordFieldTypes.addOptionality();
-    }
-
-    private XQuerySequenceType getExtensibleRecordLookupType(
-        final ParserRuleContext ctx,
-        final LookupContext lookup,
-        final KeySpecifierContext keySpecifier,
-        final TypeInContext targetType,
-        final TypeInContext keySpecifierType,
-        final boolean isWildcard)
-    {
-        final XQueryItemType targetKeyItemType = typeFactory.itemString();
-        final Map<String, XQueryRecordField> recordFields = targetType.type.itemType.recordFields;
-        if (recordFields.isEmpty()) {
-            warn(ctx, WarningType.LOOKUP__RETURNS_ALWAYS_EMPTY, List.of());
-            return emptySequence;
-        }
-        final XQuerySequenceType mergedRecordFieldTypes = recordFields
-            .values()
-            .stream()
-            .map(this::resolveRecordFieldType)
-            .reduce((x, y)->x.alternativeMerge(y))
-            .get();
-        if (isWildcard) {
-            return mergedRecordFieldTypes;
-        }
-        if (!keySpecifierType.isSubtypeOf(typeFactory.zeroOrMore(typeFactory.itemString()))) {
-            error(ctx, ErrorType.LOOKUP__INVALID_EXTENDED_RECORD_KEY_TYPE, List.of());
-            return zeroOrMoreItems;
-        }
-        final var stringToken = keySpecifier.STRING();
-        if (stringToken != null) {
-            final String key = processStringLiteral(keySpecifier);
-            final var recordField = recordFields.get(key);
-            if (recordField == null) {
-                return zeroOrMoreItems;
-            }
-            return resolveRecordFieldType(recordField);
-        }
-        final XQuerySequenceType expectedKeyItemtype = typeFactory.zeroOrMore(targetKeyItemType);
-        if (!keySpecifierType.isSubtypeOf(expectedKeyItemtype)) {
-            error(lookup, ErrorType.LOOKUP__INVALID_EXTENDED_RECORD_KEY_TYPE, List.of(targetType, expectedKeyItemtype));
-        }
-        if (keySpecifierType.type.itemType.type == XQueryTypes.ENUM) {
-            final var members = keySpecifierType.type.itemType.enumMembers;
-            final var firstField = members.stream().findFirst().get();
-            final var firstRecordField = recordFields.get(firstField);
-            XQuerySequenceType merged = resolveRecordFieldType(firstRecordField);
-            for (final var member : members) {
-                if (member.equals(firstField))
-                    continue;
-                final var recordField = recordFields.get(member);
-                if (recordField == null)  {
-                    return zeroOrMoreItems;
-                }
-                merged = merged.alternativeMerge(resolveRecordFieldType(recordField));
-            }
-            return merged;
-        }
-        return mergedRecordFieldTypes.addOptionality();
-    }
-
-	private XQuerySequenceType resolveRecordFieldType(final XQueryRecordField t) {
-		final var type = switch(t.typeOrReference().fieldType()) {
-		    case REFERENCE -> {
-		        yield typeFactory.namedType(t.typeOrReference().reference()).type();
-		    }
-		    case TYPE -> {
-		        yield t.typeOrReference().type();
-		    }
-		};
-		return t.isRequired()? type : type.addOptionality();
-	}
 
     TypeInContext getKeySpecifier(final LookupExprContext ctx) {
         final KeySpecifierContext keySpecifier = ctx.lookup().keySpecifier();
         if (keySpecifier.qname() != null) {
-            final XQuerySequenceType enum_ = typeFactory.enum_(Set.of(keySpecifier.qname().getText()));
+            final AntlrQuerySequenceType enum_ = typeFactory.enum_(Set.of(keySpecifier.qname().getText()));
             return symbolManager.typeInContext(enum_);
         }
         if (keySpecifier.STRING() != null ) {
@@ -2364,53 +1932,13 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     }
 
 
-    @Override
-    public TypeInContext visitForwardAxis(final ForwardAxisContext ctx) {
-        if (ctx.CHILD() != null)
-            currentAxis = XQueryAxis.CHILD;
-        if (ctx.DESCENDANT() != null)
-            currentAxis = XQueryAxis.DESCENDANT;
-        if (ctx.SELF() != null)
-            currentAxis = XQueryAxis.SELF;
-        if (ctx.DESCENDANT_OR_SELF() != null)
-            currentAxis = XQueryAxis.DESCENDANT_OR_SELF;
-        if (ctx.FOLLOWING_SIBLING() != null)
-            currentAxis = XQueryAxis.FOLLOWING_SIBLING;
-        if (ctx.FOLLOWING() != null)
-            currentAxis = XQueryAxis.FOLLOWING;
-        if (ctx.FOLLOWING_SIBLING_OR_SELF() != null)
-            currentAxis = XQueryAxis.FOLLOWING_SIBLING_OR_SELF;
-        if (ctx.FOLLOWING_OR_SELF() != null)
-            currentAxis = XQueryAxis.FOLLOWING_OR_SELF;
-        return null;
-    }
-
-    @Override
-    public TypeInContext visitReverseAxis(final ReverseAxisContext ctx) {
-        if (ctx.PARENT() != null)
-            currentAxis = XQueryAxis.PARENT;
-        if (ctx.ANCESTOR() != null)
-            currentAxis = XQueryAxis.ANCESTOR;
-        if (ctx.PRECEDING_SIBLING_OR_SELF() != null)
-            currentAxis = XQueryAxis.PRECEDING_SIBLING_OR_SELF;
-        if (ctx.PRECEDING_OR_SELF() != null)
-            currentAxis = XQueryAxis.PRECEDING_OR_SELF;
-        if (ctx.PRECEDING_SIBLING() != null)
-            currentAxis = XQueryAxis.PRECEDING_SIBLING;
-        if (ctx.PRECEDING() != null)
-            currentAxis = XQueryAxis.PRECEDING;
-        if (ctx.ANCESTOR_OR_SELF() != null)
-            currentAxis = XQueryAxis.ANCESTOR_OR_SELF;
-        return null;
-    }
-
 
 
     @Override
     public TypeInContext visitForwardStep(final ForwardStepContext ctx)
     {
         if (ctx.forwardAxis() != null) {
-            ctx.forwardAxis().accept(this);
+            currentAxis = axisVisitor.visit(ctx.forwardAxis());
         } else {
             if (currentAxis == null) {
                 currentAxis = XQueryAxis.CHILD;
@@ -2425,7 +1953,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         if (ctx.abbrevReverseStep() != null) {
             return ctx.abbrevReverseStep().accept(this);
         }
-        ctx.reverseAxis().accept(this);
+        currentAxis = axisVisitor.visit(ctx.reverseAxis());
         return visitNodeTest(ctx.nodeTest());
     }
 
@@ -2453,7 +1981,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         if (ctx.EXCLAMATION_MARK().isEmpty())
             return visitPathExpr(ctx.pathExpr(0));
         final TypeInContext firstExpressionType = visitPathExpr(ctx.pathExpr(0));
-        final XQuerySequenceType iterator = firstExpressionType.iteratorType();
+        final AntlrQuerySequenceType iterator = firstExpressionType.iteratorType();
         final var savedContext = saveContext();
         context.setType(symbolManager.typeInContext(iterator));
         context.setPositionType(symbolManager.typeInContext(number));
@@ -2462,7 +1990,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final var theRest = ctx.pathExpr().subList(1, ctx.pathExpr().size());
         for (final var mappedExpression : theRest) {
             final TypeInContext type = visitPathExpr(mappedExpression);
-            result = symbolManager.typeInContext(result.type.mapping(type.type));
+            result = symbolManager.typeInContext(typeFactory.sequence(type.type.itemType, result.type.cardinality));
             context.setType(symbolManager.typeInContext(result.iteratorType()));
         }
         context = savedContext;
@@ -2516,7 +2044,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
 
 
     private final SequencetypeCastable castability;
-    private final XQuerySequenceType anyNodes;
+    private final AntlrQuerySequenceType anyNodes;
 
     @Override
     public TypeInContext visitCastableExpr(final CastableExprContext ctx) {
@@ -2533,7 +2061,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
     private <T> void verifyCastability(
             final ParserRuleContext ctx,
             final T type,
-            final XQuerySequenceType tested,
+            final AntlrQuerySequenceType tested,
             final Castability castability,
             final IsCastableResult result)
     {
@@ -2624,7 +2152,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         if (ctx.exprSingle().isEmpty()) {
             return symbolManager.typeInContext(anyArray);
         }
-        final XQuerySequenceType arrayType = ctx.exprSingle().stream()
+        final AntlrQuerySequenceType arrayType = ctx.exprSingle().stream()
             .map(expr -> expr.accept(this).type)
             .reduce((t1, t2) -> t1.alternativeMerge(t2))
             .get();
@@ -2639,7 +2167,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             return symbolManager.typeInContext(anyArray);
         }
 
-        final XQuerySequenceType arrayType = expressions.exprSingle().stream()
+        final AntlrQuerySequenceType arrayType = expressions.exprSingle().stream()
             .map(expr -> expr.accept(this).type)
             .reduce((t1, t2) -> t1.alternativeMerge(t2))
             .get();
@@ -2674,7 +2202,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final var testedExprType = ctx.tryClause().enclosedExpr().accept(this);
         final var alternativeCatches = ctx.catchClause().stream()
             .map(c -> {
-                XQuerySequenceType choicedErrors;
+                AntlrQuerySequenceType choicedErrors;
                 if (c.pureNameTestUnion() != null) {
                     final var foundErrors = new ArrayList<XQueryItemType>();
                     for (final var error : c.pureNameTestUnion().nameTest()) {
@@ -2756,15 +2284,15 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         if (finallyClause != null) {
             context = new XQueryVisitingSemanticContext();
             context.setType(symbolManager.typeInContext(typeFactory.anyNode()));
-            final XQuerySequenceType finallyType = visitEnclosedExpr(finallyClause.enclosedExpr()).type;
+            final AntlrQuerySequenceType finallyType = visitEnclosedExpr(finallyClause.enclosedExpr()).type;
             if (!finallyType.isSubtypeOf(emptySequence)) {
                 error(finallyClause, ErrorType.TRY_CATCH__FINALLY_NON_EMPTY, List.of(finallyType));
             }
         }
         context = savedContext;
-        final XQuerySequenceType mergedAlternativeCatches = alternativeCatches
+        final AntlrQuerySequenceType mergedAlternativeCatches = alternativeCatches
             .map(x->x.type)
-            .reduce(XQuerySequenceType::alternativeMerge)
+            .reduce(AntlrQuerySequenceType::alternativeMerge)
             .get();
         final var merged = testedExprType.type.alternativeMerge(mergedAlternativeCatches);
         return symbolManager.typeInContext(merged);
@@ -2791,14 +2319,14 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             for (final var enumMember : enumMembers) {
                 final var valueType = entries.get(i).mapValueExpr().accept(this);
                 recordEntries.add(Map.entry(enumMember, new XQueryRecordField(
-                    TypeOrReference.type(valueType.type),
+                    new TypeOrReference.Type(valueType.type),
                     true)));
                 i++;
             }
             return symbolManager.typeInContext(typeFactory.record(Map.ofEntries(recordEntries.toArray(Entry[]::new))));
         }
         // TODO: refine
-        final XQuerySequenceType valueType = entries.stream()
+        final AntlrQuerySequenceType valueType = entries.stream()
             .map(e -> visitMapValueExpr(e.mapValueExpr()).type)
             .reduce((t1, t2) -> t1.alternativeMerge(t2))
             .get();
@@ -2851,23 +2379,16 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             .get(visitedPositionalArguments.size() - 1) ;
 
 
-        if (mappedSequence.type.isZero) {
+        if (mappedSequence.type.cardinality.isZero()) {
             return mappedSequence;
         }
-        final XQuerySequenceType iterator = mappedSequence.iteratorType();
+        final AntlrQuerySequenceType iterator = mappedSequence.iteratorType();
         visitedPositionalArguments = new ArrayList<>();
         visitedPositionalArguments.add(symbolManager.typeInContext(iterator));
         final var call = ctx.arrowTarget().accept(this);
-        return switch(mappedSequence.type.occurence) {
-            case ONE -> call;
-            case ONE_OR_MORE -> symbolManager.typeInContext(call.type.sequenceMerge(call.type));
-            case ZERO_OR_MORE -> symbolManager.typeInContext(call.type.sequenceMerge(call.type).addOptionality());
-            case ZERO_OR_ONE -> symbolManager.typeInContext(call.type.addOptionality());
-            case ZERO -> {
-                error(ctx, ErrorType.MAPPING__EMPTY_SEQUENCE, List.of());
-                yield symbolManager.typeInContext(emptySequence);
-            }
-        };
+        final Cardinality mergedCardinality = Cardinalities.multiply(returnedCardinality, returnedCardinality);
+        final AntlrQuerySequenceType x = typeFactory.sequence(call.type.itemType, mergedCardinality);
+        return symbolManager.typeInContext(x);
     }
 
     @Override
@@ -2879,7 +2400,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         }
         ctx.positionalArgumentList().accept(this);
 
-        final List<XQuerySequenceType> args = visitedPositionalArguments.stream().map(a->a.type).toList();
+        final List<AntlrQuerySequenceType> args = visitedPositionalArguments.stream().map(a->a.type).toList();
         final var expectedFunction = typeFactory.itemFunction(zeroOrMoreItems, args);
         if (!value.type.itemType.itemtypeIsSubtypeOf(expectedFunction))
         {
@@ -3039,14 +2560,14 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         if (ctx.OTHERWISE().isEmpty())
             return ctx.stringConcatExpr(0).accept(this);
         final int length = ctx.stringConcatExpr().size();
-        XQuerySequenceType merged = visitStringConcatExpr(ctx.stringConcatExpr(0)).type;
-        if (merged.isOne || merged.isOneOrMore) {
+        AntlrQuerySequenceType merged = visitStringConcatExpr(ctx.stringConcatExpr(0)).type;
+        if (!Cardinalities.contains(merged.cardinality, BigDecimal.ZERO)) {
             warn(ctx.stringConcatExpr(0), WarningType.OTHERWISE__IMPOSSIBLE, List.of(merged));
         }
         for (int i = 1; i < length; i++) {
             final var expr = ctx.stringConcatExpr(i);
-            final XQuerySequenceType exprType = visitStringConcatExpr(expr).type;
-            if (exprType.isOne || exprType.isOneOrMore) {
+            final AntlrQuerySequenceType exprType = visitStringConcatExpr(expr).type;
+            if (!Cardinalities.contains(exprType.cardinality, BigDecimal.ZERO)) {
                 warn(expr, WarningType.OTHERWISE__IMPOSSIBLE, List.of(exprType));
             }
             merged = exprType.alternativeMerge(merged);
@@ -3135,12 +2656,12 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             ? switchCases.switchCaseClause()
             : ctx.bracedSwitchCases().switchCases().switchCaseClause();
 
-        XQuerySequenceType merged = null;
+        AntlrQuerySequenceType merged = null;
         for (final var clause : clauses) {
             final var operandType = clause.switchCaseOperand().stream()
                 .map(this::visit)
                 .map(x->x.type)
-                .reduce(XQuerySequenceType::alternativeMerge)
+                .reduce(AntlrQuerySequenceType::alternativeMerge)
                 .get();
             if (!operandType.isSubtypeOf(comparand.type)) {
                 error(clause, ErrorType.SWITCH__INVALID_CASE, List.of(operandType, comparand));
@@ -3276,14 +2797,14 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             return symbolManager.typeInContext(typeFactory.anyFunction());
         }
         final Set<String> argumentNames = new HashSet<>();
-        final List<XQuerySequenceType> args = new ArrayList<>();
+        final List<AntlrQuerySequenceType> args = new ArrayList<>();
         final var functionSignature = ctx.functionSignature();
         final var returnTypeDeclaration = functionSignature.typeDeclaration();
         symbolManager.enterScope();
         for (final var parameter : functionSignature.paramList().varNameAndType()) {
             final String parameterName = parameter.varName().qname().getText();
             final TypeDeclarationContext typeDeclaration = parameter.typeDeclaration();
-            final XQuerySequenceType parameterType = typeDeclaration != null
+            final AntlrQuerySequenceType parameterType = typeDeclaration != null
                 ? typeDeclaration.accept(this).type
                 : zeroOrMoreItems;
             if (argumentNames.contains(parameterName)) {
@@ -3412,7 +2933,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         symbolManager.enterContext();
         for (final var param : spec.args.subList(0, spec.minArity))
         {
-            final XQuerySequenceType paramType = param.type == null
+            final AntlrQuerySequenceType paramType = param.type == null
                 ? zeroOrMoreItems
                 : param.type.accept(this).type;
             final var argDecl = new ArgumentSpecification(param.name, paramType, param.defaultValue);
@@ -3422,7 +2943,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
 
         for (final var defaultParam : spec.args.subList(spec.minArity, spec.maxArity))
         {
-            final XQuerySequenceType paramType = defaultParam.type == null
+            final AntlrQuerySequenceType paramType = defaultParam.type == null
                 ? zeroOrMoreItems
                 : defaultParam.type.accept(this).type;
             final var dvt = defaultParam.defaultValue.accept(this);
@@ -3562,7 +3083,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                 fields.put(
                     fieldName,
                     new XQueryRecordField(
-                        TypeOrReference.type(zeroOrMoreItems),
+                        new TypeOrReference.Type(zeroOrMoreItems),
                         field.isRequired
                         )
                     );
@@ -3574,7 +3095,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
                 fields.put(
                     fieldName,
                     new XQueryRecordField(
-                        TypeOrReference.type(
+                        new TypeOrReference.Type(
                             visitSequenceType(fieldTypeCtx).type),
                             field.isRequired));
                 continue;
@@ -3662,7 +3183,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
 
 
     XQueryAxis currentAxis;
-    private final XQuerySequenceType zeroOrOneItem;
+    private final AntlrQuerySequenceType zeroOrOneItem;
 
     private XQueryAxis saveAxis() {
         final var saved = currentAxis;
@@ -3787,7 +3308,7 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
             : ctx.typeswitchCases()
             ;
         final var clauses = cases.caseClause();
-        final List<XQuerySequenceType> types = new ArrayList<>();
+        final List<AntlrQuerySequenceType> types = new ArrayList<>();
         for (final var typeswitchCase : clauses) {
             for (final var typeCtx : typeswitchCase.sequenceTypeUnion().sequenceType()) {
                 final var type = visitSequenceType(typeCtx);
@@ -3810,8 +3331,8 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         final var defaultType = visitExprSingle(cases.exprSingle());
         symbolManager.leaveScope();
         types.add(defaultType.type);
-        final XQuerySequenceType orElse = types.stream()
-            .reduce(XQuerySequenceType::alternativeMerge)
+        final AntlrQuerySequenceType orElse = types.stream()
+            .reduce(AntlrQuerySequenceType::alternativeMerge)
             .orElse(zeroOrMoreItems);
         return symbolManager.typeInContext(orElse);
     }
@@ -3864,5 +3385,367 @@ public class XQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInC
         }
         return null;
     }
+
+
+    @Override
+    public TypeInContext visitAnyItem(AnyItemContext ctx) {
+        return symbolManager.typeInContext(typeFactory.anyItem());
+        
+    }
+
+
+    @Override
+    public TypeInContext visitChoiceItemType(final ChoiceItemTypeContext ctx)
+    {
+        final List<ItemTypeContext> itemTypes = ctx.itemType();
+        if (itemTypes.size() == 1) {
+            return ctx.itemType(0).accept(this);
+        }
+        final var choiceItemNames = itemTypes.stream().map(i -> i.getText()).collect(Collectors.toSet());
+        if (choiceItemNames.size() != itemTypes.size()) {
+            error(ctx, ErrorType.CHOICE_ITEM_TYPE__DUPLICATED, List.of());
+        }
+        final List<XQueryItemType> choiceItems = itemTypes.stream().map(i -> i.accept(this))
+            .map(sequenceType -> sequenceType.type.itemType)
+            .toList();
+        return symbolManager.typeInContext(typeFactory.choice(choiceItems));
+    }
+
+    @Override
+    public TypeInContext visitTypeName(final TypeNameContext ctx)
+    {
+        final var name = ctx.getText();
+        final AntlrQuerySequenceType result = switch (name) {
+            case "number" -> number;
+            case "string" -> string;
+            case "boolean" -> boolean_;
+            default -> {
+                final var visitedQualifiedName = namespaceResolver.resolveType(name);
+                final var type = typeFactory.namedType(visitedQualifiedName);
+                if (type.status() == NamedAccessingStatus.OK)
+                    yield type.type();
+
+                for (final QualifiedName resolvedName : recordsMapped.keySet()) {
+                    if (resolvedName.equals(visitedQualifiedName)) {
+                        final var namedRecordResult = resolveRecord(resolvedName, recordsMapped.get(resolvedName));
+                        yield typeFactory.one(namedRecordResult.recordItemType);
+                    }
+                }
+                for (final var resolved : itemsMapped.keySet()) {
+                    if (resolved.equals(visitedQualifiedName)) {
+                        final var t = resolveItemTypeFromDecl(resolved, itemsMapped.get(resolved));
+                        yield typeFactory.one(t.registered());
+                    }
+                }
+
+                error(ctx, ErrorType.TYPE_NAME__UNKNOWN, List.of(name));
+                yield zeroOrMoreItems;
+            }
+        };
+        return symbolManager.typeInContext(result);
+    }
+
+    @Override
+    public TypeInContext visitAnyKindType(final AnyKindTypeContext ctx)
+    {
+        return symbolManager.typeInContext(typeFactory.anyNode());
+    }
+
+    @Override
+    public TypeInContext visitElementType(final ElementTypeContext ctx)
+    {
+        final Set<QualifiedName> elementNames = ctx.nameTypeUnion().nameTest().stream().map(e -> namespaceResolver.resolveElement(e.getText()))
+            .collect(Collectors.toSet());
+        return symbolManager.typeInContext(typeFactory.element(elementNames));
+    }
+
+    @Override
+    public TypeInContext visitFunctionType(final FunctionTypeContext ctx)
+    {
+        if (ctx.anyFunctionType() != null) {
+            return symbolManager.typeInContext(typeFactory.anyFunction());
+        }
+        final var func = ctx.typedFunctionType();
+        final List<AntlrQuerySequenceType> parameterTypes = func.typedFunctionParam().stream()
+            .map(p -> visitSequenceType(p.sequenceType()).type)
+            .collect(Collectors.toList());
+        final var function =  typeFactory.function(visitSequenceType(func.sequenceType()).type, parameterTypes);
+        return symbolManager.typeInContext(function);
+    }
+
+    @Override
+    public TypeInContext visitMapType(final MapTypeContext ctx)
+    {
+        if (ctx.anyMapType() != null) {
+            return symbolManager.typeInContext(typeFactory.anyMap());
+        }
+        final var map = ctx.typedMapType();
+        final XQueryItemType keyType = map.itemType().accept(this).type.itemType;
+        final TypeInContext valueType = visitSequenceType(map.sequenceType());
+        return symbolManager.typeInContext(typeFactory.map(keyType, valueType.type));
+    }
+
+    @Override
+    public TypeInContext visitArrayType(final ArrayTypeContext ctx)
+    {
+        if (ctx.anyArrayType() != null) {
+            return symbolManager.typeInContext(typeFactory.anyArray());
+        }
+        final var array = ctx.typedArrayType();
+        final var sequenceType = visitSequenceType(array.sequenceType());
+        return symbolManager.typeInContext(typeFactory.array(sequenceType.type));
+    }
+
+    @Override
+    public TypeInContext visitRecordType(final RecordTypeContext ctx)
+    {
+        if (ctx.anyRecordType() != null) {
+            return symbolManager.typeInContext(typeFactory.anyMap());
+        }
+        final var record = ctx.typedRecordType();
+        final var fieldDeclarations = record.fieldDeclaration();
+        final Map<String, XQueryRecordField> fields = new HashMap<>(fieldDeclarations.size());
+        for (final var field : fieldDeclarations) {
+            final String fieldName = field.fieldName().getText();
+            final var fieldType = visitSequenceType(field.sequenceType());
+            final boolean isRequired = field.QUESTION_MARK() != null;
+            final XQueryRecordField recordField = new XQueryRecordField(new TypeOrReference.Type(fieldType.type), isRequired);
+            fields.put(fieldName, recordField);
+        }
+        if (record.extensibleFlag() == null) {
+            return symbolManager.typeInContext(typeFactory.extensibleRecord(fields));
+        }
+        return symbolManager.typeInContext(typeFactory.record(fields));
+    }
+
+    @Override
+    public TypeInContext visitEnumerationType(final EnumerationTypeContext ctx)
+    {
+        final Set<String> enumMembers = ctx.STRING().stream()
+            .map(TerminalNode::getText)
+            .map(s->s.substring(1, s.length()-1))
+            .collect(Collectors.toSet());
+        return symbolManager.typeInContext(typeFactory.enum_(enumMembers));
+    }
+
+
+
+
+    AntlrQuerySequenceType getAnyArrayOrMapLookupType(
+        final LookupContext ctx,
+        final boolean isWildcard,
+        final TypeInContext targetType,
+        final TypeInContext keySpecifierType)
+    {
+        if (isWildcard) {
+            return null;
+        }
+        final XQueryItemType targetItemType = targetType.type.itemType;
+        final Collection<XQueryItemType> choiceItemTypes = targetItemType.itemTypes;
+        XQueryItemType targetKeyItemType = null;
+        AntlrQuerySequenceType resultingType = null;
+        for (final var itemType : choiceItemTypes) {
+            if (resultingType == null) {
+                if (!isWildcard) {
+                    if (keySpecifierType.type.cardinality.isSingular()) {
+                        resultingType = typeFactory.sequence(itemType, keySpecifierType.type.cardinality);
+                    }
+                    else {
+                        resultingType = typeFactory.zeroOrMore(itemType);
+                    }
+                }
+                else {
+                    resultingType = typeFactory.zeroOrMore(itemType);
+                }
+                continue;
+            }
+
+            switch (itemType.type) {
+                case ARRAY -> {
+                    resultingType = resultingType.alternativeMerge(itemType.arrayMemberType);
+                    targetKeyItemType = targetItemType.alternativeMerge(typeFactory.itemNumber());
+                }
+                case MAP -> {
+                    resultingType = resultingType.alternativeMerge(itemType.mapValueType);
+                    targetKeyItemType = targetItemType.alternativeMerge(itemType.mapKeyType);
+                }
+                default -> {
+                    resultingType = zeroOrMoreItems;
+                    targetKeyItemType = typeFactory.itemAnyItem();
+                }
+            }
+        }
+        resultingType = resultingType.addOptionality();
+        if (isWildcard) {
+            return resultingType;
+        }
+        final XQueryItemType numberOrKey = targetKeyItemType.alternativeMerge(typeFactory.itemNumber());
+
+        final AntlrQuerySequenceType expectedKeyItemtype = typeFactory.zeroOrMore(numberOrKey);
+        if (!keySpecifierType.itemtypeIsSubtypeOf(expectedKeyItemtype)) {
+            error(ctx, ErrorType.LOOKUP__ARRAY_OR_MAP_INVALID_KEY, List.of(targetType, expectedKeyItemtype));
+        }
+        return resultingType;
+    }
+
+    
+    private  AntlrQuerySequenceType getMapLookuptype(
+            final ParserRuleContext target,
+            final LookupContext lookup,
+            final KeySpecifierContext keySpecifier,
+            final TypeInContext targetType,
+            final TypeInContext keySpecifierType,
+            final boolean isWildcard)
+    {
+        final XQueryItemType targetKeyItemType = targetType.type.itemType.mapKeyType;
+        final AntlrQuerySequenceType targetValueType = targetType.type.itemType.mapValueType;
+        final XQueryItemType targetValueItemtype = targetValueType.itemType;
+        if (isWildcard) {
+            return typeFactory.zeroOrMore(targetValueItemtype);
+        }
+        final AntlrQuerySequenceType result = typeFactory.sequence(targetValueItemtype, Cardinalities.addOptionality(keySpecifierType.type.cardinality));
+        final AntlrQuerySequenceType expectedKeyItemtype = typeFactory.zeroOrMore(targetKeyItemType);
+        if (!keySpecifierType.isSubtypeOf(expectedKeyItemtype)) {
+            error(lookup, ErrorType.LOOKUP__MAP_INVALID_KEY, List.of(targetType, expectedKeyItemtype));
+        }
+        if (targetValueItemtype.type == XQueryTypes.RECORD) {
+            return result;
+        }
+        return result.addOptionality();
+    }
+
+    private AntlrQuerySequenceType getRecordLookupType(
+        final ParserRuleContext target,
+        final LookupContext lookup,
+        final KeySpecifierContext keySpecifier,
+        final TypeInContext targetType,
+        final TypeInContext keySpecifierType,
+        final boolean isWildcard)
+    {
+        final XQueryItemType targetKeyItemType = typeFactory.itemString();
+        final Map<String, XQueryRecordField> recordFields = targetType.type.itemType.recordFields;
+        if (recordFields.isEmpty()) {
+            warn(target, WarningType.LOOKUP__EMPTY_RECORD, List.of());
+            return emptySequence;
+        }
+        final AntlrQuerySequenceType mergedRecordFieldTypes = recordFields
+            .values()
+            .stream()
+            .map(this::resolveRecordFieldType)
+            .reduce((x, y)->x.alternativeMerge(y))
+            .get();
+        if (isWildcard) {
+            return mergedRecordFieldTypes;
+        }
+        if (!keySpecifierType.isSubtypeOf(typeFactory.zeroOrMore(typeFactory.itemString()))) {
+            error(keySpecifier, ErrorType.LOOKUP__INVALID_RECORD_KEY_TYPE, List.of(targetType, keySpecifierType));
+            return zeroOrMoreItems;
+        }
+        final var string = keySpecifier.STRING();
+        if (string != null) {
+            final String key = processStringLiteral(keySpecifier);
+            final var valueType = recordFields.get(key);
+            if (valueType == null) {
+                error(keySpecifier, ErrorType.LOOKUP__INVALID_RECORD_KEY_NAME, List.of(key, targetType));
+                return zeroOrMoreItems;
+            }
+            return resolveRecordFieldType(valueType);
+        }
+        final AntlrQuerySequenceType expectedKeyItemtype = typeFactory.zeroOrMore(targetKeyItemType);
+        if (!keySpecifierType.isSubtypeOf(expectedKeyItemtype)) {
+            error(lookup, ErrorType.LOOKUP__INVALID_RECORD_KEY_TYPE, List.of(targetType, expectedKeyItemtype));
+        }
+        if (keySpecifierType.type.itemType.type == XQueryTypes.ENUM) {
+            final var members = keySpecifierType.type.itemType.enumMembers;
+            final var firstField = members.stream().findFirst().get();
+            final var firstRecordField = recordFields.get(firstField);
+            AntlrQuerySequenceType merged = resolveRecordFieldType(firstRecordField);
+            for (final var member : members) {
+                if (member.equals(firstField))
+                    continue;
+                final var recordField = recordFields.get(member);
+                if (recordField == null) {
+                    warn(lookup, WarningType.LOOKUP__IMPOSSIBLE_RECORD_FIELD, List.of(member));
+                    return zeroOrMoreItems;
+                }
+                merged = merged.sequenceMerge(resolveRecordFieldType(recordField));
+            }
+            return merged;
+        }
+        return mergedRecordFieldTypes.addOptionality();
+    }
+
+    private AntlrQuerySequenceType getExtensibleRecordLookupType(
+        final ParserRuleContext ctx,
+        final LookupContext lookup,
+        final KeySpecifierContext keySpecifier,
+        final TypeInContext targetType,
+        final TypeInContext keySpecifierType,
+        final boolean isWildcard)
+    {
+        final XQueryItemType targetKeyItemType = typeFactory.itemString();
+        final Map<String, XQueryRecordField> recordFields = targetType.type.itemType.recordFields;
+        if (recordFields.isEmpty()) {
+            warn(ctx, WarningType.LOOKUP__RETURNS_ALWAYS_EMPTY, List.of());
+            return emptySequence;
+        }
+        final AntlrQuerySequenceType mergedRecordFieldTypes = recordFields
+            .values()
+            .stream()
+            .map(this::resolveRecordFieldType)
+            .reduce((x, y)->x.alternativeMerge(y))
+            .get();
+        if (isWildcard) {
+            return mergedRecordFieldTypes;
+        }
+        if (!keySpecifierType.isSubtypeOf(typeFactory.zeroOrMore(typeFactory.itemString()))) {
+            error(ctx, ErrorType.LOOKUP__INVALID_EXTENDED_RECORD_KEY_TYPE, List.of());
+            return zeroOrMoreItems;
+        }
+        final var stringToken = keySpecifier.STRING();
+        if (stringToken != null) {
+            final String key = processStringLiteral(keySpecifier);
+            final var recordField = recordFields.get(key);
+            if (recordField == null) {
+                return zeroOrMoreItems;
+            }
+            return resolveRecordFieldType(recordField);
+        }
+        final AntlrQuerySequenceType expectedKeyItemtype = typeFactory.zeroOrMore(targetKeyItemType);
+        if (!keySpecifierType.isSubtypeOf(expectedKeyItemtype)) {
+            error(lookup, ErrorType.LOOKUP__INVALID_EXTENDED_RECORD_KEY_TYPE, List.of(targetType, expectedKeyItemtype));
+        }
+        if (keySpecifierType.type.itemType.type == XQueryTypes.ENUM) {
+            final var members = keySpecifierType.type.itemType.enumMembers;
+            final var firstField = members.stream().findFirst().get();
+            final var firstRecordField = recordFields.get(firstField);
+            AntlrQuerySequenceType merged = resolveRecordFieldType(firstRecordField);
+            for (final var member : members) {
+                if (member.equals(firstField))
+                    continue;
+                final var recordField = recordFields.get(member);
+                if (recordField == null)  {
+                    return zeroOrMoreItems;
+                }
+                merged = merged.alternativeMerge(resolveRecordFieldType(recordField));
+            }
+            return merged;
+        }
+        return mergedRecordFieldTypes.addOptionality();
+    }
+
+	private AntlrQuerySequenceType resolveRecordFieldType(final XQueryRecordField t) {
+		final var type = switch(t.typeOrReference()) {
+		    case final TypeOrReference.Reference ref -> {
+		        yield typeFactory.namedType(ref.reference()).type();
+		    }
+		    case final TypeOrReference.Type fieldType -> {
+		        yield fieldType.type();
+		    }
+		};
+		return t.isRequired()? type : type.addOptionality();
+	}
+
+
 
 }

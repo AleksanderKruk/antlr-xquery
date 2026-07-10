@@ -1,40 +1,34 @@
 package com.github.akruk.antlrxquery.typesystem;
 
+import java.util.List;
+import java.util.StringJoiner;
+
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryCardinality;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.types.Cardinality;
+import com.github.akruk.antlrxquery.typesystem.types.Cardinality.CardinalityInterval;
 
 
 
 public record XQueryRecordField(TypeOrReference typeOrReference, boolean isRequired) {
-    public static enum FieldType {
-        REFERENCE, TYPE
+    public sealed interface TypeOrReference 
+        permits TypeOrReference.Type, 
+                TypeOrReference.Reference 
+    {
+        public static record Type(AntlrQuerySequenceType type) 
+            implements TypeOrReference { }
+        public static record Reference(QualifiedName reference, Cardinality cardinality) 
+            implements TypeOrReference { }
     }
-    public static record TypeOrReference(
-        FieldType fieldType,
-        XQuerySequenceType type,
-        QualifiedName reference,
-        XQueryCardinality referenceCardinality
-    ) {
-        public static TypeOrReference type(XQuerySequenceType type) {
-            return new TypeOrReference(FieldType.TYPE, type, null, null);
-        }
-
-        public static TypeOrReference reference(QualifiedName reference, XQueryCardinality cardinality) {
-            return new TypeOrReference(FieldType.REFERENCE, null, reference, cardinality);
-        }
 
 
-    }
-    public XQuerySequenceType resolveFieldType(XQueryTypeFactory typeFactory) {
-        var type = switch(this.typeOrReference.fieldType) {
-            case REFERENCE -> {
-                yield typeFactory.namedType(typeOrReference.reference).type();
-            }
-            case TYPE -> {
-                yield this.typeOrReference.type;
-            }
+
+
+    public AntlrQuerySequenceType resolveFieldType(final XQueryTypeFactory typeFactory) {
+        final var type = switch(this.typeOrReference) {
+            case final Type t -> t.type;
+            case final Reference r -> typeFactory.namedType(r.reference).type();
         };
         return isRequired? type : type.addOptionality();
     }
@@ -42,19 +36,29 @@ public record XQueryRecordField(TypeOrReference typeOrReference, boolean isRequi
     @Override
     public String toString()
     {
-        return switch(this.typeOrReference.fieldType) {
-            case REFERENCE -> {
+        return switch(this.typeOrReference) {
+            case final TypeOrReference.Reference r -> {
                 if (isRequired) {
-                    yield typeOrReference.reference.toString();
+                    yield r.reference.toString();
                 } else {
-                    yield typeOrReference.reference + typeOrReference.referenceCardinality.occurenceSuffix();
+                    final Cardinality cardinality = r.cardinality;
+                    final List<Cardinality.CardinalityInterval> intervals = cardinality.toIntervals();
+                    if (intervals.size() == 1) {
+                        yield r.reference.toString() + "^" + intervals.get(0).toCardinalityInterval();
+                    }
+                    final StringJoiner sj = new StringJoiner(" | ", "(", ")");
+                    for (final CardinalityInterval interval : intervals) {
+                        sj.add(interval.toCardinalityInterval());
+                    }
+                    final String cardinalityString = sj.toString();
+                    yield r.reference.toString() + cardinalityString;
                 }
             }
-            case TYPE -> {
+            case final TypeOrReference.Type t -> {
                 if (isRequired) {
-                    yield this.typeOrReference.type.toString();
+                    yield t.type.toString();
                 } else {
-                    yield this.typeOrReference.type.addOptionality().toString();
+                    yield t.type.addOptionality().toString();
                 }
             }
         };

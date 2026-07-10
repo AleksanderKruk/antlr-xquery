@@ -20,21 +20,21 @@ import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMe
 import com.github.akruk.antlrxquery.languageserver.DiagnosticMessageCreator;
 import com.github.akruk.antlrxquery.semanticanalyzer.GrammarManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager;
-import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContextManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.SemanticFunctionSets;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
+import com.github.akruk.antlrxquery.semanticanalyzer.visitors.AntlrQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTypeSets;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 
 public class SemanticTestsBase {
     final protected XQueryTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new XQueryNamedTypeSets().all());
 
     record AnalysisResult(
-        XQuerySemanticAnalyzer analyzer,
-        XQuerySequenceType expressionType
+        AntlrQuerySemanticAnalyzer analyzer,
+        AntlrQuerySequenceType expressionType
         )
     {};
 
@@ -58,7 +58,7 @@ public class SemanticTestsBase {
         final ParseTree xqueryTree = xqueryParser.xquery();
         final var contextManager = new XQuerySemanticContextManager(typeFactory);
         final XQuerySemanticSymbolManager caller = new XQuerySemanticSymbolManager(typeFactory, contextManager, SemanticFunctionSets.ALL(typeFactory));
-        final XQuerySemanticAnalyzer analyzer = new XQuerySemanticAnalyzer(
+        final AntlrQuerySemanticAnalyzer analyzer = new AntlrQuerySemanticAnalyzer(
                 null,
                 typeFactory,
                 new XQueryMemoizedValueFactory(typeFactory),
@@ -96,12 +96,12 @@ public class SemanticTestsBase {
         assertTrue(analyzer.analyzer.getErrors().size() != 0, "Found no erros");
     }
 
-    protected void assertType(final AnalysisResult result, final XQuerySequenceType expectedType) {
+    protected void assertType(final AnalysisResult result, final AntlrQuerySequenceType expectedType) {
         assertNoErrors(result);
         assertTrue(result.expressionType.equals(expectedType));
     }
 
-    protected void assertType(final String xquery, final XQuerySequenceType expectedType) {
+    protected void assertType(final String xquery, final AntlrQuerySequenceType expectedType) {
         final var analysisResult = analyze(xquery);
         assertNoErrors(analysisResult);
         assertEquals(expectedType, analysisResult.expressionType);

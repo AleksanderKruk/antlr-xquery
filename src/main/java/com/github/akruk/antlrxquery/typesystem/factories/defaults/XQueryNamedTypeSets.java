@@ -7,8 +7,8 @@ import java.util.Map;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField.TypeOrReference;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.types.XQueryItemType;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 
 public final class XQueryNamedTypeSets {
     private Map<String, Map<String, XQueryItemType>> DEFAULT_ALL;
@@ -17,16 +17,16 @@ public final class XQueryNamedTypeSets {
         if (DEFAULT_ALL != null)
             return DEFAULT_ALL;
         DEFAULT_ALL = new HashMap<>(10);
-        final XQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
+        final AntlrQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         final XQueryItemType keyValuePair = typeFactory.itemExtensibleRecord(Map.of(
             "key", new XQueryRecordField(TypeOrReference.type(typeFactory.anyItem()), true),
             "value", new XQueryRecordField(TypeOrReference.type(zeroOrMoreItems), true)
         ));
         DEFAULT_ALL.computeIfAbsent("fn", _->new HashMap<>()).put("key-value-pair", keyValuePair);
 
-        final XQuerySequenceType stringToAnyItems = typeFactory.map(typeFactory.itemString(), zeroOrMoreItems);
-        final XQuerySequenceType integerToAnyFunction = typeFactory.map(typeFactory.itemNumber(), typeFactory.anyFunction());
-        final XQuerySequenceType stringToIntegerToAnyFunction = typeFactory.map(typeFactory.itemString(), integerToAnyFunction);
+        final AntlrQuerySequenceType stringToAnyItems = typeFactory.map(typeFactory.itemString(), zeroOrMoreItems);
+        final AntlrQuerySequenceType integerToAnyFunction = typeFactory.map(typeFactory.itemNumber(), typeFactory.anyFunction());
+        final AntlrQuerySequenceType stringToIntegerToAnyFunction = typeFactory.map(typeFactory.itemString(), integerToAnyFunction);
         final XQueryItemType loadXQueryModuleRecord = typeFactory.itemRecord(Map.of(
             "variables", new XQueryRecordField(TypeOrReference.type(stringToAnyItems), true),
             "functions", new XQueryRecordField(TypeOrReference.type(stringToIntegerToAnyFunction), true)

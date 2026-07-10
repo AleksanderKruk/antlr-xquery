@@ -9,14 +9,15 @@ import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.Assumption;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.Implication;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.ValueImplication;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContext;
-import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
+import com.github.akruk.antlrxquery.semanticanalyzer.visitors.AntlrQuerySemanticAnalyzer;
+import com.github.akruk.antlrxquery.typesystem.types.TypeInContext;
 
-final class AndTrueImplication extends ValueImplication<Boolean> {
+public final class AndTrueImplication extends ValueImplication<Boolean> {
     private final TypeInContext andResult;
     private final List<ParseTree> andEffectiveBooleanValues;
-    private final XQuerySemanticAnalyzer analyzer;
+    private final AntlrQuerySemanticAnalyzer analyzer;
 
-    AndTrueImplication(final TypeInContext andResult, final List<ParseTree> andExprs, final XQuerySemanticAnalyzer analyzer) {
+    public AndTrueImplication(final TypeInContext andResult, final List<ParseTree> andExprs, final AntlrQuerySemanticAnalyzer analyzer) {
         super(andResult, true);
         this.andResult = andResult;
         this.andEffectiveBooleanValues = andExprs;

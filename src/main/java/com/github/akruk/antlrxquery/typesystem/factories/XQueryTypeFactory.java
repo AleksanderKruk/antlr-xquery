@@ -7,8 +7,9 @@ import java.util.Set;
 
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.types.XQueryItemType;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.types.Cardinality;
 
 public interface XQueryTypeFactory {
     public XQueryItemType itemError();
@@ -22,9 +23,9 @@ public interface XQueryTypeFactory {
     public XQueryItemType itemAnyFunction();
     public XQueryItemType itemAnyItem();
     public XQueryItemType itemBoolean();
-    public XQueryItemType itemMap(XQueryItemType keyType, XQuerySequenceType valueType);
-    public XQueryItemType itemArray(XQuerySequenceType itemType);
-    public XQueryItemType itemFunction(XQuerySequenceType returnType, List<XQuerySequenceType> argumentTypes);
+    public XQueryItemType itemMap(XQueryItemType keyType, AntlrQuerySequenceType valueType);
+    public XQueryItemType itemArray(AntlrQuerySequenceType itemType);
+    public XQueryItemType itemFunction(AntlrQuerySequenceType returnType, List<AntlrQuerySequenceType> argumentTypes);
     public XQueryItemType itemRecord(Map<String, XQueryRecordField> fields);
     public XQueryItemType itemExtensibleRecord(Map<String, XQueryRecordField> fields);
     public XQueryItemType itemChoice(Collection<XQueryItemType> items);
@@ -41,30 +42,31 @@ public interface XQueryTypeFactory {
     record RegistrationResult(XQueryItemType registered, RegistrationStatus status){}
     public RegistrationResult registerNamedType(QualifiedName name, XQueryItemType itemType);
 
-    public XQuerySequenceType error();
-    public XQuerySequenceType string();
-    public XQuerySequenceType enum_(Set<String> memberNames);
-    public XQuerySequenceType number();
-    public XQuerySequenceType anyNode();
-    public XQuerySequenceType anyArray();
-    public XQuerySequenceType array(XQuerySequenceType itemType);
-    public XQuerySequenceType anyMap();
-    public XQuerySequenceType map(XQueryItemType mapKeyType, XQuerySequenceType mapValueType);
-    public XQuerySequenceType record(Map<String, XQueryRecordField> fields);
-    public XQuerySequenceType extensibleRecord(Map<String, XQueryRecordField> fields);
-    public XQuerySequenceType element(Set<QualifiedName> elementName);
-    public XQuerySequenceType anyFunction();
-    public XQuerySequenceType function(XQuerySequenceType returnType, List<XQuerySequenceType> argumentTypes);
-    public XQuerySequenceType choice(Collection<XQueryItemType> items);
-    public XQuerySequenceType anyItem();
-    public XQuerySequenceType boolean_();
-    public XQuerySequenceType emptySequence();
+    public AntlrQuerySequenceType error();
+    public AntlrQuerySequenceType string();
+    public AntlrQuerySequenceType enum_(Set<String> memberNames);
+    public AntlrQuerySequenceType number();
+    public AntlrQuerySequenceType anyNode();
+    public AntlrQuerySequenceType anyArray();
+    public AntlrQuerySequenceType array(AntlrQuerySequenceType itemType);
+    public AntlrQuerySequenceType anyMap();
+    public AntlrQuerySequenceType map(XQueryItemType mapKeyType, AntlrQuerySequenceType mapValueType);
+    public AntlrQuerySequenceType record(Map<String, XQueryRecordField> fields);
+    public AntlrQuerySequenceType extensibleRecord(Map<String, XQueryRecordField> fields);
+    public AntlrQuerySequenceType element(Set<QualifiedName> elementName);
+    public AntlrQuerySequenceType anyFunction();
+    public AntlrQuerySequenceType function(AntlrQuerySequenceType returnType, List<AntlrQuerySequenceType> argumentTypes);
+    public AntlrQuerySequenceType choice(Collection<XQueryItemType> items);
+    public AntlrQuerySequenceType anyItem();
+    public AntlrQuerySequenceType boolean_();
+    public AntlrQuerySequenceType emptySequence();
 
-    public record NamedAccessingResult(XQuerySequenceType type, NamedAccessingStatus status) {}
+    public record NamedAccessingResult(AntlrQuerySequenceType type, NamedAccessingStatus status) {}
     public NamedAccessingResult namedType(QualifiedName name);
 
-    public XQuerySequenceType one(XQueryItemType itemType);
-    public XQuerySequenceType zeroOrOne(XQueryItemType itemType);
-    public XQuerySequenceType zeroOrMore(XQueryItemType itemType);
-    public XQuerySequenceType oneOrMore(XQueryItemType itemType);
+    public AntlrQuerySequenceType one(XQueryItemType itemType);
+    public AntlrQuerySequenceType zeroOrOne(XQueryItemType itemType);
+    public AntlrQuerySequenceType zeroOrMore(XQueryItemType itemType);
+    public AntlrQuerySequenceType oneOrMore(XQueryItemType itemType);
+    public AntlrQuerySequenceType sequence(XQueryItemType itemType, Cardinality cardinality);
 }

@@ -9,11 +9,11 @@ import org.eclipse.lsp4j.Location;
 
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameContext;
 import com.github.akruk.antlrxquery.semanticanalyzer.EffectiveBooleanValueTrue;
-import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType.EffectiveBooleanValueType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.types.TypeInContext;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.types.XQueryTypes;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType.EffectiveBooleanValueType;
 
 
 public class XQuerySemanticScope {
@@ -229,7 +229,7 @@ public class XQuerySemanticScope {
         return variables.containsKey(variableName);
     }
 
-    public TypeInContext typeInContext(XQuerySequenceType type)
+    public TypeInContext typeInContext(AntlrQuerySequenceType type)
     {
         var tic = new TypeInContext(type, context, this);
         scopedTypes.add(tic);
@@ -265,7 +265,7 @@ public class XQuerySemanticScope {
                 yield ebvs.computeIfAbsent(resolvedType, (_) -> typeInContext(typeFactory.boolean_()));
             }
             case ALWAYS_TRUE__NUMBER_STRING_BOOLEAN, NUMBER_STRING_BOOLEAN-> {
-                if (typeInContext.type.itemType.type == XQueryTypes.BOOLEAN && typeInContext.type.isOne) {
+                if (typeInContext.type.itemType.type == XQueryTypes.BOOLEAN && typeInContext.type.cardinality.isOne()) {
                     yield resolvedType;
                 }
                 yield ebvs.computeIfAbsent(resolvedType, (_) -> typeInContext(typeFactory.boolean_()));

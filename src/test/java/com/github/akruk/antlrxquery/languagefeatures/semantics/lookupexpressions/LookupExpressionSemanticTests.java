@@ -5,13 +5,13 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.types.XQueryItemType;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 
 public class LookupExpressionSemanticTests extends SemanticTestsBase {
     @Test
     public void lookupOnEmptyMap() {
-        final XQuerySequenceType anyItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
+        final AntlrQuerySequenceType anyItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         assertType("map {} ? abc", anyItems);
         assertType("map {} ? 'a b c'", anyItems);
         assertType("map {} ? 2", anyItems);
@@ -23,7 +23,7 @@ public class LookupExpressionSemanticTests extends SemanticTestsBase {
 
     @Test
     public void lookupOnEmptyArray() {
-        final XQuerySequenceType zeroOrMore = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
+        final AntlrQuerySequenceType zeroOrMore = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         assertErrors("array {} ? abc");
         assertErrors("array {} ? 'a b c'");
         assertType("array {} ? 2", zeroOrMore);

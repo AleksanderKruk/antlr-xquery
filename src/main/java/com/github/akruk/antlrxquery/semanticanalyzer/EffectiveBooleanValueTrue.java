@@ -6,8 +6,9 @@ import java.util.Set;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.Implication;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.ValueImplication;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContext;
-import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.types.Cardinality;
+import com.github.akruk.antlrxquery.typesystem.types.TypeInContext;
 
 public class EffectiveBooleanValueTrue extends ValueImplication<Boolean> {
 
@@ -42,11 +43,13 @@ public class EffectiveBooleanValueTrue extends ValueImplication<Boolean> {
         }
         var variantNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
         if (changedType.isSubtypeOf(variantNodes)) {
-            changedType.type = switch(changedType.type.occurence) {
-                case ZERO_OR_MORE -> typeFactory.oneOrMore(changedType.type.itemType);
-                case ZERO_OR_ONE -> typeFactory.one(changedType.type.itemType);
-                default -> changedType.type;
-            };
+            if (changedType.type.cardinality == Cardinality.ZERO_OR_MORE) {
+                changedType.type = typeFactory.oneOrMore(changedType.type.itemType);
+            } else if (changedType.type.cardinality == Cardinality.ZERO_OR_ONE) {
+                changedType.type = typeFactory.one(changedType.type.itemType);
+            } else {
+                changedType.type = changedType.type;
+            }
             return;
         }
         return;

@@ -25,8 +25,6 @@ import com.github.akruk.antlrxquery.inputgrammaranalyzer.InputGrammarAnalyzer.Qu
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.semanticanalyzer.DiagnosticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.ErrorType;
-import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer;
-import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticAnalyzer.UnresolvedFunctionSpecification;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQuerySemanticError;
 import com.github.akruk.antlrxquery.semanticanalyzer.XQueryVisitingSemanticContext;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContext;
@@ -34,10 +32,12 @@ import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySeman
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticScope;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticScope.EntypingResult;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticScope.VariableInfo;
-import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType.EffectiveBooleanValueType;
+import com.github.akruk.antlrxquery.semanticanalyzer.visitors.AntlrQuerySemanticAnalyzer;
+import com.github.akruk.antlrxquery.semanticanalyzer.visitors.AntlrQuerySemanticAnalyzer.UnresolvedFunctionSpecification;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.types.TypeInContext;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType.EffectiveBooleanValueType;
 
 public class XQuerySemanticSymbolManager {
     public static record AnalysisResult(
@@ -48,7 +48,7 @@ public class XQuerySemanticSymbolManager {
 
     public static record ArgumentSpecification(
         String name,
-        XQuerySequenceType type,
+        AntlrQuerySequenceType type,
         ParseTree defaultArgument) {}
 
     public static record UsedArg(
@@ -71,8 +71,8 @@ public class XQuerySemanticSymbolManager {
         long minArity,
         long maxArity,
         List<ArgumentSpecification> args,
-        XQuerySequenceType returnedType,
-        XQuerySequenceType requiredContextValueType,
+        AntlrQuerySequenceType returnedType,
+        AntlrQuerySequenceType requiredContextValueType,
         boolean requiresPosition,
         boolean requiresSize,
         ParseTree body,
@@ -82,8 +82,8 @@ public class XQuerySemanticSymbolManager {
     public static record SimplifiedFunctionSpecification(
         QualifiedName qname,
         List<ArgumentSpecification> args,
-        XQuerySequenceType returnedType,
-        XQuerySequenceType requiredContextValueType,
+        AntlrQuerySequenceType returnedType,
+        AntlrQuerySequenceType requiredContextValueType,
         boolean requiresPosition,
         boolean requiresSize,
         ParseTree body,
@@ -93,7 +93,7 @@ public class XQuerySemanticSymbolManager {
     public interface XQuerySemanticFunction {
         public AnalysisResult call(final XQueryTypeFactory typeFactory,
                 final XQueryVisitingSemanticContext context,
-                final List<XQuerySequenceType> types);
+                final List<AntlrQuerySequenceType> types);
     }
 
     public static record NamespaceInfo(String name, QnameContext declaration) {}
@@ -116,7 +116,7 @@ public class XQuerySemanticSymbolManager {
 
     private final XQueryTypeFactory typeFactory;
 
-    private XQuerySemanticAnalyzer analyzer;
+    private AntlrQuerySemanticAnalyzer analyzer;
 
     private final Map<String, Map<String, List<FunctionSpecification>>> functionNamespaces;
 
@@ -124,7 +124,7 @@ public class XQuerySemanticSymbolManager {
 
     private final Map<String, QualifiedGrammarAnalysisResult> grammars;
     private final XQuerySemanticContextManager contextManager;
-    private final XQuerySequenceType zeroOrMoreItems;
+    private final AntlrQuerySequenceType zeroOrMoreItems;
 
     Map<QualifiedName, List<UnresolvedFunctionSpecification>> functionDeclarations;
 
@@ -238,7 +238,7 @@ public class XQuerySemanticSymbolManager {
         return contextManager.getVariable(variableName);
     }
 
-    public TypeInContext typeInContext(final XQuerySequenceType type) {
+    public TypeInContext typeInContext(final AntlrQuerySequenceType type) {
         return contextManager.typeInContext(type);
     }
 
@@ -251,7 +251,7 @@ public class XQuerySemanticSymbolManager {
     }
 
     public void setAnalyzer(
-        final XQuerySemanticAnalyzer analyzer
+        final AntlrQuerySemanticAnalyzer analyzer
         )
     {
         this.analyzer = analyzer;
@@ -424,7 +424,7 @@ public class XQuerySemanticSymbolManager {
             return new AnalysisResult(fallback, List.of(error));
         }
         final TypeInContext returnedType = context.typeInContext(specAndErrors.spec.returnedType);
-        final List<XQuerySequenceType> argTypes = specAndErrors.spec.args.stream()
+        final List<AntlrQuerySequenceType> argTypes = specAndErrors.spec.args.stream()
             .map(arg->arg.type())
             .toList()
             .subList(0, arity);
@@ -472,7 +472,7 @@ public class XQuerySemanticSymbolManager {
             final String namespace,
             final String functionName,
             final List<ArgumentSpecification> args,
-            final XQuerySequenceType returnedType) {
+            final AntlrQuerySequenceType returnedType) {
         return registerFunction(namespace, functionName, args, returnedType, null, false, false, null,
             (_, _, _, ctx) -> ctx.currentScope().typeInContext(returnedType));
     }
@@ -481,7 +481,7 @@ public class XQuerySemanticSymbolManager {
             final String namespace,
             final String functionName,
             final List<ArgumentSpecification> args,
-            final XQuerySequenceType returnedType,
+            final AntlrQuerySequenceType returnedType,
             final GrainedAnalysis analysis)
     {
         return registerFunction(namespace, functionName, args, returnedType,
@@ -493,7 +493,7 @@ public class XQuerySemanticSymbolManager {
             final String namespace,
             final String functionName,
             final List<ArgumentSpecification> args,
-            final XQuerySequenceType returnedType,
+            final AntlrQuerySequenceType returnedType,
             final ParseTree body) {
         return registerFunction(
             namespace,
@@ -512,7 +512,7 @@ public class XQuerySemanticSymbolManager {
             final String namespace,
             final String functionName,
             final List<ArgumentSpecification> args,
-            final XQuerySequenceType returnedType,
+            final AntlrQuerySequenceType returnedType,
             final ParseTree body,
             final GrainedAnalysis analysis) {
         return registerFunction(namespace, functionName, args, returnedType, null, false, false, body, analysis);
@@ -522,7 +522,7 @@ public class XQuerySemanticSymbolManager {
             final String namespace,
             final String functionName,
             final List<ArgumentSpecification> args,
-            final XQuerySequenceType returnedType) {
+            final AntlrQuerySequenceType returnedType) {
         return uncheckedRegisterFunction(namespace, functionName, args, returnedType, null, false, false, null,
             ((_, _, _, ctx) -> ctx.currentScope().typeInContext(returnedType)));
     }
@@ -531,7 +531,7 @@ public class XQuerySemanticSymbolManager {
             final String namespace,
             final String functionName,
             final List<ArgumentSpecification> args,
-            final XQuerySequenceType returnedType,
+            final AntlrQuerySequenceType returnedType,
             final ParseTree body,
             final GrainedAnalysis analysis) {
         return uncheckedRegisterFunction(
@@ -551,8 +551,8 @@ public class XQuerySemanticSymbolManager {
             final String namespace,
             final String functionName,
             final List<ArgumentSpecification> args,
-            final XQuerySequenceType returnedType,
-            final XQuerySequenceType requiredContextValueType,
+            final AntlrQuerySequenceType returnedType,
+            final AntlrQuerySequenceType requiredContextValueType,
             final boolean requiresPosition,
             final boolean requiresLength,
             final ParseTree body,
@@ -715,7 +715,7 @@ public class XQuerySemanticSymbolManager {
     {
         boolean keywordTypeMismatch = false;
         for (final ArgumentSpecification arg : partitioned.get(true)) {
-            final XQuerySequenceType passedType = keywordArgs.get(arg.name()).type;
+            final AntlrQuerySequenceType passedType = keywordArgs.get(arg.name()).type;
             if (!passedType.isSubtypeOf(arg.type())) {
                 reasons.add("Keyword argument '" + arg.name() + "' type mismatch:"
                         + "\n        expected: " + arg.type()
@@ -804,8 +804,8 @@ public class XQuerySemanticSymbolManager {
             final String namespace,
             final String functionName,
             final List<ArgumentSpecification> args,
-            final XQuerySequenceType returnedType,
-            final XQuerySequenceType requiredContextValueType,
+            final AntlrQuerySequenceType returnedType,
+            final AntlrQuerySequenceType requiredContextValueType,
             final boolean requiresPosition,
             final boolean requiresLength,
             final ParseTree body,

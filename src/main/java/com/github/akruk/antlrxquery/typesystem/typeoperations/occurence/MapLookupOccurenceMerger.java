@@ -1,6 +1,6 @@
 package com.github.akruk.antlrxquery.typesystem.typeoperations.occurence;
 
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryCardinality;
+import com.github.akruk.antlrxquery.typesystem.types.XQueryCardinality;
 
 public class MapLookupOccurenceMerger
 {

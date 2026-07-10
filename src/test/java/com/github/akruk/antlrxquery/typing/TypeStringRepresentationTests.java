@@ -4,10 +4,10 @@ import org.junit.Test;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField.TypeOrReference;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTypeSets;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 
 import static org.junit.Assert.assertEquals;
@@ -88,8 +88,8 @@ public class TypeStringRepresentationTests {
     @Test
     public void testRecordType() {
         Map<String, XQueryRecordField> fields = Map.of(
-            "id", new XQueryRecordField(TypeOrReference.type(typeFactory.one(typeFactory.itemNumber())), true),
-            "name", new XQueryRecordField(TypeOrReference.type(typeFactory.zeroOrOne(typeFactory.itemString())), false)
+            "id", new XQueryRecordField(new TypeOrReference.Type(typeFactory.one(typeFactory.itemNumber())), true),
+            "name", new XQueryRecordField(new TypeOrReference.Type(typeFactory.zeroOrOne(typeFactory.itemString())), false)
         );
         String repr = typeFactory.record(fields).toString();
         assertTrue("record(id as number, name? as string?)".equals(repr)
@@ -107,7 +107,7 @@ public class TypeStringRepresentationTests {
     public void testExtensibleRecordType() {
         Map<String, XQueryRecordField> fields = Map.of(
             "name", new XQueryRecordField(
-                TypeOrReference.type(typeFactory.zeroOrOne(typeFactory.itemString())), true
+                new TypeOrReference.Type(typeFactory.zeroOrOne(typeFactory.itemString())), true
             )
         );
         assertEquals(
@@ -182,8 +182,8 @@ public class TypeStringRepresentationTests {
 
     @Test
     public void testFunctionWithTypedArgumentsAndSuffixRequiresParens() {
-        XQuerySequenceType resultType = typeFactory.one(typeFactory.itemNumber());
-        List<XQuerySequenceType> argTypes = List.of(
+        AntlrQuerySequenceType resultType = typeFactory.one(typeFactory.itemNumber());
+        List<AntlrQuerySequenceType> argTypes = List.of(
             typeFactory.one(typeFactory.itemNumber()),
             typeFactory.one(typeFactory.itemString())
         );

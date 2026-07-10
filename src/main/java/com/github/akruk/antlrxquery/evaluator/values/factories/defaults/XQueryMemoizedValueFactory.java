@@ -14,8 +14,8 @@ import com.github.akruk.antlrxquery.evaluator.values.XQueryError;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryFunction;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 
 public class XQueryMemoizedValueFactory implements XQueryValueFactory {
     private final Map<ParseTree, XQueryValue> createdNodes;
@@ -62,7 +62,7 @@ public class XQueryMemoizedValueFactory implements XQueryValueFactory {
     }
 
     @Override
-    public XQueryValue functionReference(XQueryFunction f, XQuerySequenceType type) {
+    public XQueryValue functionReference(XQueryFunction f, AntlrQuerySequenceType type) {
         return XQueryValue.functionReference(f, type);
     }
 

@@ -1,6 +1,6 @@
 package com.github.akruk.antlrxquery.semanticanalyzer;
 
-import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
+import com.github.akruk.antlrxquery.typesystem.types.TypeInContext;
 
 public class XQueryVisitingSemanticContext {
     private TypeInContext itemType;

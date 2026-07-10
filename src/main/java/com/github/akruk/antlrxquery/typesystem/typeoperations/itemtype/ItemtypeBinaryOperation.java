@@ -2,8 +2,8 @@ package com.github.akruk.antlrxquery.typesystem.typeoperations.itemtype;
 
 import java.util.function.BiFunction;
 
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryTypes;
+import com.github.akruk.antlrxquery.typesystem.types.XQueryItemType;
+import com.github.akruk.antlrxquery.typesystem.types.XQueryTypes;
 
 @SuppressWarnings("unchecked")
 public abstract class ItemtypeBinaryOperation<Returned>

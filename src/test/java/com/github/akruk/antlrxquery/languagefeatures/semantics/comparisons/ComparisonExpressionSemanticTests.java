@@ -3,7 +3,7 @@ package com.github.akruk.antlrxquery.languagefeatures.semantics.comparisons;
 import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 
 public class ComparisonExpressionSemanticTests extends SemanticTestsBase {
     @Test
@@ -26,8 +26,8 @@ public class ComparisonExpressionSemanticTests extends SemanticTestsBase {
 
     @Test
     public void valueComparisons() {
-        final XQuerySequenceType optionalBool = typeFactory.zeroOrOne(typeFactory.itemBoolean());
-        final XQuerySequenceType bool = typeFactory.boolean_();
+        final AntlrQuerySequenceType optionalBool = typeFactory.zeroOrOne(typeFactory.itemBoolean());
+        final AntlrQuerySequenceType bool = typeFactory.boolean_();
         assertType("1 eq 1", bool);
         assertType("1 ne 1", bool);
         assertType("1 lt 1", bool);

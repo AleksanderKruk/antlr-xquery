@@ -5,7 +5,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrxquery.languagefeatures.semantics.SemanticTestsBase;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 
 public class FLWORExpressionSemanticTests extends SemanticTestsBase {
     @Test
@@ -99,7 +99,7 @@ public class FLWORExpressionSemanticTests extends SemanticTestsBase {
 
     @Test
     public void tumblingWindow() {
-        XQuerySequenceType zeroOrMoreNumbers = typeFactory.zeroOrMore(typeFactory.itemNumber());
+        AntlrQuerySequenceType zeroOrMoreNumbers = typeFactory.zeroOrMore(typeFactory.itemNumber());
         assertType("""
                     for tumbling window $w in (1, 2, 3)
                         start $s at $si when $s = 2

@@ -4,10 +4,10 @@ import org.junit.Test;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField.TypeOrReference;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.types.XQueryItemType;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 
 import java.util.HashMap;
@@ -20,35 +20,35 @@ import static org.junit.Assert.*;
 public class XQueryTypesTest {
 
     final XQueryTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new HashMap<>());
-    final XQuerySequenceType error = typeFactory.error();
-    final XQuerySequenceType boolean_ = typeFactory.boolean_();
-    final XQuerySequenceType string = typeFactory.string();
-    final XQuerySequenceType number = typeFactory.number();
-    final XQuerySequenceType anyNode = typeFactory.anyNode();
-    final XQuerySequenceType emptySequence = typeFactory.emptySequence();
-    final XQuerySequenceType stringSequenceOneOrMore = typeFactory.oneOrMore(typeFactory.itemString());
-    final XQuerySequenceType stringSequenceZeroOrMore = typeFactory.zeroOrMore(typeFactory.itemString());
-    final XQuerySequenceType stringSequenceZeroOrOne = typeFactory.zeroOrOne(typeFactory.itemString());
-    final XQuerySequenceType numberSequenceOneOrMore = typeFactory.oneOrMore(typeFactory.itemNumber());
-    final XQuerySequenceType numberSequenceZeroOrMore = typeFactory.zeroOrMore(typeFactory.itemNumber());
-    final XQuerySequenceType numberSequenceZeroOrOne = typeFactory.zeroOrOne(typeFactory.itemNumber());
-    final XQuerySequenceType fooElement = typeFactory.element(Set.of(new QualifiedName("", "foo")));
-    final XQuerySequenceType barElement = typeFactory.element(Set.of(new QualifiedName("", "bar")));
-    final XQuerySequenceType anyArray = typeFactory.anyArray();
-    final XQuerySequenceType anyMap = typeFactory.anyMap();
-    final XQuerySequenceType anyItem = typeFactory.anyItem();
-    final XQuerySequenceType anyFunction = typeFactory.anyFunction();
+    final AntlrQuerySequenceType error = typeFactory.error();
+    final AntlrQuerySequenceType boolean_ = typeFactory.boolean_();
+    final AntlrQuerySequenceType string = typeFactory.string();
+    final AntlrQuerySequenceType number = typeFactory.number();
+    final AntlrQuerySequenceType anyNode = typeFactory.anyNode();
+    final AntlrQuerySequenceType emptySequence = typeFactory.emptySequence();
+    final AntlrQuerySequenceType stringSequenceOneOrMore = typeFactory.oneOrMore(typeFactory.itemString());
+    final AntlrQuerySequenceType stringSequenceZeroOrMore = typeFactory.zeroOrMore(typeFactory.itemString());
+    final AntlrQuerySequenceType stringSequenceZeroOrOne = typeFactory.zeroOrOne(typeFactory.itemString());
+    final AntlrQuerySequenceType numberSequenceOneOrMore = typeFactory.oneOrMore(typeFactory.itemNumber());
+    final AntlrQuerySequenceType numberSequenceZeroOrMore = typeFactory.zeroOrMore(typeFactory.itemNumber());
+    final AntlrQuerySequenceType numberSequenceZeroOrOne = typeFactory.zeroOrOne(typeFactory.itemNumber());
+    final AntlrQuerySequenceType fooElement = typeFactory.element(Set.of(new QualifiedName("", "foo")));
+    final AntlrQuerySequenceType barElement = typeFactory.element(Set.of(new QualifiedName("", "bar")));
+    final AntlrQuerySequenceType anyArray = typeFactory.anyArray();
+    final AntlrQuerySequenceType anyMap = typeFactory.anyMap();
+    final AntlrQuerySequenceType anyItem = typeFactory.anyItem();
+    final AntlrQuerySequenceType anyFunction = typeFactory.anyFunction();
 
     final XQueryRecordField requiredAnyItem =
-        new XQueryRecordField(TypeOrReference.type(typeFactory.anyItem()), true);
+        new XQueryRecordField(new TypeOrReference.Type(typeFactory.anyItem()), true);
 
     final XQueryRecordField requiredNumber =
-        new XQueryRecordField(TypeOrReference.type(typeFactory.number()), true);
+        new XQueryRecordField(new TypeOrReference.Type(typeFactory.number()), true);
 
     final XQueryRecordField requiredString =
-        new XQueryRecordField(TypeOrReference.type(typeFactory.string()), true);
+        new XQueryRecordField(new TypeOrReference.Type(typeFactory.string()), true);
 
-    final XQuerySequenceType recordAny = typeFactory.record(Map.of("foo", requiredAnyItem, "bar", requiredAnyItem));
+    final AntlrQuerySequenceType recordAny = typeFactory.record(Map.of("foo", requiredAnyItem, "bar", requiredAnyItem));
 
     final XQueryItemType itemError = typeFactory.itemError();
     final XQueryItemType itemAnyFunction = typeFactory.itemAnyFunction();
@@ -1022,7 +1022,7 @@ public class XQueryTypesTest {
 
     @Test
     public void extensibleRecordsSubtyping() {
-        final var numberRequired = new XQueryRecordField(TypeOrReference.type(typeFactory.number()), true);
+        final var numberRequired = new XQueryRecordField(new TypeOrReference.Type(typeFactory.number()), true);
         final var a_number = typeFactory.extensibleRecord( Map.of("a", numberRequired));
         assertTrue(a_number.isSubtypeOf(anyMap));
         //         3.3.2.8 Subtyping Records
@@ -1036,7 +1036,7 @@ public class XQueryTypesTest {
         // B is map(*) or record(*).
         assertTrue(a_number.isSubtypeOf(anyMap));
 
-        final var anyItemRequired = new XQueryRecordField(TypeOrReference.type(anyItem), true);
+        final var anyItemRequired = new XQueryRecordField(new TypeOrReference.Type(anyItem), true);
         // Examples:
         // record(longitude, latitude) ⊆ map(*)
         final var longitudeLatitudeRecord = typeFactory.record(Map.of("longitude", anyItemRequired,
@@ -1056,7 +1056,7 @@ public class XQueryTypesTest {
         // Examples:
         // record(x, y) ⊆ map(xs:string, item()*)
         final var xy = typeFactory.record(Map.of("x", anyItemRequired, "y", anyItemRequired));
-        final XQuerySequenceType anyItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
+        final AntlrQuerySequenceType anyItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         final var mapStringItem = typeFactory.map(typeFactory.itemString(),
                                                   anyItems);
         xy.isSubtypeOf(mapStringItem);
@@ -1074,7 +1074,7 @@ public class XQueryTypesTest {
         // For every field that is declared in both A and B, where the declared type in A is T and the declared type in B is U, T ⊑ U .
         // Examples:
         // record(x, y) ⊆ record(x, y, z?)
-        final var anyItemsRequired = new XQueryRecordField(TypeOrReference.type(anyItems), true);
+        final var anyItemsRequired = new XQueryRecordField(new TypeOrReference.Type(anyItems), true);
         final var xyz = typeFactory.record(Map.of("x", anyItemsRequired, "y", anyItemsRequired, "z", anyItemsRequired));
         xy.isSubtypeOf(xyz);
 
@@ -1097,7 +1097,7 @@ public class XQueryTypesTest {
         // Error in documentation?
         // ??? record(x?, y?, z?, *) ⊆ record(x, y, *) ???
         // more likely: record(x, y, z?, *) ⊆ record(x, y, *)
-        final var anyItemsOptional = new XQueryRecordField(TypeOrReference.type(anyItems), false);
+        final var anyItemsOptional = new XQueryRecordField(new TypeOrReference.Type(anyItems), false);
         final var xyzExtensibleOptional = typeFactory.extensibleRecord(
             Map.of("x", anyItemsRequired, "y", anyItemsRequired, "z", anyItemsOptional)
         );
@@ -1108,7 +1108,7 @@ public class XQueryTypesTest {
             Map.of("x", numberRequired, "y", numberRequired)
         );
         final var xyExtensibleIntegers2 = typeFactory.extensibleRecord(
-            Map.of("x", numberRequired, "y", new XQueryRecordField(TypeOrReference.type(typeFactory.zeroOrMore(typeFactory.itemNumber())), true))
+            Map.of("x", numberRequired, "y", new XQueryRecordField(new TypeOrReference.Type(typeFactory.zeroOrMore(typeFactory.itemNumber())), true))
         );
         xyExtensibleIntegers.isSubtypeOf(xyExtensibleIntegers2);
 
@@ -1117,7 +1117,7 @@ public class XQueryTypesTest {
             Map.of("x", numberRequired)
         );
         final var xyExtensibleIntegerItem = typeFactory.extensibleRecord(
-            Map.of("x", numberRequired, "y", new XQueryRecordField(TypeOrReference.type(typeFactory.anyItem()), true))
+            Map.of("x", numberRequired, "y", new XQueryRecordField(new TypeOrReference.Type(typeFactory.anyItem()), true))
         );
         xExtensibleInteger.isSubtypeOf(xyExtensibleIntegerItem);
 

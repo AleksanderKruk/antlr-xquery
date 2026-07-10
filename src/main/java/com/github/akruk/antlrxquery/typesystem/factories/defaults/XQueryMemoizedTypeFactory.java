@@ -9,8 +9,8 @@ import java.util.stream.Collectors;
 
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
-import com.github.akruk.antlrxquery.typesystem.defaults.*;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.types.*;
 
 public class XQueryMemoizedTypeFactory implements XQueryTypeFactory
 {
@@ -24,25 +24,25 @@ public class XQueryMemoizedTypeFactory implements XQueryTypeFactory
     private final XQueryItemType ANY_FUNCTION = XQueryItemType.anyFunction(this);
     private final XQueryItemType ANY_MAP = XQueryItemType.anyMap(this);
 
-    private final Map<XQuerySequenceType, XQuerySequenceType> arrays = new HashMap<>();
-    private final Map<XQueryItemType, Map<XQuerySequenceType, XQuerySequenceType>> maps=new HashMap<>();
+    private final Map<AntlrQuerySequenceType, AntlrQuerySequenceType> arrays = new HashMap<>();
+    private final Map<XQueryItemType, Map<AntlrQuerySequenceType, AntlrQuerySequenceType>> maps=new HashMap<>();
     private final Map<Set<String>, XQueryItemType> enums = new HashMap<>();
     private final Map<Set<QualifiedName>, XQueryItemType> elementTypes = new HashMap<>();
-    private final Map<XQueryItemType, XQuerySequenceType> oneTypes = new HashMap<>();
-    private final Map<XQueryItemType, XQuerySequenceType> zeroOrOneTypes = new HashMap<>();
-    private final Map<XQueryItemType, XQuerySequenceType> zeroOrMoreTypes = new HashMap<>();
-    private final Map<XQueryItemType, XQuerySequenceType> oneOrMoreTypes = new HashMap<>();
+    private final Map<XQueryItemType, AntlrQuerySequenceType> oneTypes = new HashMap<>();
+    private final Map<XQueryItemType, AntlrQuerySequenceType> zeroOrOneTypes = new HashMap<>();
+    private final Map<XQueryItemType, AntlrQuerySequenceType> zeroOrMoreTypes = new HashMap<>();
+    private final Map<XQueryItemType, AntlrQuerySequenceType> oneOrMoreTypes = new HashMap<>();
 
-    private final XQuerySequenceType STRING_TYPE = one(STRING_ITEM_TYPE);
-    private final XQuerySequenceType NUMBER_TYPE = one(NUMBER_ITEM_TYPE);
-    private final XQuerySequenceType ANY_NODE = one(ANY_NODE_TYPE);
-    private final XQuerySequenceType ANY_ARRAY_TYPE = one(ANY_ARRAY);
-    private final XQuerySequenceType ANY_MAP_TYPE = one(ANY_MAP);
-    private final XQuerySequenceType ERROR_ITEM = one(ERROR_ITEM_TYPE);
-    private final XQuerySequenceType ANY_FUNCTION_TYPE = one(ANY_FUNCTION);
-    private final XQuerySequenceType ANY_ITEM = one(ANY_ITEM_TYPE);
-    private final XQuerySequenceType BOOLEAN_TYPE = one(BOOLEAN_ITEM_TYPE);
-    private final XQuerySequenceType EMPTY_SEQUENCE = XQuerySequenceType.emptySequence(this);
+    private final AntlrQuerySequenceType STRING_TYPE = one(STRING_ITEM_TYPE);
+    private final AntlrQuerySequenceType NUMBER_TYPE = one(NUMBER_ITEM_TYPE);
+    private final AntlrQuerySequenceType ANY_NODE = one(ANY_NODE_TYPE);
+    private final AntlrQuerySequenceType ANY_ARRAY_TYPE = one(ANY_ARRAY);
+    private final AntlrQuerySequenceType ANY_MAP_TYPE = one(ANY_MAP);
+    private final AntlrQuerySequenceType ERROR_ITEM = one(ERROR_ITEM_TYPE);
+    private final AntlrQuerySequenceType ANY_FUNCTION_TYPE = one(ANY_FUNCTION);
+    private final AntlrQuerySequenceType ANY_ITEM = one(ANY_ITEM_TYPE);
+    private final AntlrQuerySequenceType BOOLEAN_TYPE = one(BOOLEAN_ITEM_TYPE);
+    private final AntlrQuerySequenceType EMPTY_SEQUENCE = AntlrQuerySequenceType.emptySequence(this);
 
 
 
@@ -112,12 +112,12 @@ public class XQueryMemoizedTypeFactory implements XQueryTypeFactory
     }
 
     @Override
-    public XQuerySequenceType error() {
+    public AntlrQuerySequenceType error() {
         return ERROR_ITEM;
     }
 
     @Override
-    public XQuerySequenceType string() {
+    public AntlrQuerySequenceType string() {
         return STRING_TYPE;
     }
 
@@ -127,120 +127,120 @@ public class XQueryMemoizedTypeFactory implements XQueryTypeFactory
     }
 
     @Override
-    public XQuerySequenceType enum_(final Set<String> memberNames) {
+    public AntlrQuerySequenceType enum_(final Set<String> memberNames) {
         return one(itemEnum(memberNames));
     }
 
     @Override
-    public XQuerySequenceType number() {
+    public AntlrQuerySequenceType number() {
         return NUMBER_TYPE;
     }
 
     @Override
-    public XQuerySequenceType anyNode() {
+    public AntlrQuerySequenceType anyNode() {
         return ANY_NODE;
     }
 
     @Override
-    public XQuerySequenceType anyArray() {
+    public AntlrQuerySequenceType anyArray() {
         return ANY_ARRAY_TYPE;
     }
 
     @Override
-    public XQuerySequenceType anyMap() {
+    public AntlrQuerySequenceType anyMap() {
         return ANY_MAP_TYPE;
     }
 
     @Override
-    public XQuerySequenceType element(final Set<QualifiedName> elementName) {
+    public AntlrQuerySequenceType element(final Set<QualifiedName> elementName) {
         return one(itemElement(elementName));
     }
 
     @Override
-    public XQueryItemType itemArray(final XQuerySequenceType itemType) {
+    public XQueryItemType itemArray(final AntlrQuerySequenceType itemType) {
         return XQueryItemType.array(itemType, this);
     }
 
     @Override
-    public XQueryItemType itemFunction(final XQuerySequenceType returnType, final List<XQuerySequenceType> argumentTypes) {
-        final List<XQuerySequenceType> argumentTypesEnum = argumentTypes.stream()
-                .map(t -> (XQuerySequenceType) t)
+    public XQueryItemType itemFunction(final AntlrQuerySequenceType returnType, final List<AntlrQuerySequenceType> argumentTypes) {
+        final List<AntlrQuerySequenceType> argumentTypesEnum = argumentTypes.stream()
+                .map(t -> (AntlrQuerySequenceType) t)
                 .collect(Collectors.toList());
         return XQueryItemType.function(returnType, argumentTypesEnum, this);
     }
     @Override
-    public XQueryItemType itemMap(final XQueryItemType keyType, final XQuerySequenceType valueType) {
-        return XQueryItemType.map((XQueryItemType) keyType, (XQuerySequenceType) valueType, this);
+    public XQueryItemType itemMap(final XQueryItemType keyType, final AntlrQuerySequenceType valueType) {
+        return XQueryItemType.map((XQueryItemType) keyType, (AntlrQuerySequenceType) valueType, this);
     }
 
     @Override
-    public XQuerySequenceType record(final Map<String, XQueryRecordField> fields) {
+    public AntlrQuerySequenceType record(final Map<String, XQueryRecordField> fields) {
         return one(itemRecord(fields));
     }
 
     @Override
-    public XQuerySequenceType extensibleRecord(final Map<String, XQueryRecordField> fields) {
+    public AntlrQuerySequenceType extensibleRecord(final Map<String, XQueryRecordField> fields) {
         return one(itemExtensibleRecord(fields));
     }
 
     @Override
-    public XQuerySequenceType array(final XQuerySequenceType containedItemType) {
+    public AntlrQuerySequenceType array(final AntlrQuerySequenceType containedItemType) {
         return arrays.computeIfAbsent(containedItemType, _ -> one(itemArray(containedItemType)));
     }
 
     @Override
-    public XQuerySequenceType map(final XQueryItemType mapKeyType, final XQuerySequenceType mapValueType) {
+    public AntlrQuerySequenceType map(final XQueryItemType mapKeyType, final AntlrQuerySequenceType mapValueType) {
         final var keyMap = maps.computeIfAbsent(mapKeyType, _-> new HashMap<>());
         return keyMap.computeIfAbsent(mapValueType, _ -> one(itemMap(mapKeyType, mapValueType)));
     }
 
     @Override
-    public XQuerySequenceType function(final XQuerySequenceType returnType, final List<XQuerySequenceType> argumentTypes) {
+    public AntlrQuerySequenceType function(final AntlrQuerySequenceType returnType, final List<AntlrQuerySequenceType> argumentTypes) {
         return one(itemFunction(returnType, argumentTypes));
     }
 
     @Override
-    public XQuerySequenceType anyFunction() {
+    public AntlrQuerySequenceType anyFunction() {
         return ANY_FUNCTION_TYPE;
     }
 
     @Override
-    public XQuerySequenceType anyItem() {
+    public AntlrQuerySequenceType anyItem() {
         return ANY_ITEM;
     }
 
     @Override
-    public XQuerySequenceType boolean_() {
+    public AntlrQuerySequenceType boolean_() {
         return BOOLEAN_TYPE;
     }
 
     @Override
-    public XQuerySequenceType emptySequence() {
+    public AntlrQuerySequenceType emptySequence() {
         return EMPTY_SEQUENCE;
     }
 
     @Override
-    public XQuerySequenceType one(final XQueryItemType itemType) {
+    public AntlrQuerySequenceType one(final XQueryItemType itemType) {
         return oneTypes.computeIfAbsent(itemType,
-                _ -> new XQuerySequenceType(this, itemType, XQueryCardinality.ONE));
+                _ -> new AntlrQuerySequenceType(this, itemType, XQueryCardinality.ONE));
     }
 
     @Override
-    public XQuerySequenceType zeroOrOne(final XQueryItemType itemType) {
+    public AntlrQuerySequenceType zeroOrOne(final XQueryItemType itemType) {
         return zeroOrOneTypes.computeIfAbsent(itemType,
-                _ -> new XQuerySequenceType(this, (XQueryItemType) itemType, XQueryCardinality.ZERO_OR_ONE));
+                _ -> new AntlrQuerySequenceType(this, (XQueryItemType) itemType, XQueryCardinality.ZERO_OR_ONE));
     }
 
     @Override
-    public XQuerySequenceType zeroOrMore(final XQueryItemType itemType) {
+    public AntlrQuerySequenceType zeroOrMore(final XQueryItemType itemType) {
         return zeroOrMoreTypes.computeIfAbsent(itemType,
-                _ -> new XQuerySequenceType(this, (XQueryItemType) itemType, XQueryCardinality.ZERO_OR_MORE));
+                _ -> new AntlrQuerySequenceType(this, (XQueryItemType) itemType, XQueryCardinality.ZERO_OR_MORE));
     }
 
     @Override
-    public XQuerySequenceType oneOrMore(final XQueryItemType itemType) {
+    public AntlrQuerySequenceType oneOrMore(final XQueryItemType itemType) {
         return oneOrMoreTypes.computeIfAbsent(itemType,
-                _ -> new XQuerySequenceType(this, (XQueryItemType) itemType, XQueryCardinality.ONE_OR_MORE));
+                _ -> new AntlrQuerySequenceType(this, (XQueryItemType) itemType, XQueryCardinality.ONE_OR_MORE));
     }
 
     @Override
@@ -249,7 +249,7 @@ public class XQueryMemoizedTypeFactory implements XQueryTypeFactory
     }
 
     @Override
-    public XQuerySequenceType choice(final Collection<XQueryItemType> items) {
+    public AntlrQuerySequenceType choice(final Collection<XQueryItemType> items) {
         if (items.size() == 1) {
             return one(items.stream().findFirst().get());
         }

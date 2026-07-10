@@ -4,7 +4,7 @@ import java.util.Map;
 
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryItemType;
+import com.github.akruk.antlrxquery.typesystem.types.XQueryItemType;
 
 public class ItemtypeStringRepresentation extends ItemtypeUnaryOperation<String> {
 

@@ -8,7 +8,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQueryCardinality;
+import com.github.akruk.antlrxquery.typesystem.types.Cardinality;
 
 public class GrammarRuleCardinalityAnalyzerTest {
 
@@ -23,33 +23,33 @@ public class GrammarRuleCardinalityAnalyzerTest {
             Set.of(x, a, b, c)
         );
         // x: a b c;
-        analyzer.addRule(x, a, XQueryCardinality.ONE);
-        analyzer.addRule(x, b, XQueryCardinality.ONE);
-        analyzer.addRule(x, c, XQueryCardinality.ONE);
+        analyzer.addRule(x, a, Cardinality.ONE);
+        analyzer.addRule(x, b, Cardinality.ONE);
+        analyzer.addRule(x, c, Cardinality.ONE);
 
         // b: x?
-        analyzer.addRule(b, x, XQueryCardinality.ZERO_OR_ONE);
+        analyzer.addRule(b, x, Cardinality.ZERO_OR_ONE);
 
         var r = analyzer.analyzeAll();
-        Map<QualifiedName, XQueryCardinality> xDescendants = r.get(x);
-        XQueryCardinality xx = xDescendants.get(x);
-        XQueryCardinality xa = xDescendants.get(a);
-        XQueryCardinality xb = xDescendants.get(b);
-        XQueryCardinality xc = xDescendants.get(c);
-        assertEquals(XQueryCardinality.ZERO_OR_MORE, xx);
-        assertEquals(XQueryCardinality.ONE_OR_MORE, xa);
-        assertEquals(XQueryCardinality.ONE_OR_MORE, xb);
-        assertEquals(XQueryCardinality.ONE_OR_MORE, xc);
+        Map<QualifiedName, Cardinality> xDescendants = r.get(x);
+        Cardinality xx = xDescendants.get(x);
+        Cardinality xa = xDescendants.get(a);
+        Cardinality xb = xDescendants.get(b);
+        Cardinality xc = xDescendants.get(c);
+        assertEquals(Cardinality.ZERO_OR_MORE, xx);
+        assertEquals(Cardinality.ONE_OR_MORE, xa);
+        assertEquals(Cardinality.ONE_OR_MORE, xb);
+        assertEquals(Cardinality.ONE_OR_MORE, xc);
 
-        Map<QualifiedName, XQueryCardinality> bDescendants = r.get(b);
-        XQueryCardinality bx = bDescendants.get(x);
-        XQueryCardinality ba = bDescendants.get(a);
-        XQueryCardinality bb = bDescendants.get(b);
-        XQueryCardinality bc = bDescendants.get(c);
-        assertEquals(XQueryCardinality.ZERO_OR_MORE, bx);
-        assertEquals(XQueryCardinality.ZERO_OR_MORE, ba);
-        assertEquals(XQueryCardinality.ZERO_OR_MORE, bb);
-        assertEquals(XQueryCardinality.ZERO_OR_MORE, bc);
+        Map<QualifiedName, Cardinality> bDescendants = r.get(b);
+        Cardinality bx = bDescendants.get(x);
+        Cardinality ba = bDescendants.get(a);
+        Cardinality bb = bDescendants.get(b);
+        Cardinality bc = bDescendants.get(c);
+        assertEquals(Cardinality.ZERO_OR_MORE, bx);
+        assertEquals(Cardinality.ZERO_OR_MORE, ba);
+        assertEquals(Cardinality.ZERO_OR_MORE, bb);
+        assertEquals(Cardinality.ZERO_OR_MORE, bc);
     }
 
 
@@ -57,11 +57,11 @@ public class GrammarRuleCardinalityAnalyzerTest {
     void b() {
         GrammarRuleCardinalityAnalyzer analyzer = new GrammarRuleCardinalityAnalyzer(Set.of(x, a));
         // x: a a;
-        analyzer.addRule(x, a, XQueryCardinality.ONE);
-        analyzer.addRule(x, a, XQueryCardinality.ONE);
+        analyzer.addRule(x, a, Cardinality.ONE);
+        analyzer.addRule(x, a, Cardinality.ONE);
         var r = analyzer.analyzeAll();
-        Map<QualifiedName, XQueryCardinality> xDescendants = r.get(x);
-        XQueryCardinality xa = xDescendants.get(a);
-        assertEquals(XQueryCardinality.ONE_OR_MORE, xa);
+        Map<QualifiedName, Cardinality> xDescendants = r.get(x);
+        Cardinality xa = xDescendants.get(a);
+        assertEquals(Cardinality.ONE_OR_MORE, xa);
     }
 }

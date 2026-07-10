@@ -31,13 +31,13 @@ import com.github.akruk.antlrxquery.evaluator.values.operations.EffectiveBoolean
 import com.github.akruk.antlrxquery.evaluator.values.operations.Stringifier;
 import com.github.akruk.antlrxquery.evaluator.values.operations.ValueAtomizer;
 import com.github.akruk.antlrxquery.evaluator.values.operations.ValueComparisonOperator;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 import com.github.akruk.nodegetter.NodeGetter;
 
 public class XQueryEvaluatingFunctionManager {
     record FunctionEntry(XQueryFunction function, long minArity, long maxArity, List<String> argNames,
-            Map<String, ParseTree> defaultArguments, String variadicArg, XQuerySequenceType type) {
+            Map<String, ParseTree> defaultArguments, String variadicArg, AntlrQuerySequenceType type) {
     }
 
     private final Map<String, Map<String, List<FunctionEntry>>> namespaces;

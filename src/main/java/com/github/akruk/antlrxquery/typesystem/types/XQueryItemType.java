@@ -27,11 +27,11 @@ public class XQueryItemType {
     public final int typeOrdinal;
 
 
-    public final List<XQuerySequenceType> argumentTypes;
-    public final XQuerySequenceType returnedType;
-    public final XQuerySequenceType arrayMemberType;
+    public final List<AntlrQuerySequenceType> argumentTypes;
+    public final AntlrQuerySequenceType returnedType;
+    public final AntlrQuerySequenceType arrayMemberType;
     public final XQueryItemType mapKeyType;
-    public final XQuerySequenceType mapValueType;
+    public final AntlrQuerySequenceType mapValueType;
     public final Set<QualifiedName> elementNames;
     public final Map<String, XQueryRecordField> recordFields;
     public final Collection<XQueryItemType> itemTypes;
@@ -45,16 +45,16 @@ public class XQueryItemType {
 
     public XQueryItemType(
         final XQueryTypes type,
-        final List<XQuerySequenceType> argumentTypes,
-        final XQuerySequenceType returnedType,
-        final XQuerySequenceType arrayType,
+        final List<AntlrQuerySequenceType> argumentTypes,
+        final AntlrQuerySequenceType returnedType,
+        final AntlrQuerySequenceType arrayType,
         final XQueryItemType key,
-        final XQuerySequenceType mapValueType,
+        final AntlrQuerySequenceType mapValueType,
         final Set<QualifiedName> elementNames,
         final XQueryTypeFactory typeFactory,
         final Collection<XQueryItemType> itemTypes,
         final Map<String, XQueryRecordField> recordFields,
-        final XQuerySequenceType arrayMemberType,
+        final AntlrQuerySequenceType arrayMemberType,
         final Set<String> enumMembers
         )
     {
@@ -122,14 +122,14 @@ public class XQueryItemType {
             if (this.argumentTypes.size() != otherArgumentTypes.size())
                 return false;
             for (int i = 0; i < this.argumentTypes.size(); i++) {
-                final XQuerySequenceType thisArg = this.argumentTypes.get(i);
-                final XQuerySequenceType otherArg = otherArgumentTypes.get(i);
+                final AntlrQuerySequenceType thisArg = this.argumentTypes.get(i);
+                final AntlrQuerySequenceType otherArg = otherArgumentTypes.get(i);
                 if (!thisArg.equals(otherArg)) {
                     return false;
                 }
             }
         }
-        final XQuerySequenceType otherReturnedType = other.returnedType;
+        final AntlrQuerySequenceType otherReturnedType = other.returnedType;
         if (!isNullableEquals(this.returnedType, otherReturnedType))
             return false;
 
@@ -172,7 +172,7 @@ public class XQueryItemType {
 
     private static final boolean[] isFunction = booleanEnumArray(XQueryTypes.ANY_FUNCTION, XQueryTypes.FUNCTION);
 
-    public boolean isFunction(final XQuerySequenceType otherReturnedType, final List<XQuerySequenceType> otherArgumentTypes) {
+    public boolean isFunction(final AntlrQuerySequenceType otherReturnedType, final List<AntlrQuerySequenceType> otherArgumentTypes) {
         return isFunction[typeOrdinal]
                 && this.returnedType.equals(otherReturnedType)
                 && this.argumentTypes.size() == otherArgumentTypes.size()
@@ -236,7 +236,7 @@ public class XQueryItemType {
         return  alternativeMerger.alternativeMerge(this, other);
     }
 
-    public XQuerySequenceType lookup(final XQuerySequenceType keySpecifierType) {
+    public AntlrQuerySequenceType lookup(final AntlrQuerySequenceType keySpecifierType) {
         return null;
     }
     private static final ItemtypeStringRepresentation representationProvider = new ItemtypeStringRepresentation();
@@ -308,7 +308,7 @@ public class XQueryItemType {
 
 
 
-    public static XQueryItemType function(final XQuerySequenceType returnedType, final List<XQuerySequenceType> argumentType,
+    public static XQueryItemType function(final AntlrQuerySequenceType returnedType, final List<AntlrQuerySequenceType> argumentType,
         final XQueryTypeFactory factory)
     {
         return new XQueryItemType(XQueryTypes.FUNCTION, argumentType, returnedType, null, null, null, null, factory,
@@ -320,7 +320,7 @@ public class XQueryItemType {
 
 
     public static XQueryItemType map(final XQueryItemType key,
-                                    final XQuerySequenceType value,
+                                    final AntlrQuerySequenceType value,
                                     final XQueryTypeFactory factory)
     {
         return new XQueryItemType(XQueryTypes.MAP, null, null, null, key, value, null, factory, null, null, null, null);
@@ -328,7 +328,7 @@ public class XQueryItemType {
 
 
 
-    public static XQueryItemType array(final XQuerySequenceType containedType, final XQueryTypeFactory factory) {
+    public static XQueryItemType array(final AntlrQuerySequenceType containedType, final XQueryTypeFactory factory) {
         return new XQueryItemType(XQueryTypes.ARRAY, null, null, null, null,
             null, null, factory,
                 null, null, containedType, null);

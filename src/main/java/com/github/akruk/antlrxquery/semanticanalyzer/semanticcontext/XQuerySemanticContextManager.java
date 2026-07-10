@@ -9,10 +9,10 @@ import org.eclipse.lsp4j.Location;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameContext;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticScope.EntypingResult;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticScope.VariableInfo;
-import com.github.akruk.antlrxquery.typesystem.defaults.TypeInContext;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType;
-import com.github.akruk.antlrxquery.typesystem.defaults.XQuerySequenceType.EffectiveBooleanValueType;
 import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.types.TypeInContext;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType.EffectiveBooleanValueType;
 
 
 
@@ -78,7 +78,7 @@ public class XQuerySemanticContextManager {
         return currentContext().getVariable(variableName);
     }
 
-    public TypeInContext typeInContext(XQuerySequenceType type) {
+    public TypeInContext typeInContext(AntlrQuerySequenceType type) {
         return currentContext().currentScope().typeInContext(type);
     }
 

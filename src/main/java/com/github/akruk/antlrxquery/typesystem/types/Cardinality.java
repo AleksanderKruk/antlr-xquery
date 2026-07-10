@@ -144,7 +144,7 @@ public final class Cardinality {
     /**
      * Normalizes an already flattened event stream into canonical event sequence.
      */
-    private static Event[] normalize(Event[] input) {
+    public static Event[] normalize(Event[] input) {
         if (input.length == 0) {
             return input;
         }

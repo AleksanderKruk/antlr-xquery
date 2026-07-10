@@ -9,7 +9,7 @@ import java.util.stream.IntStream;
 
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.itemtype.ItemtypeAlternativeMerger;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.itemtype.ItemtypeIntersectionMerger;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.itemtype.ItemtypeStringRepresentation;
@@ -51,7 +51,7 @@ public class XQueryItemType {
         final XQueryItemType key,
         final AntlrQuerySequenceType mapValueType,
         final Set<QualifiedName> elementNames,
-        final XQueryTypeFactory typeFactory,
+        final AntlrQueryTypeFactory typeFactory,
         final Collection<XQueryItemType> itemTypes,
         final Map<String, XQueryRecordField> recordFields,
         final AntlrQuerySequenceType arrayMemberType,
@@ -248,68 +248,68 @@ public class XQueryItemType {
 
 
 
-    public static XQueryItemType choice(final XQueryTypeFactory factory, final Collection<XQueryItemType> itemTypes)
+    public static XQueryItemType choice(final AntlrQueryTypeFactory factory, final Collection<XQueryItemType> itemTypes)
     {
         return new XQueryItemType(XQueryTypes.CHOICE,
             null, null, null, null, null, null, factory, itemTypes, null, null, null);
     }
 
-    public static XQueryItemType anyArray(final XQueryTypeFactory factory)
+    public static XQueryItemType anyArray(final AntlrQueryTypeFactory factory)
     {
         return new XQueryItemType(XQueryTypes.ANY_ARRAY, null, null, null, null, null, null, factory, null, null, null, null);
     }
 
-    public static XQueryItemType anyFunction(final XQueryTypeFactory factory)
+    public static XQueryItemType anyFunction(final AntlrQueryTypeFactory factory)
     {
         return new XQueryItemType(XQueryTypes.ANY_FUNCTION, null, null, null, null, null, null, factory, null, null,
             null, null);
     }
 
-    public static XQueryItemType anyItem(final XQueryTypeFactory factory) {
+    public static XQueryItemType anyItem(final AntlrQueryTypeFactory factory) {
         return new XQueryItemType(XQueryTypes.ANY_ITEM, null, null, null, null, null, null, factory, null, null, null, null);
     }
 
-    public static XQueryItemType anyMap(final XQueryTypeFactory factory) {
+    public static XQueryItemType anyMap(final AntlrQueryTypeFactory factory) {
         return new XQueryItemType(XQueryTypes.ANY_MAP, null, null, null, null, null, null, factory, null, null, null, null);
     }
 
-    public static XQueryItemType anyNode(final XQueryTypeFactory factory) {
+    public static XQueryItemType anyNode(final AntlrQueryTypeFactory factory) {
         return new XQueryItemType(XQueryTypes.ANY_NODE, null, null, null, null, null, null, factory, null, null, null, null);
     }
 
 
-    public static XQueryItemType error(final XQueryTypeFactory factory)
+    public static XQueryItemType error(final AntlrQueryTypeFactory factory)
     {
         return new XQueryItemType(XQueryTypes.ERROR, null, null, null, null, null, null, factory, null, null, null, null);
     }
 
 
-    public static XQueryItemType string(final XQueryTypeFactory factory)
+    public static XQueryItemType string(final AntlrQueryTypeFactory factory)
     {
         return new XQueryItemType(XQueryTypes.STRING, null, null, null, null, null, null, factory, null, null, null, null);
     }
 
-    public static XQueryItemType boolean_(final XQueryTypeFactory factory)
+    public static XQueryItemType boolean_(final AntlrQueryTypeFactory factory)
     {
         return new XQueryItemType(XQueryTypes.BOOLEAN, null, null, null, null, null, null, factory, null, null, null, null);
     }
 
 
-    public static XQueryItemType number(final XQueryTypeFactory factory) {
+    public static XQueryItemType number(final AntlrQueryTypeFactory factory) {
         return new XQueryItemType(XQueryTypes.NUMBER, null, null,
             null, null, null,
             null, factory, null,
                      null, null, null);
     }
 
-    public static XQueryItemType element(final Set<QualifiedName> elementName, final XQueryTypeFactory factory) {
+    public static XQueryItemType element(final Set<QualifiedName> elementName, final AntlrQueryTypeFactory factory) {
         return new XQueryItemType(XQueryTypes.ELEMENT, null, null, null, null, null, elementName, factory, null, null, null, null);
     }
 
 
 
     public static XQueryItemType function(final AntlrQuerySequenceType returnedType, final List<AntlrQuerySequenceType> argumentType,
-        final XQueryTypeFactory factory)
+        final AntlrQueryTypeFactory factory)
     {
         return new XQueryItemType(XQueryTypes.FUNCTION, argumentType, returnedType, null, null, null, null, factory,
             null, null, null, null);
@@ -321,30 +321,30 @@ public class XQueryItemType {
 
     public static XQueryItemType map(final XQueryItemType key,
                                     final AntlrQuerySequenceType value,
-                                    final XQueryTypeFactory factory)
+                                    final AntlrQueryTypeFactory factory)
     {
         return new XQueryItemType(XQueryTypes.MAP, null, null, null, key, value, null, factory, null, null, null, null);
     }
 
 
 
-    public static XQueryItemType array(final AntlrQuerySequenceType containedType, final XQueryTypeFactory factory) {
+    public static XQueryItemType array(final AntlrQuerySequenceType containedType, final AntlrQueryTypeFactory factory) {
         return new XQueryItemType(XQueryTypes.ARRAY, null, null, null, null,
             null, null, factory,
                 null, null, containedType, null);
     }
 
-    public static XQueryItemType extensibleRecord(final Map<String, XQueryRecordField> keyValuePairs, final XQueryTypeFactory factory ) {
+    public static XQueryItemType extensibleRecord(final Map<String, XQueryRecordField> keyValuePairs, final AntlrQueryTypeFactory factory ) {
         return new XQueryItemType(XQueryTypes.EXTENSIBLE_RECORD, null, null, null, null, null, null, factory, null, keyValuePairs, null, null);
     }
 
-    public static XQueryItemType contrainedRecord(final Map<String, XQueryRecordField> keyValuePairs, final XQueryTypeFactory factory ) {
+    public static XQueryItemType contrainedRecord(final Map<String, XQueryRecordField> keyValuePairs, final AntlrQueryTypeFactory factory ) {
         return new XQueryItemType(XQueryTypes.RECORD, null, null, null, null, null, null, factory, null, keyValuePairs, null, null);
     }
 
     final public Set<String> enumMembers;
 
-    public static XQueryItemType enum_(final Set<String> enumMembers, final XQueryTypeFactory factory) {
+    public static XQueryItemType enum_(final Set<String> enumMembers, final AntlrQueryTypeFactory factory) {
         return new XQueryItemType(XQueryTypes.ENUM, null, null, null, null, null, null, factory, null, null, null, enumMembers);
     }
 

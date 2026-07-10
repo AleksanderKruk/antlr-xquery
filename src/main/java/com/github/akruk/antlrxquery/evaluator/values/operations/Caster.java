@@ -17,7 +17,7 @@ import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactor
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField.TypeOrReference;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField.TypeOrReference.Reference;
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.types.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.types.XQueryTypes;
@@ -43,7 +43,7 @@ public class Caster {
 
 
     public Caster(
-        final XQueryTypeFactory typeFactory,
+        final AntlrQueryTypeFactory typeFactory,
         final XQueryValueFactory valueFactory,
         final Stringifier stringifier,
         final EffectiveBooleanValue ebv)

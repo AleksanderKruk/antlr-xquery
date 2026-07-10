@@ -4,7 +4,7 @@ import org.junit.Test;
 
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField.TypeOrReference;
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.types.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
@@ -19,7 +19,7 @@ import static org.junit.Assert.*;
 
 public class XQueryTypesTest {
 
-    final XQueryTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new HashMap<>());
+    final AntlrQueryTypeFactory typeFactory = new XQueryMemoizedTypeFactory(new HashMap<>());
     final AntlrQuerySequenceType error = typeFactory.error();
     final AntlrQuerySequenceType boolean_ = typeFactory.boolean_();
     final AntlrQuerySequenceType string = typeFactory.string();

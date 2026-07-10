@@ -13,39 +13,29 @@ import com.github.akruk.antlrxquery.inputgrammaranalyzer.InputGrammarAnalyzer.Qu
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager;
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.BlockCardinalityMerger;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.SequenceCardinalityMerger;
 import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 
 public class SequencetypePathOperator {
-    private final XQueryTypeFactory typeFactory;
+    private final AntlrQueryTypeFactory typeFactory;
 	private final XQuerySemanticSymbolManager symbolManager;
-    private final AntlrQuerySequenceType zeroOrOneNode;
-    private final AntlrQuerySequenceType zeroOrMoreNodes;
-    private final AntlrQuerySequenceType oneOrMoreNodes;
-    private final AntlrQuerySequenceType emptySequence;
-
+    
     public SequencetypePathOperator(
-        final XQueryTypeFactory typeFactory,
+        final AntlrQueryTypeFactory typeFactory,
         final XQuerySemanticSymbolManager symbolManager
         )
     {
         this.typeFactory = typeFactory;
 		this.symbolManager = symbolManager;
-        this.zeroOrMoreNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
-        this.oneOrMoreNodes = typeFactory.oneOrMore(typeFactory.itemAnyNode());
-        this.emptySequence = typeFactory.emptySequence();
-        this.zeroOrOneNode = typeFactory.zeroOrOne(typeFactory.itemAnyNode());
         zeroResult = new PathOperatorResult(
             InputStatus.EMPTY_SEQUENCE,
-            emptySequence,
+            typeFactory.emptySequence(),
             Map.of(),
             Map.of(),
             Set.of(),
             Set.of(),
             Set.of());
-        sequenceCardinalityMerger = new SequenceCardinalityMerger();
         blockCardinalityMerger = new BlockCardinalityMerger();
     }
 
@@ -104,7 +94,7 @@ public class SequencetypePathOperator {
         final NamespaceResolver namespaceResolver
         )
     {
-        if (type.cardinality == XQueryCardinality.ZERO)
+        if (type.cardinality.isZero())
             return zeroResult;
         final boolean usesWildcard = axisElementNames == null;
 

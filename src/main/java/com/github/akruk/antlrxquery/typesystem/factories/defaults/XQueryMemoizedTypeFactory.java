@@ -9,10 +9,10 @@ import java.util.stream.Collectors;
 
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.types.*;
 
-public class XQueryMemoizedTypeFactory implements XQueryTypeFactory
+public class XQueryMemoizedTypeFactory implements AntlrQueryTypeFactory
 {
     private final XQueryItemType ERROR_ITEM_TYPE = XQueryItemType.error(this);
     private final XQueryItemType STRING_ITEM_TYPE = XQueryItemType.string(this);
@@ -222,25 +222,25 @@ public class XQueryMemoizedTypeFactory implements XQueryTypeFactory
     @Override
     public AntlrQuerySequenceType one(final XQueryItemType itemType) {
         return oneTypes.computeIfAbsent(itemType,
-                _ -> new AntlrQuerySequenceType(this, itemType, XQueryCardinality.ONE));
+                _ -> new AntlrQuerySequenceType(this, itemType, Cardinality.ONE));
     }
 
     @Override
     public AntlrQuerySequenceType zeroOrOne(final XQueryItemType itemType) {
         return zeroOrOneTypes.computeIfAbsent(itemType,
-                _ -> new AntlrQuerySequenceType(this, (XQueryItemType) itemType, XQueryCardinality.ZERO_OR_ONE));
+                _ -> new AntlrQuerySequenceType(this, (XQueryItemType) itemType, Cardinality.ZERO_OR_ONE));
     }
 
     @Override
     public AntlrQuerySequenceType zeroOrMore(final XQueryItemType itemType) {
         return zeroOrMoreTypes.computeIfAbsent(itemType,
-                _ -> new AntlrQuerySequenceType(this, (XQueryItemType) itemType, XQueryCardinality.ZERO_OR_MORE));
+                _ -> new AntlrQuerySequenceType(this, (XQueryItemType) itemType, Cardinality.ZERO_OR_MORE));
     }
 
     @Override
     public AntlrQuerySequenceType oneOrMore(final XQueryItemType itemType) {
         return oneOrMoreTypes.computeIfAbsent(itemType,
-                _ -> new AntlrQuerySequenceType(this, (XQueryItemType) itemType, XQueryCardinality.ONE_OR_MORE));
+                _ -> new AntlrQuerySequenceType(this, (XQueryItemType) itemType, Cardinality.ONE_OR_MORE));
     }
 
     @Override
@@ -300,6 +300,11 @@ public class XQueryMemoizedTypeFactory implements XQueryTypeFactory
             return new NamedAccessingResult(null, NamedAccessingStatus.UNKNOWN_NAMESPACE);
         }
         return null;
+    }
+
+    @Override
+    public AntlrQuerySequenceType sequence(XQueryItemType itemType, Cardinality cardinality) {
+        return new AntlrQuerySequenceType(this, itemType, cardinality);
     }
 
 }

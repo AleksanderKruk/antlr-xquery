@@ -22,12 +22,12 @@ import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactor
 import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMemoizedValueFactory;
 import com.github.akruk.antlrxquery.evaluator.values.operations.ValueAtomizer;
 import com.github.akruk.antlrxquery.evaluator.values.operations.ValueComparisonOperator;
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTypeSets;
 
 public class EvaluationTestsBase {
-    public final XQueryTypeFactory typeFactory;
+    public final AntlrQueryTypeFactory typeFactory;
     public final XQueryValueFactory valueFactory;
     public final ValueAtomizer atomizer;
     public final ValueComparisonOperator valueOperator;

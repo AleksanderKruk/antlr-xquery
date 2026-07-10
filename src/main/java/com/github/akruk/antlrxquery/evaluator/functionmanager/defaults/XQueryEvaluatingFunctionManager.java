@@ -31,7 +31,7 @@ import com.github.akruk.antlrxquery.evaluator.values.operations.EffectiveBoolean
 import com.github.akruk.antlrxquery.evaluator.values.operations.Stringifier;
 import com.github.akruk.antlrxquery.evaluator.values.operations.ValueAtomizer;
 import com.github.akruk.antlrxquery.evaluator.values.operations.ValueComparisonOperator;
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 import com.github.akruk.nodegetter.NodeGetter;
 
@@ -58,14 +58,14 @@ public class XQueryEvaluatingFunctionManager {
     private final ProcessingBooleans processingBooleans;
     private final ProcessingSequencesFunctions processingSequences;
     private final AntlrFunctions antlrFunctions;
-    private final XQueryTypeFactory typeFactory;
+    private final AntlrQueryTypeFactory typeFactory;
 
     public XQueryEvaluatingFunctionManager(
         final XQueryEvaluatorVisitor evaluator,
         final Parser parser,
         final XQueryValueFactory valueFactory,
         final NodeGetter nodeGetter,
-        final XQueryTypeFactory typeFactory,
+        final AntlrQueryTypeFactory typeFactory,
         final EffectiveBooleanValue ebv,
         final ValueAtomizer atomizer,
         final Stringifier stringifier,

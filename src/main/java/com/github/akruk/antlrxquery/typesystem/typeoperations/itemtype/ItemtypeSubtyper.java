@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.types.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.types.XQueryTypes;
@@ -33,10 +33,10 @@ public class ItemtypeSubtyper
     private static final int EXTENSIBLE_RECORD = XQueryTypes.EXTENSIBLE_RECORD.ordinal();
 
     private final Predicate<XQueryItemType>[] itemtypeIsSubtypeOf;
-    private final XQueryTypeFactory typeFactory;
+    private final AntlrQueryTypeFactory typeFactory;
 
     @SuppressWarnings("unchecked")
-    public ItemtypeSubtyper(final XQueryItemType x, final XQueryTypeFactory typeFactory)
+    public ItemtypeSubtyper(final XQueryItemType x, final AntlrQueryTypeFactory typeFactory)
     {
         this.typeFactory = typeFactory;
         final int typeOrdinal = x.type.ordinal();

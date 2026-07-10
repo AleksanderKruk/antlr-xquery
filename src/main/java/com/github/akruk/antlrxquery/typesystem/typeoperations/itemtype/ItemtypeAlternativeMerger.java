@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField.TypeOrReference;
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.types.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.types.XQueryTypes;
@@ -40,7 +40,7 @@ public class ItemtypeAlternativeMerger
     private final BinaryOperator<XQueryItemType>[] alternativeItemMerger;
 
     @SuppressWarnings("unchecked")
-    public ItemtypeAlternativeMerger(final int typeOrdinal, final XQueryTypeFactory typeFactory)
+    public ItemtypeAlternativeMerger(final int typeOrdinal, final AntlrQueryTypeFactory typeFactory)
     {
         this.alternativeItemMerger = new BinaryOperator[typesCount];
         final BinaryOperator<XQueryItemType> error = (_, _) -> typeFactory.itemError();
@@ -409,7 +409,7 @@ public class ItemtypeAlternativeMerger
     }
 
 
-    private XQueryItemType mergeArrays(final XQueryTypeFactory typeFactory, XQueryItemType x, XQueryItemType y)
+    private XQueryItemType mergeArrays(final AntlrQueryTypeFactory typeFactory, XQueryItemType x, XQueryItemType y)
     {
         final var xArrayType = x.arrayMemberType;
         final var yArrayType = y.arrayMemberType;
@@ -418,7 +418,7 @@ public class ItemtypeAlternativeMerger
     }
 
 
-    private XQueryItemType mergeMaps(final XQueryTypeFactory typeFactory, XQueryItemType x, XQueryItemType y)
+    private XQueryItemType mergeMaps(final AntlrQueryTypeFactory typeFactory, XQueryItemType x, XQueryItemType y)
     {
         final var xKey = x.mapKeyType;
         final var yKey = y.mapKeyType;
@@ -430,7 +430,7 @@ public class ItemtypeAlternativeMerger
     }
 
 
-    private XQueryItemType rightChoiceMerge(final XQueryTypeFactory typeFactory, XQueryItemType x, XQueryItemType y)
+    private XQueryItemType rightChoiceMerge(final AntlrQueryTypeFactory typeFactory, XQueryItemType x, XQueryItemType y)
     {
         final var rightItems = y.itemTypes;
         final Set<XQueryItemType> sum = new HashSet<>(rightItems.size()+1);
@@ -439,7 +439,7 @@ public class ItemtypeAlternativeMerger
         return typeFactory.itemChoice(sum);
     }
 
-    private XQueryItemType leftChoiceMerge(final XQueryTypeFactory typeFactory, XQueryItemType x, XQueryItemType y)
+    private XQueryItemType leftChoiceMerge(final AntlrQueryTypeFactory typeFactory, XQueryItemType x, XQueryItemType y)
     {
         final var leftItems = x.itemTypes;
         final Set<XQueryItemType> sum = new HashSet<>(leftItems.size()+1);
@@ -449,7 +449,7 @@ public class ItemtypeAlternativeMerger
     }
 
 
-    private XQueryItemType mergeElements(final XQueryTypeFactory typeFactory, XQueryItemType x, XQueryItemType y)
+    private XQueryItemType mergeElements(final AntlrQueryTypeFactory typeFactory, XQueryItemType x, XQueryItemType y)
     {
         final var els1 = x.elementNames;
         final var els2 = y.elementNames;
@@ -460,7 +460,7 @@ public class ItemtypeAlternativeMerger
     }
 
 
-    private XQueryItemType mergeChoices(final XQueryTypeFactory typeFactory, XQueryItemType x, XQueryItemType y)
+    private XQueryItemType mergeChoices(final AntlrQueryTypeFactory typeFactory, XQueryItemType x, XQueryItemType y)
     {
         final var leftItems = ( x).itemTypes;
         final var rightItems = ( y).itemTypes;
@@ -472,7 +472,7 @@ public class ItemtypeAlternativeMerger
 
 
 
-    private BinaryOperator<XQueryItemType> recordMerger(final XQueryTypeFactory typeFactory)
+    private BinaryOperator<XQueryItemType> recordMerger(final AntlrQueryTypeFactory typeFactory)
     {
         return (x, y) -> {
             final var xFields = x.recordFields;
@@ -513,7 +513,7 @@ public class ItemtypeAlternativeMerger
     }
 
 
-    private BinaryOperator<XQueryItemType> extensibleRecordMerger(final XQueryTypeFactory typeFactory)
+    private BinaryOperator<XQueryItemType> extensibleRecordMerger(final AntlrQueryTypeFactory typeFactory)
     {
         return (x_, y_) -> {
             final var xRecordFields = x_.recordFields;
@@ -546,7 +546,7 @@ public class ItemtypeAlternativeMerger
     }
 
 
-    private BinaryOperator<XQueryItemType> enumMerger(final XQueryTypeFactory typeFactory)
+    private BinaryOperator<XQueryItemType> enumMerger(final AntlrQueryTypeFactory typeFactory)
     {
         return (x_, y_) -> {
             final var xMembers = x_.enumMembers;

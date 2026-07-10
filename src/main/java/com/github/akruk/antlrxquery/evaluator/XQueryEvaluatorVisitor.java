@@ -27,7 +27,7 @@ import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.semanticanalyzer.ModuleManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.visitors.AntlrQuerySemanticAnalyzer;
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 import com.github.akruk.nodegetter.NodeGetter;
 import com.github.akruk.antlrxquery.AxisVisitor;
@@ -88,7 +88,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         final Parser parser,
         final XQueryValueFactory valueFactory,
         final AntlrQuerySemanticAnalyzer analyzer,
-        final XQueryTypeFactory typeFactory,
+        final AntlrQueryTypeFactory typeFactory,
         final ModuleManager moduleManager,
         final Map<String,XQueryValue> externalVariables)
     {

@@ -9,7 +9,7 @@ import org.eclipse.lsp4j.Location;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameContext;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticScope.EntypingResult;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticScope.VariableInfo;
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.types.TypeInContext;
 import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType.EffectiveBooleanValueType;
@@ -20,7 +20,7 @@ public class XQuerySemanticContextManager {
     final List<XQuerySemanticContext> contexts;
     final Supplier<XQuerySemanticContext> contextFactory;
 
-    public XQuerySemanticContextManager(XQueryTypeFactory typeFactory) {
+    public XQuerySemanticContextManager(AntlrQueryTypeFactory typeFactory) {
         this(() -> new XQuerySemanticContext(typeFactory));
     }
 

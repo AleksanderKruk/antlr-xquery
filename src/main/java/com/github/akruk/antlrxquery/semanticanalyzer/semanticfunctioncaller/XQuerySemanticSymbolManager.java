@@ -34,7 +34,7 @@ import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySeman
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticScope.VariableInfo;
 import com.github.akruk.antlrxquery.semanticanalyzer.visitors.AntlrQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.visitors.AntlrQuerySemanticAnalyzer.UnresolvedFunctionSpecification;
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.types.TypeInContext;
 import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType.EffectiveBooleanValueType;
@@ -91,7 +91,7 @@ public class XQuerySemanticSymbolManager {
     { }
 
     public interface XQuerySemanticFunction {
-        public AnalysisResult call(final XQueryTypeFactory typeFactory,
+        public AnalysisResult call(final AntlrQueryTypeFactory typeFactory,
                 final XQueryVisitingSemanticContext context,
                 final List<AntlrQuerySequenceType> types);
     }
@@ -114,7 +114,7 @@ public class XQuerySemanticSymbolManager {
     record SpecAndErrors(FunctionSpecification spec, List<DiagnosticError> errors) {
     }
 
-    private final XQueryTypeFactory typeFactory;
+    private final AntlrQueryTypeFactory typeFactory;
 
     private AntlrQuerySemanticAnalyzer analyzer;
 
@@ -157,7 +157,7 @@ public class XQuerySemanticSymbolManager {
     // private final Map<String, Map<String, List<Symbol>>> symbols;
 
     public XQuerySemanticSymbolManager(
-        final XQueryTypeFactory typeFactory,
+        final AntlrQueryTypeFactory typeFactory,
         final XQuerySemanticContextManager contextManager,
         final List<List<SimplifiedFunctionSpecification>> functionSets
         )

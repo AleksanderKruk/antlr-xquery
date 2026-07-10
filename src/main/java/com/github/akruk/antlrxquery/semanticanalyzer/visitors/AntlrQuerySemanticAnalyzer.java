@@ -60,10 +60,10 @@ import com.github.akruk.antlrxquery.inputgrammaranalyzer.InputGrammarAnalyzer.Qu
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField.TypeOrReference;
 import com.github.akruk.antlrxquery.typesystem.factories.CardinalityFactory;
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory.NamedAccessingStatus;
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory.NamedItemAccessingResult;
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory.RegistrationResult;
+import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory.NamedAccessingStatus;
+import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory.NamedItemAccessingResult;
+import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory.RegistrationResult;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypeAtomization;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypeCastable;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.SequencetypePathOperator;
@@ -85,7 +85,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<Typ
 {
     private final List<DiagnosticError> errors;
     private final List<DiagnosticWarning> warnings;
-    private final XQueryTypeFactory typeFactory;
+    private final AntlrQueryTypeFactory typeFactory;
     private final CardinalityVisitor cardinalityVisitor;
     private final AxisVisitor axisVisitor;
     private final TypeVisitor typeVisitor;
@@ -767,7 +767,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<Typ
 
     public AntlrQuerySemanticAnalyzer(
         final Parser antlrQueryParser,
-        final XQueryTypeFactory typeFactory,
+        final AntlrQueryTypeFactory typeFactory,
         final XQueryValueFactory valueFactory,
         final XQuerySemanticSymbolManager symbolManager,
         final Map<String, QualifiedGrammarAnalysisResult> importedGrammars,

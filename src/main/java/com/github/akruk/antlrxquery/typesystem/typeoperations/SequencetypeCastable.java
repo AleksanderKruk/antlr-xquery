@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.itemtype.ItemtypeIsValidCastTarget;
 import com.github.akruk.antlrxquery.typesystem.types.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
@@ -16,9 +16,9 @@ import com.github.akruk.antlrxquery.typesystem.types.XQueryTypes;
 
 public class SequencetypeCastable {
     private final AntlrQuerySequenceType anyItems;
-    private final XQueryTypeFactory typeFactory;
+    private final AntlrQueryTypeFactory typeFactory;
 
-    public SequencetypeCastable(XQueryTypeFactory typeFactory, SequencetypeAtomization atomizer) {
+    public SequencetypeCastable(AntlrQueryTypeFactory typeFactory, SequencetypeAtomization atomizer) {
         this.typeFactory = typeFactory;
         this.anyItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         this.atomizer = atomizer;

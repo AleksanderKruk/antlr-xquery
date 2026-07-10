@@ -16,13 +16,13 @@ import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQue
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager.UsedArg;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField.TypeOrReference;
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.types.TypeInContext;
 import com.github.akruk.antlrxquery.typesystem.types.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 
 public class SemanticFunctionSets {
-    public static List<List<SimplifiedFunctionSpecification>> ALL(final XQueryTypeFactory typeFactory) {
+    public static List<List<SimplifiedFunctionSpecification>> ALL(final AntlrQueryTypeFactory typeFactory) {
         final var fn = FN(typeFactory);
         final var op = OP(typeFactory);
         final var math = MATH(typeFactory);
@@ -31,7 +31,7 @@ public class SemanticFunctionSets {
         final var map = MAP(typeFactory);
         return List.of(fn, op, math, antlr, array, map);
     }
-    public static List<SimplifiedFunctionSpecification> FN(final XQueryTypeFactory typeFactory) {
+    public static List<SimplifiedFunctionSpecification> FN(final AntlrQueryTypeFactory typeFactory) {
         final List<SimplifiedFunctionSpecification> fn = new ArrayList<>(400);
         final var helperTrees = new HelperTrees();
         final ParseTree CONTEXT_VALUE = helperTrees.CONTEXT_VALUE;
@@ -2579,7 +2579,7 @@ public class SemanticFunctionSets {
     }
 
 
-    public static List<SimplifiedFunctionSpecification> OP(final XQueryTypeFactory typeFactory) {
+    public static List<SimplifiedFunctionSpecification> OP(final AntlrQueryTypeFactory typeFactory) {
         final List<SimplifiedFunctionSpecification> op = new ArrayList<>(400);
 
         // op:numeric-add($arg1 as xs:numeric, $arg2 as xs:numeric) as xs:numeric
@@ -2870,7 +2870,7 @@ public class SemanticFunctionSets {
 
     }
 
-    public static List<SimplifiedFunctionSpecification> MATH(final XQueryTypeFactory typeFactory) {
+    public static List<SimplifiedFunctionSpecification> MATH(final AntlrQueryTypeFactory typeFactory) {
         final List<SimplifiedFunctionSpecification> math = new ArrayList<>(50);
         final AntlrQuerySequenceType optionalNumber = typeFactory.zeroOrOne(typeFactory.itemNumber());
 
@@ -3176,7 +3176,7 @@ public class SemanticFunctionSets {
 
 
 
-    public static List<SimplifiedFunctionSpecification> ANTLR(final XQueryTypeFactory typeFactory) {
+    public static List<SimplifiedFunctionSpecification> ANTLR(final AntlrQueryTypeFactory typeFactory) {
         final List<SimplifiedFunctionSpecification> antlr = new ArrayList<>(50);
         final AntlrQuerySequenceType optionalNumber = typeFactory.zeroOrOne(typeFactory.itemNumber());
         final AntlrQuerySequenceType optionalBoolean = typeFactory.zeroOrOne(typeFactory.itemBoolean());
@@ -3305,7 +3305,7 @@ public class SemanticFunctionSets {
 
     }
 
-    public static List<SimplifiedFunctionSpecification> ARRAY(final XQueryTypeFactory typeFactory) {
+    public static List<SimplifiedFunctionSpecification> ARRAY(final AntlrQueryTypeFactory typeFactory) {
         final List<SimplifiedFunctionSpecification> array = new ArrayList<>(100);
 
         final AntlrQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
@@ -3849,7 +3849,7 @@ public class SemanticFunctionSets {
         return array;
     }
 
-    public static List<SimplifiedFunctionSpecification> MAP(final XQueryTypeFactory typeFactory) {
+    public static List<SimplifiedFunctionSpecification> MAP(final AntlrQueryTypeFactory typeFactory) {
         final List<SimplifiedFunctionSpecification> map = new ArrayList<>(100);
 
         final var helperTrees = new HelperTrees();

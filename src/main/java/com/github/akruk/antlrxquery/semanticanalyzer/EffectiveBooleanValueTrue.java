@@ -6,7 +6,7 @@ import java.util.Set;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.Implication;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.ValueImplication;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySemanticContext;
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.types.Cardinality;
 import com.github.akruk.antlrxquery.typesystem.types.TypeInContext;
 
@@ -14,9 +14,9 @@ public class EffectiveBooleanValueTrue extends ValueImplication<Boolean> {
 
     private final TypeInContext ebv;
     private final TypeInContext changedType;
-    private final XQueryTypeFactory typeFactory;
+    private final AntlrQueryTypeFactory typeFactory;
 
-    public EffectiveBooleanValueTrue(TypeInContext ebv, TypeInContext changedType, XQueryTypeFactory typeFactory) {
+    public EffectiveBooleanValueTrue(TypeInContext ebv, TypeInContext changedType, AntlrQueryTypeFactory typeFactory) {
         super(ebv, true);
         this.ebv = ebv;
         this.changedType = changedType;

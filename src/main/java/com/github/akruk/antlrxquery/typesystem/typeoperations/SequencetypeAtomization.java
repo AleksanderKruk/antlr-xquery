@@ -1,14 +1,14 @@
 package com.github.akruk.antlrxquery.typesystem.typeoperations;
 
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.types.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 
 public class SequencetypeAtomization {
     private final AntlrQuerySequenceType anyItems;
-    private final XQueryTypeFactory typeFactory;
+    private final AntlrQueryTypeFactory typeFactory;
 
-    public SequencetypeAtomization(XQueryTypeFactory typeFactory) {
+    public SequencetypeAtomization(AntlrQueryTypeFactory typeFactory) {
         this.typeFactory = typeFactory;
         this.anyItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
     }

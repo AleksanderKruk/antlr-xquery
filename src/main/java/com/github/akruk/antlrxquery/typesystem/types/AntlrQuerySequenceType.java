@@ -1,7 +1,7 @@
 package com.github.akruk.antlrxquery.typesystem.types;
 
 import java.util.Set;
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.cardinality.Cardinalities;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.IsValueComparableWith;
 
@@ -12,12 +12,12 @@ public class AntlrQuerySequenceType {
     public final XQueryItemType itemType;
     public final Cardinality cardinality;
 
-    private final XQueryTypeFactory typeFactory;
+    private final AntlrQueryTypeFactory typeFactory;
 
 
 
     public AntlrQuerySequenceType(
-        final XQueryTypeFactory typeFactory,
+        final AntlrQueryTypeFactory typeFactory,
         final XQueryItemType itemType,
         final Cardinality cardinality)
     {
@@ -195,7 +195,7 @@ public class AntlrQuerySequenceType {
 
 
 
-    public static AntlrQuerySequenceType emptySequence(final XQueryTypeFactory typeFactory) {
+    public static AntlrQuerySequenceType emptySequence(final AntlrQueryTypeFactory typeFactory) {
         return new AntlrQuerySequenceType(typeFactory, null, Cardinality.of());
     }
 

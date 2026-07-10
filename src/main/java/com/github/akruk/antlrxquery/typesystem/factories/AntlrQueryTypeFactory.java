@@ -11,7 +11,7 @@ import com.github.akruk.antlrxquery.typesystem.types.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.types.Cardinality;
 
-public interface XQueryTypeFactory {
+public interface AntlrQueryTypeFactory {
     public XQueryItemType itemError();
     public XQueryItemType itemString();
     public XQueryItemType itemEnum(Set<String> memberNames);

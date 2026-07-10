@@ -6,7 +6,7 @@ import java.util.Set;
 import java.util.function.BinaryOperator;
 
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.types.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.types.XQueryTypes;
 
@@ -18,10 +18,10 @@ public class ItemtypeIntersectionMerger
     private static final int typesCount = XQueryTypes.values().length;
 
     private final BinaryOperator<XQueryItemType>[] intersectionItemMerger;
-    private final XQueryTypeFactory typeFactory;
+    private final AntlrQueryTypeFactory typeFactory;
 
     @SuppressWarnings("unchecked")
-    public ItemtypeIntersectionMerger(final int typeOrdinal, final XQueryTypeFactory typeFactory)
+    public ItemtypeIntersectionMerger(final int typeOrdinal, final AntlrQueryTypeFactory typeFactory)
     {
         this.typeFactory = typeFactory;
         this.intersectionItemMerger = new BinaryOperator[typesCount];

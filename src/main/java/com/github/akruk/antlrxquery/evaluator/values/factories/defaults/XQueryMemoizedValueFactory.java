@@ -14,7 +14,7 @@ import com.github.akruk.antlrxquery.evaluator.values.XQueryError;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryFunction;
 import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrxquery.evaluator.values.factories.XQueryValueFactory;
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 
 public class XQueryMemoizedValueFactory implements XQueryValueFactory {
@@ -23,12 +23,12 @@ public class XQueryMemoizedValueFactory implements XQueryValueFactory {
     private final Map<Integer, XQueryValue> createdIntegers;
     private final Map<String, XQueryValue> createdStrings;
     private final Map<List<XQueryValue>, XQueryValue> createdSequences;
-    private final XQueryTypeFactory typeFactory;
+    private final AntlrQueryTypeFactory typeFactory;
     private final XQueryValue TRUE;
     private final XQueryValue FALSE;
 
 
-    public XQueryMemoizedValueFactory(XQueryTypeFactory typeFactory)
+    public XQueryMemoizedValueFactory(AntlrQueryTypeFactory typeFactory)
     {
         this( new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), typeFactory);
     }
@@ -37,7 +37,7 @@ public class XQueryMemoizedValueFactory implements XQueryValueFactory {
     public XQueryMemoizedValueFactory(Map<ParseTree, XQueryValue> createdNodes,
             Map<BigDecimal, XQueryValue> createdNumbers, Map<Integer, XQueryValue> createdIntegers,
             Map<String, XQueryValue> createdStrings, Map<List<XQueryValue>, XQueryValue> createdSequences,
-            XQueryTypeFactory typeFactory)
+            AntlrQueryTypeFactory typeFactory)
     {
         this.createdNodes = createdNodes;
         this.createdNumbers = createdNumbers;

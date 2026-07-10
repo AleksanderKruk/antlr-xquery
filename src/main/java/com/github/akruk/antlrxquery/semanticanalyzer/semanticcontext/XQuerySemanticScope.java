@@ -9,7 +9,7 @@ import org.eclipse.lsp4j.Location;
 
 import com.github.akruk.antlrxquery.AntlrXqueryParser.VarNameContext;
 import com.github.akruk.antlrxquery.semanticanalyzer.EffectiveBooleanValueTrue;
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.types.TypeInContext;
 import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.types.XQueryTypes;
@@ -25,12 +25,12 @@ public class XQuerySemanticScope {
     final XQuerySemanticContext context;
     final Map<TypeInContext, TypeInContext> typeMapping;
     final Map<TypeInContext, TypeInContext> ebvs;
-    final private XQueryTypeFactory typeFactory;
+    final private AntlrQueryTypeFactory typeFactory;
 
     public XQuerySemanticScope(
         XQuerySemanticContext context,
         XQuerySemanticScope previousScope,
-        XQueryTypeFactory typeFactory
+        AntlrQueryTypeFactory typeFactory
     )
     {
         this.typeFactory = typeFactory;
@@ -89,7 +89,7 @@ public class XQuerySemanticScope {
 
     public XQuerySemanticScope(
         XQuerySemanticContext context,
-        XQueryTypeFactory typeFactory
+        AntlrQueryTypeFactory typeFactory
     )
     {
         this.scopedTypes = new ArrayList<>();

@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.StringJoiner;
 
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.types.Cardinality;
 import com.github.akruk.antlrxquery.typesystem.types.Cardinality.CardinalityInterval;
@@ -25,7 +25,7 @@ public record XQueryRecordField(TypeOrReference typeOrReference, boolean isRequi
 
 
 
-    public AntlrQuerySequenceType resolveFieldType(final XQueryTypeFactory typeFactory) {
+    public AntlrQuerySequenceType resolveFieldType(final AntlrQueryTypeFactory typeFactory) {
         final var type = switch(this.typeOrReference) {
             case final Type t -> t.type;
             case final Reference r -> typeFactory.namedType(r.reference).type();

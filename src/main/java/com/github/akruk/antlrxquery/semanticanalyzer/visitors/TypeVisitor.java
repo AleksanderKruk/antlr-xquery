@@ -4,7 +4,7 @@ import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
 import com.github.akruk.antlrxquery.semanticanalyzer.ErrorType;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.AnyItemContext;
 import com.github.akruk.antlrxquery.AntlrXqueryParser.EmptySequenceContext;
-import com.github.akruk.antlrxquery.typesystem.factories.XQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 
 public class TypeVisitor
@@ -12,10 +12,10 @@ public class TypeVisitor
 {
 
 
-    private final XQueryTypeFactory typeFactory;
+    private final AntlrQueryTypeFactory typeFactory;
     private final CardinalityVisitor visitor;
 
-    public TypeVisitor(XQueryTypeFactory factory, CardinalityVisitor visitor) {
+    public TypeVisitor(AntlrQueryTypeFactory factory, CardinalityVisitor visitor) {
         this.typeFactory = factory;
         this.visitor = visitor;
 

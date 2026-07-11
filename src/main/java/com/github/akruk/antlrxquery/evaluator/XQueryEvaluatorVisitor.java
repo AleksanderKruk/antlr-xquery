@@ -2423,7 +2423,7 @@ public class XQueryEvaluatorVisitor extends AntlrXqueryParserBaseVisitor<XQueryV
         var clauses = cases.caseClause();
         for (var typeswitchCase : clauses) {
             for (var typeCtx : typeswitchCase.sequenceTypeUnion().sequenceType()) {
-                var type = semanticAnalyzer.visitSequenceType(typeCtx);
+                var type = typeCtx.accept(semanticAnalyzer);
                 if (switched.type.isSubtypeOf(type.type)) {
                     if (typeswitchCase.varName() != null) {
                         var caseVarName = cases.varName().qname().getText();

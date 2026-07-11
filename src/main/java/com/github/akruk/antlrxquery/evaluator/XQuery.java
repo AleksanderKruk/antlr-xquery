@@ -27,6 +27,7 @@ import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.Sema
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.visitors.AntlrQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.visitors.CardinalityVisitor;
+import com.github.akruk.antlrxquery.semanticanalyzer.visitors.ItemTypeVisitor;
 import com.github.akruk.antlrxquery.semanticanalyzer.visitors.TypeVisitor;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.BaseCardinalityFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
@@ -105,7 +106,7 @@ public final class XQuery {
             varTypes,
             new AxisVisitor(),
             cardinalityFactory,
-            new TypeVisitor(typeFactory, new CardinalityVisitor(cardinalityFactory))
+            new TypeVisitor(typeFactory, new CardinalityVisitor(cardinalityFactory), new ItemTypeVisitor(typeFactory))
             );
         final XQueryEvaluatorVisitor visitor = new XQueryEvaluatorVisitor(
             tree, parser, valueFactory, analyzer, typeFactory, moduleManager, vars);
@@ -172,7 +173,7 @@ public final class XQuery {
             Map.of(),
             new AxisVisitor(),
             cardinalityFactory,
-            new TypeVisitor(typeFactory, new CardinalityVisitor(cardinalityFactory))
+            new TypeVisitor(typeFactory, new CardinalityVisitor(cardinalityFactory), new ItemTypeVisitor(typeFactory))
             );
 
 

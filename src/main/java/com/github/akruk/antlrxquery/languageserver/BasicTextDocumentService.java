@@ -101,6 +101,7 @@ import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQue
 import com.github.akruk.antlrxquery.semanticanalyzer.visitors.AntlrQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.visitors.AntlrQuerySemanticAnalyzer.AnalysisListener;
 import com.github.akruk.antlrxquery.semanticanalyzer.visitors.CardinalityVisitor;
+import com.github.akruk.antlrxquery.semanticanalyzer.visitors.ItemTypeVisitor;
 import com.github.akruk.antlrxquery.semanticanalyzer.visitors.TypeVisitor;
 import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.BaseCardinalityFactory;
@@ -273,7 +274,7 @@ public class BasicTextDocumentService implements TextDocumentService {
                     Map.of(), 
                     new AxisVisitor(),
                     cardinalityFactory,
-                    new TypeVisitor(typeFactory, new CardinalityVisitor(cardinalityFactory))
+                    new TypeVisitor(typeFactory, new CardinalityVisitor(cardinalityFactory), new ItemTypeVisitor(typeFactory))
             );
 
             final Map<VarRefContext, TypeInContext> varRefsMappedToTypes_ = new HashMap<>();

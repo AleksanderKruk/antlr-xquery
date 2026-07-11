@@ -1229,29 +1229,30 @@ public class AntlrQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<Typ
 
     public TypeOrReference resolveSequenceTypeOrReference(final SequenceTypeContext ctx)
     {
-        if (ctx.emptySequence() != null) {
+        if (ctx instanceof EmptySequenceTypeContext) {
             return new TypeOrReference.Type(emptySequence);
+        } else if (ctx instanceof NonEmptySequenceTypeContext nonEmpty) {
+            final ItemTypeContext itemTypeCtx = nonEmpty.itemType();
+            final Cardinality cardinality = ctx.accept(cardinalityVisitor);
+            if (itemTypeCtx.typeName() != null)
+            { // type reference or builtin type
+                return switch (itemTypeCtx.getText())
+                {
+                    default ->
+                        new TypeOrReference.Reference(
+                            namespaceResolver.resolveType(
+                                itemTypeCtx.typeName().getText()), cardinality
+                                );
+                };
+            } else { // literal type
+                final AntlrQuerySequenceType type = typeFactory.sequence(
+                    visitItemType(itemTypeCtx).type.itemType,
+                    cardinality
+                    );
+                return new TypeOrReference.Type(type);
+            }
         }
-        final ItemTypeContext itemTypeCtx = ctx.itemType();
-        final Cardinality cardinality = cardinalityVisitor.visitSequenceType(ctx);
-        if (itemTypeCtx.typeName() != null)
-        { // type reference or builtin type
-            return switch (itemTypeCtx.getText())
-            {
-                default ->
-                    new TypeOrReference.Reference(
-                        namespaceResolver.resolveType(
-                            itemTypeCtx.typeName().getText()), cardinality
-                            );
-            };
-        } else { // literal type
-            final AntlrQuerySequenceType type = typeFactory.sequence(
-                visitItemType(itemTypeCtx).type.itemType,
-                cardinality
-                );
-            return new TypeOrReference.Type(type);
-        }
-
+        throw new IllegalStateException("Unreachable");
     }
 
     
@@ -2024,13 +2025,13 @@ public class AntlrQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<Typ
         if (ctx.TREAT() == null) {
             return expression;
         }
-        final var relevantType = visitSequenceType(ctx.sequenceType());
-        if (!relevantType.isSubtypeOf(expression)
+        final var relevantType = ctx.sequenceType().accept(typeVisitor);
+        if (!relevantType.isSubtypeOf(expression.type)
             && !expression.isSubtypeOf(relevantType))
         {
             warn(ctx, WarningType.TREAT__UNLIKELY, List.of(expression, relevantType));
         }
-        return relevantType;
+        return symbolManager.typeInContext(relevantType);
     }
 
     private final SequencetypeAtomization atomizer;
@@ -3083,15 +3084,15 @@ public class AntlrQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<Typ
                     );
                 continue;
             }
-            if (fieldTypeCtx.itemType() == null
-                || fieldTypeCtx.itemType().typeName() == null)
+            if (fieldTypeCtx instanceof EmptySequenceTypeContext 
+                || fieldTypeCtx instanceof final NonEmptySequenceTypeContext nonEmpty 
+                    && nonEmpty.itemType().typeName() == null)
             {
                 fields.put(
                     fieldName,
                     new XQueryRecordField(
-                        new TypeOrReference.Type(
-                            visitSequenceType(fieldTypeCtx).type),
-                            field.isRequired));
+                        new TypeOrReference.Type(fieldTypeCtx.accept(typeVisitor)), field.isRequired)
+                        );
                 continue;
             }
             final TypeOrReference typeOrReference = resolveSequenceTypeOrReference(fieldTypeCtx);
@@ -3101,15 +3102,16 @@ public class AntlrQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<Typ
             args.add(
                 new ArgumentSpecification(
                     mandatoryArgSpec.name,
-                    visitSequenceType(mandatoryArgSpec.type).type,
+                    mandatoryArgSpec.type.accept(typeVisitor),
                     mandatoryArgSpec.defaultValue));
         }
         for (final var optionalArgSpec : recordSpecification.optionalfieldsAsArgs) {
             args.add(
                 new ArgumentSpecification(
                     optionalArgSpec.name,
-                    visitSequenceType(optionalArgSpec.type).type,
-                    optionalArgSpec.defaultValue));
+                    optionalArgSpec.type.accept(typeVisitor),
+                    optionalArgSpec.defaultValue)
+                );
         }
 
         final var itemRecordType = recordSpecification.isExtensible
@@ -3305,12 +3307,12 @@ public class AntlrQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<Typ
         final List<AntlrQuerySequenceType> types = new ArrayList<>();
         for (final var typeswitchCase : clauses) {
             for (final var typeCtx : typeswitchCase.sequenceTypeUnion().sequenceType()) {
-                final var type = visitSequenceType(typeCtx);
+                final var type = typeCtx.accept(typeVisitor);
                 symbolManager.enterScope();
-                if (switched.type.isSubtypeOf(type.type)) {
+                if (switched.type.isSubtypeOf(type)) {
                     if (typeswitchCase.varName() != null) {
                         final var caseVarName = cases.varName().qname().getText();
-                        declareVariable(type, caseVarName, cases.varName());
+                        declareVariable(symbolManager.typeInContext(type), caseVarName, cases.varName());
                     }
                     final var evaluatedCase = visitExprSingle(typeswitchCase.exprSingle());
                     types.add(evaluatedCase.type);
@@ -3339,16 +3341,16 @@ public class AntlrQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<Typ
                 // DECLARE CONTEXT VALUE AS sequenceType EXTERNAL (EQ_OP varDefaultValue)?
                 if (ctx.varDefaultValue() != null) {
                     // DECLARE CONTEXT VALUE AS sequenceType EXTERNAL EQ_OP varDefaultValue
-                    final var declaredType = visitSequenceType(ctx.sequenceType());
+                    final var declaredType = ctx.sequenceType().accept(typeVisitor);
                     final var defaultValueType = visitVarDefaultValue(ctx.varDefaultValue());
-                    if (defaultValueType.type.coerceableTo(declaredType.type) == RelativeCoercability.NEVER) {
+                    if (defaultValueType.type.coerceableTo(declaredType) == RelativeCoercability.NEVER) {
                         error(ctx, ErrorType.CONTEXT_VALUE_DECL__UNCOERSABLE, List.of(defaultValueType, declaredType));
                     }
-                    context.setType(declaredType);
+                    context.setType(symbolManager.typeInContext(declaredType));
                 } else {
                     // DECLARE CONTEXT VALUE AS sequenceType EXTERNAL
-                    final var declaredType = visitSequenceType(ctx.sequenceType());
-                    context.setType(declaredType);
+                    final var declaredType = ctx.sequenceType().accept(typeVisitor);
+                    context.setType(symbolManager.typeInContext(declaredType));
                 }
             } else {
                 // DECLARE CONTEXT VALUE EXTERNAL (EQ_OP varDefaultValue)?
@@ -3364,12 +3366,12 @@ public class AntlrQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<Typ
             // DECLARE CONTEXT VALUE (AS sequenceType)? EQ_OP varValue
             if (ctx.sequenceType() != null) {
                 // DECLARE CONTEXT VALUE AS sequenceType EQ_OP varValue
-                final var declaredType = visitSequenceType(ctx.sequenceType());
+                final var declaredType = ctx.sequenceType().accept(typeVisitor);
                 final var valueType = visitVarValue(ctx.varValue());
-                if (valueType.type.coerceableTo(declaredType.type) == RelativeCoercability.NEVER) {
+                if (valueType.type.coerceableTo(declaredType) == RelativeCoercability.NEVER) {
                     error(ctx, ErrorType.CONTEXT_VALUE_DECL__UNCOERSABLE, List.of(valueType, declaredType));
                 }
-                context.setType(declaredType);
+                context.setType(symbolManager.typeInContext(declaredType));
             } else {
                 // DECLARE CONTEXT VALUE EQ_OP varValue
                 final var valueType = visitVarValue(ctx.varValue());
@@ -3461,9 +3463,9 @@ public class AntlrQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<Typ
         }
         final var func = ctx.typedFunctionType();
         final List<AntlrQuerySequenceType> parameterTypes = func.typedFunctionParam().stream()
-            .map(p -> visitSequenceType(p.sequenceType()).type)
+            .map(p -> p.sequenceType().accept(typeVisitor))
             .collect(Collectors.toList());
-        final var function =  typeFactory.function(visitSequenceType(func.sequenceType()).type, parameterTypes);
+        final var function =  typeFactory.function(func.sequenceType().accept(typeVisitor), parameterTypes);
         return symbolManager.typeInContext(function);
     }
 
@@ -3475,8 +3477,8 @@ public class AntlrQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<Typ
         }
         final var map = ctx.typedMapType();
         final XQueryItemType keyType = map.itemType().accept(this).type.itemType;
-        final TypeInContext valueType = visitSequenceType(map.sequenceType());
-        return symbolManager.typeInContext(typeFactory.map(keyType, valueType.type));
+        final AntlrQuerySequenceType valueType = map.sequenceType().accept(typeVisitor);
+        return symbolManager.typeInContext(typeFactory.map(keyType, valueType));
     }
 
     @Override
@@ -3486,8 +3488,8 @@ public class AntlrQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<Typ
             return symbolManager.typeInContext(typeFactory.anyArray());
         }
         final var array = ctx.typedArrayType();
-        final var sequenceType = visitSequenceType(array.sequenceType());
-        return symbolManager.typeInContext(typeFactory.array(sequenceType.type));
+        final var sequenceType = array.sequenceType().accept(typeVisitor);
+        return symbolManager.typeInContext(typeFactory.array(sequenceType));
     }
 
     @Override
@@ -3501,9 +3503,9 @@ public class AntlrQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<Typ
         final Map<String, XQueryRecordField> fields = new HashMap<>(fieldDeclarations.size());
         for (final var field : fieldDeclarations) {
             final String fieldName = field.fieldName().getText();
-            final var fieldType = visitSequenceType(field.sequenceType());
+            final var fieldType = field.sequenceType().accept(typeVisitor);
             final boolean isRequired = field.QUESTION_MARK() != null;
-            final XQueryRecordField recordField = new XQueryRecordField(new TypeOrReference.Type(fieldType.type), isRequired);
+            final XQueryRecordField recordField = new XQueryRecordField(new TypeOrReference.Type(fieldType), isRequired);
             fields.put(fieldName, recordField);
         }
         if (record.extensibleFlag() == null) {

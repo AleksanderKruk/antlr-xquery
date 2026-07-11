@@ -26,6 +26,7 @@ import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.Sema
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.visitors.AntlrQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.visitors.CardinalityVisitor;
+import com.github.akruk.antlrxquery.semanticanalyzer.visitors.ItemTypeVisitor;
 import com.github.akruk.antlrxquery.semanticanalyzer.visitors.TypeVisitor;
 import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.MemoizedCardinalityFactory;
@@ -76,7 +77,7 @@ public class SemanticTestsBase {
                 Map.of(),
                 new AxisVisitor(),
                 memoizedFactory,
-                new TypeVisitor(typeFactory, new CardinalityVisitor(memoizedFactory))
+                new TypeVisitor(typeFactory, new CardinalityVisitor(memoizedFactory), new ItemTypeVisitor(typeFactory))
                 );
         final var lastVisitedType = analyzer.visit(xqueryTree);
         if (lastVisitedType == null) {

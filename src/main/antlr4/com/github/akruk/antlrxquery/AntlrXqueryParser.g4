@@ -402,10 +402,10 @@ cardinalityTerm
 
 sequenceTypeUnion: sequenceType (UNION_OP sequenceType)*;
 
-sequenceType: emptySequence
-              | itemType cardinality;
+sequenceType: EMPTY_SEQUENCE LPAREN RPAREN # emptySequenceType
+            | itemType cardinality # nonEmptySequenceType
+            ;
 
-emptySequence: EMPTY_SEQUENCE LPAREN RPAREN;
 
 itemType: anyItem
         | stringType

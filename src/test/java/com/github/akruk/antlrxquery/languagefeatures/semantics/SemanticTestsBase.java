@@ -106,7 +106,7 @@ public class SemanticTestsBase {
 
     protected void assertType(final AnalysisResult result, final AntlrQuerySequenceType expectedType) {
         assertNoErrors(result);
-        assertTrue(result.expressionType.equals(expectedType));
+        assertEquals(result.expressionType, expectedType);
     }
 
     protected void assertType(final String xquery, final AntlrQuerySequenceType expectedType) {

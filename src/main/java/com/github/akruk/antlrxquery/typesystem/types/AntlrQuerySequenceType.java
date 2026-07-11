@@ -41,7 +41,7 @@ public class AntlrQuerySequenceType {
             return false;
         if (!(obj instanceof final AntlrQuerySequenceType other))
             return false;
-        if (cardinality != other.cardinality)
+        if (!cardinality.equals(other.cardinality))
             return false;
         if (!isNullableEquals(this.itemType, other.itemType))
             return false;
@@ -147,10 +147,17 @@ public class AntlrQuerySequenceType {
 
 
     public AntlrQuerySequenceType alternativeMerge(final AntlrQuerySequenceType other) {
-        final XQueryItemType thisItemType = this.itemType != null ? this.itemType : typeFactory.itemAnyItem();
-        final XQueryItemType otherItemType = other.itemType != null ? other.itemType : typeFactory.itemAnyItem();
         final Cardinality mergedCardinality = Cardinalities.union(cardinality, other.cardinality);
-        final var mergedType = thisItemType.alternativeMerge(otherItemType);
+        final XQueryItemType mergedType;
+        if (this.itemType == null && other.itemType != null) {
+            mergedType = other.itemType;
+        } else if (other.itemType == null && this.itemType != null) {
+            mergedType = this.itemType;
+        } else {
+            final XQueryItemType thisItemType = this.itemType != null ? this.itemType : typeFactory.itemAnyItem();
+            final XQueryItemType otherItemType = other.itemType != null ? other.itemType : typeFactory.itemAnyItem();
+            mergedType = thisItemType.alternativeMerge(otherItemType);
+        }
         return typeFactory.sequence(mergedType, mergedCardinality);
     }
 
@@ -194,7 +201,7 @@ public class AntlrQuerySequenceType {
 
 
     public static AntlrQuerySequenceType emptySequence(final AntlrQueryTypeFactory typeFactory) {
-        return new AntlrQuerySequenceType(typeFactory, null, Cardinality.of());
+        return new AntlrQuerySequenceType(typeFactory, null, Cardinality.ZERO);
     }
 
 
@@ -215,7 +222,7 @@ public class AntlrQuerySequenceType {
         {
             sb.append(itemType);
         }
-        sb.append(Cardinalities.stringify(cardinality));
+        sb.append(Cardinalities.stringifyWithPrefix(cardinality));
         return sb.toString();
     }
 

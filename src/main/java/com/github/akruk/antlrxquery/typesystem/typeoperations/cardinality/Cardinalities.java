@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.StringJoiner;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.common.value.qual.MinLen;
 
 import com.github.akruk.antlrxquery.typesystem.types.Cardinality;
 import com.github.akruk.antlrxquery.typesystem.types.Cardinality.CardinalityValue;
@@ -52,8 +53,8 @@ public final class Cardinalities {
      * by performing a sweep over the merged event stream.
      */
     public static Cardinality union(final Cardinality... cardinalities) {
+        if (cardinalities.length == 1) return cardinalities[0];
         final List<Cardinality.Event> events = mergeAllEvents(cardinalities);
-        if (events.isEmpty()) return Cardinality.of();
 
         List<Cardinality.Event> out = new ArrayList<>();
 
@@ -85,11 +86,10 @@ public final class Cardinalities {
      * how many cardinalities currently cover the point. A point belongs to the
      * intersection iff coverage == number of non-null inputs.
      */
-    public static Cardinality intersection(final @NonNull Cardinality... cardinalities) {
-        if (cardinalities.length == 0) return Cardinality.of();
+    public static Cardinality intersection(final @NonNull @MinLen(1) Cardinality... cardinalities) {
+        if (cardinalities.length == 1) return cardinalities[0];
 
         final List<Cardinality.Event> events = mergeAllEvents(cardinalities);
-        if (events.isEmpty()) return Cardinality.of();
 
         final int required = (int) Arrays.stream(cardinalities).filter(c -> c != null).count();
         List<Cardinality.Event> out = new ArrayList<>();
@@ -253,7 +253,7 @@ public final class Cardinalities {
         final Event[] eventsB = b.events();
         
         if (eventsA.length == 0 || eventsB.length == 0) {
-            return Cardinality.of();
+            return Cardinality.ZERO;
         }
         
         final List<Event> resultEvents = new ArrayList<>();
@@ -341,7 +341,18 @@ public final class Cardinalities {
             }
             return sj.toString();
         }
-
+        
+        /**
+         * @param cardinality
+         * @return Stringifies cardinality with prefix "^" unless cardinality == 1
+         */
+        public static String stringifyWithPrefix(final @NonNull Cardinality cardinality) {
+            if (cardinality.isOne()) {
+                return "";
+            } else {
+                return "^" + stringify(cardinality);
+            }
+        }
 
         private static String stringifyCardinalityInterval(final @NonNull CardinalityInterval interval) {
             final String leftSideBound = switch (interval.lowerBound()) {
@@ -349,12 +360,12 @@ public final class Cardinalities {
                     throw new IllegalStateException("Positive infinity lower bound should not be possible for cardinality");
                 case final FiniteBound f -> {
                     long value = f.value().longValue();
-                    yield value == 0 ? "" : String.valueOf(value);
+                    yield String.valueOf(value);
                 }
             };
             final String rightSideBound = switch (interval.upperBound()) {
                 case final PositiveInfinity _ -> 
-                    "";
+                    "∞";
                 case final FiniteBound f -> 
                     String.valueOf(f.value().intValue());
             };

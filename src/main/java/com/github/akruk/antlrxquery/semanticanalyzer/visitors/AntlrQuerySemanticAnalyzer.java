@@ -117,21 +117,21 @@ public class AntlrQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<Typ
     protected final AntlrQuerySequenceType zeroOrMoreNumbers;
 
     public interface AnalysisListener {
-        default void onModuleDeclaration(ModuleInfo moduleInfo) {};
-        default void onModuleReference(QnameContext reference, ModuleInfo moduleInfo) {};
+        default void onModuleDeclaration(final ModuleInfo moduleInfo) {};
+        default void onModuleReference(final QnameContext reference, final ModuleInfo moduleInfo) {};
 
-        default void onVariableDeclaration(VariableInfo variableInfo){}
-        default void onVariableReference(VarRefContext varRef, VariableInfo variableInfo){}
+        default void onVariableDeclaration(final VariableInfo variableInfo){}
+        default void onVariableReference(final VarRefContext varRef, final VariableInfo variableInfo){}
 
-        default void onNamespaceDeclaration(NamespaceInfo namespaceInfo){}
-        default void onNamespaceReference(QnameContext reference, NamespaceInfo namespaceInfo){}
+        default void onNamespaceDeclaration(final NamespaceInfo namespaceInfo){}
+        default void onNamespaceReference(final QnameContext reference, final NamespaceInfo namespaceInfo){}
 
-        default void onFunctionDeclaration(FunctionInfo functionInfo){}
-        default void onFunctionNamedReference(NamedFunctionRefContext reference, FunctionInfo functionInfo){}
-        default void onFunctionCall(FunctionCallContext reference, FunctionInfo functionInfo){}
-        default void onConstructorCall(FunctionCallContext reference, RecordInfo recordInfo, FunctionInfo functionInfo){}
-        default void onFunctionArrowCall(ArrowExprContext reference, FunctionInfo functionInfo){}
-        default void onMethodCall(ArrowExprContext reference, RecordInfo recordInfo, FunctionInfo functionInfo){}
+        default void onFunctionDeclaration(final FunctionInfo functionInfo){}
+        default void onFunctionNamedReference(final NamedFunctionRefContext reference, final FunctionInfo functionInfo){}
+        default void onFunctionCall(final FunctionCallContext reference, final FunctionInfo functionInfo){}
+        default void onConstructorCall(final FunctionCallContext reference, final RecordInfo recordInfo, final FunctionInfo functionInfo){}
+        default void onFunctionArrowCall(final ArrowExprContext reference, final FunctionInfo functionInfo){}
+        default void onMethodCall(final ArrowExprContext reference, final RecordInfo recordInfo, final FunctionInfo functionInfo){}
         // TODO: partial function application renaming
 
         default void onNamedItemTypeDeclaration(){}
@@ -243,7 +243,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<Typ
         final String moduleNamespace = ctx.moduleDecl().qname().getText();
         registerUniqueNamespace(ctx.moduleDecl(), moduleNamespace, ErrorType.NAMESPACE_DECL__NAMESPACE_REDECLARATION);
         final ModuleInfo moduleInfo = new ModuleInfo(moduleNamespace, ctx.moduleDecl());
-        for (var listener : listeners) {
+        for (final var listener : listeners) {
             listener.onModuleDeclaration(moduleInfo);
         }
         handleDefaultNamespaceDeclarations(
@@ -254,7 +254,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<Typ
             "",
             "");
         for (final DefaultNamespaceDeclContext defaultDeclaration : p.defaultNamespaceDecl()) {
-            for (var listener : listeners) {
+            for (final var listener : listeners) {
                 if (defaultDeclaration.qname().getText().startsWith(moduleNamespace)) {
                     listener.onModuleReference(
                         defaultDeclaration.qname(),
@@ -899,7 +899,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<Typ
     }
 
     private void declareVariable(final TypeInContext type, final String varName, final VarNameContext varNameCtx) {
-        EntypingResult entypingresult = symbolManager.entypeVariable(
+        final EntypingResult entypingresult = symbolManager.entypeVariable(
             varName,
             varNameCtx,
             new Location(currentUri, getContextRange(varNameCtx)),
@@ -1254,12 +1254,6 @@ public class AntlrQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<Typ
 
     }
 
-    @Override
-    public TypeInContext visitSequenceType(final SequenceTypeContext ctx)
-    {
-        AntlrQuerySequenceType sequenceType = typeVisitor.visitSequenceType(ctx);
-        return symbolManager.typeInContext(sequenceType);
-    }
     
     @Override
     public TypeInContext visitCountClause(final CountClauseContext ctx)
@@ -3100,7 +3094,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<Typ
                             field.isRequired));
                 continue;
             }
-            TypeOrReference typeOrReference = resolveSequenceTypeOrReference(fieldTypeCtx);
+            final TypeOrReference typeOrReference = resolveSequenceTypeOrReference(fieldTypeCtx);
             fields.put(fieldName, new XQueryRecordField(typeOrReference, field.isRequired));
         }
         for (final var mandatoryArgSpec : recordSpecification.mandatoryFieldsAsArgs) {
@@ -3388,7 +3382,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<Typ
 
 
     @Override
-    public TypeInContext visitAnyItem(AnyItemContext ctx) {
+    public TypeInContext visitAnyItem(final AnyItemContext ctx) {
         return symbolManager.typeInContext(typeFactory.anyItem());
         
     }

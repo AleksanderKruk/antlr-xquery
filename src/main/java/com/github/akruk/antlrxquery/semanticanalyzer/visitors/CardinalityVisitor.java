@@ -43,7 +43,7 @@ public class CardinalityVisitor
 
 
     @Override
-    public Cardinality visitEmptySequence(EmptySequenceContext ctx) {
+    public Cardinality visitEmptySequenceType(EmptySequenceTypeContext ctx) {
         return cardinalityFactory.empty();
     }
 

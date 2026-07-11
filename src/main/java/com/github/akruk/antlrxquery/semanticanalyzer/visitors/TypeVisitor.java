@@ -1,9 +1,13 @@
 package com.github.akruk.antlrxquery.semanticanalyzer.visitors;
 
 import com.github.akruk.antlrxquery.AntlrXqueryParserBaseVisitor;
-import com.github.akruk.antlrxquery.AntlrXqueryParser.EmptySequenceContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.EmptySequenceTypeContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.NonEmptySequenceTypeContext;
+import com.github.akruk.antlrxquery.AntlrXqueryParser.SequenceTypeContext;
 import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
+import com.github.akruk.antlrxquery.typesystem.types.Cardinality;
+import com.github.akruk.antlrxquery.typesystem.types.XQueryItemType;
 
 public class TypeVisitor
     extends AntlrXqueryParserBaseVisitor<AntlrQuerySequenceType>
@@ -11,16 +15,30 @@ public class TypeVisitor
 
 
     private final AntlrQueryTypeFactory typeFactory;
-    private final CardinalityVisitor visitor;
+    private final CardinalityVisitor cardinalityVisitor;
+    private final ItemTypeVisitor itemTypeVisitor;
 
-    public TypeVisitor(AntlrQueryTypeFactory factory, CardinalityVisitor visitor) {
+    public TypeVisitor(
+        AntlrQueryTypeFactory factory, 
+        CardinalityVisitor cardinalityVisitor,
+        ItemTypeVisitor itemTypeVisitor
+    ) 
+    {
         this.typeFactory = factory;
-        this.visitor = visitor;
+        this.cardinalityVisitor = cardinalityVisitor;
+        this.itemTypeVisitor = itemTypeVisitor;
     }
 
     @Override
-    public AntlrQuerySequenceType visitEmptySequence(EmptySequenceContext ctx) {
+    public AntlrQuerySequenceType visitEmptySequenceType(EmptySequenceTypeContext ctx) {
         return typeFactory.emptySequence();
+    }
+
+    @Override
+    public AntlrQuerySequenceType visitNonEmptySequenceType(NonEmptySequenceTypeContext ctx) {
+        final XQueryItemType it = ctx.itemType().accept(itemTypeVisitor);
+        final Cardinality c = ctx.cardinality().accept(cardinalityVisitor);
+        return typeFactory.sequence(it, c);
     }
 
     // @Override

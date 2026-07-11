@@ -3,7 +3,6 @@ package com.github.akruk.antlrxquery.typesystem.types;
 import java.util.Set;
 import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.cardinality.Cardinalities;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.IsValueComparableWith;
 
 public class AntlrQuerySequenceType {
     public enum RelativeCoercability {
@@ -172,14 +171,13 @@ public class AntlrQuerySequenceType {
     }
 
 
-    private static final IsValueComparableWith occurenceIsValueComparable = new IsValueComparableWith();
 
     public boolean isValueComparableWith(final AntlrQuerySequenceType other) {
         if (cardinality.isZero() || other.cardinality.isZero())
         {
             return true;
         }
-        return (occurenceIsValueComparable.isValueComparableWith(cardinality, other.cardinality)
+        return (Cardinalities.isValueComparableWith(cardinality, other.cardinality)
                 && itemType.isValueComparableWith(other.itemType));
     }
 

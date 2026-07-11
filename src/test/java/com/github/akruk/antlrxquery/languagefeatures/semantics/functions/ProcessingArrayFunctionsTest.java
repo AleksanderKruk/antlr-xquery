@@ -260,7 +260,7 @@ public class ProcessingArrayFunctionsTest extends SemanticTestsBase {
     public void membersArray_valid() {
         assertType(
                 "array:members(array{1,2})",
-                typeFactory.zeroOrMore(typeFactory.itemRecord(Map.of("value", new XQueryRecordField(TypeOrReference.type(typeFactory.anyItem()), true)))));
+                typeFactory.zeroOrMore(typeFactory.itemRecord(Map.of("value", new XQueryRecordField(new TypeOrReference.Type(typeFactory.anyItem()), true)))));
     }
 
     @Test

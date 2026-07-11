@@ -1276,7 +1276,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<Typ
         if (!filteringExpressionType.type.hasEffectiveBooleanValue()) {
             error(filteringExpression, ErrorType.FILTERING__EXPR_NOT_EBV, List.of(filteringExpressionType));
         }
-        returnedCardinality = Cardinalities.addOptionality(returnedCardinality);
+        returnedCardinality = Cardinalities.optionalize(returnedCardinality);
         return null;
     }
 
@@ -1316,7 +1316,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<Typ
         if (!filteringExpressionType.type.hasEffectiveBooleanValue()) {
             error(filteringExpression, ErrorType.FILTERING__EXPR_NOT_EBV, List.of(filteringExpressionType));
         }
-        returnedCardinality = Cardinalities.addOptionality(returnedCardinality);
+        returnedCardinality = Cardinalities.optionalize(returnedCardinality);
         return null;
     }
     
@@ -3603,7 +3603,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<Typ
         if (isWildcard) {
             return typeFactory.zeroOrMore(targetValueItemtype);
         }
-        final AntlrQuerySequenceType result = typeFactory.sequence(targetValueItemtype, Cardinalities.addOptionality(keySpecifierType.type.cardinality));
+        final AntlrQuerySequenceType result = typeFactory.sequence(targetValueItemtype, Cardinalities.optionalize(keySpecifierType.type.cardinality));
         final AntlrQuerySequenceType expectedKeyItemtype = typeFactory.zeroOrMore(targetKeyItemType);
         if (!keySpecifierType.isSubtypeOf(expectedKeyItemtype)) {
             error(lookup, ErrorType.LOOKUP__MAP_INVALID_KEY, List.of(targetType, expectedKeyItemtype));

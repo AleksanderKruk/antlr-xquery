@@ -1,7 +1,6 @@
 package com.github.akruk.antlrxquery.typesystem.factories.defaults;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;

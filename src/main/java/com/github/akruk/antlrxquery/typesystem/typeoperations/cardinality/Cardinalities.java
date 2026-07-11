@@ -440,7 +440,14 @@ public final class Cardinalities {
         return Cardinality.of(events.toArray(Event[]::new));
     }
 
-    public static Cardinality addOptionality(Cardinality cardinality) {
+    public static Cardinality optionalize(Cardinality cardinality) {
+        // TODO: switch to 0..max(...)
         return Cardinalities.alternativeMerge(Cardinality.ZERO, cardinality);
+    }
+
+    public static boolean isValueComparableWith(Cardinality o1, Cardinality o2) {
+        final boolean validLeft = o1.isZero() || o1.isOne() || o1.isZeroOrOne();
+        final boolean validRight = o2.isZero() || o2.isOne() || o2.isZeroOrOne();
+        return validLeft && validRight;
     }
 }

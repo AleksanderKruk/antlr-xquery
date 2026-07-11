@@ -19,7 +19,6 @@ import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.Qualifie
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager;
 import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.cardinality.Cardinalities;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.BlockCardinalityMerger;
 import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.types.Cardinality;
 import com.github.akruk.antlrxquery.typesystem.types.XQueryItemType;
@@ -37,7 +36,6 @@ public class SequencetypePathOperator {
         this.typeFactory = typeFactory;
 		this.symbolManager = symbolManager;
         this.zeroOrMoreNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
-        blockCardinalityMerger = new BlockCardinalityMerger();
     }
 
     public enum GrammarStatus {
@@ -232,8 +230,6 @@ public class SequencetypePathOperator {
 
         return typeFactory.sequence(typeFactory.itemElement(names), result);
     }
-
-    final BlockCardinalityMerger blockCardinalityMerger;
 
     record AnalyzedAxisResult(
         Cardinality resultingCardinality,

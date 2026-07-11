@@ -56,23 +56,32 @@ public class SequencetypeCastable {
             return new IsCastableResult(anyItems, tested, null, null, null, null);
         }
         final var atomized = atomizer.atomize(tested);
-        return switch (atomized.cardinality) {
-            case ZERO -> new IsCastableResult(targetType, atomized, Castability.TESTED_EXPRESSION_IS_EMPTY_SEQUENCE, null, null, null);
-            case ZERO_OR_ONE -> {
-                if (!emptyAllowed) {
-                    yield new IsCastableResult(targetType, atomized, Castability.TESTED_EXPRESSION_CAN_BE_EMPTY_SEQUENCE_WITHOUT_FLAG, null, null, null);
-                }
-                yield handleCastable(atomized, targetType, typeFactory.zeroOrOne(atomized.itemType));
+        if (atomized.cardinality.isZero()) {
+            return new IsCastableResult(targetType, atomized, Castability.TESTED_EXPRESSION_IS_EMPTY_SEQUENCE, null, null, null);
+        }
+        if (atomized.cardinality.isZeroOrOne()) {
+            if (!emptyAllowed) {
+                return new IsCastableResult(targetType, atomized, Castability.TESTED_EXPRESSION_CAN_BE_EMPTY_SEQUENCE_WITHOUT_FLAG, null, null, null);
             }
-            case ONE -> handleCastable(atomized, targetType, typeFactory.one(atomized.itemType));
-            default -> new IsCastableResult(targetType, atomized, Castability.TESTED_EXPRESSION_IS_ZERO_OR_MORE, null, null, null);
-        };
+            return handleCastable(atomized, targetType, typeFactory.zeroOrOne(atomized.itemType));
+        }
+        if (atomized.cardinality.isOne()) {
+            return handleCastable(atomized, targetType, typeFactory.one(atomized.itemType));
+
+        }
+        return new IsCastableResult(
+            targetType, 
+            atomized, 
+            Castability.TESTED_EXPRESSION_IS_ZERO_OR_MORE, 
+            null, 
+            null, 
+            null);
     }
 
     IsCastableResult handleCastable(
-            AntlrQuerySequenceType atomized,
-            AntlrQuerySequenceType type,
-            AntlrQuerySequenceType result)
+            final AntlrQuerySequenceType atomized,
+            final AntlrQuerySequenceType type,
+            final AntlrQuerySequenceType result)
     {
         if (atomized.itemtypeIsSubtypeOf(atomized)) {
             return new IsCastableResult(result, atomized, Castability.ALWAYS_POSSIBLE_CASTING_TO_SUBTYPE, null, null, null);

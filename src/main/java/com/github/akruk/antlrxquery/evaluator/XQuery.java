@@ -28,7 +28,6 @@ import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQue
 import com.github.akruk.antlrxquery.semanticanalyzer.visitors.AntlrQuerySemanticAnalyzer;
 import com.github.akruk.antlrxquery.semanticanalyzer.visitors.CardinalityVisitor;
 import com.github.akruk.antlrxquery.semanticanalyzer.visitors.TypeVisitor;
-import com.github.akruk.antlrxquery.typesystem.factories.CardinalityFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.BaseCardinalityFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTypeSets;

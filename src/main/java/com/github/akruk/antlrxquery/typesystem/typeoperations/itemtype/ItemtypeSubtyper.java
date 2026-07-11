@@ -1,6 +1,7 @@
 
 package com.github.akruk.antlrxquery.typesystem.typeoperations.itemtype;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -8,6 +9,7 @@ import java.util.Map;
 import java.util.function.Predicate;
 import com.github.akruk.antlrxquery.typesystem.XQueryRecordField;
 import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.typeoperations.cardinality.Cardinalities;
 import com.github.akruk.antlrxquery.typesystem.types.XQueryItemType;
 import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
 import com.github.akruk.antlrxquery.typesystem.types.XQueryTypes;
@@ -126,7 +128,7 @@ public class ItemtypeSubtyper
                         return false;
                     final var onlyArg =  (AntlrQuerySequenceType) y_.argumentTypes.get(0);
                     final var onlyArgItem =  (XQueryItemType) onlyArg.itemType;
-                    final boolean correctOccurence = onlyArg.isOne;
+                    final boolean correctOccurence = onlyArg.cardinality.isOne();
                     return correctOccurence
                             && x_.mapKeyType.itemtypeIsSubtypeOf(onlyArgItem);
                 };
@@ -150,7 +152,7 @@ public class ItemtypeSubtyper
                         return false;
                     final var onlyArg =  (AntlrQuerySequenceType) argumentTypes.get(0);
                     final var onlyArgItem =  (XQueryItemType) onlyArg.itemType;
-                    final boolean correctOccurence = onlyArg.isOne || onlyArg.isOneOrMore;
+                    final boolean correctOccurence = !Cardinalities.contains(onlyArg.cardinality, BigDecimal.ZERO);
                     return correctOccurence
                             && onlyArgItem.type == XQueryTypes.NUMBER;
                 };
@@ -220,7 +222,7 @@ public class ItemtypeSubtyper
                     return false;
                 final var onlyArg = x.argumentTypes.get(0);
                 final var onlyArgItem =  onlyArg.itemType;
-                final boolean correctOccurence = onlyArg.isOne;
+                final boolean correctOccurence = onlyArg.cardinality.isOne();
                 return correctOccurence
                         && canBeKey[onlyArgItem.type.ordinal()];
             };
@@ -232,7 +234,7 @@ public class ItemtypeSubtyper
                 final var onlyArgItem =  (XQueryItemType) onlyArg.itemType;
                 final boolean argCanBeKey = onlyArgItem.itemtypeIsSubtypeOf(y.mapKeyType);
                 final boolean returnedCanBeValue = x.returnedType.isSubtypeOf(y.mapValueType);
-                final boolean correctOccurence = onlyArg.isOne;
+                final boolean correctOccurence = onlyArg.cardinality.isOne();
                 return correctOccurence
                         && argCanBeKey
                         && returnedCanBeValue;
@@ -245,8 +247,8 @@ public class ItemtypeSubtyper
                     return false;
                 final var onlyArg =  (AntlrQuerySequenceType) x.argumentTypes.get(0);
                 final var onlyArgItem =  (XQueryItemType) onlyArg.itemType;
-                // this one argument must be either number or number+
-                final boolean correctOccurence = onlyArg.isOne || onlyArg.isOneOrMore;
+                // this one argument must contain at least one number
+                final boolean correctOccurence = !Cardinalities.contains(onlyArg.cardinality, BigDecimal.ZERO);
                 return correctOccurence
                         && onlyArgItem.type == XQueryTypes.NUMBER;
             };

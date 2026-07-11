@@ -14,7 +14,7 @@ public class SequencetypeAtomization {
     }
 
     public AntlrQuerySequenceType atomize(AntlrQuerySequenceType type) {
-        if (type.isZero)
+        if (type.cardinality.isZero())
             return type;
         final XQueryItemType itemType = type.itemType;
         return switch(itemType.type) {

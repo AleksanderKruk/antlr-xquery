@@ -19,7 +19,10 @@ import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySeman
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.SemanticFunctionSets;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.visitors.AntlrQuerySemanticAnalyzer;
+import com.github.akruk.antlrxquery.semanticanalyzer.visitors.CardinalityVisitor;
+import com.github.akruk.antlrxquery.semanticanalyzer.visitors.TypeVisitor;
 import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.defaults.MemoizedCardinalityFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTypeSets;
 
@@ -124,18 +127,23 @@ public class XQueryRunner {
             final Path cwd = Path.of(System.getProperty("user.dir"));
             modulePaths.add(cwd);
             final var contextManager = new XQuerySemanticContextManager(typeFactory);
+            final MemoizedCardinalityFactory cardinalityFactory = new MemoizedCardinalityFactory();
+            final CardinalityVisitor cardinalityVisitor = new CardinalityVisitor(cardinalityFactory);
             final AntlrQuerySemanticAnalyzer analyzer = new AntlrQuerySemanticAnalyzer(
                     parserAndTree.parser,
                     typeFactory,
                     new XQueryMemoizedValueFactory(typeFactory),
                     new XQuerySemanticSymbolManager(typeFactory, contextManager, SemanticFunctionSets.ALL(typeFactory)),
-                    // TODO:
+                    // // TODO:
                     null,
                     new ModuleManager(modulePaths),
                     new GrammarManager(modulePaths),
                     typeFactory.anyNode(),
                     config.queryUri,
-                    Map.of()
+                    Map.of(),
+                    new AxisVisitor(),
+                    cardinalityFactory,
+                    new TypeVisitor(typeFactory, cardinalityVisitor)
                     );
             analyzer.visit(xqueryTree);
             final var querySemanticErrors = analyzer.getErrors();
@@ -196,6 +204,8 @@ public class XQueryRunner {
             final ModuleManager manager = new ModuleManager(modulePaths);
             final GrammarManager grammarManager = new GrammarManager(grammarPaths);
             final XQuerySemanticContextManager contextManager = new XQuerySemanticContextManager(typeFactory);
+            final MemoizedCardinalityFactory cardinalityFactory = new MemoizedCardinalityFactory();
+            final CardinalityVisitor cardinalityVisitor = new CardinalityVisitor(cardinalityFactory);
             final AntlrQuerySemanticAnalyzer analyzer = new AntlrQuerySemanticAnalyzer(
                 parserAndTree.parser,
                 typeFactory,
@@ -210,7 +220,10 @@ public class XQueryRunner {
                 grammarManager,
                 typeFactory.element(Set.of(startingRuleQname)),
                 null,
-                Map.of()
+                Map.of(),
+                new AxisVisitor(),
+                cardinalityFactory,
+                new TypeVisitor(typeFactory, cardinalityVisitor)
                 );
             final XQueryEvaluatorVisitor evaluator = new XQueryEvaluatorVisitor(
                 parserAndTree.tree,

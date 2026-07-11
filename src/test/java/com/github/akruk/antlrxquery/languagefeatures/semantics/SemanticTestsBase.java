@@ -16,6 +16,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 
 import com.github.akruk.antlrxquery.AntlrXqueryLexer;
 import com.github.akruk.antlrxquery.AntlrXqueryParser;
+import com.github.akruk.antlrxquery.AxisVisitor;
 import com.github.akruk.antlrxquery.evaluator.values.factories.defaults.XQueryMemoizedValueFactory;
 import com.github.akruk.antlrxquery.languageserver.DiagnosticMessageCreator;
 import com.github.akruk.antlrxquery.semanticanalyzer.GrammarManager;
@@ -24,7 +25,10 @@ import com.github.akruk.antlrxquery.semanticanalyzer.semanticcontext.XQuerySeman
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.SemanticFunctionSets;
 import com.github.akruk.antlrxquery.semanticanalyzer.semanticfunctioncaller.XQuerySemanticSymbolManager;
 import com.github.akruk.antlrxquery.semanticanalyzer.visitors.AntlrQuerySemanticAnalyzer;
+import com.github.akruk.antlrxquery.semanticanalyzer.visitors.CardinalityVisitor;
+import com.github.akruk.antlrxquery.semanticanalyzer.visitors.TypeVisitor;
 import com.github.akruk.antlrxquery.typesystem.factories.AntlrQueryTypeFactory;
+import com.github.akruk.antlrxquery.typesystem.factories.defaults.MemoizedCardinalityFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryMemoizedTypeFactory;
 import com.github.akruk.antlrxquery.typesystem.factories.defaults.XQueryNamedTypeSets;
 import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
@@ -58,6 +62,7 @@ public class SemanticTestsBase {
         final ParseTree xqueryTree = xqueryParser.xquery();
         final var contextManager = new XQuerySemanticContextManager(typeFactory);
         final XQuerySemanticSymbolManager caller = new XQuerySemanticSymbolManager(typeFactory, contextManager, SemanticFunctionSets.ALL(typeFactory));
+        final var memoizedFactory = new MemoizedCardinalityFactory();
         final AntlrQuerySemanticAnalyzer analyzer = new AntlrQuerySemanticAnalyzer(
                 null,
                 typeFactory,
@@ -68,7 +73,10 @@ public class SemanticTestsBase {
                 new GrammarManager(Set.of()),
                 typeFactory.anyNode(),
                 "",
-                Map.of()
+                Map.of(),
+                new AxisVisitor(),
+                memoizedFactory,
+                new TypeVisitor(typeFactory, new CardinalityVisitor(memoizedFactory))
                 );
         final var lastVisitedType = analyzer.visit(xqueryTree);
         if (lastVisitedType == null) {

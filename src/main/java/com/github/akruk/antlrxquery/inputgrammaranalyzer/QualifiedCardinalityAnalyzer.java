@@ -28,8 +28,6 @@ import com.github.akruk.antlrgrammar.ANTLRv4Parser.TerminalDefContext;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.WildcardContext;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.cardinality.Cardinalities;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.AlternativeCardinalityMerger;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.BlockCardinalityMerger;
 import com.github.akruk.antlrxquery.typesystem.types.Cardinality;
 
 
@@ -38,8 +36,6 @@ class QualifiedCardinalityAnalyzer
     extends ANTLRv4ParserBaseVisitor<Map<QualifiedName, Map<QualifiedName, Cardinality>>>
 {
     final Map<QualifiedName, Map<QualifiedName, Cardinality>> childrenMapping;
-    final AlternativeCardinalityMerger alternativeCardinalityMerger;
-    final BlockCardinalityMerger blockCardinalityMerger;
     final Set<QualifiedName> nodeNames;
 
     Map<QualifiedName, Map<QualifiedName, Cardinality>> currentMapping;
@@ -50,8 +46,6 @@ class QualifiedCardinalityAnalyzer
         this.nodeNames = nodeNames;
         this.addedNamespace = addedNamespace;
         this.childrenMapping = getMapping(nodeNames);
-        alternativeCardinalityMerger = new AlternativeCardinalityMerger();
-        blockCardinalityMerger = new BlockCardinalityMerger();
     }
 
 

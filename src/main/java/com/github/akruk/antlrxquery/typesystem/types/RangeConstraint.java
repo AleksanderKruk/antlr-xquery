@@ -17,40 +17,40 @@ import org.checkerframework.checker.nullness.qual.NonNull;
  * - O(n log n) canonicalization
  * - pure state-machine semantics
  */
-public final class Cardinality {
+public final class RangeConstraint {
 
     private final Event[] events;
 
     /**
-     * @param events The events need to be normalized before creation of cardinality e.g. {@link Cardinality#normalize(Event[])}
+     * @param events The events need to be normalized before creation of cardinality e.g. {@link RangeConstraint#normalize(Event[])}
      */
-    private Cardinality(Event[] events) {
+    private RangeConstraint(Event[] events) {
         this.events = events;
     }
 
-    private Cardinality() {
+    private RangeConstraint() {
         this.events = new Event[]{};
     }
 
-    public static Cardinality skipNormalization(Event[] events) {
-        return new Cardinality(events);
+    public static RangeConstraint skipNormalization(Event[] events) {
+        return new RangeConstraint(events);
     }
 
-    public static final Cardinality ZERO = new Cardinality();
+    public static final RangeConstraint ZERO = new RangeConstraint();
 
-    public static Cardinality of(@NonNull Interval... input) {
+    public static RangeConstraint of(@NonNull Interval... input) {
         if (input.length == 0) {
             return ZERO;
         } else {
-            return new Cardinality(normalize(input));
+            return new RangeConstraint(normalize(input));
         }
     }
 
-    public static Cardinality of(@NonNull Event... input) {
-        return new Cardinality(normalize(input));
+    public static RangeConstraint of(@NonNull Event... input) {
+        return new RangeConstraint(normalize(input));
     }
 
-    public static Cardinality of() {
+    public static RangeConstraint of() {
         return ZERO;
     }
     
@@ -70,7 +70,7 @@ public final class Cardinality {
     ) {}
 
     /**
-     * Helper record for easier inline Cardinality creation
+     * Helper record for easier inline RangeConstraint creation
      * @apiNote BoundValues cannot be null
      */
     public record Interval(
@@ -240,8 +240,8 @@ public final class Cardinality {
             extends Comparable<BoundValue>
             permits FiniteBound, NegativeInfinity, PositiveInfinity {
 
-        Cardinality.BoundValue NEGATIVE_INFINITY = new Cardinality.NegativeInfinity();
-        Cardinality.BoundValue POSITIVE_INFINITY = new Cardinality.PositiveInfinity();
+        RangeConstraint.BoundValue NEGATIVE_INFINITY = new RangeConstraint.NegativeInfinity();
+        RangeConstraint.BoundValue POSITIVE_INFINITY = new RangeConstraint.PositiveInfinity();
 
         int compareTo(BoundValue other);
     }

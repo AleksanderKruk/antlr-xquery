@@ -26,16 +26,12 @@ import com.github.akruk.antlrgrammar.ANTLRv4Parser.RulerefContext;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.TerminalDefContext;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.WildcardContext;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.cardinality.Cardinalities;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.AlternativeCardinalityMerger;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.BlockCardinalityMerger;
 import com.github.akruk.antlrxquery.typesystem.types.Cardinality;
 
 
 
 class CardinalityAnalyzer extends ANTLRv4ParserBaseVisitor<Map<String, Map<String, Cardinality>>> {
     final Map<String, Map<String, Cardinality>> childrenMapping;
-    final AlternativeCardinalityMerger alternativeCardinalityMerger;
-    final BlockCardinalityMerger blockCardinalityMerger;
     final Set<String> nodeNames;
 
     Map<String, Map<String, Cardinality>> currentMapping;
@@ -44,8 +40,6 @@ class CardinalityAnalyzer extends ANTLRv4ParserBaseVisitor<Map<String, Map<Strin
     public CardinalityAnalyzer(final Set<String> nodeNames, final ANTLRv4Parser antlrParser) {
         this.nodeNames = nodeNames;
         this.childrenMapping = getMapping(nodeNames);
-        alternativeCardinalityMerger = new AlternativeCardinalityMerger();
-        blockCardinalityMerger = new BlockCardinalityMerger();
     }
 
 

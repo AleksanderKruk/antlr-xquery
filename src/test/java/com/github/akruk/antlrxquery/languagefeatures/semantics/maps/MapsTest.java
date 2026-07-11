@@ -14,8 +14,8 @@ public class MapsTest extends SemanticTestsBase {
     {
         final var numToNum = typeFactory.map(typeFactory.itemNumber(), typeFactory.number());
         final var recordType = typeFactory.record(
-            Map.of("a", new XQueryRecordField(TypeOrReference.type(typeFactory.number()), true),
-                "b", new XQueryRecordField(TypeOrReference.type(typeFactory.number()), true)));
+            Map.of("a", new XQueryRecordField(new TypeOrReference.Type(typeFactory.number()), true),
+                "b", new XQueryRecordField(new TypeOrReference.Type(typeFactory.number()), true)));
 
         assertType("map { 1: 2, 3: 4 }", numToNum); // numeric keys -> map
         assertType("map { 'a': 1, 'b': 2 }", recordType); // string literal keys -> record

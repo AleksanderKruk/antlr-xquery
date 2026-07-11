@@ -24,7 +24,6 @@ import com.github.akruk.antlrgrammar.ANTLRv4Parser.TerminalDefContext;
 import com.github.akruk.antlrxquery.XQueryAxis;
 import com.github.akruk.antlrxquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrxquery.typesystem.typeoperations.cardinality.Cardinalities;
-import com.github.akruk.antlrxquery.typesystem.typeoperations.occurence.BlockCardinalityMerger;
 import com.github.akruk.antlrxquery.typesystem.types.Cardinality;
 
 public class InputGrammarAnalyzer {
@@ -588,7 +587,6 @@ public class InputGrammarAnalyzer {
         return parentMapping;
     }
 
-    final BlockCardinalityMerger blockCardinalityMerger = new BlockCardinalityMerger();
 
     // private Map<String, Map<String, Cardinality>>
     // getDescendantCardinalityMapping(final Map<String, Map<String,

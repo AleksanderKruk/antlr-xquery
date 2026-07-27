@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile default="true" name="Default" enabled="true" />
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="visitor" />
+      </profile>
+      <profile name="Annotation profile for antlrquery-implementation" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/com/google/auto/service/auto-service/1.1.1/auto-service-1.1.1.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/google/auto/service/auto-service-annotations/1.1.1/auto-service-annotations-1.1.1.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/google/auto/auto-common/1.2.1/auto-common-1.2.1.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/google/guava/guava/32.0.1-jre/guava-32.0.1-jre.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/google/guava/failureaccess/1.0.1/failureaccess-1.0.1.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/google/guava/listenablefuture/9999.0-empty-to-avoid-conflict-with-guava/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/google/errorprone/error_prone_annotations/2.18.0/error_prone_annotations-2.18.0.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/google/j2objc/j2objc-annotations/2.8/j2objc-annotations-2.8.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/checkerframework/checker/3.42.0/checker-3.42.0.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/checkerframework/checker-qual/3.42.0/checker-qual-3.42.0.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/checkerframework/checker-util/3.42.0/checker-util-3.42.0.jar" />
+          <entry name="$PROJECT_DIR$/visitor-processor/target/classes" />
+          <entry name="$PROJECT_DIR$/visitor/target/classes" />
+          <entry name="$MAVEN_REPOSITORY$/org/antlr/ST4/4.3.4/ST4-4.3.4.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/antlr/antlr-runtime/3.5.3/antlr-runtime-3.5.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/google/auto/service/auto-service-annotations/1.1.1/auto-service-annotations-1.1.1.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/checkerframework/checker-qual/3.42.0/checker-qual-3.42.0.jar" />
+          <entry name="$PROJECT_DIR$/visitor-processor/target/classes" />
+          <entry name="$PROJECT_DIR$/visitor/target/classes" />
+          <entry name="$MAVEN_REPOSITORY$/org/antlr/ST4/4.3.4/ST4-4.3.4.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/antlr/antlr-runtime/3.5.3/antlr-runtime-3.5.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/google/auto/service/auto-service-annotations/1.1.1/auto-service-annotations-1.1.1.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/checkerframework/checker-qual/3.42.0/checker-qual-3.42.0.jar" />
+        </processorPath>
+        <module name="antlrquery-implementation" />
+      </profile>
+      <profile name="Annotation profile for antlrquery-parent" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/com/google/auto/service/auto-service/1.1.1/auto-service-1.1.1.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/google/auto/service/auto-service-annotations/1.1.1/auto-service-annotations-1.1.1.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/google/auto/auto-common/1.2.1/auto-common-1.2.1.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/google/guava/guava/32.0.1-jre/guava-32.0.1-jre.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/google/guava/failureaccess/1.0.1/failureaccess-1.0.1.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/google/guava/listenablefuture/9999.0-empty-to-avoid-conflict-with-guava/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/checkerframework/checker-qual/3.33.0/checker-qual-3.33.0.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/google/errorprone/error_prone_annotations/2.18.0/error_prone_annotations-2.18.0.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/google/j2objc/j2objc-annotations/2.8/j2objc-annotations-2.8.jar" />
+        </processorPath>
+        <module name="visitor-processor" />
+      </profile>
+    </annotationProcessing>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="antlrquery-implementation" options="" />
+    </option>
+  </component>
+</project>

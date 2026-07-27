@@ -1,0 +1,50 @@
+{
+  "name": "antlrquery",
+  "displayName": "ANTLRQuery",
+  "description": "",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.103.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "main": "./src/extention.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "antlrquery",
+        "aliases": [
+          "ANTLRQuery",
+          "antlrquery"
+        ],
+        "extensions": [
+          ".antlrquery"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "antlrquery",
+        "scopeName": "source.antlrquery",
+        "path": "./syntaxes/antlrquery.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "extension.selectExtractionTarget",
+        "title": "AntlrQuery: Select value to extract"
+      }
+    ]
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.77.0"
+  },
+
+  "dependencies": {
+    "vscode": "^1.1.37",
+    "vscode-languageclient": "^8.0.0",
+    "minimist": ">=0.2.4"
+  }
+}

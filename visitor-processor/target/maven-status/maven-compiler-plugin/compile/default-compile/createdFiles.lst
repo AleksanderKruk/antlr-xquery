@@ -1,0 +1,12 @@
+com\github\akruk\visitorprocessor\VisitorProcessor.class
+com\github\akruk\visitorprocessor\VisitorProcessor$Success.class
+com\github\akruk\visitorprocessor\SwitchModel.class
+com\github\akruk\visitorprocessor\VisitorProcessor$1.class
+com\github\akruk\visitorprocessor\VisitorProcessor$VisitorSpec.class
+com\github\akruk\visitorprocessor\VisitorModel.class
+com\github\akruk\visitorprocessor\CaseModel.class
+com\github\akruk\visitorprocessor\ClassModel.class
+com\github\akruk\visitorprocessor\LeafModel.class
+com\github\akruk\visitorprocessor\VisitorProcessor$GenerationResult.class
+com\github\akruk\visitorprocessor\VisitorProcessor$GenerationFailure.class
+META-INF\services\javax.annotation.processing.Processor

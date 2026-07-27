@@ -1,0 +1,37 @@
+delimiters "$", "$"
+
+visitor(visitorClass) ::= <<
+package $visitorClass.packageName$;
+
+$visitorClass.allImportedNames:javaImport(); separator="\n"$
+
+$visitorClass.visibility$ $visitorClass.modifiers$ interface $visitorClass.className$<Returned> {
+    $visitorClass.dispatchers:dispatcher(); separator="\n\n"$
+    $visitorClass.leaves:leaf(); separator="\n\n"$
+}
+>>
+
+javaImport(classQualifiedName) ::= <<
+import $classQualifiedName$;
+>>
+
+variable(aClass) ::= <<
+$aClass.className$ $aClass.variableName$
+>>
+
+leaf(leaf) ::= <<
+Returned visit($leaf.visitedClasses:variable(); separator=", "$);
+>>
+
+dispatcher(dispatcher) ::= <<
+default Returned visit($dispatcher.parameters:variable(); separator=", "$) {
+    return switch ($dispatcher.variableToSwitchOn$) {
+        $dispatcher.cases:dispatcherCase(); separator="\n"$
+    };
+}
+>>
+
+dispatcherCase(caseModel) ::= <<
+case $caseModel.className$ $caseModel.variableName$
+    -> visit($caseModel.pathVariables; separator=", "$);
+>>

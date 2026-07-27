@@ -1,0 +1,352 @@
+package com.github.akruk.antlrxquery.evaluator.values;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+
+import org.antlr.v4.runtime.misc.Interval;
+import org.antlr.v4.runtime.tree.ParseTree;
+
+import com.github.akruk.antlrxquery.evaluator.values.operations.ValueEquality;
+import com.github.akruk.antlrxquery.typesystem.types.AntlrQuerySequenceType;
+
+public class XQueryValue {
+    public final XQueryValues valueType;
+    public final int valueTypeOrdinal;
+    public final AntlrQuerySequenceType type;
+    public final ParseTree node;
+    public final BigDecimal numericValue;
+    public final String stringValue;
+    public final XQueryFunction functionValue;
+    public final Boolean booleanValue;
+    public final List<XQueryValue> sequence;
+    public final List<XQueryValue> arrayMembers;
+    public final Map<XQueryValue, XQueryValue> mapEntries;
+
+    public final boolean isNode;
+    public final boolean isNumeric;
+    public final boolean isString;
+    public final boolean isFunction;
+    public final boolean isBoolean;
+    public final boolean isArray;
+    public final boolean isMap;
+    public final boolean isError;
+
+    public final boolean isEmptySequence;
+    public final int size;
+    public final XQueryError error;
+    public final String errorMessage;
+
+    private final int hashCode;
+    private final String toString;
+
+    @Override
+    public int hashCode() {
+        return hashCode;
+    }
+
+    public int hashCode_() {
+        return switch (valueType) {
+            case ERROR -> error.hashCode();
+            case ELEMENT -> node.hashCode();
+            case BOOLEAN -> booleanValue.hashCode();
+            case NUMBER -> numericValue.hashCode();
+            case STRING -> stringValue.hashCode();
+            case FUNCTION -> functionValue.hashCode();
+            case ARRAY -> arrayMembers.hashCode();
+            case MAP -> mapEntries.hashCode();
+            case EMPTY_SEQUENCE, SEQUENCE -> sequence.hashCode();
+            default -> throw new IllegalArgumentException("Unexpected value: " + valueType);
+        };
+    }
+
+
+    public static XQueryValue functionReference(XQueryFunction v, AntlrQuerySequenceType type) {
+        return new XQueryValue(
+            XQueryValues.FUNCTION,
+            type,
+            null,
+            null,
+            null,
+            null,
+            v,
+            null,
+            null,
+            null,
+            null,
+            null
+        );
+    }
+
+
+    public static XQueryValue boolean_(boolean v, AntlrQuerySequenceType type) {
+        return new XQueryValue(
+            XQueryValues.BOOLEAN,
+            type,
+            null,
+            null,
+            null,
+            v,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        );
+    }
+
+    public static XQueryValue string(String v, AntlrQuerySequenceType type) {
+        return new XQueryValue(
+            XQueryValues.STRING,
+            type,
+            null,
+            null,
+            v,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        );
+    }
+
+    public static XQueryValue number(BigDecimal v, AntlrQuerySequenceType type) {
+        return new XQueryValue(
+            XQueryValues.NUMBER,
+            type,
+            null,
+            v,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        );
+    }
+
+    public static XQueryValue number(int v, AntlrQuerySequenceType type) {
+        return new XQueryValue(
+            XQueryValues.NUMBER,
+            type,
+            null,
+            BigDecimal.valueOf(v),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        );
+    }
+
+    public static XQueryValue node(ParseTree node, AntlrQuerySequenceType type) {
+        return new XQueryValue(
+            XQueryValues.ELEMENT,
+            type,
+            node,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        );
+    }
+
+    public static XQueryValue sequence(List<XQueryValue> sequence, AntlrQuerySequenceType type) {
+        if (sequence.size() == 0) {
+            return emptySequence(type);
+        }
+        if (sequence.size() == 1) {
+            return sequence.get(0);
+        }
+        return new XQueryValue(
+            XQueryValues.SEQUENCE,
+            type,
+            null,
+            null,
+            null,
+            null,
+            null,
+            sequence,
+            null,
+            null,
+            null,
+            null
+        );
+    }
+
+    public static XQueryValue emptySequence(AntlrQuerySequenceType type) {
+        return new XQueryValue(
+            XQueryValues.EMPTY_SEQUENCE,
+            type,
+            null,
+            null,
+            null,
+            null,
+            null,
+            List.of(),
+            null,
+            null,
+            null,
+            null
+        );
+    }
+
+    public static XQueryValue array(List<XQueryValue> arrayMembers, AntlrQuerySequenceType type) {
+        return new XQueryValue(
+            XQueryValues.ARRAY,
+            type,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            arrayMembers,
+            null,
+            null,
+            null
+        );
+    }
+
+    public static XQueryValue map(Map<XQueryValue, XQueryValue> mapEntries, AntlrQuerySequenceType type) {
+        return new XQueryValue(
+            XQueryValues.MAP,
+            type,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            mapEntries,
+            null,
+            null
+        );
+    }
+
+    public static XQueryValue error(XQueryError error, String message, AntlrQuerySequenceType type) {
+        return new XQueryValue(
+            XQueryValues.ERROR,
+            type,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            error,
+            message
+        );
+    }
+
+    private XQueryValue(
+        XQueryValues valueType,
+        AntlrQuerySequenceType type,
+        ParseTree node,
+        BigDecimal numericValue,
+        String stringValue,
+        Boolean booleanValue,
+        XQueryFunction functionValue,
+        List<XQueryValue> sequence,
+        List<XQueryValue> arrayMembers,
+        Map<XQueryValue, XQueryValue> mapEntries,
+        XQueryError error,
+        String errorMessage)
+    {
+        this.valueType = valueType;
+        this.valueTypeOrdinal = valueType.ordinal();
+        this.type = type;
+        this.node = node;
+        this.numericValue = numericValue;
+        this.stringValue = stringValue;
+        this.booleanValue = booleanValue;
+        this.functionValue = functionValue;
+        this.error = error;
+        this.errorMessage = errorMessage;
+        this.arrayMembers = arrayMembers;
+        this.mapEntries = mapEntries;
+
+        this.sequence = sequence != null ? sequence : List.of(this);
+        this.size = this.sequence.size();
+
+        this.isEmptySequence = this.valueType == XQueryValues.EMPTY_SEQUENCE;
+        this.isNode = this.valueType == XQueryValues.ELEMENT;
+        this.isNumeric = this.valueType == XQueryValues.NUMBER;
+        this.isString = this.valueType == XQueryValues.STRING;
+        this.isFunction = this.valueType == XQueryValues.FUNCTION;
+        this.isBoolean = this.valueType == XQueryValues.BOOLEAN;
+        this.isArray = this.valueType == XQueryValues.ARRAY;
+        this.isMap = this.valueType == XQueryValues.MAP;
+        this.isError = this.valueType == XQueryValues.ERROR;
+        this.hashCode = hashCode_();
+        this.toString = toString_();
+    }
+
+    @Override
+    public String toString() {
+        return this.toString;
+    }
+
+    public String toString_() {
+        return switch(valueType) {
+            case ERROR -> "<Error:" + errorMessage + "/>";
+            case ARRAY -> "<Array:" + arrayMembers + "/>";
+            case BOOLEAN -> "<Boolean:" + booleanValue + "/>";
+            case ELEMENT -> {
+                final Interval sourceInterval = node.getSourceInterval();
+                final StringBuilder stringBuilder = new StringBuilder();
+                stringBuilder.append("<Node:");
+                stringBuilder.append(node.getClass().getSimpleName());
+                stringBuilder.append(":");
+                stringBuilder.append(sourceInterval.a);
+                stringBuilder.append(",");
+                stringBuilder.append(sourceInterval.b);
+                stringBuilder.append(":");
+                stringBuilder.append(node.getText());
+                stringBuilder.append("/>");
+                yield stringBuilder.toString();
+            }
+            case SEQUENCE -> "<Sequence:" + sequence + "/>";
+            case EMPTY_SEQUENCE -> "<EmptySequence/>";
+            case FUNCTION -> "<Function:" + functionValue + "/>";
+            case MAP -> "<Map:" + mapEntries + "/>";
+            case NUMBER -> "<Number:" + numericValue.toPlainString() + "/>";
+            case STRING -> "<String:\"" + stringValue + "\"/>";
+            default -> throw new IllegalArgumentException("Unexpected value: " + valueType);
+        };
+    }
+
+    ValueEquality equality = new ValueEquality();
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null || !(obj instanceof final XQueryValue other))
+            return false;
+        if (this.hashCode == other.hashCode)
+            return true;
+        if (this.valueType != other.valueType)
+            return false;
+        return equality.valueEquals(this, other);
+    }
+
+
+
+}

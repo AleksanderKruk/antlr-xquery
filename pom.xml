@@ -1,203 +1,55 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>com.github.akruk.antlrxquery</groupId>
-  <artifactId>antlrxquery</artifactId>
-  <version>1.0</version>
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>22</maven.compiler.source>
-    <maven.compiler.target>22</maven.compiler.target>
-    <antlr4.visitor>true</antlr4.visitor>
-    <junit.version>5.10.0</junit.version>
-    <maven.surefire.version>3.1.2</maven.surefire.version>
-  </properties>
-  <dependencies>
-    <dependency>
-      <groupId>org.antlr</groupId>
-      <artifactId>ST4</artifactId>
-      <version>4.3.4</version>
-    </dependency>
-    <dependency>
-      <groupId>org.antlr</groupId>
-      <artifactId>antlr4-runtime</artifactId>
-      <version>4.13.2</version>
-    </dependency>
-    <dependency>
-      <groupId>org.antlr</groupId>
-      <artifactId>antlr4</artifactId>
-      <version>4.13.2</version>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.lsp4j</groupId>
-      <artifactId>org.eclipse.lsp4j</artifactId>
-      <version>0.24.0</version>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter</artifactId>
-      <version>${junit.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.vintage</groupId>
-      <artifactId>junit-vintage-engine</artifactId>
-      <version>${junit.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
-      <version>5.5.0</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.assertj</groupId>
-      <artifactId>assertj-core</artifactId>
-      <version>3.24.2</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-        <groupId>org.checkerframework</groupId>
-        <artifactId>checker-qual</artifactId>
-        <version>3.42.0</version>
-    </dependency>
-  </dependencies>
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.antlr</groupId>
-        <artifactId>antlr4-maven-plugin</artifactId>
-        <version>4.13.2</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>antlr4</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>exec-maven-plugin</artifactId>
-          <configuration>
-              <mainClass>org.checkerframework.checker.nullness.NullnessChecker</mainClass>
-          </configuration>
-      </plugin>
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.11.0</version>
-        <configuration>
-          <source>22</source>
-          <target>22</target>
-        </configuration>
-      </plugin>
-      <!-- Uber-jar dla 'antlrxquery-tool' -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <version>3.7.1</version>
-        <executions>
-          <execution>
-            <id>antlrxquery-tool-jar</id>
-            <phase>package</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-            <configuration>
-              <appendAssemblyId>false</appendAssemblyId>
-              <finalName>antlrxquery-tool</finalName>
-              <archive>
-                <manifest>
-                  <mainClass>com.github.akruk.antlrxquery.XQueryRunner</mainClass>
-                </manifest>
-              </archive>
-              <descriptorRefs>
-                <descriptorRef>jar-with-dependencies</descriptorRef>
-              </descriptorRefs>
-              <includes>
-                <include>com/github/akruk/antlrxquery/tool/**</include>
-              </includes>
-            </configuration>
-          </execution>
-          <execution>
-            <id>antlrxquery-language-server-jar</id>
-            <phase>package</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-            <configuration>
-              <appendAssemblyId>false</appendAssemblyId>
-              <finalName>antlrxquery-language-server</finalName>
-              <archive>
-                <manifest>
-                  <mainClass>com.github.akruk.antlrxquery.languageserver.AntlrQueryLanguageServer</mainClass>
-                </manifest>
-              </archive>
-              <descriptorRefs>
-                <descriptorRef>jar-with-dependencies</descriptorRef>
-              </descriptorRefs>
-              <includes>
-                <include>com/github/akruk/antlrxquery/languageserver/**</include>
-              </includes>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>${maven.surefire.version}</version>
-        <configuration>
-          <includes>
-            <include>**/*Test.java</include>
-            <include>**/*Tests.java</include>
-          </includes>
-        </configuration>
-      </plugin>
-    <plugin>
-      <groupId>org.apache.maven.plugins</groupId>
-      <artifactId>maven-antrun-plugin</artifactId>
-      <version>3.1.0</version>
-      <executions>
-        <execution>
-          <?m2e execute onConfiguration?>
-          <id>cleanup-dot-antlr</id>
-          <phase>initialize</phase> <!-- Wykonuje się przed compile -->
-          <configuration>
-            <target>
-              <delete includeemptydirs="true" quiet="true">
-                <fileset dir="${basedir}" includes="**/.antlr/**"/>
-                <dirset dir="${basedir}" includes="**/.antlr"/>
-              </delete>
-            </target>
-          </configuration>
-          <goals>
-            <goal>run</goal>
-          </goals>
-        </execution>
-        <execution>
-          <id>copy-server-and-extension</id>
-          <phase>package</phase>
-          <configuration>
-            <target>
-              <!-- Copy newly compiled server to extention directory -->
-              <mkdir dir="antlrqueryextension/antlrquery/server"/>
-              <copy file="${project.build.directory}/antlrxquery-language-server.jar"
-                    tofile="antlrqueryextension/antlrquery/server/antlrxquery-language-server.jar"
-                    overwrite="true"/>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="
+           http://maven.apache.org/POM/4.0.0
+           https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-              <!-- Copy extension directory to local available extensions -->
-            <mkdir dir="${user.home}/.vscode/extensions/antlrquery"/>
-            <copy todir="${user.home}/.vscode/extensions/antlrquery" overwrite="true">
-              <fileset dir="antlrqueryextension/antlrquery"/>
-            </copy>
-            </target>
-          </configuration>
-          <goals>
-            <goal>run</goal>
-          </goals>
-        </execution>
-      </executions>
-    </plugin>
-    </plugins>
-  </build>
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.github.akruk</groupId>
+    <artifactId>antlrquery-parent</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+
+    <packaging>pom</packaging>
+
+
+    <modules>
+        <module>visitor</module>
+        <module>visitor-processor</module>
+        <module>antlrquery-implementation</module>
+    </modules>
+
+
+    <properties>
+        <maven.compiler.release>25</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <junit.version>5.12.2</junit.version>
+    </properties>
+
+
+    <build>
+        <pluginManagement>
+            <plugins>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.15.0</version>
+                    <configuration>
+                        <release>${maven.compiler.release}</release>
+                    </configuration>
+                </plugin>
+
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.5.2</version>
+                </plugin>
+
+            </plugins>
+        </pluginManagement>
+    </build>
+
 </project>

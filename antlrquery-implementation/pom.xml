@@ -195,7 +195,7 @@
                             <archive>
                                 <manifest>
                                     <mainClass>
-                                        com.github.akruk.antlrxquery.XQueryRunner
+                                        com.github.akruk.antlrquery.AntlrQueryRunner
                                     </mainClass>
                                 </manifest>
                             </archive>
@@ -225,7 +225,7 @@
                             <archive>
                                 <manifest>
                                     <mainClass>
-                                        com.github.akruk.antlrxquery.languageserver.AntlrQueryLanguageServer
+                                        com.github.akruk.antlrquery.languageserver.AntlrQueryLanguageServer
                                     </mainClass>
                                 </manifest>
                             </archive>

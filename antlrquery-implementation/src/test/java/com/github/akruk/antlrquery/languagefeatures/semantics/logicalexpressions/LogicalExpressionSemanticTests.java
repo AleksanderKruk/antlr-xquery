@@ -1,0 +1,30 @@
+package com.github.akruk.antlrquery.languagefeatures.semantics.logicalexpressions;
+
+import org.junit.jupiter.api.Test;
+
+import com.github.akruk.antlrquery.languagefeatures.semantics.SemanticTestsBase;
+
+public class LogicalExpressionSemanticTests extends SemanticTestsBase {
+    @Test
+    public void orExpressions() {
+        assertType("true() or false() or true()", typeFactory.boolean_());
+        assertType("1 or false() or true()", typeFactory.boolean_());
+    }
+
+    @Test
+    public void andExpressions() {
+        assertType("true() and false() and true()", typeFactory.boolean_());
+        assertType("1 and false() and true()", typeFactory.boolean_());
+    }
+
+    @Test
+    public void notExpression() {
+        assertType("not(true())", typeFactory.boolean_());
+        assertType("not(4)", typeFactory.boolean_());
+        assertType("fn:not(true())", typeFactory.boolean_());
+        assertType("fn:not(4)", typeFactory.boolean_());
+        assertErrors("fn:not()");
+        assertErrors("fn:not(1, 2)");
+    }
+
+}

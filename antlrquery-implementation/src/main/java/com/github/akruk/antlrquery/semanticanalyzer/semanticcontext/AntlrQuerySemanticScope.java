@@ -234,6 +234,7 @@ public class AntlrQuerySemanticScope {
 
     public TypeInContext typeInContext(AntlrQuerySequenceType type)
     {
+        assert type != null;
         var tic = new TypeInContext(typeFactory, type, context, this);
         scopedTypes.add(tic);
         var ebvType = Types.effectiveBooleanValueType(typeFactory, type);

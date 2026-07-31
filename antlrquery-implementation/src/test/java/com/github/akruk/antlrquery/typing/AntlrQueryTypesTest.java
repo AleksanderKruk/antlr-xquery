@@ -83,7 +83,7 @@ public class AntlrQueryTypesTest {
 
     @Test
     public void stringDirectEquality() {
-        assertEquals(string, string);
+        assertEquals(typeFactory.string(), typeFactory.string());
         assertNotEquals(string, number);
         assertNotEquals(string, emptySequence);
         assertNotEquals(string, stringSequenceOneOrMore);
@@ -457,11 +457,12 @@ public class AntlrQueryTypesTest {
 
         assertTrue(ItemTypes.isSubtype(typeFactory, tested, itemAnyFunction));
         assertFalse(ItemTypes.isSubtype(typeFactory, tested, typeFactory.itemFunction(typeFactory.anyItem(), List.of())));
-        assertTrue(ItemTypes.isSubtype(typeFactory, tested, typeFactory.itemFunction(typeFactory.anyItem(), List.of(typeFactory.number(NumericRange.FULL)))));
-        assertTrue(ItemTypes.isSubtype(typeFactory, tested, typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.number(NumericRange.FULL)))));
-        assertTrue(ItemTypes.isSubtype(typeFactory, tested, typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.oneOrMore(itemNumber)))));
-        assertFalse(ItemTypes.isSubtype(typeFactory, tested, typeFactory.itemFunction(typeFactory.number(NumericRange.FULL), List.of(typeFactory.number(NumericRange.FULL)))));
-        assertFalse(ItemTypes.isSubtype(typeFactory, tested, typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.number(NumericRange.FULL), typeFactory.number(NumericRange.FULL)))));
+        assertTrue(ItemTypes.isSubtype(typeFactory, tested, typeFactory.itemFunction(typeFactory.anyItem(), List.of(typeFactory.number(NumericRange.NON_NEGATIVE)))));
+        assertTrue(ItemTypes.isSubtype(typeFactory, tested, typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.number(NumericRange.NON_NEGATIVE)))));
+        assertFalse(ItemTypes.isSubtype(typeFactory, tested, typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.number(NumericRange.FULL)))));
+        assertTrue(ItemTypes.isSubtype(typeFactory, tested, typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.oneOrMore(itemNonNegativeNumber)))));
+        assertFalse(ItemTypes.isSubtype(typeFactory, tested, typeFactory.itemFunction(typeFactory.number(NumericRange.NON_NEGATIVE), List.of(typeFactory.number(NumericRange.FULL)))));
+        assertFalse(ItemTypes.isSubtype(typeFactory, tested, typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.number(NumericRange.NON_NEGATIVE), typeFactory.number(NumericRange.FULL)))));
 
         assertFalse(ItemTypes.isSubtype(typeFactory, tested, itemRecordAny));
         assertFalse(ItemTypes.isSubtype(typeFactory, tested, itemRecordString));
@@ -888,41 +889,41 @@ public class AntlrQueryTypesTest {
     }
 
     @Test
-    public void exceptNodeMerging() {
+    public void nodeRemoveMerging() {
         final var empty = typeFactory.emptySequence();
         final var node = typeFactory.anyNode();
         final var nodeZeroOrOne = typeFactory.zeroOrOne(typeFactory.itemAnyNode());
         final var nodeZeroOrMore = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
         final var nodeOneOrMore = typeFactory.oneOrMore(typeFactory.itemAnyNode());
 
-        final var $00           = Types.subtract(typeFactory, empty, empty);
-        final var $01           = Types.subtract(typeFactory, empty, node);
-        final var $0_zeroOrOne  = Types.subtract(typeFactory, empty, nodeZeroOrOne);
-        final var $0_zeroOrMore = Types.subtract(typeFactory, empty, nodeZeroOrMore);
-        final var $0_oneOrMore  = Types.subtract(typeFactory, empty, nodeOneOrMore);
+        final var $00           = Types.remove(typeFactory, empty, empty);
+        final var $01           = Types.remove(typeFactory, empty, node);
+        final var $0_zeroOrOne  = Types.remove(typeFactory, empty, nodeZeroOrOne);
+        final var $0_zeroOrMore = Types.remove(typeFactory, empty, nodeZeroOrMore);
+        final var $0_oneOrMore  = Types.remove(typeFactory, empty, nodeOneOrMore);
         assertEquals($00, empty);
         assertEquals($01, empty);
         assertEquals($0_zeroOrOne, empty);
         assertEquals($0_zeroOrMore, empty);
         assertEquals($0_oneOrMore, empty);
 
-        final var $10 = Types.subtract(typeFactory, node, empty);
+        final var $10 = Types.remove(typeFactory, node, empty);
         assertEquals($10, node);
-        final var $11 = Types.subtract(typeFactory, node, node);
+        final var $11 = Types.remove(typeFactory, node, node);
         assertEquals(nodeZeroOrOne, $11);
-        final var $1_zeroOrOne = Types.subtract(typeFactory, node, nodeZeroOrOne);
+        final var $1_zeroOrOne = Types.remove(typeFactory, node, nodeZeroOrOne);
         assertEquals(nodeZeroOrOne, $1_zeroOrOne);
-        final var $1_zeroOrMore = Types.subtract(typeFactory, node, nodeZeroOrMore);
+        final var $1_zeroOrMore = Types.remove(typeFactory, node, nodeZeroOrMore);
         assertEquals(nodeZeroOrOne, $1_zeroOrMore);
-        final var $1_oneOrMore = Types.subtract(typeFactory, node, nodeOneOrMore);
+        final var $1_oneOrMore = Types.remove(typeFactory, node, nodeOneOrMore);
         assertEquals(nodeZeroOrOne, $1_oneOrMore);
 
 
-        final var $zeroOrOne_0 = Types.subtract(typeFactory, nodeZeroOrOne, empty);
-        final var $zeroOrOne_1 = Types.subtract(typeFactory, nodeZeroOrOne, node);
-        final var $zeroOrOne_zeroOrOne = Types.subtract(typeFactory, nodeZeroOrOne, nodeZeroOrOne);
-        final var $zeroOrOne_zeroOrMore = Types.subtract(typeFactory, nodeZeroOrOne, nodeZeroOrMore);
-        final var $zeroOrOne_oneOrMore = Types.subtract(typeFactory, nodeZeroOrOne, nodeOneOrMore);
+        final var $zeroOrOne_0 = Types.remove(typeFactory, nodeZeroOrOne, empty);
+        final var $zeroOrOne_1 = Types.remove(typeFactory, nodeZeroOrOne, node);
+        final var $zeroOrOne_zeroOrOne = Types.remove(typeFactory, nodeZeroOrOne, nodeZeroOrOne);
+        final var $zeroOrOne_zeroOrMore = Types.remove(typeFactory, nodeZeroOrOne, nodeZeroOrMore);
+        final var $zeroOrOne_oneOrMore = Types.remove(typeFactory, nodeZeroOrOne, nodeOneOrMore);
 
         assertEquals($zeroOrOne_0, nodeZeroOrOne);
         assertEquals($zeroOrOne_1, nodeZeroOrOne);
@@ -930,11 +931,11 @@ public class AntlrQueryTypesTest {
         assertEquals($zeroOrOne_zeroOrMore, nodeZeroOrOne);
         assertEquals($zeroOrOne_oneOrMore, nodeZeroOrOne);
 
-        final var $zeroOrMore_0 = Types.subtract(typeFactory, nodeZeroOrMore, empty);
-        final var $zeroOrMore_1 = Types.subtract(typeFactory, nodeZeroOrMore, node);
-        final var $zeroOrMore_zeroOrOne = Types.subtract(typeFactory, nodeZeroOrMore, nodeZeroOrOne);
-        final var $zeroOrMore_zeroOrMore = Types.subtract(typeFactory, nodeZeroOrMore, nodeZeroOrMore);
-        final var $zeroOrMore_oneOrMore = Types.subtract(typeFactory, nodeZeroOrMore, nodeOneOrMore);
+        final var $zeroOrMore_0 = Types.remove(typeFactory, nodeZeroOrMore, empty);
+        final var $zeroOrMore_1 = Types.remove(typeFactory, nodeZeroOrMore, node);
+        final var $zeroOrMore_zeroOrOne = Types.remove(typeFactory, nodeZeroOrMore, nodeZeroOrOne);
+        final var $zeroOrMore_zeroOrMore = Types.remove(typeFactory, nodeZeroOrMore, nodeZeroOrMore);
+        final var $zeroOrMore_oneOrMore = Types.remove(typeFactory, nodeZeroOrMore, nodeOneOrMore);
 
         assertEquals($zeroOrMore_0, nodeZeroOrMore);
         assertEquals($zeroOrMore_1, nodeZeroOrMore);
@@ -942,11 +943,11 @@ public class AntlrQueryTypesTest {
         assertEquals($zeroOrMore_zeroOrMore, nodeZeroOrMore);
         assertEquals($zeroOrMore_oneOrMore, nodeZeroOrMore);
 
-        final var $oneOrMore_0 = Types.subtract(typeFactory, nodeOneOrMore, empty);
-        final var $oneOrMore_1 = Types.subtract(typeFactory, nodeOneOrMore, node);
-        final var $oneOrMore_zeroOrOne = Types.subtract(typeFactory, nodeOneOrMore, nodeZeroOrOne);
-        final var $oneOrMore_zeroOrMore = Types.subtract(typeFactory, nodeOneOrMore, nodeZeroOrMore);
-        final var $oneOrMore_oneOrMore = Types.subtract(typeFactory, nodeOneOrMore, nodeOneOrMore);
+        final var $oneOrMore_0 = Types.remove(typeFactory, nodeOneOrMore, empty);
+        final var $oneOrMore_1 = Types.remove(typeFactory, nodeOneOrMore, node);
+        final var $oneOrMore_zeroOrOne = Types.remove(typeFactory, nodeOneOrMore, nodeZeroOrOne);
+        final var $oneOrMore_zeroOrMore = Types.remove(typeFactory, nodeOneOrMore, nodeZeroOrMore);
+        final var $oneOrMore_oneOrMore = Types.remove(typeFactory, nodeOneOrMore, nodeOneOrMore);
 
         assertEquals($oneOrMore_0, nodeOneOrMore);
         assertEquals($oneOrMore_1, nodeZeroOrMore);
@@ -962,7 +963,7 @@ public class AntlrQueryTypesTest {
         final QualifiedName bar = new QualifiedName("", "bar");
         final var elementBar = typeFactory.element("", Set.of(bar));
 
-        final var merged$elements = Types.subtract(typeFactory, elementFoo, elementBar);
+        final var merged$elements = Types.remove(typeFactory, elementFoo, elementBar);
         assertEquals(
             merged$elements,
             typeFactory.zeroOrOne(
@@ -970,7 +971,7 @@ public class AntlrQueryTypesTest {
             )
         );
 
-        final var merged$any = Types.subtract(typeFactory, elementFoo, anyNode);
+        final var merged$any = Types.remove(typeFactory, elementFoo, anyNode);
         assertEquals(
             merged$any,
             typeFactory.zeroOrOne(
@@ -978,7 +979,7 @@ public class AntlrQueryTypesTest {
             )
         );
 
-        final var merged$any2 = Types.subtract(typeFactory, anyNode, elementFoo);
+        final var merged$any2 = Types.remove(typeFactory, anyNode, elementFoo);
         assertEquals(
             merged$any2,
             typeFactory.zeroOrOne(

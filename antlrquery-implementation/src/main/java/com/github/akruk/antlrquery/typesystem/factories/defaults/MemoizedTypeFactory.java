@@ -36,23 +36,14 @@ public class MemoizedTypeFactory implements AntlrQueryTypeFactory {
     private static final AntlrQuerySequenceType SEQ_BOOLEAN = new AntlrQuerySequenceType.NonEmptySequence(ITEM_BOOLEAN, Cardinality.ONE);
     private static final AntlrQuerySequenceType SEQ_ANY_ITEM = new AntlrQuerySequenceType.NonEmptySequence(ITEM_ANY_ITEM, Cardinality.ONE);
 
-    private record SequenceKey(AntlrQueryItemType itemType, Cardinality cardinality) {}
-    private record MapKey(AntlrQueryItemType keyType, AntlrQuerySequenceType valueType) {}
-    private record ArrayKey(AntlrQuerySequenceType memberType, Cardinality arrayCardinality) {}
     private record TreeNodeKey(String grammar, Set<NamespaceResolver.QualifiedName> names) {}
-    private record FunctionKey(AntlrQuerySequenceType returnType, List<AntlrQuerySequenceType> argumentTypes) {}
 
-    private final Map<SequenceKey, AntlrQuerySequenceType> sequenceCache = new ConcurrentHashMap<>();
-    private final Map<MapKey, AntlrQueryItemType> mapCache = new ConcurrentHashMap<>();
-    private final Map<ArrayKey, AntlrQueryItemType> arrayCache = new ConcurrentHashMap<>();
-    private final Map<List<AntlrQuerySequenceType>, AntlrQueryItemType> tupleCache = new ConcurrentHashMap<>();
     private final Map<Set<String>, AntlrQueryItemType> enumCache = new ConcurrentHashMap<>();
     private final Map<NumericRange, AntlrQueryItemType> numberRangeCache = new ConcurrentHashMap<>();
     private final Map<Cardinality, AntlrQueryItemType> stringLengthCache = new ConcurrentHashMap<>();
     private final Map<TreeNodeKey, AntlrQueryItemType> elementCache = new ConcurrentHashMap<>();
     private final Map<TreeNodeKey, AntlrQueryItemType> tokenCache = new ConcurrentHashMap<>();
     private final Map<TreeNodeKey, AntlrQueryItemType> ruleCache = new ConcurrentHashMap<>();
-    private final Map<FunctionKey, AntlrQueryItemType> functionCache = new ConcurrentHashMap<>();
     private final Map<Set<ConcreteItemType>, AntlrQueryItemType> choiceCache = new ConcurrentHashMap<>();
 
     private final Map<String, Map<String, AntlrQueryItemType>> namedTypes;
@@ -253,18 +244,17 @@ public class MemoizedTypeFactory implements AntlrQueryTypeFactory {
 
     @Override
     public AntlrQueryItemType itemMap(AntlrQueryItemType keyType, AntlrQuerySequenceType valueType) {
-        return mapCache.computeIfAbsent(new MapKey(keyType, valueType), k -> new MapLikeType.MapType(k.keyType(), k.valueType()));
+        return new MapLikeType.MapType(keyType, valueType);
     }
 
     @Override
     public AntlrQueryItemType itemArray(AntlrQuerySequenceType itemType, Cardinality c) {
-        return arrayCache.computeIfAbsent(new ArrayKey(itemType, c), k -> new ArrayLikeType.ArrayType(k.memberType, k.arrayCardinality));
+        return new ArrayLikeType.ArrayType(itemType, c);
     }
 
     @Override
     public AntlrQueryItemType itemTuple(List<AntlrQuerySequenceType> mergedElements) {
-        return tupleCache.computeIfAbsent(List.copyOf(mergedElements),
-                elements -> new ArrayLikeType.TupleType(elements.toArray(AntlrQuerySequenceType[]::new)));
+        return new ArrayLikeType.TupleType(mergedElements.toArray(AntlrQuerySequenceType[]::new));
     }
 
     @Override
@@ -284,10 +274,7 @@ public class MemoizedTypeFactory implements AntlrQueryTypeFactory {
 
     @Override
     public AntlrQueryItemType itemFunction(AntlrQuerySequenceType returnType, List<AntlrQuerySequenceType> argumentTypes) {
-        return functionCache.computeIfAbsent(
-                new FunctionKey(returnType, List.copyOf(argumentTypes)),
-                k -> new FunctionType.ConstrainedFunction(k.argumentTypes(), k.returnType())
-        );
+        return new FunctionType.ConstrainedFunction(argumentTypes, returnType);
     }
 
     @Override
@@ -511,9 +498,6 @@ public class MemoizedTypeFactory implements AntlrQueryTypeFactory {
         if (cardinality.equals(Cardinality.ZERO) || itemType instanceof NothingType) {
             return EMPTY_SEQUENCE;
         }
-        return sequenceCache.computeIfAbsent(
-                new SequenceKey(itemType, cardinality),
-                k -> new AntlrQuerySequenceType.NonEmptySequence(k.itemType(), k.cardinality())
-        );
+        return new AntlrQuerySequenceType.NonEmptySequence(itemType, cardinality);
     }
 }

@@ -4,6 +4,7 @@ import java.util.*;
 
 import com.github.akruk.antlrquery.typesystem.RecordField;
 import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Ranges;
+import com.github.akruk.antlrquery.typesystem.typeoperations.itemtype.ItemTypeIntersection;
 import com.github.akruk.antlrquery.typesystem.typeoperations.itemtype.ItemTypeIsSubtype;
 import com.github.akruk.antlrquery.typesystem.typeoperations.itemtype.ItemTypeSubtract;
 import com.github.akruk.antlrquery.typesystem.typeoperations.itemtype.ItemTypeUnion;
@@ -236,7 +237,10 @@ public final class Types {
     public static AntlrQuerySequenceType optionalize(
         final AntlrQueryTypeFactory typeFactory, final AntlrQuerySequenceType sequence)
     {
-        Cardinality optionalizedCardinality = Cardinalities.optionalize(sequence.cardinality());
+        @Nullable Cardinality optionalizedCardinality = Cardinalities.optionalize(sequence.cardinality());
+        if (optionalizedCardinality == null) {
+            return typeFactory.neverType();
+        }
         return typeFactory.sequence(sequence.itemType(), optionalizedCardinality);
     }
 
@@ -339,6 +343,9 @@ public final class Types {
             return typeFactory.emptySequence();
         }
 
+        if (optionalized == null) {
+            return typeFactory.neverType();
+        }
         return typeFactory.sequence(mergedItemType, optionalized);
     }
 
@@ -352,16 +359,46 @@ public final class Types {
             return types[0];
         var merger = new ItemTypeSubtract(typeFactory);
         AntlrQueryItemType it = Arrays.stream(types).map(AntlrQuerySequenceType::itemType).reduce(merger::subtract).get();
-        Cardinality mergeOfSubtractedCardinalities = Arrays.stream(types).skip(1).map(AntlrQuerySequenceType::cardinality).reduce(Cardinalities::union).get();
-        @Nullable Cardinality optionalizationOfSubtractedCardinalities = Cardinalities.optionalize(mergeOfSubtractedCardinalities);
-        if (optionalizationOfSubtractedCardinalities == null) {
-            return typeFactory.neverType();
-        }
-        @Nullable Cardinality resultingCardinality = Cardinalities.remove(types[0].cardinality(), optionalizationOfSubtractedCardinalities);
+        Cardinality mergeOfSubtractedCardinalities = Arrays.stream(types)
+                .skip(1)
+                .map(AntlrQuerySequenceType::cardinality)
+                .reduce(Cardinalities::union)
+                .get();
+        @Nullable Cardinality resultingCardinality = Cardinalities.subtract(types[0].cardinality(), mergeOfSubtractedCardinalities);
         if (resultingCardinality == null) {
             return typeFactory.neverType();
         }
         return typeFactory.sequence(it, resultingCardinality);
+    }
+
+    public static AntlrQuerySequenceType remove(
+            AntlrQueryTypeFactory typeFactory,
+            AntlrQuerySequenceType@ArrayLenRange(from = 1)... types)
+    {
+        assert types.length > 0;
+        AntlrQuerySequenceType target = types[0];
+        if (types.length == 1)
+            return target;
+
+        var removedTypes =
+                Arrays.stream(types).skip(1).map(AntlrQuerySequenceType::itemType).toArray(AntlrQueryItemType[]::new);
+        var removedTypeUnion = ItemTypes.union(typeFactory, removedTypes);
+        @Nullable AntlrQueryItemType itemTypeIntersection = ItemTypes.intersection(typeFactory, target.itemType(), removedTypeUnion);
+        if (itemTypeIntersection == null) {
+            return target;
+        }
+        Cardinality mergeOfSubtractedCardinalities = Cardinalities.union(
+                Arrays.stream(types).skip(1).map(AntlrQuerySequenceType::cardinality).toArray(Cardinality[]::new)
+        );
+        @Nullable Cardinality optionalizationOfSubtractedCardinalities = Cardinalities.optionalize(mergeOfSubtractedCardinalities);
+        if (optionalizationOfSubtractedCardinalities == null) {
+            return target;
+        }
+        @Nullable Cardinality resultingCardinality = Cardinalities.remove(target.cardinality(), optionalizationOfSubtractedCardinalities);
+        if (resultingCardinality == null) {
+            return typeFactory.neverType();
+        }
+        return typeFactory.sequence(target.itemType(), resultingCardinality);
     }
 
 

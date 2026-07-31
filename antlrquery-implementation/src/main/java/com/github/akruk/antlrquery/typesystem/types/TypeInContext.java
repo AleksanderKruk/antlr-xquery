@@ -4,7 +4,10 @@ import com.github.akruk.antlrquery.semanticanalyzer.semanticcontext.AntlrQuerySe
 import com.github.akruk.antlrquery.semanticanalyzer.semanticcontext.AntlrQuerySemanticScope;
 import com.github.akruk.antlrquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrquery.typesystem.typeoperations.Types;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.framework.qual.DefaultQualifier;
 
+@DefaultQualifier(NonNull.class)
 public class TypeInContext {
     private final AntlrQueryTypeFactory typeFactory;
     public AntlrQuerySequenceType type;

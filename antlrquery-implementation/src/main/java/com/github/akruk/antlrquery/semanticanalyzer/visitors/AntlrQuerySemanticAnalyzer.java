@@ -67,7 +67,7 @@ import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 
 @DefaultQualifier(NonNull.class)
-public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<TypeInContext>
+public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nullable TypeInContext>
 {
     private final List<DiagnosticError> errors;
     private final List<DiagnosticWarning> warnings;
@@ -858,11 +858,11 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<Type
         if (varNameAndType.typeDeclaration() == null) {
             declareVariable(assignedValue, variableName, varNameAndType.varName());
         } else {
-            final TypeInContext type = varNameAndType.typeDeclaration().accept(this);
+            final AntlrQuerySequenceType type = varNameAndType.typeDeclaration().accept(typeVisitor);
             if (!assignedValue.isSubtypeOf(type)) {
                 error(ctx, ErrorType.LOOKUP__INVALID_TARGET, List.of(variableName, assignedValue, type));
             }
-            declareVariable(type, variableName, varNameAndType.varName());
+            declareVariable(symbolManager.typeInContext(type), variableName, varNameAndType.varName());
         }
     }
 

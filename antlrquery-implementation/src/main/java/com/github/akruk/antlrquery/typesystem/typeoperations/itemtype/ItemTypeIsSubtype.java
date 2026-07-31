@@ -31,8 +31,8 @@ public class ItemTypeIsSubtype {
         this.arrayToMapVisitor = new ArrayToMapIsSubtype(typeFactory);
         this.nodesVisitor = new TreeNodeIsSubtype(typeFactory);
         this.stringIsSubtype = new StringIsSubtype();
-        mapSubtypeOfFunction = new MapLikeSubtypeOfFunction(typeFactory);
-        arraySubtypeOfFunction = new ArrayLikeSubtypeOfFunction(typeFactory);
+        this.mapSubtypeOfFunction = new MapLikeSubtypeOfFunction(typeFactory);
+        this.arraySubtypeOfFunction = new ArrayLikeSubtypeOfFunction(typeFactory);
     }
 
     public boolean isSubtype(AntlrQueryItemType t1, AntlrQueryItemType t2) {

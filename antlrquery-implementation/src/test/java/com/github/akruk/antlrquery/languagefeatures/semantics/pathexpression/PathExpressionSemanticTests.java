@@ -13,8 +13,8 @@ public class PathExpressionSemanticTests extends SemanticTestsBase {
 
     @Test
     public void pathNamedDescendantsOrSelf() {
-        final var xs = typeFactory.zeroOrMore(typeFactory.itemElement("", xSet));
-        final var xys = typeFactory.zeroOrMore(typeFactory.itemElement("", xySet));
+        final var xs = typeFactory.zeroOrMore(typeFactory.itemNodesFromGrammar("", xSet));
+        final var xys = typeFactory.zeroOrMore(typeFactory.itemNodesFromGrammar("", xySet));
         final var oneOrMoreNodes = typeFactory.oneOrMore(typeFactory.itemAnyNode());
         assertType("//x", xs);
         assertType("//(x|y)", xys);
@@ -23,8 +23,8 @@ public class PathExpressionSemanticTests extends SemanticTestsBase {
 
     @Test
     public void pathChild() {
-        final var xs = typeFactory.zeroOrMore(typeFactory.itemElement("", xSet));
-        final var xys = typeFactory.zeroOrMore(typeFactory.itemElement("", xySet));
+        final var xs = typeFactory.zeroOrMore(typeFactory.itemNodesFromGrammar("", xSet));
+        final var xys = typeFactory.zeroOrMore(typeFactory.itemNodesFromGrammar("", xySet));
         final var zeroOrMoreNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
         assertType("/x", xs);
         assertType("/(x|y)", xys);
@@ -33,7 +33,7 @@ public class PathExpressionSemanticTests extends SemanticTestsBase {
 
     @Test
     public void predicates() {
-        final var xs = typeFactory.zeroOrMore(typeFactory.itemElement("", xSet));
+        final var xs = typeFactory.zeroOrMore(typeFactory.itemNodesFromGrammar("", xSet));
         assertType("/x[true()]", xs);
     }
 

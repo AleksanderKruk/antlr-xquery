@@ -7,6 +7,7 @@ import java.util.function.Predicate;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
+import com.github.akruk.antlrquery.*;
 import com.github.akruk.antlrquery.typesystem.typeoperations.*;
 import com.github.akruk.antlrquery.typesystem.types.*;
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.*;
@@ -21,7 +22,7 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-import com.github.akruk.antlrquery.AntlrXqueryParser.*;
+import com.github.akruk.antlrquery.AntlrQueryParser.*;
 import com.github.akruk.antlrquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrquery.semanticanalyzer.AndTrueImplication;
@@ -45,11 +46,6 @@ import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.Seman
 import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.SemanticSymbolManager.ModuleInfo;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.SemanticSymbolManager.NamespaceInfo;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.SemanticSymbolManager.RecordInfo;
-import com.github.akruk.antlrquery.AntlrXqueryParser;
-import com.github.akruk.antlrquery.AntlrXqueryParserBaseVisitor;
-import com.github.akruk.antlrquery.AxisVisitor;
-import com.github.akruk.antlrquery.HelperTrees;
-import com.github.akruk.antlrquery.AntlrQueryAxis;
 import com.github.akruk.antlrquery.charescaper.AntlrQuerySemanticCharEscaper;
 import com.github.akruk.antlrquery.charescaper.AntlrQuerySemanticCharEscaper.XQuerySemanticCharEscaperResult;
 import com.github.akruk.antlrquery.evaluator.values.factories.AntlrQueryValueFactory;
@@ -71,7 +67,7 @@ import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 
 @DefaultQualifier(NonNull.class)
-public class AntlrQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<TypeInContext>
+public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<TypeInContext>
 {
     private final List<DiagnosticError> errors;
     private final List<DiagnosticWarning> warnings;
@@ -1378,7 +1374,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<Typ
         for (int i = 1; i < size; i++) {
             final var exprSingle = ctx.exprSingle(i);
             final TypeInContext expressionType = exprSingle.accept(this);
-            previousExprType = Types.sequenceMerge(typeFactory, previousExprType, expressionType.type);
+            previousExprType = Types.addition(typeFactory, previousExprType, expressionType.type);
         }
         return symbolManager.typeInContext(previousExprType);
     }
@@ -2059,7 +2055,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<Typ
 
 
     @Override
-    public TypeInContext visitCastTarget(final CastTargetContext ctx) {
+    public TypeInContext visitCastTarget(final AntlrQueryParser.CastTargetContext ctx) {
         var type = super.visitCastTarget(ctx);
         if (ctx.QUESTION_MARK() != null)
             type = symbolManager.typeInContext(Types.optionalize(typeFactory, type.type));
@@ -2531,7 +2527,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<Typ
                 error(expressionNode, ErrorType.UNION__INVALID, List.of(expressionType));
                 expressionType = symbolManager.typeInContext(zeroOrMoreNodes);
             } else {
-                expressionType = symbolManager.typeInContext(Types.union(typeFactory, expressionType.type, visitedType.type));
+                expressionType = symbolManager.typeInContext(Types.addition(typeFactory, expressionType.type, visitedType.type));
             }
         }
         return expressionType;
@@ -2906,7 +2902,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrXqueryParserBaseVisitor<Typ
 
         final FunctionBodyContext functionBody = spec.body();
         if (functionBody != null) { // function body is present (non-external)
-            final var calledFunctions = XPath.findAll(functionBody, "//functionName", new AntlrXqueryParser(null));
+            final var calledFunctions = XPath.findAll(functionBody, "//functionName", new AntlrQueryParser(null));
             // TODO: refine to graphs or to cover arity range
             final Predicate<? super ParseTree> isRecursive
                 = nameCtx->namespaceResolver.resolveFunction(nameCtx.getText()).equals(spec.name);

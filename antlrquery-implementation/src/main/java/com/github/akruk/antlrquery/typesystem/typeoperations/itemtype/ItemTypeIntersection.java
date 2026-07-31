@@ -18,6 +18,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.DefaultQualifier;
 
 import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -115,11 +117,30 @@ public class ItemTypeIntersection
         }
 
         // Intersect TreeNodes together
-        List<AntlrQueryItemType> elementTypes = itemTypeToInstances.getOrDefault(TreeNodeType.NodeType.class, List.of());
-        List<AntlrQueryItemType> ruleTypes = itemTypeToInstances.getOrDefault(TreeRuleType.RuleType.class, List.of());
-        List<AntlrQueryItemType> tokenTypes = itemTypeToInstances.getOrDefault(TreeTokenType.TokenType.class, List.of());
+        List<AntlrQueryItemType> nodesFromGrammar = itemTypeToInstances.getOrDefault(TreeNodeType.NodeType.class, List.of());
+        List<AntlrQueryItemType> anyNodes = itemTypeToInstances.getOrDefault(TreeNodeType.AnyNode.class, List.of());
+        List<AntlrQueryItemType> anyNodesFromGrammar = itemTypeToInstances.getOrDefault(TreeNodeType.AnyNodeFromGrammar.class, List.of());
 
-        @Nullable AntlrQueryItemType treeNodeResult = treeNodesIntersectionType(elementTypes, ruleTypes, tokenTypes);
+        List<AntlrQueryItemType> rulesFromGrammar = itemTypeToInstances.getOrDefault(TreeRuleType.RuleType.class, List.of());
+        List<AntlrQueryItemType> anyRules = itemTypeToInstances.getOrDefault(TreeRuleType.AnyRule.class, List.of());
+        List<AntlrQueryItemType> anyRulesFromGrammar = itemTypeToInstances.getOrDefault(TreeRuleType.AnyRuleFromGrammar.class, List.of());
+
+        List<AntlrQueryItemType> tokensFromGrammar = itemTypeToInstances.getOrDefault(TreeTokenType.TokenType.class, List.of());
+        List<AntlrQueryItemType> anyTokens = itemTypeToInstances.getOrDefault(TreeTokenType.AnyToken.class, List.of());
+        List<AntlrQueryItemType> anyTokensFromGrammar = itemTypeToInstances.getOrDefault(TreeTokenType.AnyTokenFromGrammar.class, List.of());
+
+        @Nullable AntlrQueryItemType treeNodeResult = treeNodesIntersectionType(
+                typeFactory,
+                nodesFromGrammar,
+                anyNodes,
+                anyNodesFromGrammar,
+                rulesFromGrammar,
+                anyRules,
+                anyRulesFromGrammar,
+                tokensFromGrammar,
+                anyTokens,
+                anyTokensFromGrammar
+        );
         if (treeNodeResult != null) {
             results.add(treeNodeResult);
         }
@@ -176,90 +197,128 @@ public class ItemTypeIntersection
     }
 
     private static @Nullable AntlrQueryItemType treeNodesIntersectionType(
-            List<AntlrQueryItemType> elements,
-            List<AntlrQueryItemType> rules,
-            List<AntlrQueryItemType> tokens)
+            AntlrQueryTypeFactory typeFactory,
+            List<AntlrQueryItemType> nodesFromGrammar,
+            List<AntlrQueryItemType> anyNodes,
+            List<AntlrQueryItemType> anyNodesFromGrammar,
+            List<AntlrQueryItemType> rulesFromGrammar,
+            List<AntlrQueryItemType> anyRules,
+            List<AntlrQueryItemType> anyRulesFromGrammar,
+            List<AntlrQueryItemType> tokensFromGrammar,
+            List<AntlrQueryItemType> anyTokens,
+            List<AntlrQueryItemType> anyTokensFromGrammar)
     {
-        if (elements.isEmpty() && rules.isEmpty() && tokens.isEmpty()) {
+        if (nodesFromGrammar.isEmpty()
+                && anyNodes.isEmpty()
+                && anyNodesFromGrammar.isEmpty()
+                && rulesFromGrammar.isEmpty()
+                && anyRules.isEmpty()
+                && anyRulesFromGrammar.isEmpty()
+                && tokensFromGrammar.isEmpty()
+                && anyTokens.isEmpty()
+                && anyTokensFromGrammar.isEmpty()) {
             return null;
         }
 
-        // A node cannot be structurally restricted to both a Rule and a Token
-        if (!rules.isEmpty() && !tokens.isEmpty()) {
+        final boolean ruleRestricted =
+                        !rulesFromGrammar.isEmpty()
+                        || !anyRules.isEmpty()
+                        || !anyRulesFromGrammar.isEmpty();
+
+        final boolean tokenRestricted =
+                        !tokensFromGrammar.isEmpty()
+                        || !anyTokens.isEmpty()
+                        || !anyTokensFromGrammar.isEmpty();
+
+        if (ruleRestricted && tokenRestricted) {
             return null;
         }
+        if (ruleRestricted) {
+            return getNodeTypeIntersection(typeFactory,
+                    rulesFromGrammar,
+                    anyRules,
+                    anyRulesFromGrammar,
+                    typeFactory::itemRulesFromGrammar,
+                    typeFactory::grammarRules
+            );
+        }
+        if (tokenRestricted) {
+            return getNodeTypeIntersection(typeFactory,
+                    tokensFromGrammar,
+                    anyTokens,
+                    anyTokensFromGrammar,
+                    typeFactory::itemTokensFromGrammar,
+                    typeFactory::grammarTokens
+            );
+        }
+        return getNodeTypeIntersection(typeFactory,
+                nodesFromGrammar,
+                anyNodes,
+                anyNodesFromGrammar,
+                typeFactory::itemNodesFromGrammar,
+                typeFactory::grammarNodes
+        );
 
-        @MonotonicNonNull String grammar = null;
-        @MonotonicNonNull Set<NamespaceResolver.QualifiedName> mergedNames = null;
+    }
 
-        List<AntlrQueryItemType> allNodes = new ArrayList<>(elements.size() + rules.size() + tokens.size());
-        allNodes.addAll(elements);
-        allNodes.addAll(rules);
-        allNodes.addAll(tokens);
 
-        for (AntlrQueryItemType n : allNodes) {
-            String g;
-            Set<NamespaceResolver.QualifiedName> names;
-
-            if (n instanceof TreeNodeType.NodeType(
-                    String grammar1, Set<NamespaceResolver.QualifiedName> elementNames
-            )) {
-                g = grammar1;
-                names = elementNames;
-            } else if (n instanceof TreeRuleType.RuleType(
-                    String grammar1, Set<NamespaceResolver.QualifiedName> elementNames
-            )) {
-                g = grammar1;
-                names = elementNames;
-            } else {
-                TreeTokenType.TokenType t = (TreeTokenType.TokenType) n;
-                g = t.grammar();
-                names = t.elementNames();
+    private static
+    @Nullable AntlrQueryItemType getNodeTypeIntersection(
+            AntlrQueryTypeFactory typeFactory,
+            List<AntlrQueryItemType> rulesFromGrammar,
+            List<AntlrQueryItemType> anyRules,
+            List<AntlrQueryItemType> anyRulesFromGrammar,
+            BiFunction<String, Set<NamespaceResolver.QualifiedName>,AntlrQueryItemType> constrainedTypeFactory,
+            Function<String, Set<NamespaceResolver.QualifiedName>> typesFromGrammarGetter
+            )
+    {
+        if (rulesFromGrammar.size() == 1) {
+            return rulesFromGrammar.getFirst();
+        }
+        var grammarToRules = rulesFromGrammar.stream()
+                .map(obj -> (NamesConstrained&GrammarConstrained) obj)
+                .collect(Collectors.groupingBy(GrammarConstrained::grammar))
+            ;
+        if (!grammarToRules.isEmpty())  {
+            var grammar = grammarToRules.keySet().stream().findFirst().get();
+            var els = grammarToRules.get(grammar)
+                    .stream()
+                    .map(NamesConstrained::elementNames)
+                    .reduce((qualifiedNames, qualifiedNames2) -> {
+                         var new_ = new HashSet<>(qualifiedNames);
+                         new_.retainAll(qualifiedNames2);
+                         return new_;
+                    }).get();
+            if (els.isEmpty()) {
+                return null;
             }
-
-            if (grammar == null) {
-                grammar = g;
-            } else if (!grammar.equals(g)) {
-                return null; // Different grammars yield an empty intersection
-            }
-
-            if (mergedNames == null) {
-                mergedNames = new java.util.LinkedHashSet<>(names);
-            } else {
-                mergedNames.retainAll(names);
-            }
+            return constrainedTypeFactory.apply(grammar, els);
         }
-
-        if (mergedNames.isEmpty()) {
+        if (anyRulesFromGrammar.size() == 1) {
+            return anyRulesFromGrammar.getFirst();
+        }
+        var grammarToAnyRules = anyRulesFromGrammar.stream()
+                .map(obj -> (GrammarConstrained) obj)
+                .collect(Collectors.groupingBy(GrammarConstrained::grammar))
+                ;
+        if (!grammarToAnyRules.isEmpty())  {
+            var grammar = grammarToAnyRules.keySet().stream().findFirst().get();
+            var els = grammarToAnyRules.get(grammar)
+                    .stream()
+                    .map(anyRuleFromGrammar -> typesFromGrammarGetter.apply(grammar) )
+                    .reduce((qualifiedNames, qualifiedNames2) -> {
+                        qualifiedNames.retainAll(qualifiedNames2);
+                        return qualifiedNames;
+                    }).get();
+            if (els.isEmpty()) {
+                return null;
+            }
+            return constrainedTypeFactory.apply(grammar, els);
+        }
+        if (anyRules.isEmpty()) {
             return null;
         }
-
-        // Apply naming convention constraints based on the resolved node kind
-        if (!rules.isEmpty()) {
-            // Rules must NOT start with an uppercase letter
-            mergedNames.removeIf(name -> {
-                String local = name.name();
-                return local.isEmpty() || Character.isUpperCase(local.charAt(0));
-            });
-        } else if (!tokens.isEmpty()) {
-            // Tokens MUST start with an uppercase letter
-            mergedNames.removeIf(name -> {
-                String local = name.name();
-                return local.isEmpty() || !Character.isUpperCase(local.charAt(0));
-            });
-        }
-
-        if (mergedNames.isEmpty()) {
-            return null;
-        }
-
-        if (!rules.isEmpty()) {
-            return new TreeRuleType.RuleType(grammar, mergedNames);
-        } else if (!tokens.isEmpty()) {
-            return new TreeTokenType.TokenType(grammar, mergedNames);
-        } else {
-            return new TreeNodeType.NodeType(grammar, mergedNames);
-        }
+        return anyRules.getFirst();
     }
 
     private static @Nullable AntlrQueryItemType functionIntersectionType(
@@ -345,12 +404,12 @@ public class ItemTypeIntersection
         Set<String> validEnumMembers = enums.stream()
                 .flatMap(i->((StringType.StringEnum) i).members().stream())
                 .filter(enumMember->
-                        (Cardinalities.isSubtype(Cardinality.of(enumMember.length()), mergedStringCardinality))
+                        (Cardinalities.isSubSet(Cardinality.of(enumMember.length()), mergedStringCardinality))
                 )
                 .collect(Collectors.toSet());
 
         Set<String> finalMembers = validEnumMembers.stream()
-                .filter(enumMember -> Cardinalities.isSubtype(
+                .filter(enumMember -> Cardinalities.isSubSet(
                         Cardinality.of(enumMember.length()),
                         mergedStringCardinality))
                 .collect(Collectors.toSet());

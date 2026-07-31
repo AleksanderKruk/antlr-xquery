@@ -12,6 +12,8 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
+import com.github.akruk.antlrquery.AntlrQueryLexer;
+import com.github.akruk.antlrquery.AntlrQueryParser;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -61,23 +63,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.TextDocumentService;
 
-import com.github.akruk.antlrquery.AntlrXqueryLexer;
-import com.github.akruk.antlrquery.AntlrXqueryParser;
-import com.github.akruk.antlrquery.AntlrXqueryParser.ArgumentListContext;
-import com.github.akruk.antlrquery.AntlrXqueryParser.ArrowTargetContext;
-import com.github.akruk.antlrquery.AntlrXqueryParser.FunctionCallContext;
-import com.github.akruk.antlrquery.AntlrXqueryParser.FunctionDeclContext;
-import com.github.akruk.antlrquery.AntlrXqueryParser.FunctionNameContext;
-import com.github.akruk.antlrquery.AntlrXqueryParser.KeywordArgumentsContext;
-import com.github.akruk.antlrquery.AntlrXqueryParser.ModuleDeclContext;
-import com.github.akruk.antlrquery.AntlrXqueryParser.NamedFunctionRefContext;
-import com.github.akruk.antlrquery.AntlrXqueryParser.NamedRecordTypeDeclContext;
-import com.github.akruk.antlrquery.AntlrXqueryParser.PositionalArgumentsContext;
-import com.github.akruk.antlrquery.AntlrXqueryParser.QnameContext;
-import com.github.akruk.antlrquery.AntlrXqueryParser.TypeNameContext;
-import com.github.akruk.antlrquery.AntlrXqueryParser.VarNameAndTypeContext;
-import com.github.akruk.antlrquery.AntlrXqueryParser.VarNameContext;
-import com.github.akruk.antlrquery.AntlrXqueryParser.VarRefContext;
+import com.github.akruk.antlrquery.AntlrQueryParser.*;
 import com.github.akruk.antlrquery.AxisVisitor;
 import com.github.akruk.antlrquery.evaluator.AntlrQuery;
 import com.github.akruk.antlrquery.evaluator.AntlrQuery.TreeEvaluator;
@@ -222,9 +208,9 @@ public class BasicTextDocumentService implements TextDocumentService {
         System.err.println("[parseAndAnalyze] Text cardinality: " + text.length());
 
         try {
-            final AntlrXqueryLexerSavingTokens lexer = new AntlrXqueryLexerSavingTokens(CharStreams.fromString(text));
+            final AntlrQueryLexerSavingTokens lexer = new AntlrQueryLexerSavingTokens(CharStreams.fromString(text));
             final CommonTokenStream tokenStream = new CommonTokenStream(lexer);
-            final AntlrXqueryParser parser = new AntlrXqueryParser(tokenStream);
+            final AntlrQueryParser parser = new AntlrQueryParser(tokenStream);
 
             // Custom syntax error listener
             final List<Diagnostic> diagnostics = new ArrayList<>();
@@ -432,9 +418,9 @@ public class BasicTextDocumentService implements TextDocumentService {
         }
     }
 
-    private final AntlrXqueryLexer _lexer = new AntlrXqueryLexer(CharStreams.fromString(""));
+    private final AntlrQueryLexer _lexer = new AntlrQueryLexer(CharStreams.fromString(""));
     private final CommonTokenStream _tokens = new CommonTokenStream(_lexer);
-    final AntlrXqueryParser _parser = new AntlrXqueryParser(_tokens);
+    final AntlrQueryParser _parser = new AntlrQueryParser(_tokens);
     private final NamespaceResolver resolver;
 
     private final TreeEvaluator constructors = AntlrQuery.compile("//constructorChars", null, _parser);
@@ -798,8 +784,7 @@ public class BasicTextDocumentService implements TextDocumentService {
      * @param edits
     */
     private void fillVarDeclRenamingFileEdits(final String uri, final String newName, final Map<String,List<TextEdit>> edits) {
-        // TODO Auto-generated method stub
-        // throw new UnsupportedOperationException("Unimplemented method 'handleVarDeclRenamingFileEdits'");
+//        TODO:
     }
 
     private void fillFunctionRenamingFileEdits(

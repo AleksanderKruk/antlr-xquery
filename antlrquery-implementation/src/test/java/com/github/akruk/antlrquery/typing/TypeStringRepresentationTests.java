@@ -1,5 +1,6 @@
 package com.github.akruk.antlrquery.typing;
 
+import com.github.akruk.Utils;
 import com.github.akruk.antlrquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrquery.typesystem.types.Cardinality;
 import org.junit.Test;
@@ -65,7 +66,7 @@ public class TypeStringRepresentationTests {
     @Test
     public void testMapType() {
         assertEquals(
-            "map(string, boolean*)",
+            "{string : boolean*}",
             typeFactory.map(
                 typeFactory.itemString(),
                 typeFactory.zeroOrMore(typeFactory.itemBoolean())
@@ -76,7 +77,7 @@ public class TypeStringRepresentationTests {
     @Test
     public void testArrayType() {
         assertEquals(
-            "array(number+)",
+            "number+[]",
             typeFactory.array(typeFactory.oneOrMore(typeFactory.itemNumber()), Cardinality.ZERO_OR_MORE).toString()
         );
     }
@@ -84,19 +85,21 @@ public class TypeStringRepresentationTests {
     @Test
     public void testEnumType() {
         String enumRepr = typeFactory.enum_(Set.of("on", "off")).toString();
-        assertTrue( "enum('on', 'off')".equals(enumRepr)
-                    || "enum('off', 'on')".equals(enumRepr));
+        assertEquals("('off' | 'on')", enumRepr);
     }
 
     @Test
     public void testRecordType() {
-        LinkedHashMap<String, RecordField> fields = new LinkedHashMap<>(Map.of(
-            "id", new RecordField("id", new TypeOrReference.Type(typeFactory.one(typeFactory.itemNumber())), true),
-            "name", new RecordField("name", new TypeOrReference.Type(typeFactory.zeroOrOne(typeFactory.itemString())), false)
-        ));
+        LinkedHashMap<String, RecordField> fields = Utils.linkedHashMap(
+                Map.entry("id",
+                        new RecordField("id", new TypeOrReference.Type(typeFactory.one(typeFactory.itemNumber())), true)
+                ),
+                Map.entry("name",
+                        new RecordField("name", new TypeOrReference.Type(typeFactory.zeroOrOne(typeFactory.itemString())), false)
+                )
+        );
         String repr = typeFactory.record(fields).toString();
-        assertTrue("record(id as number, name? as string?)".equals(repr)
-                || "record(name? as string?, id as number)".equals(repr));
+        assertEquals("{id as number, name? as string?}", repr);
     }
 
 
@@ -104,19 +107,20 @@ public class TypeStringRepresentationTests {
     public void testEmptyRecord() {
         LinkedHashMap<String, RecordField> fields = new LinkedHashMap<>(Map.of());
         String repr = typeFactory.record(fields).toString();
-        assertEquals("record()", repr);
+        assertEquals("{}", repr);
     }
     @Test
     public void testExtensibleRecordType() {
-        LinkedHashMap<String, RecordField> fields = new LinkedHashMap<>(Map.of(
-            "name", new RecordField(
-                "name", 
-                new TypeOrReference.Type(typeFactory.zeroOrOne(typeFactory.itemString())), 
-                true
+        LinkedHashMap<String, RecordField> fields = Utils.linkedHashMap(
+            Map.entry("name",
+                    new RecordField(
+                    "name",
+                    new TypeOrReference.Type(typeFactory.zeroOrOne(typeFactory.itemString())),
+                    true)
             )
-        ));
+        );
         assertEquals(
-            "record(name as string?, *)",
+            "{name as string?, *}",
             typeFactory.extensibleRecord(fields).toString()
         );
     }
@@ -124,7 +128,7 @@ public class TypeStringRepresentationTests {
     @Test
     public void testSingleElementType() {
         assertEquals(
-            "element(title)",
+            "<title>",
             typeFactory.element("", Set.of(new QualifiedName("", "title"))).toString()
         );
     }
@@ -135,10 +139,7 @@ public class TypeStringRepresentationTests {
                 new NamespaceResolver.QualifiedName("", "name"),
                 new NamespaceResolver.QualifiedName("", "label")
             )).toString();
-        assertTrue(
-            "element(name | label)".equals(repr)
-            || "element(label | name)".equals(repr)
-        );
+        assertEquals("<label | name>", repr);
     }
 
 
@@ -149,10 +150,7 @@ public class TypeStringRepresentationTests {
             typeFactory.itemNumber(),
             typeFactory.itemString()
         ).toString();
-        assertTrue(
-            "number | string".equals(repr)
-            || "string | number".equals(repr)
-        );
+        assertEquals("number | string", repr);
     }
 
     @Test
@@ -194,19 +192,17 @@ public class TypeStringRepresentationTests {
         );
 
         String fnRepr = "fn(number, string) as number";
-        String functionRepr = "function(number, string) as number";
         String fnOptional = "(fn(number, string) as number)?";
-        String functionOptional = "(function(number, string) as number)?";
         String fnStar = "(fn(number, string) as number)*";
         String functionStar = "(function(number, string) as number)*";
 
         String result = typeFactory.function(resultType, argTypes).toString();
-        assertTrue(fnRepr.equals(result) || functionRepr.equals(result));
+        assertEquals(fnRepr, result);
 
         result = typeFactory.zeroOrOne(
             typeFactory.itemFunction(resultType, argTypes)
         ).toString();
-        assertTrue(fnOptional.equals(result) || functionOptional.equals(result));
+        assertEquals(fnOptional, result);
 
         result = typeFactory.zeroOrMore(
             typeFactory.itemFunction(resultType, argTypes)

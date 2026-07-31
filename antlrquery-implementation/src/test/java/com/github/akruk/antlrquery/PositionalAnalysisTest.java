@@ -18,7 +18,7 @@ public class PositionalAnalysisTest extends EvaluationTestsBase {
     @Test
     public void testPositionAnalysis() {
         String xquery = "(1, 2, 3) ! (. + 1)";
-        AntlrXqueryParser parser = new AntlrXqueryParser(new CommonTokenStream(new AntlrXqueryLexer(CharStreams.fromString(xquery))));
+        AntlrQueryParser parser = new AntlrQueryParser(new CommonTokenStream(new AntlrQueryLexer(CharStreams.fromString(xquery))));
         var tree = parser.xquery();
         var analyzer = new PositionAnalyzer(new Position(1, 4));
         PositionAnalysis analysis = analyzer.visit(tree);

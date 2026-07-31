@@ -34,11 +34,11 @@
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.github.akruk</groupId>
-            <artifactId>visitor-processor</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.github.akruk</groupId>-->
+<!--            <artifactId>visitor-processor</artifactId>-->
+<!--            <version>0.0.1-SNAPSHOT</version>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>org.eclipse.lsp4j</groupId>
@@ -73,6 +73,11 @@
             <version>3.42.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.checkerframework</groupId>
+            <artifactId>checker-qual</artifactId>
+            <version>3.42.0</version>
+        </dependency>
         <!-- Tests -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -131,6 +136,10 @@
                 <version>3.15.0</version>
 
                 <configuration>
+                    <generatedSourcesDirectory>
+                        ${project.build.directory}/generated-sources/annotations
+                    </generatedSourcesDirectory>
+
                     <release>${maven.compiler.release}</release>
                     <annotationProcessorPaths>
 
@@ -181,7 +190,7 @@
                 <executions>
 
                     <execution>
-                        <id>antlrxquery-tool-jar</id>
+                        <id>antlrquery-tool-jar</id>
                         <phase>package</phase>
 
                         <goals>
@@ -190,7 +199,7 @@
 
                         <configuration>
                             <appendAssemblyId>false</appendAssemblyId>
-                            <finalName>antlrxquery-tool</finalName>
+                            <finalName>antlrquery-tool</finalName>
 
                             <archive>
                                 <manifest>
@@ -211,7 +220,7 @@
 
 
                     <execution>
-                        <id>antlrxquery-language-server-jar</id>
+                        <id>antlrquery-language-server-jar</id>
                         <phase>package</phase>
 
                         <goals>
@@ -220,7 +229,7 @@
 
                         <configuration>
                             <appendAssemblyId>false</appendAssemblyId>
-                            <finalName>antlrxquery-language-server</finalName>
+                            <finalName>antlrquery-language-server</finalName>
 
                             <archive>
                                 <manifest>
@@ -241,26 +250,6 @@
 
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <version>3.4.0</version>
-                <executions>
-                    <execution>
-                        <id>add-generated-sources</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>add-source</goal>
-                        </goals>
-                        <configuration>
-                            <sources>
-                                <source>target/generated-sources/visitors</source>
-                            </sources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
 
         </plugins>
 

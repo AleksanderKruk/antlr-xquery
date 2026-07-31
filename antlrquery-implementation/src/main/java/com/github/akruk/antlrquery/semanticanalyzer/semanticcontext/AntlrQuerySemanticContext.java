@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.github.akruk.antlrquery.AntlrQueryParser;
 import org.eclipse.lsp4j.Location;
 
-import com.github.akruk.antlrquery.AntlrXqueryParser.VarNameContext;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticcontext.AntlrQuerySemanticScope.EntypingResult;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticcontext.AntlrQuerySemanticScope.VariableInfo;
 import com.github.akruk.antlrquery.typesystem.factories.AntlrQueryTypeFactory;
@@ -61,7 +61,7 @@ public class AntlrQuerySemanticContext {
 
     public EntypingResult entypeVariable(
         final String variableName,
-        final VarNameContext locationCtx,
+        final AntlrQueryParser.VarNameContext locationCtx,
         final Location location,
         final TypeInContext assignedType)
     {

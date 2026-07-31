@@ -1,6 +1,8 @@
 package com.github.akruk.antlrquery.typesystem.typeoperations.itemtype;
 
 import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -43,21 +45,22 @@ public class ItemTypeSubtract {
         if (!anyItems.isEmpty()) {
             return null;
         }
-
         Set<ConcreteItemType> baseItems;
         switch (from) {
             case AnyItemType anyItemType -> { return anyItemType; }
             case ChoiceItemType(ConcreteItemType[] itemTypes) -> baseItems = Arrays.stream(itemTypes).collect(Collectors.toSet());
             case ConcreteItemType concreteItemType -> baseItems = Set.of(concreteItemType);
             case NeverType _ -> { return null; }
-            case NothingType nothingType -> { return typeFactory.itemNothing(); }
+            case NothingType _ -> { return typeFactory.itemNothing(); }
         }
-
         List<AntlrQueryItemType> resultTypes = new ArrayList<>(baseItems.size());
+        var fromTypesGroupedByClass = groupByClass(baseItems);
+        List<AntlrQueryItemType> nodeTypes = subtractNodeTypes(fromTypesGroupedByClass, groupedSubtracted);
+        resultTypes.addAll(nodeTypes);
+
 
         for (ConcreteItemType baseItem : baseItems) {
-            AntlrQueryItemType resultingItem;
-
+            @Nullable AntlrQueryItemType resultingItem = null;
             switch (baseItem) {
                 case ArrayLikeType.ArrayType arrayType -> {
                     AntlrQuerySequenceType currentMember = arrayType.memberType();
@@ -205,8 +208,8 @@ public class ItemTypeSubtract {
                     @Nullable NumericRange result = numberType.range();
                     for (AntlrQueryItemType i : subtractedNumbers) {
                         NumericRange sn = ((AtomicType.NumberType) i).range();
-                        result = Ranges.subtract(result, sn);
                         if (result == null) break;
+                        result = Ranges.subtract(result, sn);
                     }
                     resultingItem = result == null ? typeFactory.itemNothing() : typeFactory.itemNumber(result);
                 }
@@ -470,100 +473,10 @@ public class ItemTypeSubtract {
                 }
                 case FunctionType functionType -> resultingItem = flatSubtracted.contains(functionType) ? typeFactory.itemNothing() : functionType;
                 case GrammarEntityType grammarEntityType -> resultingItem = flatSubtracted.contains(grammarEntityType) ? typeFactory.itemNothing() : grammarEntityType;
-                case TreeLike treeLike -> {
-                    if (!(treeLike instanceof final GrammarConstrained treeLikeGrammar)) {
-                        continue;
-                    }
-                    if (!(treeLike instanceof final NamesConstrained treeLikeNames)) {
-                        continue;
-                    }
-
-                    String currentGrammar = treeLikeGrammar.grammar();
-                    Set<NamespaceResolver.QualifiedName> currentNames = new java.util.HashSet<>(treeLikeNames.elementNames());
-                    boolean currentIsUniversal = currentNames.isEmpty();
-
-                    boolean isElement = treeLike instanceof TreeNodeType;
-                    boolean isRule = treeLike instanceof TreeRuleType;
-                    boolean isToken = treeLike instanceof TreeTokenType;
-
-                    boolean covered = false;
-
-                    var subtractedTrees = groupedSubtracted.getOrDefault(TreeLike.class, List.of());
-                    for (AntlrQueryItemType sub : subtractedTrees) {
-                        TreeLike subTree = (TreeLike) sub;
-
-
-                        if (subTree instanceof final GrammarConstrained gc && !currentGrammar.equals(gc.grammar())) {
-                            continue;
-                        }
-
-                        boolean subIsElement = subTree instanceof TreeNodeType.NodeType;
-                        boolean subIsRule = subTree instanceof TreeRuleType.RuleType;
-                        boolean subIsToken = subTree instanceof TreeTokenType.TokenType;
-
-                        if (!(subTree instanceof final NamesConstrained subTreeWithNames)) {
-                            continue;
-                        }
-                        Set<NamespaceResolver.QualifiedName> subNames = subTreeWithNames.elementNames();
-                        boolean subIsUniversal = subNames.isEmpty();
-
-                        if (isRule && subIsToken) continue;
-                        if (isToken && subIsRule) continue;
-
-                        if (subIsElement) {
-                            if (subIsUniversal) {
-                                covered = true;
-                                break;
-                            } else if (!currentIsUniversal) {
-                                currentNames.removeAll(subNames);
-                            }
-                        } else if (subIsRule) {
-                            if (isElement && subIsUniversal) {
-                                isElement = false;
-                                isToken = true;
-                            } else if (subIsUniversal) {
-                                covered = true;
-                                break;
-                            } else if (!currentIsUniversal) {
-                                currentNames.removeAll(subNames);
-                            }
-                        } else if (subIsToken) {
-                            if (isElement && subIsUniversal) {
-                                isElement = false;
-                                isRule = true;
-                            } else if (subIsUniversal) {
-                                covered = true;
-                                break;
-                            } else if (!currentIsUniversal) {
-                                currentNames.removeAll(subNames);
-                            }
-                        }
-
-                        if (!currentIsUniversal && currentNames.isEmpty()) {
-                            covered = true;
-                            break;
-                        }
-                    }
-
-                    if (covered) {
-                        resultingItem = typeFactory.itemNothing();
-                    } else {
-                        if (isElement) {
-                            resultingItem = typeFactory.itemElement(currentGrammar, currentNames);
-                        } else if (isRule) {
-                            resultingItem = typeFactory.itemRule(currentGrammar, currentNames);
-                        } else {
-                            resultingItem = typeFactory.itemToken(currentGrammar, currentNames);
-                        }
-
-                        if (resultingItem.equals(treeLike)) {
-                            resultingItem = treeLike;
-                        }
-                    }
-                }
+                case TreeLike treeLike -> {}
             }
 
-            if (!(resultingItem instanceof NothingType) && !(resultingItem instanceof NeverType)) {
+            if (resultingItem != null && !(resultingItem instanceof NothingType) && !(resultingItem instanceof NeverType)) {
                 resultTypes.add(resultingItem);
             }
         }
@@ -584,12 +497,424 @@ public class ItemTypeSubtract {
         return Set.of(type);
     }
 
-    private static Map<Class<?>, List<AntlrQueryItemType>> groupByClass(Collection<AntlrQueryItemType> types) {
+    private static Map<Class<?>, List<AntlrQueryItemType>> groupByClass(Collection<? extends AntlrQueryItemType> types) {
         Map<Class<?>, List<AntlrQueryItemType>> map = new HashMap<>();
         for (AntlrQueryItemType type : types) {
             map.computeIfAbsent(type.getClass(), _ -> new ArrayList<>()).add(type);
         }
         return map;
+    }
+
+
+    private List<AntlrQueryItemType> subtractNodeTypes(Map<Class<?>, List<AntlrQueryItemType>> fromTypesGroupedByClass, Map<Class<?>, List<AntlrQueryItemType>> groupedSubtracted) {
+        var fromAnyNodes = fromTypesGroupedByClass.getOrDefault(TreeNodeType.AnyNode.class, List.of());
+        var fromNodesFromGrammar = fromTypesGroupedByClass.getOrDefault(TreeNodeType.NodeType.class, List.of());
+        var fromAnyNodeFromGrammar = fromTypesGroupedByClass.getOrDefault(TreeNodeType.AnyNodeFromGrammar.class, List.of());
+        var fromAnyTokens = fromTypesGroupedByClass.getOrDefault(TreeTokenType.AnyToken.class, List.of());
+        var fromTokensFromGrammar = fromTypesGroupedByClass.getOrDefault(TreeTokenType.TokenType.class, List.of());
+        var fromAnyTokenFromGrammar = fromTypesGroupedByClass.getOrDefault(TreeTokenType.AnyTokenFromGrammar.class, List.of());
+        var fromAnyRules = fromTypesGroupedByClass.getOrDefault(TreeRuleType.AnyRule.class, List.of());
+        var fromRulesFromGrammar = fromTypesGroupedByClass.getOrDefault(TreeRuleType.RuleType.class, List.of());
+        var fromAnyRuleFromGrammar = fromTypesGroupedByClass.getOrDefault(TreeRuleType.AnyRuleFromGrammar.class, List.of());
+
+        if (fromAnyNodes.isEmpty()
+                && fromAnyNodeFromGrammar.isEmpty()
+                && fromNodesFromGrammar.isEmpty()
+                && fromAnyTokens.isEmpty()
+                && fromAnyTokenFromGrammar.isEmpty()
+                && fromTokensFromGrammar.isEmpty()
+                && fromAnyRules.isEmpty()
+                && fromAnyRuleFromGrammar.isEmpty()
+                && fromRulesFromGrammar.isEmpty()
+            )
+        {
+            return List.of();
+        }
+
+        if (!fromAnyTokens.isEmpty()
+                || !fromAnyTokenFromGrammar.isEmpty()
+                || !fromTokensFromGrammar.isEmpty())
+        { // constrained by token
+            return constrainedByNodeType(
+                    fromAnyTokenFromGrammar,
+                    fromTokensFromGrammar,
+                    fromAnyTokens,
+                    typeFactory::itemTokensFromGrammar,
+                    typeFactory::grammarTokens,
+                    groupedSubtracted.getOrDefault(TreeTokenType.AnyToken.class, List.of()),
+                    groupedSubtracted.getOrDefault(TreeNodeType.AnyNode.class, List.of()),
+                    groupedSubtracted.getOrDefault(TreeTokenType.AnyTokenFromGrammar.class, List.of()),
+                    groupedSubtracted.getOrDefault(TreeNodeType.AnyNodeFromGrammar.class, List.of()),
+                    groupedSubtracted.getOrDefault(TreeTokenType.TokenType.class, List.of()),
+                    groupedSubtracted.getOrDefault(TreeNodeType.NodeType.class, List.of())
+            );
+        }
+        if (!fromAnyRules.isEmpty()
+                || !fromAnyRuleFromGrammar.isEmpty()
+                || !fromRulesFromGrammar.isEmpty())
+        { // constrained by rule
+            return constrainedByNodeType(fromAnyRuleFromGrammar,
+                    fromRulesFromGrammar,
+                    fromAnyRules,
+                    typeFactory::itemRulesFromGrammar,
+                    typeFactory::grammarRules,
+                    groupedSubtracted.getOrDefault(TreeRuleType.AnyRule.class, List.of()),
+                    groupedSubtracted.getOrDefault(TreeNodeType.AnyNode.class, List.of()),
+                    groupedSubtracted.getOrDefault(TreeRuleType.AnyRuleFromGrammar.class, List.of()),
+                    groupedSubtracted.getOrDefault(TreeNodeType.AnyNodeFromGrammar.class, List.of()),
+                    groupedSubtracted.getOrDefault(TreeRuleType.RuleType.class, List.of()),
+                    groupedSubtracted.getOrDefault(TreeNodeType.NodeType.class, List.of()));
+        }
+        return constrainedByAnyNodeType(
+                fromAnyNodeFromGrammar,
+                fromNodesFromGrammar,
+                fromAnyNodes,
+                typeFactory::itemNodesFromGrammar,
+                typeFactory::itemTokensFromGrammar,
+                typeFactory::itemRulesFromGrammar,
+                typeFactory::itemAnyNodeFromGrammar,
+                typeFactory::itemAnyTokenFromGrammar,
+                typeFactory::itemAnyRuleFromGrammar,
+                typeFactory::grammarNodes,
+                typeFactory::grammarTokens,
+                typeFactory::grammarRules,
+                groupedSubtracted.getOrDefault(TreeTokenType.AnyToken.class, List.of()),
+                groupedSubtracted.getOrDefault(TreeRuleType.AnyRule.class, List.of()),
+                groupedSubtracted.getOrDefault(TreeNodeType.AnyNode.class, List.of()),
+                groupedSubtracted.getOrDefault(TreeTokenType.AnyTokenFromGrammar.class, List.of()),
+                groupedSubtracted.getOrDefault(TreeRuleType.AnyRuleFromGrammar.class, List.of()),
+                groupedSubtracted.getOrDefault(TreeNodeType.AnyNodeFromGrammar.class, List.of()),
+                groupedSubtracted.getOrDefault(TreeTokenType.TokenType.class, List.of()),
+                groupedSubtracted.getOrDefault(TreeRuleType.RuleType.class, List.of()),
+                groupedSubtracted.getOrDefault(TreeNodeType.NodeType.class, List.of())
+        );
+    }
+
+    private List<AntlrQueryItemType> constrainedByNodeType(
+            List<AntlrQueryItemType> fromAnyTokenFromGrammar,
+            List<AntlrQueryItemType> fromTokensFromGrammar,
+            List<AntlrQueryItemType> fromAnyTokens,
+            BiFunction<String, Set<NamespaceResolver.QualifiedName>, AntlrQueryItemType> getItemTokenFromGrammar,
+            Function<String, Set<NamespaceResolver.QualifiedName>> getTokenTypeFromGrammar,
+            List<AntlrQueryItemType> subtractedAnyTokens,
+            List<AntlrQueryItemType> subtractedAnyNodes,
+            List<AntlrQueryItemType> subtractedAnyTokenFromGrammar,
+            List<AntlrQueryItemType> subtractedAnyNodeFromGrammar,
+            List<AntlrQueryItemType> subtractedTokensFromGrammar,
+            List<AntlrQueryItemType> subtractedNodesFromGrammar
+
+    )
+    {
+        if (!subtractedAnyTokens.isEmpty() || !subtractedAnyNodes.isEmpty()) {
+            return List.of();
+        }
+
+        List<AntlrQueryItemType> results = new ArrayList<>();
+        var subtractedGrammars = Stream.of(subtractedAnyTokenFromGrammar, subtractedAnyNodeFromGrammar)
+                .flatMap(Collection::stream)
+                .map(GrammarConstrained.class::cast)
+                .map(GrammarConstrained::grammar)
+                .collect(Collectors.toSet());
+        var remainingAnyGrammars = fromAnyTokenFromGrammar.stream()
+                .map(GrammarConstrained.class::cast)
+                .filter(s->!subtractedGrammars.contains(s.grammar()))
+                .collect(Collectors.toSet());
+        var remainingTokenFromGrammar = fromTokensFromGrammar.stream()
+                .map(obj -> (GrammarConstrained&NamesConstrained) obj)
+                .filter(s->!subtractedGrammars.contains(s.grammar()))
+                .collect(Collectors.toSet());
+
+        var subtractedTokenFromGrammarGroupedByGrammar = Stream.of(subtractedTokensFromGrammar, subtractedNodesFromGrammar)
+                .flatMap(Collection::stream)
+                .map(e->(GrammarConstrained&NamesConstrained) e)
+                .collect(Collectors.groupingBy(GrammarConstrained::grammar));
+
+        for (var remainingAnyGrammar : remainingAnyGrammars) {
+            var grammarTypes = subtractedTokenFromGrammarGroupedByGrammar.get(remainingAnyGrammar.grammar());
+            if (grammarTypes == null) {
+                results.add((AntlrQueryItemType) remainingAnyGrammar);
+            }
+            var types = new HashSet<>(getTokenTypeFromGrammar.apply(remainingAnyGrammar.grammar()));
+            types.removeAll(grammarTypes);
+            if (!types.isEmpty()) {
+                results.add(getItemTokenFromGrammar.apply(remainingAnyGrammar.grammar(), types));
+            }
+        }
+        for (var remainingToken : remainingTokenFromGrammar) {
+            var grammarTypes = subtractedTokenFromGrammarGroupedByGrammar.get(remainingToken.grammar());
+            if (grammarTypes == null) {
+                results.add((AntlrQueryItemType) remainingToken);
+            }
+            var types = new HashSet<>(remainingToken.elementNames());
+            types.removeAll(grammarTypes);
+            if (!types.isEmpty()) {
+                results.add(getItemTokenFromGrammar.apply(remainingToken.grammar(), types));
+            }
+        }
+        if (!results.isEmpty()) {
+            return results;
+        }
+        return List.of(fromAnyTokens.getFirst());
+    }
+
+    private List<AntlrQueryItemType> constrainedByAnyNodeType(
+            List<AntlrQueryItemType> fromAnyNodesFromGrammar,
+            List<AntlrQueryItemType> fromNodesFromGrammar,
+            List<AntlrQueryItemType> fromAnyNodes,
+            BiFunction<String, Set<NamespaceResolver.QualifiedName>, AntlrQueryItemType> getItemNodeFromGrammar,
+            BiFunction<String, Set<NamespaceResolver.QualifiedName>, AntlrQueryItemType> getItemTokenFromGrammar,
+            BiFunction<String, Set<NamespaceResolver.QualifiedName>, AntlrQueryItemType> getItemRuleFromGrammar,
+            Function<String, AntlrQueryItemType> getAllNodeTypeFromGrammar,
+            Function<String, AntlrQueryItemType> getAllTokenTypeFromGrammar,
+            Function<String, AntlrQueryItemType> getAllRuleTypeFromGrammar,
+            Function<String, Set<NamespaceResolver.QualifiedName>> getNodeTypeFromGrammar,
+            Function<String, Set<NamespaceResolver.QualifiedName>> getTokenTypeFromGrammar,
+            Function<String, Set<NamespaceResolver.QualifiedName>> getRuleTypeFromGrammar,
+            List<AntlrQueryItemType> subtractedAnyTokens,
+            List<AntlrQueryItemType> subtractedAnyRules,
+            List<AntlrQueryItemType> subtractedAnyNodes,
+            List<AntlrQueryItemType> subtractedAnyTokenFromGrammar,
+            List<AntlrQueryItemType> subtractedAnyRuleFromGrammar,
+            List<AntlrQueryItemType> subtractedAnyNodeFromGrammar,
+            List<AntlrQueryItemType> subtractedTokensFromGrammar,
+            List<AntlrQueryItemType> subtractedRulesFromGrammar,
+            List<AntlrQueryItemType> subtractedNodesFromGrammar) {
+
+        if (!subtractedAnyNodes.isEmpty()) {
+            return List.of();
+        }
+
+        final boolean stripAllTokens = !subtractedAnyTokens.isEmpty();
+        final boolean stripAllRules = !subtractedAnyRules.isEmpty();
+
+        if (stripAllTokens && stripAllRules) {
+            return List.of();
+        }
+
+        var effectiveSubtractedAnyTokenFromGrammar =
+                stripAllTokens ? List.of() : subtractedAnyTokenFromGrammar;
+        var effectiveSubtractedAnyRuleFromGrammar =
+                stripAllRules ? List.of() : subtractedAnyRuleFromGrammar;
+
+        List<AntlrQueryItemType> results = new ArrayList<>();
+
+        var grammarsWithoutNodes = subtractedAnyNodeFromGrammar.stream()
+                .map(GrammarConstrained.class::cast)
+                .map(GrammarConstrained::grammar)
+                .collect(Collectors.toSet());
+
+        var remainingAnyNodeGrammars = fromAnyNodesFromGrammar.stream()
+                .map(GrammarConstrained.class::cast)
+                .filter(s -> !grammarsWithoutNodes.contains(s.grammar()))
+                .collect(Collectors.toSet());
+
+        var remainingNodeFromGrammar = fromNodesFromGrammar.stream()
+                .map(obj -> (GrammarConstrained & NamesConstrained) obj)
+                .filter(s -> !grammarsWithoutNodes.contains(s.grammar()))
+                .collect(Collectors.toSet());
+
+        var subtractedNodeFromGrammarGroupedByGrammar = subtractedNodesFromGrammar.stream()
+                .map(e -> (GrammarConstrained & NamesConstrained) e)
+                .collect(Collectors.groupingBy(GrammarConstrained::grammar));
+
+        var subtractedTokenFromGrammarGroupedByGrammar = subtractedTokensFromGrammar.stream()
+                .map(e -> (GrammarConstrained & NamesConstrained) e)
+                .collect(Collectors.groupingBy(GrammarConstrained::grammar));
+
+        var subtractedRuleFromGrammarGroupedByGrammar = subtractedRulesFromGrammar.stream()
+                .map(e -> (GrammarConstrained & NamesConstrained) e)
+                .collect(Collectors.groupingBy(GrammarConstrained::grammar));
+
+        if (stripAllRules) {
+
+            for (var remainingAnyGrammar : remainingAnyNodeGrammars) {
+
+                var subtractedGrammarNodes =
+                        subtractedNodeFromGrammarGroupedByGrammar.get(remainingAnyGrammar.grammar());
+                var subtractedGrammarTokens =
+                        subtractedTokenFromGrammarGroupedByGrammar.get(remainingAnyGrammar.grammar());
+
+                if (subtractedGrammarNodes == null && subtractedGrammarTokens == null) {
+                    results.add(getAllTokenTypeFromGrammar.apply(remainingAnyGrammar.grammar()));
+                    continue;
+                }
+
+                var effectiveNodes =
+                        Objects.requireNonNullElse(subtractedGrammarNodes, List.of());
+                var effectiveTokens =
+                        Objects.requireNonNullElse(subtractedGrammarTokens, List.of());
+
+                var nodes = getTokenTypeFromGrammar.apply(remainingAnyGrammar.grammar())
+                        .stream()
+                        .filter(n -> !effectiveNodes.contains(n))
+                        .filter(n -> !effectiveTokens.contains(n))
+                        .collect(Collectors.toSet());
+
+                if (!nodes.isEmpty()) {
+                    results.add(getItemTokenFromGrammar.apply(
+                            remainingAnyGrammar.grammar(),
+                            nodes));
+                }
+            }
+
+            for (var remainingNode : remainingNodeFromGrammar) {
+
+                var subtractedGrammarNodes =
+                        subtractedNodeFromGrammarGroupedByGrammar.get(remainingNode.grammar());
+                var subtractedGrammarTokens =
+                        subtractedTokenFromGrammarGroupedByGrammar.get(remainingNode.grammar());
+
+                if (subtractedGrammarNodes == null && subtractedGrammarTokens == null) {
+                    results.add((AntlrQueryItemType) remainingNode);
+                    continue;
+                }
+
+                var effectiveNodes =
+                        Objects.requireNonNullElse(subtractedGrammarNodes, List.of());
+                var effectiveTokens =
+                        Objects.requireNonNullElse(subtractedGrammarTokens, List.of());
+
+                var filtered = remainingNode.elementNames().stream()
+                        .filter(n -> n.name().matches("^\\P{IsUpper}"))
+                        .filter(n -> !effectiveNodes.contains(n))
+                        .filter(n -> !effectiveTokens.contains(n))
+                        .collect(Collectors.toCollection(HashSet::new));
+
+                if (!filtered.isEmpty()) {
+                    results.add(getItemTokenFromGrammar.apply(
+                            remainingNode.grammar(),
+                            filtered));
+                }
+            }
+        }
+
+
+        else if (stripAllTokens) {
+
+            for (var remainingAnyGrammar : remainingAnyNodeGrammars) {
+
+                var subtractedGrammarNodes =
+                        subtractedNodeFromGrammarGroupedByGrammar.get(remainingAnyGrammar.grammar());
+                var subtractedGrammarRules =
+                        subtractedRuleFromGrammarGroupedByGrammar.get(remainingAnyGrammar.grammar());
+
+                if (subtractedGrammarNodes == null && subtractedGrammarRules == null) {
+                    results.add(getAllRuleTypeFromGrammar.apply(remainingAnyGrammar.grammar()));
+                    continue;
+                }
+
+                var effectiveNodes =
+                        Objects.requireNonNullElse(subtractedGrammarNodes, List.of());
+                var effectiveRules =
+                        Objects.requireNonNullElse(subtractedGrammarRules, List.of());
+
+                var nodes = getRuleTypeFromGrammar.apply(remainingAnyGrammar.grammar())
+                        .stream()
+                        .filter(n -> !effectiveNodes.contains(n))
+                        .filter(n -> !effectiveRules.contains(n))
+                        .collect(Collectors.toSet());
+
+                if (!nodes.isEmpty()) {
+                    results.add(getItemRuleFromGrammar.apply(
+                            remainingAnyGrammar.grammar(),
+                            nodes));
+                }
+            }
+
+            for (var remainingNode : remainingNodeFromGrammar) {
+
+                var subtractedGrammarNodes =
+                        subtractedNodeFromGrammarGroupedByGrammar.get(remainingNode.grammar());
+                var subtractedGrammarRules =
+                        subtractedRuleFromGrammarGroupedByGrammar.get(remainingNode.grammar());
+
+                if (subtractedGrammarNodes == null && subtractedGrammarRules == null) {
+                    results.add((AntlrQueryItemType) remainingNode);
+                    continue;
+                }
+
+                var effectiveNodes =
+                        Objects.requireNonNullElse(subtractedGrammarNodes, List.of());
+                var effectiveRules =
+                        Objects.requireNonNullElse(subtractedGrammarRules, List.of());
+
+                var filtered = remainingNode.elementNames().stream()
+                        .filter(n -> n.name().matches("^\\p{IsUpper}"))
+                        .filter(n -> !effectiveNodes.contains(n))
+                        .filter(n -> !effectiveRules.contains(n))
+                        .collect(Collectors.toCollection(HashSet::new));
+
+                if (!filtered.isEmpty()) {
+                    results.add(getItemRuleFromGrammar.apply(
+                            remainingNode.grammar(),
+                            filtered));
+                }
+            }
+        }
+
+        else {
+
+            for (var remainingAnyGrammar : remainingAnyNodeGrammars) {
+
+                var effectiveNodes = Objects.requireNonNullElse(
+                        subtractedNodeFromGrammarGroupedByGrammar.get(remainingAnyGrammar.grammar()),
+                        List.of());
+
+                var effectiveTokens = Objects.requireNonNullElse(
+                        subtractedTokenFromGrammarGroupedByGrammar.get(remainingAnyGrammar.grammar()),
+                        List.of());
+
+                var effectiveRules = Objects.requireNonNullElse(
+                        subtractedRuleFromGrammarGroupedByGrammar.get(remainingAnyGrammar.grammar()),
+                        List.of());
+
+                var nodes = getNodeTypeFromGrammar.apply(remainingAnyGrammar.grammar())
+                        .stream()
+                        .filter(n -> !effectiveNodes.contains(n))
+                        .filter(n -> !effectiveTokens.contains(n))
+                        .filter(n -> !effectiveRules.contains(n))
+                        .collect(Collectors.toSet());
+
+                if (!nodes.isEmpty()) {
+                    results.add(getItemNodeFromGrammar.apply(
+                            remainingAnyGrammar.grammar(),
+                            nodes));
+                }
+            }
+
+            for (var remainingNode : remainingNodeFromGrammar) {
+
+                var effectiveNodes = Objects.requireNonNullElse(
+                        subtractedNodeFromGrammarGroupedByGrammar.get(remainingNode.grammar()),
+                        List.of());
+
+                var effectiveTokens = Objects.requireNonNullElse(
+                        subtractedTokenFromGrammarGroupedByGrammar.get(remainingNode.grammar()),
+                        List.of());
+
+                var effectiveRules = Objects.requireNonNullElse(
+                        subtractedRuleFromGrammarGroupedByGrammar.get(remainingNode.grammar()),
+                        List.of());
+
+                var filtered = remainingNode.elementNames().stream()
+                        .filter(n -> !effectiveNodes.contains(n))
+                        .filter(n -> !effectiveTokens.contains(n))
+                        .filter(n -> !effectiveRules.contains(n))
+                        .collect(Collectors.toCollection(HashSet::new));
+
+                if (!filtered.isEmpty()) {
+                    results.add(getItemNodeFromGrammar.apply(
+                            remainingNode.grammar(),
+                            filtered));
+                }
+            }
+        }
+
+        if (!results.isEmpty()) {
+            return results;
+        }
+
+        return List.of(fromAnyNodes.getFirst());
     }
 
 }

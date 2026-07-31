@@ -2,8 +2,8 @@ package com.github.akruk.antlrquery.semanticanalyzer.visitors;
 
 import java.math.BigInteger;
 
-import com.github.akruk.antlrquery.AntlrXqueryParserBaseVisitor;
-import com.github.akruk.antlrquery.AntlrXqueryParser.*;
+import com.github.akruk.antlrquery.AntlrQueryParserBaseVisitor;
+import com.github.akruk.antlrquery.AntlrQueryParser.*;
 import com.github.akruk.antlrquery.typesystem.factories.CardinalityFactory;
 import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Cardinalities;
 import com.github.akruk.antlrquery.typesystem.types.Cardinality;
@@ -13,7 +13,7 @@ import com.github.akruk.antlrquery.typesystem.types.Cardinality;
  * CardinalityVisitor visits AntlrQuery parse tree to determine the cardinality of type
  */
 public class CardinalityVisitor 
-    extends AntlrXqueryParserBaseVisitor<Cardinality> 
+    extends AntlrQueryParserBaseVisitor<Cardinality>
 {
     private CardinalityFactory cardinalityFactory;
 

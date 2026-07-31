@@ -5,9 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.github.akruk.antlrquery.AntlrQueryParser;
 import org.eclipse.lsp4j.Location;
 
-import com.github.akruk.antlrquery.AntlrXqueryParser.VarNameContext;
 import com.github.akruk.antlrquery.semanticanalyzer.EffectiveBooleanValueTrue;
 import com.github.akruk.antlrquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrquery.typesystem.types.TypeInContext;
@@ -17,7 +17,7 @@ import com.github.akruk.antlrquery.typesystem.types.AntlrQuerySequenceType;
 
 
 public class AntlrQuerySemanticScope {
-    public static record VariableInfo(String name, TypeInContext type, VarNameContext definition, Location location) {}
+    public static record VariableInfo(String name, TypeInContext type, AntlrQueryParser.VarNameContext definition, Location location) {}
     final Map<String, VariableInfo> variables;
     final List<TypeInContext> scopedTypes;
     final Map<TypeInContext, List<Assumption>> scopedAssumptions;
@@ -124,7 +124,7 @@ public class AntlrQuerySemanticScope {
      */
     public EntypingResult entypeVariable(
         String variableName,
-        VarNameContext variableDefinition,
+        AntlrQueryParser.VarNameContext variableDefinition,
         Location variableLocation,
         TypeInContext assignedType)
     {

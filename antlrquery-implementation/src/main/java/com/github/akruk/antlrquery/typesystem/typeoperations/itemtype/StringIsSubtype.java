@@ -13,7 +13,7 @@ public class StringIsSubtype implements StringTypeVisitor<Boolean> {
 
     @Override
     public Boolean visit(StringType.StringNonEnum stringNonEnum, StringType.StringNonEnum stringNonEnum2) {
-        return Cardinalities.isSubtype(stringNonEnum.cardinality(), stringNonEnum2.cardinality());
+        return Cardinalities.isSubSet(stringNonEnum.cardinality(), stringNonEnum2.cardinality());
     }
 
     @Override
@@ -23,7 +23,7 @@ public class StringIsSubtype implements StringTypeVisitor<Boolean> {
 
     @Override
     public Boolean visit(StringType.StringEnum stringEnum, StringType.StringNonEnum stringNonEnum) {
-        return Cardinalities.isSubtype(stringEnum.cardinality(), stringNonEnum.cardinality());
+        return Cardinalities.isSubSet(stringEnum.cardinality(), stringNonEnum.cardinality());
     }
 
     @Override

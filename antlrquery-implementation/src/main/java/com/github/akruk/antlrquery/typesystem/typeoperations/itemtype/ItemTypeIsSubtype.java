@@ -32,11 +32,12 @@ public class ItemTypeIsSubtype {
         this.nodesVisitor = new TreeNodeIsSubtype(typeFactory);
         this.stringIsSubtype = new StringIsSubtype();
         mapSubtypeOfFunction = new MapLikeSubtypeOfFunction(typeFactory);
-        arraySubtypeOfFunction = new ArrayLikeSubtypeOfFunction();
+        arraySubtypeOfFunction = new ArrayLikeSubtypeOfFunction(typeFactory);
     }
 
     public boolean isSubtype(AntlrQueryItemType t1, AntlrQueryItemType t2) {
         if (t1 instanceof NeverType) return true;
+        if (t1 instanceof NothingType) return true;
         if (t1 instanceof ChoiceItemType c1) return allItemsAreSubtypesOf(c1, t2);
         return switch(t2) {
             case AnyItemType _ -> true;
@@ -45,7 +46,7 @@ public class ItemTypeIsSubtype {
                     t1 instanceof final ArrayLikeType a1
                         && this.arrayVisitor.visit(a1, arrayLikeType);
             case AtomicType.NumberType(NumericRange r2) ->
-                    t1 instanceof AtomicType.NumberType(NumericRange r1) && Ranges.isSubtype(r1, r2);
+                    t1 instanceof AtomicType.NumberType(NumericRange r1) && Ranges.isSubSet(r1, r2);
             case AtomicType.RegexType(Pattern p2) ->
                     t1 instanceof AtomicType.RegexType(Pattern p1) && p1.equals(p2);
             case BooleanType.Boolean _ -> t1 instanceof BooleanType;
@@ -88,6 +89,7 @@ public class ItemTypeIsSubtype {
                 if (t1 instanceof final ArrayLikeType a1) {
                     yield this.arrayToMapVisitor.visit(a1, mapLikeType);
                 }
+
                 yield false;
             }
             case TreeLike n2 -> {
@@ -96,8 +98,7 @@ public class ItemTypeIsSubtype {
                 }
                 yield false;
             }
-            case NeverType _ -> false; // ((* - NeverType), NeverType)
-            case NothingType _ -> t1 instanceof NothingType;
+            case NeverType _, NothingType _ -> false; // ( {* - { NeverType, NothingType }} x {NeverType, NothingType})
         };
     }
 
@@ -106,7 +107,7 @@ public class ItemTypeIsSubtype {
     }
 
     private boolean anyItemsAreSubtypesOf(AntlrQueryItemType subType, ChoiceItemType choice) {
-        return Arrays.stream(choice.itemTypes()).allMatch(i->isSubtype(subType, i));
+        return Arrays.stream(choice.itemTypes()).anyMatch(i->isSubtype(subType, i));
     }
 
 

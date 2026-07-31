@@ -3,6 +3,7 @@ package com.github.akruk.antlrquery.typesystem.typeoperations;
 import java.util.*;
 
 import com.github.akruk.antlrquery.typesystem.RecordField;
+import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Ranges;
 import com.github.akruk.antlrquery.typesystem.typeoperations.itemtype.ItemTypeIsSubtype;
 import com.github.akruk.antlrquery.typesystem.typeoperations.itemtype.ItemTypeSubtract;
 import com.github.akruk.antlrquery.typesystem.typeoperations.itemtype.ItemTypeUnion;
@@ -155,6 +156,16 @@ public final class Types {
         return Types.union(typeFactory, valueTypes);
     }
 
+    public static AntlrQuerySequenceType getIndexType(AntlrQueryTypeFactory typeFactory, ArrayLikeType.TupleType tupleType) {
+        var indices = Ranges.indices(0, tupleType.members().length);
+        return typeFactory.zeroOrMore(typeFactory.itemNumber(indices));
+    }
+
+    public static AntlrQuerySequenceType getIndexType(AntlrQueryTypeFactory typeFactory, ArrayLikeType.ArrayType arrayType) {
+        var indices = Ranges.indices(Cardinalities.toNumericRange(arrayType.cardinality()));
+        return typeFactory.zeroOrMore(typeFactory.itemNumber(indices));
+    }
+
     public enum EffectiveBooleanValueType {
         ALWAYS_FALSE__EMPTY_SEQUENCE,
         ALWAYS_TRUE__NUMBER_STRING_BOOLEAN,
@@ -197,20 +208,19 @@ public final class Types {
     }
     
     public static boolean isSubtype(AntlrQueryTypeFactory typeFactory, final AntlrQuerySequenceType subtype, final AntlrQuerySequenceType supertype) {
-        if (!Cardinalities.isSubtype(subtype.cardinality(), supertype.cardinality())) {
+        if (!Cardinalities.isSubSet(subtype.cardinality(), supertype.cardinality())) {
             return false;
         }
-        return Types.itemTypeIsSubtypeOf(typeFactory, supertype, subtype);
+        return Types.itemTypeIsSubtypeOf(typeFactory, subtype, supertype);
     }
 
 
-    public static AntlrQuerySequenceType sequenceMerge(final AntlrQueryTypeFactory typeFactory, final AntlrQuerySequenceType... sequences) {
-        final Cardinality[] cardinalities = new Cardinality[sequences.length + 1];
-        final AntlrQueryItemType[] itemTypes = new AntlrQueryItemType[sequences.length + 1];
-        
+    public static AntlrQuerySequenceType addition(final AntlrQueryTypeFactory typeFactory, final AntlrQuerySequenceType... sequences) {
+        final Cardinality[] cardinalities = new Cardinality[sequences.length];
+        final AntlrQueryItemType[] itemTypes = new AntlrQueryItemType[sequences.length];
         for (int i = 0; i < sequences.length; i++) {
-            cardinalities[i + 1] = sequences[i].cardinality();
-            itemTypes[i + 1] = sequences[i].itemType();
+            cardinalities[i] = sequences[i].cardinality();
+            itemTypes[i] = sequences[i].itemType();
         }
         
         final Cardinality mergedCardinality = Cardinalities.sequenceMerge(cardinalities);
@@ -235,8 +245,7 @@ public final class Types {
             AntlrQuerySequenceType t1,
             AntlrQuerySequenceType t2)
     {
-        var merger = new ItemTypeIsSubtype(typeFactory);
-        return merger.isSubtype(t1.itemType(), t2.itemType());
+        return ItemTypes.isSubtype(typeFactory, t1.itemType(), t2.itemType());
     }
 
     public static boolean itemTypeIsSubtypeOf(AntlrQueryTypeFactory typeFactory, AntlrQuerySequenceType type, AntlrQueryItemType itemType) {
@@ -275,12 +284,23 @@ public final class Types {
         return RelativeCoercibility.POSSIBLE;
     }
 
-
     public static String stringify(final AntlrQuerySequenceType type) {
         return switch(type) {
             case AntlrQuerySequenceType.EmptySequence() -> "empty-sequence()";
-            case AntlrQuerySequenceType.NonEmptySequence(AntlrQueryItemType itemType, Cardinality cardinality)->
-                ItemTypes.stringify(itemType) + Cardinalities.stringifyWithPrefix(cardinality); 
+            case AntlrQuerySequenceType.NonEmptySequence(AntlrQueryItemType itemType, Cardinality cardinality) -> {
+                String cardinalityRepr = Cardinalities.stringifyWithPrefix(cardinality);
+                if (cardinalityRepr.isEmpty()) {
+                    yield ItemTypes.stringifyWithoutParentheses(itemType);
+                }
+                if (itemType instanceof final FunctionType.ConstrainedFunction cf) {
+                    if (!(cf.returnType().itemType() instanceof AnyItemType
+                            && cf.returnType().cardinality().equals(Cardinality.ZERO_OR_MORE)))
+                    {
+                        yield "(" + ItemTypes.stringify(cf) + ")" + cardinalityRepr;
+                    }
+                }
+                yield ItemTypes.stringify(itemType) + cardinalityRepr;
+            }
         };
     }
 
@@ -296,13 +316,13 @@ public final class Types {
                 .map(AntlrQuerySequenceType::cardinality)
                 .toArray(Cardinality[]::new);
 
-        @Nullable Cardinality mergedCardinality = Cardinalities.intersection(cardinalities);
-
-
+        final @Nullable Cardinality mergedCardinality = Cardinalities.intersection(cardinalities);
         // If the intersected cardinality allows no elements (e.g. range is empty / size 0)
         if (mergedCardinality == null) {
             return typeFactory.emptySequence();
         }
+        // Each element of intersection could be optional
+        final @Nullable Cardinality optionalized = Cardinalities.optionalize(mergedCardinality);
 
         // Intersect item types
         AntlrQueryItemType[] itemTypes = Arrays.stream(types)
@@ -319,7 +339,7 @@ public final class Types {
             return typeFactory.emptySequence();
         }
 
-        return typeFactory.sequence(mergedItemType, mergedCardinality);
+        return typeFactory.sequence(mergedItemType, optionalized);
     }
 
 
@@ -328,11 +348,20 @@ public final class Types {
             AntlrQuerySequenceType@ArrayLenRange(from = 1)... types)
     {
         assert types.length > 0;
-        if (types.length == 1) return types[0];
+        if (types.length == 1)
+            return types[0];
         var merger = new ItemTypeSubtract(typeFactory);
         AntlrQueryItemType it = Arrays.stream(types).map(AntlrQuerySequenceType::itemType).reduce(merger::subtract).get();
-        Cardinality c = Arrays.stream(types).map(AntlrQuerySequenceType::cardinality).reduce(Cardinalities::union).get();
-        return typeFactory.sequence(it, c);
+        Cardinality mergeOfSubtractedCardinalities = Arrays.stream(types).skip(1).map(AntlrQuerySequenceType::cardinality).reduce(Cardinalities::union).get();
+        @Nullable Cardinality optionalizationOfSubtractedCardinalities = Cardinalities.optionalize(mergeOfSubtractedCardinalities);
+        if (optionalizationOfSubtractedCardinalities == null) {
+            return typeFactory.neverType();
+        }
+        @Nullable Cardinality resultingCardinality = Cardinalities.remove(types[0].cardinality(), optionalizationOfSubtractedCardinalities);
+        if (resultingCardinality == null) {
+            return typeFactory.neverType();
+        }
+        return typeFactory.sequence(it, resultingCardinality);
     }
 
 
@@ -340,12 +369,11 @@ public final class Types {
             AntlrQueryTypeFactory typeFactory,
             AntlrQuerySequenceType@ArrayLenRange(from = 1)... types)
     {
-        Types.subtract(typeFactory);
         assert types.length > 0;
         if (types.length == 1) return types[0];
         var merger = new ItemTypeUnion(typeFactory);
-        AntlrQueryItemType it = Arrays.stream(types).map(AntlrQuerySequenceType::itemType).reduce(merger::union).get();
         Cardinality c = Arrays.stream(types).map(AntlrQuerySequenceType::cardinality).reduce(Cardinalities::union).get();
+        AntlrQueryItemType it = Arrays.stream(types).map(AntlrQuerySequenceType::itemType).reduce(merger::union).get();
         return typeFactory.sequence(it, c);
     }
 

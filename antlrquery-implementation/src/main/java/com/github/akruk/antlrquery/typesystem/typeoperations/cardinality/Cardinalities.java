@@ -1,4 +1,3 @@
-// File: com/github/akruk/antlrxquery/typesystem/typeoperations/cardinality/CardinalityAlgebra.java
 package com.github.akruk.antlrquery.typesystem.typeoperations.cardinality;
 
 import com.github.akruk.antlrquery.typesystem.types.Cardinality;
@@ -8,6 +7,7 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.common.value.qual.MinLen;
+import org.checkerframework.framework.qual.DefaultQualifier;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -19,6 +19,7 @@ import java.util.*;
  * All operations return new immutable {@code Cardinality} instances and never
  * modify the input objects.
  */
+@DefaultQualifier(NonNull.class)
 public final class Cardinalities {
 
     private Cardinalities() {}
@@ -79,7 +80,7 @@ public final class Cardinalities {
      * how many cardinalities currently cover the point. A point belongs to the
      * intersection iff coverage == number of non-null inputs.
      */
-    public static @Nullable Cardinality intersection(final @NonNull @MinLen(1) Cardinality... cardinalities) {
+    public static @Nullable Cardinality intersection(final @MinLen(1) Cardinality... cardinalities) {
         assert cardinalities.length != 0 : "There are no cardinalities to intersect";
         if (cardinalities.length == 1) return cardinalities[0];
 
@@ -114,108 +115,187 @@ public final class Cardinalities {
     /**
      * Subtract right-hand union from left: left \\ (right1 ∪ right2 ∪ ...)
      */
-    public static @Nullable Cardinality subtract(@NonNull final Cardinality left, final @NonNull Cardinality... right) {
-        final Cardinality unionRight = union(right);
-        
-        // Collect events from both sides
-        final Event[] leftEvents = left.events();
-        final Event[] rightEvents = unionRight.events();
+    public static @Nullable Cardinality subtract(
+            final Cardinality left,
+            final Cardinality... right)
+    {
+        final Cardinality rhs = union(right);
 
-        // Map key -> [leftDeltaSum, rightDeltaSum] and representative event for ordering/inclusivity
-        final java.util.Map<String, int[]> deltas = new java.util.HashMap<>();
-        final java.util.Map<String, Cardinality.Event> representative = new java.util.HashMap<>();
+        final Event[] a = left.events();
+        final Event[] b = rhs.events();
 
-        final java.util.function.Function<Cardinality.Event, String> keyOf = e ->
-                e.value() + "|" + (e.type() == Cardinality.Type.START ? "S" : "E");
+        if (a.length == 0)
+            return null;
 
-        // accumulate left deltas
-        for (final Cardinality.Event e : leftEvents) {
-            final String k = keyOf.apply(e);
-            deltas.computeIfAbsent(k, _ -> new int[2]);
-            deltas.get(k)[0] += e.type() == Cardinality.Type.START ? 1 : -1;
-            representative.putIfAbsent(k, e);
-        }
+        if (b.length == 0)
+            return left;
 
-        // accumulate right deltas
-        for (final Cardinality.Event e : rightEvents) {
-            final String k = keyOf.apply(e);
-            deltas.computeIfAbsent(k, _ -> new int[2]);
-            deltas.get(k)[1] += e.type() == Cardinality.Type.START ? 1 : -1;
-            representative.putIfAbsent(k, e);
-        }
+        final List<Event> out = new ArrayList<>();
 
-        // Build sorted list of unique representative events
-        final List<Cardinality.Event> sorted = new ArrayList<>(representative.values());
-        sorted.sort(EVENT_COMPARATOR);
-
-        final List<Cardinality.Event> out = new ArrayList<>();
+        int ia = 0;
+        int ib = 0;
 
         int leftActive = 0;
         int rightActive = 0;
-        Cardinality.Event segStart = null;
 
-        for (final Cardinality.Event e : sorted) {
-            final String k = keyOf.apply(e);
-            final int[] dr = deltas.getOrDefault(k, new int[2]);
-            final int leftDelta = dr[0];
-            final int rightDelta = dr[1];
+        Event segmentStart = null;
 
-            // Apply left deltas first
-            if (leftDelta != 0) {
-                final int prevLeft = leftActive;
-                leftActive += leftDelta;
-                // start a segment when left becomes >0 while right==0
-                if (prevLeft == 0 && leftActive > 0 && rightActive == 0) {
-                    segStart = e;
-                }
-                // end a segment when left drops to 0 while right==0
-                if (prevLeft > 0 && leftActive == 0 && rightActive == 0 && segStart != null) {
-                    out.add(new Cardinality.Event(segStart.value(), Cardinality.Type.START));
-                    out.add(new Cardinality.Event(e.value(), Cardinality.Type.END));
-                    segStart = null;
-                }
+        while (ia < a.length || ib < b.length) {
+
+            // Determine next sweep value
+            final CardinalityValue value;
+
+            if (ia == a.length)
+                value = b[ib].value();
+            else if (ib == b.length)
+                value = a[ia].value();
+            else
+                value = a[ia].value().compareTo(b[ib].value()) <= 0
+                        ? a[ia].value()
+                        : b[ib].value();
+
+            int leftStarts = 0;
+            int leftEnds = 0;
+            int rightStarts = 0;
+            int rightEnds = 0;
+
+            // Collect left events at this value
+            while (ia < a.length && a[ia].value().compareTo(value) == 0) {
+                if (a[ia].type() == Cardinality.Type.START)
+                    leftStarts++;
+                else
+                    leftEnds++;
+                ia++;
             }
 
-            // Then apply right deltas
-            if (rightDelta != 0) {
-                final int prevRight = rightActive;
-                rightActive += rightDelta;
+            // Collect right events at this value
+            while (ib < b.length && b[ib].value().compareTo(value) == 0) {
+                if (b[ib].type() == Cardinality.Type.START)
+                    rightStarts++;
+                else
+                    rightEnds++;
+                ib++;
+            }
 
-                // If the right becomes >0 while leftActive>0 -> close current segment (we remove overlap)
-                if (prevRight == 0 && rightActive > 0 && leftActive > 0 && segStart != null) {
-                    out.add(new Cardinality.Event(segStart.value(), Cardinality.Type.START));
-                    out.add(new Cardinality.Event(e.value(), Cardinality.Type.END));
-                    segStart = null;
-                }
+            // A point is represented as START(x) and END(x) at the same value.
+            boolean leftPoint = (leftStarts > 0 && leftEnds > 0 && leftStarts == leftEnds);
+            boolean rightPoint = (rightStarts > 0 && rightEnds > 0 && rightStarts == rightEnds);
 
-                // If the right becomes 0 (i.e., gap in right) and leftActive>0 -> start new segment
-                if (prevRight > 0 && rightActive == 0 && leftActive > 0) {
-                    segStart = e;
-                }
+            // If left has a point and right does NOT cover it, preserve the point.
+            if (leftPoint && !rightPoint && rightActive == 0 && rightStarts == 0 && rightEnds == 0) {
+                out.add(new Event(value, Cardinality.Type.START));
+                out.add(new Event(value, Cardinality.Type.END));
+                continue;
+            }
+
+            boolean before = leftActive > 0 && rightActive == 0;
+
+            // Apply END deltas
+            leftActive -= leftEnds;
+            rightActive -= rightEnds;
+
+            // Apply START deltas
+            leftActive += leftStarts;
+            rightActive += rightStarts;
+
+            boolean middle = leftActive > 0 && rightActive == 0;
+            boolean after = middle;
+
+            // Opening a segment
+            if (!before && middle) {
+                segmentStart = new Event(value, Cardinality.Type.START);
+            }
+
+            // Closing a segment
+            if (before && !middle) {
+                out.add(segmentStart);
+                out.add(new Event(value, Cardinality.Type.END));
+                segmentStart = null;
             }
         }
 
-        // If sweep ended while a segment was open and rightActive == 0 and leftActive > 0, close it at +inf
-        if (segStart != null && leftActive > 0 && rightActive == 0) {
-            out.add(new Cardinality.Event(segStart.value(), Cardinality.Type.START));
-            out.add(new Cardinality.Event(CardinalityValue.POSITIVE_INFINITY, Cardinality.Type.END));
+        // Close segment at +∞ if still open
+        if (segmentStart != null) {
+            out.add(segmentStart);
+            out.add(new Event(CardinalityValue.POSITIVE_INFINITY, Cardinality.Type.END));
         }
-        if (out.isEmpty())
-            return null;// no range at all
 
-        return Cardinality.of(out.toArray(Cardinality.Event[]::new));
+        return out.isEmpty()
+                ? null
+                : Cardinality.skipNormalization(out.toArray(Event[]::new));
     }
 
     /**
+     * Equivalent to removing union(right) from left that is:
+     * 10 remove 7 = 'from 10 elements remove exactly 7' = 3 elements remaining
+     * 10 remove 0..7 = 'from 10 elements remove at most 7 elements' = 3..10 elements remaining
+     * */
+    public static @Nullable Cardinality remove(
+            final Cardinality left,
+            final Cardinality... right)
+    {
+        final Cardinality rhs = union(right);
+
+        if (left.events().length == 0) {
+            return null;
+        }
+
+        if (rhs.events().length == 0) {
+            return left;
+        }
+
+        final List<Cardinality.CardinalityInterval> leftIntervals = left.toIntervals();
+        final List<Cardinality.CardinalityInterval> rightIntervals = rhs.toIntervals();
+
+        final List<Cardinality.Event> out = new ArrayList<>();
+
+        for (Cardinality.CardinalityInterval l : leftIntervals) {
+            for (Cardinality.CardinalityInterval r : rightIntervals) {
+
+                Cardinality.CardinalityValue lower =
+                        subtractFloorZero(l.lowerBound(), r.upperBound());
+
+                Cardinality.CardinalityValue upper =
+                        subtractFloorZero(l.upperBound(), r.lowerBound());
+
+                out.add(new Cardinality.Event(lower, Cardinality.Type.START));
+                out.add(new Cardinality.Event(upper, Cardinality.Type.END));
+            }
+        }
+
+        return out.isEmpty()
+                ? null
+                : Cardinality.of(out.toArray(Cardinality.Event[]::new));
+    }
+
+    private static Cardinality.CardinalityValue subtractFloorZero(
+            Cardinality.CardinalityValue left,
+            Cardinality.CardinalityValue right)
+    {
+        return switch (left) {
+            case Cardinality.PositiveInfinity _ -> Cardinality.CardinalityValue.POSITIVE_INFINITY;
+
+            case Cardinality.FiniteBound(BigInteger a) -> switch (right) {
+                case Cardinality.PositiveInfinity _ ->
+                        new Cardinality.FiniteBound(BigInteger.ZERO);
+
+                case Cardinality.FiniteBound(BigInteger b) -> {
+                    BigInteger result = a.subtract(b);
+                    if (result.signum() < 0) {
+                        result = BigInteger.ZERO;
+                    }
+                    yield new Cardinality.FiniteBound(result);
+                }
+            };
+        };
+    }
+    /**
      * Returns true if every value in subset is contained in superset.
      */
-    public static boolean isSubtype(final Cardinality subset, final Cardinality superset) {
-        if (subset == null) return true;
-        if (superset == null) return false;
-
-        final Cardinality diff = subtract(subset, superset);
+    public static boolean isSubSet(final Cardinality subset, final Cardinality superset) {
+        final @Nullable Cardinality diff = subtract(subset, superset);
         // if subset \ superset is empty then subset is contained
-        return diff.events().length == 0;
+        return diff == null;
     }
 
 
@@ -234,7 +314,7 @@ public final class Cardinalities {
      * - Upper bound inclusive ⟺ both upper bounds are inclusive
      */
     public static Cardinality sequenceMerge(
-            final @NonNull @MinLen(1) Cardinality... cardinalities) {
+            final @MinLen(1) Cardinality... cardinalities) {
 
         final List<Event> result = new ArrayList<>();
 
@@ -335,7 +415,7 @@ public final class Cardinalities {
             return false;
         }
 
-        public static String stringify(final @NonNull Cardinality cardinality) {
+        public static String stringify(final Cardinality cardinality) {
             final List<CardinalityInterval> intervals = cardinality.toIntervals();
             if (intervals.size() == 1) {
                 return stringifyCardinalityInterval(intervals.getFirst());
@@ -347,7 +427,7 @@ public final class Cardinalities {
             return sj.toString();
         }
         
-        public static String stringifyWithoutParentheses(final @NonNull Cardinality cardinality) {
+        public static String stringifyWithoutParentheses(final Cardinality cardinality) {
             final List<CardinalityInterval> intervals = cardinality.toIntervals();
             if (intervals.size() == 1) {
                 return stringifyCardinalityInterval(intervals.getFirst());
@@ -362,15 +442,21 @@ public final class Cardinalities {
         /**
          * @return Stringifies cardinality with prefix "^" unless cardinality == 1
          */
-        public static String stringifyWithPrefix(final @NonNull Cardinality cardinality) {
+        public static String stringifyWithPrefix(final Cardinality cardinality) {
             if (cardinality.isOne()) {
                 return "";
+            } else if (cardinality.isZeroOrOne()) {
+                return "?";
+            } else if (cardinality.equals(Cardinality.ZERO_OR_MORE)) {
+                return "*";
+            } else if (cardinality.equals(Cardinality.ONE_OR_MORE)) {
+                return "+";
             } else {
                 return "^" + stringify(cardinality);
             }
         }
 
-        private static String stringifyCardinalityInterval(final @NonNull CardinalityInterval interval) {
+        private static String stringifyCardinalityInterval(final CardinalityInterval interval) {
             final String leftSideBound = switch (interval.lowerBound()) {
                 case final PositiveInfinity _ -> 
                     throw new IllegalStateException("Positive infinity lower bound should not be possible for cardinality");
@@ -413,8 +499,8 @@ public final class Cardinalities {
         }
 
     public static Cardinality multiply(
-            final @NonNull Cardinality a,
-            final @NonNull Cardinality b) {
+            final Cardinality a,
+            final Cardinality b) {
 
         final List<Event> events = new ArrayList<>();
 
@@ -454,9 +540,27 @@ public final class Cardinalities {
         return Cardinality.of(events.toArray(Event[]::new));
     }
 
-    public static Cardinality optionalize(final Cardinality cardinality) {
-        // TODO: switch to 0..max(...)
-        return Cardinalities.union(Cardinality.ZERO, cardinality);
+    public static @Nullable CardinalityValue max(Cardinality cardinality) {
+        Event[] events = cardinality.events();
+
+        if (events.length == 0) {
+            return null;
+        }
+
+        return events[events.length - 1].value();
+    }
+
+    public static @Nullable Cardinality optionalize(Cardinality cardinality) {
+        @Nullable CardinalityValue max = max(cardinality);
+
+        if (max == null) {
+            return null;
+        }
+
+        return Cardinality.skipNormalization(new Event[] {
+                new Event(new FiniteBound(BigInteger.ZERO), Cardinality.Type.START),
+                new Event(max, Cardinality.Type.END)
+        });
     }
 
     public static boolean areValueComparable(final Cardinality o1, final Cardinality o2) {

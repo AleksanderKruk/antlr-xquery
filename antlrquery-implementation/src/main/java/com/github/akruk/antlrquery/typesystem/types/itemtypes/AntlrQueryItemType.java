@@ -1,7 +1,7 @@
 package com.github.akruk.antlrquery.typesystem.types.itemtypes;
 
 
-public sealed interface AntlrQueryItemType 
+public sealed interface AntlrQueryItemType
     permits 
         ConcreteItemType,
         ChoiceItemType,
@@ -12,4 +12,5 @@ public sealed interface AntlrQueryItemType
     NothingType NOTHING = new NothingType();
     NeverType NEVER = new NeverType();
     AnyItemType ANY_TYPE = new AnyItemType();
+
 }

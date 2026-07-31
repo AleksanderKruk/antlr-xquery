@@ -45,7 +45,9 @@ public class ArrayToMapIsSubtype implements ArrayToMapVisitor<Boolean> {
 
     @Override
     public Boolean visit(ArrayLikeType.ArrayType arrayType, MapLikeType.MapType mapType) {
-        if (!ItemTypes.isSubtype(typeFactory, typeFactory.itemNumber(), mapType.keyType())) {
+        AntlrQuerySequenceType indexType = Types.getIndexType(typeFactory, arrayType);
+        if (!ItemTypes.isSubtype(typeFactory, indexType.itemType(), mapType.keyType()))
+        {
             return false;
         }
         return Types.isSubtype(typeFactory, arrayType.memberType(), mapType.valueType());

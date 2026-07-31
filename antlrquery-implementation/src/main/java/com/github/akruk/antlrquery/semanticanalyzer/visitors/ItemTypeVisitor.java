@@ -1,7 +1,7 @@
 package com.github.akruk.antlrquery.semanticanalyzer.visitors;
 
-import com.github.akruk.antlrquery.AntlrXqueryParserBaseVisitor;
-import com.github.akruk.antlrquery.AntlrXqueryParser.*;
+import com.github.akruk.antlrquery.AntlrQueryParserBaseVisitor;
+import com.github.akruk.antlrquery.AntlrQueryParser.*;
 import com.github.akruk.antlrquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.AntlrQueryItemType;
 
@@ -10,7 +10,7 @@ import com.github.akruk.antlrquery.typesystem.types.itemtypes.AntlrQueryItemType
  * CardinalityVisitor visits AntlrQuery parse tree to determine the cardinality of type
  */
 public class ItemTypeVisitor 
-    extends AntlrXqueryParserBaseVisitor<AntlrQueryItemType> 
+    extends AntlrQueryParserBaseVisitor<AntlrQueryItemType> 
 {
     private AntlrQueryTypeFactory typeFactory;
     public ItemTypeVisitor(AntlrQueryTypeFactory typeFactory) {

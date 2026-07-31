@@ -3146,7 +3146,7 @@ public class SequenceTypeCastable
             return new IsCastable.AlwaysPossible.CastingToSame();
         }
 
-        if (Cardinalities.isSubtype(stringNonEnum.cardinality(), stringNonEnum2.cardinality())) {
+        if (Cardinalities.isSubSet(stringNonEnum.cardinality(), stringNonEnum2.cardinality())) {
             return new IsCastable.AlwaysPossible.TypeCanAlwaysBeCastToTarget();
         }
 
@@ -3748,7 +3748,7 @@ public class SequenceTypeCastable
 
     @Override
     public IsCastable visit(NumberType numberType, NumberType numberType2) {
-        if (Ranges.isSubtype(numberType.range(), numberType2.range())) {
+        if (Ranges.isSubSet(numberType.range(), numberType2.range())) {
             return new IsCastable.AlwaysPossible.CastingToSame();
         }
 

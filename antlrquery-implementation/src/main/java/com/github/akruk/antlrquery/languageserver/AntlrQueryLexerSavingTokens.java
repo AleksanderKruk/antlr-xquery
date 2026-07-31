@@ -7,11 +7,11 @@ import java.util.List;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Token;
 
-import com.github.akruk.antlrquery.AntlrXqueryLexer;
+import com.github.akruk.antlrquery.AntlrQueryLexer;
 
-public class AntlrXqueryLexerSavingTokens extends AntlrXqueryLexer {
+public class AntlrQueryLexerSavingTokens extends AntlrQueryLexer {
     public final List<Token> tokens = new ArrayList<>();
-    public AntlrXqueryLexerSavingTokens(CharStream input) {
+    public AntlrQueryLexerSavingTokens(CharStream input) {
         super(input);
     }
 

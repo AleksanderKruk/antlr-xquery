@@ -3,6 +3,7 @@ package com.github.akruk.antlrquery.languageserver;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.github.akruk.antlrquery.AntlrQueryParserBaseVisitor;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -10,9 +11,8 @@ import org.antlr.v4.runtime.tree.RuleNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.eclipse.lsp4j.Position;
 
-import com.github.akruk.antlrquery.AntlrXqueryParserBaseVisitor;
 
-public class PositionAnalyzer extends AntlrXqueryParserBaseVisitor<PositionAnalysis> {
+public class PositionAnalyzer extends AntlrQueryParserBaseVisitor<PositionAnalysis> {
     final Position position;
 
     public PositionAnalyzer(final Position position) {

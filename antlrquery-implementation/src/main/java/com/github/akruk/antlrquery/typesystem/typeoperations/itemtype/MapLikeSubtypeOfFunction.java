@@ -25,7 +25,8 @@ public class MapLikeSubtypeOfFunction implements  MapLikeToFunctionVisitor<Boole
         if (constrainedFunction.argumentTypes().size() != 1) {
             return false;
         }
-        if (!Types.isSubtype(typeFactory, constrainedFunction.argumentTypes().getFirst(), typeFactory.one(mapType.keyType()))) {
+        if (!Types.isSubtype(typeFactory, typeFactory.one(mapType.keyType()), constrainedFunction.argumentTypes().getFirst()))
+        {
             return false;
         }
         return Types.isSubtype(typeFactory, mapType.valueType(), constrainedFunction.returnType());

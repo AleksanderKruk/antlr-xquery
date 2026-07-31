@@ -12,11 +12,11 @@ import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 
-import com.github.akruk.antlrquery.AntlrXqueryParser.FunctionDeclContext;
-import com.github.akruk.antlrquery.AntlrXqueryParser.ModuleDeclContext;
-import com.github.akruk.antlrquery.AntlrXqueryParser.NamedRecordTypeDeclContext;
-import com.github.akruk.antlrquery.AntlrXqueryParser.QnameContext;
-import com.github.akruk.antlrquery.AntlrXqueryParser.VarNameContext;
+import com.github.akruk.antlrquery.AntlrQueryParser.FunctionDeclContext;
+import com.github.akruk.antlrquery.AntlrQueryParser.ModuleDeclContext;
+import com.github.akruk.antlrquery.AntlrQueryParser.NamedRecordTypeDeclContext;
+import com.github.akruk.antlrquery.AntlrQueryParser.QnameContext;
+import com.github.akruk.antlrquery.AntlrQueryParser.VarNameContext;
 import com.github.akruk.antlrquery.evaluator.values.AntlrQueryValue;
 import com.github.akruk.antlrquery.inputgrammaranalyzer.InputGrammarAnalyzer.QualifiedGrammarAnalysisResult;
 import com.github.akruk.antlrquery.namespaceresolver.NamespaceResolver.QualifiedName;

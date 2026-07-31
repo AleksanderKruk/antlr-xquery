@@ -1,6 +1,7 @@
 package com.github.akruk.visitorprocessor;
 
 import java.io.IOException;
+import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -21,6 +22,7 @@ import com.google.auto.service.AutoService;
 import javax.lang.model.element.PackageElement;
 import javax.tools.Diagnostic;
 import javax.tools.FileObject;
+import javax.tools.JavaFileObject;
 import javax.tools.StandardLocation;
 
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
@@ -445,64 +447,23 @@ public class VisitorProcessor
 
 
     private void writeVisitor(
-            final TypeElement originatingElement,
-            final String packageName,
-            final String className,
-            final String source) {
+            TypeElement originatingElement,
+            String packageName,
+            String className,
+            String source) {
 
-        final String relativeDir = "visitors/" + packageName.replace('.', '/');
-        final String targetRelativePath = relativeDir + "/" + className + ".java";
-
-        final String tmpName = "tmp_" + UUID.randomUUID() + ".tmp";
-
-        @MonotonicNonNull  FileObject tmpFile = null;
         try {
-            tmpFile = processingEnv.getFiler().createResource(
-                    StandardLocation.SOURCE_OUTPUT,
-                    "",
-                    tmpName,
-                    originatingElement
-            );
+            JavaFileObject file =
+                    processingEnv.getFiler().createSourceFile(
+                            packageName + "." + className,
+                            originatingElement);
 
-            Path sourceOutputDir = Path.of(tmpFile.toUri()).getParent();
-
-            Path visitorsDir = sourceOutputDir.resolve(relativeDir);
-            Files.createDirectories(visitorsDir);
-
-            Path targetPath = visitorsDir.resolve(className + ".java");
-            Files.writeString(targetPath, source);
-
-        } catch (FilerException fe) {
-            try {
-                FileObject root = processingEnv.getFiler().getResource(
-                        StandardLocation.SOURCE_OUTPUT,
-                        "",
-                        ""
-                );
-                Path sourceOutputDir = Path.of(root.toUri());
-                Path visitorsDir = sourceOutputDir.resolve(relativeDir);
-                Files.createDirectories(visitorsDir);
-                Path targetPath = visitorsDir.resolve(className + ".java");
-                Files.writeString(targetPath, source);
-            } catch (IOException e) {
-                error(originatingElement,
-                        "Failed to write visitor (fallback) '" + className + "': " + e.getMessage());
+            try (Writer writer = file.openWriter()) {
+                writer.write(source);
             }
-        } catch (IOException ioe) {
+        } catch (IOException e) {
             error(originatingElement,
-                    "Failed to generate visitor '" + className + "': " + ioe.getMessage());
-        } finally {
-            if (tmpFile != null) {
-                try {
-                    Path tmpPath = Path.of(tmpFile.toUri());
-                    Files.deleteIfExists(tmpPath);
-                } catch (Exception ignore) {
-                    processingEnv.getMessager().printMessage(
-                            javax.tools.Diagnostic.Kind.NOTE,
-                            "Could not delete temporary file: " + tmpFile.toUri()
-                    );
-                }
-            }
+                    "Failed to generate visitor '" + className + "': " + e.getMessage());
         }
     }
 

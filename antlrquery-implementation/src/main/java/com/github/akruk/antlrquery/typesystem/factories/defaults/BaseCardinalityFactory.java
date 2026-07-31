@@ -1,113 +1,96 @@
 package com.github.akruk.antlrquery.typesystem.factories.defaults;
 
-import java.math.BigInteger;
-
 import com.github.akruk.antlrquery.typesystem.factories.CardinalityFactory;
 import com.github.akruk.antlrquery.typesystem.types.Cardinality;
-import com.github.akruk.antlrquery.typesystem.types.Cardinality.CardinalityInterval;
 
+import java.math.BigInteger;
+
+
+// TODO: implement
 public class BaseCardinalityFactory implements CardinalityFactory {
 
     @Override
     public Cardinality empty() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'empty'");
+        return null;
     }
 
     @Override
     public Cardinality singleNumber(BigInteger value) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'singleNumber'");
+        return null;
     }
 
     @Override
     public Cardinality closedRange(BigInteger lower, BigInteger upper) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'closedRange'");
+        return null;
     }
 
     @Override
     public Cardinality inclusiveRange(BigInteger lower, BigInteger upper) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'inclusiveRange'");
+        return null;
     }
 
     @Override
     public Cardinality leftOpenRange(BigInteger lower, BigInteger upper) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'leftOpenRange'");
+        return null;
     }
 
     @Override
     public Cardinality rightOpenRange(BigInteger lower, BigInteger upper) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'rightOpenRange'");
+        return null;
     }
 
     @Override
     public Cardinality minimum(BigInteger lower) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'minimum'");
+        return null;
     }
 
     @Override
     public Cardinality greaterThan(BigInteger lower) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'greaterThan'");
+        return null;
     }
 
     @Override
     public Cardinality greaterOrEqual(BigInteger lower) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'greaterOrEqual'");
+        return null;
     }
 
     @Override
     public Cardinality maximum(BigInteger upper) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'maximum'");
+        return null;
     }
 
     @Override
     public Cardinality lessThan(BigInteger upper) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'lessThan'");
+        return null;
     }
 
     @Override
     public Cardinality lessOrEqual(BigInteger upper) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'lessOrEqual'");
+        return null;
     }
 
     @Override
     public Cardinality exactlyOne() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'exactlyOne'");
+        return null;
     }
 
     @Override
     public Cardinality oneOrMore() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'oneOrMore'");
+        return null;
     }
 
     @Override
     public Cardinality zeroOrOne() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'zeroOrOne'");
+        return null;
     }
 
     @Override
     public Cardinality zeroOrMore() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'zeroOrMore'");
+        return null;
     }
 
     @Override
-    public Cardinality of(CardinalityInterval... intervals) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'of'");
+    public Cardinality of(Cardinality.CardinalityInterval... intervals) {
+        return null;
     }
-    
 }

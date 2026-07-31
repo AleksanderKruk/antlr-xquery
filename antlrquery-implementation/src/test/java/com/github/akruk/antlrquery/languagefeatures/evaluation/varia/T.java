@@ -15,7 +15,7 @@ public class T extends EvaluationTestsBase {
     {
         assertDynamicGrammarQuery(
             "Java20",
-            Path.of("src/test/java/com/github/akruk/antlrxquery/languagefeatures/evaluation/varia/Java20.g4"),
+            Path.of("src/test/java/com/github/akruk/AntlrQuery/languagefeatures/evaluation/varia/Java20.g4"),
             "start_",
             """
 

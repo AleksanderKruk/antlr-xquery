@@ -20,10 +20,25 @@ public interface AntlrQueryTypeFactory {
     AntlrQueryItemType itemString();
     AntlrQueryItemType itemEnum(Set<String> memberNames);
     AntlrQueryItemType itemNumber();
+
     AntlrQueryItemType itemAnyNode();
+    AntlrQueryItemType itemNodesFromGrammar(String grammar, Set<QualifiedName> elementName);
+    AntlrQueryItemType itemAnyNodeFromGrammar(String grammar);
+
+    AntlrQueryItemType itemAnyToken();
+    AntlrQueryItemType itemTokensFromGrammar(String grammar, Set<QualifiedName> mergedNames);
+    AntlrQueryItemType itemAnyTokenFromGrammar(String grammar);
+
+    AntlrQueryItemType itemAnyRule();
+    AntlrQueryItemType itemRulesFromGrammar(String grammar, Set<QualifiedName> mergedNames);
+    AntlrQueryItemType itemAnyRuleFromGrammar(String grammar);
+
+
+
+
+
     AntlrQueryItemType itemAnyArray();
     AntlrQueryItemType itemAnyMap();
-    AntlrQueryItemType itemElement(String grammar, Set<QualifiedName> elementName);
     AntlrQueryItemType itemAnyFunction();
     AntlrQueryItemType itemAnyItem();
     AntlrQueryItemType itemBoolean();
@@ -41,9 +56,6 @@ public interface AntlrQueryTypeFactory {
 
     AntlrQueryItemType itemString(Cardinality union);
 
-    AntlrQueryItemType itemToken(String grammar, Set<QualifiedName> mergedNames);
-
-    AntlrQueryItemType itemRule(String grammar, Set<QualifiedName> mergedNames);
 
     AntlrQueryItemType itemFalse();
 

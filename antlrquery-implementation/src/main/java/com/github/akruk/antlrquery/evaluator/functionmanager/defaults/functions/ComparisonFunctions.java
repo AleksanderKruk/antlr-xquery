@@ -1,10 +1,8 @@
 package com.github.akruk.antlrquery.evaluator.functionmanager.defaults.functions;
 
-// import java.text.Collator;
 
 import org.antlr.v4.runtime.Parser;
 
-// import com.github.akruk.antlrxquery.evaluator.values.XQueryValue;
 import com.github.akruk.antlrquery.evaluator.values.factories.AntlrQueryValueFactory;
 import com.github.akruk.antlrquery.evaluator.values.operations.EffectiveBooleanValue;
 

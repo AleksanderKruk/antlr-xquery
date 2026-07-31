@@ -2,6 +2,8 @@ package com.github.akruk.antlrquery.typesystem.types.itemtypes;
 
 import com.github.akruk.antlrquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrquery.typesystem.types.AntlrQuerySequenceType;
+import com.github.akruk.antlrquery.typesystem.types.ItemTypes;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.List;
 
@@ -14,6 +16,10 @@ public sealed interface FunctionType
             List<AntlrQuerySequenceType> argumentTypes,
             AntlrQuerySequenceType returnType
     ) implements com.github.akruk.antlrquery.typesystem.types.itemtypes.FunctionType {
+        @Override
+        public @NonNull String toString() {
+            return ItemTypes.stringify(this);
+        }
     }
 
     final class AnyFunction implements com.github.akruk.antlrquery.typesystem.types.itemtypes.FunctionType {
@@ -24,6 +30,10 @@ public sealed interface FunctionType
         @Override
         public AntlrQuerySequenceType returnType() {
             return returnedType;
+        }
+        @Override
+        public @NonNull String toString() {
+            return ItemTypes.stringify(this);
         }
     }
 

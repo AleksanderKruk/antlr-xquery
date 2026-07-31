@@ -1,4 +1,4 @@
-// File: com/github/akruk/antlrxquery/typesystem/typeoperations/cardinality/NumericRangeAlgebra.java
+// File: com/github/akruk/AntlrQuery/typesystem/typeoperations/cardinality/NumericRangeAlgebra.java
 package com.github.akruk.antlrquery.typesystem.typeoperations.cardinality;
 
 import java.math.BigDecimal;
@@ -20,7 +20,6 @@ import org.checkerframework.framework.qual.DefaultQualifier;
 /**
  * Provides algebraic operations on {@link NumericRange} objects using the
  * event (sweep-line) representation exposed by {@link NumericRange.Event}.
- *
  * All operations return new immutable {@code NumericRange} instances and never
  * modify the input objects.
  */
@@ -30,7 +29,7 @@ public final class Ranges {
     private Ranges() {}
 
     private static final Comparator<NumericRange.Event> EVENT_COMPARATOR =
-            Comparator.<NumericRange.Event, BoundValue>comparing(e -> e.value())
+            Comparator.comparing(Event::value)
                     .thenComparing(e -> e.type() == NumericRange.Type.START ? 0 : 1)// START before END
                     .thenComparing(e -> e.inclusive() ? 0 : 1); // inclusive before exclusive
 
@@ -40,7 +39,6 @@ public final class Ranges {
     private static List<NumericRange.Event> mergeAllEvents(final NumericRange... inputs) {
         final List<NumericRange.Event> all = new ArrayList<>();
         for (final NumericRange c : inputs) {
-            if (c == null) continue;
             all.addAll(Arrays.asList(c.events()));
         }
         all.sort(EVENT_COMPARATOR);
@@ -120,106 +118,144 @@ public final class Ranges {
     /**
      * Subtract right-hand union from left: left \\ (right1 ∪ right2 ∪ ...)
      */
-    public static @Nullable NumericRange subtract(final NumericRange left, final NumericRange... right) {
-        final NumericRange unionRight = union(right);
-        
-        // Collect events from both sides
-        final Event[] leftEvents = left.events();
-        final Event[] rightEvents = unionRight.events();
+    public static @Nullable NumericRange subtract(
+            final NumericRange left,
+            final NumericRange... right)
+    {
+        final NumericRange rhs = union(right);
 
-        // Map key -> [leftDeltaSum, rightDeltaSum] and representative event for ordering/inclusivity
-        final java.util.Map<String, int[]> deltas = new java.util.HashMap<>();
-        final java.util.Map<String, NumericRange.Event> representative = new java.util.HashMap<>();
+        final NumericRange.Event[] a = left.events();
+        final NumericRange.Event[] b = rhs.events();
 
-        java.util.function.Function<NumericRange.Event, String> keyOf = e ->
-                e.value().toString() + "|" + (e.type() == NumericRange.Type.START ? "S" : "E") + "|" + (e.inclusive() ? "I" : "X");
+        if (a.length == 0)
+            return null;
 
-        // accumulate left deltas
-        for (NumericRange.Event e : leftEvents) {
-            final String k = keyOf.apply(e);
-            deltas.computeIfAbsent(k, kk -> new int[2]);
-            deltas.get(k)[0] += e.type() == NumericRange.Type.START ? 1 : -1;
-            representative.putIfAbsent(k, e);
-        }
+        if (b.length == 0)
+            return left;
 
-        // accumulate right deltas
-        for (NumericRange.Event e : rightEvents) {
-            final String k = keyOf.apply(e);
-            deltas.computeIfAbsent(k, kk -> new int[2]);
-            deltas.get(k)[1] += e.type() == NumericRange.Type.START ? 1 : -1;
-            representative.putIfAbsent(k, e);
-        }
+        final List<NumericRange.Event> out = new ArrayList<>();
 
-        // Build sorted list of unique representative events
-        final List<NumericRange.Event> sorted = new ArrayList<>(representative.values());
-        sorted.sort(EVENT_COMPARATOR);
-
-        List<NumericRange.Event> out = new ArrayList<>();
+        int ia = 0;
+        int ib = 0;
 
         int leftActive = 0;
         int rightActive = 0;
-        NumericRange.Event segStart = null;
 
-        for (NumericRange.Event e : sorted) {
-            final String k = keyOf.apply(e);
-            final int[] dr = deltas.getOrDefault(k, new int[2]);
-            final int leftDelta = dr[0];
-            final int rightDelta = dr[1];
+        NumericRange.Event segmentStart = null;
 
-            // Apply left deltas first
-            if (leftDelta != 0) {
-                int prevLeft = leftActive;
-                leftActive += leftDelta;
-                // start a segment when left becomes >0 while right==0
-                if (prevLeft == 0 && leftActive > 0 && rightActive == 0) {
-                    segStart = e;
+        while (ia < a.length || ib < b.length) {
+
+            final BoundValue value;
+
+            if (ia == a.length)
+                value = b[ib].value();
+            else if (ib == b.length)
+                value = a[ia].value();
+            else
+                value = a[ia].value().compareTo(b[ib].value()) <= 0
+                        ? a[ia].value()
+                        : b[ib].value();
+
+            int leftEnds = 0;
+            int leftStarts = 0;
+            int rightEnds = 0;
+            int rightStarts = 0;
+
+            boolean leftInclusiveStart = false;
+            boolean leftInclusiveEnd = false;
+            boolean rightInclusiveStart = false;
+            boolean rightInclusiveEnd = false;
+
+            while (ia < a.length && a[ia].value().compareTo(value) == 0) {
+                NumericRange.Event e = a[ia];
+                if (e.type() == NumericRange.Type.START) {
+                    leftStarts++;
+                    leftInclusiveStart |= e.inclusive();
+                } else {
+                    leftEnds++;
+                    leftInclusiveEnd |= e.inclusive();
                 }
-                // end a segment when left drops to 0 while right==0
-                if (prevLeft > 0 && leftActive == 0 && rightActive == 0 && segStart != null) {
-                    out.add(new NumericRange.Event(segStart.value(), NumericRange.Type.START, segStart.inclusive()));
-                    out.add(new NumericRange.Event(e.value(), NumericRange.Type.END, e.inclusive()));
-                    segStart = null;
-                }
+                ia++;
             }
 
-            // Then apply right deltas
-            if (rightDelta != 0) {
-                int prevRight = rightActive;
-                rightActive += rightDelta;
-
-                // If right becomes >0 while leftActive>0 -> close current segment (we remove overlap)
-                if (prevRight == 0 && rightActive > 0 && leftActive > 0 && segStart != null) {
-                    out.add(new NumericRange.Event(segStart.value(), NumericRange.Type.START, segStart.inclusive()));
-                    out.add(new NumericRange.Event(e.value(), NumericRange.Type.END, e.inclusive()));
-                    segStart = null;
+            while (ib < b.length && b[ib].value().compareTo(value) == 0) {
+                NumericRange.Event e = b[ib];
+                if (e.type() == NumericRange.Type.START) {
+                    rightStarts++;
+                    rightInclusiveStart |= e.inclusive();
+                } else {
+                    rightEnds++;
+                    rightInclusiveEnd |= e.inclusive();
                 }
+                ib++;
+            }
 
-                // If right becomes 0 (i.e., gap in right) and leftActive>0 -> start new segment
-                if (prevRight > 0 && rightActive == 0 && leftActive > 0) {
-                    segStart = e;
-                }
+            boolean before = leftActive > 0 && rightActive == 0;
+
+            leftActive -= leftEnds;
+            rightActive -= rightEnds;
+
+            boolean middle = leftActive > 0 && rightActive == 0;
+
+            leftActive += leftStarts;
+            rightActive += rightStarts;
+
+            boolean after = leftActive > 0 && rightActive == 0;
+
+            if (!before && middle) {
+                segmentStart = new NumericRange.Event(
+                        value,
+                        NumericRange.Type.START,
+                        leftInclusiveStart || leftInclusiveEnd);
+            }
+
+            if (middle && !after) {
+                assert segmentStart != null;
+                out.add(segmentStart);
+                out.add(new NumericRange.Event(
+                        value,
+                        NumericRange.Type.END,
+                        leftInclusiveStart || leftInclusiveEnd));
+                segmentStart = null;
+            }
+
+            if (!middle && after) {
+                segmentStart = new NumericRange.Event(
+                        value,
+                        NumericRange.Type.START,
+                        leftInclusiveStart || leftInclusiveEnd);
+            }
+
+            if (before && !middle) {
+                assert segmentStart != null;
+                out.add(segmentStart);
+                out.add(new NumericRange.Event(
+                        value,
+                        NumericRange.Type.END,
+                        leftInclusiveStart || leftInclusiveEnd));
+                segmentStart = null;
             }
         }
 
-        // If sweep ended while a segment was open and rightActive == 0 and leftActive > 0, close it at +inf
-        if (segStart != null && leftActive > 0 && rightActive == 0) {
-            out.add(new NumericRange.Event(segStart.value(), NumericRange.Type.START, segStart.inclusive()));
-            out.add(new NumericRange.Event(BoundValue.POSITIVE_INFINITY, NumericRange.Type.END, true));
+        if (segmentStart != null) {
+            out.add(segmentStart);
+            out.add(new NumericRange.Event(
+                    BoundValue.POSITIVE_INFINITY,
+                    NumericRange.Type.END,
+                    true));
         }
 
-        return NumericRange.of(out.toArray(NumericRange.Event[]::new));
+        return out.isEmpty()
+                ? null
+                : NumericRange.skipNormalization(out.toArray(NumericRange.Event[]::new));
     }
 
     /**
      * Returns true if every value in subset is contained in superset.
      */
-    public static boolean isSubtype(final NumericRange subset, final NumericRange superset) {
-        if (subset == null) return true;
-        if (superset == null) return false;
-
-        final NumericRange diff = subtract(subset, superset);
-        // if subset \ superset is empty then subset is contained
-        return diff.events().length == 0;
+    public static boolean isSubSet(final NumericRange subset, final NumericRange superset) {
+        final @Nullable NumericRange diff = subtract(subset, superset);
+        return diff == null;
     }
 
 
@@ -228,7 +264,6 @@ public final class Ranges {
      * Returns true if the two cardinalities share at least one common value.
      */
     public static boolean overlaps(final NumericRange a, final NumericRange b) {
-        if (a == null || b == null) return false;
         final NumericRange inter = intersection(a, b);
         return inter.events().length > 0;
     }
@@ -356,15 +391,101 @@ public final class Ranges {
     }
 
     public static String stringify(NumericRange range) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'stringify'");
+        final List<NumericRange.Interval> intervals = range.toIntervals();
+        if (intervals.size() == 1) {
+            return stringifyInterval(intervals.getFirst());
+        }
+        final StringJoiner sj = new StringJoiner(" | ", "(", ")");
+        for (final NumericRange.Interval interval : intervals) {
+            sj.add(stringifyInterval(interval));
+        }
+        return sj.toString();
     }
 
+    private static String stringifyInterval(final NumericRange.Interval interval) {
+        final String lowerBound = switch (interval.lowerBound()) {
+            case FiniteBound f -> String.valueOf(f.value().longValue());
+            case NegativeInfinity _ -> "-∞";
+            case PositiveInfinity _ ->
+                    throw new IllegalStateException("Positive infinity lower bound should not be possible for cardinality");
+        };
+        final String rightSideBound = switch (interval.upperBound()) {
+            case FiniteBound f -> String.valueOf(f.value().intValue());
+            case PositiveInfinity _ -> "∞";
+            case NegativeInfinity _ ->
+                    throw new IllegalStateException("Positive infinity lower bound should not be possible for cardinality");
+        };
 
-    public static NumericRange indices(NumericRange numericRange) {
-        return null;
+        if (lowerBound.equals(rightSideBound)) {
+            // If both bounds are equal, we can represent it as a single value (e.g., "3" instead of "3..3").
+            return lowerBound;
+        }
+        return lowerBound + ".." + rightSideBound;
+
     }
 
+    public static NumericRange indices(final NumericRange range) {
+        if (range.isZero()) {
+            return NumericRange.ZERO;
+        }
+
+        final List<Event> out = new ArrayList<>();
+
+        final Event[] events = range.events();
+        for (int i = 0; i < events.length; i += 2) {
+            final Event start = events[i];
+            final Event end = events[i + 1];
+
+            // ----- first integer in interval -----
+            final BoundValue firstBound = switch (start.value()) {
+                case NegativeInfinity _ ->
+                        new FiniteBound(BigDecimal.ZERO);
+
+                case PositiveInfinity _ ->
+                        throw new IllegalStateException();
+
+                case FiniteBound(BigDecimal value) -> {
+                    BigDecimal first = value.setScale(0, java.math.RoundingMode.CEILING);
+                    if (!start.inclusive() && first.compareTo(value) == 0) {
+                        first = first.add(BigDecimal.ONE);
+                    }
+                    if (first.signum() < 0) {
+                        first = BigDecimal.ZERO;
+                    }
+                    yield new FiniteBound(first);
+                }
+            };
+
+            // ----- last integer in interval -----
+            final BoundValue lastBound = switch (end.value()) {
+                case PositiveInfinity _ -> BoundValue.POSITIVE_INFINITY;
+
+                case NegativeInfinity _ ->
+                        throw new IllegalStateException();
+
+                case FiniteBound(BigDecimal value) -> {
+                    BigDecimal last = value.setScale(0, java.math.RoundingMode.FLOOR);
+                    if (!end.inclusive() && last.compareTo(value) == 0) {
+                        last = last.subtract(BigDecimal.ONE);
+                    }
+                    yield new FiniteBound(last);
+                }
+            };
+
+            if (lastBound instanceof FiniteBound(BigDecimal last)) {
+                FiniteBound finiteBound = (FiniteBound) firstBound;
+                BigDecimal first = finiteBound.value();
+                if (first.compareTo(last) > 0) {
+                    continue;
+                }
+            }
+
+            out.add(new Event(firstBound, NumericRange.Type.START, true));
+            out.add(new Event(lastBound, NumericRange.Type.END, true));
+        }
+
+        return NumericRange.of(out.toArray(Event[]::new));
+    }
     public static boolean contains(NumericRange range, int i) {
         return false;
     }
@@ -375,7 +496,7 @@ public final class Ranges {
 
     public static NumericRange indices(
             @NonNegative int start,
-            int stop)
+            @NonNegative int stop)
     {
         if (start >= stop) {
             return NumericRange.ZERO;

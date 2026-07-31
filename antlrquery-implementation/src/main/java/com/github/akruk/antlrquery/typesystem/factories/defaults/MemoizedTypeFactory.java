@@ -63,6 +63,8 @@ public class MemoizedTypeFactory implements AntlrQueryTypeFactory {
     private final AntlrQueryItemType ITEM_ANY_MAP;
     private final AntlrQueryItemType ITEM_ANY_FUNCTION;
     private final AntlrQueryItemType ITEM_ANY_NODE;
+    private final AntlrQueryItemType ITEM_ANY_RULE;
+    private final AntlrQueryItemType ITEM_ANY_TOKEN;
     private final AntlrQuerySequenceType SEQ_ANY_NODE;
     private final AntlrQuerySequenceType SEQ_ANY_ARRAY;
     private final AntlrQuerySequenceType SEQ_ANY_MAP;
@@ -84,6 +86,8 @@ public class MemoizedTypeFactory implements AntlrQueryTypeFactory {
         this.SEQ_ANY_ARRAY = new AntlrQuerySequenceType.NonEmptySequence(ITEM_ANY_ARRAY, Cardinality.ONE);
         this.SEQ_ANY_MAP = new AntlrQuerySequenceType.NonEmptySequence(ITEM_ANY_MAP, Cardinality.ONE);
         this.SEQ_ANY_FUNCTION = new AntlrQuerySequenceType.NonEmptySequence(ITEM_ANY_FUNCTION, Cardinality.ONE);
+        ITEM_ANY_RULE = new TreeRuleType.AnyRule();
+        ITEM_ANY_TOKEN = new TreeTokenType.AnyToken();
     }
 
     record GrammarTypes(
@@ -192,15 +196,47 @@ public class MemoizedTypeFactory implements AntlrQueryTypeFactory {
     }
 
     @Override
-    public AntlrQueryItemType itemElement(String grammar, Set<NamespaceResolver.QualifiedName> elementName) {
+    public AntlrQueryItemType itemNodesFromGrammar(String grammar, Set<NamespaceResolver.QualifiedName> elementName) {
         return elementCache.computeIfAbsent(
                 new TreeNodeKey(grammar, Set.copyOf(elementName)),
                 k -> new TreeNodeType.NodeType(k.grammar(), k.names())
         );
     }
 
+    private final Map<String, AntlrQueryItemType> anyNodesFromGrammar = new ConcurrentHashMap<>();
+    private final Map<String, AntlrQueryItemType> anyTokensFromGrammar = new ConcurrentHashMap<>();
+    private final Map<String, AntlrQueryItemType> tokensFromGrammar = new ConcurrentHashMap<>();
+    private final Map<String, AntlrQueryItemType> anyRulesFromGrammar = new ConcurrentHashMap<>();
+    private final Map<String, AntlrQueryItemType> rulesFromGrammar = new ConcurrentHashMap<>();
+
     @Override
-    public AntlrQueryItemType itemToken(String grammar, Set<NamespaceResolver.QualifiedName> mergedNames) {
+    public AntlrQueryItemType itemAnyNodeFromGrammar(String grammar) {
+        return anyNodesFromGrammar.computeIfAbsent(grammar, TreeNodeType.AnyNodeFromGrammar::new);
+    }
+
+    @Override
+    public AntlrQueryItemType itemAnyToken() {
+        return ITEM_ANY_TOKEN;
+    }
+
+    @Override
+    public AntlrQueryItemType itemAnyTokenFromGrammar(String grammar) {
+        return anyNodesFromGrammar.computeIfAbsent(grammar, TreeTokenType.AnyTokenFromGrammar::new);
+    }
+
+    @Override
+    public AntlrQueryItemType itemAnyRule() {
+        return ITEM_ANY_RULE;
+    }
+
+
+    @Override
+    public AntlrQueryItemType itemAnyRuleFromGrammar(String grammar) {
+        return anyNodesFromGrammar.computeIfAbsent(grammar, TreeRuleType.AnyRuleFromGrammar::new);
+    }
+
+    @Override
+    public AntlrQueryItemType itemTokensFromGrammar(String grammar, Set<NamespaceResolver.QualifiedName> mergedNames) {
         return tokenCache.computeIfAbsent(
                 new TreeNodeKey(grammar, Set.copyOf(mergedNames)),
                 k -> new TreeTokenType.TokenType(k.grammar(), k.names())
@@ -208,7 +244,7 @@ public class MemoizedTypeFactory implements AntlrQueryTypeFactory {
     }
 
     @Override
-    public AntlrQueryItemType itemRule(String grammar, Set<NamespaceResolver.QualifiedName> mergedNames) {
+    public AntlrQueryItemType itemRulesFromGrammar(String grammar, Set<NamespaceResolver.QualifiedName> mergedNames) {
         return ruleCache.computeIfAbsent(
                 new TreeNodeKey(grammar, Set.copyOf(mergedNames)),
                 k -> new TreeRuleType.RuleType(k.grammar(), k.names())
@@ -432,12 +468,12 @@ public class MemoizedTypeFactory implements AntlrQueryTypeFactory {
 
     @Override
     public AntlrQuerySequenceType extensibleRecord(LinkedHashMap<String, RecordField> fields) {
-        return one(itemExtensibleRecord(fields, emptySequence()));
+        return one(itemExtensibleRecord(fields, zeroOrMore(itemAnyItem())));
     }
 
     @Override
     public AntlrQuerySequenceType element(String grammar, Set<NamespaceResolver.QualifiedName> elementName) {
-        return one(itemElement(grammar, elementName));
+        return one(itemNodesFromGrammar(grammar, elementName));
     }
 
     @Override

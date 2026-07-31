@@ -40,10 +40,10 @@ public class ItemTypeUnion
     public AntlrQueryItemType union(final AntlrQueryItemType type1, final AntlrQueryItemType type2)
     {
         if (ItemTypes.isSubtype(typeFactory, type1, type2)) {
-            return type1;
+            return type2;
         }
         if (ItemTypes.isSubtype(typeFactory, type2, type1)) {
-            return type2;
+            return type1;
         }
         return visit(type1, type2);
     }
@@ -1268,7 +1268,7 @@ public class ItemTypeUnion
         AntlrQuerySequenceType[] mergedMembers = new AntlrQuerySequenceType[len];
 
         for (int i = 0; i < len; i++) {
-            mergedMembers[i] = Types.sequenceMerge(typeFactory, tupleType.members()[i], tupleType2.members()[i]);
+            mergedMembers[i] = Types.addition(typeFactory, tupleType.members()[i], tupleType2.members()[i]);
         }
 
         return new ArrayLikeType.TupleType(mergedMembers);
@@ -2412,7 +2412,7 @@ public class ItemTypeUnion
                 mergedFields.put(key, new RecordField(
                         key,
                         new RecordField.TypeOrReference.Type(
-                                Types.sequenceMerge(typeFactory, resolvedX, resolvedY)
+                                Types.addition(typeFactory, resolvedX, resolvedY)
                         ),
                         required
                 ));
@@ -2421,7 +2421,7 @@ public class ItemTypeUnion
                 mergedFields.put(key, new RecordField(
                         key,
                         new RecordField.TypeOrReference.Type(
-                                Types.sequenceMerge(typeFactory, resolvedX, y.additionalFieldType())
+                                Types.addition(typeFactory, resolvedX, y.additionalFieldType())
                         ),
                         false
                 ));
@@ -2430,7 +2430,7 @@ public class ItemTypeUnion
                 mergedFields.put(key, new RecordField(
                         key,
                         new RecordField.TypeOrReference.Type(
-                                Types.sequenceMerge(typeFactory, x.additionalFieldType(), resolvedY)
+                                Types.addition(typeFactory, x.additionalFieldType(), resolvedY)
                         ),
                         false
                 ));
@@ -2438,7 +2438,7 @@ public class ItemTypeUnion
         }
 
 
-        final AntlrQuerySequenceType mergedAdditional = Types.sequenceMerge(typeFactory, x.additionalFieldType(), y.additionalFieldType());
+        final AntlrQuerySequenceType mergedAdditional = Types.addition(typeFactory, x.additionalFieldType(), y.additionalFieldType());
 
         return new MapLikeType.ExtensibleRecordType(mergedFields, mergedAdditional);
     }
@@ -2814,7 +2814,7 @@ public class ItemTypeUnion
 
                 newFields.put(key, new RecordField(
                         key,
-                        new RecordField.TypeOrReference.Type(Types.sequenceMerge(typeFactory, resolvedX, resolvedY)
+                        new RecordField.TypeOrReference.Type(Types.addition(typeFactory, resolvedX, resolvedY)
                         ),
                         required
                 ));
@@ -2947,7 +2947,7 @@ public class ItemTypeUnion
         if (Objects.equals(elementType.grammar(), elementType2.grammar())) {
             Set<NamespaceResolver.QualifiedName> mergedNames = new HashSet<>(elementType.elementNames());
             mergedNames.addAll(elementType2.elementNames());
-            return typeFactory.itemElement(elementType.grammar(), mergedNames);
+            return typeFactory.itemNodesFromGrammar(elementType.grammar(), mergedNames);
         }
         return typeFactory.itemChoice(elementType, elementType2);
     }
@@ -2970,7 +2970,7 @@ public class ItemTypeUnion
         if (Objects.equals(elementType.grammar(), tokenType.grammar())) {
             Set<NamespaceResolver.QualifiedName> mergedNames = new HashSet<>(elementType.elementNames());
             mergedNames.addAll(tokenType.elementNames());
-            return typeFactory.itemElement(elementType.grammar(), mergedNames);
+            return typeFactory.itemNodesFromGrammar(elementType.grammar(), mergedNames);
         }
         return typeFactory.itemChoice(elementType, tokenType);
     }
@@ -2999,7 +2999,7 @@ public class ItemTypeUnion
         if (Objects.equals(elementType.grammar(), ruleType.grammar())) {
             Set<NamespaceResolver.QualifiedName> mergedNames = new HashSet<>(elementType.elementNames());
             mergedNames.addAll(ruleType.elementNames());
-            return typeFactory.itemElement(elementType.grammar(), mergedNames);
+            return typeFactory.itemNodesFromGrammar(elementType.grammar(), mergedNames);
         }
         return typeFactory.itemChoice(elementType, ruleType);
     }
@@ -3469,7 +3469,7 @@ public class ItemTypeUnion
             final HashSet<NamespaceResolver.QualifiedName> nodes = new HashSet<>(tokenType.elementNames().size() + rules.size());
             nodes.addAll(rules);
             nodes.addAll(tokenType.elementNames());
-            return typeFactory.itemRule(tokenType.grammar(), nodes);
+            return typeFactory.itemRulesFromGrammar(tokenType.grammar(), nodes);
         }
         return typeFactory.itemChoice(tokenType, anyRuleFromGrammar);
     }
@@ -3504,7 +3504,7 @@ public class ItemTypeUnion
         if (Objects.equals(tokenType.grammar(), tokenType2.grammar())) {
             Set<NamespaceResolver.QualifiedName> mergedNames = new HashSet<>(tokenType.elementNames());
             mergedNames.addAll(tokenType2.elementNames());
-            return typeFactory.itemToken(tokenType.grammar(), mergedNames);
+            return typeFactory.itemTokensFromGrammar(tokenType.grammar(), mergedNames);
         }
         return typeFactory.itemChoice(tokenType, tokenType2);
     }
@@ -3524,7 +3524,7 @@ public class ItemTypeUnion
         if (Objects.equals(tokenType.grammar(), ruleType.grammar())) {
             Set<NamespaceResolver.QualifiedName> mergedNames = new HashSet<>(tokenType.elementNames());
             mergedNames.addAll(ruleType.elementNames());
-            return typeFactory.itemElement(tokenType.grammar(), mergedNames);
+            return typeFactory.itemNodesFromGrammar(tokenType.grammar(), mergedNames);
         }
         return typeFactory.itemChoice(tokenType, ruleType);
     }
@@ -3983,7 +3983,7 @@ public class ItemTypeUnion
         if (Objects.equals(ruleType.grammar(), ruleType2.grammar())) {
             Set<NamespaceResolver.QualifiedName> mergedNames = new HashSet<>(ruleType.elementNames());
             mergedNames.addAll(ruleType2.elementNames());
-            return typeFactory.itemRule(ruleType.grammar(), mergedNames);
+            return typeFactory.itemRulesFromGrammar(ruleType.grammar(), mergedNames);
         }
         return typeFactory.itemChoice(ruleType, ruleType2);
     }

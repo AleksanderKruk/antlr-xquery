@@ -39,16 +39,16 @@ public final class ItemTypes {
         return Arrays.stream(itemTypes).reduce(merger::union).get();
     }
 
-    public static String stringifyConcreteItemType(final ConcreteItemType item) {
+    public static String stringify(final ConcreteItemType item) {
         return switch(item) {
-            case AtomicType c -> ItemTypes.stringifyAtomicType(c);
-            case ArrayLikeType.ArrayType e -> ItemTypes.stringifyArrayType(e);
-            case MapLikeType.MapType e -> ItemTypes.stringifyMapType(e);
-            case MapLikeType.RecordType e -> ItemTypes.stringifyRecordType(e);
-            case MapLikeType.ExtensibleRecordType e -> ItemTypes.stringifyExtensibleRecordType(e);
-            case ArrayLikeType.TupleType e -> ItemTypes.stringifyTupleType(e);
-            case GrammarEntityType c2 -> ItemTypes.stringifyGrammarEntity(c2);
-            case TreeLike c2 -> ItemTypes.stringifyTreeNodeType(c2);
+            case AtomicType c -> ItemTypes.stringify(c);
+            case ArrayLikeType.ArrayType e -> ItemTypes.stringify(e);
+            case MapLikeType.MapType e -> ItemTypes.stringify(e);
+            case MapLikeType.RecordType e -> ItemTypes.stringify(e);
+            case MapLikeType.ExtensibleRecordType e -> ItemTypes.stringify(e);
+            case ArrayLikeType.TupleType e -> ItemTypes.stringify(e);
+            case GrammarEntityType c2 -> ItemTypes.stringify(c2);
+            case TreeLike c2 -> ItemTypes.stringify(c2);
             case FunctionType.AnyFunction anyFunction -> ItemTypes.stringify(anyFunction);
             case FunctionType.ConstrainedFunction functionType -> ItemTypes.stringify(functionType);
         };
@@ -65,34 +65,34 @@ public final class ItemTypes {
         return "fn(" + argsString + ") as " + Types.stringify(returnedType);
     }
 
-    private static String stringifyTreeNodeType(TreeLike c2) {
+    private static String stringify(TreeLike c2) {
         return switch(c2) {
             case TreeNodeType.NodeType(String _, Set<QualifiedName> elementNames) ->
                 elementNames.stream()
-                    .sorted()
                     .map(QualifiedName::toString)
-                    .collect(Collectors.joining(" | ", "element(", ")"));
+                    .sorted()
+                    .collect(Collectors.joining(" | ", "<", ">"));
             case TreeRuleType.RuleType(String _, Set<QualifiedName> elementNames) ->
                 elementNames.stream()
-                    .sorted()
                     .map(QualifiedName::toString)
+                    .sorted()
                     .collect(Collectors.joining(" | ", "rule(", ")"));
 
             case TreeTokenType.TokenType(String _, Set<QualifiedName> elementNames) ->
                 elementNames.stream()
-                    .sorted()
                     .map(QualifiedName::toString)
+                    .sorted()
                     .collect(Collectors.joining(" | ", "token(", ")"));
-            case TreeNodeType.AnyNode anyNode -> null;
-            case TreeNodeType.AnyNodeFromGrammar anyNodeFromGrammar -> null;
-            case TreeRuleType.AnyRule anyRule -> null;
-            case TreeRuleType.AnyRuleFromGrammar anyRuleFromGrammar -> null;
-            case TreeTokenType.AnyToken anyToken -> null;
-            case TreeTokenType.AnyTokenFromGrammar anyTokenFromGrammar -> null;
+            case TreeNodeType.AnyNode() -> "<*>";
+            case TreeNodeType.AnyNodeFromGrammar(String grammar) -> "<" + grammar + ":*>";
+            case TreeRuleType.AnyRule() -> "rule(*)";
+            case TreeRuleType.AnyRuleFromGrammar(String grammar) -> "rule(" + grammar + ":*)";
+            case TreeTokenType.AnyToken() -> "token(*)";
+            case TreeTokenType.AnyTokenFromGrammar(String grammar) -> "token(" + grammar + ":*)";
         };
     }
 
-    public static String stringifyTupleType(final TupleType e) {
+    public static String stringify(final TupleType e) {
         return Arrays.stream(e.members())
             .map(Types::stringify)
             .collect(Collectors.joining(", ", "[", "]"))
@@ -100,8 +100,8 @@ public final class ItemTypes {
     }
 
 
-    public static String stringifyExtensibleRecordType(final ExtensibleRecordType e) {
-        final boolean isAny = e.additionalFieldType().itemType().equals(AntlrQueryItemType.ANY_TYPE); 
+    public static String stringify(final ExtensibleRecordType e) {
+        final boolean isAny = e.additionalFieldType().itemType().equals(AntlrQueryItemType.ANY_TYPE);
         final String fieldType = isAny? "": Types.stringify(e.additionalFieldType());
         final String extensibleEnding = ", " +fieldType  + "*}";
         return e.fields().values().stream()
@@ -110,18 +110,18 @@ public final class ItemTypes {
             ;
     }
 
-    public static String stringifyRecordType(final RecordType e) {
+    public static String stringify(final RecordType e) {
         return e.fields().values().stream()
             .map(ItemTypes::stringifyRecordField)
             .collect(Collectors.joining(", ", "{", "}"))
             ;
     }
 
-    public static String stringifyMapType(MapType e) {
+    public static String stringify(MapType e) {
         return "{" + e.keyType() + " : " + e.valueType() + "}";
     }
 
-    public static String stringifyArrayType(ArrayType e) {
+    public static String stringify(ArrayType e) {
         final String typeString = Types.stringify(e.memberType());
         if (e.cardinality().equals(Cardinality.ZERO_OR_MORE)) {
             return typeString + "[]";
@@ -129,7 +129,7 @@ public final class ItemTypes {
         return typeString + "[" + Cardinalities.stringify(e.cardinality()) + "]";
     }
 
-    public static String stringifyGrammarEntity(GrammarEntityType c2) {
+    public static String stringify(GrammarEntityType c2) {
         throw new IllegalStateException();
     }
 
@@ -144,14 +144,19 @@ public final class ItemTypes {
                     field.name() + fieldSuffix + " as " + Types.stringify(type);
         };
     }
-    public static String stringifyAtomicType(AtomicType c) {
+    public static String stringify(AtomicType c) {
         return switch(c) {
-            case AtomicType.NumberType(NumericRange range) -> "number"+Ranges.stringify(range);
+            case AtomicType.NumberType n -> stringify(n);
             case StringType s -> switch(s) {
                 case StringType.StringEnum(Set<String> enumValues, Cardinality _) ->
-                    "string" + enumValues.stream().sorted().collect(Collectors.joining(" | ", "(", ")"));
-                case StringType.StringNonEnum(Cardinality length) -> 
-                    "string" + Cardinalities.stringifyWithoutParentheses(length);
+                    enumValues.stream()
+                            .sorted()
+                            .map(member->"'" + member + "'")
+                            .collect(Collectors.joining(" | ", "(", ")"));
+                case StringType.StringNonEnum(Cardinality length) when length.equals(Cardinality.ZERO_OR_MORE) ->
+                    "string";
+                case StringType.StringNonEnum(Cardinality length) ->
+                        "string(" + Cardinalities.stringifyWithoutParentheses(length) + ")";
             };
             case BooleanType c2 -> switch(c2) {
                 case BooleanType.True _ -> "true";
@@ -163,14 +168,35 @@ public final class ItemTypes {
         };
     }
 
+    private static String stringify(AtomicType.NumberType t) {
+        if (t.range().equals(NumericRange.FULL)) {
+            return "number";
+        }
+        return "number" + Ranges.stringify(t.range());
+    }
+
     public static String stringify(final  AntlrQueryItemType item) {
         return switch(item) {
-            case ConcreteItemType c -> ItemTypes.stringifyConcreteItemType(c);
+            case ConcreteItemType c -> ItemTypes.stringify(c);
             case ChoiceItemType(ConcreteItemType[] itemTypes) ->
                 Arrays.stream(itemTypes)
                     .map(ItemTypes::stringify)
                     .sorted()
                     .collect(Collectors.joining(" | ", "(", ")"));
+            case AnyItemType() -> "item()";
+            case NothingType() -> "∅";
+            case NeverType() -> "⊥";
+        };
+    }
+
+    public static String stringifyWithoutParentheses(final  AntlrQueryItemType item) {
+        return switch(item) {
+            case ConcreteItemType c -> ItemTypes.stringify(c);
+            case ChoiceItemType(ConcreteItemType[] itemTypes) ->
+                    Arrays.stream(itemTypes)
+                            .map(ItemTypes::stringify)
+                            .sorted()
+                            .collect(Collectors.joining(" | "));
             case AnyItemType() -> "item()";
             case NothingType() -> "∅";
             case NeverType() -> "⊥";

@@ -49,7 +49,7 @@ function activate(context) {
     // Konfiguracja LSP
     const serverOptions = {
         command: 'java',
-        args: ['-jar', context.asAbsolutePath('./server/antlrxquery-language-server.jar')],
+        args: ['-jar', context.asAbsolutePath('./server/AntlrQuery-language-server.jar')],
         transport: TransportKind.stdout,
         options: { cwd: process.cwd() }
     };

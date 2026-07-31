@@ -22,6 +22,7 @@ import org.checkerframework.framework.qual.DefaultQualifier;
 public final class NumericRange {
 
     public static final NumericRange FULL = NumericRange.of(new Event(BoundValue.NEGATIVE_INFINITY, Type.START, false), new Event(BoundValue.POSITIVE_INFINITY, Type.END, false));
+    public static final NumericRange NON_NEGATIVE = NumericRange.of(new Event(new FiniteBound(BigDecimal.valueOf(0)), Type.START, true), new Event(BoundValue.POSITIVE_INFINITY, Type.END, false));
     private final Event[] events;
 
     /**

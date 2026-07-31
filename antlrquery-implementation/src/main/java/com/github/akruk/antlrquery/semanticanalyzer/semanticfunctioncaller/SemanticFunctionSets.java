@@ -6,7 +6,7 @@ import com.github.akruk.antlrquery.typesystem.types.NumericRange;
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.AntlrQueryItemType;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import com.github.akruk.antlrquery.AntlrXqueryParser.ParenthesizedExprContext;
+import com.github.akruk.antlrquery.AntlrQueryParser.ParenthesizedExprContext;
 import com.github.akruk.antlrquery.HelperTrees;
 import com.github.akruk.antlrquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.SemanticSymbolManager.ArgumentSpecification;
@@ -1140,7 +1140,7 @@ public class SemanticFunctionSets {
             new QualifiedName("fn", "analyze-string"),
             List.of(optionalStringRequiredValue, pattern, flags),
             typeFactory.one(
-                typeFactory.itemElement(
+                typeFactory.itemNodesFromGrammar(
                         "fn", Set.of(
                         new QualifiedName("fn", "analyze-string-result")
                     )

@@ -1,12 +1,12 @@
-// package com.github.akruk.antlrxquery;
+// package com.github.akruk.AntlrQuery;
 
 // import org.junit.jupiter.api.Test;
 // import org.junit.jupiter.api.BeforeEach;
 // import org.junit.jupiter.api.io.TempDir;
 
-// import com.github.akruk.antlrxquery.XQueryRunner.ExtractionResult;
-// import com.github.akruk.antlrxquery.XQueryRunner.InputStatus;
-// import com.github.akruk.antlrxquery.XQueryRunner.ValidationResult;
+// import com.github.akruk.AntlrQuery.XQueryRunner.ExtractionResult;
+// import com.github.akruk.AntlrQuery.XQueryRunner.InputStatus;
+// import com.github.akruk.AntlrQuery.XQueryRunner.ValidationResult;
 
 // import static org.junit.jupiter.api.Assertions.*;
 // import java.nio.file.Path;

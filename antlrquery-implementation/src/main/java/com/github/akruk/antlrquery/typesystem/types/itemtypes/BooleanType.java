@@ -1,16 +1,31 @@
 package com.github.akruk.antlrquery.typesystem.types.itemtypes;
 
+import com.github.akruk.antlrquery.typesystem.types.ItemTypes;
+import org.checkerframework.checker.nullness.qual.NonNull;
+
 sealed public interface BooleanType extends AtomicType
         permits BooleanType.True,
         BooleanType.False,
         BooleanType.Boolean {
 
-    public record True() implements com.github.akruk.antlrquery.typesystem.types.itemtypes.BooleanType {
+    record True() implements com.github.akruk.antlrquery.typesystem.types.itemtypes.BooleanType {
+        @Override
+        public @NonNull String toString() {
+            return ItemTypes.stringify(this);
+        }
     }
 
-    public record False() implements com.github.akruk.antlrquery.typesystem.types.itemtypes.BooleanType {
+    record False() implements com.github.akruk.antlrquery.typesystem.types.itemtypes.BooleanType {
+        @Override
+        public @NonNull String toString() {
+            return ItemTypes.stringify(this);
+        }
     }
 
-    public record Boolean() implements com.github.akruk.antlrquery.typesystem.types.itemtypes.BooleanType {
+    record Boolean() implements com.github.akruk.antlrquery.typesystem.types.itemtypes.BooleanType {
+        @Override
+        public @NonNull String toString() {
+            return ItemTypes.stringify(this);
+        }
     }
 }

@@ -13,10 +13,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.CharStream;
-import com.github.akruk.antlrquery.AntlrXqueryLexer;
-import com.github.akruk.antlrquery.AntlrXqueryParser;
+import com.github.akruk.antlrquery.AntlrQueryLexer;
+import com.github.akruk.antlrquery.AntlrQueryParser;
 import com.github.akruk.antlrquery.AxisVisitor;
-import com.github.akruk.antlrquery.AntlrXqueryParser.XqueryContext;
+import com.github.akruk.antlrquery.AntlrQueryParser.XqueryContext;
 import com.github.akruk.antlrquery.evaluator.values.AntlrQueryValue;
 import com.github.akruk.antlrquery.evaluator.values.factories.AntlrQueryValueFactory;
 import com.github.akruk.antlrquery.evaluator.values.factories.defaults.AntlrQueryMemoizedValueFactory;
@@ -110,6 +110,10 @@ public final class AntlrQuery {
             cardinalityVisitor,
             new TypeVisitor(typeFactory, cardinalityVisitor, new ItemTypeVisitor(typeFactory))
             );
+        analyzer.visit(xqueryTree);
+        if (!analyzer.getErrors().isEmpty())
+            throw new IllegalStateException("Errors in semantic analysis");
+
         final AntlrQueryEvaluator visitor = new AntlrQueryEvaluator(
             tree, parser, valueFactory, analyzer, typeFactory, moduleManager, vars);
 
@@ -197,9 +201,9 @@ public final class AntlrQuery {
 
     public static XqueryContext parse(final String xquery) {
         final CharStream characters = CharStreams.fromString(xquery);
-        final var xqueryLexer = new AntlrXqueryLexer(characters);
+        final var xqueryLexer = new AntlrQueryLexer(characters);
         final var xqueryTokens = new CommonTokenStream(xqueryLexer);
-        final var xqueryParser = new AntlrXqueryParser(xqueryTokens);
+        final var xqueryParser = new AntlrQueryParser(xqueryTokens);
         return xqueryParser.xquery();
     }
 

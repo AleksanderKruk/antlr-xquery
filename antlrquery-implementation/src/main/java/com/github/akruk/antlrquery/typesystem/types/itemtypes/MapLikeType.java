@@ -2,6 +2,8 @@ package com.github.akruk.antlrquery.typesystem.types.itemtypes;
 
 import com.github.akruk.antlrquery.typesystem.RecordField;
 import com.github.akruk.antlrquery.typesystem.types.AntlrQuerySequenceType;
+import com.github.akruk.antlrquery.typesystem.types.ItemTypes;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -16,16 +18,32 @@ public sealed interface MapLikeType
             AntlrQueryItemType keyType,
             AntlrQuerySequenceType valueType
     ) implements MapLikeType
-    {}
+    {
+        @Override
+        public @NonNull String toString() {
+            return ItemTypes.stringify(this);
+        }
+    }
 
     record RecordType(
             LinkedHashMap<String, RecordField> fields
     ) implements MapLikeType
-    {}
+    {
+        @Override
+        public @NonNull String toString() {
+            return ItemTypes.stringify(this);
+        }
+    }
 
     record ExtensibleRecordType(
             Map<String, RecordField> fields,
             AntlrQuerySequenceType additionalFieldType
     ) implements MapLikeType
-    {}
+    {
+        @Override
+        public @NonNull String toString() {
+            return ItemTypes.stringify(this);
+        }
+
+    }
 }

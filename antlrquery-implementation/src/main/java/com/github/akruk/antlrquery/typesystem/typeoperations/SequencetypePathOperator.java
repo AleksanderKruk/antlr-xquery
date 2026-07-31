@@ -90,7 +90,7 @@ public class SequencetypePathOperator {
             @MonotonicNonNull AntlrQuerySequenceType returnedType;
             if (validatedNames.grammars.size() == 1) {
                 String grammar = validatedNames.grammars.keySet().stream().findFirst().get();
-                 returnedType = typeFactory.zeroOrMore(typeFactory.itemElement(grammar, validatedNames.validNames));
+                 returnedType = typeFactory.zeroOrMore(typeFactory.itemNodesFromGrammar(grammar, validatedNames.validNames));
             } else {
                 returnedType = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
             }
@@ -108,7 +108,7 @@ public class SequencetypePathOperator {
         if (type.itemType() instanceof final ChoiceItemType c) {
             return new PathOperatorResult(
                     InputStatus.MULTIGRAMMAR,
-                    typeFactory.zeroOrMore(typeFactory.itemElement("", validatedNames.validNames)),
+                    typeFactory.zeroOrMore(typeFactory.itemNodesFromGrammar("", validatedNames.validNames)),
                     getGrammars(c),
                     validatedNames.grammars,
                     validatedNames.invalidNames,
@@ -244,9 +244,9 @@ public class SequencetypePathOperator {
                 unreachableNames.removeAll(validatedNames.validNames);
                 final var constrainedNames = new HashSet<>(elementNames);
                 constrainedNames.removeAll(unreachableNames);
-                return new ItemTypeResult(typeFactory.itemElement(grammar, constrainedNames), constrainedNames, unreachableNames);
+                return new ItemTypeResult(typeFactory.itemNodesFromGrammar(grammar, constrainedNames), constrainedNames, unreachableNames);
             } else {
-                return new ItemTypeResult(typeFactory.itemElement(grammar, validatedNames.validNames), Set.of(), Set.of());
+                return new ItemTypeResult(typeFactory.itemNodesFromGrammar(grammar, validatedNames.validNames), Set.of(), Set.of());
             }
         }
     }
@@ -268,7 +268,7 @@ public class SequencetypePathOperator {
                 analyzedAxis.resultingCardinality()
             );
 
-        return typeFactory.sequence(typeFactory.itemElement(grammar, names), result);
+        return typeFactory.sequence(typeFactory.itemNodesFromGrammar(grammar, names), result);
     }
 
     record AnalyzedAxisResult(

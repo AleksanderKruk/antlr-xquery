@@ -23,7 +23,7 @@ public class UnionExpressionSemanticTests extends SemanticTestsBase {
                         $y as element(b)* := (),
                         $z as element(c)* := ()
                     return $x | $y | $z
-                """, typeFactory.zeroOrMore(typeFactory.itemElement("", Set.of(
+                """, typeFactory.zeroOrMore(typeFactory.itemNodesFromGrammar("", Set.of(
                     new QualifiedName("", "a"),
                     new QualifiedName("", "b"),
                     new QualifiedName("", "c")

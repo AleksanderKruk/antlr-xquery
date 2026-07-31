@@ -1,8 +1,8 @@
 package com.github.akruk.antlrquery.semanticanalyzer.visitors;
 
-import com.github.akruk.antlrquery.AntlrXqueryParserBaseVisitor;
-import com.github.akruk.antlrquery.AntlrXqueryParser.EmptySequenceTypeContext;
-import com.github.akruk.antlrquery.AntlrXqueryParser.NonEmptySequenceTypeContext;
+import com.github.akruk.antlrquery.AntlrQueryParserBaseVisitor;
+import com.github.akruk.antlrquery.AntlrQueryParser.EmptySequenceTypeContext;
+import com.github.akruk.antlrquery.AntlrQueryParser.NonEmptySequenceTypeContext;
 import com.github.akruk.antlrquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrquery.typesystem.types.AntlrQuerySequenceType;
 import com.github.akruk.antlrquery.typesystem.types.Cardinality;
@@ -12,7 +12,7 @@ import org.checkerframework.framework.qual.DefaultQualifier;
 
 @DefaultQualifier(NonNull.class)
 public class TypeVisitor
-    extends AntlrXqueryParserBaseVisitor<AntlrQuerySequenceType>
+    extends AntlrQueryParserBaseVisitor<AntlrQuerySequenceType>
 {
 
 

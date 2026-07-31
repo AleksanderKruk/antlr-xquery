@@ -14,8 +14,8 @@ import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import com.github.akruk.antlrquery.AntlrXqueryLexer;
-import com.github.akruk.antlrquery.AntlrXqueryParser;
+import com.github.akruk.antlrquery.AntlrQueryLexer;
+import com.github.akruk.antlrquery.AntlrQueryParser;
 import com.github.akruk.antlrquery.AxisVisitor;
 import com.github.akruk.antlrquery.evaluator.values.factories.defaults.AntlrQueryMemoizedValueFactory;
 import com.github.akruk.antlrquery.languageserver.DiagnosticMessageCreator;
@@ -45,9 +45,9 @@ public class SemanticTestsBase {
 
     protected AnalysisResult analyze(final String text) {
         final CharStream characters = CharStreams.fromString(text);
-        final Lexer xqueryLexer = new AntlrXqueryLexer(characters);
+        final Lexer xqueryLexer = new AntlrQueryLexer(characters);
         final CommonTokenStream xqueryTokens = new CommonTokenStream(xqueryLexer);
-        final AntlrXqueryParser xqueryParser = new AntlrXqueryParser(xqueryTokens);
+        final AntlrQueryParser xqueryParser = new AntlrQueryParser(xqueryTokens);
         xqueryParser.addErrorListener(new BaseErrorListener() {
             @Override
             public void syntaxError(

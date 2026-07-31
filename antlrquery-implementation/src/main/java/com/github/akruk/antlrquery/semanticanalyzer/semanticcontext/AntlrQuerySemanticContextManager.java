@@ -6,7 +6,7 @@ import java.util.function.Supplier;
 
 import org.eclipse.lsp4j.Location;
 
-import com.github.akruk.antlrquery.AntlrXqueryParser.VarNameContext;
+import com.github.akruk.antlrquery.AntlrQueryParser.VarNameContext;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticcontext.AntlrQuerySemanticScope.EntypingResult;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticcontext.AntlrQuerySemanticScope.VariableInfo;
 import com.github.akruk.antlrquery.typesystem.factories.AntlrQueryTypeFactory;

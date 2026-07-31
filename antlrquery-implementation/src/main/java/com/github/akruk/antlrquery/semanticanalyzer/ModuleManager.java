@@ -12,7 +12,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import com.github.akruk.antlrquery.AntlrXqueryParser.XqueryContext;
+import com.github.akruk.antlrquery.AntlrQueryParser.XqueryContext;
 import com.github.akruk.antlrquery.evaluator.AntlrQuery;
 
 public class ModuleManager {

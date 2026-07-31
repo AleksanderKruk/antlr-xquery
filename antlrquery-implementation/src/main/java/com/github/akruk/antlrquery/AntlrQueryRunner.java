@@ -103,9 +103,9 @@ public class AntlrQueryRunner {
 
             // Compile XQuery query to tree once
             final CharStream xqueryCharStream = CharStreams.fromString(query);
-            final AntlrXqueryLexer xqueryLexer = new AntlrXqueryLexer(xqueryCharStream);
+            final AntlrQueryLexer xqueryLexer = new AntlrQueryLexer(xqueryCharStream);
             final CommonTokenStream xqueryTokens = new CommonTokenStream(xqueryLexer);
-            final AntlrXqueryParser xqueryParser = new AntlrXqueryParser(xqueryTokens);
+            final AntlrQueryParser xqueryParser = new AntlrQueryParser(xqueryTokens);
             final ParseTree xqueryTree = xqueryParser.xquery();
 
             final String targetFile = Files.readString(Path.of(targetFiles.getFirst()));

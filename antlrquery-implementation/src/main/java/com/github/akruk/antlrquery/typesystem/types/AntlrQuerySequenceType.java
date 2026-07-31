@@ -2,6 +2,7 @@ package com.github.akruk.antlrquery.typesystem.types;
 
 
 
+import com.github.akruk.antlrquery.typesystem.typeoperations.Types;
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.AntlrQueryItemType;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
@@ -12,7 +13,7 @@ public sealed interface AntlrQuerySequenceType
     permits AntlrQuerySequenceType.EmptySequence, 
             AntlrQuerySequenceType.NonEmptySequence
 {
-    public static final record EmptySequence() 
+    record EmptySequence()
         implements AntlrQuerySequenceType 
     {
         @Override
@@ -25,26 +26,23 @@ public sealed interface AntlrQuerySequenceType
             return AntlrQueryItemType.NOTHING;
         }
 
-        
+        @Override
+        public String toString() {
+            return Types.stringify(this);
+        }
     }
-    public static record NonEmptySequence(AntlrQueryItemType itemType, Cardinality cardinality)
-        implements AntlrQuerySequenceType {}
+    record NonEmptySequence(AntlrQueryItemType itemType, Cardinality cardinality)
+        implements AntlrQuerySequenceType
+    {
+        @Override
+        public String toString() {
+            return Types.stringify(this);
+        }
+    }
 
 
-    public Cardinality cardinality();
-    public AntlrQueryItemType itemType();
+    Cardinality cardinality();
+    AntlrQueryItemType itemType();
 
 
 }
-
-//     public final XQueryItemType itemType;
-//     public final Cardinality cardinality;
-
-//     private final AntlrQueryTypeFactory typeFactory;
-
-
-
-
-
-
-// }

@@ -8,7 +8,9 @@ import com.github.akruk.antlrquery.typesystem.types.ItemTypes;
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.MapLikeType;
 import com.github.akruk.visitorannotations.Visitor;
 
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Visitor(name = "MapVisitor", classes= {MapLikeType.class, MapLikeType.class})
 public class MapTypeIsSubtype implements MapVisitor<Boolean>  {
@@ -133,28 +135,66 @@ public class MapTypeIsSubtype implements MapVisitor<Boolean>  {
     }
 
     @Override
-    public Boolean visit(MapLikeType.RecordType recordType, MapLikeType.RecordType recordType2) {
-        Map<String, RecordField> sourceFields = recordType.fields();
-        Map<String, RecordField> targetFields = recordType2.fields();
+    public Boolean visit(MapLikeType.RecordType sub, MapLikeType.RecordType sup) {
 
-        for (Map.Entry<String, RecordField> targetEntry : targetFields.entrySet()) {
-            String fieldName = targetEntry.getKey();
-            RecordField sourceField = sourceFields.get(fieldName);
+        List<RecordField> subFields = new ArrayList<>(sub.fields().values());
+        List<RecordField> supFields = new ArrayList<>(sup.fields().values());
 
-            if (sourceField == null) {
+        int i = 0; // index in sub
+        int j = 0; // index in sup
+
+        while (j < supFields.size()) {
+            RecordField supField = supFields.get(j);
+
+            // If we've exhausted sub but sup still has required fields → fail
+            if (i >= subFields.size()) {
+                if (supField.isRequired()) {
+                    return false;
+                }
+                j++;
+                continue;
+            }
+
+            RecordField subField = subFields.get(i);
+
+            // Names must match for required fields
+            if (!subField.name().equals(supField.name())) {
+                if (supField.isRequired()) {
+                    // Required field missing or out of order → fail
+                    return false;
+                } else {
+                    // Optional field in sup may be skipped
+                    j++;
+                    continue;
+                }
+            }
+
+            // Names match -> check type compatibility
+            boolean typeOk = Types.isSubtype(
+                    typeFactory,
+                    subField.resolveFieldType(typeFactory),
+                    supField.resolveFieldType(typeFactory)
+            );
+
+            if (!typeOk) {
                 return false;
             }
 
-            boolean fieldSub = Types.isSubtype(typeFactory, sourceField.resolveFieldType(typeFactory), targetEntry.getValue().resolveFieldType(typeFactory));
-            if (!fieldSub) {
-                return false;
-            }
+            // Move forward in both
+            i++;
+            j++;
         }
+
+        // All required fields matched in order
         return true;
     }
 
     @Override
     public Boolean visit(MapLikeType.RecordType recordType, MapLikeType.MapType mapType) {
+        Set<String> indices =IntStream.range(0, recordType.fields().size()).mapToObj(Objects::toString).collect(Collectors.toSet());
+        if (!ItemTypes.isSubtype(typeFactory, typeFactory.itemEnum(indices), mapType.keyType())) {
+            return false;
+        }
         for (Map.Entry<String, RecordField> entry : recordType.fields().entrySet()) {
             boolean valSub = Types.isSubtype(typeFactory, entry.getValue().resolveFieldType(typeFactory), mapType.valueType());
             if (!valSub) {
@@ -176,7 +216,7 @@ public class MapTypeIsSubtype implements MapVisitor<Boolean>  {
 
     @Override
     public Boolean visit(MapLikeType.MapType mapType, MapLikeType.MapType mapType2) {
-        boolean keysSub = ItemTypes.isSubtype(typeFactory, mapType2.keyType(), mapType.keyType());
+        boolean keysSub = ItemTypes.isSubtype(typeFactory, mapType.keyType(), mapType2.keyType());
         boolean valuesSub = Types.isSubtype(typeFactory, mapType.valueType(), mapType2.valueType());
         return keysSub && valuesSub;
     }

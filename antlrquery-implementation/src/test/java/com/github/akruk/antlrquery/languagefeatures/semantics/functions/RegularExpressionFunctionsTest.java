@@ -117,21 +117,21 @@ public class RegularExpressionFunctionsTest extends SemanticTestsBase {
     @Test public void analyzeString_minimal() {
         assertType(
             "fn:analyze-string('abc','b')",
-            typeFactory.one(typeFactory.itemElement(
+            typeFactory.one(typeFactory.itemNodesFromGrammar(
                     "", Set.of(new QualifiedName("fn", "analyze-string-result"))))
         );
     }
     @Test public void analyzeString_withFlags() {
         assertType(
             "fn:analyze-string('AbC','b','i')",
-            typeFactory.one(typeFactory.itemElement(
+            typeFactory.one(typeFactory.itemNodesFromGrammar(
                     "", Set.of(new QualifiedName("fn", "analyze-string-result"))))
         );
     }
     @Test public void analyzeString_nullValue() {
         assertType(
             "fn:analyze-string((),'.*')",
-            typeFactory.one(typeFactory.itemElement(
+            typeFactory.one(typeFactory.itemNodesFromGrammar(
                     "", Set.of(new QualifiedName("fn", "analyze-string-result"))))
         );
     }

@@ -21,7 +21,7 @@ public class ArrayTypeIsSubtype implements  ArrayVisitor<Boolean>{
 
     @Override
     public Boolean visit(ArrayLikeType.ArrayType arrayType, ArrayLikeType.ArrayType arrayType2) {
-        return Cardinalities.isSubtype(arrayType.cardinality(), arrayType2.cardinality())
+        return Cardinalities.isSubSet(arrayType.cardinality(), arrayType2.cardinality())
                 && Types.isSubtype(typeFactory, arrayType.memberType(), arrayType2.memberType());
     }
 
@@ -35,7 +35,7 @@ public class ArrayTypeIsSubtype implements  ArrayVisitor<Boolean>{
         AntlrQuerySequenceType[] members = tupleType.members();
 
         final Cardinality tupleLength = Cardinality.of(members.length);
-        if (!Cardinalities.isSubtype(tupleLength, arrayType.cardinality())) {
+        if (!Cardinalities.isSubSet(tupleLength, arrayType.cardinality())) {
             return false;
         }
 

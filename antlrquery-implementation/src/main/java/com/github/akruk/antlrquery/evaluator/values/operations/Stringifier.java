@@ -24,7 +24,7 @@ public class Stringifier {
         if (target.isString)
             return target.stringValue;
         if (target.isBoolean)
-            return target.booleanValue? "true" : "false";
+            return target.booleanValue.toString();
         if (target.isNumeric)
             return target.numericValue.toString();
         if (target.isNode)

@@ -1283,45 +1283,49 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         returnedCardinality = Cardinalities.optionalize(returnedCardinality);
         return null;
     }
-    
+
+    @Override
+    public @Nullable TypeInContext visitIntegerLiteral(IntegerLiteralContext ctx) {
+        return handleNumber(ctx);
+    }
+
+    @Override
+    public @Nullable TypeInContext visitHexIntegerLiteral(HexIntegerLiteralContext ctx) {
+        final String raw = ctx.getText();
+        final String hex = raw.replace("_", "").substring(2);
+        valueFactory.number(new BigDecimal(new java.math.BigInteger(hex, 16)));
+        return symbolManager.typeInContext(number);
+    }
+
+    @Override
+    public @Nullable TypeInContext visitBinaryIntegerLiteral(BinaryIntegerLiteralContext ctx) {
+        final String raw = ctx.getText();
+        final String binary = raw.replace("_", "").substring(2);
+        valueFactory.number(new BigDecimal(new java.math.BigInteger(binary, 2)));
+        return symbolManager.typeInContext(number);
+    }
+
+    @Override
+    public @Nullable TypeInContext visitDecimalLiteral(DecimalLiteralContext ctx) {
+        final String cleaned = ctx.getText().replace("_", "");
+        valueFactory.number(new BigDecimal(cleaned));
+        return symbolManager.typeInContext(number);
+    }
+
+    @Override
+    public @Nullable TypeInContext visitDoubleLiteral(DoubleLiteralContext ctx) {
+        final String cleaned = ctx.getText().replace("_", "");
+        valueFactory.number(new BigDecimal(cleaned));
+        return symbolManager.typeInContext(number);
+    }
+
     @Override
     public TypeInContext visitLiteral(final LiteralContext ctx)
     {
         if (ctx.STRING() != null) {
             return handleString(ctx);
         }
-
-        final var numeric = ctx.numericLiteral();
-        if (numeric.IntegerLiteral() != null) {
-            return handleNumber(numeric);
-        }
-
-        if (numeric.HexIntegerLiteral() != null) {
-            final String raw = numeric.HexIntegerLiteral().getText();
-            final String hex = raw.replace("_", "").substring(2);
-            valueFactory.number(new BigDecimal(new java.math.BigInteger(hex, 16)));
-            return symbolManager.typeInContext(number);
-        }
-
-        if (numeric.BinaryIntegerLiteral() != null) {
-            final String raw = numeric.BinaryIntegerLiteral().getText();
-            final String binary = raw.replace("_", "").substring(2);
-            valueFactory.number(new BigDecimal(new java.math.BigInteger(binary, 2)));
-            return symbolManager.typeInContext(number);
-        }
-
-        if (numeric.DecimalLiteral() != null) {
-            final String cleaned = numeric.DecimalLiteral().getText().replace("_", "");
-            valueFactory.number(new BigDecimal(cleaned));
-            return symbolManager.typeInContext(number);
-        }
-
-        if (numeric.DoubleLiteral() != null) {
-            final String cleaned = numeric.DoubleLiteral().getText().replace("_", "");
-            valueFactory.number(new BigDecimal(cleaned));
-            return symbolManager.typeInContext(number);
-        }
-        return null;
+        return Objects.requireNonNull(ctx.numericLiteral().accept(this));
     }
 
     private TypeInContext handleNumber(final TerminalNode numeric) {
@@ -1330,8 +1334,8 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         return symbolManager.typeInContext(number);
     }
 
-    private TypeInContext handleNumber(final NumericLiteralContext numeric) {
-        final String value = numeric.IntegerLiteral().getText().replace("_", "");
+    private <T extends ParserRuleContext> TypeInContext handleNumber(final T numeric) {
+        final String value = numeric.getText().replace("_", "");
         valueFactory.number(new BigDecimal(value));
         return symbolManager.typeInContext(number);
     }
@@ -3318,162 +3322,6 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         }
         return null;
     }
-
-
-    @Override
-    public TypeInContext visitAnyItem(final AnyItemContext ctx) {
-        // TODO: MOVE TO TYPE VISITOR
-        return symbolManager.typeInContext(typeFactory.anyItem());
-        
-    }
-
-
-    @Override
-    public TypeInContext visitChoiceItemType(final ChoiceItemTypeContext ctx)
-    {
-        // TODO: MOVE TO TYPE VISITOR
-        final List<ItemTypeContext> itemTypes = ctx.itemType();
-        if (itemTypes.size() == 1) {
-            return ctx.itemType().getFirst().accept(this);
-        }
-        final var choiceItemNames = itemTypes.stream().map(RuleContext::getText).collect(Collectors.toSet());
-        if (choiceItemNames.size() != itemTypes.size()) {
-            error(ctx, ErrorType.CHOICE_ITEM_TYPE__DUPLICATED, List.of());
-        }
-        final List<AntlrQueryItemType> choiceItems = itemTypes.stream().map(i -> i.accept(this))
-            .map(sequenceType -> sequenceType.type.itemType())
-            .toList();
-        return symbolManager.typeInContext(typeFactory.choice(choiceItems.toArray(AntlrQueryItemType[]::new)));
-    }
-
-    @Override
-    public TypeInContext visitTypeName(final TypeNameContext ctx)
-    {
-        // TODO: MOVE TO TYPE VISITOR
-        final var name = ctx.getText();
-        final AntlrQuerySequenceType result = switch (name) {
-            case "number" -> number;
-            case "string" -> string;
-            case "boolean" -> boolean_;
-            default -> {
-                final var visitedQualifiedName = namespaceResolver.resolveType(name);
-                final var type = typeFactory.itemNamedType(visitedQualifiedName);
-                switch (type) {
-                    case NamedItemAccessingResult.Success(AntlrQueryItemType r) -> { yield typeFactory.one(r); }
-                    case NamedItemAccessingResult.UnknownName _, NamedItemAccessingResult.UnknownNamespace _ -> {
-                    }
-                }
-
-                for (final QualifiedName resolvedName : recordsMapped.keySet()) {
-                    if (resolvedName.equals(visitedQualifiedName)) {
-                        final var namedRecordResult = resolveRecord(resolvedName, recordsMapped.get(resolvedName));
-                        yield typeFactory.one(namedRecordResult.recordItemType);
-                    }
-                }
-                for (final var resolved : itemsMapped.keySet()) {
-                    if (resolved.equals(visitedQualifiedName)) {
-                        final var t = resolveItemTypeFromDecl(resolved, itemsMapped.get(resolved));
-                        yield typeFactory.one(t.registered());
-                    }
-                }
-
-                error(ctx, ErrorType.TYPE_NAME__UNKNOWN, List.of(name));
-                yield zeroOrMoreItems;
-            }
-        };
-        return symbolManager.typeInContext(result);
-    }
-
-    @Override
-    public TypeInContext visitAnyKindType(final AnyKindTypeContext ctx)
-    {
-        // TODO: MOVE TO TYPE VISITOR
-        return symbolManager.typeInContext(typeFactory.anyNode());
-    }
-
-    @Override
-    public TypeInContext visitElementType(final ElementTypeContext ctx)
-    {
-        // TODO: MOVE TO TYPE VISITOR
-        final Set<QualifiedName> elementNames = ctx.nameTypeUnion().nameTest().stream()
-                .map(e -> namespaceResolver.resolveElement(e.getText()))
-                .collect(Collectors.toSet());
-        return symbolManager.typeInContext(typeFactory.element("", elementNames));
-    }
-
-    @Override
-    public TypeInContext visitFunctionType(final FunctionTypeContext ctx)
-    {
-        // TODO: MOVE TO TYPE VISITOR
-        if (ctx.anyFunctionType() != null) {
-            return symbolManager.typeInContext(typeFactory.anyFunction());
-        }
-        final var func = ctx.typedFunctionType();
-        final List<AntlrQuerySequenceType> parameterTypes = func.typedFunctionParam().stream()
-            .map(p -> p.sequenceType().accept(typeVisitor))
-            .collect(Collectors.toList());
-        final var function =  typeFactory.function(func.sequenceType().accept(typeVisitor), parameterTypes);
-        return symbolManager.typeInContext(function);
-    }
-
-    @Override
-    public TypeInContext visitMapType(final MapTypeContext ctx)
-    {
-        // TODO: MOVE TO TYPE VISITOR
-        if (ctx.anyMapType() != null) {
-            return symbolManager.typeInContext(typeFactory.anyMap());
-        }
-        final var map = ctx.typedMapType();
-        final AntlrQueryItemType keyType = map.itemType().accept(this).type.itemType();
-        final AntlrQuerySequenceType valueType = map.sequenceType().accept(typeVisitor);
-        return symbolManager.typeInContext(typeFactory.map(keyType, valueType));
-    }
-
-    @Override
-    public TypeInContext visitArrayType(final ArrayTypeContext ctx)
-    {
-        // TODO: MOVE TO TYPE VISITOR
-        if (ctx.anyArrayType() != null) {
-            return symbolManager.typeInContext(typeFactory.anyArray());
-        }
-        final var array = ctx.typedArrayType();
-        final var sequenceType = array.sequenceType().accept(typeVisitor);
-        return symbolManager.typeInContext(typeFactory.array(sequenceType, Cardinality.ZERO_OR_MORE));
-    }
-
-    @Override
-    public TypeInContext visitRecordType(final RecordTypeContext ctx)
-    {
-        if (ctx.anyRecordType() != null) {
-            return symbolManager.typeInContext(typeFactory.anyMap());
-        }
-        final var record = ctx.typedRecordType();
-        final var fieldDeclarations = record.fieldDeclaration();
-        final LinkedHashMap<String, RecordField> fields = new LinkedHashMap<>(fieldDeclarations.size());
-        for (final var field : fieldDeclarations) {
-            final String fieldName = field.fieldName().getText();
-            final var fieldType = field.sequenceType().accept(typeVisitor);
-            final boolean isRequired = field.QUESTION_MARK() != null;
-            final RecordField recordField = new RecordField(fieldName, new TypeOrReference.Type(fieldType), isRequired);
-            fields.put(fieldName, recordField);
-        }
-        if (record.extensibleFlag() == null) {
-            return symbolManager.typeInContext(typeFactory.extensibleRecord(fields));
-        }
-        return symbolManager.typeInContext(typeFactory.record(fields));
-    }
-
-    @Override
-    public TypeInContext visitEnumerationType(final EnumerationTypeContext ctx)
-    {
-        final Set<String> enumMembers = ctx.STRING().stream()
-            .map(TerminalNode::getText)
-            .map(s->s.substring(1, s.length()-1))
-            .collect(Collectors.toSet());
-        return symbolManager.typeInContext(typeFactory.enum_(enumMembers));
-    }
-
-
 
 
 

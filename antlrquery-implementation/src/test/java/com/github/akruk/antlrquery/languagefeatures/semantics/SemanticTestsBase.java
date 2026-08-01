@@ -37,7 +37,7 @@ import com.github.akruk.antlrquery.typesystem.types.AntlrQuerySequenceType;
 public class SemanticTestsBase {
     final protected AntlrQueryTypeFactory typeFactory = new MemoizedTypeFactory(new AntlrQueryNamedTypeSets().all(), Map.of());
 
-    record AnalysisResult(
+    protected record AnalysisResult(
         AntlrQuerySemanticAnalyzer analyzer,
         AntlrQuerySequenceType expressionType
         )
@@ -91,7 +91,7 @@ public class SemanticTestsBase {
 
     protected DiagnosticMessageCreator messageCreator = new DiagnosticMessageCreator();
     protected void assertNoErrors(final AnalysisResult analyzer) {
-        boolean noErrors = analyzer.analyzer.getErrors().size() == 0;
+        boolean noErrors = analyzer.analyzer.getErrors().isEmpty();
         String concatenatedInNewlinesMessages = analyzer.analyzer.getErrors().stream()
             .map(e->messageCreator.create(e))
             .collect(Collectors.joining(System.lineSeparator()));
@@ -104,7 +104,7 @@ public class SemanticTestsBase {
     }
 
     protected void assertErrors(final AnalysisResult analyzer) {
-        assertTrue(analyzer.analyzer.getErrors().size() != 0, "Found no erros");
+        assertFalse(analyzer.analyzer.getErrors().isEmpty(), "Found no errors");
     }
 
     protected void assertType(final AnalysisResult result, final AntlrQuerySequenceType expectedType) {

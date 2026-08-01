@@ -15,8 +15,8 @@ public class ItemTypeVisitor
     private AntlrQueryTypeFactory typeFactory;
     public ItemTypeVisitor(AntlrQueryTypeFactory typeFactory) {
         this.typeFactory = typeFactory;
-
     }
+
     @Override
     public AntlrQueryItemType visitAnyItem(AnyItemContext ctx) {
         return typeFactory.itemAnyItem();

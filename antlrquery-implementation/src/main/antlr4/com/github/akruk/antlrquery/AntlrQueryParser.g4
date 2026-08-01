@@ -334,11 +334,11 @@ literal:
   | STRING;
 
 numericLiteral
-    : IntegerLiteral
-    | HexIntegerLiteral
-    | BinaryIntegerLiteral
-    | DecimalLiteral
-    |  DoubleLiteral
+    : IntegerLiteral        # integerLiteral
+    | HexIntegerLiteral     # hexIntegerLiteral
+    | BinaryIntegerLiteral  # binaryIntegerLiteral
+    | DecimalLiteral        # decimalLiteral
+    | DoubleLiteral         # doubleLiteral
     ;
 
 varRef: DOLLAR qname;

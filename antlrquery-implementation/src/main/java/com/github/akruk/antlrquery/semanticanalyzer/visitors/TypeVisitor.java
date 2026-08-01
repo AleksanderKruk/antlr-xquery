@@ -1,14 +1,26 @@
 package com.github.akruk.antlrquery.semanticanalyzer.visitors;
 
+import com.github.akruk.antlrquery.AntlrQueryParser;
 import com.github.akruk.antlrquery.AntlrQueryParserBaseVisitor;
 import com.github.akruk.antlrquery.AntlrQueryParser.EmptySequenceTypeContext;
 import com.github.akruk.antlrquery.AntlrQueryParser.NonEmptySequenceTypeContext;
+import com.github.akruk.antlrquery.namespaceresolver.NamespaceResolver;
+import com.github.akruk.antlrquery.semanticanalyzer.ErrorType;
+import com.github.akruk.antlrquery.typesystem.RecordField;
 import com.github.akruk.antlrquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrquery.typesystem.types.AntlrQuerySequenceType;
 import com.github.akruk.antlrquery.typesystem.types.Cardinality;
+import com.github.akruk.antlrquery.typesystem.types.TypeInContext;
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.AntlrQueryItemType;
+import org.antlr.v4.runtime.RuleContext;
+import org.antlr.v4.runtime.tree.TerminalNode;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @DefaultQualifier(NonNull.class)
 public class TypeVisitor
@@ -44,6 +56,163 @@ public class TypeVisitor
         return typeFactory.sequence(it, c);
     }
 
+//
+//    @Override
+//    public TypeInContext visitAnyItem(final AntlrQueryParser.AnyItemContext ctx) {
+//        // TODO: MOVE TO TYPE VISITOR
+//        return symbolManager.typeInContext(typeFactory.anyItem());
+//
+//    }
+//
+//
+//    @Override
+//    public TypeInContext visitChoiceItemType(final AntlrQueryParser.ChoiceItemTypeContext ctx)
+//    {
+//        // TODO: MOVE TO TYPE VISITOR
+//        final List<AntlrQueryParser.ItemTypeContext> itemTypes = ctx.itemType();
+//        if (itemTypes.size() == 1) {
+//            return ctx.itemType().getFirst().accept(this);
+//        }
+//        final var choiceItemNames = itemTypes.stream().map(RuleContext::getText).collect(Collectors.toSet());
+//        if (choiceItemNames.size() != itemTypes.size()) {
+//            error(ctx, ErrorType.CHOICE_ITEM_TYPE__DUPLICATED, List.of());
+//        }
+//        final List<AntlrQueryItemType> choiceItems = itemTypes.stream().map(i -> i.accept(this))
+//                .map(sequenceType -> sequenceType.type.itemType())
+//                .toList();
+//        return symbolManager.typeInContext(typeFactory.choice(choiceItems.toArray(AntlrQueryItemType[]::new)));
+//    }
+//
+//    @Override
+//    public TypeInContext visitTypeName(final AntlrQueryParser.TypeNameContext ctx)
+//    {
+//        // TODO: MOVE TO TYPE VISITOR
+//        final var name = ctx.getText();
+//        final AntlrQuerySequenceType result = switch (name) {
+//            case "number" -> number;
+//            case "string" -> string;
+//            case "boolean" -> boolean_;
+//            default -> {
+//                final var visitedQualifiedName = namespaceResolver.resolveType(name);
+//                final var type = typeFactory.itemNamedType(visitedQualifiedName);
+//                switch (type) {
+//                    case AntlrQueryTypeFactory.NamedItemAccessingResult.Success(AntlrQueryItemType r) -> { yield typeFactory.one(r); }
+//                    case AntlrQueryTypeFactory.NamedItemAccessingResult.UnknownName _, AntlrQueryTypeFactory.NamedItemAccessingResult.UnknownNamespace _ -> {
+//                    }
+//                }
+//
+//                for (final NamespaceResolver.QualifiedName resolvedName : recordsMapped.keySet()) {
+//                    if (resolvedName.equals(visitedQualifiedName)) {
+//                        final var namedRecordResult = resolveRecord(resolvedName, recordsMapped.get(resolvedName));
+//                        yield typeFactory.one(namedRecordResult.recordItemType);
+//                    }
+//                }
+//                for (final var resolved : itemsMapped.keySet()) {
+//                    if (resolved.equals(visitedQualifiedName)) {
+//                        final var t = resolveItemTypeFromDecl(resolved, itemsMapped.get(resolved));
+//                        yield typeFactory.one(t.registered());
+//                    }
+//                }
+//
+//                error(ctx, ErrorType.TYPE_NAME__UNKNOWN, List.of(name));
+//                yield zeroOrMoreItems;
+//            }
+//        };
+//        return symbolManager.typeInContext(result);
+//    }
+//
+//    @Override
+//    public TypeInContext visitAnyKindType(final AntlrQueryParser.AnyKindTypeContext ctx)
+//    {
+//        // TODO: MOVE TO TYPE VISITOR
+//        return symbolManager.typeInContext(typeFactory.anyNode());
+//    }
+//
+//    @Override
+//    public TypeInContext visitElementType(final AntlrQueryParser.ElementTypeContext ctx)
+//    {
+//        // TODO: MOVE TO TYPE VISITOR
+//        final Set<NamespaceResolver.QualifiedName> elementNames = ctx.nameTypeUnion().nameTest().stream()
+//                .map(e -> namespaceResolver.resolveElement(e.getText()))
+//                .collect(Collectors.toSet());
+//        return symbolManager.typeInContext(typeFactory.element("", elementNames));
+//    }
+//
+//    @Override
+//    public TypeInContext visitFunctionType(final AntlrQueryParser.FunctionTypeContext ctx)
+//    {
+//        // TODO: MOVE TO TYPE VISITOR
+//        if (ctx.anyFunctionType() != null) {
+//            return symbolManager.typeInContext(typeFactory.anyFunction());
+//        }
+//        final var func = ctx.typedFunctionType();
+//        final List<AntlrQuerySequenceType> parameterTypes = func.typedFunctionParam().stream()
+//                .map(p -> p.sequenceType().accept(typeVisitor))
+//                .collect(Collectors.toList());
+//        final var function =  typeFactory.function(func.sequenceType().accept(typeVisitor), parameterTypes);
+//        return symbolManager.typeInContext(function);
+//    }
+//
+//    @Override
+//    public TypeInContext visitMapType(final AntlrQueryParser.MapTypeContext ctx)
+//    {
+//        // TODO: MOVE TO TYPE VISITOR
+//        if (ctx.anyMapType() != null) {
+//            return symbolManager.typeInContext(typeFactory.anyMap());
+//        }
+//        final var map = ctx.typedMapType();
+//        final AntlrQueryItemType keyType = map.itemType().accept(this).type.itemType();
+//        final AntlrQuerySequenceType valueType = map.sequenceType().accept(typeVisitor);
+//        return symbolManager.typeInContext(typeFactory.map(keyType, valueType));
+//    }
+//
+//    @Override
+//    public TypeInContext visitArrayType(final AntlrQueryParser.ArrayTypeContext ctx)
+//    {
+//        // TODO: MOVE TO TYPE VISITOR
+//        if (ctx.anyArrayType() != null) {
+//            return symbolManager.typeInContext(typeFactory.anyArray());
+//        }
+//        final var array = ctx.typedArrayType();
+//        final var sequenceType = array.sequenceType().accept(typeVisitor);
+//        return symbolManager.typeInContext(typeFactory.array(sequenceType, Cardinality.ZERO_OR_MORE));
+//    }
+//
+//    @Override
+//    public TypeInContext visitRecordType(final AntlrQueryParser.RecordTypeContext ctx)
+//    {
+//        if (ctx.anyRecordType() != null) {
+//            return symbolManager.typeInContext(typeFactory.anyMap());
+//        }
+//        final var record = ctx.typedRecordType();
+//        final var fieldDeclarations = record.fieldDeclaration();
+//        final LinkedHashMap<String, RecordField> fields = new LinkedHashMap<>(fieldDeclarations.size());
+//        for (final var field : fieldDeclarations) {
+//            final String fieldName = field.fieldName().getText();
+//            final var fieldType = field.sequenceType().accept(typeVisitor);
+//            final boolean isRequired = field.QUESTION_MARK() != null;
+//            final RecordField recordField = new RecordField(fieldName, new RecordField.TypeOrReference.Type(fieldType), isRequired);
+//            fields.put(fieldName, recordField);
+//        }
+//        if (record.extensibleFlag() == null) {
+//            return symbolManager.typeInContext(typeFactory.extensibleRecord(fields));
+//        }
+//        return symbolManager.typeInContext(typeFactory.record(fields));
+//    }
+//
+//    @Override
+//    public TypeInContext visitEnumerationType(final AntlrQueryParser.EnumerationTypeContext ctx)
+//    {
+//        final Set<String> enumMembers = ctx.STRING().stream()
+//                .map(TerminalNode::getText)
+//                .map(s->s.substring(1, s.length()-1))
+//                .collect(Collectors.toSet());
+//        return symbolManager.typeInContext(typeFactory.enum_(enumMembers));
+//    }
+//
+//
+//
+//
     // @Override
     // public AntlrQuerySequenceType visitAnyItem(AnyItemContext ctx) {
     //     return typeFactory.anyItem();

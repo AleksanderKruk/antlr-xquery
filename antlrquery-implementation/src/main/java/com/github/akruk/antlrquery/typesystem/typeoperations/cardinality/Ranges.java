@@ -116,7 +116,7 @@ public final class Ranges {
     }
 
     /**
-     * Subtract right-hand union from left: left \\ (right1 ∪ right2 ∪ ...)
+     * Subtract right-hand union from left: left \ (right1 ∪ right2 ∪ ...)
      */
     public static @Nullable NumericRange subtract(
             final NumericRange left,
@@ -146,26 +146,26 @@ public final class Ranges {
         while (ia < a.length || ib < b.length) {
 
             final BoundValue value;
-
             if (ia == a.length)
                 value = b[ib].value();
             else if (ib == b.length)
                 value = a[ia].value();
-            else
-                value = a[ia].value().compareTo(b[ib].value()) <= 0
-                        ? a[ia].value()
-                        : b[ib].value();
+            else {
+                final int cmp = a[ia].value().compareTo(b[ib].value());
+                value = (cmp <= 0) ? a[ia].value() : b[ib].value();
+            }
 
-            int leftEnds = 0;
             int leftStarts = 0;
-            int rightEnds = 0;
+            int leftEnds = 0;
             int rightStarts = 0;
+            int rightEnds = 0;
 
             boolean leftInclusiveStart = false;
             boolean leftInclusiveEnd = false;
             boolean rightInclusiveStart = false;
             boolean rightInclusiveEnd = false;
 
+            // Collect left events at this value
             while (ia < a.length && a[ia].value().compareTo(value) == 0) {
                 NumericRange.Event e = a[ia];
                 if (e.type() == NumericRange.Type.START) {
@@ -178,6 +178,7 @@ public final class Ranges {
                 ia++;
             }
 
+            // Collect right events at this value
             while (ib < b.length && b[ib].value().compareTo(value) == 0) {
                 NumericRange.Event e = b[ib];
                 if (e.type() == NumericRange.Type.START) {
@@ -190,53 +191,70 @@ public final class Ranges {
                 ib++;
             }
 
-            boolean before = leftActive > 0 && rightActive == 0;
+            // Detect point-events: equal number of START and END on same side at this coordinate
+            final boolean leftPoint = (leftStarts > 0 && leftEnds > 0 && leftStarts == leftEnds);
+            final boolean rightPoint = (rightStarts > 0 && rightEnds > 0 && rightStarts == rightEnds);
 
+            // State before applying deltas at this coordinate
+            final boolean before = leftActive > 0 && rightActive == 0;
+
+            // If left has a point at this value and right does NOT cover this point, preserve the point.
+            // Right covers the point if rightActive > 0 (an interval covering it) or rightPoint == true.
+            if (leftPoint && !rightPoint && rightActive == 0 && rightStarts == 0 && rightEnds == 0) {
+                out.add(new NumericRange.Event(value, NumericRange.Type.START, leftInclusiveStart || leftInclusiveEnd));
+                out.add(new NumericRange.Event(value, NumericRange.Type.END, leftInclusiveStart || leftInclusiveEnd));
+                // Points do not change active counts; continue to next coordinate.
+                continue;
+            }
+
+            // Apply END deltas first
             leftActive -= leftEnds;
             rightActive -= rightEnds;
 
-            boolean middle = leftActive > 0 && rightActive == 0;
+            // State in the middle (after ends, before starts)
+            final boolean middle = leftActive > 0 && rightActive == 0;
 
+            // Apply START deltas
             leftActive += leftStarts;
             rightActive += rightStarts;
 
-            boolean after = leftActive > 0 && rightActive == 0;
+            // State after applying starts
+            final boolean after = leftActive > 0 && rightActive == 0;
 
-            if (!before && middle) {
-                segmentStart = new NumericRange.Event(
-                        value,
-                        NumericRange.Type.START,
-                        leftInclusiveStart || leftInclusiveEnd);
+            // Opening a segment: was closed before, now open (use middle because ends at this coord may open)
+            if (!before && middle && segmentStart == null) {
+                // Choose inclusivity: if any left bound at this coordinate is inclusive prefer inclusive
+                boolean inclusive = leftInclusiveStart || leftInclusiveEnd;
+                segmentStart = new NumericRange.Event(value, NumericRange.Type.START, inclusive);
             }
 
+            // Closing a segment when middle -> not after (segment ends at this coordinate)
             if (middle && !after) {
                 assert segmentStart != null;
+                // Use left inclusivity for the end if present
+                boolean inclusive = leftInclusiveStart || leftInclusiveEnd;
                 out.add(segmentStart);
-                out.add(new NumericRange.Event(
-                        value,
-                        NumericRange.Type.END,
-                        leftInclusiveStart || leftInclusiveEnd));
+                out.add(new NumericRange.Event(value, NumericRange.Type.END, inclusive));
                 segmentStart = null;
             }
 
-            if (!middle && after) {
-                segmentStart = new NumericRange.Event(
-                        value,
-                        NumericRange.Type.START,
-                        leftInclusiveStart || leftInclusiveEnd);
+            // If segment was closed before and becomes open after applying starts (no middle), open at this coordinate
+            if (!middle && after && segmentStart == null) {
+                boolean inclusive = leftInclusiveStart || leftInclusiveEnd;
+                segmentStart = new NumericRange.Event(value, NumericRange.Type.START, inclusive);
             }
 
+            // If it was open before and becomes closed in middle (before -> !middle), close at this coordinate
             if (before && !middle) {
                 assert segmentStart != null;
+                boolean inclusive = leftInclusiveStart || leftInclusiveEnd;
                 out.add(segmentStart);
-                out.add(new NumericRange.Event(
-                        value,
-                        NumericRange.Type.END,
-                        leftInclusiveStart || leftInclusiveEnd));
+                out.add(new NumericRange.Event(value, NumericRange.Type.END, inclusive));
                 segmentStart = null;
             }
         }
 
+        // Close segment at +∞ if still open
         if (segmentStart != null) {
             out.add(segmentStart);
             out.add(new NumericRange.Event(
@@ -269,9 +287,9 @@ public final class Ranges {
     }
 
     /**
-     * Build a NumericRange that represents the sequence merge (concatenation) 
+     * Build a NumericRange that represents the sequence merge (concatenation)
      * of two cardinalities.
-     * 
+     *
      * Algorithm:
      * 1. Get normalized event arrays from both cardinalities
      * 2. Events come in pairs (START, END) due to normalization
@@ -279,7 +297,7 @@ public final class Ranges {
      *    - Add bounds: [start_a + start_b, end_a + end_b]
      *    - Combine inclusivity with AND logic
      * 4. Collect result events and pass to NumericRange.of() for normalization
-     * 
+     *
      * Inclusivity rule:
      * - Lower bound inclusive ⟺ both lower bounds are inclusive
      * - Upper bound inclusive ⟺ both upper bounds are inclusive
@@ -287,36 +305,36 @@ public final class Ranges {
     public static NumericRange sequenceMerge(final @NonNull NumericRange a, final @NonNull NumericRange b) {
         final Event[] eventsA = a.events();
         final Event[] eventsB = b.events();
-        
+
         if (eventsA.length == 0 || eventsB.length == 0) {
             return NumericRange.of();
         }
-        
+
         final List<Event> resultEvents = new ArrayList<>();
-        
+
         // Events come in pairs (START, END) due to normalization
         for (int i = 0; i < eventsA.length; i += 2) {
             Event startA = eventsA[i];
             Event endA = eventsA[i + 1];
-            
+
             for (int j = 0; j < eventsB.length; j += 2) {
                 Event startB = eventsB[j];
                 Event endB = eventsB[j + 1];
-                
+
                 // Add bounds
                 final BoundValue newLower = addBoundValues(startA.value(), startB.value());
                 final BoundValue newUpper = addBoundValues(endA.value(), endB.value());
-                
+
                 // Combine inclusivity: both must be inclusive for result to be inclusive
                 final boolean newLowerInclusive = startA.inclusive() && startB.inclusive();
                 final boolean newUpperInclusive = endA.inclusive() && endB.inclusive();
-                
+
                 // Generate result events
                 resultEvents.add(new Event(newLower, NumericRange.Type.START, newLowerInclusive));
                 resultEvents.add(new Event(newUpper, NumericRange.Type.END, newUpperInclusive));
             }
         }
-        
+
         return NumericRange.of(resultEvents.toArray(new Event[0]));
     }
 

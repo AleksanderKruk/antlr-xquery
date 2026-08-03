@@ -32,12 +32,26 @@ public sealed interface StringType
         public Set<String> members() {
             return members;
         }
+
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof StringEnum(Set<String> members1, Cardinality cardinality1)
+                    && members1.equals(this.members)
+                    && cardinality1.equals(this.cardinality)
+                    ;
+        }
     }
 
     record StringNonEnum(Cardinality cardinality) implements StringType{
         @Override
         public @NonNull String toString() {
             return ItemTypes.stringify(this);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return (obj instanceof StringNonEnum(Cardinality cardinality1))
+                    && cardinality1.equals(this.cardinality);
         }
     }
 

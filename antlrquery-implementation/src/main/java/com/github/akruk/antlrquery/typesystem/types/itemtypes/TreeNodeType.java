@@ -21,6 +21,10 @@ sealed public interface TreeNodeType
             return ItemTypes.stringify(this);
         }
 
+        @Override
+        public boolean equals(Object obj) {
+           return obj instanceof AnyNode;
+        }
     }
 
     record AnyNodeFromGrammar(String grammar)
@@ -29,6 +33,12 @@ sealed public interface TreeNodeType
         @Override
         public @NonNull String toString() {
             return ItemTypes.stringify(this);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof AnyNodeFromGrammar(String grammar1)
+                    && grammar1.equals(this.grammar);
         }
 
     }
@@ -43,5 +53,11 @@ sealed public interface TreeNodeType
             return ItemTypes.stringify(this);
         }
 
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof NodeType(String grammar1, Set<NamespaceResolver.QualifiedName> names)
+                    && grammar1.equals(this.grammar)
+                    && names.equals(this.elementNames);
+        }
     }
 }

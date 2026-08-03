@@ -9,4 +9,9 @@ public record AnyItemType() implements AntlrQueryItemType {
     public @NonNull String toString() {
         return ItemTypes.stringify(this);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof AnyItemType;
+    }
 }

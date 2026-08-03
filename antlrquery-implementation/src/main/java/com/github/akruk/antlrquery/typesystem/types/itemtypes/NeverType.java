@@ -9,4 +9,8 @@ public record NeverType() implements AntlrQueryItemType {
         return ItemTypes.stringify(this);
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof NeverType;
+    }
 }

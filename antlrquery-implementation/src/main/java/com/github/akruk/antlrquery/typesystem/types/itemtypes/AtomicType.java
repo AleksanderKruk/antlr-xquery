@@ -21,6 +21,11 @@ sealed public interface AtomicType extends ConcreteItemType
             return ItemTypes.stringify(this);
         }
 
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof NumberType(NumericRange range1)
+                    && range1.equals(this.range);
+        }
     }
 
 
@@ -31,6 +36,11 @@ sealed public interface AtomicType extends ConcreteItemType
             return ItemTypes.stringify(this);
         }
 
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof RegexType(Pattern pattern1)
+                    && pattern1.equals(this.pattern);
+        }
     }
 
 }

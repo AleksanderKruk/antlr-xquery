@@ -2,10 +2,13 @@ package com.github.akruk.antlrquery.typesystem.types;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Ranges;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.common.value.qual.ArrayLenRange;
 import org.checkerframework.framework.qual.DefaultQualifier;
 
 
@@ -58,11 +61,14 @@ public final class NumericRange {
         return ZERO;
     }
 
-    public static NumericRange of(int i) {
-        return new NumericRange(
-            new Event(new FiniteBound(BigDecimal.valueOf(i)), Type.START, true),
-            new Event(new FiniteBound(BigDecimal.valueOf(i)), Type.END, true)
-        );
+    public static NumericRange of(int@ArrayLenRange(from = 1) ... ints) {
+        assert ints.length > 0;
+        Event[] events = new Event[ints.length*2];
+        for (int i = 0, a = 0, b = 1, eventLength = events.length; b < eventLength; i++, a+=2, b+=2) {
+            events[a] = new Event(new FiniteBound(BigDecimal.valueOf(ints[i])), Type.START, true);
+            events[b] = new Event(new FiniteBound(BigDecimal.valueOf(ints[i])), Type.END, true);
+        }
+        return new NumericRange(events);
     }
 
     public static NumericRange of(BigDecimal bigDecimal) {
@@ -72,6 +78,16 @@ public final class NumericRange {
         );
     }
 
+    public static NumericRange of(long@ArrayLenRange(from = 1)... ints) {
+        assert ints.length > 0;
+        Event[] events = new Event[ints.length*2];
+        for (int i = 0, a = 0, b = 1, eventLength = events.length; b < eventLength; i++, a+=2, b+=2) {
+            events[a] = new Event(new FiniteBound(BigDecimal.valueOf(ints[i])), Type.START, true);
+            events[b] = new Event(new FiniteBound(BigDecimal.valueOf(ints[i])), Type.END, true);
+        }
+        return new NumericRange(events);
+    }
+
     /**
      * Convert internal events to public events for external inspection.
      */
@@ -79,9 +95,9 @@ public final class NumericRange {
         return events.clone();
     }
 
-    public static enum Type { START, END }
+    public enum Type { START, END }
 
-    public static record Event(
+    public record Event(
             BoundValue value,
             Type type,
             boolean inclusive
@@ -317,4 +333,15 @@ public final class NumericRange {
                 && events[1].inclusive;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof final NumericRange nr
+                && Arrays.deepEquals(nr.events, events);
+    }
+
+
+    @Override
+    public String toString() {
+        return Ranges.stringify(this);
+    }
 }

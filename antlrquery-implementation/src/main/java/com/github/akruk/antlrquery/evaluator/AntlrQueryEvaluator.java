@@ -452,39 +452,43 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     }
 
     @Override
+    public AntlrQueryValue visitIntegerLiteral(AntlrQueryParser.IntegerLiteralContext ctx) {
+        return handleInteger(ctx.IntegerLiteral());
+    }
+
+    @Override
+    public AntlrQueryValue visitHexIntegerLiteral(AntlrQueryParser.HexIntegerLiteralContext ctx) {
+        final String raw = ctx.HexIntegerLiteral().getText();
+        final String hex = raw.replace("_", "").substring(2);
+        return valueFactory.number(new BigDecimal(new java.math.BigInteger(hex, 16)));
+    }
+
+    @Override
+    public AntlrQueryValue visitBinaryIntegerLiteral(AntlrQueryParser.BinaryIntegerLiteralContext ctx) {
+        final String raw = ctx.BinaryIntegerLiteral().getText();
+        final String binary = raw.replace("_", "").substring(2);
+        return valueFactory.number(new BigDecimal(new java.math.BigInteger(binary, 2)));
+    }
+
+    @Override
+    public AntlrQueryValue visitDecimalLiteral(AntlrQueryParser.DecimalLiteralContext ctx) {
+        final String cleaned = ctx.DecimalLiteral().getText().replace("_", "");
+        return valueFactory.number(new BigDecimal(cleaned));
+    }
+
+    @Override
+    public AntlrQueryValue visitDoubleLiteral(AntlrQueryParser.DoubleLiteralContext ctx) {
+        final String cleaned = ctx.DoubleLiteral().getText().replace("_", "");
+        return valueFactory.number(new BigDecimal(cleaned));
+    }
+
+    @Override
     public AntlrQueryValue visitLiteral(final AntlrQueryParser.LiteralContext ctx)
     {
         if (ctx.STRING() != null) {
             return handleString(ctx);
         }
-
-        final var numeric = ctx.numericLiteral();
-        if (numeric.IntegerLiteral() != null) {
-            return handleInteger(numeric.IntegerLiteral());
-        }
-
-        if (numeric.HexIntegerLiteral() != null) {
-            final String raw = numeric.HexIntegerLiteral().getText();
-            final String hex = raw.replace("_", "").substring(2);
-            return valueFactory.number(new BigDecimal(new java.math.BigInteger(hex, 16)));
-        }
-
-        if (numeric.BinaryIntegerLiteral() != null) {
-            final String raw = numeric.BinaryIntegerLiteral().getText();
-            final String binary = raw.replace("_", "").substring(2);
-            return valueFactory.number(new BigDecimal(new java.math.BigInteger(binary, 2)));
-        }
-
-        if (numeric.DecimalLiteral() != null) {
-            final String cleaned = numeric.DecimalLiteral().getText().replace("_", "");
-            return valueFactory.number(new BigDecimal(cleaned));
-        }
-
-        if (numeric.DoubleLiteral() != null) {
-            final String cleaned = numeric.DoubleLiteral().getText().replace("_", "");
-            return valueFactory.number(new BigDecimal(cleaned));
-        }
-        return null;
+        return ctx.numericLiteral().accept(this);
     }
 
     private AntlrQueryValue handleInteger(final TerminalNode integerLiteral)

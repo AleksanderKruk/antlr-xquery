@@ -79,11 +79,12 @@ public class AntlrQueryMemoizedValueFactory implements AntlrQueryValueFactory {
     @Override
     public AntlrQueryValue number(BigDecimal d) {
         // TODO:
-        return createdNumbers.computeIfAbsent(d, _ -> AntlrQueryValue.number(d, typeFactory.number(NumericRange.FULL)));
+        return createdNumbers.computeIfAbsent(d,
+                _ -> AntlrQueryValue.number(d, typeFactory.number(NumericRange.of(d))));
     }
     @Override
     public AntlrQueryValue number(int integer) {
-        return createdIntegers.computeIfAbsent(integer, _ -> AntlrQueryValue.number(integer, typeFactory.number(NumericRange.FULL)));
+        return createdIntegers.computeIfAbsent(integer, _ -> AntlrQueryValue.number(integer, typeFactory.number(NumericRange.of(integer))));
     }
 
     final AntlrQueryValue EMPTY_SEQUENCE;

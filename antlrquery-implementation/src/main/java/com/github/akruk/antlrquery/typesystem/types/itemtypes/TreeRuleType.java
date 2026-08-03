@@ -20,6 +20,10 @@ public sealed interface TreeRuleType
             return ItemTypes.stringify(this);
         }
 
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof AnyRule;
+        }
     }
 
     record AnyRuleFromGrammar(String grammar)
@@ -30,6 +34,11 @@ public sealed interface TreeRuleType
             return ItemTypes.stringify(this);
         }
 
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof AnyRuleFromGrammar(String grammar1)
+                    && grammar1.equals(this.grammar);
+        }
     }
 
     record RuleType(
@@ -42,5 +51,11 @@ public sealed interface TreeRuleType
             return ItemTypes.stringify(this);
         }
 
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof RuleType(String grammar1, Set<NamespaceResolver.QualifiedName> names)
+                    && grammar1.equals(this.grammar)
+                    && names.equals(this.elementNames);
+        }
     }
 }

@@ -14,6 +14,11 @@ sealed public interface GrammarEntityType
         public @NonNull String toString() {
             return ItemTypes.stringify(this);
         }
+
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof GrammarType;
+        }
     }
 
     record GrammarRuleType()
@@ -22,6 +27,11 @@ sealed public interface GrammarEntityType
         public @NonNull String toString() {
             return ItemTypes.stringify(this);
         }
+
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof GrammarRuleType;
+        }
     }
 
     record GrammarTokenType()
@@ -29,6 +39,11 @@ sealed public interface GrammarEntityType
         @Override
         public @NonNull String toString() {
             return ItemTypes.stringify(this);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof GrammarTokenType;
         }
     }
 }

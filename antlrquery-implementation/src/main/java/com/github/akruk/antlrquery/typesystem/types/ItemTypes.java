@@ -148,6 +148,8 @@ public final class ItemTypes {
         return switch(c) {
             case AtomicType.NumberType n -> stringify(n);
             case StringType s -> switch(s) {
+                case StringType.StringEnum(Set<String> enumValues, Cardinality _) when enumValues.size() == 1 ->
+                        enumValues.stream().findFirst().get();
                 case StringType.StringEnum(Set<String> enumValues, Cardinality _) ->
                     enumValues.stream()
                             .sorted()
@@ -172,7 +174,7 @@ public final class ItemTypes {
         if (t.range().equals(NumericRange.FULL)) {
             return "number";
         }
-        return "number" + Ranges.stringify(t.range());
+        return "number" + "(" + Ranges.stringify(t.range()) + ")";
     }
 
     public static String stringify(final  AntlrQueryItemType item) {

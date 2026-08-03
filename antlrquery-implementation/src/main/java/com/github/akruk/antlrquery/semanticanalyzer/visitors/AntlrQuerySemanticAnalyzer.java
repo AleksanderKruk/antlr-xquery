@@ -13,7 +13,6 @@ import com.github.akruk.antlrquery.typesystem.types.*;
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.*;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -80,12 +79,13 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
     private final SequencetypePathOperator pathOperator;
     private final ModuleManager moduleManager;
     private final GrammarManager grammarManager;
+    private final AntlrQuerySequenceType nonNegativeNumber;
+    private final AntlrQuerySequenceType anyNumber;
 
     private VisitingSemanticContext context;
     private @Nullable List<TypeInContext> visitedPositionalArguments;
     private @Nullable Map<String, TypeInContext> visitedKeywordArguments;
 
-    protected final AntlrQuerySequenceType number;
     protected final AntlrQuerySequenceType zeroOrMoreNodes;
     protected final AntlrQuerySequenceType anyArray;
     protected final AntlrQuerySequenceType anyMap;
@@ -774,7 +774,8 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         this.anyArrayOrMap = typeFactory.zeroOrMore(typeFactory.itemChoice(typeFactory.itemAnyMap(), typeFactory.itemAnyArray()));
         this.zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         this.emptySequence = typeFactory.emptySequence();
-        this.number = typeFactory.number(NumericRange.FULL);
+        this.anyNumber = typeFactory.number(NumericRange.FULL);
+        this.nonNegativeNumber = typeFactory.number(NumericRange.NON_NEGATIVE);
         this.zeroOrMoreNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
         this.anyArray = typeFactory.anyArray();
         this.anyMap = typeFactory.anyMap();
@@ -943,7 +944,8 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         }
         final var currentVarPos = windowVars.positionalVar();
         if (currentVarPos != null) {
-            declareVariable(symbolManager.typeInContext(number), currentVarPos.varName());
+            // TODO: Refine number value range
+            declareVariable(symbolManager.typeInContext(nonNegativeNumber), currentVarPos.varName());
         }
         final var previousVar = windowVars.previousVar();
         if (previousVar != null) {
@@ -1092,8 +1094,9 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         processVariableTypeDeclaration(ctx.varNameAndType(), symbolManager.typeInContext(iteratorType), variableName, ctx);
 
         if (ctx.positionalVar() != null) {
+            // TODO: Refine number value range
             final String positionalVariableName = ctx.positionalVar().varName().qname().getText();
-            declareVariable(symbolManager.typeInContext(number), positionalVariableName, ctx.positionalVar().varName());
+            declareVariable(symbolManager.typeInContext(nonNegativeNumber), positionalVariableName, ctx.positionalVar().varName());
         }
     }
 
@@ -1112,8 +1115,9 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         processVariableTypeDeclaration(ctx.varNameAndType(), symbolManager.typeInContext(memberType), variableName, ctx);
 
         if (ctx.positionalVar() != null) {
+            // TODO: refine number value range
             final String positionalVariableName = ctx.positionalVar().varName().qname().getText();
-            declareVariable(symbolManager.typeInContext(number), positionalVariableName, ctx.positionalVar().varName());
+            declareVariable(symbolManager.typeInContext(nonNegativeNumber), positionalVariableName, ctx.positionalVar().varName());
         }
     }
 
@@ -1158,8 +1162,9 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         }
 
         if (ctx.positionalVar() != null) {
+            // TODO: refine number value range
             final String positionalVariableName = ctx.positionalVar().varName().qname().getText();
-            declareVariable(symbolManager.typeInContext(number), positionalVariableName, ctx.positionalVar().varName());
+            declareVariable(symbolManager.typeInContext(nonNegativeNumber), positionalVariableName, ctx.positionalVar().varName());
         }
     }
 
@@ -1228,8 +1233,9 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
     @Override
     public TypeInContext visitCountClause(final CountClauseContext ctx)
     {
-        declareVariable(symbolManager.typeInContext(number), ctx.varName());
-        return symbolManager.typeInContext(number);
+        // TODO: refine value range
+        declareVariable(symbolManager.typeInContext(nonNegativeNumber), ctx.varName());
+        return symbolManager.typeInContext(nonNegativeNumber);
     }
 
     @Override
@@ -1286,37 +1292,39 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
 
     @Override
     public @Nullable TypeInContext visitIntegerLiteral(IntegerLiteralContext ctx) {
-        return handleNumber(ctx);
+        final String value = ctx.getText().replace("_", "");
+        var aqValue = valueFactory.number(new BigDecimal(value));
+        return symbolManager.typeInContext(aqValue.type);
     }
 
     @Override
     public @Nullable TypeInContext visitHexIntegerLiteral(HexIntegerLiteralContext ctx) {
         final String raw = ctx.getText();
         final String hex = raw.replace("_", "").substring(2);
-        valueFactory.number(new BigDecimal(new java.math.BigInteger(hex, 16)));
-        return symbolManager.typeInContext(number);
+        var aqValue = valueFactory.number(new BigDecimal(new java.math.BigInteger(hex, 16)));
+        return symbolManager.typeInContext(aqValue.type);
     }
 
     @Override
     public @Nullable TypeInContext visitBinaryIntegerLiteral(BinaryIntegerLiteralContext ctx) {
         final String raw = ctx.getText();
         final String binary = raw.replace("_", "").substring(2);
-        valueFactory.number(new BigDecimal(new java.math.BigInteger(binary, 2)));
-        return symbolManager.typeInContext(number);
+        var aqValue = valueFactory.number(new BigDecimal(new java.math.BigInteger(binary, 2)));
+        return symbolManager.typeInContext(aqValue.type);
     }
 
     @Override
     public @Nullable TypeInContext visitDecimalLiteral(DecimalLiteralContext ctx) {
         final String cleaned = ctx.getText().replace("_", "");
-        valueFactory.number(new BigDecimal(cleaned));
-        return symbolManager.typeInContext(number);
+        var aqValue = valueFactory.number(new BigDecimal(cleaned));
+        return symbolManager.typeInContext(aqValue.type);
     }
 
     @Override
     public @Nullable TypeInContext visitDoubleLiteral(DoubleLiteralContext ctx) {
         final String cleaned = ctx.getText().replace("_", "");
-        valueFactory.number(new BigDecimal(cleaned));
-        return symbolManager.typeInContext(number);
+        var aqValue = valueFactory.number(new BigDecimal(cleaned));
+        return symbolManager.typeInContext(aqValue.type);
     }
 
     @Override
@@ -1326,18 +1334,6 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
             return handleString(ctx);
         }
         return Objects.requireNonNull(ctx.numericLiteral().accept(this));
-    }
-
-    private TypeInContext handleNumber(final TerminalNode numeric) {
-        final String value = numeric.getText().replace("_", "");
-        valueFactory.number(new BigDecimal(value));
-        return symbolManager.typeInContext(number);
-    }
-
-    private <T extends ParserRuleContext> TypeInContext handleNumber(final T numeric) {
-        final String value = numeric.getText().replace("_", "");
-        valueFactory.number(new BigDecimal(value));
-        return symbolManager.typeInContext(number);
     }
 
     private TypeInContext handleString(final ParserRuleContext ctx) {
@@ -1704,8 +1700,8 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         final var savedArgs = saveVisitedArguments();
         final var savedContext = saveContext();
         context.setType(symbolManager.typeInContext(Types.iteratorType(typeFactory, stepResult)));
-        context.setPositionType(symbolManager.typeInContext(number));
-        context.setSizeType(symbolManager.typeInContext(number));
+        context.setPositionType(symbolManager.typeInContext(nonNegativeNumber)); // TODO: refine value range
+        context.setSizeType(symbolManager.typeInContext(nonNegativeNumber));     // TODO: refine value range
         for (final var predicate : ctx.predicateList().predicate()) {
             predicate.accept(this);
         }
@@ -1739,8 +1735,8 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         final var predicateExpression = ctx.expr().accept(this);
         final var savedContext = saveContext();
         context.setType(symbolManager.typeInContext(savedContext.getType().iteratorType()));
-        context.setPositionType(symbolManager.typeInContext(number));
-        context.setSizeType(symbolManager.typeInContext(number));
+        context.setPositionType(symbolManager.typeInContext(nonNegativeNumber));// TODO: refine value range
+        context.setSizeType(symbolManager.typeInContext(nonNegativeNumber));    // TODO: refine value range
         if (Types.isSubtype(typeFactory, predicateExpression.type, emptySequence))
             return symbolManager.typeInContext(emptySequence);
         if (Types.isSubtype(typeFactory, predicateExpression.type, typeFactory.zeroOrOne(typeFactory.itemNumber()))) {
@@ -1767,8 +1763,8 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         final var savedArgs = saveVisitedArguments();
         final var savedContext = saveContext();
         context.setType(savedContext.getType());
-        context.setPositionType(symbolManager.typeInContext(number));
-        context.setSizeType(symbolManager.typeInContext(number));
+        context.setPositionType(symbolManager.typeInContext(nonNegativeNumber));// TODO: refine value range
+        context.setSizeType(symbolManager.typeInContext(nonNegativeNumber)); // TODO: refine value range
         final AntlrQuerySequenceType value = ctx.postfixExpr().accept(this).type;
         // TODO: switch to getCallable due to array and map and record and tuple and ...
         final boolean isCallable = Types.isSubtype(typeFactory, value, typeFactory.anyFunction());
@@ -1860,7 +1856,9 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
             return handleString(keySpecifier);
         }
         if (keySpecifier.IntegerLiteral() != null) {
-            return handleNumber(keySpecifier.IntegerLiteral());
+            final String value = keySpecifier.IntegerLiteral().getText().replace("_", "");
+            var aqValue = valueFactory.number(new BigDecimal(value));
+            return symbolManager.typeInContext(aqValue.type);
         }
         return keySpecifier.accept(this);
     }
@@ -1925,8 +1923,8 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         final AntlrQuerySequenceType iterator = firstExpressionType.iteratorType();
         final var savedContext = saveContext();
         context.setType(symbolManager.typeInContext(iterator));
-        context.setPositionType(symbolManager.typeInContext(number));
-        context.setSizeType(symbolManager.typeInContext(number));
+        context.setPositionType(symbolManager.typeInContext(nonNegativeNumber));// TODO: refine value range
+        context.setSizeType(symbolManager.typeInContext(nonNegativeNumber));// TODO: refine value range
         TypeInContext result = firstExpressionType;
         final var theRest = ctx.pathExpr().subList(1, ctx.pathExpr().size());
         for (final var mappedExpression : theRest) {
@@ -2387,16 +2385,17 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
     @Override
     public TypeInContext visitAdditiveExpr(final AdditiveExprContext ctx)
     {
+        // TODO: refine semantics
         if (ctx.additiveOperator().isEmpty()) {
             return ctx.multiplicativeExpr(0).accept(this);
         }
         for (final var operandExpr : ctx.multiplicativeExpr()) {
             final var operand = operandExpr.accept(this);
-            if (!operand.isSubtypeOf(number)) {
+            if (!operand.isSubtypeOf(anyNumber)) {
                 error(operandExpr, ErrorType.ADDITIVE__INVALID, List.of(operand));
             }
         }
-        return symbolManager.typeInContext(number);
+        return symbolManager.typeInContext(anyNumber);
     }
 
     @Override
@@ -2483,11 +2482,11 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         }
         for (final var expr : ctx.unionExpr()) {
             final var visitedType = expr.accept(this);
-            if (!visitedType.isSubtypeOf(number)) {
+            if (!visitedType.isSubtypeOf(anyNumber)) {
                 error(ctx, ErrorType.MUL__INVALID, List.of(visitedType));
             }
         }
-        return symbolManager.typeInContext(number);
+        return symbolManager.typeInContext(anyNumber);
     }
 
     @Override
@@ -2576,10 +2575,10 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
             return ctx.simpleMapExpr().accept(this);
         }
         final var type = ctx.simpleMapExpr().accept(this);
-        if (!type.isSubtypeOf(number)) {
+        if (!type.isSubtypeOf(anyNumber)) {
             error(ctx, ErrorType.UNARY__INVALID, List.of(type));
         }
-        return symbolManager.typeInContext(number);
+        return symbolManager.typeInContext(anyNumber);
     }
 
     @Override

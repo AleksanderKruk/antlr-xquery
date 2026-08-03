@@ -10,4 +10,9 @@ public record NothingType() implements AntlrQueryItemType {
     public String toString() {
         return ItemTypes.stringify(this);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof NothingType;
+    }
 }

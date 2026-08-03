@@ -35,7 +35,6 @@ public final class Cardinalities {
     private static List<Cardinality.Event> mergeAllEvents(final Cardinality... inputs) {
         final List<Cardinality.Event> all = new ArrayList<>();
         for (final Cardinality c : inputs) {
-            if (c == null) continue;
             all.addAll(Arrays.asList(c.events()));
         }
         all.sort(EVENT_COMPARATOR);
@@ -145,9 +144,9 @@ public final class Cardinalities {
             // Determine next sweep value
             final CardinalityValue value;
 
-            if (ia == a.length)
+            if (ia == a.length) // no 'a' values remaining
                 value = b[ib].value();
-            else if (ib == b.length)
+            else if (ib == b.length) // no 'b' values remaining
                 value = a[ia].value();
             else
                 value = a[ia].value().compareTo(b[ib].value()) <= 0
@@ -383,8 +382,6 @@ public final class Cardinalities {
          * Returns true if the given numeric value belongs to the specified cardinality.
          */
         public static boolean contains(final Cardinality cardinality, final BigInteger value) {
-            if (cardinality == null) return false;
-
             // Sweep the events and check whether value falls into any active segment
             final Cardinality.Event[] events = cardinality.events();
             if (events.length == 0) return false;

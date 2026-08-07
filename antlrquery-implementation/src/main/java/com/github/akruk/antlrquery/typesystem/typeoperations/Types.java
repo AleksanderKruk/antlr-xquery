@@ -4,7 +4,6 @@ import java.util.*;
 
 import com.github.akruk.antlrquery.typesystem.RecordField;
 import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Ranges;
-import com.github.akruk.antlrquery.typesystem.typeoperations.itemtype.ItemTypeIntersection;
 import com.github.akruk.antlrquery.typesystem.typeoperations.itemtype.ItemTypeIsSubtype;
 import com.github.akruk.antlrquery.typesystem.typeoperations.itemtype.ItemTypeSubtract;
 import com.github.akruk.antlrquery.typesystem.typeoperations.itemtype.ItemTypeUnion;
@@ -308,7 +307,7 @@ public final class Types {
         };
     }
 
-    public static AntlrQuerySequenceType intersection(
+    public static AntlrQuerySequenceType intersect(
             AntlrQueryTypeFactory typeFactory,
             AntlrQuerySequenceType@ArrayLenRange(from = 1)... types)
     {

@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.checkerframework.checker.index.qual.NonNegative;
-import org.checkerframework.checker.index.qual.Positive;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Cardinalities;
@@ -69,13 +68,13 @@ public final class Cardinality {
         return of(BigInteger.valueOf(point));
     }
 
-    public static Cardinality range(@Positive int i, @Positive int i1) {
+    public static Cardinality range(@NonNegative int i, @NonNegative int i1) {
         assert i < i1;
         return Cardinality.skipNormalization(new Event[]{ new Event(new FiniteBound(BigInteger.valueOf(i)), Type.START),
                 new Event(new FiniteBound(BigInteger.valueOf(i1)), Type.END) });
     }
 
-    public static Cardinality greaterThan(@Positive int i) {
+    public static Cardinality greaterThan(@NonNegative int i) {
         return Cardinality.skipNormalization(new Event[]{ new Event(new FiniteBound(BigInteger.valueOf(i)), Type.START),
                 new Event(CardinalityValue.POSITIVE_INFINITY, Type.END) });
     }

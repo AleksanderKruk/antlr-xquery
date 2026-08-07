@@ -1,4 +1,7 @@
 parser grammar AntlrQueryParser;
+
+import AntlrQueryQname, AntlrQueryTypeSystem, AntlrQueryCardinality, AntlrQueryNumericRange;
+
 options {
     tokenVocab = AntlrQueryLexer;
 }
@@ -8,8 +11,9 @@ xquery
     : versionDecl? (libraryModule | mainModule) EOF
     ;
 
-expr:
-    exprSingle (COMMA exprSingle)*;
+expr
+    : exprSingle (COMMA exprSingle)*
+    ;
 
 exprSingle
     : fLWORExpr
@@ -18,15 +22,17 @@ exprSingle
     | switchExpr
     | typeswitchExpr
     | tryCatchExpr
-    | orExpr;
+    | orExpr
+    ;
 
-fLWORExpr:
-    initialClause intermediateClause* returnClause;
+fLWORExpr
+    : initialClause intermediateClause* returnClause;
 
 initialClause
     : forClause
     | windowClause
-    | letClause;
+    | letClause
+    ;
 
 intermediateClause
     : forClause
@@ -37,7 +43,8 @@ intermediateClause
     | whileClause
     | orderByClause
     | groupByClause
-    | countClause;
+    | countClause
+    ;
 
 forClause
     : FOR forBinding (COMMA forBinding)*
@@ -77,9 +84,9 @@ forEntryValueBinding
 positionalVar: AT varName;
 
 // TODO: let destructuring
-// LetSequenceBinding	::=	"$" "(" (VarNameAndType ++ ",") ")" TypeDeclaration? ":=" ExprSingle
-// LetArrayBinding	::=	"$" "[" (VarNameAndType ++ ",") "]" TypeDeclaration? ":=" ExprSingle
-// LetMapBinding	::=	"$" "{" (VarNameAndType ++ ",") "}" TypeDeclaration? ":=" ExprSingle
+// letSequenceBinding	:	'$" '(" (varNameAndType ++ ',") ')" typeDeclaration? ':=' exprSingle
+// letArrayBinding	:	'$' '[' (varNameAndType ++ ',') ']' typeDeclaration? ':=' exprSingle
+// letMapBinding	:	'$" '{" (varNameAndType ++ ',") '}" typeDeclaration? ':=" exprSingle
 letClause:
     LET letBinding (COMMA letBinding)*;
 
@@ -166,7 +173,10 @@ catchClause : CATCH (pureNameTestUnion | wildcard) enclosedExpr ;
 
 finallyClause : FINALLY enclosedExpr ;
 
-pureNameTestUnion:nameTest (UNION_OP nameTest)*;
+pureNameTestUnion: nameTest (UNION_OP nameTest)*;
+
+nameTest:
+    qname | wildcard;
 
 
 typeswitchExpr
@@ -178,7 +188,7 @@ typeswitchCases
     ;
 
 caseClause
-    : CASE (varName AS)? sequenceTypeUnion RETURN exprSingle
+    : CASE (varName AS)? type RETURN exprSingle
     ;
 
 bracedTypeswitchCases
@@ -196,10 +206,10 @@ additiveExpr: multiplicativeExpr (additiveOperator multiplicativeExpr)*;
 multiplicativeExpr: unionExpr (multiplicativeOperator unionExpr )*;
 unionExpr: intersectExpr (unionOperator intersectExpr)*;
 intersectExpr: instanceofExpr (exceptOrIntersect instanceofExpr)*;
-instanceofExpr: treatExpr (INSTANCE OF sequenceType)?;
-treatExpr: castableExpr (TREAT AS sequenceType)?;
+instanceofExpr: treatExpr (INSTANCE OF type)?;
+treatExpr: castableExpr (TREAT AS type)?;
 castableExpr: castExpr (CASTABLE AS castTarget)?;
-  castTarget: (typeName | choiceItemType | enumerationType) QUESTION_MARK?;
+castTarget: (typeName | choiceItemType | enumerationType) QUESTION_MARK?;
 castExpr: pipelineExpr (CAST AS castTarget)?;
 pipelineExpr:arrowExpr (PIPE_ARROW arrowExpr)*;
 
@@ -231,9 +241,12 @@ mappingArrowTarget
 
 unaryExpr: (MINUS | PLUS)? simpleMapExpr;
 simpleMapExpr: pathExpr (EXCLAMATION_MARK pathExpr)*;
-pathExpr: (SLASH relativePathExpr?) // TODO: verify optionality
-        | (SLASHES relativePathExpr)
-        | relativePathExpr;
+pathExpr
+    : SLASH relativePathExpr?
+    | SLASHES relativePathExpr
+    | relativePathExpr
+    ;
+
 relativePathExpr: stepExpr (pathOperator stepExpr)*;
 stepExpr: postfixExpr | axisStep;
 axisStep: (reverseStep | forwardStep) predicateList;
@@ -252,35 +265,64 @@ exceptOrIntersect: EXCEPT | INTERSECT;
 
 
 // TODO: add remaining combinations of axes
-forwardAxis: CHILD COLONS                  # childAxis
-        | DESCENDANT COLONS                # descendantAxis
-        | SELF COLONS                      # selfAxis
-        | DESCENDANT_OR_SELF COLONS        # descendantOrSelfAxis
-        | FOLLOWING_SIBLING COLONS         # followingSiblingAxis
-        | FOLLOWING COLONS                 # followingAxis
-        | FOLLOWING_SIBLING_OR_SELF COLONS # followingSiblingOrSelfAxis
-        | FOLLOWING_OR_SELF COLONS         # followingOrSelfAxis;
+forwardAxis
+    : CHILD COLONS                  # childAxis
+    | DESCENDANT COLONS                # descendantAxis
+    | SELF COLONS                      # selfAxis
+    | DESCENDANT_OR_SELF COLONS        # descendantOrSelfAxis
+    | FOLLOWING_SIBLING COLONS         # followingSiblingAxis
+    | FOLLOWING COLONS                 # followingAxis
+    | FOLLOWING_SIBLING_OR_SELF COLONS # followingSiblingOrSelfAxis
+    | FOLLOWING_OR_SELF COLONS         # followingOrSelfAxis;
 
-reverseStep: (reverseAxis nodeTest) | abbrevReverseStep;
-reverseAxis: PARENT COLONS                 # parentAxis
-        | PRECEDING_SIBLING_OR_SELF COLONS # precedingSiblingOrSelfAxis
-        | PRECEDING_OR_SELF COLONS         # precedingOrSelfAxis
-        | ANCESTOR COLONS                  # ancestorAxis
-        | PRECEDING_SIBLING COLONS         # precedingSiblingAxis
-        | PRECEDING COLONS                 # precedingAxis
-        | ANCESTOR_OR_SELF COLONS          # ancestorOrSelfAxis;
+reverseStep
+    : (reverseAxis nodeTest)
+    | abbrevReverseStep
+    ;
 
-abbrevReverseStep: DOTS;
+reverseAxis
+    : PARENT COLONS                    # parentAxis
+    | PRECEDING_SIBLING_OR_SELF COLONS # precedingSiblingOrSelfAxis
+    | PRECEDING_OR_SELF COLONS         # precedingOrSelfAxis
+    | ANCESTOR COLONS                  # ancestorAxis
+    | PRECEDING_SIBLING COLONS         # precedingSiblingAxis
+    | PRECEDING COLONS                 # precedingAxis
+    | ANCESTOR_OR_SELF COLONS          # ancestorOrSelfAxis;
+
+abbrevReverseStep
+    : DOTS
+    ;
+
 nodeTest: pathNameTestUnion | wildcard;
+
+pathNameTestUnion
+    : qname
+    | LPAREN qname (UNION_OP qname)* RPAREN;
+
 wildcard: STAR
         | (ID COLONSTAR)
         | (STARCOLON ID);
 // postfix: predicate | argumentList;
-argumentList: LPAREN (positionalArguments (COMMA keywordArguments)? | keywordArguments)? RPAREN;
-positionalArguments: argument (COMMA argument)*;
-keywordArguments: keywordArgument (COMMA keywordArgument)* ;
-keywordArgument: qname ASSIGNMENT_OP argument;
-argument: exprSingle | argumentPlaceholder;
+
+argumentList
+    : LPAREN (positionalArguments (COMMA keywordArguments)? | keywordArguments)? RPAREN
+    ;
+
+positionalArguments
+    : argument (COMMA argument)*
+    ;
+
+keywordArguments
+    : keywordArgument (COMMA keywordArgument)*
+    ;
+
+keywordArgument
+    : qname ASSIGNMENT_OP argument
+    ;
+argument
+    : exprSingle | argumentPlaceholder
+    ;
+
 argumentPlaceholder: QUESTION_MARK;
 
 
@@ -308,8 +350,8 @@ curlyArrayConstructor
 
 predicateList: predicate*;
 predicate: LBRACKET expr RBRACKET;
-primaryExpr:
-    literal
+primaryExpr
+    : literal
     | varRef
     | parenthesizedExpr
     | contextValueRef
@@ -320,8 +362,6 @@ primaryExpr:
     | stringConstructor
     | stringInterpolation
     | unaryLookup
-    // | orderedExpr
-    // | unorderedExpr
     // | nodeConstructor
     ;
 
@@ -343,162 +383,11 @@ numericLiteral
 
 varRef: DOLLAR qname;
 varName: DOLLAR qname;
-paramName: DOLLAR qname;
 parenthesizedExpr: LPAREN expr? RPAREN;
 contextValueRef: DOT;
 functionCall: functionName argumentList;
-typeDeclaration: AS sequenceType;
+typeDeclaration: AS type;
 
-cardinality
-    : HAT cardinalityTerm              # singleTermCardinality
-    | HAT LPAREN cardinalitySet RPAREN # parenthesizedCardinality
-    | STAR                             # zeroOrMoreCardinality
-    | PLUS                             # oneOrMoreCardinality
-    | QUESTION_MARK                    # zeroOrOneCardinality
-    |                                  # exactlyOneCardinality
-    ;
-
-cardinalitySet
-    : cardinalityTerm (UNION_OP cardinalityTerm)*
-    ;
-
-cardinalityTerm
-    : IntegerLiteral # singleNumberCardinality
-    | IntegerLiteral DOTS IntegerLiteral # inclusiveRangeCardinality
-    | IntegerLiteral DOTS                # minimumCardinality
-    | DOTS IntegerLiteral                # maximumCardinality
-    ;
-
-// cardinality
-//     : HAT cardinalityTerm              # singleTermCardinality
-//     | HAT LPAREN cardinalitySet RPAREN # parenthesizedCardinality
-//     | STAR                             # zeroOrMoreCardinality
-//     | PLUS                             # oneOrMoreCardinality
-//     | QUESTION_MARK                    # zeroOrOneCardinality
-//     |                                  # exactlyOneCardinality
-//     ;
-
-// cardinalitySet
-//     : cardinalityTerm (UNION_OP cardinalityTerm)*
-//     ;
-
-// cardinalityTerm
-//     : IntegerLiteral # singleNumberCardinality
-    
-//     | IntegerLiteral DOTS IntegerLiteral # inclusiveRangeCardinality
-//     | IntegerLiteral DOTS                # minimumCardinality
-//     | DOTS IntegerLiteral                # maximumCardinality
-
-//     | DOT GT IntegerLiteral # greaterThanCardinality
-//     | DOT GE IntegerLiteral # greaterOrEqualCardinality
-//     | DOT LT IntegerLiteral # lessThanCardinality
-//     | DOT LE IntegerLiteral # lessOrEqualCardinality
-
-//     | IntegerLiteral LT DOT LT IntegerLiteral # openRangeCardinality
-//     | IntegerLiteral LE DOT LE IntegerLiteral # closedRangeCardinality
-//     | IntegerLiteral LT DOT LE IntegerLiteral # leftOpenRangeCardinality
-//     | IntegerLiteral LE DOT LT IntegerLiteral # rightOpenRangeCardinality
-//     ;
-
-sequenceTypeUnion: sequenceType (UNION_OP sequenceType)*;
-
-sequenceType: EMPTY_SEQUENCE LPAREN RPAREN # emptySequenceType
-            | itemType cardinality # nonEmptySequenceType
-            ;
-
-
-itemType: anyItem
-        | stringType
-        | numberType
-        | booleanType
-        | typeName
-        | kindType
-        | functionType
-        | mapType
-        | arrayType
-        | recordType
-        | enumerationType
-        | choiceItemType;
-
-stringType: STRING;
-booleanType: BOOLEAN;
-numberType: NUMBER;
-
-
-kindType: elementType
-        | anyKindType;
-
-elementType:
-    ELEMENT LPAREN nameTypeUnion? RPAREN;
-
-
-pathNameTestUnion
-    : qname
-    | LPAREN qname (UNION_OP qname)* RPAREN;
-
-nameTypeUnion:
-    nameTest (UNION_OP nameTest)*;
-
-nameTest:
-    qname | wildcard;
-
-functionType:
-    annotation* (anyFunctionType | typedFunctionType);
-
-annotation:
-    PERCENTAGE qname (LPAREN annotationValue (COMMA annotationValue)* RPAREN)?;
-
-annotationValue:
-    STRING | (MINUS? numericLiteral) | (qname LPAREN RPAREN);
-
-anyFunctionType:
-    FUNCTION LPAREN STAR RPAREN;
-
-typedFunctionType:
-    FUNCTION LPAREN (typedFunctionParam (COMMA typedFunctionParam)*)? RPAREN AS sequenceType;
-
-typedFunctionParam:
-    (paramName AS)? sequenceType;
-
-mapType
-    : anyMapType
-    | typedMapType;
-
-anyMapType:
-    MAP LPAREN STAR RPAREN;
-
-typedMapType:
-    MAP LPAREN itemType COMMA sequenceType RPAREN;
-
-recordType:anyRecordType | typedRecordType;
-
-anyRecordType: RECORD LPAREN STAR RPAREN;
-
-typedRecordType: RECORD LPAREN (fieldDeclaration (COMMA fieldDeclaration)*)? extensibleFlag? RPAREN;
-
-extensibleFlag:COMMA STAR;
-
-fieldDeclaration:fieldName QUESTION_MARK? (AS sequenceType)?;
-
-fieldName: anyName;
-
-arrayType:anyArrayType | typedArrayType;
-
-anyArrayType:ARRAY LPAREN STAR RPAREN;
-
-typedArrayType:ARRAY LPAREN sequenceType RPAREN;
-
-enumerationType:ENUM LPAREN STRING (COMMA STRING)* RPAREN;
-
-choiceItemType:LPAREN itemType (UNION_OP itemType)* RPAREN;
-
-anyItem:ITEM LPAREN RPAREN;
-
-anyKindType:NODE LPAREN RPAREN;
-
-functionName: qname;
-
-typeName: qname;
 
 postfixExpr
     : primaryExpr                         # postfixPrimary
@@ -649,7 +538,7 @@ namespacePrefix:
     ;
 
 contextValueDecl
-    : DECLARE CONTEXT VALUE (AS sequenceType)?
+    : DECLARE CONTEXT VALUE (AS type)?
       ((EQ_OP varValue) | (EXTERNAL (EQ_OP varDefaultValue)?))
     ;
 
@@ -666,7 +555,7 @@ itemTypeDecl
     ;
 
 namedRecordTypeDecl
-    : DECLARE annotation* RECORD qname LPAREN (extendedFieldDeclaration (COMMA extendedFieldDeclaration)*)? extensibleFlag? RPAREN
+    : DECLARE annotation* RECORD qname LPAREN (extendedFieldDeclaration (COMMA extendedFieldDeclaration)*)? extensibleType? RPAREN
     ;
 
 extendedFieldDeclaration
@@ -687,132 +576,6 @@ queryBody
     : expr?
     ;
 
-qname: (namespace COLON)* anyName;
-namespace: anyName;
-anyName: ID
-        | ALLOWING
-        | ANCESTOR
-        | ANCESTOR_OR_SELF
-        | AND
-        | ANNOTATION
-        | ARRAY
-        | AS
-        | ASCENDING
-        | AT
-        | BASE_URI
-        | BOOLEAN
-        | BY
-        | CASE
-        | CAST
-        | CASTABLE
-        | CATCH
-        | CHILD
-        | COLLATION
-        | CONTEXT
-        | COUNT
-        | DECIMAL_FORMAT
-        | DECIMAL_SEPARATOR
-        | DECLARE
-        | DEFAULT
-        | DESCENDANT
-        | DESCENDANT_OR_SELF
-        | DESCENDING
-        | DIGIT
-        | ELEMENT
-        | ELSE
-        | EMPTY
-        | EMPTY_SEQUENCE
-        | ENCODING
-        | END
-        | ENUM
-        | EQ
-        | EVERY
-        | EXCEPT
-        | EXPONENT_SEPARATOR
-        | EXTERNAL
-        | FINALLY
-        | FIXED
-        | FN
-        | FOLLOWING
-        | FOLLOWING_OR_SELF
-        | FOLLOWING_SIBLING
-        | FOLLOWING_SIBLING_OR_SELF
-        | FOLLOWS
-        | FOR
-        | FUNCTION
-        | GE
-        | GRAMMAR
-        | GREATEST
-        | GROUPING_SEPARATOR
-        | GT
-        | IDIV
-        | IF
-        | IMPORT
-        | IN
-        | INFINITY
-        | INSTANCE
-        | INTERSECT
-        | IS
-        | ITEM
-        | KEY
-        | LE
-        | LEAST
-        | LET
-        | LT
-        | MAP
-        | MEMBER
-        | MOD
-        | MULTIPLICATION
-        | NAMESPACE
-        | NAN
-        | NE
-        | NEXT
-        | NODE
-        | NUMBER
-        | OF
-        | ONLY
-        | OPTION
-        | OR
-        | PARENT
-        | PATTERN_SEPARATOR
-        | PER_MILLE
-        | PERCENT
-        | PERCENTAGE
-        | PRECEDES
-        | PRECEDING
-        | PRECEDING_OR_SELF
-        | PRECEDING_SIBLING
-        | PRECEDING_SIBLING_OR_SELF
-        | PRESERVE
-        | PREVIOUS
-        | RECORD
-        | RETURN
-        | SATISFIES
-        | SELF
-        | SLIDING
-        | SOME
-        | STABLE
-        | START
-        | STRING
-        | STRIP
-        | SWITCH
-        | THEN
-        | TO
-        | TREAT
-        | TRY
-        | TUMBLING
-        | TYPE
-        | UNION
-        | UNORDERED
-        | VALUE
-        | VERSION
-        | WHEN
-        | WHERE
-        | WHILE
-        | WINDOW
-        | ZERO_DIGIT
-        ;
-
 stringConstructor:
     STRING_CONSTRUCTOR_START
     stringConstructorContent
@@ -827,10 +590,8 @@ constructorChars:
     (CONSTRUCTOR_CHARS | BACKTICK | BRACKET)+
     ;
 
-constructorInterpolation:
-    CONSTRUCTION_START
-    expr?
-    RCURLY BACKTICK
+constructorInterpolation
+    : CONSTRUCTION_START expr? RCURLY BACKTICK
     ;
 
 
@@ -903,11 +664,4 @@ functionSignature
 paramList
     : (varNameAndType (COMMA varNameAndType)*)?
     ;
-
-// multilineInterpolation:
-//     '`#' NL?
-//     ('`'? (multilineInterpolationChars|multilineInterpolationInterpolation)*  NL?)*
-//     '#`'
-//     ;
-
 

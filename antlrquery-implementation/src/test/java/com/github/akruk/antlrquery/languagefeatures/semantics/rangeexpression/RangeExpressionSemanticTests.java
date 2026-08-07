@@ -1,5 +1,7 @@
 package com.github.akruk.antlrquery.languagefeatures.semantics.rangeexpression;
 
+import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Ranges;
+import com.github.akruk.antlrquery.typesystem.types.NumericRange;
 import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrquery.languagefeatures.semantics.SemanticTestsBase;
@@ -11,11 +13,15 @@ public class RangeExpressionSemanticTests extends SemanticTestsBase {
         final var numbers = typeFactory.zeroOrMore(typeFactory.itemNumber());
         assertType("""
                     1 to 5
-                """, numbers);
+                """,
+                typeFactory.number(Ranges.indices(1, 6))
+        );
         assertType("""
                     let $x as number? := 5
                     return ($x to 5)
-                """, numbers);
+                """,
+                typeFactory.number(Ranges.indices(1, 6))
+        );
         assertType("""
                     let $x as number? := 5
                     return (5 to $x)

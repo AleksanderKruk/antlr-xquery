@@ -33,7 +33,10 @@ import com.github.akruk.antlrquery.typesystem.factories.defaults.BaseCardinality
 import com.github.akruk.antlrquery.typesystem.factories.defaults.MemoizedTypeFactory;
 import com.github.akruk.antlrquery.typesystem.factories.defaults.AntlrQueryNamedTypeSets;
 import com.github.akruk.antlrquery.typesystem.types.AntlrQuerySequenceType;
+import org.checkerframework.framework.qual.DefaultQualifier;
+import org.eclipse.lsp4j.jsonrpc.validation.NonNull;
 
+@DefaultQualifier(NonNull.class)
 public final class AntlrQuery {
     public static AntlrQueryValue evaluateWithMockRoot(
         final ParseTree tree,
@@ -89,7 +92,9 @@ public final class AntlrQuery {
         final AntlrQuerySemanticContextManager contextManager = new AntlrQuerySemanticContextManager(typeFactory);
         final Map<String, AntlrQuerySequenceType> varTypes = vars.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e->e.getValue().type));
         final BaseCardinalityFactory cardinalityFactory = new BaseCardinalityFactory();
-        CardinalityVisitor cardinalityVisitor = new CardinalityVisitor(cardinalityFactory);
+        final CardinalityVisitor cardinalityVisitor = new CardinalityVisitor(cardinalityFactory);
+        final ItemTypeVisitor itemTypeVisitor = new ItemTypeVisitor(typeFactory);
+        final TypeVisitor typeVisitor = new TypeVisitor(typeFactory, cardinalityVisitor, itemTypeVisitor);
         final AntlrQuerySemanticAnalyzer analyzer = new AntlrQuerySemanticAnalyzer(
             parser,
             typeFactory,
@@ -108,14 +113,15 @@ public final class AntlrQuery {
             new AxisVisitor(),
             cardinalityFactory,
             cardinalityVisitor,
-            new TypeVisitor(typeFactory, cardinalityVisitor, new ItemTypeVisitor(typeFactory))
+                typeVisitor,
+            itemTypeVisitor
             );
         analyzer.visit(xqueryTree);
         if (!analyzer.getErrors().isEmpty())
             throw new IllegalStateException("Errors in semantic analysis");
 
         final AntlrQueryEvaluator visitor = new AntlrQueryEvaluator(
-            tree, parser, valueFactory, analyzer, typeFactory, moduleManager, vars);
+            tree, parser, valueFactory, analyzer, typeFactory, moduleManager, vars, typeVisitor);
 
         return visitor.visit(xqueryTree);
     }
@@ -161,7 +167,9 @@ public final class AntlrQuery {
         final GrammarManager grammarManager = new GrammarManager(Set.of());
         final AntlrQuerySemanticContextManager contextManager = new AntlrQuerySemanticContextManager(typeFactory);
         final BaseCardinalityFactory cardinalityFactory = new BaseCardinalityFactory();
-        CardinalityVisitor cardinalityVisitor = new CardinalityVisitor(cardinalityFactory);
+        final CardinalityVisitor cardinalityVisitor = new CardinalityVisitor(cardinalityFactory);
+        final ItemTypeVisitor itemTypeVisitor = new ItemTypeVisitor(typeFactory);
+        final TypeVisitor typeVisitor = new TypeVisitor(typeFactory, cardinalityVisitor, itemTypeVisitor);
         final AntlrQuerySemanticAnalyzer analyzer = new AntlrQuerySemanticAnalyzer(
             parser,
             typeFactory,
@@ -180,7 +188,8 @@ public final class AntlrQuery {
             new AxisVisitor(),
             cardinalityFactory,
             cardinalityVisitor,
-            new TypeVisitor(typeFactory, cardinalityVisitor, new ItemTypeVisitor(typeFactory))
+                typeVisitor,
+            itemTypeVisitor
             );
 
 
@@ -192,7 +201,8 @@ public final class AntlrQuery {
                 analyzer,
                 typeFactory,
                 moduleManager,
-                variables
+                variables,
+                typeVisitor
                 );
             return visitor.visit(xqueryTree);
         };

@@ -22,7 +22,6 @@ import static org.junit.Assert.*;
 public class AntlrQueryTypesTest {
 
     final AntlrQueryTypeFactory typeFactory = new MemoizedTypeFactory(Map.of(), Map.of());
-    final AntlrQuerySequenceType error = typeFactory.error();
     final AntlrQuerySequenceType boolean_ = typeFactory.boolean_();
     final AntlrQuerySequenceType string = typeFactory.string();
     final AntlrQuerySequenceType number = typeFactory.number(NumericRange.FULL);
@@ -31,16 +30,10 @@ public class AntlrQueryTypesTest {
     final AntlrQuerySequenceType stringSequenceOneOrMore = typeFactory.oneOrMore(typeFactory.itemString());
     final AntlrQuerySequenceType stringSequenceZeroOrMore = typeFactory.zeroOrMore(typeFactory.itemString());
     final AntlrQuerySequenceType stringSequenceZeroOrOne = typeFactory.zeroOrOne(typeFactory.itemString());
-    final AntlrQuerySequenceType numberSequenceOneOrMore = typeFactory.oneOrMore(typeFactory.itemNumber());
-    final AntlrQuerySequenceType numberSequenceZeroOrMore = typeFactory.zeroOrMore(typeFactory.itemNumber());
-    final AntlrQuerySequenceType numberSequenceZeroOrOne = typeFactory.zeroOrOne(typeFactory.itemNumber());
     final AntlrQuerySequenceType fooElement = typeFactory.element("", Set.of(new QualifiedName("", "foo")));
-    final AntlrQuerySequenceType barElement = typeFactory.element("", Set.of(new QualifiedName("", "bar")));
-    final AntlrQuerySequenceType anyArray = typeFactory.anyArray();
     final AntlrQuerySequenceType anyMap = typeFactory.anyMap();
     final AntlrQuerySequenceType anyItem = typeFactory.anyItem();
     final AntlrQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
-    final AntlrQuerySequenceType anyFunction = typeFactory.anyFunction();
 
 
     // final RecordField requiredNumber =
@@ -553,8 +546,6 @@ public class AntlrQueryTypesTest {
     @Test
     public void recordItemSubtyping() {
         final var tested = itemRecordAny;
-        final var numberToItem = typeFactory.itemFunction(typeFactory.anyItem(), List.of(typeFactory.number(NumericRange.FULL)));
-        final var numberToString = typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.number(NumericRange.FULL)));
         assertFalse(ItemTypes.isSubtype(typeFactory, tested, itemError));
         assertTrue(ItemTypes.isSubtype(typeFactory, tested, itemAnyItem));
         assertFalse(ItemTypes.isSubtype(typeFactory, tested, itemAnyNode));
@@ -592,7 +583,6 @@ public class AntlrQueryTypesTest {
         assertFalse(ItemTypes.isSubtype(typeFactory, itemRecordAny, itemRecordString));
 
         final RecordField foostr = new RecordField("foo", new TypeOrReference.Type(typeFactory.string()), true);
-        final RecordField foonum = new RecordField("num", new TypeOrReference.Type(typeFactory.number(NumericRange.FULL)), true);
         final RecordField bar = new RecordField("bar", new TypeOrReference.Type(typeFactory.string()), true);
         final RecordField hoo = new RecordField("hoo", new TypeOrReference.Type(typeFactory.string()), true);
         final RecordField hooOpt = new RecordField("hoo", new TypeOrReference.Type(typeFactory.string()), false);
@@ -785,22 +775,22 @@ public class AntlrQueryTypesTest {
         final var nodeZeroOrMore = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
         final var nodeOneOrMore = typeFactory.oneOrMore(typeFactory.itemAnyNode());
 
-        final var $00           = Types.intersection(typeFactory, empty, empty);
-        final var $01           = Types.intersection(typeFactory, empty, node);
-        final var $0_zeroOrOne  = Types.intersection(typeFactory, empty, nodeZeroOrOne);
-        final var $0_zeroOrMore = Types.intersection(typeFactory, empty, nodeZeroOrMore);
-        final var $0_oneOrMore  = Types.intersection(typeFactory, empty, nodeOneOrMore);
+        final var $00           = Types.intersect(typeFactory, empty, empty);
+        final var $01           = Types.intersect(typeFactory, empty, node);
+        final var $0_zeroOrOne  = Types.intersect(typeFactory, empty, nodeZeroOrOne);
+        final var $0_zeroOrMore = Types.intersect(typeFactory, empty, nodeZeroOrMore);
+        final var $0_oneOrMore  = Types.intersect(typeFactory, empty, nodeOneOrMore);
         assertEquals($00, empty);
         assertEquals($01, empty);
         assertEquals($0_zeroOrOne, empty);
         assertEquals($0_zeroOrMore, empty);
         assertEquals($0_oneOrMore, empty);
 
-        final var $10           = Types.intersection(typeFactory, node, empty);
-        final var $11           = Types.intersection(typeFactory, node, node);
-        final var $1_zeroOrOne  = Types.intersection(typeFactory, node, nodeZeroOrOne);
-        final var $1_zeroOrMore = Types.intersection(typeFactory, node, nodeZeroOrMore);
-        final var $1_oneOrMore  = Types.intersection(typeFactory, node, nodeOneOrMore);
+        final var $10           = Types.intersect(typeFactory, node, empty);
+        final var $11           = Types.intersect(typeFactory, node, node);
+        final var $1_zeroOrOne  = Types.intersect(typeFactory, node, nodeZeroOrOne);
+        final var $1_zeroOrMore = Types.intersect(typeFactory, node, nodeZeroOrMore);
+        final var $1_oneOrMore  = Types.intersect(typeFactory, node, nodeOneOrMore);
 
         assertEquals($10, empty);
         assertEquals($11, nodeZeroOrOne);
@@ -808,11 +798,11 @@ public class AntlrQueryTypesTest {
         assertEquals($1_zeroOrMore, nodeZeroOrOne);
         assertEquals($1_oneOrMore, nodeZeroOrOne);
 
-        final var $zeroOrOne_0 = Types.intersection(typeFactory, nodeZeroOrOne, empty);
-        final var $zeroOrOne_1 = Types.intersection(typeFactory, nodeZeroOrOne, node);
-        final var $zeroOrOne_zeroOrOne = Types.intersection(typeFactory, nodeZeroOrOne, nodeZeroOrOne);
-        final var $zeroOrOne_zeroOrMore = Types.intersection(typeFactory, nodeZeroOrOne, nodeZeroOrMore);
-        final var $zeroOrOne_oneOrMore = Types.intersection(typeFactory, nodeZeroOrOne, nodeOneOrMore);
+        final var $zeroOrOne_0 = Types.intersect(typeFactory, nodeZeroOrOne, empty);
+        final var $zeroOrOne_1 = Types.intersect(typeFactory, nodeZeroOrOne, node);
+        final var $zeroOrOne_zeroOrOne = Types.intersect(typeFactory, nodeZeroOrOne, nodeZeroOrOne);
+        final var $zeroOrOne_zeroOrMore = Types.intersect(typeFactory, nodeZeroOrOne, nodeZeroOrMore);
+        final var $zeroOrOne_oneOrMore = Types.intersect(typeFactory, nodeZeroOrOne, nodeOneOrMore);
 
         assertEquals($zeroOrOne_0, empty);
         assertEquals($zeroOrOne_1, nodeZeroOrOne);
@@ -820,11 +810,11 @@ public class AntlrQueryTypesTest {
         assertEquals($zeroOrOne_zeroOrMore, nodeZeroOrOne);
         assertEquals($zeroOrOne_oneOrMore, nodeZeroOrOne);
 
-        final var $zeroOrMore_0 = Types.intersection(typeFactory, nodeZeroOrMore, empty);
-        final var $zeroOrMore_1 = Types.intersection(typeFactory, nodeZeroOrMore, node);
-        final var $zeroOrMore_zeroOrOne = Types.intersection(typeFactory, nodeZeroOrMore, nodeZeroOrOne);
-        final var $zeroOrMore_zeroOrMore = Types.intersection(typeFactory, nodeZeroOrMore, nodeZeroOrMore);
-        final var $zeroOrMore_oneOrMore = Types.intersection(typeFactory, nodeZeroOrMore, nodeOneOrMore);
+        final var $zeroOrMore_0 = Types.intersect(typeFactory, nodeZeroOrMore, empty);
+        final var $zeroOrMore_1 = Types.intersect(typeFactory, nodeZeroOrMore, node);
+        final var $zeroOrMore_zeroOrOne = Types.intersect(typeFactory, nodeZeroOrMore, nodeZeroOrOne);
+        final var $zeroOrMore_zeroOrMore = Types.intersect(typeFactory, nodeZeroOrMore, nodeZeroOrMore);
+        final var $zeroOrMore_oneOrMore = Types.intersect(typeFactory, nodeZeroOrMore, nodeOneOrMore);
 
         assertEquals($zeroOrMore_0, empty);
         assertEquals($zeroOrMore_1, nodeZeroOrOne);
@@ -832,11 +822,11 @@ public class AntlrQueryTypesTest {
         assertEquals($zeroOrMore_zeroOrMore, nodeZeroOrMore);
         assertEquals($zeroOrMore_oneOrMore, nodeZeroOrMore);
 
-        final var $oneOrMore_0 = Types.intersection(typeFactory, nodeOneOrMore, empty);
-        final var $oneOrMore_1 = Types.intersection(typeFactory, nodeOneOrMore, node);
-        final var $oneOrMore_zeroOrOne = Types.intersection(typeFactory, nodeOneOrMore, nodeZeroOrOne);
-        final var $oneOrMore_zeroOrMore = Types.intersection(typeFactory, nodeOneOrMore, nodeZeroOrMore);
-        final var $oneOrMore_oneOrMore = Types.intersection(typeFactory, nodeOneOrMore, nodeOneOrMore);
+        final var $oneOrMore_0 = Types.intersect(typeFactory, nodeOneOrMore, empty);
+        final var $oneOrMore_1 = Types.intersect(typeFactory, nodeOneOrMore, node);
+        final var $oneOrMore_zeroOrOne = Types.intersect(typeFactory, nodeOneOrMore, nodeZeroOrOne);
+        final var $oneOrMore_zeroOrMore = Types.intersect(typeFactory, nodeOneOrMore, nodeZeroOrMore);
+        final var $oneOrMore_oneOrMore = Types.intersect(typeFactory, nodeOneOrMore, nodeOneOrMore);
 
         assertEquals($oneOrMore_0, empty);
         assertEquals($oneOrMore_1, nodeZeroOrOne);
@@ -856,7 +846,7 @@ public class AntlrQueryTypesTest {
             new QualifiedName("", "x")
         ));
 
-        final var merged$elements = Types.intersection(typeFactory, elementFoo, elementBar);
+        final var merged$elements = Types.intersect(typeFactory, elementFoo, elementBar);
         assertEquals(
             merged$elements,
             typeFactory.zeroOrOne(
@@ -864,7 +854,7 @@ public class AntlrQueryTypesTest {
             )
         );
 
-        final var merged$any = Types.intersection(typeFactory, elementFoo, anyNode);
+        final var merged$any = Types.intersect(typeFactory, elementFoo, anyNode);
         assertEquals(
             merged$any,
             typeFactory.zeroOrOne(
@@ -875,7 +865,7 @@ public class AntlrQueryTypesTest {
             )
         );
 
-        final var merged$any2 = Types.intersection(typeFactory, anyNode, elementFoo);
+        final var merged$any2 = Types.intersect(typeFactory, anyNode, elementFoo);
         assertEquals(
             merged$any2,
             typeFactory.zeroOrOne(
@@ -1174,13 +1164,12 @@ public class AntlrQueryTypesTest {
         }
 
         // record(y as xs:integer) ⊆ record(x?, y as xs:decimal, *)
-        final var yFieldNumberOnly = numberRequired;
         final var record_y_number = typeFactory.record(
-            Utils.linkedHashMap(Map.entry("y", yFieldNumberOnly))
+            Utils.linkedHashMap(Map.entry("y", numberRequired))
         );
         final var xFieldAny = new RecordField("x", new TypeOrReference.Type(zeroOrMoreItems), true);
         final var extensible_record_x_any_y_number_2 = typeFactory.extensibleRecord(
-            Utils.linkedHashMap(Map.entry("x", xFieldAny),Map.entry("y", yFieldNumberOnly))
+            Utils.linkedHashMap(Map.entry("x", xFieldAny),Map.entry("y", numberRequired))
         );
         assertTrue(Types.isSubtype(typeFactory, record_y_number, extensible_record_x_any_y_number_2));
     }

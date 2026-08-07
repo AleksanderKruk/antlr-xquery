@@ -33,9 +33,7 @@ public interface AntlrQueryTypeFactory {
     AntlrQueryItemType itemRulesFromGrammar(String grammar, Set<QualifiedName> mergedNames);
     AntlrQueryItemType itemAnyRuleFromGrammar(String grammar);
 
-
-
-
+    AntlrQuerySequenceType any();
 
     AntlrQueryItemType itemAnyArray();
     AntlrQueryItemType itemAnyMap();
@@ -70,6 +68,18 @@ public interface AntlrQueryTypeFactory {
     Set<QualifiedName> grammarTokens(String grammar);
     Set<QualifiedName> grammarNodes(String grammar);
     Set<QualifiedName> grammarRules(String grammar);
+
+    AntlrQueryItemType itemRegex();
+
+    AntlrQueryItemType itemGrammarReference(String text);
+
+    AntlrQueryItemType itemRuleReference(QualifiedName qualifiedName);
+
+    AntlrQueryItemType itemRuleReference(String namespace, Set<QualifiedName> qname);
+
+    AntlrQueryItemType itemAllRuleReferencesFromGrammar(String text);
+
+    AntlrQueryItemType itemRuleReferencesFromGrammar(String text, Set<QualifiedName> p);
 
     enum RegistrationStatus {
         OK, ALREADY_REGISTERED_SAME, ALREADY_REGISTERED_DIFFERENT

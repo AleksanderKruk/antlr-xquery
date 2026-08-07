@@ -1,15 +1,15 @@
 lexer grammar AntlrQueryLexer;
 
 fragment Digits: [0-9]+;
-fragment DEC_DIGIT      : [0-9];
-fragment HEX_DIGIT      : [0-9a-fA-F];
-fragment BINARY_DIGIT   : [01];
+fragment DEC_DIGIT: [0-9];
+fragment HEX_DIGIT: [0-9a-fA-F];
+fragment BINARY_DIGIT: [01];
 
-fragment E              : [eE];
-fragment UNDER          : '_';
+fragment E: [eE];
+fragment UNDER: '_';
 
-fragment HEX_PREFIX     : '0x';
-fragment BIN_PREFIX     : '0b';
+fragment HEX_PREFIX: '0x';
+fragment BIN_PREFIX: '0b';
 
 HASH: '#';
 HAT: '^';
@@ -17,8 +17,8 @@ HAT: '^';
 LOOKUP: '?[';
 
 DecimalLiteral
-    : DOT DigitSeq                          // np. .75
-    | DigitSeq DOT DigitSeq?               // np. 1.2 lub 1.
+    : DOT DigitSeq
+    | DigitSeq DOT DigitSeq?
     ;
 
 DoubleLiteral
@@ -57,17 +57,21 @@ fragment ExponentPart
 
 STRING: ('"' ('""' | CHARREF | PREDEFINED_ENTITY_REF | ~["&])* '"')
     | ('\'' ('\'\'' | CHARREF | PREDEFINED_ENTITY_REF | ~['&])* '\'');
-fragment CHARREF: '&#' [0-9]+ ';'
-                | '&#x' [0-9a-fA-F]+ ';';
+fragment CHARREF
+    : '&#' [0-9]+ ';'
+    | '&#x' [0-9a-fA-F]+ ';';
 fragment PREDEFINED_ENTITY_REF
     : '&lt;'
     | '&gt;'
     | '&amp;'
     | '&apos;'
-    | '&quot;';
+    | '&quot;'
+    ;
 
 
 TUMBLING: 'tumbling';
+TOKEN: 'token';
+RULE: 'rule';
 SLIDING: 'sliding';
 WINDOW: 'window';
 START: 'start';
@@ -76,11 +80,9 @@ ONLY: 'only';
 WHEN: 'when';
 PREVIOUS: 'previous';
 NEXT: 'next';
-
 TRY: 'try' ;
 CATCH: 'catch' ;
 FINALLY: 'finally' ;
-
 IS: 'is';
 IS_NOT: 'is-not';
 FOLLOWS: 'follows' ;
@@ -242,17 +244,17 @@ ORDERING: 'ordering';
 COPY_NAMESPACES: 'copy-namespaces';
 DECIMAL_FORMAT: 'decimal-format';
 GROUP: 'group';
-
-
-ORDERED: 'ordered';
-UNORDERED: 'unordered';
+REGEX: 'regex';
 ANNOTATION: 'annotation';
 
 
 TYPESWITCH     : 'typeswitch';
 
-NUMBER : 'boolean';
-BOOLEAN: 'number';
+BOOLEAN : 'boolean';
+TRUE : 'true';
+FALSE : 'false';
+NUMBER: 'number';
+STRING_W: 'string';
 
 ID: NAME_START (DASH NAME_MIDDLE)*
     ; /* TODO: Replace with antlr compatible */

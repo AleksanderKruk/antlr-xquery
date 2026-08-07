@@ -12,7 +12,6 @@ import com.github.akruk.antlrquery.typesystem.types.Cardinality;
 import com.github.akruk.antlrquery.typesystem.types.ItemTypes;
 import com.github.akruk.antlrquery.typesystem.types.NumericRange;
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.*;
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.DefaultQualifier;
@@ -348,7 +347,7 @@ public class ItemTypeIntersection
                 argCandidates.add(((FunctionType.ConstrainedFunction) f).argumentTypes().get(i));
             }
 
-            AntlrQuerySequenceType mergedArgSeq = Types.intersection(
+            AntlrQuerySequenceType mergedArgSeq = Types.intersect(
                     typeFactory,
                     argCandidates.toArray(AntlrQuerySequenceType[]::new)
             );
@@ -365,7 +364,7 @@ public class ItemTypeIntersection
             retCandidates.add(((FunctionType.ConstrainedFunction) f).returnType());
         }
 
-        AntlrQuerySequenceType mergedRetSeq = Types.intersection(
+        AntlrQuerySequenceType mergedRetSeq = Types.intersect(
                 typeFactory,
                 retCandidates.toArray(AntlrQuerySequenceType[]::new)
         );
@@ -461,7 +460,7 @@ public class ItemTypeIntersection
                     .map(m -> ((MapLikeType.MapType) m).valueType())
                     .toArray(AntlrQuerySequenceType[]::new);
 
-            AntlrQuerySequenceType mergedValueSeq = Types.intersection(typeFactory, valueTypes);
+            AntlrQuerySequenceType mergedValueSeq = Types.intersect(typeFactory, valueTypes);
             if (mergedValueSeq.itemType() instanceof NeverType) {
                 return null;
             }
@@ -534,7 +533,7 @@ public class ItemTypeIntersection
             Collections.addAll(fieldSequenceCandidates, mapValueTypes);
 
             // Bulk intersect all collected field candidates using Types.intersection
-            AntlrQuerySequenceType mergedFieldSeq = Types.intersection(
+            AntlrQuerySequenceType mergedFieldSeq = Types.intersect(
                     typeFactory,
                     fieldSequenceCandidates.toArray(AntlrQuerySequenceType[]::new)
             );
@@ -566,7 +565,7 @@ public class ItemTypeIntersection
         }
         Collections.addAll(additionalCandidates, mapValueTypes);
 
-        AntlrQuerySequenceType mergedAdditional = Types.intersection(
+        AntlrQuerySequenceType mergedAdditional = Types.intersect(
                 typeFactory,
                 additionalCandidates.toArray(AntlrQuerySequenceType[]::new)
         );
@@ -595,7 +594,7 @@ public class ItemTypeIntersection
                             Collectors.mapping(ArrayLikeType.ArrayType::memberType, Collectors.toList()),
                             Collectors.mapping(ArrayLikeType.ArrayType::cardinality, Collectors.toList()),
                             (antlrQuerySequenceTypes, cardinalities) -> {
-                                var type = Types.intersection(typeFactory, antlrQuerySequenceTypes.toArray(AntlrQuerySequenceType[]::new));
+                                var type = Types.intersect(typeFactory, antlrQuerySequenceTypes.toArray(AntlrQuerySequenceType[]::new));
                                 if (type.itemType() instanceof  NeverType) {
                                     return type.itemType();
                                 }
@@ -636,7 +635,7 @@ public class ItemTypeIntersection
             Collections.addAll(elementCandidates, arrayElementTypes);
 
             // Bulk intersect all collected candidates for the current index
-            AntlrQuerySequenceType mergedElementSeq = Types.intersection(
+            AntlrQuerySequenceType mergedElementSeq = Types.intersect(
                     typeFactory,
                     elementCandidates.toArray(AntlrQuerySequenceType[]::new)
             );

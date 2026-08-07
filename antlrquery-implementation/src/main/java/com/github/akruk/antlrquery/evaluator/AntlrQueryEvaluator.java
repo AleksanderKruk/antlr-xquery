@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 
 import com.github.akruk.antlrquery.*;
 import com.github.akruk.antlrquery.evaluator.dynamiccontext.DynamicContextManager;
+import com.github.akruk.antlrquery.semanticanalyzer.visitors.TypeVisitor;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
@@ -71,6 +72,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     private final AntlrQueryValue emptySequence;
 
     private final AntlrQuerySemanticAnalyzer semanticAnalyzer;
+    private final TypeVisitor typeVisitor;
     // private final XQueryTypeFactory typeFactory;
 
     private @Nullable AntlrQueryAxis currentAxis;
@@ -97,11 +99,12 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
             final AntlrQuerySemanticAnalyzer analyzer,
             final AntlrQueryTypeFactory typeFactory,
             final ModuleManager moduleManager,
-            final Map<String, AntlrQueryValue> externalVariables)
+            final Map<String, AntlrQueryValue> externalVariables, TypeVisitor typeVisitor)
     {
         this.semanticAnalyzer = analyzer;
         this.moduleManager = moduleManager;
         this.typeFactory = typeFactory;
+        this.typeVisitor = typeVisitor;
         this.root = valueFactory.node("", tree);
         this.context = new AntlrQueryVisitingContext();
         this.context.setValue(root);
@@ -902,7 +905,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         if (ctx.paramListWithDefaults() != null) {
             final var params = ctx.paramListWithDefaults().paramWithDefault();
             for (final AntlrQueryParser.ParamWithDefaultContext param : params) {
-                final var argName = param.varNameAndType().varName().qname().anyName().getText();
+                final var argName = param.varNameAndType().varName().qname().anyName(0).getText();
                 final var defaultValue = param.exprSingle();
                 if (defaultValue != null) {
                     defaults.put(argName, defaultValue);
@@ -2353,7 +2356,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         if (ctx.INSTANCE() == null)
             return visitTreatExpr(ctx.treatExpr());
         final var visited = visitTreatExpr(ctx.treatExpr());
-        final var expectedType = ctx.sequenceType().accept(this.semanticAnalyzer);
+        final var expectedType = ctx.type().accept(this.semanticAnalyzer);
         final boolean result = Types.isSubtype(typeFactory, visited.type, expectedType.type);
         return valueFactory.bool(result);
     }
@@ -2363,7 +2366,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     {
         if (ctx.TREAT() == null)
             return visitCastableExpr(ctx.castableExpr());
-        final var type = ctx.sequenceType().accept(semanticAnalyzer);
+        final var type = ctx.type().accept(semanticAnalyzer);
         final var expr = visitCastableExpr(ctx.castableExpr());
         if (!Types.isSubtype(typeFactory, expr.type, type.type)) {
             return valueFactory.error(AntlrQueryError.TreatAsTypeMismatch,
@@ -2434,16 +2437,14 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
             ;
         var clauses = cases.caseClause();
         for (var typeswitchCase : clauses) {
-            for (var typeCtx : typeswitchCase.sequenceTypeUnion().sequenceType()) {
-                var type = typeCtx.accept(semanticAnalyzer);
-                if (Types.isSubtype(typeFactory, switched.type, type.type)) {
-                    if (typeswitchCase.varName() != null) {
-                        var caseVarName = cases.varName().qname().getText();
-                        contextManager.provideVariable(caseVarName, switched);
-                    }
-                    var evaluatedCase = visitExprSingle(typeswitchCase.exprSingle());
-                    return evaluatedCase;
+            var type = typeVisitor.visitType(typeswitchCase.type());
+            if (Types.isSubtype(typeFactory, switched.type, type)) {
+                if (typeswitchCase.varName() != null) {
+                    var caseVarName = cases.varName().qname().getText();
+                    contextManager.provideVariable(caseVarName, switched);
                 }
+                var evaluatedCase = visitExprSingle(typeswitchCase.exprSingle());
+                return evaluatedCase;
             }
         }
         if (cases.varName() != null) {

@@ -195,10 +195,6 @@ public class MemoizedTypeFactory implements AntlrQueryTypeFactory {
     }
 
     private final Map<String, AntlrQueryItemType> anyNodesFromGrammar = new ConcurrentHashMap<>();
-    private final Map<String, AntlrQueryItemType> anyTokensFromGrammar = new ConcurrentHashMap<>();
-    private final Map<String, AntlrQueryItemType> tokensFromGrammar = new ConcurrentHashMap<>();
-    private final Map<String, AntlrQueryItemType> anyRulesFromGrammar = new ConcurrentHashMap<>();
-    private final Map<String, AntlrQueryItemType> rulesFromGrammar = new ConcurrentHashMap<>();
 
     @Override
     public AntlrQueryItemType itemAnyNodeFromGrammar(String grammar) {
@@ -224,6 +220,11 @@ public class MemoizedTypeFactory implements AntlrQueryTypeFactory {
     @Override
     public AntlrQueryItemType itemAnyRuleFromGrammar(String grammar) {
         return anyNodesFromGrammar.computeIfAbsent(grammar, TreeRuleType.AnyRuleFromGrammar::new);
+    }
+
+    @Override
+    public AntlrQuerySequenceType any() {
+        return zeroOrMore(ITEM_ANY_ITEM);
     }
 
     @Override
@@ -270,6 +271,36 @@ public class MemoizedTypeFactory implements AntlrQueryTypeFactory {
     @Override
     public Set<NamespaceResolver.QualifiedName> grammarRules(String grammar) {
         return Set.of();
+    }
+
+    @Override
+    public AntlrQueryItemType itemRegex() {
+        return new AtomicType.RegexType(Pattern.compile("\\w+"));
+    }
+
+    @Override
+    public AntlrQueryItemType itemGrammarReference(String text) {
+        return new GrammarEntityType.GrammarType();
+    }
+
+    @Override
+    public AntlrQueryItemType itemRuleReference(NamespaceResolver.QualifiedName qualifiedName) {
+        return new GrammarEntityType.GrammarRuleType();
+    }
+
+    @Override
+    public AntlrQueryItemType itemRuleReference(String namespace, Set<NamespaceResolver.QualifiedName> qname) {
+        return new GrammarEntityType.GrammarRuleType();
+    }
+
+    @Override
+    public AntlrQueryItemType itemAllRuleReferencesFromGrammar(String text) {
+        return new GrammarEntityType.GrammarRuleType();
+    }
+
+    @Override
+    public AntlrQueryItemType itemRuleReferencesFromGrammar(String text, Set<NamespaceResolver.QualifiedName> p) {
+        return new GrammarEntityType.GrammarRuleType();
     }
 
     @Override

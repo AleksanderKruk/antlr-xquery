@@ -41,7 +41,7 @@ public class SemanticTestsBase {
         AntlrQuerySemanticAnalyzer analyzer,
         AntlrQuerySequenceType expressionType
         )
-    {};
+    {}
 
     protected AnalysisResult analyze(final String text) {
         final CharStream characters = CharStreams.fromString(text);
@@ -65,6 +65,8 @@ public class SemanticTestsBase {
         final SemanticSymbolManager caller = new SemanticSymbolManager(typeFactory, contextManager, SemanticFunctionSets.ALL(typeFactory));
         final var memoizedFactory = new MemoizedCardinalityFactory();
         CardinalityVisitor cardinalityVisitor = new CardinalityVisitor(memoizedFactory);
+        ItemTypeVisitor itemTypeVisitor = new ItemTypeVisitor(typeFactory);
+        TypeVisitor typeVisitor = new TypeVisitor(typeFactory, cardinalityVisitor, itemTypeVisitor);
         final AntlrQuerySemanticAnalyzer analyzer = new AntlrQuerySemanticAnalyzer(
                 null,
                 typeFactory,
@@ -79,7 +81,8 @@ public class SemanticTestsBase {
                 new AxisVisitor(),
                 memoizedFactory,
                 cardinalityVisitor,
-                new TypeVisitor(typeFactory, cardinalityVisitor, new ItemTypeVisitor(typeFactory))
+                typeVisitor,
+                itemTypeVisitor
                 );
         final var lastVisitedType = analyzer.visit(xqueryTree);
         if (lastVisitedType == null) {

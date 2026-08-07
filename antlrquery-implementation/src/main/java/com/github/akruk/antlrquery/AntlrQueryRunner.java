@@ -116,6 +116,8 @@ public class AntlrQueryRunner {
             final var contextManager = new AntlrQuerySemanticContextManager(typeFactory);
             final MemoizedCardinalityFactory cardinalityFactory = new MemoizedCardinalityFactory();
             final CardinalityVisitor cardinalityVisitor = new CardinalityVisitor(cardinalityFactory);
+            final ItemTypeVisitor itemTypeVisitor = new ItemTypeVisitor(typeFactory);
+            final TypeVisitor typeVisitor = new TypeVisitor(typeFactory, cardinalityVisitor, itemTypeVisitor);
             final AntlrQuerySemanticAnalyzer analyzer = new AntlrQuerySemanticAnalyzer(
                     parserAndTree.parser,
                     typeFactory,
@@ -131,7 +133,8 @@ public class AntlrQueryRunner {
                     new AxisVisitor(),
                     cardinalityFactory,
                     cardinalityVisitor,
-                    new TypeVisitor(typeFactory, cardinalityVisitor, new ItemTypeVisitor(typeFactory))
+                    typeVisitor,
+                    itemTypeVisitor
                     );
             analyzer.visit(xqueryTree);
             final var querySemanticErrors = analyzer.getErrors();
@@ -196,34 +199,38 @@ public class AntlrQueryRunner {
             final AntlrQuerySemanticContextManager contextManager = new AntlrQuerySemanticContextManager(typeFactory);
             final MemoizedCardinalityFactory cardinalityFactory = new MemoizedCardinalityFactory();
             final CardinalityVisitor cardinalityVisitor = new CardinalityVisitor(cardinalityFactory);
+            final ItemTypeVisitor itemTypeVisitor = new ItemTypeVisitor(typeFactory);
+            final TypeVisitor typeVisitor = new TypeVisitor(typeFactory, cardinalityVisitor, itemTypeVisitor);
             final AntlrQuerySemanticAnalyzer analyzer = new AntlrQuerySemanticAnalyzer(
-                parserAndTree.parser,
-                typeFactory,
-                valueFactory,
-                new SemanticSymbolManager(
+                    parserAndTree.parser,
                     typeFactory,
-                    contextManager,
-                    SemanticFunctionSets.ALL(typeFactory)
-                ),
-                Map.of(),
-                manager,
-                grammarManager,
-                typeFactory.element("", Set.of(startingRuleQname)),
-                startingUri,
-                Map.of(),
-                new AxisVisitor(),
-                cardinalityFactory,
-                cardinalityVisitor,
-                new TypeVisitor(typeFactory, cardinalityVisitor, new ItemTypeVisitor(typeFactory))
+                    valueFactory,
+                    new SemanticSymbolManager(
+                        typeFactory,
+                        contextManager,
+                        SemanticFunctionSets.ALL(typeFactory)
+                    ),
+                    Map.of(),
+                    manager,
+                    grammarManager,
+                    typeFactory.element("", Set.of(startingRuleQname)),
+                    startingUri,
+                    Map.of(),
+                    new AxisVisitor(),
+                    cardinalityFactory,
+                    cardinalityVisitor,
+                    typeVisitor,
+                    itemTypeVisitor
                 );
             final AntlrQueryEvaluator evaluator = new AntlrQueryEvaluator(
-                parserAndTree.tree,
-                parserAndTree.parser,
-                valueFactory,
-                analyzer,
-                typeFactory,
-                manager,
-                vars
+                    parserAndTree.tree,
+                    parserAndTree.parser,
+                    valueFactory,
+                    analyzer,
+                    typeFactory,
+                    manager,
+                    vars,
+                    typeVisitor
                 );
             return evaluator.visit(query);
         } catch (final Exception e) {

@@ -86,7 +86,7 @@ import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.Seman
 import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.SemanticSymbolManager.FunctionSpecification;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.SemanticSymbolManager.ModuleInfo;
 import com.github.akruk.antlrquery.semanticanalyzer.visitors.AntlrQuerySemanticAnalyzer;
-import com.github.akruk.antlrquery.semanticanalyzer.visitors.AntlrQuerySemanticAnalyzer.AnalysisListener;
+import com.github.akruk.antlrquery.semanticanalyzer.visitors.AnalysisListener;
 import com.github.akruk.antlrquery.semanticanalyzer.visitors.CardinalityVisitor;
 import com.github.akruk.antlrquery.semanticanalyzer.visitors.ItemTypeVisitor;
 import com.github.akruk.antlrquery.semanticanalyzer.visitors.TypeVisitor;
@@ -248,7 +248,9 @@ public class BasicTextDocumentService implements TextDocumentService {
             paths.add(currentPath.getParent());
             final AntlrQuerySemanticContextManager contextManager = new AntlrQuerySemanticContextManager(typeFactory);
             final BaseCardinalityFactory cardinalityFactory = new BaseCardinalityFactory();
-            CardinalityVisitor cardinalityVisitor = new CardinalityVisitor(cardinalityFactory);
+            final CardinalityVisitor cardinalityVisitor = new CardinalityVisitor(cardinalityFactory);
+            final ItemTypeVisitor itemTypeVisitor = new ItemTypeVisitor(typeFactory);
+            var typeVisitor = new TypeVisitor(typeFactory, cardinalityVisitor, itemTypeVisitor);
             final AntlrQuerySemanticAnalyzer analyzer = new AntlrQuerySemanticAnalyzer(
                     null,
                     typeFactory,
@@ -263,7 +265,8 @@ public class BasicTextDocumentService implements TextDocumentService {
                     new AxisVisitor(),
                     cardinalityFactory,
                     cardinalityVisitor,
-                    new TypeVisitor(typeFactory, cardinalityVisitor, new ItemTypeVisitor(typeFactory))
+                    typeVisitor,
+                    itemTypeVisitor
             );
 
             final Map<VarRefContext, TypeInContext> varRefsMappedToTypes_ = new HashMap<>();

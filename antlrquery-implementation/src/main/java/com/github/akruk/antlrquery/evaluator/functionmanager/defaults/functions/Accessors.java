@@ -46,7 +46,7 @@ public class Accessors {
             node = context.getValue();
         } else {
             node = args.getFirst();
-            if (node.sequence.size() == 0) {
+            if (node.sequence.isEmpty()) {
                 return valueFactory.emptyString();
             }
             if (!node.isNode) {
@@ -55,7 +55,7 @@ public class Accessors {
         }
 
         ParseTree nodeTree = node.node;
-        if (nodeTree == null || !(nodeTree instanceof ParserRuleContext ctx)) {
+        if (!(nodeTree instanceof ParserRuleContext ctx)) {
             return valueFactory.emptyString();
         }
 
@@ -65,17 +65,16 @@ public class Accessors {
 
 
     public AntlrQueryValue string(
-            AntlrQueryVisitingContext context,
+            AntlrQueryVisitingContext ignoredContext,
             List<AntlrQueryValue> args)
     {
-
         AntlrQueryValue target = args.getFirst();
         return stringifier.stringify(target);
     }
 
 
-    public AntlrQueryValue data(AntlrQueryVisitingContext ctx, List<AntlrQueryValue> args) {
-        return valueFactory.sequence(atomizer.atomize(args.get(0)));
+    public AntlrQueryValue data(AntlrQueryVisitingContext ignoredCtx, List<AntlrQueryValue> args) {
+        return valueFactory.sequence(atomizer.atomize(args.getFirst()));
     }
 
 }

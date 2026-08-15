@@ -39,7 +39,6 @@ class QualifiedCardinalityAnalyzer
 
     final String addedNamespace;
 
-    @Nullable Map<QualifiedName, Map<QualifiedName, Cardinality>> currentMapping;
     @Nullable Map<QualifiedName, Cardinality> currentSubMapping;
 
     public QualifiedCardinalityAnalyzer(final Set<QualifiedName> nodeNames, String addedNamespace) {
@@ -91,7 +90,7 @@ class QualifiedCardinalityAnalyzer
     public @Nullable Map<QualifiedName, Map<QualifiedName, Cardinality>> visitLexerRuleSpec(LexerRuleSpecContext ctx) {
         currentRuleRef = new QualifiedName(addedNamespace, ctx.TOKEN_REF().getText());
         super.visitLexerRuleSpec(ctx);
-        childrenMapping.put(currentRuleRef, currentSubMapping);
+        childrenMapping.put(currentRuleRef, Objects.requireNonNull(currentSubMapping));
         return null;
     }
 
@@ -99,7 +98,7 @@ class QualifiedCardinalityAnalyzer
     public @Nullable Map<QualifiedName, Map<QualifiedName, Cardinality>> visitParserRuleSpec(final ParserRuleSpecContext ctx) {
         currentRuleRef = new QualifiedName("", ctx.RULE_REF().getText());
         super.visitParserRuleSpec(ctx);
-        childrenMapping.put(currentRuleRef, currentSubMapping);
+        childrenMapping.put(currentRuleRef, Objects.requireNonNull(currentSubMapping));
         return null;
     }
 

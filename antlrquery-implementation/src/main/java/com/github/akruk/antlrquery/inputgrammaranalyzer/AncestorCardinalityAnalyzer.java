@@ -46,10 +46,8 @@ public class AncestorCardinalityAnalyzer {
     void analyze(QualifiedName start, Map<QualifiedName, Cardinality> ancestorToCardinality) {
         Queue<Pair<QualifiedName, Cardinality>> queue = new LinkedList<>();
         Set<QualifiedName> visited = new HashSet<>();
-        Map<QualifiedName, Cardinality> nodeCardinalities = new HashMap<>();
 
         queue.add(new Pair<>(start, Cardinality.ONE));
-        nodeCardinalities.put(start, Cardinality.ONE);
 
         while (!queue.isEmpty()) {
             Pair<QualifiedName, Cardinality> current = queue.poll();
@@ -71,11 +69,11 @@ public class AncestorCardinalityAnalyzer {
                 }
 
                 if (target.equals(start) && !currentNode.equals(start)) {
-                    Cardinality recursionCard = Cardinalities.recursionMerge(newCard);
+                    Cardinality recursionCard = Objects.requireNonNull(Cardinalities.recursionMerge(newCard));
                     ancestorToCardinality.merge(start, recursionCard, Cardinalities::union);
                 }
                 else if (visited.contains(target) && !target.equals(start)) {
-                    Cardinality cycleCard = Cardinalities.recursionMerge(newCard);
+                    Cardinality cycleCard = Objects.requireNonNull(Cardinalities.recursionMerge(newCard));
                     ancestorToCardinality.merge(target, cycleCard, Cardinalities::union);
                 }
                 else {
@@ -83,20 +81,12 @@ public class AncestorCardinalityAnalyzer {
                 }
 
                 if (!visited.contains(target)) {
-                    nodeCardinalities.put(target, newCard);
                     queue.add(new Pair<>(target, newCard));
                 }
             }
         }
     }
 
-    private static class Pair<A, B> {
-        final A first;
-        final B second;
-
-        Pair(A first, B second) {
-            this.first = first;
-            this.second = second;
-        }
+    private record Pair<A, B>(A first, B second) {
     }
 }

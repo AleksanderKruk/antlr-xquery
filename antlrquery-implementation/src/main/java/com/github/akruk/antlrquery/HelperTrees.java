@@ -1,11 +1,8 @@
 package com.github.akruk.antlrquery;
 
-import java.util.BitSet;
 import java.util.function.Function;
 
 import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.atn.ATNConfigSet;
-import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 public class HelperTrees {
@@ -32,25 +29,10 @@ public class HelperTrees {
         final AntlrQueryLexer lexer = new AntlrQueryLexer(charStream);
         final CommonTokenStream stream = new CommonTokenStream(lexer);
         final AntlrQueryParser parser = new AntlrQueryParser(stream);
-        parser.addErrorListener(new ANTLRErrorListener() {
+        parser.addErrorListener(new BaseErrorListener() {
             @Override
             public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
                 throw new IllegalStateException(msg);
-            }
-
-            @Override
-            public void reportAmbiguity(Parser recognizer, DFA dfa, int startIndex, int stopIndex, boolean exact, BitSet ambigAlts, ATNConfigSet configs) {
-                throw new IllegalStateException();
-            }
-
-            @Override
-            public void reportAttemptingFullContext(Parser recognizer, DFA dfa, int startIndex, int stopIndex, BitSet conflictingAlts, ATNConfigSet configs) {
-                throw new IllegalStateException();
-            }
-
-            @Override
-            public void reportContextSensitivity(Parser recognizer, DFA dfa, int startIndex, int stopIndex, int prediction, ATNConfigSet configs) {
-                throw new IllegalStateException();
             }
         });
         return initialRule.apply(parser);

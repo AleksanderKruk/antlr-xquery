@@ -7,7 +7,6 @@ import com.github.akruk.antlrquery.typesystem.types.Cardinality;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 
 public record RuleGraph(LinkedHashMap<NamespaceResolver.QualifiedName, List<RuleEdge>> graph) {
@@ -25,7 +24,4 @@ public record RuleGraph(LinkedHashMap<NamespaceResolver.QualifiedName, List<Rule
         transformRule(from, to, op, Cardinalities::add);
     }
 
-    public void unionRule(NamespaceResolver.QualifiedName from, NamespaceResolver.QualifiedName to, Cardinality op) {
-        transformRule(from, to, op, Cardinalities::union);
-    }
 }

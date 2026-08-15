@@ -24,8 +24,7 @@ public class AntlrFunctions {
 
 
     public static TerminalNode findTerminalMatchingToken(ParseTree node, Token token) {
-        if (node instanceof TerminalNode) {
-            TerminalNode terminal = (TerminalNode) node;
+        if (node instanceof TerminalNode terminal) {
             if (terminal.getSymbol() == token) {
                 return terminal;
             }
@@ -38,7 +37,7 @@ public class AntlrFunctions {
     }
 
     public AntlrQueryValue start(
-            final AntlrQueryVisitingContext context,
+            final AntlrQueryVisitingContext ignoredContext,
             final List<AntlrQueryValue> args)
     {
         final var input = args.getFirst();
@@ -60,7 +59,7 @@ public class AntlrFunctions {
 
 
     public AntlrQueryValue stop(
-            final AntlrQueryVisitingContext context,
+            final AntlrQueryVisitingContext ignoredContext,
             final List<AntlrQueryValue> args)
     {
         final var input = args.getFirst();
@@ -80,7 +79,7 @@ public class AntlrFunctions {
     }
 
     public AntlrQueryValue pos(
-            final AntlrQueryVisitingContext context,
+            final AntlrQueryVisitingContext ignoredContext,
             final List<AntlrQueryValue> args)
     {
         final var input = args.getFirst();
@@ -103,10 +102,10 @@ public class AntlrFunctions {
     }
 
     public AntlrQueryValue index(
-            final AntlrQueryVisitingContext context,
+            final AntlrQueryVisitingContext ignoredContext,
             final List<AntlrQueryValue> args)
     {
-        final var input = args.get(0);
+        final var input = args.getFirst();
         if (input.isEmptySequence)
             return input;
         if (!input.isNode)
@@ -129,7 +128,7 @@ public class AntlrFunctions {
             final AntlrQueryVisitingContext context,
             final List<AntlrQueryValue> args)
     {
-        final var input = args.get(0);
+        final var input = args.getFirst();
         if (input.isEmptySequence)
             return input;
         if (!input.isNode)
@@ -152,7 +151,7 @@ public class AntlrFunctions {
             final AntlrQueryVisitingContext context,
             final List<AntlrQueryValue> args)
     {
-        final var input = args.get(0);
+        final var input = args.getFirst();
         if (input.isEmptySequence)
             return input;
         if (!input.isNode)
@@ -160,7 +159,7 @@ public class AntlrFunctions {
                 """
                 antlr:is-token($node as node()? := .) as number?
                     expected: argument must be a 'node()?'
-                    received: """ + input);
+                    received:\s""" + input);
         return valueFactory.bool(input.node instanceof TerminalNode);
     }
 
@@ -177,7 +176,7 @@ public class AntlrFunctions {
                 """
                 antlr:is-rule($node as node()? := .) as number?
                     expected: argument must be a 'node()?'
-                    received: """ + input);
+                    received:""" + " " + input);
         return valueFactory.bool(input.node instanceof ParserRuleContext);
     }
 

@@ -5,7 +5,6 @@ import java.math.MathContext;
 import java.text.Collator;
 import java.util.List;
 import java.util.Map;
-import org.antlr.v4.runtime.Parser;
 import com.github.akruk.antlrquery.evaluator.AntlrQueryVisitingContext;
 import com.github.akruk.antlrquery.evaluator.values.AntlrQueryError;
 import com.github.akruk.antlrquery.evaluator.values.AntlrQueryValue;
@@ -16,12 +15,11 @@ import com.github.akruk.antlrquery.evaluator.values.operations.ValueComparisonOp
 public class AggregateFunctions {
 
     private final AntlrQueryValueFactory valueFactory;
-    private final Map<String, Collator> collationUriToCollator;;
+    private final Map<String, Collator> collationUriToCollator;
     private final ValueAtomizer atomizer;
     private final ValueComparisonOperator comparisonOperator;
 
     public AggregateFunctions(final AntlrQueryValueFactory valueFactory,
-                                final Parser targetParser,
                                 final Map<String, Collator> collationUriToCollator,
                                 final ValueAtomizer atomizer,
                                 final ValueComparisonOperator comparisonOperator)
@@ -34,7 +32,7 @@ public class AggregateFunctions {
 
 
     public AntlrQueryValue count(
-            final AntlrQueryVisitingContext context,
+            final AntlrQueryVisitingContext ignoredContext,
             final List<AntlrQueryValue> args)
     {
         final var input = args.getFirst();
@@ -43,7 +41,7 @@ public class AggregateFunctions {
 
 
     public AntlrQueryValue avg(
-            final AntlrQueryVisitingContext context,
+            final AntlrQueryVisitingContext ignoredContext,
             final List<AntlrQueryValue> args)
     {
         final var values = args.getFirst();
@@ -57,13 +55,13 @@ public class AggregateFunctions {
             .map(v->v.numericValue)
             .map(number->number.divide(size, MathContext.DECIMAL128))
             .reduce(BigDecimal::add)
-            .get();
+            .orElse(BigDecimal.ZERO);
         return valueFactory.number(summed);
     }
 
 
     public AntlrQueryValue max(
-            final AntlrQueryVisitingContext context,
+            final AntlrQueryVisitingContext ignoredContext,
             final List<AntlrQueryValue> args)
     {
         final var values = args.getFirst();
@@ -72,42 +70,51 @@ public class AggregateFunctions {
         final List<AntlrQueryValue> sequence = values.sequence;
         if (!sequence.stream().allMatch(v->v.isNumeric))
             return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
-        final BigDecimal max = sequence.stream().map(v->v.numericValue).max(BigDecimal::compareTo).get();
+        final BigDecimal max = sequence.stream()
+                .map(v->v.numericValue)
+                .max(BigDecimal::compareTo)
+                .orElse(BigDecimal.ZERO);
         return valueFactory.number(max);
     }
 
 
     public AntlrQueryValue min(
-            final AntlrQueryVisitingContext context,
+            final AntlrQueryVisitingContext ignoredContext,
             final List<AntlrQueryValue> args)
     {
-        final var values = args.get(0);
+        final var values = args.getFirst();
         if (values.isEmptySequence)
             return values;
         final List<AntlrQueryValue> sequence = values.sequence;
         if (!sequence.stream().allMatch(v->v.isNumeric))
             return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
-        final BigDecimal min = sequence.stream().map(v->v.numericValue).min(BigDecimal::compareTo).get();
+        final BigDecimal min = sequence.stream()
+                .map(v->v.numericValue)
+                .min(BigDecimal::compareTo)
+                .orElse(BigDecimal.ZERO);
         return valueFactory.number(min);
     }
 
 
     public AntlrQueryValue sum(
-            final AntlrQueryVisitingContext context,
+            final AntlrQueryVisitingContext ignoredContext,
             final List<AntlrQueryValue> args)
     {
-        final var values = args.get(0);
+        final var values = args.getFirst();
         if (values.isEmptySequence)
             return values;
         final List<AntlrQueryValue> sequence = values.sequence;
         if (!sequence.stream().allMatch(v->v.isNumeric))
             return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
-        final BigDecimal summed = sequence.stream().map(v->v.numericValue).reduce(BigDecimal::add).get();
+        final BigDecimal summed = sequence.stream()
+                .map(v->v.numericValue)
+                .reduce(BigDecimal::add)
+                .orElse(BigDecimal.ZERO);
         return valueFactory.number(summed);
     }
 
     public AntlrQueryValue allEqual(
-            final AntlrQueryVisitingContext context,
+            final AntlrQueryVisitingContext ignoredContext,
             final List<AntlrQueryValue> args)
     {
         // TODO: take collation into account
@@ -115,10 +122,8 @@ public class AggregateFunctions {
         if (values.isEmptySequence)
             return valueFactory.bool(true);
         final List<AntlrQueryValue> sequence = atomizer.atomize(values);
-        // if (!sequence.stream().allMatch(XQueryValue::isNumericValue))
-            // return XQueryError.InvalidArgumentType;
         int size = sequence.size();
-        AntlrQueryValue previousValue = sequence.get(0);
+        AntlrQueryValue previousValue = sequence.getFirst();
         for (int i = 1; i < size; i++) {
             var value = sequence.get(i);
             if (comparisonOperator.valueUnequal(previousValue, value).booleanValue)
@@ -129,7 +134,7 @@ public class AggregateFunctions {
 
 
     public AntlrQueryValue allDifferent(
-            AntlrQueryVisitingContext context,
+            AntlrQueryVisitingContext ignoredContext,
             final List<AntlrQueryValue> args) {
 
         AntlrQueryValue valuesArg    = args.get(0);

@@ -117,7 +117,7 @@ public class DescendantCardinalityAnalyzer {
         }
     }
 
-    static void main(String[] args) {
+    static void main(String[] ignoredArgs) {
         final QualifiedName x = new QualifiedName("", "x");
         final QualifiedName a = new QualifiedName("", "a");
         final QualifiedName b = new QualifiedName("", "b");

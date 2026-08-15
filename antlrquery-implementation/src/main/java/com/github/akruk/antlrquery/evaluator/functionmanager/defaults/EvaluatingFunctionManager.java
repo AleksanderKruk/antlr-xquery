@@ -42,22 +42,7 @@ public class EvaluatingFunctionManager {
 
     private final Map<String, Map<String, List<FunctionEntry>>> namespaces;
     private final AntlrQueryValueFactory valueFactory;
-    private final MathFunctions mathFunctions;
-    private final FunctionsOnStringValues functionsOnStringValues;
     private final AntlrQueryEvaluator evaluator;
-    private final FunctionsBasedOnSubstringMatching functionsBasedOnSubstringMatching;
-    private final FunctionsOnNumericValues functionsOnNumericValues;
-    private final CardinalityFunctions cardinalityFunctions;
-    private final NumericOperators numericOperators;
-    private final Accessors accessors;
-    private final AggregateFunctions aggregateFunctions;
-    private final OtherFunctionsOnNodes otherFuctionsOnNodes;
-    // private final FunctionsOnSequencesOfNodes functionsOnSequencesOfNodes;
-    // private final ParsingNumbers parsingNumbers;
-    private final ProcessingStrings processingStrings;
-    private final ProcessingBooleans processingBooleans;
-    private final ProcessingSequencesFunctions processingSequences;
-    private final AntlrFunctions antlrFunctions;
     private final AntlrQueryTypeFactory typeFactory;
 
     public EvaluatingFunctionManager(
@@ -75,24 +60,24 @@ public class EvaluatingFunctionManager {
         this.evaluator = evaluator;
         this.typeFactory = typeFactory;
         this.namespaces = new HashMap<>(10);
-        this.mathFunctions = new MathFunctions(valueFactory);
-        this.accessors = new Accessors(valueFactory, parser, atomizer, stringifier);
-        this.functionsOnStringValues = new FunctionsOnStringValues(valueFactory, atomizer, stringifier);
-        this.functionsOnNumericValues = new FunctionsOnNumericValues(valueFactory);
-        this.functionsBasedOnSubstringMatching = new FunctionsBasedOnSubstringMatching(valueFactory);
-        this.cardinalityFunctions = new CardinalityFunctions(valueFactory, atomizer);
-        this.numericOperators = new NumericOperators(valueFactory);
-        this.otherFuctionsOnNodes = new OtherFunctionsOnNodes(valueFactory, nodeGetter, parser);
+        MathFunctions mathFunctions = new MathFunctions(valueFactory);
+        Accessors accessors = new Accessors(valueFactory, parser, atomizer, stringifier);
+        FunctionsOnStringValues functionsOnStringValues = new FunctionsOnStringValues(valueFactory, atomizer, stringifier);
+        FunctionsOnNumericValues functionsOnNumericValues = new FunctionsOnNumericValues(valueFactory);
+        FunctionsBasedOnSubstringMatching functionsBasedOnSubstringMatching = new FunctionsBasedOnSubstringMatching(valueFactory);
+        CardinalityFunctions cardinalityFunctions = new CardinalityFunctions(valueFactory, atomizer);
+        NumericOperators numericOperators = new NumericOperators(valueFactory);
+        OtherFunctionsOnNodes otherFuctionsOnNodes = new OtherFunctionsOnNodes(valueFactory, nodeGetter, parser);
         // this.functionsOnSequencesOfNodes = new FunctionsOnSequencesOfNodes(valueFactory, parser);
-        this.processingSequences = new ProcessingSequencesFunctions(valueFactory, parser, atomizer);
+        ProcessingSequencesFunctions processingSequences = new ProcessingSequencesFunctions(valueFactory, parser, atomizer);
         // this.parsingNumbers = new ParsingNumbers(valueFactory, parser);
         final Collator defaultCollator = Collations.DEFAULT_COLLATOR;
         final Map<String, Collator> collators = Map.of(Collations.CODEPOINT_URI, defaultCollator);
-        this.processingStrings = new ProcessingStrings(valueFactory, parser, defaultCollator,
+        ProcessingStrings processingStrings = new ProcessingStrings(valueFactory, parser, defaultCollator,
                 collators, Locale.getDefault(), atomizer, ebv);
-        this.processingBooleans = new ProcessingBooleans(valueFactory, parser, ebv);
-        this.aggregateFunctions = new AggregateFunctions(valueFactory, parser, collators, atomizer, valueComparisonOperator);
-        this.antlrFunctions = new AntlrFunctions(valueFactory);
+        ProcessingBooleans processingBooleans = new ProcessingBooleans(valueFactory, parser, ebv);
+        AggregateFunctions aggregateFunctions = new AggregateFunctions(valueFactory, collators, atomizer, valueComparisonOperator);
+        AntlrFunctions antlrFunctions = new AntlrFunctions(valueFactory);
 
         final HelperTrees helperTrees = new HelperTrees();
         final ParseTree CONTEXT_VALUE = helperTrees.CONTEXT_VALUE;
@@ -224,15 +209,8 @@ public class EvaluatingFunctionManager {
         registerFunction("fn", "codepoint-equal", processingStrings::codepointEqual, List.of("value1", "value2"),
                 Map.of());
 
-        // registerFunction("fn", "collation", processingStrings::collation,
-        // List.of("options"), Map.of());
-
         registerFunction("fn", "collation-available", processingStrings::collationAvailable,
                 List.of("collation", "usage"), Map.of("usage", EMPTY_SEQUENCE));
-
-        // registerFunction("fn", "collation-key", processingStrings::collationKey,
-        // List.of("value", "collation"),
-        // Map.of("collation", DEFAULT_COLLATION));
 
         registerFunction("fn", "contains-token", processingStrings::containsToken,
                 List.of("value", "token", "collation"), Map.of("collation", DEFAULT_COLLATION));
@@ -405,7 +383,7 @@ public class EvaluatingFunctionManager {
         return valueFactory.number(context.getSize());
     }
 
-    record ParseFlagsResult(int flags, String newPattern, String newReplacement) {
+    public record ParseFlagsResult(int flags, String newPattern, String newReplacement) {
     }
 
     public ParseFlagsResult parseFlags(final String flags, String pattern, String replacement) {
@@ -456,7 +434,7 @@ public class EvaluatingFunctionManager {
                 final String pattern = args.get(1).stringValue;
                 final String replacement = args.get(2).stringValue;
                 final String flags = args.get(3).stringValue;
-                final var parsed = parseFlags(flags, pattern, replacement);
+                final ParseFlagsResult parsed = parseFlags(flags, pattern, replacement);
                 final Pattern compiled = Pattern.compile(parsed.newPattern(), parsed.flags());
                 final String result = compiled.matcher(input).replaceAll(parsed.newReplacement());
                 return valueFactory.string(result);
@@ -477,7 +455,7 @@ public class EvaluatingFunctionManager {
         final Map<String, List<FunctionEntry>> namespaceFunctions = namespaces.computeIfAbsent(namespace,
                 _ -> new HashMap<>());
         final List<FunctionEntry> functionsWithDesiredName = namespaceFunctions.computeIfAbsent(localName,
-                _ -> new ArrayList<FunctionEntry>());
+                _ -> new ArrayList<>());
         functionsWithDesiredName.add(functionEntry);
     }
 
@@ -490,11 +468,11 @@ public class EvaluatingFunctionManager {
         final Map<String, List<FunctionEntry>> namespaceFunctions = namespaces.computeIfAbsent(namespace,
                 _ -> new HashMap<>());
         final List<FunctionEntry> functionsWithDesiredName = namespaceFunctions.computeIfAbsent(localName,
-                _ -> new ArrayList<FunctionEntry>());
+                _ -> new ArrayList<>());
         functionsWithDesiredName.add(functionEntry);
     }
 
-    public static record FunctionOrError(FunctionEntry entry, AntlrQueryValue error) {
+    public record FunctionOrError(FunctionEntry entry, AntlrQueryValue error) {
         public boolean isError() {
             return error != null;
         }
@@ -509,9 +487,9 @@ public class EvaluatingFunctionManager {
         final Predicate<FunctionEntry> withinArityRange = f -> (f.minArity() <= arity && arity <= f.maxArity());
         final Optional<FunctionEntry> functionWithRequiredArity = functionsWithGivenName.stream()
                 .filter(withinArityRange).findFirst();
-        if (!functionWithRequiredArity.isPresent())
-            return new FunctionOrError(null, error(AntlrQueryError.WrongNumberOfArguments, "", typeFactory.error()));
-        return new FunctionOrError(functionWithRequiredArity.get(), null);
+        return functionWithRequiredArity
+                .map(functionEntry -> new FunctionOrError(functionEntry, null))
+                .orElseGet(() -> new FunctionOrError(null, error(AntlrQueryError.WrongNumberOfArguments, "", typeFactory.error())));
     }
 
     public AntlrQueryValue call(
@@ -547,12 +525,12 @@ public class EvaluatingFunctionManager {
                     return default_.accept(evaluator);
                 }));
         keywordArgs_.putAll(defaultedArguments);
-        final List<AntlrQueryValue> rearranged = rearrangeArguments(remainingArgs, context, args, keywordArgs_);
+        final List<AntlrQueryValue> rearranged = rearrangeArguments(remainingArgs, args, keywordArgs_);
         return function.call(context, rearranged);
     }
 
     private AntlrQueryValue callVariadicFunction(final FunctionEntry functionEntry, final AntlrQueryVisitingContext context,
-                                                 final List<AntlrQueryValue> args, final Map<String, AntlrQueryValue> keywordArgs) {
+                                                 final List<AntlrQueryValue> args, final Map<String, AntlrQueryValue> ignoredKeywordArgs) {
         return functionEntry.function.call(context, args);
     }
 
@@ -564,8 +542,10 @@ public class EvaluatingFunctionManager {
         return valueFactory.functionReference(function.entry().function, null);
     }
 
-    List<AntlrQueryValue> rearrangeArguments(final List<String> remainingArgs, final AntlrQueryVisitingContext context,
-                                             final List<AntlrQueryValue> args, final Map<String, AntlrQueryValue> keywordArgs) {
+    List<AntlrQueryValue> rearrangeArguments(final List<String> remainingArgs,
+                                             final List<AntlrQueryValue> args,
+                                             final Map<String, AntlrQueryValue> keywordArgs)
+    {
         final List<AntlrQueryValue> rearranged = new ArrayList<>(args.size() + keywordArgs.size());
         rearranged.addAll(args);
         for (final var arg : remainingArgs) {

@@ -32,13 +32,6 @@ public class InputGrammarAnalyzer {
             .collect(Collectors.toSet());
     }
 
-    Set<String> toSet(final Collection<ParseTree> els)
-    {
-        return els.stream()
-            .map(ParseTree::getText)
-            .collect(Collectors.toSet());
-    }
-
 
     public QualifiedGrammarAnalysisResult analyze(String addedNamespace, final List<ParseTree> trees)
     {
@@ -136,12 +129,6 @@ public class InputGrammarAnalyzer {
         );
     }
 
-    private Set<QualifiedName> getPresentKeys(final Map<QualifiedName, Cardinality> x) {
-         final Set<QualifiedName> presentKeys = new HashSet<>(x.keySet());
-         presentKeys.removeIf(k->x.get(k).equals(Cardinality.ZERO));
-         return presentKeys;
-     }
-
     Set<String> getSimpleTokens(final ANTLRv4Parser antlrParser, Collection<ParseTree> lexerRules)
     {
         final Predicate<ParseTree> isFragment = rule -> {
@@ -161,8 +148,8 @@ public class InputGrammarAnalyzer {
         final Set<ParseTree> remainingRules = new HashSet<>(normalRules);
         remainingRules.removeAll(previousSimpleRules);
         remainingFragments.removeAll(previousSimpleFragments);
-        int previousSimpleRuleCount = 0;
-        int currentSimpleRuleCount = 0;
+        int previousSimpleRuleCount;
+        int currentSimpleRuleCount;
         do {
             previousSimpleRuleCount = previousSimpleFragments.size() + previousSimpleRules.size();
             final Set<String> previousFragmentRuleNames = previousSimpleFragments.stream().map(this::getLexerRuleName)
@@ -476,19 +463,6 @@ public class InputGrammarAnalyzer {
     // }
     // return precedingMapping;
     // }
-
-    private Map<String, Map<String, Cardinality>> getMapping(final Set<String> nodeNames)
-    {
-        final var map = new HashMap<String, Map<String, Cardinality>>(nodeNames.size(), 1);
-        for (final var nodename : nodeNames) {
-            final var subhashmap = new HashMap<String, Cardinality>(nodeNames.size(), 1);
-            for (final var sub : nodeNames) {
-                subhashmap.put(sub, Cardinality.ZERO);
-            }
-            map.put(nodename, subhashmap);
-        }
-        return map;
-    }
 
     private Map<QualifiedName, Map<QualifiedName, Cardinality>>
         getQualifiedMapping(

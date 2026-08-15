@@ -35,7 +35,7 @@ import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
 
 public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientAware {
-    public static void main(final String[] args)
+    static void main()
     {
         System.err.println("[main] Starting BasicLanguageServer...");
 
@@ -109,12 +109,9 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
 		public void setRanges(List<Range> ranges) {
 			this.ranges = ranges;
 		}
-		private List<String> texts;
+		private final List<String> texts;
 		public List<String> getTexts() {
 			return texts;
-		}
-		public void setTexts(List<String> texts) {
-			this.texts = texts;
 		}
     }
 
@@ -171,8 +168,8 @@ public class AntlrQueryLanguageServer implements LanguageServer, LanguageClientA
         capabilities.setCodeActionProvider(options);
 
         workspacePaths.forEach(directoryPath->{
-            try {
-                Files.walk(directoryPath).forEach(p -> {
+            try(var walker = Files.walk(directoryPath)) {
+                walker.forEach(p -> {
                     try {
                         if (p.toFile().isFile() && p.endsWith(".antlrquery"))
                         {

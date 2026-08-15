@@ -1,5 +1,6 @@
 package com.github.akruk.antlrquery.typesystem.typeoperations.itemtype;
 
+import com.github.akruk.antlrquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Ranges;
 import com.github.akruk.antlrquery.typesystem.types.AntlrQuerySequenceType;
@@ -39,6 +40,9 @@ public class ItemTypeIsSubtype {
         if (t1 instanceof NeverType) return true;
         if (t1 instanceof NothingType) return true;
         if (t1 instanceof ChoiceItemType c1) return allItemsAreSubtypesOf(c1, t2);
+        if (t1 instanceof NamedItemType(NamespaceResolver.QualifiedName reference1)) {
+            return isSubtype(typeFactory.guaranteedItemNamedType(reference1, new IllegalStateException()), t2);
+        }
         return switch(t2) {
             case AnyItemType _ -> true;
             case ChoiceItemType choiceItemType -> anyItemsAreSubtypesOf(t1, choiceItemType);
@@ -99,6 +103,8 @@ public class ItemTypeIsSubtype {
                 yield false;
             }
             case NeverType _, NothingType _ -> false; // ( {* - { NeverType, NothingType }} x {NeverType, NothingType})
+            case NamedItemType(NamespaceResolver.QualifiedName reference) ->
+                    isSubtype(t1, typeFactory.guaranteedItemNamedType(reference, new IllegalStateException()));
         };
     }
 

@@ -128,8 +128,8 @@ public class TypeStringRepresentationTests {
     @Test
     public void testSingleElementType() {
         assertEquals(
-            "<title>",
-            typeFactory.element("", Set.of(new QualifiedName("", "title"))).toString()
+            "rule(title)",
+            typeFactory.one(typeFactory.itemRulesFromGrammar("", Set.of(new QualifiedName("", "title")))).toString()
         );
     }
 
@@ -139,7 +139,7 @@ public class TypeStringRepresentationTests {
                 new NamespaceResolver.QualifiedName("", "name"),
                 new NamespaceResolver.QualifiedName("", "label")
             )).toString();
-        assertEquals("<label | name>", repr);
+        assertEquals("rule(label | name)", repr);
     }
 
 

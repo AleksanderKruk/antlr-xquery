@@ -1,5 +1,7 @@
 package com.github.akruk.antlrquery;
 
+import com.github.akruk.antlrquery.namespaceresolver.NamespaceResolver;
+import com.github.akruk.antlrquery.semanticanalyzer.visitors.*;
 import org.antlr.v4.Tool;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -18,10 +20,6 @@ import com.github.akruk.antlrquery.semanticanalyzer.ModuleManager;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticcontext.AntlrQuerySemanticContextManager;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.SemanticFunctionSets;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.SemanticSymbolManager;
-import com.github.akruk.antlrquery.semanticanalyzer.visitors.AntlrQuerySemanticAnalyzer;
-import com.github.akruk.antlrquery.semanticanalyzer.visitors.CardinalityVisitor;
-import com.github.akruk.antlrquery.semanticanalyzer.visitors.ItemTypeVisitor;
-import com.github.akruk.antlrquery.semanticanalyzer.visitors.TypeVisitor;
 import com.github.akruk.antlrquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrquery.typesystem.factories.defaults.MemoizedCardinalityFactory;
 import com.github.akruk.antlrquery.typesystem.factories.defaults.MemoizedTypeFactory;
@@ -115,8 +113,10 @@ public class AntlrQueryRunner {
             modulePaths.add(cwd);
             final var contextManager = new AntlrQuerySemanticContextManager(typeFactory);
             final MemoizedCardinalityFactory cardinalityFactory = new MemoizedCardinalityFactory();
+            final NumericRangeVisitor numericRangeVisitor = new NumericRangeVisitor();
             final CardinalityVisitor cardinalityVisitor = new CardinalityVisitor(cardinalityFactory);
-            final ItemTypeVisitor itemTypeVisitor = new ItemTypeVisitor(typeFactory);
+            final ItemTypeVisitor itemTypeVisitor = new ItemTypeVisitor(
+                    cardinalityVisitor, numericRangeVisitor, typeFactory);
             final TypeVisitor typeVisitor = new TypeVisitor(typeFactory, cardinalityVisitor, itemTypeVisitor);
             final AntlrQuerySemanticAnalyzer analyzer = new AntlrQuerySemanticAnalyzer(
                     parserAndTree.parser,
@@ -134,7 +134,8 @@ public class AntlrQueryRunner {
                     cardinalityFactory,
                     cardinalityVisitor,
                     typeVisitor,
-                    itemTypeVisitor
+                    itemTypeVisitor,
+            new NamespaceResolver("fn", "", "", "", "")
                     );
             analyzer.visit(xqueryTree);
             final var querySemanticErrors = analyzer.getErrors();
@@ -152,7 +153,7 @@ public class AntlrQueryRunner {
                     lexerClass,
                     parserClass,
                     startingRule,
-                    new QualifiedName(null, startingRule),
+                    new QualifiedName("", startingRule), // TODO: connect to grammar
                     fileContent,
                     modulePaths,
                     modulePaths
@@ -178,17 +179,17 @@ public class AntlrQueryRunner {
     }
 
     static AntlrQueryValue executeQuery(
-            final ParseTree query,
-            final Class<?> lexerClass,
-            final Class<?> parserClass,
-            final String startingRule,
-            final QualifiedName startingRuleQname,
-            final String input,
-            final Set<Path> modulePaths,
-            final Set<Path> grammarPaths,
-            final Map<String, AntlrQueryValue> vars,
-            final String startingUri
-            )
+        final ParseTree query,
+        final Class<?> lexerClass,
+        final Class<?> parserClass,
+        final String startingRule,
+        final QualifiedName startingRuleQname,
+        final String input,
+        final Set<Path> modulePaths,
+        final Set<Path> grammarPaths,
+        final Map<String, AntlrQueryValue> vars,
+        final String startingUri
+        )
     {
         try {
             final ParserAndTree parserAndTree = parseTargetFile(input, lexerClass, parserClass, startingRule);
@@ -199,7 +200,9 @@ public class AntlrQueryRunner {
             final AntlrQuerySemanticContextManager contextManager = new AntlrQuerySemanticContextManager(typeFactory);
             final MemoizedCardinalityFactory cardinalityFactory = new MemoizedCardinalityFactory();
             final CardinalityVisitor cardinalityVisitor = new CardinalityVisitor(cardinalityFactory);
-            final ItemTypeVisitor itemTypeVisitor = new ItemTypeVisitor(typeFactory);
+            final NumericRangeVisitor numericRangeVisitor = new NumericRangeVisitor();
+            final ItemTypeVisitor itemTypeVisitor = new ItemTypeVisitor(
+                    cardinalityVisitor, numericRangeVisitor, typeFactory);
             final TypeVisitor typeVisitor = new TypeVisitor(typeFactory, cardinalityVisitor, itemTypeVisitor);
             final AntlrQuerySemanticAnalyzer analyzer = new AntlrQuerySemanticAnalyzer(
                     parserAndTree.parser,
@@ -220,7 +223,8 @@ public class AntlrQueryRunner {
                     cardinalityFactory,
                     cardinalityVisitor,
                     typeVisitor,
-                    itemTypeVisitor
+                    itemTypeVisitor,
+            new NamespaceResolver("fn", "", "", "", "")
                 );
             final AntlrQueryEvaluator evaluator = new AntlrQueryEvaluator(
                     parserAndTree.tree,
@@ -497,39 +501,39 @@ public class AntlrQueryRunner {
         return new ValidationResult(InputStatus.OK, null);
     }
 
-private static ValidationResult validateTargetFiles(final Map<String, List<String>> args) {
-    if (!args.containsKey(TARGET_FILES_ARG)) {
-        return new ValidationResult(InputStatus.NO_TARGET_FILES, "No target files given (" + TARGET_FILES_ARG + ")");
-    }
-
-    final List<String> targetFiles = args.get(TARGET_FILES_ARG);
-    if (targetFiles.isEmpty()) {
-        return new ValidationResult(InputStatus.NO_TARGET_FILES, "Target files list is empty (" + TARGET_FILES_ARG + ")");
-    }
-
-    for (final String file : targetFiles) {
-        final Path targetPath = Path.of(file);
-        if (!Files.exists(targetPath)) {
-            return new ValidationResult(InputStatus.INVALID_TARGET_FILE, "Target file does not exist: " + file);
+    private static ValidationResult validateTargetFiles(final Map<String, List<String>> args) {
+        if (!args.containsKey(TARGET_FILES_ARG)) {
+            return new ValidationResult(InputStatus.NO_TARGET_FILES, "No target files given (" + TARGET_FILES_ARG + ")");
         }
-        if (!Files.isRegularFile(targetPath)) {
-            return new ValidationResult(InputStatus.INVALID_TARGET_FILE, "Target file is not a regular file: " + file);
+
+        final List<String> targetFiles = args.get(TARGET_FILES_ARG);
+        if (targetFiles.isEmpty()) {
+            return new ValidationResult(InputStatus.NO_TARGET_FILES, "Target files list is empty (" + TARGET_FILES_ARG + ")");
         }
+
+        for (final String file : targetFiles) {
+            final Path targetPath = Path.of(file);
+            if (!Files.exists(targetPath)) {
+                return new ValidationResult(InputStatus.INVALID_TARGET_FILE, "Target file does not exist: " + file);
+            }
+            if (!Files.isRegularFile(targetPath)) {
+                return new ValidationResult(InputStatus.INVALID_TARGET_FILE, "Target file is not a regular file: " + file);
+            }
+        }
+
+        return new ValidationResult(InputStatus.OK, null);
     }
 
-    return new ValidationResult(InputStatus.OK, null);
-}
-
-private static ValidationResult validateStartingRule(final Map<String, List<String>> args) {
-    if (!args.containsKey(STARTING_RULE_ARG)) {
-        return new ValidationResult(InputStatus.NO_STARTING_RULE, "No starting rule given (" + STARTING_RULE_ARG + ")");
+    private static ValidationResult validateStartingRule(final Map<String, List<String>> args) {
+        if (!args.containsKey(STARTING_RULE_ARG)) {
+            return new ValidationResult(InputStatus.NO_STARTING_RULE, "No starting rule given (" + STARTING_RULE_ARG + ")");
+        }
+        final List<String> startingRules = args.get(STARTING_RULE_ARG);
+        if (startingRules.isEmpty()) {
+            return new ValidationResult(InputStatus.NO_STARTING_RULE, "Starting rule is empty (" + STARTING_RULE_ARG + ")");
+        }
+        return new ValidationResult(InputStatus.OK, null);
     }
-    final List<String> startingRules = args.get(STARTING_RULE_ARG);
-    if (startingRules.isEmpty()) {
-        return new ValidationResult(InputStatus.NO_STARTING_RULE, "Starting rule is empty (" + STARTING_RULE_ARG + ")");
-    }
-    return new ValidationResult(InputStatus.OK, null);
-}
 
     private static ValidationResult validateQuery(final Map<String, List<String>> args) {
         final boolean hasQuery = args.containsKey(QUERY_ARG);

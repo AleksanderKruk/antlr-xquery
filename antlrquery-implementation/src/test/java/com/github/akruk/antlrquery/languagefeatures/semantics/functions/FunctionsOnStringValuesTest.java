@@ -137,7 +137,7 @@ public class FunctionsOnStringValuesTest extends SemanticTestsBase {
 
     @Test
     public void stringLength_default() {
-        assertType("fn:string-length()", typeFactory.number(NumericRange.FULL));
+        assertType("fn:string-length()", typeFactory.number(NumericRange.NON_NEGATIVE));
     }
 
     @Test

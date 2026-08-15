@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import com.github.akruk.antlrquery.evaluator.values.AntlrQueryValue;
 import com.github.akruk.antlrquery.languagefeatures.evaluation.EvaluationTestsBase;
 
-public class Accessors extends EvaluationTestsBase {
+public class AccessorsTest extends EvaluationTestsBase {
     @Test
     public void nodeName() throws Exception {
         String grammarName = "Grammar";
@@ -15,10 +15,10 @@ public class Accessors extends EvaluationTestsBase {
             grammar Grammar;
             x: 'x';
 
-                """;
+            """;
         String startRuleName = "x";
         String textualTree = "x";
-        String xquery = "fn:node-name(/x)";
+        String xquery = "fn:node-name(fn:zero-or-one(/x))";
         AntlrQueryValue expected = valueFactory.string("x");
         assertDynamicGrammarQuery(grammarName, grammar, startRuleName, textualTree, xquery, "", expected);
     }

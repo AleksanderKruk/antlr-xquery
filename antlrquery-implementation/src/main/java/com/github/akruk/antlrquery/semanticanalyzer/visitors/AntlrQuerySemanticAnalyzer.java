@@ -7,8 +7,11 @@ import java.util.function.Predicate;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
+import com.github.akruk.Utils;
 import com.github.akruk.antlrquery.*;
+import com.github.akruk.antlrquery.semanticanalyzer.*;
 import com.github.akruk.antlrquery.typesystem.typeoperations.*;
+import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Ranges;
 import com.github.akruk.antlrquery.typesystem.types.*;
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.*;
 import org.antlr.v4.runtime.Parser;
@@ -24,17 +27,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import com.github.akruk.antlrquery.AntlrQueryParser.*;
 import com.github.akruk.antlrquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrquery.namespaceresolver.NamespaceResolver.QualifiedName;
-import com.github.akruk.antlrquery.semanticanalyzer.AndTrueImplication;
-import com.github.akruk.antlrquery.semanticanalyzer.InstanceOfSuccessImplication;
-import com.github.akruk.antlrquery.semanticanalyzer.DiagnosticError;
-import com.github.akruk.antlrquery.semanticanalyzer.DiagnosticWarning;
-import com.github.akruk.antlrquery.semanticanalyzer.ErrorType;
-import com.github.akruk.antlrquery.semanticanalyzer.GrammarManager;
-import com.github.akruk.antlrquery.semanticanalyzer.ModuleManager;
-import com.github.akruk.antlrquery.semanticanalyzer.VisitingSemanticContext;
 import com.github.akruk.antlrquery.semanticanalyzer.GrammarManager.GrammarFile;
 import com.github.akruk.antlrquery.semanticanalyzer.ModuleManager.ImportResult;
-import com.github.akruk.antlrquery.semanticanalyzer.WarningType;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticcontext.Assumption;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticcontext.AntlrQuerySemanticScope.EntypingResult;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticcontext.AntlrQuerySemanticScope.VariableInfo;
@@ -53,8 +47,8 @@ import com.github.akruk.antlrquery.typesystem.factories.CardinalityFactory;
 import com.github.akruk.antlrquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrquery.typesystem.factories.AntlrQueryTypeFactory.NamedItemAccessingResult;
 import com.github.akruk.antlrquery.typesystem.factories.AntlrQueryTypeFactory.RegistrationResult;
-import com.github.akruk.antlrquery.typesystem.typeoperations.SequencetypePathOperator.GrammarStatus;
-import com.github.akruk.antlrquery.typesystem.typeoperations.SequencetypePathOperator.PathOperatorResult;
+import com.github.akruk.antlrquery.typesystem.typeoperations.SequenceTypePathOperator.GrammarStatus;
+import com.github.akruk.antlrquery.typesystem.typeoperations.SequenceTypePathOperator.PathOperatorResult;
 import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Cardinalities;
 import com.github.akruk.antlrquery.typesystem.typeoperations.Types.RelativeCoercibility;
 import org.checkerframework.framework.qual.DefaultQualifier;
@@ -73,7 +67,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
     private final TypeVisitor typeVisitor;
     private final AntlrQueryValueFactory valueFactory;
     private final SemanticSymbolManager symbolManager;
-    private final SequencetypePathOperator pathOperator;
+    private final SequenceTypePathOperator pathOperator;
     private final ModuleManager moduleManager;
     private final GrammarManager grammarManager;
     private final AntlrQuerySequenceType nonNegativeNumber;
@@ -83,6 +77,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
     private VisitingSemanticContext context;
     private @Nullable List<TypeInContext> visitedPositionalArguments;
     private @Nullable Map<String, TypeInContext> visitedKeywordArguments;
+    private NamespaceResolver namespaceResolver;
 
     protected final AntlrQuerySequenceType zeroOrMoreNodes;
     protected final AntlrQuerySequenceType anyArray;
@@ -449,7 +444,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
             return false;
         }
         return switch(qName.name()) {
-            case "string", "number", "boolean" -> true;
+            case "string", "number", "boolean", "true", "false" -> true;
             default -> false;
         };
     }
@@ -711,7 +706,8 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         final CardinalityFactory cardinalityFactory,
         final CardinalityVisitor cardinalityVisitor,
         final TypeVisitor typeVisitor,
-        final ItemTypeVisitor itemTypeVisitor
+        final ItemTypeVisitor itemTypeVisitor,
+        final NamespaceResolver resolver
         )
     {
         this.currentUri = startingUri;
@@ -730,7 +726,9 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         this.context.setSizeType(null);
         this.errors = new ArrayList<>();
         this.warnings = new ArrayList<>();
-        
+        this.namespaceResolver = resolver;
+        itemTypeVisitor.setNamespaceResolver(resolver);
+
         this.anyArrayOrMap = typeFactory.zeroOrMore(typeFactory.itemChoice(typeFactory.itemAnyMap(), typeFactory.itemAnyArray()));
         this.zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
         this.emptySequence = typeFactory.emptySequence();
@@ -755,7 +753,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         this.atomizer = new SequencetypeAtomization(typeFactory);
         this.castability = new SequenceTypeCastable(typeFactory);
         this.anyNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
-        this.pathOperator = new SequencetypePathOperator(
+        this.pathOperator = new SequenceTypePathOperator(
             typeFactory,
             symbolManager);
         this.moduleManager = moduleManager;
@@ -815,7 +813,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
                                 final ExprSingleContext assignedValueCtx)
     {
         final String variableName = varNameAndType.varName().qname().getText();
-        final TypeInContext assignedValue = visitExprSingle(assignedValueCtx);
+        final TypeInContext assignedValue = Objects.requireNonNull(visitExprSingle(assignedValueCtx));
         if (varNameAndType.typeDeclaration() == null) {
             declareVariable(assignedValue, variableName, varNameAndType.varName());
         } else {
@@ -832,7 +830,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         declareVariable(type, varName, varNameCtx);
     }
 
-    private void declareVariable(final TypeInContext type, final String varName, final VarNameContext varNameCtx) {
+    private void declareVariable(final TypeInContext type, final String varName, final @Nullable VarNameContext varNameCtx) {
         final EntypingResult entypingresult = symbolManager.entypeVariable(
             varName,
             varNameCtx,
@@ -864,7 +862,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
 
 
     @Override
-    public TypeInContext visitForClause(final ForClauseContext ctx) {
+    public @Nullable TypeInContext visitForClause(final ForClauseContext ctx) {
         // TODO: add coercion
         for (final ForBindingContext forBinding : ctx.forBinding()) {
             if (forBinding.forItemBinding() != null) {
@@ -879,8 +877,8 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
     }
 
     @Override
-    public TypeInContext visitTumblingWindowClause(final TumblingWindowClauseContext ctx) {
-        final var iteratedType = visitExprSingle(ctx.exprSingle());
+    public @Nullable TypeInContext visitTumblingWindowClause(final TumblingWindowClauseContext ctx) {
+        final var iteratedType = Objects.requireNonNull(visitExprSingle(ctx.exprSingle()));
         final var iterator = symbolManager.typeInContext(iteratedType.iteratorType());
         final var optionalIterator = symbolManager.typeInContext(Types.optionalize(typeFactory, iterator.type));
         final String windowVariableName = ctx.varNameAndType().varName().qname().getText();
@@ -919,7 +917,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
 
     @Override
     public @Nullable TypeInContext visitSlidingWindowClause(final SlidingWindowClauseContext ctx) {
-        final TypeInContext iteratedType = visitExprSingle(ctx.exprSingle());
+        final TypeInContext iteratedType = Objects.requireNonNull(visitExprSingle(ctx.exprSingle()));
         final var iterator = symbolManager.typeInContext(iteratedType.iteratorType());
         final var optionalIterator = symbolManager.typeInContext(Types.optionalize(typeFactory, iterator.type));
         final String windowVariableName = ctx.varNameAndType().varName().qname().getText();
@@ -935,7 +933,8 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
     private void handleWindowIterator(final VarNameAndTypeContext ctx, final String windowVariableName,
             final TypeInContext windowSequenceType) {
         if (ctx.typeDeclaration() != null) {
-            final TypeInContext windowDeclaredVarType = visitTypeDeclaration(ctx.typeDeclaration());
+            final TypeInContext windowDeclaredVarType = symbolManager.typeInContext(
+                    typeVisitor.visitTypeDeclaration(ctx.typeDeclaration()));
             if (!windowDeclaredVarType.isSubtypeOf(windowSequenceType)) {
                 error(ctx, ErrorType.WINDOW__DECLARATION_MISMATCH, List.of(windowDeclaredVarType, windowSequenceType));
             }
@@ -994,6 +993,8 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         for (final var gs : ctx.groupingSpec()) {
             if (gs.exprSingle() != null) {
                 declareVariable(gs, gs.varNameAndType(), gs.exprSingle());
+                groupingVarsCtx.add(gs.varNameAndType().varName());
+                groupingVars.add(gs.varNameAndType().varName().qname().getText());
             } else {
                 final VarNameContext varName2 = gs.varNameAndType().varName();
                 final String varname = varName2.qname().getText();
@@ -1025,6 +1026,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
                 }
             }
         }
+        assert !groupingVarsCtx.isEmpty();
         final Set<Entry<String, VariableInfo>> variablesInContext = symbolManager.currentContext().getVariables().entrySet();
         int i = 0;
         for (final var variableNameAndType : variablesInContext) {
@@ -1033,7 +1035,10 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
                 continue;
             }
             final var varType = variableNameAndType.getValue();
-            declareVariable(symbolManager.typeInContext(Types.optionalize(typeFactory, varType.type().type)), varName, groupingVarsCtx.get(i));
+            declareVariable(
+                    symbolManager.typeInContext(Types.optionalize(typeFactory, varType.type().type)),
+                    varName,
+                    groupingVarsCtx.get(i));
             i++;
         }
         return null;
@@ -1092,8 +1097,8 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
             return;
         }
 
-        final ForEntryKeyBindingContext keyBinding = ctx.forEntryKeyBinding();
-        final ForEntryValueBindingContext valueBinding = ctx.forEntryValueBinding();
+        final @Nullable ForEntryKeyBindingContext keyBinding = ctx.forEntryKeyBinding();
+        final @Nullable ForEntryValueBindingContext valueBinding = ctx.forEntryValueBinding();
 
         // Check for duplicate key and value variable names
         if (keyBinding != null && valueBinding != null) {
@@ -1150,7 +1155,8 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
             return;
         }
 
-        final TypeInContext declaredType = visitTypeDeclaration(varNameAndType.typeDeclaration());
+        final TypeInContext declaredType = symbolManager.typeInContext(
+                typeVisitor.visitTypeDeclaration(varNameAndType.typeDeclaration()));
         if (!inferredType.isSubtypeOf(declaredType)) {
             error(
                 (ParserRuleContext)context,
@@ -1319,7 +1325,6 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         return result.unescaped();
     }
 
-    private NamespaceResolver namespaceResolver = new NamespaceResolver("fn", "", "", "", "");
 
     @Override
     public TypeInContext visitFunctionCall(final FunctionCallContext ctx)
@@ -1374,22 +1379,22 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
                 .map(binding -> binding.varNameAndType().varName())
                 .toList();
 
-        final List<AntlrQuerySequenceType> coercedTypes = quantifierBindings.stream()
+        final List<@Nullable AntlrQuerySequenceType> coercedTypes = quantifierBindings.stream()
                 .map(binding -> {
                     final TypeDeclarationContext typeDeclaration = binding.varNameAndType().typeDeclaration();
-                    return typeDeclaration != null? typeDeclaration.accept(this).type : null;
+                    return typeDeclaration != null? typeDeclaration.accept(typeVisitor) : null;
                 })
                 .toList();
 
         final List<AntlrQuerySequenceType> variableTypes = quantifierBindings.stream()
-                .map(binding -> binding.exprSingle().accept(this).type)
+                .map(binding -> Objects.requireNonNull(binding.exprSingle().accept(this)).type)
                 .toList();
 
         final ExprSingleContext criterionNode = ctx.exprSingle();
 
         for (int i = 0; i < variableNames.size(); i++) {
-            final var assignedType = variableTypes.get(i);
-            final var desiredType = coercedTypes.get(i);
+            final AntlrQuerySequenceType assignedType = variableTypes.get(i);
+            final @Nullable AntlrQuerySequenceType desiredType = coercedTypes.get(i);
             if (desiredType !=null) {
                 if (Types.coercibility(typeFactory, assignedType, desiredType) == RelativeCoercibility.NEVER){
                     error(
@@ -1400,10 +1405,10 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
                 declareVariable(symbolManager.typeInContext(desiredType), variableNames.get(i), variableNameCtxs.get(i));
                 continue;
             }
-            declareVariable(symbolManager.typeInContext(assignedType), variableNames.get(i), variableNameCtxs.get(i));
+            declareVariable(symbolManager.typeInContext(Types.iteratorType(typeFactory, assignedType)), variableNames.get(i), variableNameCtxs.get(i));
         }
 
-        final AntlrQuerySequenceType queriedType = criterionNode.accept(this).type;
+        final AntlrQuerySequenceType queriedType = Objects.requireNonNull(criterionNode.accept(this)).type;
         if (Types.hasNoEffectiveBooleanValue(typeFactory, queriedType)) {
             error(criterionNode, ErrorType.QUANTIFIED__CRITERION_NON_EBV, List.of(queriedType));
         }
@@ -1431,21 +1436,63 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
     @Override
     public TypeInContext visitRangeExpr(final RangeExprContext ctx)
     {
+        AdditiveExprContext fromExprCtx = ctx.additiveExpr(0);
         if (ctx.TO() == null) {
-            return ctx.additiveExpr(0).accept(this);
+            return visitAdditiveExpr(fromExprCtx);
         }
-        final var fromValue = ctx.additiveExpr(0).accept(this);
-        final var toValue = ctx.additiveExpr(1).accept(this);
+        final AdditiveExprContext toExprCtx = ctx.additiveExpr(1);
+        final TypeInContext fromValue = visitAdditiveExpr(fromExprCtx);
+        final TypeInContext toValue = visitAdditiveExpr(toExprCtx);
         final boolean validFrom = Types.isSubtype(typeFactory, fromValue.type, optionalNumber);
         final boolean validTo = Types.isSubtype(typeFactory, toValue.type, optionalNumber);
         if (!validFrom && !validTo) {
-            error(ctx.additiveExpr(0), ErrorType.RANGE__INVALID_BOTH, List.of(fromValue, toValue));
+            error(ctx, ErrorType.RANGE__INVALID_BOTH, List.of(fromValue, toValue));
+            return symbolManager.typeInContext(anyNumbers);
         } else if (!validFrom) {
-            error(ctx.additiveExpr(0), ErrorType.RANGE__INVALID_FROM, List.of(fromValue));
+            error(fromExprCtx, ErrorType.RANGE__INVALID_FROM, List.of(fromValue));
+            return symbolManager.typeInContext(anyNumbers);
         } else if (!validTo) {
-            error(ctx.additiveExpr(1), ErrorType.RANGE__INVALID_TO, List.of(toValue));
+            error(toExprCtx, ErrorType.RANGE__INVALID_TO, List.of(toValue));
+            return symbolManager.typeInContext(anyNumbers);
         }
-        return symbolManager.typeInContext(anyNumbers);
+        final boolean fromIsEmpty = fromValue.type.equals(emptySequence);
+        final boolean toIsEmpty = toValue.type.equals(emptySequence);
+        if (fromIsEmpty && toIsEmpty) {
+            warn(fromExprCtx, WarningType.RANGE__EMPTY_BOTH, List.of());
+            return symbolManager.typeInContext(emptySequence);
+        }
+        if (fromIsEmpty) {
+            warn(fromExprCtx, WarningType.RANGE__EMPTY_FROM, List.of());
+            return symbolManager.typeInContext(emptySequence);
+        }
+        if (toIsEmpty) {
+            warn(toExprCtx, WarningType.RANGE__EMPTY_TO, List.of());
+            return symbolManager.typeInContext(emptySequence);
+        }
+        if (!(fromValue.type.itemType() instanceof AtomicType.NumberType(NumericRange r1)
+                && toValue.type.itemType() instanceof AtomicType.NumberType(NumericRange r2))
+            )
+        {
+            throw new IllegalStateException("All other variants should have already been excluded");
+        }
+
+//        Nulls shouldn't be possible because NumericRanges shouldn't contain empty NumericRanges
+        NumericRange.Event min1 = Objects.requireNonNull(Ranges.min(r1));
+        NumericRange.Event max2 = Objects.requireNonNull(Ranges.max(r2));
+//      e.g. [9, 10] to  [5, 8] will always produce empty sequences
+        if (min1.value().compareTo(max2.value()) > 0) {
+            warn(ctx, WarningType.RANGE__ALWAYS_EMPTY, List.of());
+        }
+        var numbers = Ranges.integers(NumericRange.of(min1, max2));
+        boolean emptyPossible = Cardinalities.contains(fromValue.type.cardinality(), BigInteger.ZERO)
+            || Cardinalities.contains(toValue.type.cardinality(), BigInteger.ZERO);
+
+        var numberItemType = typeFactory.itemNumber(numbers);
+        var type = emptyPossible
+                ? typeFactory.zeroOrOne(numberItemType)
+                : typeFactory.one(numberItemType);
+
+        return symbolManager.typeInContext(type);
     }
 
     @Override
@@ -1526,7 +1573,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
 
         }
 
-        // reporting element invalid names
+        // reporting invalid element names
         if (!result.invalidElementNames().isEmpty()) {
             // TODO: move to message
             final String joinedNames = result
@@ -1594,7 +1641,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         context.setPositionType(savedContext.getPositionType());
         context.setSizeType(savedContext.getSizeType());
         TypeInContext result = visitStepExpr(ctx.stepExpr(0));
-        context.setType(result);
+        context.setType(symbolManager.typeInContext(result.iteratorType()));
         final var operationCount = ctx.pathOperator().size();
         for (int i = 1; i <= operationCount; i++) {
             currentAxis = (ctx.pathOperator(i-1).SLASH() != null)
@@ -1631,11 +1678,11 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         }
         final var savedArgs = saveVisitedArguments();
         final var savedContext = saveContext();
-        context.setType(symbolManager.typeInContext(Types.iteratorType(typeFactory, stepResult)));
-        context.setPositionType(symbolManager.typeInContext(nonNegativeNumber)); // TODO: refine value range
-        context.setSizeType(symbolManager.typeInContext(nonNegativeNumber));     // TODO: refine value range
+
+        context.setType(symbolManager.typeInContext(stepResult));
         for (final var predicate : ctx.predicateList().predicate()) {
-            predicate.accept(this);
+            stepResult = visitPredicate(predicate).type;
+            context.setType(symbolManager.typeInContext(stepResult));
         }
         visitedPositionalArguments = savedArgs;
         context = savedContext;
@@ -1654,7 +1701,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
     {
         final AntlrQuerySequenceType expr = ctx.postfixExpr().accept(this).type;
         final var savedContext = saveContext();
-        context.setType(symbolManager.typeInContext(Types.iteratorType(typeFactory, expr)));
+        context.setType(symbolManager.typeInContext(expr));
         final var filtered = visitPredicate(ctx.predicate());
         context = savedContext;
         return filtered;
@@ -1664,28 +1711,34 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
     public TypeInContext visitPredicate(final PredicateContext ctx)
     {
         final var contextType = context.getType();
-        final var predicateExpression = ctx.expr().accept(this);
         final var savedContext = saveContext();
+        var iteratedSequence = savedContext.getType();
         context.setType(symbolManager.typeInContext(savedContext.getType().iteratorType()));
-        context.setPositionType(symbolManager.typeInContext(nonNegativeNumber));// TODO: refine value range
-        context.setSizeType(symbolManager.typeInContext(nonNegativeNumber));    // TODO: refine value range
+        context.setPositionType(symbolManager.typeInContext(
+                typeFactory.number(
+                        Ranges.union(NumericRange.ZERO, Ranges.integers(Cardinalities.toNumericRange(iteratedSequence.type.cardinality())))
+                )
+        ));// TODO: refine to integers // TODO: verify index range from 1
+        context.setSizeType(symbolManager.typeInContext(nonNegativeNumber));
+//        context.setSizeType(
+//                typeFactory.number(NumericRange.of(Ranges.max(Ranges.integers(Cardinalities.toNumericRange(iteratedSequence.type.cardinality()))))
+//                )
+//        );    // TODO: refine value range
+        final var predicateExpression = visitExpr(ctx.expr());
         if (Types.isSubtype(typeFactory, predicateExpression.type, emptySequence))
             return symbolManager.typeInContext(emptySequence);
-        if (Types.isSubtype(typeFactory, predicateExpression.type, typeFactory.zeroOrOne(typeFactory.itemNumber()))) {
-            final var item = contextType.type.itemType();
-            final var deducedType = typeFactory.zeroOrOne(item);
-            return symbolManager.typeInContext(deducedType);
-        }
         if (Types.isSubtype(typeFactory, predicateExpression.type, typeFactory.zeroOrMore(typeFactory.itemNumber()))) {
             final var item = contextType.type.itemType();
-            final var deducedType = typeFactory.zeroOrMore(item);
-            final TypeInContext deducedInContext = symbolManager.typeInContext(deducedType);
-            context.setType(deducedInContext);
-            return deducedInContext;
+            Cardinality optionalizedCardinality = Objects.requireNonNull(
+                    Cardinalities.optionalize(predicateExpression.type.cardinality())
+            );
+            final var deducedType = typeFactory.sequence(
+                    item, optionalizedCardinality);
+            return symbolManager.typeInContext(deducedType);
         }
         if (Types.hasNoEffectiveBooleanValue(typeFactory, predicateExpression.type)) {
             error(ctx.expr(), ErrorType.PREDICATE__NON_EBV, List.of(predicateExpression));
-        }
+        }// TODO: add always true and always false checks
         context = savedContext;
         return symbolManager.typeInContext(Types.optionalize(typeFactory, contextType.type));
     }
@@ -1718,20 +1771,21 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
     }
 
 
-    private LookupOperation lookupOperation;
+    private final LookupOperation lookupOperation;
 
     @Override
     public TypeInContext visitLookupExpr(final LookupExprContext ctx) {
-        final var targetType = ctx.postfixExpr().accept(this);
+        final var targetType = Objects.requireNonNull(ctx.postfixExpr().accept(this));
         final TypeInContext keySpecifierType = getKeySpecifier(ctx);
         final LookupContext lookup = ctx.lookup();
-        final LookupOperation.LookupSemanticResult lookupType;
         return typecheckLookup(ctx, lookup, targetType, keySpecifierType);
     }
 
-    private <T extends ParserRuleContext> TypeInContext typecheckLookup(T ctx, LookupContext lookup, TypeInContext targetType, TypeInContext keySpecifierType) {
+    private <T extends ParserRuleContext> TypeInContext typecheckLookup(
+            T ctx, LookupContext lookup, TypeInContext targetType, TypeInContext keySpecifierType)
+    {
         final LookupOperation.LookupSemanticResult lookupType;
-        if (lookup.keySpecifier() == null) {
+        if (lookup.keySpecifier().lookupWildcard() != null) {
             lookupType = lookupOperation.lookupWildcard(targetType.type);
         } else {
             lookupType = lookupOperation.lookupNonWildcard(targetType.type, keySpecifierType.type);
@@ -1760,8 +1814,34 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
                 error(ctx, ErrorType.LOOKUP__INVALID_TARGET, List.of(target));
                 return symbolManager.typeInContext(resultingType);
             }
-            case LookupOperation.LookupSemanticResult.LookupError.KeyEmpty(AntlrQuerySequenceType resultingType) -> {
+            case LookupOperation.LookupSemanticResult.LookupError.KeyEmpty(AntlrQuerySequenceType resultingType) ->
+            {
                 warn(ctx, WarningType.LOOKUP__KEY_EMPTY, List.of(keySpecifierType));
+                return symbolManager.typeInContext(resultingType);
+            }
+            case LookupOperation.LookupSemanticResult.LookupError.InvalidRecordKey(
+                    AntlrQuerySequenceType resultingType, AntlrQueryItemType key) ->
+            {
+                error(ctx, ErrorType.LOOKUP__INVALID_RECORD_KEY_TYPE, List.of(key));
+                return symbolManager.typeInContext(resultingType);
+            }
+            case LookupOperation.LookupSemanticResult.LookupError.InvalidArrayIndex(
+                    AntlrQuerySequenceType resultingType, AntlrQueryItemType givenKey, AntlrQueryItemType expectedKey)
+                    ->
+            {
+                error(ctx, ErrorType.LOOKUP__INVALID_ARRAY_KEY__INDEX_OUTSIDE_OF_RANGE, List.of(givenKey, expectedKey));
+                return symbolManager.typeInContext(resultingType);
+            }
+            case LookupOperation.LookupSemanticResult.LookupError.InvalidArrayKey(
+                    AntlrQuerySequenceType resultingType, AntlrQueryItemType givenKey, AntlrQueryItemType expectedKey)
+                    ->
+            {
+                error(ctx, ErrorType.LOOKUP__INVALID_ARRAY_KEY__WRONG_TYPE, List.of(givenKey, expectedKey));
+                return symbolManager.typeInContext(resultingType);
+            }
+            case LookupOperation.LookupSemanticResult.LookupError.InvalidMapKey(
+                    AntlrQuerySequenceType resultingType, AntlrQueryItemType givenKey, AntlrQueryItemType expectedKey) -> {
+                error(ctx, ErrorType.LOOKUP__MAP_INVALID_KEY__WRONG_TYPE, List.of(givenKey, expectedKey));
                 return symbolManager.typeInContext(resultingType);
             }
         }
@@ -1851,7 +1931,10 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
     {
         if (ctx.EXCLAMATION_MARK().isEmpty())
             return visitPathExpr(ctx.pathExpr(0));
-        final TypeInContext firstExpressionType = visitPathExpr(ctx.pathExpr(0));
+        final TypeInContext firstExpressionType = Objects.requireNonNull(visitPathExpr(ctx.pathExpr(0)));
+        if (firstExpressionType.type.equals(emptySequence)){
+            return firstExpressionType;
+        }
         final AntlrQuerySequenceType iterator = firstExpressionType.iteratorType();
         final var savedContext = saveContext();
         context.setType(symbolManager.typeInContext(iterator));
@@ -1875,8 +1958,8 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         if (ctx.INSTANCE() == null) {
             return expression;
         }
-        final var testedType = Objects.requireNonNull(visitType(ctx.type()));
-        if (Types.isSubtype(typeFactory, expression.type, testedType.type)) {
+        final var testedType = Objects.requireNonNull(typeVisitor.visitType(ctx.type()));
+        if (Types.isSubtype(typeFactory, expression.type, testedType)) {
             // UNNECESSARY_INSTANCE_OF__ALWAYS_TRUE
             warn(ctx, WarningType.INSTANCE_OF__ALWAYS_TRUE, List.of());
         }
@@ -1888,7 +1971,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
                 bool,
                 true,
                 expression,
-                testedType
+                symbolManager.typeInContext(testedType)
                 )
             );
         return bool;
@@ -2011,7 +2094,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
     public TypeInContext visitSquareArrayConstructor(final SquareArrayConstructorContext ctx)
     {
         if (ctx.exprSingle().isEmpty()) {
-            return symbolManager.typeInContext(anyArray);
+            return symbolManager.typeInContext(typeFactory.one(typeFactory.itemTuple(List.of())));
         }
 
         final List<AntlrQuerySequenceType> types = ctx.exprSingle().stream()
@@ -2026,7 +2109,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
     {
         final var expressions = ctx.enclosedExpr().expr();
         if (expressions == null) {
-            return symbolManager.typeInContext(anyArray);
+            return symbolManager.typeInContext(typeFactory.one(typeFactory.itemTuple(List.of())));
         }
 
         final AntlrQuerySequenceType arrayType = expressions.exprSingle().stream()
@@ -2036,7 +2119,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
                         Collectors.mapping(AntlrQuerySequenceType::cardinality, Collectors.toList()),
                         (antlrQueryItemTypes, cardinalities) -> {
                             var itemType = ItemTypes.union(typeFactory, antlrQueryItemTypes.toArray(AntlrQueryItemType[]::new));
-                            var cardinality = Cardinalities.union(cardinalities.toArray(Cardinality[]::new));
+                            var cardinality = Cardinalities.add(cardinalities.toArray(Cardinality[]::new));
                             return typeFactory.array(typeFactory.one(itemType), cardinality);
                         }
                 ));
@@ -2167,18 +2250,24 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
     {
         final var entries = ctx.mapConstructorEntry();
         if (entries.isEmpty()) {
-            // return symbolManager.typeInContext(typeFactory.record(Map.of()));
-            return symbolManager.typeInContext(typeFactory.anyMap());
+            if (ctx.MAP() == null) {
+                return symbolManager.typeInContext(typeFactory.record(new LinkedHashMap<>()));
+            } else {
+                return symbolManager.typeInContext(typeFactory.map(typeFactory.itemAnyItem(), typeFactory.emptySequence()));
+            }
         }
         final AntlrQueryItemType keyType = entries.stream()
             .map(e -> e.mapKeyExpr().accept(this).type.itemType())
             .reduce((t1, t2) -> ItemTypes.union(typeFactory, t1, t2))
             .get();
         if (keyType instanceof final StringType.StringEnum enum_) {
-            final var enumMembers = enum_.members();
-            final List<Entry<String, RecordField>> recordEntries = new ArrayList<Entry<String, RecordField>>(enumMembers.size());
+            final List<String> fieldNames = entries.stream()
+                    .map(e -> e.mapKeyExpr().accept(this).type.itemType())
+                    .map(e -> ((StringType.StringEnum) e).members().stream().findFirst().get())
+                    .toList();
+            final List<Entry<String, RecordField>> recordEntries = new ArrayList<Entry<String, RecordField>>(fieldNames.size());
             int i = 0;
-            for (final var enumMember : enumMembers) {
+            for (final var enumMember : fieldNames) {
                 final var valueType = entries.get(i).mapValueExpr().accept(this);
                 recordEntries.add(Map.entry(enumMember, new RecordField(enumMember,
                     new TypeOrReference.Type(valueType.type),
@@ -2187,9 +2276,11 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
             }
             return symbolManager.typeInContext(
                     typeFactory.record(
-                            new LinkedHashMap<>(
-                                    Map.ofEntries(
-                                            recordEntries.toArray(Entry[]::new)))));
+                            Utils.linkedHashMap(
+                                recordEntries.toArray(Entry[]::new)
+                            )
+                    )
+            );
         }
         // TODO: refine
         final AntlrQuerySequenceType valueType = entries.stream()
@@ -2198,6 +2289,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
             .get();
         return symbolManager.typeInContext(typeFactory.map(keyType, valueType));
     }
+
 
 
     @Override
@@ -2229,29 +2321,29 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         if (ctx.functionCall() != null) {
             ctx.functionCall().argumentList().accept(this);
             final String functionQname = ctx.functionCall().functionName().getText();
+            assert visitedPositionalArguments != null;
+            assert visitedKeywordArguments != null;
             return callFunction(
                 ctx.functionCall(),
                 functionQname,
                 visitedPositionalArguments,
                 visitedKeywordArguments);
         }
-        return ctx.restrictedDynamicCall().accept(this);
+        return Objects.requireNonNull(ctx.restrictedDynamicCall().accept(this));
     }
 
 
     @Override
     public TypeInContext visitMappingArrowTarget(final MappingArrowTargetContext ctx) {
-        final TypeInContext mappedSequence = visitedPositionalArguments
-            .get(visitedPositionalArguments.size() - 1) ;
-
-
+        assert visitedPositionalArguments != null;
+        final TypeInContext mappedSequence = visitedPositionalArguments.getLast() ;
         if (mappedSequence.type.cardinality().isZero()) {
             return mappedSequence;
         }
         final AntlrQuerySequenceType iterator = mappedSequence.iteratorType();
         visitedPositionalArguments = new ArrayList<>();
         visitedPositionalArguments.add(symbolManager.typeInContext(iterator));
-        final var call = ctx.arrowTarget().accept(this);
+        final var call = Objects.requireNonNull(ctx.arrowTarget().accept(this));
         final Cardinality mergedCardinality = Cardinalities.multiply(returnedCardinality, returnedCardinality);
         final AntlrQuerySequenceType x = typeFactory.sequence(call.type.itemType(), mergedCardinality);
         return symbolManager.typeInContext(x);
@@ -2259,13 +2351,13 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
 
     @Override
     public TypeInContext visitRestrictedDynamicCall(final RestrictedDynamicCallContext ctx) {
-        final var value = ctx.children.getFirst().accept(this);
+        final var value = Objects.requireNonNull(ctx.children.getFirst().accept(this));
         final boolean isCallable = value.isSubtypeOf(typeFactory.anyFunction());
         if (!isCallable) {
             error(ctx, ErrorType.RESTRICTED_DYNAMIC_CALL__NON_FUNCTION, List.of(value));
         }
         ctx.positionalArgumentList().accept(this);
-
+        assert visitedPositionalArguments != null;
         final List<AntlrQuerySequenceType> args = visitedPositionalArguments.stream().map(a->a.type).toList();
         final var expectedFunction = typeFactory.itemFunction(zeroOrMoreItems, args);
         if (!Types.itemTypeIsSubtypeOf(typeFactory, value.type, expectedFunction))
@@ -2351,7 +2443,9 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         final var secondOtherwise = visitOtherwiseExpr(ctx.otherwiseExpr(1));
         final var leftHandSide = atomizer.atomize(firstOtherwise.type);
         final var rightHandSide = atomizer.atomize(secondOtherwise.type);
-        if (!Types.isSubtype(typeFactory, leftHandSide, rightHandSide) && !Types.isSubtype(typeFactory, leftHandSide, rightHandSide)) {
+        final var intersection = Types.intersect(typeFactory, leftHandSide, rightHandSide);
+        if (intersection.itemType() instanceof NeverType)
+        {
             error(ctx, ErrorType.GENERAL_COMP__INVALID, List.of(leftHandSide, rightHandSide));
         }
         return symbolManager.typeInContext(typeFactory.boolean_());
@@ -2359,14 +2453,14 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
 
     private TypeInContext handleValueComparison(final ComparisonExprContext ctx)
     {
-        final var leftHandSide = ctx.otherwiseExpr(0).accept(this);
-        final var rightHandSide = ctx.otherwiseExpr(1).accept(this);
+        final var leftHandSide = Objects.requireNonNull(ctx.otherwiseExpr(0).accept(this));
+        final var rightHandSide = Objects.requireNonNull(ctx.otherwiseExpr(1).accept(this));
+
         final var optionalItem = typeFactory.zeroOrOne(typeFactory.itemAnyItem());
-        final var optionalBoolean = typeFactory.zeroOrOne(typeFactory.itemBoolean());
         final boolean invalidLeft = !leftHandSide.isSubtypeOf(optionalItem);
         final boolean invalidRight = !rightHandSide.isSubtypeOf(optionalItem);
         if (invalidLeft && invalidRight) {
-            error(ctx.otherwiseExpr(0), ErrorType.VALUE_COMP__BOTH_INVALID, List.of(leftHandSide, rightHandSide));
+            error(ctx, ErrorType.VALUE_COMP__BOTH_INVALID, List.of(leftHandSide, rightHandSide));
         }
         else if (invalidLeft) {
             error(ctx.otherwiseExpr(0), ErrorType.VALUE_COMP__LHS_INVALID, List.of(leftHandSide));
@@ -2377,12 +2471,12 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         else if (!Types.isValueComparableWith(leftHandSide.type, rightHandSide.type)) {
             error(ctx, ErrorType.VALUE_COMP__INCOMPARABLE, List.of(leftHandSide, rightHandSide));
         }
-        if (leftHandSide.isSubtypeOf(typeFactory.anyItem())
-            && rightHandSide.isSubtypeOf(typeFactory.anyItem()))
-        {
-            return symbolManager.typeInContext(typeFactory.boolean_());
-        }
-        return symbolManager.typeInContext(optionalBoolean);
+        var resultingCardinality = Cardinalities.multiply(
+            leftHandSide.type.cardinality(), rightHandSide.type.cardinality()
+        );
+
+        final var resultingType = typeFactory.sequence(typeFactory.itemBoolean(), resultingCardinality);
+        return symbolManager.typeInContext(resultingType);
     }
 
     private TypeInContext handleNodeComp(final ComparisonExprContext ctx)
@@ -2624,7 +2718,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         }
         TypeInContext trueType;
         TypeInContext falseType;
-        // symbolManager.currentScope().imply(ebv, new EffectiveBooleanValueTrue(ebv, conditionType, typeFactory));
+//         symbolManager.currentScope().imply(ebv, new EffectiveBooleanValueTrue(ebv, conditionType, typeFactory));
         if (ctx.bracedAction() != null) {
             symbolManager.enterScope();
             symbolManager.currentScope().assume(ebv, new Assumption(ebv, true));
@@ -2679,7 +2773,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
             final String parameterName = parameter.varName().qname().getText();
             final TypeDeclarationContext typeDeclaration = parameter.typeDeclaration();
             final AntlrQuerySequenceType parameterType = typeDeclaration != null
-                ? typeDeclaration.accept(this).type
+                ? typeVisitor.visitTypeDeclaration(typeDeclaration)
                 : zeroOrMoreItems;
             if (argumentNames.contains(parameterName)) {
                 error(parameter, ErrorType.FUNCTION__DUPLICATED_ARG_NAME, List.of(parameterName));
@@ -2688,14 +2782,14 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
             args.add(parameterType);
             declareVariable(symbolManager.typeInContext(parameterType), parameterName, parameter.varName());
         }
-        final var inlineType = ctx.functionBody().enclosedExpr().accept(this);
+        final var inlineType = Objects.requireNonNull(ctx.functionBody().enclosedExpr().accept(this));
         if (returnTypeDeclaration != null) {
-            final var returnedType = returnTypeDeclaration.accept(this);
-            if (!inlineType.isSubtypeOf(returnedType)) {
+            final var returnedType = returnTypeDeclaration.accept(typeVisitor);
+            if (!Types.isSubtype(typeFactory, inlineType.type, returnedType)) {
                 error(ctx.functionBody(), ErrorType.FUNCTION__INVALID_BODY_TYPE, List.of(inlineType, returnedType));
             }
             symbolManager.leaveScope();
-            return symbolManager.typeInContext(typeFactory.function(returnedType.type, args));
+            return symbolManager.typeInContext(typeFactory.function(returnedType, args));
         } else {
             symbolManager.leaveScope();
             return symbolManager.typeInContext(typeFactory.function(inlineType.type, args));
@@ -2801,7 +2895,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         {
             final AntlrQuerySequenceType paramType = param.type == null
                 ? zeroOrMoreItems
-                : param.type.accept(this).type;
+                : param.type.accept(typeVisitor);
             final var argDecl = new ArgumentSpecification(param.name, paramType, param.defaultValue);
             args.add(argDecl);
             argNameCtx.add(((ParamWithDefaultContext)param.location).varNameAndType().varName());
@@ -2811,9 +2905,11 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         {
             final AntlrQuerySequenceType paramType = defaultParam.type == null
                 ? zeroOrMoreItems
-                : defaultParam.type.accept(this).type;
-            final var dvt = defaultParam.defaultValue.accept(this);
-            if (!dvt.isSubtypeOf(paramType)) {
+                : defaultParam.type.accept(typeVisitor);
+            assert defaultParam.defaultValue != null;
+            final var dvt = defaultParam.defaultValue.accept(typeVisitor);
+            if (!Types.isSubtype(typeFactory, dvt, paramType))
+            {
                 error((ParserRuleContext)defaultParam.defaultValue,
                     ErrorType.FUNCTION__INVALID_DEFAULT,
                     List.of(dvt, paramType));
@@ -2830,9 +2926,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
                 argNameCtx.get(i));
         }
 
-        final TypeInContext returned = spec.returnedType != null
-            ? spec.returnedType.accept(this)
-            : symbolManager.typeInContext(zeroOrMoreItems);
+        final AntlrQuerySequenceType returned = spec.returnedType.accept(typeVisitor);
 
         final FunctionBodyContext functionBody = spec.body();
         if (functionBody != null) { // function body is present (non-external)
@@ -2847,14 +2941,14 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
                     spec.name.namespace(),
                     spec.name.name(),
                     args,
-                    returned.type);
+                    returned);
 
             } else { // if called function is NOT recursive we have to skip grained body analysis
                 symbolManager.registerFunction(
                     spec.name.namespace(),
                     spec.name.name(),
                     args,
-                    returned.type,
+                    returned,
                     functionBody.enclosedExpr());
             }
             final var bodyType = visitEnclosedExpr(functionBody.enclosedExpr());
@@ -2868,7 +2962,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
                 spec.name.namespace(),
                 spec.name.name(),
                 args,
-                returned.type);
+                returned);
 
         }
         symbolManager.leaveContext();
@@ -2891,14 +2985,14 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
     {
         final VarNameContext varNameCtx = ctx.varNameAndType().varName();
         final var name = varNameCtx.qname().getText();
-        final var declaredType = visitTypeDeclaration(ctx.varNameAndType().typeDeclaration());
+        final var declaredType = typeVisitor.visitTypeDeclaration(ctx.varNameAndType().typeDeclaration());
         if (ctx.EXTERNAL() == null) {
             final var assignedType = visitVarValue(ctx.varValue()).type;
-            if (Types.coercibility(typeFactory, assignedType, declaredType.type) == RelativeCoercibility.NEVER) {
+            if (Types.coercibility(typeFactory, assignedType, declaredType) == RelativeCoercibility.NEVER) {
                 error(ctx, ErrorType.VAR_DECL__UNCOERSABLE, List.of(name, declaredType, assignedType));
             }
         }
-        declareVariable(declaredType, name, varNameCtx);
+        declareVariable(symbolManager.typeInContext(declaredType), name, varNameCtx);
         return null;
     }
 

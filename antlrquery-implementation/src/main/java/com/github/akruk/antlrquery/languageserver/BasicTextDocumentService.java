@@ -14,6 +14,8 @@ import java.util.stream.Stream;
 
 import com.github.akruk.antlrquery.AntlrQueryLexer;
 import com.github.akruk.antlrquery.AntlrQueryParser;
+import com.github.akruk.antlrquery.semanticanalyzer.visitors.*;
+import com.github.akruk.antlrquery.typesystem.factories.defaults.MemoizedCardinalityFactory;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -85,13 +87,7 @@ import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.Seman
 import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.SemanticSymbolManager.ArgumentSpecification;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.SemanticSymbolManager.FunctionSpecification;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.SemanticSymbolManager.ModuleInfo;
-import com.github.akruk.antlrquery.semanticanalyzer.visitors.AntlrQuerySemanticAnalyzer;
-import com.github.akruk.antlrquery.semanticanalyzer.visitors.AnalysisListener;
-import com.github.akruk.antlrquery.semanticanalyzer.visitors.CardinalityVisitor;
-import com.github.akruk.antlrquery.semanticanalyzer.visitors.ItemTypeVisitor;
-import com.github.akruk.antlrquery.semanticanalyzer.visitors.TypeVisitor;
 import com.github.akruk.antlrquery.typesystem.factories.AntlrQueryTypeFactory;
-import com.github.akruk.antlrquery.typesystem.factories.defaults.BaseCardinalityFactory;
 import com.github.akruk.antlrquery.typesystem.factories.defaults.MemoizedTypeFactory;
 import com.github.akruk.antlrquery.typesystem.factories.defaults.AntlrQueryNamedTypeSets;
 import com.github.akruk.antlrquery.typesystem.types.TypeInContext;
@@ -247,9 +243,11 @@ public class BasicTextDocumentService implements TextDocumentService {
             final Path currentPath = Path.of(URI.create(uri));
             paths.add(currentPath.getParent());
             final AntlrQuerySemanticContextManager contextManager = new AntlrQuerySemanticContextManager(typeFactory);
-            final BaseCardinalityFactory cardinalityFactory = new BaseCardinalityFactory();
+            final MemoizedCardinalityFactory cardinalityFactory = new MemoizedCardinalityFactory();
+            final NumericRangeVisitor numericRangeVisitor = new NumericRangeVisitor();
             final CardinalityVisitor cardinalityVisitor = new CardinalityVisitor(cardinalityFactory);
-            final ItemTypeVisitor itemTypeVisitor = new ItemTypeVisitor(typeFactory);
+            final ItemTypeVisitor itemTypeVisitor = new ItemTypeVisitor(
+                    cardinalityVisitor, numericRangeVisitor, typeFactory);
             var typeVisitor = new TypeVisitor(typeFactory, cardinalityVisitor, itemTypeVisitor);
             final AntlrQuerySemanticAnalyzer analyzer = new AntlrQuerySemanticAnalyzer(
                     null,
@@ -266,7 +264,8 @@ public class BasicTextDocumentService implements TextDocumentService {
                     cardinalityFactory,
                     cardinalityVisitor,
                     typeVisitor,
-                    itemTypeVisitor
+                    itemTypeVisitor,
+                    new NamespaceResolver("fn", "", "", "", "")
             );
 
             final Map<VarRefContext, TypeInContext> varRefsMappedToTypes_ = new HashMap<>();
@@ -1334,7 +1333,8 @@ public class BasicTextDocumentService implements TextDocumentService {
     Map<ParserRuleContext, ExtractLocationInfo> extractVariableLocationsCache = new HashMap<>();
 
     public CompletableFuture<ExtractLocationInfo> extractVariableLocations(
-            final ExtractVariableLocationsParams params) {
+            final ExtractVariableLocationsParams params)
+    {
         final List<Range> ranges = new ArrayList<>();
         final List<String> texts = new ArrayList<>();
         final VarExtractionInfo info = varExtractionData.get(params.actionId());

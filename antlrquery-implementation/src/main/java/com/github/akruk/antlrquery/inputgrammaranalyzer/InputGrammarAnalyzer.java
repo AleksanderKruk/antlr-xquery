@@ -1,25 +1,12 @@
 package com.github.akruk.antlrquery.inputgrammaranalyzer;
 
-import java.util.Collection;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.xpath.XPath;
-import com.github.akruk.antlrgrammar.ANTLRv4Lexer;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser;
-import com.github.akruk.antlrgrammar.ANTLRv4Parser.GrammarSpecContext;
-import com.github.akruk.antlrgrammar.ANTLRv4Parser.ParserRuleSpecContext;
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.TerminalDefContext;
 import com.github.akruk.antlrquery.AntlrQueryAxis;
 import com.github.akruk.antlrquery.namespaceresolver.NamespaceResolver.QualifiedName;
@@ -27,31 +14,12 @@ import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Cardina
 import com.github.akruk.antlrquery.typesystem.types.Cardinality;
 
 public class InputGrammarAnalyzer {
-    public record GrammarAnalysisResult(
-        Map<String, Map<String, Cardinality>> children,
-        // Map<String, Map<String, Cardinality>> descendants,
-        // Map<String, Map<String, Cardinality>> descendantsOrSelf,
-        // Map<String, Map<String, Cardinality>> following,
-        // Map<String, Map<String, Cardinality>> followingOrSelf,
-        // Map<String, Map<String, Cardinality>> followingSibling,
-        // Map<String, Map<String, Cardinality>> followingSiblingOrSelf,
-        // Map<String, Map<String, Cardinality>> ancestors,
-        // Map<String, Map<String, Cardinality>> ancestorsOrSelf,
-        Map<String, Map<String, Cardinality>> parent//,
-        // Map<String, Map<String, Cardinality>> preceding,
-        // Map<String, Map<String, Cardinality>> precedingOrSelf,
-        // Map<String, Map<String, Cardinality>> precedingSibling,
-        // Map<String, Map<String, Cardinality>> precedingSiblingOrSelf,
-        // Set<String> simpleTokens,
-        // Set<String> simpleRules
-    ) {}
-
 
     public record QualifiedGrammarAnalysisResult(
         /* element <=> rule | token */
         Set<String> grammarNames,
         Set<QualifiedName> elementNames,
-        /* axis -> rulename -> relativerulename -> cardinality */
+        /* axis -> ruleName -> relativeRuleName -> cardinality */
         EnumMap<AntlrQueryAxis, Map<QualifiedName, Map<QualifiedName, Cardinality>>> axes,
         Set<QualifiedName> simpleTokens,
         Set<QualifiedName> simpleRules
@@ -67,83 +35,10 @@ public class InputGrammarAnalyzer {
     Set<String> toSet(final Collection<ParseTree> els)
     {
         return els.stream()
-            .map(e -> e.getText())
+            .map(ParseTree::getText)
             .collect(Collectors.toSet());
     }
 
-    public GrammarAnalysisResult analyze(final CharStream characterStream)
-    {
-        final Lexer xqueryLexer = new ANTLRv4Lexer(characterStream);
-        final CommonTokenStream xqueryTokens = new CommonTokenStream(xqueryLexer);
-        final ANTLRv4Parser antlrParser = new ANTLRv4Parser(xqueryTokens);
-        final var tree = antlrParser.grammarSpec();
-        final var definedNodes = XPath.findAll(tree, "//parserRuleSpec/RULE_REF", antlrParser);
-        final var terminalTokens = XPath.findAll(tree, "//parserRuleSpec//TOKEN_REF", antlrParser);
-        final var terminalTokenLiterals = XPath.findAll(tree, "//parserRuleSpec//STRING_LITERAL", antlrParser);
-        final var definedNodes_ = XPath.findAll(tree, "//lexerRuleSpec/RULE_REF", antlrParser);
-        final var terminalTokens_ = XPath.findAll(tree, "//lexerRuleSpec//TOKEN_REF", antlrParser);
-        final var terminalTokenLiterals_ = XPath.findAll(tree, "//lexerRuleSpec//STRING_LITERAL", antlrParser);
-        final Set<String> allNodeNames = toSet(definedNodes);
-        allNodeNames.addAll(toSet(terminalTokens));
-        allNodeNames.addAll(toSet(terminalTokenLiterals));
-        allNodeNames.addAll(toSet(definedNodes_));
-        allNodeNames.addAll(toSet(terminalTokens_));
-        allNodeNames.addAll(toSet(terminalTokenLiterals_));
-
-        final Map<String, Set<String>> childrenMapping = getChildrenMapping(antlrParser, tree, allNodeNames);
-        final CardinalityAnalyzer cardinalityAnalyzer =
-            new CardinalityAnalyzer(allNodeNames, antlrParser);
-        tree.accept(cardinalityAnalyzer);
-        final Map<String, Map<String, Cardinality>> parentCardinalityMapping =
-            getParentCardinalityMapping(childrenMapping);
-        // final Map<String, Map<String, Cardinality>> ancestorCardinalityMapping
-        // = getAncestorCardinalityMapping(parentCardinalityMapping);
-        // final Map<String, Map<String, Cardinality>>
-        // ancestorOrSelfCardinalityMapping
-        // = addSelf(ancestorCardinalityMapping);
-        // final var descendantCardinalityMapping =
-        // getDescendantCardinalityMapping(cardinalityAnalyzer.childrenMapping);
-        // final var descendantOrSelfCardinalityMapping =
-        // addSelf(descendantCardinalityMapping);
-        // final ElementSequenceAnalyzer analyzer = new
-        // ElementSequenceAnalyzer(allNodeNames);
-        // tree.accept(analyzer);
-
-        // var extendedAnalyzer = new ExtendedCardinalityAnalyzer(allNodeNames,
-        // antlrParser);
-        // extendedAnalyzer.visit(tree);
-        // final var followingSiblingOrSelfCardinalityMapping =
-        // addSelf(extendedAnalyzer.followingSiblingMapping);
-        // final var precedingSiblingOrSelfCardinalityMapping =
-        // addSelf(extendedAnalyzer.precedingSiblingMapping);
-        // final var followingOrSelfCardinalityMapping =
-        // addSelf(extendedAnalyzer.followingMapping);
-        // final var precedingOrSelfCardinalityMapping =
-        // addSelf(extendedAnalyzer.precedingMapping);
-
-        // final Set<String> simpleTokens = getSimpleTokens(antlrParser, tree);
-        // final Set<String> simpleRules = getSimpleRules(tree, antlrParser, simpleTokens);
-
-        final var gatheredData = new GrammarAnalysisResult(
-            cardinalityAnalyzer.childrenMapping,
-            // descendantCardinalityMapping,
-            // descendantOrSelfCardinalityMapping,
-            // extendedAnalyzer.followingMapping,
-            // followingOrSelfCardinalityMapping,
-            // extendedAnalyzer.followingSiblingMapping,
-            // followingSiblingOrSelfCardinalityMapping,
-            // ancestorCardinalityMapping,
-            // ancestorOrSelfCardinalityMapping,
-            parentCardinalityMapping
-        // extendedAnalyzer.precedingMapping,
-        // precedingOrSelfCardinalityMapping,
-        // extendedAnalyzer.precedingSiblingMapping,
-        // precedingSiblingOrSelfCardinalityMapping,
-        // simpleTokens,
-        // simpleRules
-        );
-        return gatheredData;
-    }
 
     public QualifiedGrammarAnalysisResult analyze(String addedNamespace, final List<ParseTree> trees)
     {
@@ -180,21 +75,30 @@ public class InputGrammarAnalyzer {
         }
         final Map<QualifiedName, Map<QualifiedName, Cardinality>> childrenMapping
             = childrenAnalyzer.childrenMapping;
-        final GrammarRuleCardinalityAnalyzer descendantAnalyzer
-            = new GrammarRuleCardinalityAnalyzer(childrenMapping.keySet());
+
+        RuleGraph graph = new RuleGraph(new LinkedHashMap<>());
+
         for (QualifiedName node : childrenMapping.keySet()) {
             final Map<QualifiedName, Cardinality> children = childrenMapping.get(node);
             for (var child : children.keySet()) {
-                descendantAnalyzer.addRule(node, child, children.get(child));
+                graph.addRule(node, child, children.get(child));
             }
         }
+        final DescendantCardinalityAnalyzer descendantAnalyzer
+                = new DescendantCardinalityAnalyzer(graph, childrenMapping.keySet());
+
         final var descendants = descendantAnalyzer.analyzeAll();
-        final var parents = getQualifiedParentCardinalityMapping(childrenMapping);
+        final var parents = getQualifiedParentCardinalityMapping(allNodeNames, childrenMapping);
         final Map<QualifiedName, Map<QualifiedName, Cardinality>> zeroOrMoreMapping
             = getQualifiedMapping(allNodeNames, Cardinality.ZERO_OR_MORE);
 
+        final AncestorCardinalityAnalyzer ancestorAnalyzer
+                = new AncestorCardinalityAnalyzer(graph, childrenMapping.keySet());
+        final Map<QualifiedName, Map<QualifiedName, Cardinality>> ancestors = ancestorAnalyzer.analyzeAll();
+        final Map<QualifiedName, Map<QualifiedName, Cardinality>> ancestorsOrSelf = addSelf(ancestors);
+
         final var simpleTokens = getSimpleTokens(antlrParser, allLexerRules);
-        final var simpleRules = getSimpleRules(allParserRules, antlrParser, simpleTokens);
+        final var simpleRules = getSimpleRules(allParserRules, simpleTokens);
         final Set<QualifiedName> qualifiedSimpleTokens = simpleTokens.stream()
             .map(t->new QualifiedName(addedNamespace, t))
             .collect(Collectors.toSet());
@@ -202,13 +106,14 @@ public class InputGrammarAnalyzer {
             .map(t->new QualifiedName(addedNamespace, t))
             .collect(Collectors.toSet());
 
+
         EnumMap<AntlrQueryAxis, Map<QualifiedName, Map<QualifiedName, Cardinality>>> axes = new EnumMap<>(AntlrQueryAxis.class);
         axes.put(AntlrQueryAxis.CHILD, childrenMapping);
         axes.put(AntlrQueryAxis.DESCENDANT, descendants);
         axes.put(AntlrQueryAxis.DESCENDANT_OR_SELF, addSelf(descendants));
         axes.put(AntlrQueryAxis.PARENT, parents);
-        axes.put(AntlrQueryAxis.ANCESTOR, zeroOrMoreMapping);
-        axes.put(AntlrQueryAxis.ANCESTOR_OR_SELF, zeroOrMoreMapping);
+        axes.put(AntlrQueryAxis.ANCESTOR, ancestors);
+        axes.put(AntlrQueryAxis.ANCESTOR_OR_SELF, ancestorsOrSelf);
         axes.put(AntlrQueryAxis.FOLLOWING, zeroOrMoreMapping);
         axes.put(AntlrQueryAxis.FOLLOWING_OR_SELF, zeroOrMoreMapping);
         axes.put(AntlrQueryAxis.FOLLOWING_SIBLING, zeroOrMoreMapping);
@@ -218,79 +123,24 @@ public class InputGrammarAnalyzer {
         axes.put(AntlrQueryAxis.PRECEDING_SIBLING, zeroOrMoreMapping);
         axes.put(AntlrQueryAxis.PRECEDING_SIBLING_OR_SELF, zeroOrMoreMapping);
         axes.put(AntlrQueryAxis.SELF, getSelfMapping(allNodeNames));
+        for (var axis : AntlrQueryAxis.values()) {
+            assert axes.containsKey(axis);
+        }
 
-        final var gatheredData = new QualifiedGrammarAnalysisResult(
+        return new QualifiedGrammarAnalysisResult(
             grammarNames,
             childrenMapping.keySet(),
             axes,
             qualifiedSimpleTokens,
             qualifiedSimpleRules
         );
-        return gatheredData;
     }
 
-    // private Map<String, Map<String, Cardinality>>
-    // getFollowingSiblingCardinalityMapping(
-    // Map<String, Map<String, Cardinality>> childrenCardinalityMapping,
-    // Map<String, Set<RuleParent>> followingSiblingMapping)
-    // {
-    // var followingSiblingCardinalityMapping =
-    // getMapping(childrenCardinalityMapping.keySet());
-
-    // for (String rulename : followingSiblingMapping.keySet()) {
-    // Map<String, Cardinality> descendants =
-    // childrenCardinalityMapping.get(rulename);
-    // Set<RuleParent> followingSiblings = followingSiblingMapping.get(rulename);
-    // for (RuleParent followingSibling : followingSiblings) {
-    // String fsName = followingSibling.rule();
-    // String fsParent = followingSibling.parent();
-    // Map<String, Cardinality> parentsChildrenCardinality
-    // = childrenCardinalityMapping.get(fsParent);
-
-    // }
-    // // followingSiblings.size()
-    // }
-    // return followingSiblingCardinalityMapping;
-    // }
-
-    // private Map<String, Map<String, Cardinality>>
-    // getAncestorCardinalityMapping(final Map<String, Map<String,
-    // Cardinality>> parentMapping)
-    // {
-    // final Set<String> allNodes = parentMapping.keySet();
-    // final Map<String, Map<String, Cardinality>> ancestorMapping = new
-    // HashMap<>(parentMapping);
-    // for (final String node: allNodes) {
-    // final Map<String, Cardinality> ancestors = ancestorMapping.get(node);
-    // final Map<String, Cardinality> parents = parentMapping.get(node);
-    // final Set<String> presentKeys = getPresentKeys(parents);
-    // final Set<String> nodesToProcess = new HashSet<>(presentKeys);
-    // while (!nodesToProcess.isEmpty()) {
-    // final String currentNode = nodesToProcess.stream().findFirst().get();
-    // final Map<String, Cardinality> currentNodeParents =
-    // parentMapping.get(currentNode);
-    // final var processedParents = getPresentKeys(currentNodeParents);
-    // for (var parent : processedParents) {
-    // Cardinality currentCardinality = ancestors.get(parent);
-    // Cardinality other = currentNodeParents.get(parent);
-    // byte mergedOrdinal =
-    // sequenceCardinalityMerger.merge(currentCardinality.ordinal(),
-    // other.ordinal());
-    // Cardinality merged = Cardinality.values()[mergedOrdinal];
-    // ancestors.put(parent, merged);
-    // }
-    // nodesToProcess.addAll(processedParents);
-    // nodesToProcess.remove(currentNode);
-    // }
-    // }
-    // return ancestorMapping;
-    // }
-
-    // private Set<String> getPresentKeys(final Map<String, Cardinality> x) {
-    // final Set<String> presentKeys = new HashSet<>(x.keySet());
-    // presentKeys.removeIf(k->x.get(k) == Cardinality.ZERO);
-    // return presentKeys;
-    // }
+    private Set<QualifiedName> getPresentKeys(final Map<QualifiedName, Cardinality> x) {
+         final Set<QualifiedName> presentKeys = new HashSet<>(x.keySet());
+         presentKeys.removeIf(k->x.get(k).equals(Cardinality.ZERO));
+         return presentKeys;
+     }
 
     Set<String> getSimpleTokens(final ANTLRv4Parser antlrParser, Collection<ParseTree> lexerRules)
     {
@@ -342,7 +192,9 @@ public class InputGrammarAnalyzer {
         return previousSimpleRules.stream().map(this::getLexerRuleName).collect(Collectors.toSet());
     }
 
-    public Set<String> getSimpleRules(Collection<ParseTree> allParserRules, ANTLRv4Parser antlrParser, Set<String> simpleTokens)
+    public Set<String> getSimpleRules(
+            Collection<ParseTree> allParserRules,
+            Set<String> simpleTokens)
     {
         // Track simple rules and pending rules
         Set<String> simpleRules = new HashSet<>(allParserRules.size());
@@ -461,8 +313,7 @@ public class InputGrammarAnalyzer {
     private String getLexerRuleName(final ParseTree rule)
     {
         final var ruleSpec = (ANTLRv4Parser.LexerRuleSpecContext) rule;
-        final var ruleName = ruleSpec.TOKEN_REF().getText();
-        return ruleName;
+        return ruleSpec.TOKEN_REF().getText();
     }
 
     private boolean isSimpleLexerRule(final ANTLRv4Parser antlrParser, final ParseTree rule)
@@ -488,7 +339,7 @@ public class InputGrammarAnalyzer {
         if (allAtoms.size() != allLiterals.size())
             return false;
         final var suffixes = XPath.findAll(ruleBlock, "//ebnfSuffix", antlrParser);
-        return suffixes.size() == 0;
+        return suffixes.isEmpty();
     }
 
     private boolean isSimpleFragmentedLexerRule(final ANTLRv4Parser antlrParser,
@@ -524,7 +375,7 @@ public class InputGrammarAnalyzer {
         if (allAtoms.size() != (allLiterals.size() + refs.size()))
             return false;
         final var suffixes = XPath.findAll(ruleBlock, "//ebnfSuffix", antlrParser);
-        return suffixes.size() == 0;
+        return suffixes.isEmpty();
     }
 
     private Map<QualifiedName, Map<QualifiedName, Cardinality>>
@@ -536,7 +387,7 @@ public class InputGrammarAnalyzer {
             final Map<QualifiedName, Cardinality> mapped = mapping.get(node);
             final Map<QualifiedName, Cardinality> cloned = new HashMap<>(mapped);
             var currentCardinality = cloned.get(node);
-            var merged = Cardinalities.sequenceMerge(Cardinality.ONE, currentCardinality);
+            var merged = Cardinalities.add(Cardinality.ONE, currentCardinality);
             cloned.put(node, merged);
             selfMapping.put(node, cloned);
         }
@@ -555,116 +406,28 @@ public class InputGrammarAnalyzer {
     }
 
 
-    private Map<String, Map<String, Cardinality>> getParentCardinalityMapping(
-        final Map<String, Set<String>> childrenMapping)
-    {
-        final Map<String, Map<String, Cardinality>> parentMapping = getMapping(childrenMapping.keySet());
-        for (String parentName : parentMapping.keySet()) {
-            final Set<String> children = childrenMapping.get(parentName);
-            for (final var child : children) {
-                final var parents = parentMapping.get(child);
-                parents.put(parentName, Cardinality.ZERO_OR_ONE);
-            }
-        }
-        return parentMapping;
-    }
-
 
     private
     Map<QualifiedName, Map<QualifiedName, Cardinality>>
         getQualifiedParentCardinalityMapping(
+            final Set<QualifiedName> allNodeNames,
             final Map<QualifiedName, Map<QualifiedName, Cardinality>> childrenMapping
         )
     {
-        final Map<QualifiedName, Map<QualifiedName, Cardinality>> parentMapping = getQualifiedMapping(childrenMapping.keySet());
+        final Map<QualifiedName, Map<QualifiedName, Cardinality>> parentMapping = getQualifiedMapping(allNodeNames);
         for (QualifiedName parentName : parentMapping.keySet()) {
             final Set<QualifiedName> children = childrenMapping.get(parentName).keySet();
             for (final var child : children) {
-                final var parents = parentMapping.get(child);
-                parents.put(parentName, Cardinality.ZERO_OR_ONE);
+                final var parentsForGivenChild = parentMapping.get(child);
+                final Cardinality c = childrenMapping.get(parentName).get(child);
+                if (!c.equals(Cardinality.ZERO)) {
+                    parentsForGivenChild.put(parentName, Cardinality.ZERO_OR_ONE );
+                }
             }
         }
         return parentMapping;
     }
 
-
-    // private Map<String, Map<String, Cardinality>>
-    // getDescendantCardinalityMapping(final Map<String, Map<String,
-    // Cardinality>> childrenMapping)
-    // {
-    // final var allNodes = childrenMapping.keySet();
-    // final Map<String, Map<String, Cardinality>> descendantMapping =
-    // deepClone(childrenMapping, allNodes);
-
-    // for (final String node : allNodes) {
-    // final Map<String, Cardinality> children = childrenMapping.get(node);
-    // final Map<String, Cardinality> descendants =
-    // descendantMapping.get(node);
-    // final Set<String> nodesToProcess = getPresentKeys(children);
-
-    // while (!nodesToProcess.isEmpty()) {
-    // final String processedNode = nodesToProcess.stream().findFirst().get();
-    // nodesToProcess.remove(processedNode);
-
-    // final Map<String, Cardinality> processedNodeChildren =
-    // childrenMapping.get(processedNode);
-    // final Set<String> presentChildren = getPresentKeys(processedNodeChildren);
-    // for (final var childName : presentChildren) {
-    // final Cardinality childCardinality =
-    // processedNodeChildren.get(childName);
-    // final Cardinality parentCardinality = descendants.get(processedNode);
-    // final Cardinality mergedCardinality =
-    // blockCardinalityMerger.merge(parentCardinality, childCardinality);
-
-    // final Cardinality existingCardinality = descendants.get(childName);
-    // final Cardinality updatedCardinality =
-    // sequenceCardinalityMerger.merge(existingCardinality, mergedCardinality);
-    // descendants.put(childName, updatedCardinality);
-    // nodesToProcess.add(childName);
-    // }
-    // }
-    // }
-    // return descendantMapping;
-    // }
-
-    // private Map<String, Map<String, Cardinality>> deepClone(
-    // final Map<String, Map<String, Cardinality>> childrenMapping, final
-    // Set<String> allNodes) {
-    // final Map<String, Map<String, Cardinality>> descendantMapping = new
-    // HashMap<>(childrenMapping.size());
-    // for (var name : allNodes) {
-    // descendantMapping.put(name, new HashMap<>(childrenMapping.get(name)));
-    // }
-    // return descendantMapping;
-    // }
-
-    private Map<String, Set<String>> getChildrenMapping(final ANTLRv4Parser antlrParser,
-        final GrammarSpecContext tree,
-        final Set<String> allNodeNames)
-    {
-        final Map<String, Set<String>> childrenMapping = new HashMap<>(allNodeNames.size(), 1);
-        for (final var nodename : allNodeNames) {
-            childrenMapping.put(nodename, new HashSet<>());
-        }
-
-        final var ruleSpecs = XPath.findAll(tree, "//parserRuleSpec", antlrParser);
-        for (final ParseTree spec : ruleSpecs) {
-            final ParserRuleSpecContext spec_ = (ParserRuleSpecContext) spec;
-            final String ruleRef = spec_.RULE_REF().getText();
-
-            final Set<String> children = new HashSet<>();
-            final var rulerefs = XPath.findAll(spec, "/parserRuleSpec//ruleref", antlrParser);
-            final var terminalTokens = XPath.findAll(spec, "/parserRuleSpec//TOKEN_REF", antlrParser);
-            final var terminalTokenLiterals = XPath.findAll(spec, "/parserRuleSpec//STRING_LITERAL", antlrParser);
-
-            children.addAll(toSet(rulerefs));
-            children.addAll(toSet(terminalTokens));
-            children.addAll(toSet(terminalTokenLiterals));
-            allNodeNames.addAll(children);
-            childrenMapping.put(ruleRef, children);
-        }
-        return childrenMapping;
-    }
 
     // private Map<String, Set<String>> getFollowing(final Map<String, Set<String>>
     // ancestorOrSelfMapping,

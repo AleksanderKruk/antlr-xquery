@@ -2,6 +2,7 @@ package com.github.akruk.antlrquery.inputgrammaranalyzer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -19,16 +20,16 @@ public class GrammarRuleCardinalityAnalyzerTest {
 
     @Test
     void a() {
-        GrammarRuleCardinalityAnalyzer analyzer = new GrammarRuleCardinalityAnalyzer(
-            Set.of(x, a, b, c)
-        );
-        // x: a b c;
-        analyzer.addRule(x, a, Cardinality.ONE);
-        analyzer.addRule(x, b, Cardinality.ONE);
-        analyzer.addRule(x, c, Cardinality.ONE);
+        var graph = new RuleGraph(new LinkedHashMap<>());
+        graph.addRule(x, a, Cardinality.ONE);
+        graph.addRule(x, b, Cardinality.ONE);
+        graph.addRule(x, c, Cardinality.ONE);
 
         // b: x?
-        analyzer.addRule(b, x, Cardinality.ZERO_OR_ONE);
+        graph.addRule(b, x, Cardinality.ZERO_OR_ONE);
+        DescendantCardinalityAnalyzer analyzer = new DescendantCardinalityAnalyzer(graph,
+                Set.of(x, a, b, c));
+        // x: a b c;
 
         var r = analyzer.analyzeAll();
         Map<QualifiedName, Cardinality> xDescendants = r.get(x);
@@ -55,13 +56,14 @@ public class GrammarRuleCardinalityAnalyzerTest {
 
     @Test
     void b() {
-        GrammarRuleCardinalityAnalyzer analyzer = new GrammarRuleCardinalityAnalyzer(Set.of(x, a));
+        var graph = new RuleGraph(new LinkedHashMap<>());
+        DescendantCardinalityAnalyzer analyzer = new DescendantCardinalityAnalyzer(graph, Set.of(x, a));
         // x: a a;
-        analyzer.addRule(x, a, Cardinality.ONE);
-        analyzer.addRule(x, a, Cardinality.ONE);
+        graph.addRule(x, a, Cardinality.ONE);
+        graph.addRule(x, a, Cardinality.ONE);
         var r = analyzer.analyzeAll();
         Map<QualifiedName, Cardinality> xDescendants = r.get(x);
         Cardinality xa = xDescendants.get(a);
-        assertEquals(Cardinality.ONE_OR_MORE, xa);
+        assertEquals(Cardinality.of(2), xa);
     }
 }

@@ -56,6 +56,8 @@ public class SequencetypeAtomization {
             case AnyItemType() -> anyItems;
             case NothingType() -> input;
             case NeverType() -> input;
+            case NamedItemType namedItemType ->
+                    typeFactory.sequence(typeFactory.guaranteedItemNamedType(namedItemType.reference(), new IllegalStateException()), cardinality);
         };
     }
 

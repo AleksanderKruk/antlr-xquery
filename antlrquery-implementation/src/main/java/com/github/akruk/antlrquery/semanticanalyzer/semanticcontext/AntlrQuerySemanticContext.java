@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.github.akruk.antlrquery.AntlrQueryParser;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.framework.qual.DefaultQualifier;
 import org.eclipse.lsp4j.Location;
 
 import com.github.akruk.antlrquery.semanticanalyzer.semanticcontext.AntlrQuerySemanticScope.EntypingResult;
@@ -14,7 +16,7 @@ import com.github.akruk.antlrquery.typesystem.types.TypeInContext;
 import com.github.akruk.antlrquery.typesystem.typeoperations.Types.EffectiveBooleanValueType;
 import com.github.akruk.antlrquery.typesystem.types.AntlrQuerySequenceType;
 
-
+@DefaultQualifier(NonNull.class)
 public class AntlrQuerySemanticContext {
     final List<AntlrQuerySemanticScope> scopes;
     final private AntlrQueryTypeFactory typeFactory;
@@ -61,14 +63,14 @@ public class AntlrQuerySemanticContext {
 
     public EntypingResult entypeVariable(
         final String variableName,
-        final AntlrQueryParser.VarNameContext locationCtx,
-        final Location location,
+        final AntlrQueryParser.VarNameContext variableLocationCtx,
+        final Location variableLocation,
         final TypeInContext assignedType)
     {
         return currentScope().entypeVariable(
             variableName,
-            locationCtx,
-            location,
+            variableLocationCtx,
+            variableLocation,
             assignedType
             );
     }

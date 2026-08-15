@@ -39,6 +39,8 @@ public class ItemTypeIntersection
      * @return a new item type that is an intersection of the input types
      */
     public static @Nullable AntlrQueryItemType intersection(AntlrQueryTypeFactory typeFactory, AntlrQueryItemType... types) {
+        assert types.length != 0 : "Intersecting no items";
+        if (types.length == 1) return types[0];
         // Flatten all item types
         Map<Class<? extends AntlrQueryItemType>, List<AntlrQueryItemType>> itemTypeToInstances =
                 Arrays.stream(types).parallel()
@@ -76,96 +78,136 @@ public class ItemTypeIntersection
         } // else False ^^ True = empty set
 
         // Intersect strings
-        List<AntlrQueryItemType> strings = itemTypeToInstances.getOrDefault(StringType.StringNonEnum.class, List.of());
-        List<AntlrQueryItemType> enums = itemTypeToInstances.getOrDefault(StringType.StringEnum.class, List.of());
-        @Nullable AntlrQueryItemType stringResult = stringIntersectionType(typeFactory, strings, enums);
-        if (stringResult != null) {
-            results.add(stringResult);
+        {
+            List<AntlrQueryItemType> strings = itemTypeToInstances.getOrDefault(StringType.StringNonEnum.class, List.of());
+            List<AntlrQueryItemType> enums = itemTypeToInstances.getOrDefault(StringType.StringEnum.class, List.of());
+            if (strings.size() + enums.size() == types.length) {
+                @Nullable AntlrQueryItemType stringResult = stringIntersectionType(typeFactory, strings, enums);
+                if (stringResult != null) {
+                    results.add(stringResult);
+                }
+            }
         }
 
         // Intersect numbers
-        List<AntlrQueryItemType> numbers = itemTypeToInstances.getOrDefault(AtomicType.NumberType.class, List.of());
-        @Nullable AntlrQueryItemType numberResult = numberIntersectionType(typeFactory, numbers);
-        if (numberResult != null) {
-            results.add(numberResult);
+        {
+            List<AntlrQueryItemType> numbers = itemTypeToInstances.getOrDefault(AtomicType.NumberType.class, List.of());
+            if (numbers.size() == types.length) {
+                @Nullable AntlrQueryItemType numberResult = numberIntersectionType(typeFactory, numbers);
+                if (numberResult != null) {
+                    results.add(numberResult);
+                }
+            }
         }
 
         // Intersect regexes
-        List<AntlrQueryItemType> regexes = itemTypeToInstances.getOrDefault(AtomicType.RegexType.class, List.of());
-        @Nullable AntlrQueryItemType regexResult = regexIntersectionType(regexes);
-        if (regexResult != null) {
-            results.add(regexResult);
+        {
+            List<AntlrQueryItemType> regexes = itemTypeToInstances.getOrDefault(AtomicType.RegexType.class, List.of());
+            if (regexes.size() == types.length) {
+                @Nullable AntlrQueryItemType regexResult = regexIntersectionType(regexes);
+                if (regexResult != null) {
+                    results.add(regexResult);
+                }
+
+            }
         }
 
         // Intersect records and maps together
-        List<AntlrQueryItemType> records = itemTypeToInstances.getOrDefault(MapLikeType.RecordType.class, List.of());
-        List<AntlrQueryItemType> extRecords = itemTypeToInstances.getOrDefault(MapLikeType.ExtensibleRecordType.class, List.of());
-        List<AntlrQueryItemType> maps = itemTypeToInstances.getOrDefault(MapLikeType.MapType.class, List.of());
-
-        @Nullable AntlrQueryItemType recordOrMapResult = recordAndMapIntersectionType(typeFactory, records, extRecords, maps);
-        if (recordOrMapResult != null) {
-            results.add(recordOrMapResult);
+        {
+            List<AntlrQueryItemType> records = itemTypeToInstances.getOrDefault(MapLikeType.RecordType.class, List.of());
+            List<AntlrQueryItemType> extRecords = itemTypeToInstances.getOrDefault(MapLikeType.ExtensibleRecordType.class, List.of());
+            List<AntlrQueryItemType> maps = itemTypeToInstances.getOrDefault(MapLikeType.MapType.class, List.of());
+            if (records.size() + extRecords.size() + maps.size() == types.length) {
+                @Nullable AntlrQueryItemType recordOrMapResult = recordAndMapIntersectionType(typeFactory, records, extRecords, maps);
+                if (recordOrMapResult != null) {
+                    results.add(recordOrMapResult);
+                }
+            }
         }
 
         // Intersect arrays and tuples together
-        List<AntlrQueryItemType> arrays = itemTypeToInstances.getOrDefault(ArrayLikeType.ArrayType.class, List.of());
-        List<AntlrQueryItemType> tuples = itemTypeToInstances.getOrDefault(ArrayLikeType.TupleType.class, List.of());
-        @Nullable AntlrQueryItemType arrayResult = arrayAndTupleIntersectionType(typeFactory, arrays, tuples);
-        if (arrayResult != null) {
-            results.add(arrayResult);
+        {
+            List<AntlrQueryItemType> arrays = itemTypeToInstances.getOrDefault(ArrayLikeType.ArrayType.class, List.of());
+            List<AntlrQueryItemType> tuples = itemTypeToInstances.getOrDefault(ArrayLikeType.TupleType.class, List.of());
+            if (arrays.size() + tuples.size() == types.length) {
+                @Nullable AntlrQueryItemType arrayResult = arrayAndTupleIntersectionType(typeFactory, arrays, tuples);
+                if (arrayResult != null) {
+                    results.add(arrayResult);
+                }
+            }
+
         }
 
         // Intersect TreeNodes together
-        List<AntlrQueryItemType> nodesFromGrammar = itemTypeToInstances.getOrDefault(TreeNodeType.NodeType.class, List.of());
-        List<AntlrQueryItemType> anyNodes = itemTypeToInstances.getOrDefault(TreeNodeType.AnyNode.class, List.of());
-        List<AntlrQueryItemType> anyNodesFromGrammar = itemTypeToInstances.getOrDefault(TreeNodeType.AnyNodeFromGrammar.class, List.of());
+        {
+            List<AntlrQueryItemType> nodesFromGrammar = itemTypeToInstances.getOrDefault(TreeNodeType.NodeType.class, List.of());
+            List<AntlrQueryItemType> anyNodes = itemTypeToInstances.getOrDefault(TreeNodeType.AnyNode.class, List.of());
+            List<AntlrQueryItemType> anyNodesFromGrammar = itemTypeToInstances.getOrDefault(TreeNodeType.AnyNodeFromGrammar.class, List.of());
 
-        List<AntlrQueryItemType> rulesFromGrammar = itemTypeToInstances.getOrDefault(TreeRuleType.RuleType.class, List.of());
-        List<AntlrQueryItemType> anyRules = itemTypeToInstances.getOrDefault(TreeRuleType.AnyRule.class, List.of());
-        List<AntlrQueryItemType> anyRulesFromGrammar = itemTypeToInstances.getOrDefault(TreeRuleType.AnyRuleFromGrammar.class, List.of());
+            List<AntlrQueryItemType> rulesFromGrammar = itemTypeToInstances.getOrDefault(TreeRuleType.RuleType.class, List.of());
+            List<AntlrQueryItemType> anyRules = itemTypeToInstances.getOrDefault(TreeRuleType.AnyRule.class, List.of());
+            List<AntlrQueryItemType> anyRulesFromGrammar = itemTypeToInstances.getOrDefault(TreeRuleType.AnyRuleFromGrammar.class, List.of());
 
-        List<AntlrQueryItemType> tokensFromGrammar = itemTypeToInstances.getOrDefault(TreeTokenType.TokenType.class, List.of());
-        List<AntlrQueryItemType> anyTokens = itemTypeToInstances.getOrDefault(TreeTokenType.AnyToken.class, List.of());
-        List<AntlrQueryItemType> anyTokensFromGrammar = itemTypeToInstances.getOrDefault(TreeTokenType.AnyTokenFromGrammar.class, List.of());
+            List<AntlrQueryItemType> tokensFromGrammar = itemTypeToInstances.getOrDefault(TreeTokenType.TokenType.class, List.of());
+            List<AntlrQueryItemType> anyTokens = itemTypeToInstances.getOrDefault(TreeTokenType.AnyToken.class, List.of());
+            List<AntlrQueryItemType> anyTokensFromGrammar = itemTypeToInstances.getOrDefault(TreeTokenType.AnyTokenFromGrammar.class, List.of());
+            var sum = nodesFromGrammar.size()
+                    + anyNodes.size()
+                    + anyNodesFromGrammar.size()
+                    + rulesFromGrammar.size()
+                    + anyRules.size()
+                    + anyRulesFromGrammar.size()
+                    + tokensFromGrammar.size()
+                    + anyTokens.size()
+                    + anyTokensFromGrammar.size();
+            if (sum == types.length) {
+                @Nullable AntlrQueryItemType treeNodeResult = treeNodesIntersectionType(
+                        typeFactory,
+                        nodesFromGrammar,
+                        anyNodes,
+                        anyNodesFromGrammar,
+                        rulesFromGrammar,
+                        anyRules,
+                        anyRulesFromGrammar,
+                        tokensFromGrammar,
+                        anyTokens,
+                        anyTokensFromGrammar
+                );
+                if (treeNodeResult != null) {
+                    results.add(treeNodeResult);
+                }
 
-        @Nullable AntlrQueryItemType treeNodeResult = treeNodesIntersectionType(
-                typeFactory,
-                nodesFromGrammar,
-                anyNodes,
-                anyNodesFromGrammar,
-                rulesFromGrammar,
-                anyRules,
-                anyRulesFromGrammar,
-                tokensFromGrammar,
-                anyTokens,
-                anyTokensFromGrammar
-        );
-        if (treeNodeResult != null) {
-            results.add(treeNodeResult);
+            }
+
+
         }
 
         // Intersect Functions
-        List<AntlrQueryItemType> anyFunctions = itemTypeToInstances.getOrDefault(FunctionType.AnyFunction.class, List.of());
-        List<AntlrQueryItemType> functions = itemTypeToInstances.getOrDefault(FunctionType.ConstrainedFunction.class, List.of());
-        @Nullable AntlrQueryItemType functionResult = functionIntersectionType(typeFactory, anyFunctions, functions);
-        if (functionResult != null) {
-            results.add(functionResult);
+        {
+            List<AntlrQueryItemType> anyFunctions = itemTypeToInstances.getOrDefault(FunctionType.AnyFunction.class, List.of());
+            List<AntlrQueryItemType> functions = itemTypeToInstances.getOrDefault(FunctionType.ConstrainedFunction.class, List.of());
+            if (anyFunctions.size() + functions.size() == types.length) {
+                @Nullable AntlrQueryItemType functionResult = functionIntersectionType(typeFactory, anyFunctions, functions);
+                if (functionResult != null) {
+                    results.add(functionResult);
+                }
+            }
         }
 
         // Intersect Grammar Entities (Since they have no constraints, intersecting identical instances yields the same instance)
-        if (!itemTypeToInstances.getOrDefault(GrammarEntityType.GrammarType.class, List.of()).isEmpty()) {
+        if (itemTypeToInstances.getOrDefault(GrammarEntityType.GrammarType.class, List.of()).size() == types.length) {
             results.add(new GrammarEntityType.GrammarType());
         }
-        if (!itemTypeToInstances.getOrDefault(GrammarEntityType.GrammarRuleType.class, List.of()).isEmpty()) {
+        if (itemTypeToInstances.getOrDefault(GrammarEntityType.GrammarRuleType.class, List.of()).size() == types.length) {
             results.add(new GrammarEntityType.GrammarRuleType());
         }
-        if (!itemTypeToInstances.getOrDefault(GrammarEntityType.GrammarTokenType.class, List.of()).isEmpty()) {
+        if (itemTypeToInstances.getOrDefault(GrammarEntityType.GrammarTokenType.class, List.of()).size() == types.length) {
             results.add(new GrammarEntityType.GrammarTokenType());
         }
 
         // Fallback: If no explicit constraints were collected, but AnyItemType was present, return AnyType.
         // AnyType intersected with another constraint simply vanishes since the other constraint is strictly narrower.
-        if (results.isEmpty() && !itemTypeToInstances.getOrDefault(AnyItemType.class, List.of()).isEmpty()) {
+        if (results.isEmpty() && itemTypeToInstances.getOrDefault(AnyItemType.class, List.of()).size() == types.length) {
             return AnyItemType.ANY_TYPE;
         }
 
@@ -488,7 +530,7 @@ public class ItemTypeIntersection
             MapLikeType.MapType map = (MapLikeType.MapType) m;
 
             for (String key : allKeys) {
-                @Nullable AntlrQueryItemType keyIntersection = ItemTypes.intersection(
+                @Nullable AntlrQueryItemType keyIntersection = ItemTypes.intersect(
                         typeFactory,
                         map.keyType(),
                         typeFactory.itemEnum(Set.of(key))

@@ -1,5 +1,6 @@
 package com.github.akruk.antlrquery.typesystem.typeoperations;
 
+import com.github.akruk.antlrquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrquery.typesystem.RecordField;
 import com.github.akruk.antlrquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Cardinalities;
@@ -9,8 +10,11 @@ import com.github.akruk.antlrquery.typesystem.types.itemtypes.*;
 import org.checkerframework.framework.qual.DefaultQualifier;
 import org.eclipse.lsp4j.jsonrpc.validation.NonNull;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 
@@ -34,22 +38,27 @@ public class LookupOperation {
                 implements LookupSemanticResult {}
 
         sealed interface LookupError
-                extends LookupSemanticResult
-                permits
-                LookupError.EmptyTarget,
-                LookupError.InvalidTarget,
-                LookupError.KeyEmpty,
-                LookupError.InvalidChoiceItem
+            extends LookupSemanticResult
+                permits LookupError.EmptyTarget, LookupError.InvalidArrayIndex, LookupError.InvalidArrayKey, LookupError.InvalidChoiceItem, LookupError.InvalidMapKey, LookupError.InvalidRecordKey, LookupError.InvalidTarget, LookupError.KeyEmpty
         {
             AntlrQuerySequenceType resultingType();
 
             record KeyEmpty(AntlrQuerySequenceType resultingType) implements LookupError {}
+
+            record InvalidRecordKey(AntlrQuerySequenceType resultingType, AntlrQueryItemType key) implements LookupError {}
+
+            record InvalidArrayIndex(AntlrQuerySequenceType resultingType, AntlrQueryItemType givenKey, AntlrQueryItemType expectedKey) implements LookupError {}
+
+            record InvalidArrayKey(AntlrQuerySequenceType resultingType, AntlrQueryItemType givenKey, AntlrQueryItemType expectedKey) implements LookupError {}
 
             record InvalidTarget(AntlrQuerySequenceType resultingType, AntlrQuerySequenceType target) implements LookupError {}
 
             record EmptyTarget(AntlrQuerySequenceType resultingType, AntlrQuerySequenceType target) implements LookupError {}
 
             record InvalidChoiceItem(AntlrQuerySequenceType resultingType, LookupError innerError, AntlrQuerySequenceType target) implements LookupError {}
+
+            record InvalidMapKey(AntlrQuerySequenceType resultingType, AntlrQueryItemType givenKey, AntlrQueryItemType expectedKey) implements LookupError {
+            }
         }
     }
 
@@ -97,9 +106,12 @@ public class LookupOperation {
             }
             case ArrayLikeType.ArrayType a -> {
                 final Cardinality arrayLength = a.cardinality();
-                final NumericRange numericRange = Ranges.indices(Cardinalities.toNumericRange(arrayLength));
+                final NumericRange numericRange = Ranges.integers(Cardinalities.toNumericRange(arrayLength));
                 final AntlrQuerySequenceType wildcardKeyType = typeFactory.sequence(typeFactory.itemNumber(numericRange), a.cardinality());
                 return lookupNonWildcardArray(mapLikeTypeSequence.cardinality(), a, wildcardKeyType);
+            }
+            case ArrayLikeType.TupleType t when t.members().length == 0 -> {
+                return new LookupSemanticResult.Success(emptySequence);
             }
             case ArrayLikeType.TupleType t -> {
                 final var merged = Types.union(typeFactory, t.members());
@@ -127,6 +139,14 @@ public class LookupOperation {
                  GrammarEntityType _,
                  TreeLike _
                     -> { return new LookupSemanticResult.LookupError.InvalidTarget(zeroOrMoreItems, mapLikeTypeSequence); }
+            case NamedItemType(NamespaceResolver.QualifiedName reference) -> {
+                return lookupWildcard(
+                        typeFactory.sequence(
+                                typeFactory.guaranteedItemNamedType(reference, new IllegalStateException()),
+                                mapLikeTypeSequence.cardinality()
+                        )
+                );
+            }
         }
     }
 
@@ -197,6 +217,12 @@ public class LookupOperation {
                  GrammarEntityType _,
                  TreeLike _
                     -> { return new LookupSemanticResult.LookupError.InvalidTarget(zeroOrMoreItems, mapLikeTypeSequence); }
+            case NamedItemType(NamespaceResolver.QualifiedName reference) -> {
+                return lookupWildcard(
+                        typeFactory.sequence(
+                                typeFactory.guaranteedItemNamedType(reference, new IllegalStateException()),
+                                mapLikeTypeSequence.cardinality()));
+            }
         }
     }
 
@@ -208,19 +234,31 @@ public class LookupOperation {
     {
         final AntlrQuerySequenceType expectedKeyItemType = typeFactory.zeroOrMore(m.keyType());
 
+        boolean optionality = false;
         if (!Types.isSubtype(typeFactory, keyTypeSequence, expectedKeyItemType)) {
-            return new LookupSemanticResult.LookupError.InvalidTarget(zeroOrMoreItems, keyTypeSequence);
+            var intersection = ItemTypes.intersect(typeFactory, keyTypeSequence.itemType(), expectedKeyItemType.itemType());
+            if (intersection == null|| intersection.equals(typeFactory.itemNothing())) {
+                return new LookupSemanticResult.LookupError.InvalidMapKey(zeroOrMoreItems, keyTypeSequence.itemType(), expectedKeyItemType.itemType());
+            }
+            optionality = true;
         }
+
 
         final AntlrQuerySequenceType valueType = m.valueType();
         final Cardinality keyCardinality = keyTypeSequence.cardinality();
-        final Cardinality resultingCardinality = Cardinalities.optionalize(Cardinalities.multiply(inputSequenceCardinality, keyCardinality));
+
+
+        Cardinality multiplied = Cardinalities.multiply(inputSequenceCardinality, keyCardinality);
+
+        final Cardinality resultingCardinality = optionality
+                ?Cardinalities.optionalize(multiplied)
+                :multiplied
+                ;
+        assert resultingCardinality != null;
         final AntlrQuerySequenceType resultingType = typeFactory.sequence(valueType.itemType(), resultingCardinality);
 
         return new LookupSemanticResult.Success(resultingType);
     }
-
-
 
     /*
      * array(MemberType) ? KeyType
@@ -229,11 +267,19 @@ public class LookupOperation {
             Cardinality inputSequenceCardinality, ArrayLikeType.ArrayType a, AntlrQuerySequenceType keyTypeSequence)
     {
         final Cardinality arrayLength = a.cardinality();
-        final NumericRange numericRange = Ranges.indices(Cardinalities.toNumericRange(arrayLength));
+        final NumericRange numericRange = Ranges.integers(
+                Cardinalities.toNumericRange(
+                        Objects.requireNonNull(
+                                Cardinalities.optionalize(arrayLength))));
         final AntlrQuerySequenceType expectedKeyItemType = typeFactory.zeroOrMore(typeFactory.itemNumber(numericRange));
 
         if (!Types.isSubtype(typeFactory, keyTypeSequence, expectedKeyItemType)) {
-            return new LookupSemanticResult.LookupError.InvalidTarget(zeroOrMoreItems, keyTypeSequence);
+            if (keyTypeSequence.itemType() instanceof AtomicType.NumberType) {
+                return new LookupSemanticResult.LookupError.InvalidArrayIndex(
+                        zeroOrMoreItems, keyTypeSequence.itemType(), expectedKeyItemType.itemType());
+            }
+            return new LookupSemanticResult.LookupError.InvalidArrayKey(
+                    zeroOrMoreItems, keyTypeSequence.itemType(), expectedKeyItemType.itemType());
         }
 
         final AntlrQuerySequenceType memberType = a.memberType();
@@ -250,11 +296,16 @@ public class LookupOperation {
             AntlrQuerySequenceType keyTypeSequence)
     {
         final int tupleSize = t.members().length;
-        final NumericRange numericRange = Ranges.indices(0, tupleSize);
+        final NumericRange numericRange = Ranges.integers(0, tupleSize);
         final AntlrQuerySequenceType expectedKeyItemType = typeFactory.zeroOrMore(typeFactory.itemNumber(numericRange));
 
         if (!Types.isSubtype(typeFactory, keyTypeSequence, expectedKeyItemType)) {
-            return new LookupSemanticResult.LookupError.InvalidTarget(zeroOrMoreItems, keyTypeSequence);
+            if (keyTypeSequence.itemType() instanceof AtomicType.NumberType) {
+                return new LookupSemanticResult.LookupError.InvalidArrayIndex(
+                        zeroOrMoreItems, keyTypeSequence.itemType(), expectedKeyItemType.itemType());
+            }
+            return new LookupSemanticResult.LookupError.InvalidArrayKey(
+                    zeroOrMoreItems, keyTypeSequence.itemType(), expectedKeyItemType.itemType());
         }
 
         final AntlrQuerySequenceType[] members = t.members();
@@ -269,7 +320,7 @@ public class LookupOperation {
 
             int lowest = -1;
             for (int i = tupleSize - 1; i >= 0; i--) {
-                if (Ranges.contains(range, i)) {
+                if (Ranges.contains(range, BigDecimal.valueOf(i))) {
                     lowest = i;
                     break;
                 }
@@ -279,7 +330,7 @@ public class LookupOperation {
             } else {
                 final AntlrQuerySequenceType[] matchedMembers = new AntlrQuerySequenceType[lowest+1];
                 for (int i = lowest - 1; i >= 0; i--) {
-                    if (Ranges.contains(range, i)) {
+                    if (Ranges.contains(range, BigDecimal.valueOf(i))) {
                         matchedMembers[i] = members[i];
                     }
                 }
@@ -353,7 +404,7 @@ public class LookupOperation {
     {
         final Map<String, RecordField> recordFields = record.fields();
         if (!(keyTypeSequence.itemType() instanceof final StringType stringType)) {
-            return new LookupSemanticResult.LookupError.InvalidTarget(zeroOrMoreItems, keyTypeSequence);
+            return new LookupSemanticResult.LookupError.InvalidRecordKey(zeroOrMoreItems, keyTypeSequence.itemType());
         }
 
         final AntlrQuerySequenceType matchedType;
@@ -375,6 +426,13 @@ public class LookupOperation {
                 matchedType = matchedFields.isEmpty()
                         ? emptySequence
                         : Types.union(typeFactory, matchedFields.toArray(new AntlrQuerySequenceType[0]));
+                final Cardinality keyCardinality = keyTypeSequence.cardinality();
+                final Cardinality resultingCardinality = Cardinalities.multiply(inputSequenceCardinality, keyCardinality);
+                final AntlrQuerySequenceType resultingType = typeFactory.sequence(matchedType.itemType(), resultingCardinality);
+                return matchedFields.isEmpty()
+                        ? new LookupSemanticResult.LookupError.InvalidRecordKey(resultingType, stringEnum)
+                        : new LookupSemanticResult.Success(resultingType)
+                        ;
             }
             case StringType.StringNonEnum _ ->
                     matchedType = recordFields.isEmpty()

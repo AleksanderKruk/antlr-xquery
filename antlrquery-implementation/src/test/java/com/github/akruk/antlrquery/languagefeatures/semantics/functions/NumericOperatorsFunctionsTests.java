@@ -66,7 +66,7 @@ public class NumericOperatorsFunctionsTests extends SemanticTestsBase {
 
     @Test
     public void intDivide_valid() {
-        assertType("op:numeric-integer-divide(5, 2)", typeFactory.number(NumericRange.of(2)));
+        assertType("op:numeric-integer-divide(5, 2)", typeFactory.number(NumericRange.FULL));
     }
 
     @Test
@@ -87,7 +87,7 @@ public class NumericOperatorsFunctionsTests extends SemanticTestsBase {
 
     @Test
     public void unaryPlus_valid() {
-        assertType("op:numeric-unary-plus(4)", typeFactory.number(NumericRange.of(4)));
+        assertType("op:numeric-unary-plus(4)", typeFactory.number(NumericRange.FULL));
     }
 
     @Test

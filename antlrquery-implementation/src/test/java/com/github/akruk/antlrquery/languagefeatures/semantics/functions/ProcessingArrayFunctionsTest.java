@@ -372,7 +372,7 @@ public class ProcessingArrayFunctionsTest extends SemanticTestsBase {
     public void sortByArray_valid() {
         assertType(
                 "array:sort-by(array{1,2}, map{ 'key':function($v){}})",
-                typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
+                typeFactory.one(typeFactory.itemAnyArray()));
     }
 
     @Test

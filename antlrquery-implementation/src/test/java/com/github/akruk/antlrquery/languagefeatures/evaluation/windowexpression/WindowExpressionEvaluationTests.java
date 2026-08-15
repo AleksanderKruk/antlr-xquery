@@ -43,7 +43,7 @@ public class WindowExpressionEvaluationTests extends EvaluationTestsBase {
                     end at $e when $e - $s eq 2
                     return $w
                 """;
-        AntlrQueryValue value = AntlrQuery.evaluateWithMockRoot(null, xquery, null, null);
+        AntlrQueryValue value = AntlrQuery.evaluateWithMockRoot(null, xquery, "", null);
         List<AntlrQueryValue> expected = Arrays.asList(
                 valueFactory.sequence(List.of(valueFactory.number(1), valueFactory.number(2), valueFactory.number(3))),
                 valueFactory.sequence(List.of(valueFactory.number(2), valueFactory.number(3), valueFactory.number(4))),
@@ -66,7 +66,7 @@ public class WindowExpressionEvaluationTests extends EvaluationTestsBase {
                             start $s at $sPos end $e at $ePos when $ePos - $sPos eq 2
                         return ($s, $e)
                 """;
-        AntlrQueryValue value = AntlrQuery.evaluateWithMockRoot(null, xquery, null, null);
+        AntlrQueryValue value = AntlrQuery.evaluateWithMockRoot(null, xquery, "", null);
         List<AntlrQueryValue> expected = Arrays.asList(
                 valueFactory.sequence(List.of(valueFactory.number(1), valueFactory.number(3))),
                 valueFactory.sequence(List.of(valueFactory.number(4), valueFactory.number(6))),
@@ -84,7 +84,7 @@ public class WindowExpressionEvaluationTests extends EvaluationTestsBase {
                         end $e at $ePos when $ePos - $sPos eq 2
                     return ($s, $e)
                 """;
-        AntlrQueryValue value = AntlrQuery.evaluateWithMockRoot(null, xquery, null, null);
+        AntlrQueryValue value = AntlrQuery.evaluateWithMockRoot(null, xquery, "", null);
         List<AntlrQueryValue> expected = Arrays.asList(
                 valueFactory.sequence(List.of(valueFactory.number(1), valueFactory.number(3))),
                 valueFactory.sequence(List.of(valueFactory.number(2), valueFactory.number(4))),

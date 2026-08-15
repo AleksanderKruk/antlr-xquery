@@ -8,6 +8,9 @@ import java.util.stream.Stream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.framework.qual.DefaultQualifier;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
@@ -37,19 +40,20 @@ import com.github.akruk.antlrquery.typesystem.typeoperations.Types;
 import com.github.akruk.antlrquery.typesystem.typeoperations.Types.EffectiveBooleanValueType;
 import com.github.akruk.antlrquery.typesystem.types.AntlrQuerySequenceType;
 
+@DefaultQualifier(NonNull.class)
 public class SemanticSymbolManager {
-    public static record AnalysisResult(
+    public record AnalysisResult(
         TypeInContext result,
         List<DiagnosticError> errors
         )
     {}
 
-    public static record ArgumentSpecification(
+    public record ArgumentSpecification(
         String name,
         AntlrQuerySequenceType type,
-        ParseTree defaultArgument) {}
+        @Nullable ParseTree defaultArgument) {}
 
-    public static record UsedArg(
+    public record UsedArg(
         TypeInContext type,
         AntlrQueryValue value,
         ParseTree tree
@@ -791,7 +795,7 @@ public class SemanticSymbolManager {
         for (int i = 0 ; i < args.size(); i++) {
             final ArgumentSpecification argSpec = args.get(i);
             final UsedArg usedArg = arguments.get(i);
-            typeCtx.entypeVariable(argSpec.name, null, null, usedArg.type);
+            typeCtx.entypeVariable(argSpec.name, (VarNameContext) usedArg.tree, null, usedArg.type);
         }
         return body.accept(analyzer);
     }

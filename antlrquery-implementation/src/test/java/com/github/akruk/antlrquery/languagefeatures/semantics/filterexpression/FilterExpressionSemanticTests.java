@@ -2,6 +2,7 @@ package com.github.akruk.antlrquery.languagefeatures.semantics.filterexpression;
 
 import java.util.Set;
 
+import com.github.akruk.antlrquery.typesystem.types.Cardinality;
 import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrquery.languagefeatures.semantics.SemanticTestsBase;
@@ -17,25 +18,23 @@ public class FilterExpressionSemanticTests extends SemanticTestsBase {
                     ("a", "b", "c")[()]
                 """, typeFactory.emptySequence());
         final AntlrQueryItemType abcEnum = typeFactory.itemEnum(Set.of("a", "b", "c"));
-        final AntlrQuerySequenceType zeroOrOneABC = typeFactory.zeroOrOne(abcEnum);
-        final AntlrQuerySequenceType zeroOrMoreABC = typeFactory.zeroOrMore(abcEnum);
         assertType("""
                     ("a", "b", "c")[1]
-                """, zeroOrOneABC);
+                """, typeFactory.zeroOrOne(abcEnum));
         assertType("""
                     ("a", "b", "c")[1, 2]
-                """, zeroOrMoreABC);
+                """, typeFactory.sequence(abcEnum, Cardinality.inclusiveRange(0, 2)));
         assertType("""
                     let $x as number? := 1
                     return ("a", "b", "c")[$x]
-                """, zeroOrOneABC);
+                """, typeFactory.zeroOrOne(abcEnum));
         assertType("""
                     let $x as number* := (1, 2)
                     return ("a", "b", "c")[$x]
-                """, zeroOrMoreABC);
+                """, typeFactory.zeroOrMore(abcEnum));
         assertType("""
                     let $x as number+ := (1, 2)
                     return ("a", "b", "c")[$x]
-                """, zeroOrMoreABC);
+                """, typeFactory.zeroOrMore(abcEnum));
     }
 }

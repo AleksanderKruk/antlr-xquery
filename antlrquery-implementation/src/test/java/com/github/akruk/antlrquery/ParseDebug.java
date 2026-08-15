@@ -9,10 +9,20 @@ import java.util.concurrent.Future;
 
 public final class ParseDebug {
 
-    public static void main(String[] args) throws Exception {
+    static void main(String[] args) throws Exception {
         CharStream input;
 
-        input = CharStreams.fromString("fn:boolean#1");
+        input = CharStreams.fromString(
+                """
+
+declare namespace local;
+
+declare function local:is-simple-property-assignment($rule as node(propertyAssignment)) as boolean
+{
+};
+()
+"""
+        );
 
         AntlrQueryLexer lexer = new AntlrQueryLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -41,7 +51,7 @@ public final class ParseDebug {
         parser.addErrorListener(new DiagnosticErrorListener());
         parser.addErrorListener(ConsoleErrorListener.INSTANCE);
 
-        ParseTree tree = parser.expr();
+        ParseTree tree = parser.xquery();
 
         System.out.println(tree.toStringTree(parser));
 

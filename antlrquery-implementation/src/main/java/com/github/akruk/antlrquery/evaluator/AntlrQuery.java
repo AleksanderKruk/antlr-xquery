@@ -1,5 +1,11 @@
 package com.github.akruk.antlrquery.evaluator;
 
+import com.github.akruk.antlrquery.languageserver.DiagnosticMessageCreator;
+import com.github.akruk.antlrquery.namespaceresolver.NamespaceResolver;
+import com.github.akruk.antlrquery.semanticanalyzer.DiagnosticError;
+import com.github.akruk.antlrquery.semanticanalyzer.visitors.*;
+import com.github.akruk.antlrquery.typesystem.factories.CardinalityFactory;
+import com.github.akruk.antlrquery.typesystem.factories.defaults.MemoizedCardinalityFactory;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -9,6 +15,7 @@ import org.antlr.v4.runtime.CharStreams;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -25,11 +32,6 @@ import com.github.akruk.antlrquery.semanticanalyzer.ModuleManager;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticcontext.AntlrQuerySemanticContextManager;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.SemanticFunctionSets;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.SemanticSymbolManager;
-import com.github.akruk.antlrquery.semanticanalyzer.visitors.AntlrQuerySemanticAnalyzer;
-import com.github.akruk.antlrquery.semanticanalyzer.visitors.CardinalityVisitor;
-import com.github.akruk.antlrquery.semanticanalyzer.visitors.ItemTypeVisitor;
-import com.github.akruk.antlrquery.semanticanalyzer.visitors.TypeVisitor;
-import com.github.akruk.antlrquery.typesystem.factories.defaults.BaseCardinalityFactory;
 import com.github.akruk.antlrquery.typesystem.factories.defaults.MemoizedTypeFactory;
 import com.github.akruk.antlrquery.typesystem.factories.defaults.AntlrQueryNamedTypeSets;
 import com.github.akruk.antlrquery.typesystem.types.AntlrQuerySequenceType;
@@ -91,9 +93,10 @@ public final class AntlrQuery {
         final GrammarManager grammarManager = new GrammarManager(Set.of());
         final AntlrQuerySemanticContextManager contextManager = new AntlrQuerySemanticContextManager(typeFactory);
         final Map<String, AntlrQuerySequenceType> varTypes = vars.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e->e.getValue().type));
-        final BaseCardinalityFactory cardinalityFactory = new BaseCardinalityFactory();
+        final CardinalityFactory cardinalityFactory = new MemoizedCardinalityFactory();
+        final NumericRangeVisitor numericRangeVisitor = new NumericRangeVisitor();
         final CardinalityVisitor cardinalityVisitor = new CardinalityVisitor(cardinalityFactory);
-        final ItemTypeVisitor itemTypeVisitor = new ItemTypeVisitor(typeFactory);
+        final ItemTypeVisitor itemTypeVisitor = new ItemTypeVisitor(cardinalityVisitor, numericRangeVisitor, typeFactory);
         final TypeVisitor typeVisitor = new TypeVisitor(typeFactory, cardinalityVisitor, itemTypeVisitor);
         final AntlrQuerySemanticAnalyzer analyzer = new AntlrQuerySemanticAnalyzer(
             parser,
@@ -114,11 +117,18 @@ public final class AntlrQuery {
             cardinalityFactory,
             cardinalityVisitor,
                 typeVisitor,
-            itemTypeVisitor
+            itemTypeVisitor,
+                new NamespaceResolver("fn", "", "", "", "")
             );
         analyzer.visit(xqueryTree);
         if (!analyzer.getErrors().isEmpty())
-            throw new IllegalStateException("Errors in semantic analysis");
+        {
+
+            DiagnosticMessageCreator c = new DiagnosticMessageCreator();
+            throw new IllegalStateException("Errors in semantic analysis: "
+                    + analyzer.getErrors().stream().map(c::create).map(Objects::toString).collect(Collectors.joining("\n")));
+
+        }
 
         final AntlrQueryEvaluator visitor = new AntlrQueryEvaluator(
             tree, parser, valueFactory, analyzer, typeFactory, moduleManager, vars, typeVisitor);
@@ -166,9 +176,11 @@ public final class AntlrQuery {
         final ModuleManager moduleManager = new ModuleManager(Set.of());
         final GrammarManager grammarManager = new GrammarManager(Set.of());
         final AntlrQuerySemanticContextManager contextManager = new AntlrQuerySemanticContextManager(typeFactory);
-        final BaseCardinalityFactory cardinalityFactory = new BaseCardinalityFactory();
+        final MemoizedCardinalityFactory cardinalityFactory = new MemoizedCardinalityFactory();
         final CardinalityVisitor cardinalityVisitor = new CardinalityVisitor(cardinalityFactory);
-        final ItemTypeVisitor itemTypeVisitor = new ItemTypeVisitor(typeFactory);
+        final NumericRangeVisitor numericRangeVisitor = new NumericRangeVisitor();
+        final ItemTypeVisitor itemTypeVisitor = new ItemTypeVisitor(
+                cardinalityVisitor, numericRangeVisitor, typeFactory);
         final TypeVisitor typeVisitor = new TypeVisitor(typeFactory, cardinalityVisitor, itemTypeVisitor);
         final AntlrQuerySemanticAnalyzer analyzer = new AntlrQuerySemanticAnalyzer(
             parser,
@@ -189,7 +201,8 @@ public final class AntlrQuery {
             cardinalityFactory,
             cardinalityVisitor,
                 typeVisitor,
-            itemTypeVisitor
+            itemTypeVisitor,
+            new NamespaceResolver("fn", "", "", "", "")
             );
 
 

@@ -16,7 +16,7 @@ import com.github.akruk.antlrquery.semanticanalyzer.DiagnosticWarning;
 import com.github.akruk.antlrquery.semanticanalyzer.GrammarManager.GrammarImportResult;
 import com.github.akruk.antlrquery.semanticanalyzer.ModuleManager.ImportResult;
 import com.github.akruk.antlrquery.semanticanalyzer.ModuleManager.ResolvingStatus;
-import com.github.akruk.antlrquery.typesystem.typeoperations.SequencetypePathOperator.GrammarStatus;
+import com.github.akruk.antlrquery.typesystem.typeoperations.SequenceTypePathOperator.GrammarStatus;
 
 public class DiagnosticMessageCreator {
     public String create(final DiagnosticError error) {
@@ -191,13 +191,21 @@ public class DiagnosticMessageCreator {
             }
             case ITEM_DECLARATION__ALREADY_REGISTERED_SAME -> {
             }
-            case LOOKUP__ARRAY_INVALID_KEY -> {
+            case LOOKUP__INVALID_ARRAY_KEY__WRONG_TYPE -> {
                 final var targetType = error.data().get(0);
                 final var keySpecifierType = error.data().get(1);
                 return "Key type for lookup expression on " + targetType + " must be of type number*"
                     + "\n\ttarget type: " + targetType
                     + "\n\t   key type: " + keySpecifierType
                     ;
+            }
+            case LOOKUP__INVALID_ARRAY_KEY__INDEX_OUTSIDE_OF_RANGE -> {
+                final var givenKey = error.data().get(0);
+                final var expectedKey = error.data().get(1);
+                return "Key type for lookup expression on " + givenKey + " is outside of index range"
+                        + "\n\t   given key: " + givenKey
+                        + "\n\texpected key: " + expectedKey
+                        ;
             }
             case LOOKUP__ARRAY_OR_MAP_INVALID_KEY -> {
                 final var targetType = error.data().get(0);
@@ -228,7 +236,7 @@ public class DiagnosticMessageCreator {
             case LOOKUP__INVALID_TARGET -> {
                 return String.format("Left side of lookup expression '<left> ? ...' must be map(*)* or array(*)*\n\treceived: %s", error.data().get(0));
             }
-            case LOOKUP__MAP_INVALID_KEY -> {
+            case LOOKUP__MAP_INVALID_KEY__WRONG_TYPE -> {
             }
             case MAPPING__EMPTY_SEQUENCE -> {
                 return "Mapping empty sequence";

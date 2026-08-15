@@ -5,6 +5,7 @@ import com.github.akruk.antlrgrammar.ANTLRv4ParserBaseVisitor;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import com.github.akruk.antlrgrammar.ANTLRv4Parser.AltListContext;
@@ -50,12 +51,12 @@ class QualifiedCardinalityAnalyzer
 
     private Map<QualifiedName, Map<QualifiedName, Cardinality>> getMapping(final Set<QualifiedName> nodeNames) {
         final var map = new HashMap<QualifiedName, Map<QualifiedName, Cardinality>>(nodeNames.size(), 1);
-        for (final var nodename : nodeNames) {
+        for (final var nodeName : nodeNames) {
             final var subhashmap =  new HashMap<QualifiedName, Cardinality>(nodeNames.size(), 1);
             for (final var sub : nodeNames) {
                 subhashmap.put(sub, Cardinality.ZERO);
             }
-            map.put(nodename, subhashmap);
+            map.put(nodeName, subhashmap);
         }
         return map;
     }
@@ -72,7 +73,7 @@ class QualifiedCardinalityAnalyzer
     @Nullable
     Cardinality visitedCardinality;
     @Override
-    public Map<QualifiedName, Map<QualifiedName, Cardinality>> visitEbnfSuffix(final EbnfSuffixContext ctx) {
+    public @Nullable Map<QualifiedName, Map<QualifiedName, Cardinality>> visitEbnfSuffix(final EbnfSuffixContext ctx) {
         if (ctx.STAR() != null)
             visitedCardinality = Cardinality.ZERO_OR_MORE;
         else if (ctx.PLUS() != null)
@@ -85,9 +86,9 @@ class QualifiedCardinalityAnalyzer
     }
 
 
-    QualifiedName currentRuleRef;
+    @Nullable QualifiedName currentRuleRef = null;
     @Override
-    public Map<QualifiedName, Map<QualifiedName, Cardinality>> visitLexerRuleSpec(LexerRuleSpecContext ctx) {
+    public @Nullable Map<QualifiedName, Map<QualifiedName, Cardinality>> visitLexerRuleSpec(LexerRuleSpecContext ctx) {
         currentRuleRef = new QualifiedName(addedNamespace, ctx.TOKEN_REF().getText());
         super.visitLexerRuleSpec(ctx);
         childrenMapping.put(currentRuleRef, currentSubMapping);
@@ -95,7 +96,7 @@ class QualifiedCardinalityAnalyzer
     }
 
     @Override
-    public Map<QualifiedName, Map<QualifiedName, Cardinality>> visitParserRuleSpec(final ParserRuleSpecContext ctx) {
+    public @Nullable Map<QualifiedName, Map<QualifiedName, Cardinality>> visitParserRuleSpec(final ParserRuleSpecContext ctx) {
         currentRuleRef = new QualifiedName("", ctx.RULE_REF().getText());
         super.visitParserRuleSpec(ctx);
         childrenMapping.put(currentRuleRef, currentSubMapping);
@@ -104,15 +105,15 @@ class QualifiedCardinalityAnalyzer
 
 
     @Override
-    public Map<QualifiedName, Map<QualifiedName, Cardinality>> visitLexerElement(LexerElementContext ctx) {
+    public @Nullable Map<QualifiedName, Map<QualifiedName, Cardinality>> visitLexerElement(LexerElementContext ctx) {
         if (ctx.actionBlock() != null)
             return null;
-        Cardinality declaredCardinality = null;
+        Cardinality declaredCardinality;
         if (ctx.ebnfSuffix() == null) {
             declaredCardinality = Cardinality.ONE;
         } else {
             ctx.ebnfSuffix().accept(this);
-            declaredCardinality = visitedCardinality;
+            declaredCardinality = Objects.requireNonNull(visitedCardinality);
         }
 
         if (ctx.lexerBlock() != null) {
@@ -128,25 +129,25 @@ class QualifiedCardinalityAnalyzer
         if (visitedRef == null)
             return null;
         // if (visitedRef == currentRu)
-        Cardinality current = currentSubMapping.get(visitedRef);
-        Cardinality merged = Cardinalities.sequenceMerge(declaredCardinality, current);
+        Cardinality current = Objects.requireNonNull(currentSubMapping).get(visitedRef);
+        Cardinality merged = Cardinalities.add(declaredCardinality, current);
         currentSubMapping.put(visitedRef, merged);
         return null;
     }
 
 
     @Override
-    public Map<QualifiedName, Map<QualifiedName, Cardinality>> visitElement(final ElementContext ctx) {
+    public @Nullable Map<QualifiedName, Map<QualifiedName, Cardinality>> visitElement(final ElementContext ctx) {
         if (ctx.actionBlock() != null)
             return null;
         if (ctx.ebnf() != null)
             return ctx.ebnf().accept(this);
-        Cardinality declaredCardinality = null;
+        Cardinality declaredCardinality;
         if (ctx.ebnfSuffix() == null) {
             declaredCardinality = Cardinality.ONE;
         } else {
             ctx.ebnfSuffix().accept(this);
-            declaredCardinality = visitedCardinality;
+            declaredCardinality = Objects.requireNonNull(visitedCardinality);
         }
 
         if (ctx.labeledElement() != null) {
@@ -164,55 +165,50 @@ class QualifiedCardinalityAnalyzer
         // if no ref visited then skipping
         if (visitedRef == null)
             return null;
-        Cardinality current = currentSubMapping.get(visitedRef);
-        Cardinality merged;
-        if (visitedRef.equals(currentRuleRef)) {
-            merged = Cardinalities.recursionMerge(declaredCardinality, current);
-        } else {
-            merged = Cardinalities.sequenceMerge(declaredCardinality, current);
-        }
+        Cardinality current = Objects.requireNonNull(currentSubMapping).get(visitedRef);
+        Cardinality merged = Cardinalities.add(declaredCardinality, current);
         currentSubMapping.put(visitedRef, merged);
         return null;
     }
 
 
     private void blockMergeSubMapping(Cardinality declaredCardinality) {
-        for (final var entry : currentSubMapping.entrySet()) {
+        for (final var entry : Objects.requireNonNull(currentSubMapping).entrySet()) {
             final QualifiedName ruleName = entry.getKey();
             final Cardinality currentCardinality = currentSubMapping.get(ruleName);
-            final Cardinality merged = Cardinalities.union(declaredCardinality, currentCardinality);
+            final Cardinality merged = Cardinalities.add(declaredCardinality, currentCardinality);
             currentSubMapping.put(ruleName, merged);
         }
     }
 
-    private void unionSubMapping(Map<QualifiedName, Cardinality> previous, Map<QualifiedName, Cardinality> currentSubMapping) {
+    private static void unionSubMapping(Map<QualifiedName, Cardinality> previous, Map<QualifiedName, Cardinality> currentSubMapping) {
         for (final var entry : previous.entrySet()) {
             final QualifiedName ruleName = entry.getKey();
             final Cardinality cardinality = entry.getValue();
             final Cardinality currentCardinality = currentSubMapping.get(ruleName);
             final Cardinality merged = Cardinalities.union(cardinality, currentCardinality);
-            
+
             currentSubMapping.put(ruleName, merged);
         }
     }
 
     @Override
-    public Map<QualifiedName, Map<QualifiedName, Cardinality>> visitEbnf(EbnfContext ctx) {
+    public @Nullable Map<QualifiedName, Map<QualifiedName, Cardinality>> visitEbnf(EbnfContext ctx) {
         if (ctx.blockSuffix() == null)
             visitedCardinality = Cardinality.ONE;
         else
             ctx.blockSuffix().accept(this);
 
         ctx.block().accept(this);
-        blockMergeSubMapping(visitedCardinality);
+        blockMergeSubMapping(Objects.requireNonNull(visitedCardinality));
         return null;
     }
 
 
     @Override
-    public Map<QualifiedName, Map<QualifiedName, Cardinality>> visitLexerAltList(LexerAltListContext ctx) {
+    public @Nullable Map<QualifiedName, Map<QualifiedName, Cardinality>> visitLexerAltList(LexerAltListContext ctx) {
         ctx.lexerAlt(0).accept(this);
-        var previous = currentSubMapping;
+        Map<QualifiedName, Cardinality> previous = Objects.requireNonNull(currentSubMapping);
         for (var alternative : ctx.lexerAlt().subList(1, ctx.lexerAlt().size())) {
             alternative.accept(this);
             unionSubMapping(previous, currentSubMapping);
@@ -222,9 +218,9 @@ class QualifiedCardinalityAnalyzer
     }
 
     @Override
-    public Map<QualifiedName, Map<QualifiedName, Cardinality>> visitAltList(AltListContext ctx) {
+    public @Nullable Map<QualifiedName, Map<QualifiedName, Cardinality>> visitAltList(AltListContext ctx) {
         ctx.alternative(0).accept(this);
-        var previous = currentSubMapping;
+        var previous = Objects.requireNonNull(currentSubMapping);
         for (var alternative : ctx.alternative().subList(1, ctx.alternative().size())) {
             alternative.accept(this);
             unionSubMapping(previous, currentSubMapping);
@@ -246,10 +242,10 @@ class QualifiedCardinalityAnalyzer
     }
 
 
-    QualifiedName visitedRef;
+    @Nullable QualifiedName visitedRef;
 
     @Override
-    public Map<QualifiedName, Map<QualifiedName, Cardinality>> visitTerminalDef(final TerminalDefContext ctx) {
+    public @Nullable Map<QualifiedName, Map<QualifiedName, Cardinality>> visitTerminalDef(final TerminalDefContext ctx) {
         if (ctx.TOKEN_REF() != null)
             visitedRef = new QualifiedName(addedNamespace, ctx.TOKEN_REF().getText());
         else
@@ -259,19 +255,19 @@ class QualifiedCardinalityAnalyzer
 
 
     @Override
-    public Map<QualifiedName, Map<QualifiedName, Cardinality>> visitRuleref(final RulerefContext ctx) {
+    public @Nullable Map<QualifiedName, Map<QualifiedName, Cardinality>> visitRuleref(final RulerefContext ctx) {
         visitedRef = new QualifiedName(addedNamespace, ctx.RULE_REF().getText());
         return null;
     }
 
     @Override
-    public Map<QualifiedName, Map<QualifiedName, Cardinality>> visitNotSet(final NotSetContext ctx) {
+    public @Nullable Map<QualifiedName, Map<QualifiedName, Cardinality>> visitNotSet(final NotSetContext ctx) {
         visitedRef = null;
         return null;
     }
 
     @Override
-    public Map<QualifiedName, Map<QualifiedName, Cardinality>> visitWildcard(final WildcardContext ctx) {
+    public @Nullable Map<QualifiedName, Map<QualifiedName, Cardinality>> visitWildcard(final WildcardContext ctx) {
         visitedRef = null;
         return null;
     }

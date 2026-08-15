@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Map;
 
 import com.github.akruk.antlrquery.AntlrQueryParser;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.framework.qual.DefaultQualifier;
 import org.eclipse.lsp4j.Location;
 
 import com.github.akruk.antlrquery.semanticanalyzer.EffectiveBooleanValueTrue;
@@ -15,18 +18,21 @@ import com.github.akruk.antlrquery.typesystem.typeoperations.Types;
 import com.github.akruk.antlrquery.typesystem.typeoperations.Types.EffectiveBooleanValueType;
 import com.github.akruk.antlrquery.typesystem.types.AntlrQuerySequenceType;
 
-
+@DefaultQualifier(NonNull.class)
 public class AntlrQuerySemanticScope {
-    public static record VariableInfo(String name, TypeInContext type, AntlrQueryParser.VarNameContext definition, Location location) {}
+    public record VariableInfo(
+            String name,
+            TypeInContext type,
+            AntlrQueryParser.@Nullable VarNameContext definition,
+            @Nullable Location location) {}
     final Map<String, VariableInfo> variables;
-    final List<TypeInContext> scopedTypes;
-    final Map<TypeInContext, List<Assumption>> scopedAssumptions;
-    final Map<TypeInContext, List<Implication>> scopedImplications;
-    final AntlrQuerySemanticContext context;
-    final Map<TypeInContext, TypeInContext> typeMapping;
-    final Map<TypeInContext, TypeInContext> ebvs;
-    final private AntlrQueryTypeFactory typeFactory;
-    private AntlrQuerySequenceType boolean_;
+    private final List<TypeInContext> scopedTypes;
+    private final Map<TypeInContext, List<Assumption>> scopedAssumptions;
+    private final Map<TypeInContext, List<Implication>> scopedImplications;
+    private final AntlrQuerySemanticContext context;
+    private final Map<TypeInContext, TypeInContext> typeMapping;
+    private final Map<TypeInContext, TypeInContext> ebvs;
+    private final AntlrQueryTypeFactory typeFactory;
 
     public AntlrQuerySemanticScope(
         AntlrQuerySemanticContext context,
@@ -85,8 +91,6 @@ public class AntlrQuerySemanticScope {
                 scopedImplications.computeIfAbsent(copiedType, _ -> new ArrayList<>()).add(remappedImplication);
             }
         }
-        boolean_ = typeFactory.boolean_();
-
     }
 
     public AntlrQuerySemanticScope(
@@ -102,25 +106,16 @@ public class AntlrQuerySemanticScope {
         this.context = context;
         this.ebvs = new HashMap<>();
         this.typeFactory = typeFactory;
-        boolean_ = typeFactory.boolean_();
     }
 
-    public Map<String, VariableInfo> getVariables() {
-        return variables;
-    }
-
-    public final record EntypingResult(VariableInfo oldVariable, VariableInfo newVariable){}
+    public record EntypingResult(
+            @Nullable VariableInfo oldVariable, // if . == null -> no previous variable
+            VariableInfo newVariable)
+    {}
 
     /**
      * Either creates variable with required type
      * or overrides existing variable
-     * @param variableName
-     * @param variableDefinition
-     * @param assignedType
-     * @return EntypingResult {
-     *      VariableInfo? oldVariable;
-     *      VariableInfo  newVariable;
-     * }
      */
     public EntypingResult entypeVariable(
         String variableName,
@@ -143,7 +138,7 @@ public class AntlrQuerySemanticScope {
                 scopedAssumptions.computeIfAbsent(copiedType, _ -> new ArrayList<>()).add(copiedAssumption);
             }
             if (variableDefinition == null) { // called by redeclaration or undeclared external variable
-                final VariableInfo variableInfo = variables.get(variableName);
+                final @Nullable VariableInfo variableInfo = variables.get(variableName);
                 if (variableInfo == null) { // new variable
                     VariableInfo newVariable = new VariableInfo(variableName, copiedType, null, null);
                     variables.put(variableName, newVariable);
@@ -223,8 +218,8 @@ public class AntlrQuerySemanticScope {
     public List<Assumption> resolveAssumptionsForType(TypeInContext type)
     {
         var resolvedType = resolveType(type);
-        var inscope = this.scopedAssumptions.get(resolvedType);
-        return inscope != null? inscope : List.of();
+        var inScope = this.scopedAssumptions.get(resolvedType);
+        return inScope != null? inScope : List.of();
     }
 
     public boolean hasVariable(String variableName)
@@ -234,7 +229,6 @@ public class AntlrQuerySemanticScope {
 
     public TypeInContext typeInContext(AntlrQuerySequenceType type)
     {
-        assert type != null;
         var tic = new TypeInContext(typeFactory, type, context, this);
         scopedTypes.add(tic);
         var ebvType = Types.effectiveBooleanValueType(typeFactory, type);
@@ -250,9 +244,6 @@ public class AntlrQuerySemanticScope {
     public boolean existsAssumption(Assumption matchingAssumption)
     {
         var assumptions = resolveAssumptionsForType(matchingAssumption.type);
-        if (assumptions == null) {
-            return false;
-        }
         for (var assumption : assumptions) {
             if (assumption.value.equals(matchingAssumption.value)) {
                 return true;
@@ -265,24 +256,18 @@ public class AntlrQuerySemanticScope {
         var resolvedType = resolveType(typeInContext);
         return switch (ebvType) {
             case ALWAYS_FALSE__EMPTY_SEQUENCE, ALWAYS_TRUE__NODE, NODE, NO_EBV ->
-            {
-                yield ebvs.computeIfAbsent(resolvedType, (_) -> typeInContext(typeFactory.boolean_()));
-            }
+                    ebvs.computeIfAbsent(resolvedType, (_) -> typeInContext(typeFactory.boolean_()));
             case ALWAYS_TRUE__NUMBER_STRING_BOOLEAN, NUMBER_STRING_BOOLEAN-> {
                 if (typeInContext.type.equals(typeFactory.boolean_())) {
                     yield resolvedType;
                 }
-                yield ebvs.computeIfAbsent(resolvedType, (_) -> typeInContext(boolean_));
+                yield ebvs.computeIfAbsent(resolvedType, (_) -> typeInContext(typeFactory.boolean_()));
             }
         };
     }
 
     public TypeInContext resolveEffectiveBooleanValue(TypeInContext type) {
         return resolveEffectiveBooleanValue(type, Types.effectiveBooleanValueType(typeFactory, type.type));
-    }
-
-    public boolean namespaceExists(String namespace) {
-        return variables.containsKey(namespace);
     }
 
 }

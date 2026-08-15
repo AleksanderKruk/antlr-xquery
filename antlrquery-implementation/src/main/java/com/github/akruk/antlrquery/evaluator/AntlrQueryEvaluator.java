@@ -2356,8 +2356,8 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         if (ctx.INSTANCE() == null)
             return visitTreatExpr(ctx.treatExpr());
         final var visited = visitTreatExpr(ctx.treatExpr());
-        final var expectedType = ctx.type().accept(this.semanticAnalyzer);
-        final boolean result = Types.isSubtype(typeFactory, visited.type, expectedType.type);
+        final var expectedType = ctx.type().accept(typeVisitor);
+        final boolean result = Types.isSubtype(typeFactory, visited.type, expectedType);
         return valueFactory.bool(result);
     }
 
@@ -2366,9 +2366,9 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     {
         if (ctx.TREAT() == null)
             return visitCastableExpr(ctx.castableExpr());
-        final var type = ctx.type().accept(semanticAnalyzer);
+        final var type = ctx.type().accept(typeVisitor);
         final var expr = visitCastableExpr(ctx.castableExpr());
-        if (!Types.isSubtype(typeFactory, expr.type, type.type)) {
+        if (!Types.isSubtype(typeFactory, expr.type, type)) {
             return valueFactory.error(AntlrQueryError.TreatAsTypeMismatch,
                 "Type: " + expr.type + " cannot be treated as " + type);
         }

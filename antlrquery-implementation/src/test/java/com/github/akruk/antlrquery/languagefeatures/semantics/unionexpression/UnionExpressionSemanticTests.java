@@ -19,11 +19,11 @@ public class UnionExpressionSemanticTests extends SemanticTestsBase {
                 """, typeFactory.zeroOrMore(typeFactory.itemAnyNode()));
 
         assertType("""
-                    let $x as element(a)* := (),
-                        $y as element(b)* := (),
-                        $z as element(c)* := ()
+                    let $x as <a>* := (),
+                        $y as <b>* := (),
+                        $z as <c>* := ()
                     return $x | $y | $z
-                """, typeFactory.zeroOrMore(typeFactory.itemNodesFromGrammar("", Set.of(
+                """, typeFactory.zeroOrMore(typeFactory.itemRulesFromGrammar("", Set.of(
                     new QualifiedName("", "a"),
                     new QualifiedName("", "b"),
                     new QualifiedName("", "c")
@@ -36,7 +36,7 @@ public class UnionExpressionSemanticTests extends SemanticTestsBase {
     }
 
     @Test
-    public void efb() {
+    public void ebv() {
         assertType("""
                     let $x as number? := 3
                     return if ($x)

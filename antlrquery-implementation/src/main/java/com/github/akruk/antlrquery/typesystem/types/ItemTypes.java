@@ -36,7 +36,7 @@ public final class ItemTypes {
     public static AntlrQueryItemType union(AntlrQueryTypeFactory typeFactory, AntlrQueryItemType@ArrayLenRange(from = 1)... itemTypes) {
         assert itemTypes.length != 0;
         var merger = new ItemTypeUnion(typeFactory);
-        return Arrays.stream(itemTypes).reduce(merger::union).get();
+        return merger.union(itemTypes);
     }
 
     public static String stringify(final ConcreteItemType item) {
@@ -174,7 +174,7 @@ public final class ItemTypes {
         if (t.range().equals(NumericRange.FULL)) {
             return "number";
         }
-        return "number" + "(" + Ranges.stringify(t.range()) + ")";
+        return Ranges.stringify(t.range());
     }
 
     public static String stringify(final  AntlrQueryItemType item) {
@@ -188,6 +188,7 @@ public final class ItemTypes {
             case AnyItemType() -> "item()";
             case NothingType() -> "∅";
             case NeverType() -> "⊥";
+            case NamedItemType namedItemType -> namedItemType.reference().toString();
         };
     }
 
@@ -202,6 +203,7 @@ public final class ItemTypes {
             case AnyItemType() -> "item()";
             case NothingType() -> "∅";
             case NeverType() -> "⊥";
+            case NamedItemType namedItemType -> namedItemType.reference().toString();
         };
     }
 
@@ -210,11 +212,17 @@ public final class ItemTypes {
         return merger.isSubtype(tested, itemAnyItem);
     }
 
-    public static @Nullable AntlrQueryItemType intersection(AntlrQueryTypeFactory typeFactory, AntlrQueryItemType@ArrayLenRange(from = 1)... array) {
+    public static @Nullable AntlrQueryItemType intersect(AntlrQueryTypeFactory typeFactory, AntlrQueryItemType@ArrayLenRange(from = 1)... array) {
         return ItemTypeIntersection.intersection(typeFactory, array);
     }
 
     public static boolean areValueComparable(AntlrQueryItemType type, AntlrQueryItemType type2) {
+        boolean lhsEmpty = type instanceof NothingType;
+        boolean rhsEmpty = type2 instanceof NothingType;
+        if (lhsEmpty && rhsEmpty) return true;
+        if (lhsEmpty) return type2 instanceof AtomicType;
+        if (rhsEmpty) return type instanceof AtomicType;
+
         if (!(type instanceof final AtomicType a1) || !(type2 instanceof AtomicType a2)) {
             return false;
         }

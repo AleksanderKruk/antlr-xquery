@@ -3,9 +3,12 @@ package com.github.akruk.antlrquery.typesystem.types.itemtypes;
 import com.github.akruk.antlrquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrquery.typesystem.types.ItemTypes;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.framework.qual.DefaultQualifier;
 
+import java.util.Objects;
 import java.util.Set;
 
+@DefaultQualifier(NonNull.class)
 sealed public interface TreeNodeType
     extends TreeLike
     permits
@@ -17,7 +20,7 @@ sealed public interface TreeNodeType
             implements TreeNodeType
     {
         @Override
-        public @NonNull String toString() {
+        public String toString() {
             return ItemTypes.stringify(this);
         }
 
@@ -31,7 +34,7 @@ sealed public interface TreeNodeType
             implements TreeNodeType, GrammarConstrained
     {
         @Override
-        public @NonNull String toString() {
+        public String toString() {
             return ItemTypes.stringify(this);
         }
 
@@ -48,16 +51,23 @@ sealed public interface TreeNodeType
             Set<NamespaceResolver.QualifiedName> elementNames
     ) implements TreeNodeType, GrammarConstrained, NamesConstrained
     {
+        public NodeType(
+                String grammar,
+                Set<NamespaceResolver.QualifiedName> elementNames
+        ) {
+            this.grammar = Objects.requireNonNull(grammar);
+            this.elementNames = Objects.requireNonNull(elementNames);
+        }
         @Override
-        public @NonNull String toString() {
+        public String toString() {
             return ItemTypes.stringify(this);
         }
 
         @Override
         public boolean equals(Object obj) {
             return obj instanceof NodeType(String grammar1, Set<NamespaceResolver.QualifiedName> names)
-                    && grammar1.equals(this.grammar)
-                    && names.equals(this.elementNames);
+                    && Objects.equals(grammar1, this.grammar)
+                    && Objects.equals(names, this.elementNames);
         }
     }
 }

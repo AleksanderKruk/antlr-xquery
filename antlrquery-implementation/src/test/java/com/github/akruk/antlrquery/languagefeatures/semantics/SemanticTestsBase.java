@@ -1,10 +1,14 @@
 package com.github.akruk.antlrquery.languagefeatures.semantics;
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.github.akruk.antlrquery.namespaceresolver.NamespaceResolver;
+import com.github.akruk.antlrquery.semanticanalyzer.*;
+import com.github.akruk.antlrquery.semanticanalyzer.visitors.*;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -19,15 +23,9 @@ import com.github.akruk.antlrquery.AntlrQueryParser;
 import com.github.akruk.antlrquery.AxisVisitor;
 import com.github.akruk.antlrquery.evaluator.values.factories.defaults.AntlrQueryMemoizedValueFactory;
 import com.github.akruk.antlrquery.languageserver.DiagnosticMessageCreator;
-import com.github.akruk.antlrquery.semanticanalyzer.GrammarManager;
-import com.github.akruk.antlrquery.semanticanalyzer.ModuleManager;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticcontext.AntlrQuerySemanticContextManager;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.SemanticFunctionSets;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.SemanticSymbolManager;
-import com.github.akruk.antlrquery.semanticanalyzer.visitors.AntlrQuerySemanticAnalyzer;
-import com.github.akruk.antlrquery.semanticanalyzer.visitors.CardinalityVisitor;
-import com.github.akruk.antlrquery.semanticanalyzer.visitors.ItemTypeVisitor;
-import com.github.akruk.antlrquery.semanticanalyzer.visitors.TypeVisitor;
 import com.github.akruk.antlrquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrquery.typesystem.factories.defaults.MemoizedCardinalityFactory;
 import com.github.akruk.antlrquery.typesystem.factories.defaults.MemoizedTypeFactory;
@@ -47,8 +45,8 @@ public class SemanticTestsBase {
         final CharStream characters = CharStreams.fromString(text);
         final Lexer xqueryLexer = new AntlrQueryLexer(characters);
         final CommonTokenStream xqueryTokens = new CommonTokenStream(xqueryLexer);
-        final AntlrQueryParser xqueryParser = new AntlrQueryParser(xqueryTokens);
-        xqueryParser.addErrorListener(new BaseErrorListener() {
+        final AntlrQueryParser antlrQueryParser = new AntlrQueryParser(xqueryTokens);
+        antlrQueryParser.addErrorListener(new BaseErrorListener() {
             @Override
             public void syntaxError(
                 Recognizer<?, ?> recognizer,
@@ -60,15 +58,16 @@ public class SemanticTestsBase {
                 throw e;
             }
         });
-        final ParseTree xqueryTree = xqueryParser.xquery();
+        final ParseTree xqueryTree = antlrQueryParser.xquery();
         final var contextManager = new AntlrQuerySemanticContextManager(typeFactory);
         final SemanticSymbolManager caller = new SemanticSymbolManager(typeFactory, contextManager, SemanticFunctionSets.ALL(typeFactory));
         final var memoizedFactory = new MemoizedCardinalityFactory();
-        CardinalityVisitor cardinalityVisitor = new CardinalityVisitor(memoizedFactory);
-        ItemTypeVisitor itemTypeVisitor = new ItemTypeVisitor(typeFactory);
-        TypeVisitor typeVisitor = new TypeVisitor(typeFactory, cardinalityVisitor, itemTypeVisitor);
+        final NumericRangeVisitor numericRangeVisitor = new NumericRangeVisitor();
+        final CardinalityVisitor cardinalityVisitor = new CardinalityVisitor(memoizedFactory);
+        final ItemTypeVisitor itemTypeVisitor = new ItemTypeVisitor(cardinalityVisitor, numericRangeVisitor, typeFactory);
+        final TypeVisitor typeVisitor = new TypeVisitor(typeFactory, cardinalityVisitor, itemTypeVisitor);
         final AntlrQuerySemanticAnalyzer analyzer = new AntlrQuerySemanticAnalyzer(
-                null,
+                antlrQueryParser,
                 typeFactory,
                 new AntlrQueryMemoizedValueFactory(typeFactory),
                 caller,
@@ -82,7 +81,8 @@ public class SemanticTestsBase {
                 memoizedFactory,
                 cardinalityVisitor,
                 typeVisitor,
-                itemTypeVisitor
+                itemTypeVisitor,
+        new NamespaceResolver("fn", "", "", "", "")
                 );
         final var lastVisitedType = analyzer.visit(xqueryTree);
         if (lastVisitedType == null) {
@@ -108,6 +108,16 @@ public class SemanticTestsBase {
 
     protected void assertErrors(final AnalysisResult analyzer) {
         assertFalse(analyzer.analyzer.getErrors().isEmpty(), "Found no errors");
+    }
+
+    protected void assertDiagnostics(
+            final String xquery,
+            final List<ErrorType> errors,
+            final List<WarningType> warnings)
+    {
+        final var analysisResult = analyze(xquery);
+        assertEquals(errors, analysisResult.analyzer.getErrors().stream().map(DiagnosticError::type).toList());
+        assertEquals(warnings, analysisResult.analyzer.getWarnings().stream().map(DiagnosticWarning::type).toList());
     }
 
     protected void assertType(final AnalysisResult result, final AntlrQuerySequenceType expectedType) {

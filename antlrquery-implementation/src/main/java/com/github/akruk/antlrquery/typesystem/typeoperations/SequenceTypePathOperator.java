@@ -1,11 +1,6 @@
 package com.github.akruk.antlrquery.typesystem.typeoperations;
 
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.*;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
@@ -21,14 +16,15 @@ import com.github.akruk.antlrquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Cardinalities;
 import com.github.akruk.antlrquery.typesystem.types.AntlrQuerySequenceType;
 import com.github.akruk.antlrquery.typesystem.types.Cardinality;
+import org.checkerframework.framework.qual.DefaultQualifier;
 
-
-public class SequencetypePathOperator {
+@DefaultQualifier(NonNull.class)
+public class SequenceTypePathOperator {
     private final AntlrQueryTypeFactory typeFactory;
 	private final SemanticSymbolManager symbolManager;
     private final AntlrQuerySequenceType zeroOrMoreNodes;
     
-    public SequencetypePathOperator(
+    public SequenceTypePathOperator(
         final AntlrQueryTypeFactory typeFactory,
         final SemanticSymbolManager symbolManager
         )
@@ -78,10 +74,10 @@ public class SequencetypePathOperator {
      * @return {@link PathOperatorResult}
      */
     public PathOperatorResult pathOperator(
-        final @NonNull AntlrQuerySequenceType type,
-        final @NonNull AntlrQueryAxis axis,
+        final AntlrQuerySequenceType type,
+        final AntlrQueryAxis axis,
         final @Nullable List<String> axisElementNames,
-        final @NonNull NamespaceResolver namespaceResolver
+        final NamespaceResolver namespaceResolver
         )
     {
         final ValidateNamesResult validatedNames = resolveAndValidateNames(axisElementNames != null? axisElementNames: List.of(), namespaceResolver);
@@ -120,9 +116,9 @@ public class SequencetypePathOperator {
             throw new IllegalStateException("Checks above should have prevented types other than TreeNodeType");
         }
         final GrammarAndElement grammarAndElementNames = getGrammarAndElementNames(typeFactory, nodeType);
-        final String inputGrammar = grammarAndElementNames.grammar;
+        final String inputGrammar = Objects.requireNonNullElse(grammarAndElementNames.grammar, "");
         final Map<String, GrammarStatus> inputGrammars = Map.of(inputGrammar, getGrammarStatus(inputGrammar));
-        final Set<QualifiedName> elementNames = grammarAndElementNames.elementNames;
+        final @Nullable Set<QualifiedName> elementNames = grammarAndElementNames.elementNames;
 
         final boolean usesWildcard = axisElementNames == null;
         final boolean isSelf = axis == AntlrQueryAxis.SELF;
@@ -131,7 +127,7 @@ public class SequencetypePathOperator {
         final CardinalityResult resultingCardinality = getResultingCardinality(axis, type, usesWildcard);
         final AntlrQuerySequenceType resultingType = typeFactory.sequence(resultingItemType.itemType, resultingCardinality.cardinality);
 
-        final QualifiedGrammarAnalysisResult analysis = symbolManager.getGrammar(inputGrammar);
+        final @Nullable QualifiedGrammarAnalysisResult analysis = symbolManager.getGrammar(inputGrammar);
         if (analysis == null) {
             return new PathOperatorResult(
                     InputStatus.OK, resultingType, inputGrammars,
@@ -208,7 +204,7 @@ public class SequencetypePathOperator {
         final Cardinality axisFactor = axisToCardinality.get(axis);
         final Cardinality axisCardinality = Cardinalities.multiply(type.cardinality(), axisFactor);
         final Cardinality selfCardinalityMultipliedByFactor = Cardinalities.multiply(type.cardinality(), axisToSelfFactor.get(axis));
-        final Cardinality finalCardinality = Cardinalities.sequenceMerge(axisCardinality, selfCardinalityMultipliedByFactor);
+        final Cardinality finalCardinality = Cardinalities.add(axisCardinality, selfCardinalityMultipliedByFactor);
         final Cardinality optionalityFactor = usesWildcards? finalCardinality : Cardinalities.optionalize(finalCardinality);
 
         return new CardinalityResult(optionalityFactor);
@@ -301,7 +297,7 @@ public class SequencetypePathOperator {
                 } else {
                     possibleNames.add(pathElementName);
                 }
-                resultingCardinality = Cardinalities.sequenceMerge(resultingCardinality, pathElementCardinality);
+                resultingCardinality = Cardinalities.add(resultingCardinality, pathElementCardinality);
             }
         }
         return new AnalyzedAxisResult(resultingCardinality, possibleNames, impossibleNames);
@@ -326,7 +322,7 @@ public class SequencetypePathOperator {
                 {
                     possibleNames.add(pathElementName);
                 }
-                resultingCardinality = Cardinalities.sequenceMerge(resultingCardinality, pathElementCardinality);
+                resultingCardinality = Cardinalities.add(resultingCardinality, pathElementCardinality);
 
             }
         }
@@ -363,27 +359,27 @@ public class SequencetypePathOperator {
     
     EnumMap<AntlrQueryAxis, Cardinality> axisToSelfFactor = new EnumMap<>(AntlrQueryAxis.class);
     {
-        axisToCardinality.put(AntlrQueryAxis.ANCESTOR, Cardinality.ZERO);
-        axisToCardinality.put(AntlrQueryAxis.CHILD, Cardinality.ZERO);
-        axisToCardinality.put(AntlrQueryAxis.DESCENDANT, Cardinality.ZERO);
-        axisToCardinality.put(AntlrQueryAxis.FOLLOWING, Cardinality.ZERO);
-        axisToCardinality.put(AntlrQueryAxis.FOLLOWING_SIBLING, Cardinality.ZERO);
-        axisToCardinality.put(AntlrQueryAxis.PRECEDING, Cardinality.ZERO);
-        axisToCardinality.put(AntlrQueryAxis.PRECEDING_SIBLING, Cardinality.ZERO);
+        axisToSelfFactor.put(AntlrQueryAxis.ANCESTOR, Cardinality.ZERO);
+        axisToSelfFactor.put(AntlrQueryAxis.CHILD, Cardinality.ZERO);
+        axisToSelfFactor.put(AntlrQueryAxis.DESCENDANT, Cardinality.ZERO);
+        axisToSelfFactor.put(AntlrQueryAxis.FOLLOWING, Cardinality.ZERO);
+        axisToSelfFactor.put(AntlrQueryAxis.FOLLOWING_SIBLING, Cardinality.ZERO);
+        axisToSelfFactor.put(AntlrQueryAxis.PRECEDING, Cardinality.ZERO);
+        axisToSelfFactor.put(AntlrQueryAxis.PRECEDING_SIBLING, Cardinality.ZERO);
         
-        axisToCardinality.put(AntlrQueryAxis.ANCESTOR_OR_SELF, Cardinality.ONE);
-        axisToCardinality.put(AntlrQueryAxis.DESCENDANT_OR_SELF, Cardinality.ONE);
-        axisToCardinality.put(AntlrQueryAxis.FOLLOWING_OR_SELF, Cardinality.ONE);
-        axisToCardinality.put(AntlrQueryAxis.FOLLOWING_SIBLING_OR_SELF, Cardinality.ONE);
-        axisToCardinality.put(AntlrQueryAxis.PRECEDING_OR_SELF, Cardinality.ONE);
-        axisToCardinality.put(AntlrQueryAxis.PRECEDING_SIBLING_OR_SELF, Cardinality.ONE);
+        axisToSelfFactor.put(AntlrQueryAxis.ANCESTOR_OR_SELF, Cardinality.ONE);
+        axisToSelfFactor.put(AntlrQueryAxis.DESCENDANT_OR_SELF, Cardinality.ONE);
+        axisToSelfFactor.put(AntlrQueryAxis.FOLLOWING_OR_SELF, Cardinality.ONE);
+        axisToSelfFactor.put(AntlrQueryAxis.FOLLOWING_SIBLING_OR_SELF, Cardinality.ONE);
+        axisToSelfFactor.put(AntlrQueryAxis.PRECEDING_OR_SELF, Cardinality.ONE);
+        axisToSelfFactor.put(AntlrQueryAxis.PRECEDING_SIBLING_OR_SELF, Cardinality.ONE);
         
-        axisToCardinality.put(AntlrQueryAxis.PARENT, Cardinality.ZERO);
+        axisToSelfFactor.put(AntlrQueryAxis.PARENT, Cardinality.ZERO);
         
-        axisToCardinality.put(AntlrQueryAxis.SELF, Cardinality.ZERO); // SELF does not change cardinality, it returns the same as input
+        axisToSelfFactor.put(AntlrQueryAxis.SELF, Cardinality.ZERO); // SELF does not change cardinality, it returns the same as input
 
         for (AntlrQueryAxis axis : AntlrQueryAxis.values()) {
-            if (!axisToCardinality.containsKey(axis)) {
+            if (!axisToSelfFactor.containsKey(axis)) {
                 throw new IllegalStateException("Missing cardinality mapping for axis: " + axis);
             }
         }
@@ -392,7 +388,7 @@ public class SequencetypePathOperator {
     
     private GrammarStatus getGrammarStatus(final String grammar)
     {
-        if ("".equals(grammar)) {
+        if (grammar.isEmpty()) {
             return GrammarStatus.UNCHECKED;
         } else if (!symbolManager.grammarExists(grammar)) {
             return GrammarStatus.UNREGISTERED;

@@ -9,6 +9,7 @@ import com.github.akruk.antlrquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrquery.typesystem.types.AntlrQuerySequenceType;
 import com.github.akruk.antlrquery.typesystem.types.Cardinality;
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.AntlrQueryItemType;
+import com.github.akruk.antlrquery.typesystem.types.itemtypes.NamedItemType;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
@@ -27,15 +28,27 @@ import java.util.stream.Collectors;
 public class ItemTypeVisitor 
     extends AntlrQueryParserBaseVisitor<AntlrQueryItemType>
 {
+
+    private final CardinalityVisitor cardinalityVisitor;
+    private final NumericRangeVisitor numericRangeVisitor;
+    private final AntlrQueryTypeFactory typeFactory;
+    private NamespaceResolver namespaceResolver;
+
     private TypeVisitor typeVisitor;
-    private CardinalityVisitor cardinalityVisitor;
-    private NumericRangeVisitor numericRangeVisitor;
-    private AntlrQueryTypeFactory typeFactory;
-    public ItemTypeVisitor(AntlrQueryTypeFactory typeFactory) {
+
+    public ItemTypeVisitor(CardinalityVisitor cardinalityVisitor, NumericRangeVisitor numericRangeVisitor, AntlrQueryTypeFactory typeFactory) {
+        this.cardinalityVisitor = cardinalityVisitor;
+        this.numericRangeVisitor = numericRangeVisitor;
         this.typeFactory = typeFactory;
     }
 
+    public TypeVisitor getTypeVisitor() {
+        return typeVisitor;
+    }
 
+    public void setTypeVisitor(TypeVisitor typeVisitor) {
+        this.typeVisitor = typeVisitor;
+    }
 
     @Override
     public AntlrQueryItemType visitAnyItem(AnyItemContext ctx) {
@@ -61,6 +74,12 @@ public class ItemTypeVisitor
     @Override
     public AntlrQueryItemType visitNumericSet(NumericSetContext ctx) {
         return typeFactory.itemNumber(ctx.numericRange().accept(numericRangeVisitor));
+    }
+
+    @Override
+    public AntlrQueryItemType visitSimpleNumberType(SimpleNumberTypeContext ctx) {
+        var range = numericRangeVisitor.visitNumericRangeTerm(ctx.numericRangeTerm());
+        return typeFactory.itemNumber(range);
     }
 
     @Override
@@ -210,7 +229,6 @@ public class ItemTypeVisitor
         return typeFactory.itemAnyNodeFromGrammar(ctx.namespace().getText());
     }
 
-    NamespaceResolver resolver;
     @Override
     public AntlrQueryItemType visitQnameEnumeratedNodeType(QnameEnumeratedNodeTypeContext ctx) {
         return getItemChoiceTypeFromTreeElements(ctx.qname(), typeFactory::itemNodesFromGrammar);
@@ -232,8 +250,8 @@ public class ItemTypeVisitor
     )
     {
         var elementsMappedToGrammar = ctx.stream()
-                .map(Objects::toString)
-                .map(resolver::resolveElement)
+                .map(RuleContext::getText)
+                .map(namespaceResolver::resolveElement)
                 .collect(Collectors.groupingBy(NamespaceResolver.QualifiedName::namespace, Collectors.toSet()))
                 ;
         AntlrQueryItemType[] combinedTypes = new AntlrQueryItemType[elementsMappedToGrammar.size()];
@@ -282,7 +300,7 @@ public class ItemTypeVisitor
 
     @Override
     public AntlrQueryItemType visitSingleRuleReference(SingleRuleReferenceContext ctx) {
-        var qname = resolver.resolveElement(ctx.qname().getText());
+        var qname = namespaceResolver.resolveElement(ctx.qname().getText());
         return typeFactory.itemRuleReference(qname.namespace(), Set.of(qname));
     }
 
@@ -290,7 +308,7 @@ public class ItemTypeVisitor
     public AntlrQueryItemType visitEnumeratedRuleReference(EnumeratedRuleReferenceContext ctx) {
         var grammarsToElements = ctx.qname().stream()
                 .map(RuleContext::getText)
-                .map(resolver::resolveElement)
+                .map(namespaceResolver::resolveElement)
                 .collect(Collectors.groupingBy(NamespaceResolver.QualifiedName::namespace, Collectors.toUnmodifiableSet()));
 
         AntlrQueryItemType[] combinedTypes = new AntlrQueryItemType[grammarsToElements.size()];
@@ -309,7 +327,7 @@ public class ItemTypeVisitor
 
     @Override
     public AntlrQueryItemType visitEnumeratedRulesFromGrammarReference(EnumeratedRulesFromGrammarReferenceContext ctx) {
-        var p = ctx.anyName().stream().map(Objects::toString).map(resolver::resolveElement).collect(Collectors.toUnmodifiableSet());
+        var p = ctx.anyName().stream().map(Objects::toString).map(namespaceResolver::resolveElement).collect(Collectors.toUnmodifiableSet());
         return typeFactory.itemRuleReferencesFromGrammar(ctx.grammarName().getText(), p);
     }
 
@@ -318,12 +336,15 @@ public class ItemTypeVisitor
      public AntlrQueryItemType visitTypeName(final TypeNameContext ctx)
      {
          final var name = ctx.getText();
-         final var visitedQualifiedName = resolver.resolveType(name);
-         return typeFactory.guaranteedItemNamedType(visitedQualifiedName, new IllegalStateException());
+         final var typeName = namespaceResolver.resolveType(name);
+         return new NamedItemType(typeName);
      }
 
     @Override
-    public AntlrQueryItemType visitFromOperatorArrayType(FromOperatorArrayTypeContext ctx) {
+    public AntlrQueryItemType visitArrayTypeOperator(ArrayTypeOperatorContext ctx) {
+        if (ctx.arrayOperator().isEmpty()) {
+            return null;
+        }
         var sq = typeVisitor.visitTypePrimitive(ctx.typePrimitive());
         ArrayList<Cardinality> arrayCardinalities = new ArrayList<>(ctx.arrayOperator().size());
         for (var arrayOperator : ctx.arrayOperator()) {
@@ -342,5 +363,9 @@ public class ItemTypeVisitor
             itemType = typeFactory.itemArray(typeFactory.one(itemType), c);
         }
         return itemType;
+    }
+
+    public void setNamespaceResolver(NamespaceResolver resolver) {
+        this.namespaceResolver = resolver;
     }
 }

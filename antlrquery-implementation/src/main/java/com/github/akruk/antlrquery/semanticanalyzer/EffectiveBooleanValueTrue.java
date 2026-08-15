@@ -6,6 +6,7 @@ import com.github.akruk.antlrquery.semanticanalyzer.semanticcontext.Implication;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticcontext.ValueImplication;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticcontext.AntlrQuerySemanticContext;
 import com.github.akruk.antlrquery.typesystem.factories.AntlrQueryTypeFactory;
+import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Cardinalities;
 import com.github.akruk.antlrquery.typesystem.types.Cardinality;
 import com.github.akruk.antlrquery.typesystem.types.TypeInContext;
 
@@ -42,14 +43,12 @@ public class EffectiveBooleanValueTrue extends ValueImplication<Boolean> {
         }
         var variantNodes = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
         if (changedType.isSubtypeOf(variantNodes)) {
-            if (changedType.type.cardinality() == Cardinality.ZERO_OR_MORE) {
-                changedType.type = typeFactory.oneOrMore(changedType.type.itemType());
-            } else if (changedType.type.cardinality() == Cardinality.ZERO_OR_ONE) {
-                changedType.type = typeFactory.one(changedType.type.itemType());
-            } else {
-                changedType.type = changedType.type;
+            var newCardinality = Cardinalities.subtract(changedType.type.cardinality(), Cardinality.ZERO);
+            if (newCardinality == null) {
+                changedType.type = typeFactory.emptySequence();
+                return;
             }
-            return;
+            changedType.type = typeFactory.sequence(changedType.type.itemType(), newCardinality);
         }
         return;
     }

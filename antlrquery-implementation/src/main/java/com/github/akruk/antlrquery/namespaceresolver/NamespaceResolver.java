@@ -1,16 +1,18 @@
 package com.github.akruk.antlrquery.namespaceresolver;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.framework.qual.DefaultQualifier;
 
 import java.util.regex.Pattern;
 
+@DefaultQualifier(NonNull.class)
 public class NamespaceResolver {
     public record QualifiedName(String namespace, String name)
             implements Comparable<QualifiedName>
     {
         @Override
-        public @NonNull String toString() {
-            if (namespace == null || namespace.isEmpty()) {
+        public String toString() {
+            if (namespace.isEmpty()) {
                 return name;
             } else {
                 return namespace + ":" + name;
@@ -19,10 +21,7 @@ public class NamespaceResolver {
 
         @Override
         public int compareTo(QualifiedName o) {
-            String thisNamespace = (namespace == null) ? "" : namespace;
-            String otherNamespace = (o.namespace == null) ? "" : o.namespace;
-
-            int cmp = thisNamespace.compareTo(otherNamespace);
+            int cmp = namespace.compareTo(o.namespace);
             if (cmp != 0) {
                 return cmp;
             }

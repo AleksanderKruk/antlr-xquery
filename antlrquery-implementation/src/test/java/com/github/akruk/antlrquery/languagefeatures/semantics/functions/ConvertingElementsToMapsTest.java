@@ -18,7 +18,7 @@ public class ConvertingElementsToMapsTest extends SemanticTestsBase {
     @Test
     public void elementToMapPlan_withElements() {
         assertType(
-            "let $x as element(a)* := () return fn:element-to-map-plan($x)",
+            "let $x as node(a)* := () return fn:element-to-map-plan($x)",
             typeFactory.map(typeFactory.itemString(), typeFactory.anyMap())
         );
     }
@@ -46,7 +46,7 @@ public class ConvertingElementsToMapsTest extends SemanticTestsBase {
     @Test
     public void elementToMap_withElement() {
         assertType(
-            "let $x as element(x)? := () return fn:element-to-map($x)",
+            "let $x as <x>? := () return fn:element-to-map($x)",
             typeFactory.zeroOrOne(typeFactory.itemMap(typeFactory.itemString(), typeFactory.zeroOrOne(typeFactory.itemAnyItem())))
         );
     }

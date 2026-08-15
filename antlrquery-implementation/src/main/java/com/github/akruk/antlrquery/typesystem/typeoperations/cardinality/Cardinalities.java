@@ -116,113 +116,95 @@ public final class Cardinalities {
      */
     public static @Nullable Cardinality subtract(
             final Cardinality left,
-            final Cardinality... right)
-    {
+            final Cardinality... right) {
         final Cardinality rhs = union(right);
 
         final Event[] a = left.events();
         final Event[] b = rhs.events();
 
-        if (a.length == 0)
-            return null;
-
-        if (b.length == 0)
-            return left;
+        if (a.length == 0) return null;
+        if (b.length == 0) return left;
 
         final List<Event> out = new ArrayList<>();
-
-        int ia = 0;
-        int ib = 0;
-
-        int leftActive = 0;
-        int rightActive = 0;
-
+        int ia = 0, ib = 0;
+        int leftActive = 0, rightActive = 0;
         Event segmentStart = null;
 
         while (ia < a.length || ib < b.length) {
-
-            // Determine next sweep value
             final CardinalityValue value;
-
-            if (ia == a.length) // no 'a' values remaining
+            if (ia == a.length) {
                 value = b[ib].value();
-            else if (ib == b.length) // no 'b' values remaining
+            } else if (ib == b.length) {
                 value = a[ia].value();
-            else
-                value = a[ia].value().compareTo(b[ib].value()) <= 0
-                        ? a[ia].value()
-                        : b[ib].value();
+            } else {
+                value = a[ia].value().compareTo(b[ib].value()) <= 0 ? a[ia].value() : b[ib].value();
+            }
 
-            int leftStarts = 0;
-            int leftEnds = 0;
-            int rightStarts = 0;
-            int rightEnds = 0;
+            int leftStarts = 0, leftEnds = 0;
+            int rightStarts = 0, rightEnds = 0;
 
-            // Collect left events at this value
             while (ia < a.length && a[ia].value().compareTo(value) == 0) {
-                if (a[ia].type() == Cardinality.Type.START)
-                    leftStarts++;
-                else
-                    leftEnds++;
+                if (a[ia].type() == Cardinality.Type.START) leftStarts++;
+                else leftEnds++;
                 ia++;
             }
 
-            // Collect right events at this value
             while (ib < b.length && b[ib].value().compareTo(value) == 0) {
-                if (b[ib].type() == Cardinality.Type.START)
-                    rightStarts++;
-                else
-                    rightEnds++;
+                if (b[ib].type() == Cardinality.Type.START) rightStarts++;
+                else rightEnds++;
                 ib++;
             }
 
-            // A point is represented as START(x) and END(x) at the same value.
+            boolean wasInResult = leftActive > 0 && rightActive == 0;
+
+            leftActive += leftStarts - leftEnds;
+            rightActive += rightStarts - rightEnds;
+
+            boolean isInResult = leftActive > 0 && rightActive == 0;
             boolean leftPoint = (leftStarts > 0 && leftEnds > 0 && leftStarts == leftEnds);
             boolean rightPoint = (rightStarts > 0 && rightEnds > 0 && rightStarts == rightEnds);
 
-            // If left has a point and right does NOT cover it, preserve the point.
+            if (rightPoint && isInResult) {
+                if (segmentStart != null) {
+                    out.add(segmentStart);
+                    out.add(new Event(value, Cardinality.Type.END));
+                    segmentStart = null;
+                }
+                if (value instanceof FiniteBound f) {
+                    CardinalityValue nextValue = next(f);
+                    segmentStart = new Event(nextValue, Cardinality.Type.START);
+                }
+            }
+
             if (leftPoint && !rightPoint && rightActive == 0 && rightStarts == 0 && rightEnds == 0) {
                 out.add(new Event(value, Cardinality.Type.START));
                 out.add(new Event(value, Cardinality.Type.END));
-                continue;
             }
 
-            boolean before = leftActive > 0 && rightActive == 0;
-
-            // Apply END deltas
-            leftActive -= leftEnds;
-            rightActive -= rightEnds;
-
-            // Apply START deltas
-            leftActive += leftStarts;
-            rightActive += rightStarts;
-
-            boolean middle = leftActive > 0 && rightActive == 0;
-            boolean after = middle;
-
-            // Opening a segment
-            if (!before && middle) {
+            if (!wasInResult && isInResult && segmentStart == null) {
                 segmentStart = new Event(value, Cardinality.Type.START);
             }
 
-            // Closing a segment
-            if (before && !middle) {
+            if (wasInResult && !isInResult && segmentStart != null) {
                 out.add(segmentStart);
                 out.add(new Event(value, Cardinality.Type.END));
                 segmentStart = null;
             }
         }
 
-        // Close segment at +∞ if still open
         if (segmentStart != null) {
             out.add(segmentStart);
             out.add(new Event(CardinalityValue.POSITIVE_INFINITY, Cardinality.Type.END));
         }
 
-        return out.isEmpty()
-                ? null
-                : Cardinality.skipNormalization(out.toArray(Event[]::new));
+        return out.isEmpty() ? null : Cardinality.skipNormalization(out.toArray(Event[]::new));
     }
+
+    public static CardinalityValue next(FiniteBound f) {
+        return new Cardinality.FiniteBound(f.value().add(BigInteger.ONE));
+    }
+
+
 
     /**
      * Equivalent to removing union(right) from left that is:
@@ -312,7 +294,7 @@ public final class Cardinalities {
      * - Lower bound inclusive ⟺ both lower bounds are inclusive
      * - Upper bound inclusive ⟺ both upper bounds are inclusive
      */
-    public static Cardinality sequenceMerge(
+    public static Cardinality add(
             final @MinLen(1) Cardinality... cardinalities) {
 
         final List<Event> result = new ArrayList<>();
@@ -477,28 +459,20 @@ public final class Cardinalities {
 
         }
 
-        public static Cardinality recursionMerge(final Cardinality a, final Cardinality b) {
-            Cardinality result = a;
-            Cardinality current = a;
+        public static @Nullable Cardinality recursionMerge(final Cardinality a) {
+            @Nullable CardinalityValue min = Cardinalities.min(a);
+            if (min==null) return null;
+            return Cardinality.of(
+                    new Event(min, Type.START),
+                    new Event(CardinalityValue.POSITIVE_INFINITY, Type.END)
+            );
 
-            while (true) {
-                final Cardinality next = sequenceMerge(current, b);
-
-                final Cardinality merged = union(result, next);
-
-                if (merged.equals(result)) {
-                    return result;
-                }
-
-                result = merged;
-                current = next;
-            }
         }
 
     public static Cardinality multiply(
             final Cardinality a,
-            final Cardinality b) {
-
+            final Cardinality b)
+    {
         final List<Event> events = new ArrayList<>();
 
         @MonotonicNonNull  CardinalityValue minLower = null;
@@ -506,17 +480,17 @@ public final class Cardinalities {
 
         for (final CardinalityInterval ia : a.toIntervals()) {
             for (final CardinalityInterval ib : b.toIntervals()) {
+                final CardinalityValue lower = ia.lowerBound().multiply(ib.lowerBound());
+
+                if (minLower == null || lower.compareTo(minLower) < 0) {
+                    minLower = lower;
+                }
+
                 if (ia.upperBound() == CardinalityValue.POSITIVE_INFINITY
                         || ib.upperBound() == CardinalityValue.POSITIVE_INFINITY) {
 
                     hasPositiveInfinity = true;
                     continue;
-                }
-
-                final CardinalityValue lower = ia.lowerBound().multiply(ib.lowerBound());
-
-                if (minLower == null || lower.compareTo(minLower) < 0) {
-                    minLower = lower;
                 }
 
                 final FiniteBound ua = (FiniteBound) ia.upperBound();
@@ -547,6 +521,15 @@ public final class Cardinalities {
         return events[events.length - 1].value();
     }
 
+    public static @Nullable CardinalityValue min(Cardinality cardinality) {
+        Event[] events = cardinality.events();
+
+        if (events.length == 0) {
+            return null;
+        }
+        return events[0].value();
+    }
+
     public static @Nullable Cardinality optionalize(Cardinality cardinality) {
         @Nullable CardinalityValue max = max(cardinality);
 
@@ -574,7 +557,7 @@ public final class Cardinalities {
             Cardinality.Event event = cardEvents[i];
 
             NumericRange.BoundValue numValue = switch (event.value()) {
-                case Cardinality.FiniteBound fb -> new NumericRange.FiniteBound(new BigDecimal(fb.value()));
+                case Cardinality.FiniteBound fb -> new NumericRange.FiniteBound(new BigDecimal(fb.value()), true);
                 case Cardinality.PositiveInfinity _ -> NumericRange.BoundValue.POSITIVE_INFINITY;
             };
 
@@ -582,7 +565,7 @@ public final class Cardinalities {
                     ? NumericRange.Type.START
                     : NumericRange.Type.END;
 
-            numEvents[i] = new NumericRange.Event(numValue, numType, true);
+            numEvents[i] = new NumericRange.Event(numValue, numType);
         }
 
         return NumericRange.skipNormalization(numEvents);

@@ -31,7 +31,7 @@ public class ArrayToMapIsSubtype implements ArrayToMapVisitor<Boolean> {
             return true;
         }
 
-        if (!ItemTypes.isSubtype(typeFactory, typeFactory.itemNumber(Ranges.indices(1, tupleLen)), mapType.keyType())) {
+        if (!ItemTypes.isSubtype(typeFactory, typeFactory.itemNumber(Ranges.integers(1, tupleLen)), mapType.keyType())) {
             return false;
         }
 

@@ -1,6 +1,7 @@
 package com.github.akruk.antlrquery.typesystem.typeoperations;
 
 
+import com.github.akruk.antlrquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrquery.typesystem.RecordField;
 import com.github.akruk.antlrquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Cardinalities;
@@ -78,8 +79,15 @@ public class SequenceTypeCastable
                 case ConcreteItemType concreteTarget -> visit(concreteTested, concreteTarget);
                 case AnyItemType _ -> new IsCastable.AlwaysPossible.TestedTypeIsSubtypeOfTargetType();
                 case NeverType _, NothingType _ -> impossible;
+                case NamedItemType(NamespaceResolver.QualifiedName reference) ->
+                    handleItemTypeCastable(testedItem, typeFactory.guaranteedItemNamedType(reference, new IllegalStateException()))
+                ;
+
             };
             case NothingType _, NeverType _ -> testedTypeIsSubtypeOfTargetType;
+            case NamedItemType(NamespaceResolver.QualifiedName reference)->
+                    handleItemTypeCastable(typeFactory.guaranteedItemNamedType(reference, new IllegalStateException()), targetItem)
+                    ;
         };
     }
 

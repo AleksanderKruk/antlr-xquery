@@ -49,7 +49,7 @@ public class SimpleMapExpressionEvaluationTests extends EvaluationTestsBase {
     @Test
     public void simpleMapWithStringFunctions() {
         // build strings, then measure their cardinality via chained maps
-        String xquery = "('a', 'bc') ! concat((., '-')) ! string-cardinality(.)";
+        String xquery = "('a', 'bc') ! concat((., '-')) ! string-length(.)";
         List<AntlrQueryValue> expected = List.of(
                 valueFactory.number(2),
                 valueFactory.number(3));

@@ -13,24 +13,31 @@ import com.github.akruk.antlrquery.typesystem.types.Cardinality;
 public class OtherwiseExpressionSemanticTests extends SemanticTestsBase {
     @Test
     public void otherwiseExpression() {
-        final var number = typeFactory.number(NumericRange.FULL);
-        final var optionalNumber = typeFactory.zeroOrOne(typeFactory.itemNumber());
         assertType("""
                     () otherwise 1
-                """, optionalNumber);
+                """, typeFactory.zeroOrOne(typeFactory.itemNumber(NumericRange.of(1))));
         assertType("""
                     1 otherwise 2
-                """, number);
+                """, typeFactory.number(NumericRange.of(1, 2)));
         assertType("""
-                    "napis" otherwise 2
-                """, typeFactory.choice(typeFactory.itemEnum(Set.of("napis")), typeFactory.itemNumber()));
+                    "text" otherwise 2
+                """, typeFactory.choice(typeFactory.itemEnum(Set.of("text")), typeFactory.itemNumber(NumericRange.of(2))));
         assertType("""
                     (1, 2, 3) otherwise () otherwise (1, 2, 3)
-                """, typeFactory.sequence(typeFactory.itemNumber(), 
-                Cardinalities.union(Cardinality.of(BigInteger.valueOf(0)), Cardinality.of(BigInteger.valueOf(3)))));
+                """,
+                typeFactory.sequence(
+                        typeFactory.itemNumber(NumericRange.of(1, 2, 3)),
+                        Cardinalities.union(Cardinality.ZERO, Cardinality.of(3))
+                )
+        );
         assertType("""
                     (1, 2, 3) otherwise (1, 2, 3) otherwise (1, 2, 3)
-                """, typeFactory.sequence(typeFactory.itemNumber(), Cardinality.of(BigInteger.valueOf(3))));
+                """,
+                typeFactory.sequence(
+                        typeFactory.itemNumber(NumericRange.of(1, 2, 3)),
+                        Cardinality.of(3)
+                )
+        );
     }
 
 }

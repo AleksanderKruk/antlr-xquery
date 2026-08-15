@@ -450,7 +450,11 @@ public class AntlrQueryTypesTest {
 
         assertTrue(ItemTypes.isSubtype(typeFactory, tested, itemAnyFunction));
         assertFalse(ItemTypes.isSubtype(typeFactory, tested, typeFactory.itemFunction(typeFactory.anyItem(), List.of())));
-        assertTrue(ItemTypes.isSubtype(typeFactory, tested, typeFactory.itemFunction(typeFactory.anyItem(), List.of(typeFactory.number(NumericRange.NON_NEGATIVE)))));
+        assertTrue(
+                ItemTypes.isSubtype(typeFactory,
+                        tested,
+                        typeFactory.itemFunction(typeFactory.anyItem(), List.of(typeFactory.number(NumericRange.NON_NEGATIVE))))
+        );
         assertTrue(ItemTypes.isSubtype(typeFactory, tested, typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.number(NumericRange.NON_NEGATIVE)))));
         assertFalse(ItemTypes.isSubtype(typeFactory, tested, typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.number(NumericRange.FULL)))));
         assertTrue(ItemTypes.isSubtype(typeFactory, tested, typeFactory.itemFunction(typeFactory.string(), List.of(typeFactory.oneOrMore(itemNonNegativeNumber)))));
@@ -705,7 +709,7 @@ public class AntlrQueryTypesTest {
 
         assertEquals($10, node);
         assertEquals($11, node$2);
-        assertEquals($1_zeroOrOne, typeFactory.sequence(typeFactory.itemAnyNode(), Cardinality.range(1, 2)));
+        assertEquals($1_zeroOrOne, typeFactory.sequence(typeFactory.itemAnyNode(), Cardinality.inclusiveRange(1, 2)));
         assertEquals($1_zeroOrMore, nodeOneOrMore);
         assertEquals($1_oneOrMore, typeFactory.sequence(typeFactory.itemAnyNode(), Cardinality.greaterThan(2)));
 
@@ -716,8 +720,8 @@ public class AntlrQueryTypesTest {
         final var $zeroOrOne_oneOrMore = Types.addition(typeFactory, nodeZeroOrOne, nodeOneOrMore);
 
         assertEquals($zeroOrOne_0, nodeZeroOrOne);
-        assertEquals($zeroOrOne_1, typeFactory.sequence(typeFactory.itemAnyNode(), Cardinality.range(1, 2)));
-        assertEquals($zeroOrOne_zeroOrOne, typeFactory.sequence(typeFactory.itemAnyNode(), Cardinality.range(0, 2)));
+        assertEquals($zeroOrOne_1, typeFactory.sequence(typeFactory.itemAnyNode(), Cardinality.inclusiveRange(1, 2)));
+        assertEquals($zeroOrOne_zeroOrOne, typeFactory.sequence(typeFactory.itemAnyNode(), Cardinality.inclusiveRange(0, 2)));
         assertEquals($zeroOrOne_zeroOrMore, nodeZeroOrMore);
         assertEquals($zeroOrOne_oneOrMore, nodeOneOrMore);
 

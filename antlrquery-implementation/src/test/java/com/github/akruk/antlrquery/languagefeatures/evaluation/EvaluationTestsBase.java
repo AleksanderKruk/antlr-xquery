@@ -70,19 +70,19 @@ public class EvaluationTestsBase {
     }
 
     public void assertResult(final String xquery, final String result) {
-        final var value = AntlrQuery.evaluateWithMockRoot(null, xquery, null, null);
+        final var value = AntlrQuery.evaluateWithMockRoot(null, xquery, "", null);
         assertNotNull(value);
         assertEquals(result, value.stringValue);
     }
 
     public void assertResult(final String xquery, final BigDecimal result) {
-        final var value = AntlrQuery.evaluateWithMockRoot(null, xquery, null, null);
+        final var value = AntlrQuery.evaluateWithMockRoot(null, xquery, "", null);
         assertNotNull(value);
         assertTrue(result.compareTo(value.numericValue) == 0);
     }
 
     public void assertResult(final String xquery, final List<AntlrQueryValue> result) {
-        final AntlrQueryValue value = AntlrQuery.evaluateWithMockRoot(null, xquery, null, null);
+        final AntlrQueryValue value = AntlrQuery.evaluateWithMockRoot(null, xquery, "", null);
         assertNotNull(value);
         assertEquals(result.size(), value.size);
         for (int i = 0; i < result.size(); i++) {
@@ -104,12 +104,12 @@ public class EvaluationTestsBase {
     }
 
     public void assertResult(final String xquery, final AntlrQueryValue result) {
-        final AntlrQueryValue value = AntlrQuery.evaluateWithMockRoot(null, xquery, null, null);
+        final AntlrQueryValue value = AntlrQuery.evaluateWithMockRoot(null, xquery, "", null);
         assertResult(value, result);
     }
 
     public void assertError(final String xquery, final AntlrQueryValue result) {
-        final AntlrQueryValue value = AntlrQuery.evaluateWithMockRoot(null, xquery, null, null);
+        final AntlrQueryValue value = AntlrQuery.evaluateWithMockRoot(null, xquery, "", null);
         assertNotNull(value);
         assertTrue(result.error == value.error);
     }
@@ -201,6 +201,12 @@ public class EvaluationTestsBase {
         final Lexer lexer = (Lexer) lexerClass.getConstructor(CharStream.class).newInstance(input);
         final CommonTokenStream tokens = new CommonTokenStream(lexer);
         final Parser parser = (Parser) parserClass.getConstructor(TokenStream.class).newInstance(tokens);
+        parser.addErrorListener(new BaseErrorListener(){
+            @Override
+            public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+                throw new IllegalStateException(msg);
+            }
+        });
 
         final Method startRule = parser.getClass().getMethod(startingRuleName);
         final ParseTree tree = (ParseTree) startRule.invoke(parser);

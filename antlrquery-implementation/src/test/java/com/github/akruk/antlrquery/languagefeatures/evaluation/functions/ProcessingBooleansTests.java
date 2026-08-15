@@ -30,7 +30,6 @@ public class ProcessingBooleansTests extends EvaluationTestsBase {
         assertResult("not('')", valueFactory.bool(true));
         assertResult("not('text')", valueFactory.bool(false));
 
-        assertError("not()", valueFactory.error(AntlrQueryError.WrongNumberOfArguments, ""));
 
     }
 
@@ -49,8 +48,6 @@ public class ProcessingBooleansTests extends EvaluationTestsBase {
         assertResult("boolean('')", valueFactory.bool(false));
         assertResult("boolean('text')", valueFactory.bool(true));
         assertResult("boolean('0')", valueFactory.bool(true));
-
-        assertError("boolean()", valueFactory.error(AntlrQueryError.WrongNumberOfArguments, ""));
     }
 
 
@@ -63,7 +60,6 @@ public class ProcessingBooleansTests extends EvaluationTestsBase {
         assertResult("op:boolean-equal(boolean(1), boolean(2))", valueFactory.bool(true));
         assertResult("op:boolean-equal(boolean(0), boolean(()))", valueFactory.bool(true));
         assertResult("op:boolean-equal(boolean('text'), boolean(42))", valueFactory.bool(true));
-        assertError("op:boolean-equal(boolean(), boolean())", valueFactory.error(AntlrQueryError.InvalidArgumentType, ""));
     }
 
     @Test

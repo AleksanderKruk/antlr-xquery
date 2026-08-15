@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.github.akruk.antlrquery.evaluator.values.AntlrQueryValues;
+import com.github.akruk.antlrquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.*;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
@@ -75,6 +76,10 @@ public class Caster {
                 case TreeLike _ -> valueFactory.error(AntlrQueryError.InvalidCastValue, "");
             };
             case AnyItemType(), NothingType(), NeverType(), ChoiceItemType _ -> throw new IllegalStateException("Unreachable");
+            case NamedItemType(NamespaceResolver.QualifiedName reference) -> {
+                var itemType =  typeFactory.guaranteedItemNamedType(reference, new IllegalStateException("Type: " + reference + " has not been preregistered"));
+                yield cast(typeFactory.sequence(itemType, targetType.cardinality()), testedValue);
+            }
         };
     }
 

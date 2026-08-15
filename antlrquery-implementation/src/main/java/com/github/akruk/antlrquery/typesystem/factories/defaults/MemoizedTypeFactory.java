@@ -188,10 +188,24 @@ public class MemoizedTypeFactory implements AntlrQueryTypeFactory {
 
     @Override
     public AntlrQueryItemType itemNodesFromGrammar(String grammar, Set<NamespaceResolver.QualifiedName> elementName) {
-        return elementCache.computeIfAbsent(
-                new TreeNodeKey(grammar, Set.copyOf(elementName)),
-                k -> new TreeNodeType.NodeType(k.grammar(), k.names())
-        );
+        boolean containsToken = elementName.stream().anyMatch(qualifiedName -> qualifiedName.name().matches("^\\p{IsUpper}.*$"));
+        boolean containsRule = elementName.stream().allMatch(qualifiedName -> qualifiedName.name().matches("^\\p{IsLower}.*$"));
+        if (containsToken && containsRule) {
+            return elementCache.computeIfAbsent(
+                    new TreeNodeKey(grammar, Set.copyOf(elementName)),
+                    k -> new TreeNodeType.NodeType(k.grammar(), k.names())
+            );
+        } else if (containsToken) {
+            return elementCache.computeIfAbsent(
+                    new TreeNodeKey(grammar, Set.copyOf(elementName)),
+                    k -> new TreeTokenType.TokenType(k.grammar(), k.names())
+            );
+        } else {
+            return elementCache.computeIfAbsent(
+                    new TreeNodeKey(grammar, Set.copyOf(elementName)),
+                    k -> new TreeRuleType.RuleType(k.grammar(), k.names())
+            );
+        }
     }
 
     private final Map<String, AntlrQueryItemType> anyNodesFromGrammar = new ConcurrentHashMap<>();
@@ -229,6 +243,7 @@ public class MemoizedTypeFactory implements AntlrQueryTypeFactory {
 
     @Override
     public AntlrQueryItemType itemTokensFromGrammar(String grammar, Set<NamespaceResolver.QualifiedName> mergedNames) {
+        assert mergedNames.stream().allMatch(qualifiedName -> qualifiedName.name().matches("^\\p{IsUpper}.*$"));
         return tokenCache.computeIfAbsent(
                 new TreeNodeKey(grammar, Set.copyOf(mergedNames)),
                 k -> new TreeTokenType.TokenType(k.grammar(), k.names())
@@ -237,6 +252,7 @@ public class MemoizedTypeFactory implements AntlrQueryTypeFactory {
 
     @Override
     public AntlrQueryItemType itemRulesFromGrammar(String grammar, Set<NamespaceResolver.QualifiedName> mergedNames) {
+        assert mergedNames.stream().allMatch(qualifiedName -> qualifiedName.name().matches("^\\p{IsLower}.*$"));
         return ruleCache.computeIfAbsent(
                 new TreeNodeKey(grammar, Set.copyOf(mergedNames)),
                 k -> new TreeRuleType.RuleType(k.grammar(), k.names())
@@ -310,7 +326,7 @@ public class MemoizedTypeFactory implements AntlrQueryTypeFactory {
 
     @Override
     public AntlrQueryItemType itemChoice(AntlrQueryItemType... items) {
-        if (items.length == 0) return ITEM_NOTHING;
+        assert items.length != 0;
         if (items.length == 1) return items[0];
 
         Set<ConcreteItemType> flattened = new HashSet<>();

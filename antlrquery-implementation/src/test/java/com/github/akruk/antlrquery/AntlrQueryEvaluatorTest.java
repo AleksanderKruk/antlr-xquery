@@ -192,8 +192,14 @@ public class AntlrQueryEvaluatorTest extends EvaluationTestsBase {
 
     @Test
     public void identityNodeComparison() throws Exception {
-        assertDynamicGrammarQuery(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "/test is /test", "",
-                                    valueFactory.bool(true));
+        assertDynamicGrammarQuery(
+                TEST_GRAMMAR_NAME,
+                TEST_GRAMMAR,
+                "test",
+                "a bc a d",
+                "exactly-one(/test) is exactly-one(/test)",
+                "",
+                valueFactory.bool(true));
     }
 
     @Test
@@ -202,22 +208,34 @@ public class AntlrQueryEvaluatorTest extends EvaluationTestsBase {
             TEST_GRAMMAR_NAME,
             TEST_GRAMMAR, "test",
             "a bc a d",
-            "/test << /test",
+            "exactly-one(/test) << exactly-one(/test)",
             null,
             valueFactory.bool(false));
         assertDynamicGrammarQuery(
             TEST_GRAMMAR_NAME,
             TEST_GRAMMAR, "test",
             "a bc a d",
-            "/test << /test/A[1]",
+            "exactly-one(/test) << exactly-one(/test/A[1])",
             null,
             valueFactory.bool(true));
     }
 
     @Test
     public void afterNode() throws Exception {
-        assertDynamicGrammarQuery(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "/test >> /test", "", valueFactory.bool(false));
-        assertDynamicGrammarQuery(TEST_GRAMMAR_NAME, TEST_GRAMMAR, "test", "a bc a d", "/test/A[1] >> /test", "", valueFactory.bool(true));
+        assertDynamicGrammarQuery(TEST_GRAMMAR_NAME,
+                TEST_GRAMMAR,
+                "test",
+                "a bc a d",
+                "exactly-one(/test) >> exactly-one(/test)",
+                "",
+                valueFactory.bool(false));
+        assertDynamicGrammarQuery(TEST_GRAMMAR_NAME,
+                TEST_GRAMMAR,
+                "test",
+                "a bc a d",
+                "/test/A[1] >> exactly-one(/test)",
+                "",
+                valueFactory.bool(true));
     }
 
     @Test
@@ -366,14 +384,14 @@ public class AntlrQueryEvaluatorTest extends EvaluationTestsBase {
 
     @Test
     public void arrowExpression() {
-        assertResult("'a' => string-cardinality()", valueFactory.number(1));
-        assertResult("'a' => string-cardinality() => string()", valueFactory.string("1"));
+        assertResult("'a' => string-length()", valueFactory.number(1));
+        assertResult("'a' => string-length() => string()", valueFactory.string("1"));
     }
 
     @Test
     public void arrowMappingExpression() {
         final AntlrQueryValue one = valueFactory.number(1);
-        assertResult("('a', 'b', 'c') =!> string-cardinality()", List.of(one, one, one));
+        assertResult("('a', 'b', 'c') =!> string-length()", List.of(one, one, one));
     }
 
     @Test
@@ -388,7 +406,7 @@ public class AntlrQueryEvaluatorTest extends EvaluationTestsBase {
     @Test
     public void switchExpression() {
         assertResult("""
-                    switch (4)
+                    switch (4 treat as number)
                         case 3 return false()
                         case 1 return false()
                         case 5 return false()
@@ -396,7 +414,7 @@ public class AntlrQueryEvaluatorTest extends EvaluationTestsBase {
                         default return false()
                 """, valueFactory.bool(true));
         assertResult("""
-                    switch (0)
+                    switch (0 treat as number)
                         case 3 return false()
                         case 1 return false()
                         case 5 return false()
@@ -408,7 +426,7 @@ public class AntlrQueryEvaluatorTest extends EvaluationTestsBase {
     @Test
     public void switchMulticaseExpression() {
         assertResult("""
-                    switch (4)
+                    switch (let $x as number := 4 return $x)
                         case 3 return false()
                         case 1 return false()
                         case 5 return false()
@@ -416,7 +434,7 @@ public class AntlrQueryEvaluatorTest extends EvaluationTestsBase {
                         default return false()
                 """, valueFactory.bool(true));
         assertResult("""
-                    switch (0)
+                    switch (let $x as number := 0 return $x)
                         case 3 return false()
                         case 1 case 6 return false()
                         case 5 return false()

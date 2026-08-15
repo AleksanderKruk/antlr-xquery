@@ -1,9 +1,13 @@
 package com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller;
 
+import java.math.BigDecimal;
 import java.util.*;
 
+import com.github.akruk.Utils;
+import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Cardinalities;
 import com.github.akruk.antlrquery.typesystem.types.NumericRange;
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.AntlrQueryItemType;
+import com.github.akruk.antlrquery.typesystem.types.itemtypes.StringType;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import com.github.akruk.antlrquery.AntlrQueryParser.ParenthesizedExprContext;
@@ -865,7 +869,21 @@ public class SemanticFunctionSets {
             false,
             false,
             null,
-            null
+            (args, context, functionBody, typeContext) -> {
+                var argType = args.getFirst().type();
+                AntlrQuerySequenceType empty = typeFactory.emptySequence();
+                if (argType.type.equals(empty)) {
+                    return argType;
+                }
+                if (argType.type.itemType() instanceof StringType string) {
+                    var number = typeFactory.itemNumber(Cardinalities.toNumericRange(string.cardinality()));
+                    return typeContext.typeInContext(typeFactory.sequence(number, argType.type.cardinality()));
+                }
+                return typeContext.typeInContext(
+                        typeFactory.sequence(
+                                typeFactory.itemNumber(NumericRange.NON_NEGATIVE),
+                                argType.type.cardinality()));
+            }
             )
         );
 
@@ -2881,7 +2899,7 @@ public class SemanticFunctionSets {
             new SimplifiedFunctionSpecification(
             new QualifiedName("math", "pi"),
             List.of(),
-            typeFactory.number(NumericRange.FULL),
+            typeFactory.number(NumericRange.of(BigDecimal.valueOf(Math.PI))),
             null,
             false,
             false,
@@ -3525,6 +3543,41 @@ public class SemanticFunctionSets {
             )
         );
 
+        /*
+            array:sort-by(
+                $array 	as array(*),
+                $keys 	as record(
+                    key? as (fn($member as item()*) as xs:anyAtomicType*)?,
+                    collation? as xs:string?,
+                    order? as enum('ascending', 'descending')?)*
+            ) as array(*)
+        */
+        array.add(
+                new SimplifiedFunctionSpecification(
+                        new QualifiedName("array", "sort-by"),
+                        List.of(
+                                new ArgumentSpecification(
+                                        "array",
+                                        typeFactory.anyArray(),
+                                        null
+                                ),
+                                new ArgumentSpecification(
+                                        "keys",
+                                        typeFactory.one(typeFactory.itemRecord(
+                                                Utils.linkedHashMap(
+                                                        Map.entry("key", new RecordField("key", new TypeOrReference.Type(typeFactory.zeroOrOne(typeFactory.itemFunction(typeFactory.any(), List.of(typeFactory.any())))), false)),
+                                                        Map.entry("collation", new RecordField("collation", new TypeOrReference.Type(typeFactory.zeroOrOne(typeFactory.itemString())), false)),
+                                                        Map.entry("order", new RecordField("order", new TypeOrReference.Type(typeFactory.zeroOrOne(typeFactory.itemEnum(Set.of("ascending", "descending")))), false))
+                                                )
+                                        )),
+                                        null
+                                )
+                        ),
+                        typeFactory.anyArray(),
+                        null, false, false, null, null
+                )
+        );
+
         // array:get($array as array(*), $position as xs:integer) as item()*
         array.add(
             new SimplifiedFunctionSpecification(
@@ -3759,38 +3812,6 @@ public class SemanticFunctionSets {
             )
         );
 
-        // array:sort-by(
-        // $array	as item()*,
-        // $keys	as record(key? as (fn(item()*) as xs:anyAtomicType*)?,
-        //                    collation? as xs:string?,
-        //                    order? as enum('ascending', 'descending')?)*
-        // ) as item()*
-        final var keyType = typeFactory.zeroOrOne(typeFactory.itemFunction(zeroOrMoreItems, List.of(zeroOrMoreItems)));
-        final var orderType = typeFactory.zeroOrOne(typeFactory.itemEnum(Set.of("ascending", "descending")));
-        final var keysItemType = typeFactory.itemRecord(
-                new LinkedHashMap<>(Map.of(
-                "key", new RecordField("key", new TypeOrReference.Type(keyType), true),
-                "collation", new RecordField("collation", new TypeOrReference.Type(optionalString), true),
-                "order", new RecordField("order", new TypeOrReference.Type(orderType), true)
-                )));
-
-        final var keysType = typeFactory.zeroOrMore(keysItemType);
-
-        final var anyArray = typeFactory.anyArray();
-        final List<ArgumentSpecification> sortByArgs = List.of(
-                new ArgumentSpecification("array", anyArray, null),
-                new ArgumentSpecification("keys", keysType, null)
-            );
-
-        array.add(
-            new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "sort-by"),
-            sortByArgs,
-            zeroOrMoreItems,
-            null, false, false, null, null
-            )
-        );
-
         // array:split($array as array(*)) as array(*)*
         array.add(
             new SimplifiedFunctionSpecification(
@@ -3808,11 +3829,11 @@ public class SemanticFunctionSets {
             new SimplifiedFunctionSpecification(
             new QualifiedName("array", "subarray"),
             List.of(
-                new ArgumentSpecification("array", anyArray, null),
+                new ArgumentSpecification("array", typeFactory.anyArray(), null),
                 new ArgumentSpecification("start", typeFactory.one(typeFactory.itemNumber()), null),
                 new ArgumentSpecification("cardinality", typeFactory.zeroOrOne(typeFactory.itemNumber()), EMPTY_SEQUENCE)
             ),
-            anyArray,
+            typeFactory.anyArray(),
             null, false, false, null, null
             )
         );

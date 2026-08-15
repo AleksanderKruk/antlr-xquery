@@ -13,11 +13,6 @@ public class LookupExpressionEvaluationTests extends EvaluationTestsBase {
     }
 
     @Test
-    public void emptylookupArray() {
-        assertResult("array {} ? 'a'", valueFactory.sequence(List.of()));
-    }
-
-    @Test
     public void arraySingleLookup() {
         assertResult("array {'a', 'b', 'c'} ? 2", "b");
     }

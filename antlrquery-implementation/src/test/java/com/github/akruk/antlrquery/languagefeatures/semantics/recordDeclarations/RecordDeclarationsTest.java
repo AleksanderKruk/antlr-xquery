@@ -4,14 +4,14 @@ import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrquery.languagefeatures.semantics.SemanticTestsBase;
 
-public class RecordDeclarations extends SemanticTestsBase {
+public class RecordDeclarationsTest extends SemanticTestsBase {
     @Test
     void unorderedDeclarations() {
         assertType("""
             module m;
             declare record m:A(b as m:B);
             declare record m:B(a as string);
-                """, null);
+            """, null);
 
     }
 
@@ -129,7 +129,7 @@ declare function testing:recursion($x as number) as number
 
 declare namespace local;
 
-declare function local:is-simple-property-assignment($rule as element(propertyAssignment)) as boolean
+declare function local:is-simple-property-assignment($rule as node(propertyAssignment)) as boolean
 {
   not($rule/propertyName)
   and  not($rule/LPAREN)

@@ -11,6 +11,8 @@ import com.github.akruk.antlrquery.typesystem.types.itemtypes.AntlrQueryItemType
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
 
+import java.util.ArrayList;
+
 
 @DefaultQualifier(NonNull.class)
 public class TypeVisitor
@@ -31,6 +33,7 @@ public class TypeVisitor
         this.typeFactory = factory;
         this.cardinalityVisitor = cardinalityVisitor;
         this.itemTypeVisitor = itemTypeVisitor;
+        itemTypeVisitor.setTypeVisitor(this);
     }
 
 
@@ -41,8 +44,11 @@ public class TypeVisitor
 
     @Override
     public AntlrQuerySequenceType visitConstrainedSequenceType(AntlrQueryParser.ConstrainedSequenceTypeContext ctx) {
-        final AntlrQueryItemType it = ctx.itemType().accept(itemTypeVisitor);
-        final Cardinality c = ctx.cardinality().accept(cardinalityVisitor);
+        final AntlrQueryItemType it = itemTypeVisitor.visitItemType(ctx.itemType());
+        final Cardinality c = (ctx.cardinality() != null)
+                ? cardinalityVisitor.visitCardinality(ctx.cardinality())
+                : Cardinality.ONE
+                ;
         return typeFactory.sequence(it, c);
     }
 
@@ -86,5 +92,13 @@ public class TypeVisitor
     @Override
     public AntlrQuerySequenceType visitNeverType(AntlrQueryParser.NeverTypeContext ctx) {
         return typeFactory.neverType();
+    }
+
+    @Override
+    public AntlrQuerySequenceType visitArrayTypeOperator(AntlrQueryParser.ArrayTypeOperatorContext ctx) {
+        if (!ctx.arrayOperator().isEmpty()) {
+            return null;
+        }
+        return visitTypePrimitive(ctx.typePrimitive());
     }
 }

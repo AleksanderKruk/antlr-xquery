@@ -1,5 +1,6 @@
 package com.github.akruk.antlrquery.typesystem.types;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -68,10 +69,20 @@ public final class Cardinality {
         return of(BigInteger.valueOf(point));
     }
 
-    public static Cardinality range(@NonNegative int i, @NonNegative int i1) {
+    public static Cardinality inclusiveRange(@NonNegative int i, @NonNegative int i1) {
         assert i < i1;
         return Cardinality.skipNormalization(new Event[]{ new Event(new FiniteBound(BigInteger.valueOf(i)), Type.START),
                 new Event(new FiniteBound(BigInteger.valueOf(i1)), Type.END) });
+    }
+
+    public static Cardinality inclusiveRange(@NonNegative BigInteger i, @NonNegative BigInteger i1) {
+        assert i.compareTo(i1) < 0;
+        return Cardinality.skipNormalization(
+                new Event[]{
+                        new Event(new FiniteBound(i), Type.START),
+                        new Event(new FiniteBound(i1), Type.END)
+                }
+        );
     }
 
     public static Cardinality greaterThan(@NonNegative int i) {

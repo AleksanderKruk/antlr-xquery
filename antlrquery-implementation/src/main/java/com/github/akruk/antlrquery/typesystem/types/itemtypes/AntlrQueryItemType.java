@@ -7,7 +7,8 @@ public sealed interface AntlrQueryItemType
         ChoiceItemType,
         AnyItemType,
         NothingType,
-        NeverType
+        NeverType,
+        NamedItemType
 {
     NothingType NOTHING = new NothingType();
     NeverType NEVER = new NeverType();

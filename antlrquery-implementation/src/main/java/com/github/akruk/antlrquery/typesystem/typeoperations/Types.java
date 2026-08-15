@@ -2,6 +2,7 @@ package com.github.akruk.antlrquery.typesystem.typeoperations;
 
 import java.util.*;
 
+import com.github.akruk.antlrquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrquery.typesystem.RecordField;
 import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Ranges;
 import com.github.akruk.antlrquery.typesystem.typeoperations.itemtype.ItemTypeIsSubtype;
@@ -59,6 +60,11 @@ public final class Types {
                 case ArrayLikeType.TupleType tupleType -> null;
             };
             case NeverType _, NothingType _ -> null;
+            case NamedItemType(NamespaceResolver.QualifiedName reference) ->
+                    callResult(typeFactory, typeFactory.guaranteedItemNamedType(
+                            reference,
+                            new IllegalStateException(reference + " was not preregistered")
+                    ), args);
         };
     }
 
@@ -78,6 +84,9 @@ public final class Types {
             case AtomicType _, MapLikeType.ExtensibleRecordType _, FunctionType _,
                  GrammarEntityType _, MapLikeType.MapType _, MapLikeType.RecordType _,
                  TreeLike _, NeverType _, NothingType _ -> null;
+            case NamedItemType(NamespaceResolver.QualifiedName reference) -> getMemberType(
+                    typeFactory, typeFactory.guaranteedItemNamedType(reference, new IllegalStateException())
+            );
         };
     }
     public static AntlrQuerySequenceType getMemberType(AntlrQueryTypeFactory typeFactory, ArrayLikeType.TupleType type) {
@@ -100,6 +109,9 @@ public final class Types {
             case AnyItemType _, ArrayLikeType.ArrayType _, AtomicType _, FunctionType _,
                  GrammarEntityType _, MapLikeType.RecordType _, TreeLike _,
                  ArrayLikeType.TupleType _, NeverType _, NothingType _ -> null;
+            case NamedItemType(NamespaceResolver.QualifiedName reference) -> getMapKey(
+                    typeFactory, typeFactory.guaranteedItemNamedType(reference, new IllegalStateException())
+            );
         };
 
     }
@@ -132,6 +144,9 @@ public final class Types {
             case AnyItemType _, ArrayLikeType.ArrayType _, AtomicType _, FunctionType _,
                  GrammarEntityType _, TreeLike _,
                  ArrayLikeType.TupleType _, NeverType _, NothingType _ -> null;
+            case NamedItemType(NamespaceResolver.QualifiedName reference) -> getMapValue(
+                    typeFactory, typeFactory.guaranteedItemNamedType(reference, new IllegalStateException())
+            );
         };
 
     }
@@ -157,12 +172,12 @@ public final class Types {
     }
 
     public static AntlrQuerySequenceType getIndexType(AntlrQueryTypeFactory typeFactory, ArrayLikeType.TupleType tupleType) {
-        var indices = Ranges.indices(0, tupleType.members().length);
+        var indices = Ranges.integers(0, tupleType.members().length);
         return typeFactory.zeroOrMore(typeFactory.itemNumber(indices));
     }
 
     public static AntlrQuerySequenceType getIndexType(AntlrQueryTypeFactory typeFactory, ArrayLikeType.ArrayType arrayType) {
-        var indices = Ranges.indices(Cardinalities.toNumericRange(arrayType.cardinality()));
+        var indices = Ranges.integers(Cardinalities.toNumericRange(arrayType.cardinality()));
         return typeFactory.zeroOrMore(typeFactory.itemNumber(indices));
     }
 
@@ -223,7 +238,7 @@ public final class Types {
             itemTypes[i] = sequences[i].itemType();
         }
         
-        final Cardinality mergedCardinality = Cardinalities.sequenceMerge(cardinalities);
+        final Cardinality mergedCardinality = Cardinalities.add(cardinalities);
         final AntlrQueryItemType mergedItemType = ItemTypes.union(typeFactory, itemTypes);
         return typeFactory.sequence(mergedItemType, mergedCardinality);
     }
@@ -332,7 +347,7 @@ public final class Types {
                 .map(AntlrQuerySequenceType::itemType)
                 .toArray(AntlrQueryItemType[]::new);
 
-        @Nullable AntlrQueryItemType mergedItemType = ItemTypes.intersection(typeFactory, itemTypes);
+        @Nullable AntlrQueryItemType mergedItemType = ItemTypes.intersect(typeFactory, itemTypes);
 
         // If item types are completely disjoint (NeverType), return empty sequence or never sequence based on type factory rules
         if (mergedItemType == null) {
@@ -382,7 +397,7 @@ public final class Types {
         var removedTypes =
                 Arrays.stream(types).skip(1).map(AntlrQuerySequenceType::itemType).toArray(AntlrQueryItemType[]::new);
         var removedTypeUnion = ItemTypes.union(typeFactory, removedTypes);
-        @Nullable AntlrQueryItemType itemTypeIntersection = ItemTypes.intersection(typeFactory, target.itemType(), removedTypeUnion);
+        @Nullable AntlrQueryItemType itemTypeIntersection = ItemTypes.intersect(typeFactory, target.itemType(), removedTypeUnion);
         if (itemTypeIntersection == null) {
             return target;
         }

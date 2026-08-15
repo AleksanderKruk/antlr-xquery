@@ -1,12 +1,15 @@
 package com.github.akruk.antlrquery.inputgrammaranalyzer;
 
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
+import com.github.akruk.antlrgrammar.ANTLRv4Lexer;
+import com.github.akruk.antlrgrammar.ANTLRv4Parser;
+import com.github.akruk.antlrquery.AntlrQueryAxis;
+import com.github.akruk.antlrquery.namespaceresolver.NamespaceResolver;
+import org.antlr.v4.runtime.*;
 
-import com.github.akruk.antlrquery.inputgrammaranalyzer.InputGrammarAnalyzer.GrammarAnalysisResult;
 import com.github.akruk.antlrquery.typesystem.types.Cardinality;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -15,15 +18,31 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class GrammarAnalysisTests {
 
 
-    private GrammarAnalysisResult analyzeGrammar(String grammar) {
+    private InputGrammarAnalyzer.QualifiedGrammarAnalysisResult analyzeGrammar(String grammar) {
         final InputGrammarAnalyzer analyzer = new InputGrammarAnalyzer();
         final CharStream stream = CharStreams.fromString(grammar);
-        return analyzer.analyze(stream);
+        var lexer = new ANTLRv4Lexer(stream);
+        var parser = new ANTLRv4Parser(new CommonTokenStream(lexer));
+        parser.addErrorListener(new BaseErrorListener(){
+            @Override
+            public void syntaxError(
+                    Recognizer<?, ?> recognizer,
+                    Object offendingSymbol,
+                    int line,
+                    int charPositionInLine,
+                    String msg,
+                    RecognitionException e)
+            {
+                throw new IllegalStateException(msg);
+            }
+        });
+        var tree = parser.grammarSpec();
+        return analyzer.analyze("", Collections.singletonList(tree));
     }
 
-    private GrammarAnalysisResult relationshipGrammar() {
+    private InputGrammarAnalyzer.QualifiedGrammarAnalysisResult relationshipGrammar() {
         final String grammar = """
-            grammar grammarname;
+            grammar GrammarName;
             x: a b c;
             a: 'a';
             b: B;
@@ -82,55 +101,54 @@ public class GrammarAnalysisTests {
     //     return analyzeGrammar(grammar);
     // }
 
-
     @Test
     public void children() {
         final var results = relationshipGrammar();
-        final var children = results.children();
+        final var children = results.axes().get(AntlrQueryAxis.CHILD);
 
         assertEquals(Map.ofEntries(
-            Map.entry("x", Cardinality.ZERO),
-            Map.entry("a", Cardinality.ONE),
-            Map.entry("b", Cardinality.ONE),
-            Map.entry("c", Cardinality.ONE),
-            Map.entry("'a'", Cardinality.ZERO),
-            Map.entry("B", Cardinality.ZERO),
-            Map.entry("'c'", Cardinality.ZERO),
-            Map.entry("'b'", Cardinality.ZERO)
-        ), children.get("x"));
+            Map.entry(new NamespaceResolver.QualifiedName("", "x"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "a"), Cardinality.ONE),
+            Map.entry(new NamespaceResolver.QualifiedName("", "b"), Cardinality.ONE),
+            Map.entry(new NamespaceResolver.QualifiedName("", "c"), Cardinality.ONE),
+            Map.entry(new NamespaceResolver.QualifiedName("", "'a'"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "B"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "'c'"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "'b'"), Cardinality.ZERO)
+        ), children.get(new NamespaceResolver.QualifiedName("", "x")));
 
         assertEquals(Map.ofEntries(
-            Map.entry("x", Cardinality.ZERO),
-            Map.entry("a", Cardinality.ZERO),
-            Map.entry("b", Cardinality.ZERO),
-            Map.entry("c", Cardinality.ZERO),
-            Map.entry("'a'", Cardinality.ONE),
-            Map.entry("B", Cardinality.ZERO),
-            Map.entry("'c'", Cardinality.ZERO),
-            Map.entry("'b'", Cardinality.ZERO)
-        ), children.get("a"));
+            Map.entry(new NamespaceResolver.QualifiedName("", "x"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "a"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "b"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "c"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "'a'"), Cardinality.ONE),
+            Map.entry(new NamespaceResolver.QualifiedName("", "B"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "'c'"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "'b'"), Cardinality.ZERO)
+        ), children.get(new NamespaceResolver.QualifiedName("", "a")));
 
         assertEquals(Map.ofEntries(
-            Map.entry("x", Cardinality.ZERO),
-            Map.entry("a", Cardinality.ZERO),
-            Map.entry("b", Cardinality.ZERO),
-            Map.entry("c", Cardinality.ZERO),
-            Map.entry("'a'", Cardinality.ZERO),
-            Map.entry("B", Cardinality.ONE),
-            Map.entry("'c'", Cardinality.ZERO),
-            Map.entry("'b'", Cardinality.ZERO)
-        ), children.get("b"));
+            Map.entry(new NamespaceResolver.QualifiedName("", "x"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "a"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "b"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "c"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "'a'"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "B"), Cardinality.ONE),
+            Map.entry(new NamespaceResolver.QualifiedName("", "'c'"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "'b'"), Cardinality.ZERO)
+        ), children.get(new NamespaceResolver.QualifiedName("", "b")));
 
         assertEquals(Map.ofEntries(
-            Map.entry("x", Cardinality.ZERO),
-            Map.entry("a", Cardinality.ZERO),
-            Map.entry("b", Cardinality.ZERO),
-            Map.entry("c", Cardinality.ZERO),
-            Map.entry("'a'", Cardinality.ZERO),
-            Map.entry("B", Cardinality.ZERO),
-            Map.entry("'c'", Cardinality.ONE),
-            Map.entry("'b'", Cardinality.ZERO)
-        ), children.get("c"));
+            Map.entry(new NamespaceResolver.QualifiedName("", "x"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "a"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "b"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "c"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "'a'"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "B"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "'c'"), Cardinality.ONE),
+            Map.entry(new NamespaceResolver.QualifiedName("", "'b'"), Cardinality.ZERO)
+        ), children.get(new NamespaceResolver.QualifiedName("", "c")));
 
     }
 
@@ -143,35 +161,35 @@ public class GrammarAnalysisTests {
             c: c*;
             d: d+;
         """);
-        final var children = results.children();
+        final var children = results.axes().get(AntlrQueryAxis.CHILD);
 
         assertEquals(Map.ofEntries(
-            Map.entry("a", Cardinality.ONE_OR_MORE),
-            Map.entry("b", Cardinality.ZERO),
-            Map.entry("c", Cardinality.ZERO),
-            Map.entry("d", Cardinality.ZERO)
-        ), children.get("a"));
+            Map.entry(new NamespaceResolver.QualifiedName("", "a"), Cardinality.ONE),
+            Map.entry(new NamespaceResolver.QualifiedName("", "b"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "c"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "d"), Cardinality.ZERO)
+        ), children.get(new NamespaceResolver.QualifiedName("", "a")));
 
         assertEquals(Map.ofEntries(
-            Map.entry("a", Cardinality.ZERO),
-            Map.entry("b", Cardinality.ZERO_OR_MORE),
-            Map.entry("c", Cardinality.ZERO),
-            Map.entry("d", Cardinality.ZERO)
-        ), children.get("b"));
+            Map.entry(new NamespaceResolver.QualifiedName("", "a"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "b"), Cardinality.ZERO_OR_ONE),
+            Map.entry(new NamespaceResolver.QualifiedName("", "c"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "d"), Cardinality.ZERO)
+        ), children.get(new NamespaceResolver.QualifiedName("", "b")));
 
         assertEquals(Map.ofEntries(
-            Map.entry("a", Cardinality.ZERO),
-            Map.entry("b", Cardinality.ZERO),
-            Map.entry("c", Cardinality.ZERO_OR_MORE),
-            Map.entry("d", Cardinality.ZERO)
-        ), children.get("c"));
+            Map.entry(new NamespaceResolver.QualifiedName("", "a"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "b"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "c"), Cardinality.ZERO_OR_MORE),
+            Map.entry(new NamespaceResolver.QualifiedName("", "d"), Cardinality.ZERO)
+        ), children.get(new NamespaceResolver.QualifiedName("", "c")));
 
         assertEquals(Map.ofEntries(
-            Map.entry("a", Cardinality.ZERO),
-            Map.entry("b", Cardinality.ZERO),
-            Map.entry("c", Cardinality.ZERO),
-            Map.entry("d", Cardinality.ONE_OR_MORE)
-        ), children.get("d"));
+            Map.entry(new NamespaceResolver.QualifiedName("", "a"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "b"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "c"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "d"), Cardinality.ONE_OR_MORE)
+        ), children.get(new NamespaceResolver.QualifiedName("", "d")));
     }
 
 
@@ -181,52 +199,158 @@ public class GrammarAnalysisTests {
     @Test
     public void parents() {
         final var results = relationshipGrammar();
-        final var parent = results.parent();
+        final var parent = results.axes().get(AntlrQueryAxis.PARENT);
 
         assertEquals(Map.ofEntries(
-            Map.entry("x", Cardinality.ZERO),
-            Map.entry("a", Cardinality.ZERO),
-            Map.entry("b", Cardinality.ZERO),
-            Map.entry("c", Cardinality.ZERO),
-            Map.entry("'a'", Cardinality.ZERO),
-            Map.entry("B", Cardinality.ZERO),
-            Map.entry("'c'", Cardinality.ZERO),
-            Map.entry("'b'", Cardinality.ZERO)
-            ), parent.get("x"));
+            Map.entry(new NamespaceResolver.QualifiedName("", "x"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "a"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "b"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "c"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "'a'"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "B"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "'c'"), Cardinality.ZERO),
+            Map.entry(new NamespaceResolver.QualifiedName("", "'b'"), Cardinality.ZERO)
+            ), parent.get(new NamespaceResolver.QualifiedName("", "x")));
 
-        assertEquals(parent.get("a"), Map.ofEntries(
-                Map.entry("x", Cardinality.ZERO_OR_ONE),
-                Map.entry("a", Cardinality.ZERO),
-                Map.entry("b", Cardinality.ZERO),
-                Map.entry("c", Cardinality.ZERO),
-                Map.entry("'a'", Cardinality.ZERO),
-                Map.entry("B", Cardinality.ZERO),
-                Map.entry("'c'", Cardinality.ZERO),
-                Map.entry("'b'", Cardinality.ZERO)
+        assertEquals(parent.get(new NamespaceResolver.QualifiedName("", "a")), Map.ofEntries(
+                Map.entry(new NamespaceResolver.QualifiedName("", "x"), Cardinality.ZERO_OR_ONE),
+                Map.entry(new NamespaceResolver.QualifiedName("", "a"), Cardinality.ZERO),
+                Map.entry(new NamespaceResolver.QualifiedName("", "b"), Cardinality.ZERO),
+                Map.entry(new NamespaceResolver.QualifiedName("", "c"), Cardinality.ZERO),
+                Map.entry(new NamespaceResolver.QualifiedName("", "'a'"), Cardinality.ZERO),
+                Map.entry(new NamespaceResolver.QualifiedName("", "B"), Cardinality.ZERO),
+                Map.entry(new NamespaceResolver.QualifiedName("", "'c'"), Cardinality.ZERO),
+                Map.entry(new NamespaceResolver.QualifiedName("", "'b'"), Cardinality.ZERO)
         ));
 
-        assertEquals(parent.get("b"), Map.ofEntries(
-                Map.entry("x", Cardinality.ZERO_OR_ONE),
-                Map.entry("a", Cardinality.ZERO),
-                Map.entry("b", Cardinality.ZERO),
-                Map.entry("c", Cardinality.ZERO),
-                Map.entry("'a'", Cardinality.ZERO),
-                Map.entry("B", Cardinality.ZERO),
-                Map.entry("'c'", Cardinality.ZERO),
-                Map.entry("'b'", Cardinality.ZERO)
-        ));
+        assertEquals(
+                Map.ofEntries(
+                    Map.entry(new NamespaceResolver.QualifiedName("", "x"), Cardinality.ZERO_OR_ONE),
+                    Map.entry(new NamespaceResolver.QualifiedName("", "a"), Cardinality.ZERO),
+                    Map.entry(new NamespaceResolver.QualifiedName("", "b"), Cardinality.ZERO),
+                    Map.entry(new NamespaceResolver.QualifiedName("", "c"), Cardinality.ZERO),
+                    Map.entry(new NamespaceResolver.QualifiedName("", "'a'"), Cardinality.ZERO),
+                    Map.entry(new NamespaceResolver.QualifiedName("", "B"), Cardinality.ZERO),
+                    Map.entry(new NamespaceResolver.QualifiedName("", "'c'"), Cardinality.ZERO),
+                    Map.entry(new NamespaceResolver.QualifiedName("", "'b'"), Cardinality.ZERO)
+                ),
+                parent.get(new NamespaceResolver.QualifiedName("", "b"))
+        );
 
-        assertEquals(parent.get("c"), Map.ofEntries(
-                Map.entry("x", Cardinality.ZERO_OR_ONE),
-                Map.entry("a", Cardinality.ZERO),
-                Map.entry("b", Cardinality.ZERO),
-                Map.entry("c", Cardinality.ZERO),
-                Map.entry("'a'", Cardinality.ZERO),
-                Map.entry("B", Cardinality.ZERO),
-                Map.entry("'c'", Cardinality.ZERO),
-                Map.entry("'b'", Cardinality.ZERO)
-        ));
+        assertEquals(
+                Map.ofEntries(
+                        Map.entry(new NamespaceResolver.QualifiedName("", "x"), Cardinality.ZERO_OR_ONE),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "a"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "b"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "c"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "'a'"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "B"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "'c'"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "'b'"), Cardinality.ZERO)
+                ),
+                parent.get(new NamespaceResolver.QualifiedName("", "c"))
+        );
     }
+
+
+    @Test
+    public void ancestors() {
+        final var results = relationshipGrammar();
+        final var parent = results.axes().get(AntlrQueryAxis.ANCESTOR);
+
+        assertEquals(Map.ofEntries(
+                Map.entry(new NamespaceResolver.QualifiedName("", "x"), Cardinality.ZERO),
+                Map.entry(new NamespaceResolver.QualifiedName("", "a"), Cardinality.ZERO),
+                Map.entry(new NamespaceResolver.QualifiedName("", "b"), Cardinality.ZERO),
+                Map.entry(new NamespaceResolver.QualifiedName("", "c"), Cardinality.ZERO),
+                Map.entry(new NamespaceResolver.QualifiedName("", "'a'"), Cardinality.ZERO),
+                Map.entry(new NamespaceResolver.QualifiedName("", "B"), Cardinality.ZERO),
+                Map.entry(new NamespaceResolver.QualifiedName("", "'c'"), Cardinality.ZERO),
+                Map.entry(new NamespaceResolver.QualifiedName("", "'b'"), Cardinality.ZERO)
+        ), parent.get(new NamespaceResolver.QualifiedName("", "x")));
+
+        assertEquals(Map.ofEntries(
+                Map.entry(new NamespaceResolver.QualifiedName("", "x"), Cardinality.ZERO_OR_ONE),
+                Map.entry(new NamespaceResolver.QualifiedName("", "a"), Cardinality.ZERO),
+                Map.entry(new NamespaceResolver.QualifiedName("", "b"), Cardinality.ZERO),
+                Map.entry(new NamespaceResolver.QualifiedName("", "c"), Cardinality.ZERO),
+                Map.entry(new NamespaceResolver.QualifiedName("", "'a'"), Cardinality.ZERO),
+                Map.entry(new NamespaceResolver.QualifiedName("", "B"), Cardinality.ZERO),
+                Map.entry(new NamespaceResolver.QualifiedName("", "'c'"), Cardinality.ZERO),
+                Map.entry(new NamespaceResolver.QualifiedName("", "'b'"), Cardinality.ZERO)
+        ), parent.get(new NamespaceResolver.QualifiedName("", "a")));
+
+        assertEquals(
+                Map.ofEntries(
+                        Map.entry(new NamespaceResolver.QualifiedName("", "x"), Cardinality.ZERO_OR_ONE),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "a"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "b"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "c"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "'a'"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "B"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "'c'"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "'b'"), Cardinality.ZERO)
+                ),
+                parent.get(new NamespaceResolver.QualifiedName("", "b"))
+        );
+
+        assertEquals(
+                Map.ofEntries(
+                        Map.entry(new NamespaceResolver.QualifiedName("", "x"), Cardinality.ZERO_OR_ONE),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "a"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "b"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "c"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "'a'"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "B"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "'c'"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "'b'"), Cardinality.ZERO)
+                ),
+                parent.get(new NamespaceResolver.QualifiedName("", "c"))
+        );
+
+        assertEquals(
+                Map.ofEntries(
+                        Map.entry(new NamespaceResolver.QualifiedName("", "x"), Cardinality.ZERO_OR_ONE),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "a"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "b"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "c"), Cardinality.ZERO_OR_ONE),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "'a'"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "B"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "'c'"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "'b'"), Cardinality.ZERO)
+                ),
+                parent.get(new NamespaceResolver.QualifiedName("", "'c'"))
+        );
+
+        assertEquals(
+                Map.ofEntries(
+                        Map.entry(new NamespaceResolver.QualifiedName("", "x"), Cardinality.ZERO_OR_ONE),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "a"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "b"), Cardinality.ZERO_OR_ONE),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "c"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "'a'"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "B"), Cardinality.ZERO_OR_ONE),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "'c'"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "'b'"), Cardinality.ZERO)
+                ),
+                parent.get(new NamespaceResolver.QualifiedName("", "'b'"))
+        );
+
+        assertEquals(
+                Map.ofEntries(
+                        Map.entry(new NamespaceResolver.QualifiedName("", "x"), Cardinality.ZERO_OR_ONE),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "a"), Cardinality.ZERO_OR_ONE),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "b"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "c"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "'a'"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "B"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "'c'"), Cardinality.ZERO),
+                        Map.entry(new NamespaceResolver.QualifiedName("", "'b'"), Cardinality.ZERO)
+                ),
+                parent.get(new NamespaceResolver.QualifiedName("", "'a'"))
+        );
+    }
+
 
 
 }

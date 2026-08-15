@@ -327,7 +327,7 @@ argumentPlaceholder: QUESTION_MARK;
 
 
 
-mapConstructor: MAP? LCURLY (mapConstructorEntry (COMMA mapConstructorEntry)*)? RCURLY;
+mapConstructor: (MAP|RECORD)? LCURLY (mapConstructorEntry (COMMA mapConstructorEntry)*)? RCURLY;
 mapConstructorEntry:mapKeyExpr COLON mapValueExpr;
 mapKeyExpr:exprSingle;
 mapValueExpr:exprSingle;

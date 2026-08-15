@@ -1,5 +1,7 @@
 package com.github.akruk.antlrquery.languagefeatures.semantics.functions;
 
+import com.github.akruk.antlrquery.typesystem.types.Cardinality;
+import com.github.akruk.antlrquery.typesystem.types.NumericRange;
 import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrquery.languagefeatures.semantics.SemanticTestsBase;
@@ -149,7 +151,8 @@ public class SequenceFunctionsTest extends SemanticTestsBase {
         assertType("fn:reverse(())",
             typeFactory.emptySequence());
         assertType("fn:reverse((1,2,3))",
-            typeFactory.oneOrMore(typeFactory.itemNumber()));
+            typeFactory.sequence(typeFactory.itemNumber(NumericRange.of(1, 2, 3)), Cardinality.of(3))
+        );
     }
 
     // fn:sequence-join($input as item()*, $separator as item()*) as item()*

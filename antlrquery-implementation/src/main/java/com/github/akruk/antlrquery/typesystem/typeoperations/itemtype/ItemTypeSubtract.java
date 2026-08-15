@@ -52,6 +52,9 @@ public class ItemTypeSubtract {
             case ConcreteItemType concreteItemType -> baseItems = Set.of(concreteItemType);
             case NeverType _ -> { return null; }
             case NothingType _ -> { return typeFactory.itemNothing(); }
+            case NamedItemType(NamespaceResolver.QualifiedName reference) -> {
+                return subtract(typeFactory.guaranteedItemNamedType(reference, new IllegalStateException()), subtractedTypes);
+            }
         }
         List<AntlrQueryItemType> resultTypes = new ArrayList<>(baseItems.size());
         var fromTypesGroupedByClass = groupByClass(baseItems);

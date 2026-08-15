@@ -2,7 +2,9 @@ package com.github.akruk.antlrquery.languagefeatures.semantics.maps;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
+import com.github.akruk.Utils;
 import com.github.akruk.antlrquery.typesystem.types.NumericRange;
 import org.junit.jupiter.api.Test;
 
@@ -14,79 +16,27 @@ public class MapsTest extends SemanticTestsBase {
     @Test
     public void oneTypeNonEmptyMapsAndRecords()
     {
-        final var numToNum = typeFactory.map(typeFactory.itemNumber(), typeFactory.number(NumericRange.FULL));
+        final var numToNum = typeFactory.map(
+                typeFactory.itemNumber(NumericRange.of(1, 3)),
+                typeFactory.number(NumericRange.of(2, 4))
+        );
         final var recordType = typeFactory.record(
-            new LinkedHashMap<>(Map.of("a", new RecordField("a", new TypeOrReference.Type(typeFactory.number(NumericRange.FULL)), true),
-                "b", new RecordField("b", new TypeOrReference.Type(typeFactory.number(NumericRange.FULL)), true))));
+            Utils.linkedHashMap(
+                Map.entry("a", new RecordField("a", new TypeOrReference.Type(typeFactory.number(NumericRange.of(1))), true)),
+                Map.entry("b", new RecordField("b", new TypeOrReference.Type(typeFactory.number(NumericRange.of(2))), true))
+            )
+        );
 
         assertType("map { 1: 2, 3: 4 }", numToNum); // numeric keys -> map
         assertType("map { 'a': 1, 'b': 2 }", recordType); // string literal keys -> record
+        assertType("map { 'a': 1, 'b': 2, 3: 4 }", typeFactory.map(
+                typeFactory.itemChoice(
+                    typeFactory.itemEnum(Set.of("a", "b")),
+                    typeFactory.itemNumber(NumericRange.of(3))
+                ),
+                typeFactory.number(NumericRange.of(1, 2, 4))
+            )
+        ); // mixed keys -> map
     }
-
-    @Test
-    public void impliedType() {
-        assertType("""
-            let $x as number? := 1
-            return
-            if ($x instance of number)then
-                let $y := $x
-                return 1
-            else
-                let $z := $x
-                return 1
-        """, typeFactory.number(NumericRange.FULL));
-    }
-
-    @Test
-    public void nonEmptyNumber() {
-        assertType("""
-    let $x as number? := 1
-        return if ($x) then $x
-        else 1
-        """, typeFactory.number(NumericRange.FULL));
-    }
-
-    @Test
-    public void nonEmptyBoolean() {
-        assertType("""
-    let $x as boolean? := fn:true()
-        return if ($x) then $x
-        else fn:true()
-        """, typeFactory.boolean_());
-    }
-
-    @Test
-    public void nonEmptyString() {
-        assertType("""
-    let $x as string? := "abc"
-        return if ($x) then $x
-        else "a"
-        """, typeFactory.string());
-    }
-
-    @Test
-    public void nonEmptyNode() {
-        assertType("""
-            let $x as node()* := /*
-                return if ($x) then $x
-                else .
-        """, typeFactory.oneOrMore(typeFactory.itemAnyNode()));
-    }
-
-
-    @Test
-    public void andAssumptions() {
-        assertType("""
-            let $x as number? := 1
-            let $y as number? := 1
-            return
-                if ($x and $y) then
-                    ($x, $y)
-                else
-                    (1, 1)
-        """, typeFactory.oneOrMore(typeFactory.itemNumber()));
-    }
-
-
 
 }

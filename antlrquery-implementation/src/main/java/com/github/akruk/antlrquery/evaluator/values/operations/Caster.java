@@ -225,10 +225,7 @@ public class Caster {
             }
             case EMPTY_SEQUENCE -> valueFactory.array(List.of());
             case SEQUENCE -> valueFactory.array(testedValue.sequence);
-            case MAP, STRING, BOOLEAN, ELEMENT -> errorValue;
-            case NUMBER -> errorValue;
-            case ERROR -> errorValue;
-            case FUNCTION->errorValue;
+            case MAP, STRING, BOOLEAN, ELEMENT, NUMBER, ERROR, FUNCTION -> errorValue;
         };
 
     }
@@ -270,9 +267,7 @@ public class Caster {
                 return valueFactory.map(mapping);
             }
 
-            case BOOLEAN -> {}  case ELEMENT -> {}  case EMPTY_SEQUENCE -> {}
-            case ERROR -> {}    case FUNCTION -> {} case NUMBER -> {}
-            case SEQUENCE -> {} case STRING -> {}
+            case BOOLEAN, ERROR, FUNCTION, SEQUENCE, NUMBER, STRING, EMPTY_SEQUENCE -> {}  case ELEMENT -> {}
         }
         return valueFactory.error(AntlrQueryError.InvalidCastValue, ""); // TODO: error messages
     }

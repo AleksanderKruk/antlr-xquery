@@ -4,10 +4,6 @@ import com.github.akruk.antlrquery.typesystem.types.ItemTypes;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**

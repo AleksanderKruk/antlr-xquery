@@ -329,7 +329,7 @@ public class SequenceTypePathOperator {
         return new AnalyzedAxisResult(resultingCardinality, possibleNames, Set.of());
     }
 
-    EnumMap<AntlrQueryAxis, Cardinality> axisToCardinality = new EnumMap<>(AntlrQueryAxis.class);
+    final EnumMap<AntlrQueryAxis, Cardinality> axisToCardinality = new EnumMap<>(AntlrQueryAxis.class);
     {
         axisToCardinality.put(AntlrQueryAxis.ANCESTOR, Cardinality.ZERO_OR_MORE);
         axisToCardinality.put(AntlrQueryAxis.CHILD, Cardinality.ZERO_OR_MORE);
@@ -357,7 +357,7 @@ public class SequenceTypePathOperator {
         }
     }
     
-    EnumMap<AntlrQueryAxis, Cardinality> axisToSelfFactor = new EnumMap<>(AntlrQueryAxis.class);
+    final EnumMap<AntlrQueryAxis, Cardinality> axisToSelfFactor = new EnumMap<>(AntlrQueryAxis.class);
     {
         axisToSelfFactor.put(AntlrQueryAxis.ANCESTOR, Cardinality.ZERO);
         axisToSelfFactor.put(AntlrQueryAxis.CHILD, Cardinality.ZERO);

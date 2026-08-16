@@ -145,7 +145,7 @@ public class FunctionsOnStringValues {
         // determine end position p < start + cardinality
         long endExclusivePos = startRounded + lengthRounded;
         // if lengthRounded infinite, endExclusivePos large, we'll cap by n+1
-        int endIndex = (lengthRounded >= Long.MAX_VALUE || endExclusivePos > n + 1)
+        int endIndex = (lengthRounded == Long.MAX_VALUE || endExclusivePos > n + 1)
             ? n
             : (int) Math.min(n, endExclusivePos - 1);
 

@@ -50,7 +50,7 @@ string() => characters() => x() => y()
                                ^
                                       ^
 :)
-let $arrowExpressionVariants = (
+let $arrowExpressionVariants := (
 	for $arrow in //arrowExpr
 		let $seq := $arrow/(sequenceArrowTarget|mappingArrowTarget)
 		let $start := $arrow/unaryExpr

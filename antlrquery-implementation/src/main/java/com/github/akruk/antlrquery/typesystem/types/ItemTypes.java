@@ -10,7 +10,6 @@ import com.github.akruk.antlrquery.typesystem.typeoperations.itemtype.ItemTypeIn
 import com.github.akruk.antlrquery.typesystem.typeoperations.itemtype.ItemTypeIsSubtype;
 import com.github.akruk.antlrquery.typesystem.typeoperations.itemtype.ItemTypeUnion;
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.*;
-import com.github.akruk.antlrquery.typesystem.types.itemtypes.FunctionType;
 import com.github.akruk.visitorannotations.Visitor;
 import org.checkerframework.checker.nullness.qual.NonNull;
 

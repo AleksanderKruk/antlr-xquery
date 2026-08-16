@@ -11,8 +11,6 @@ import com.github.akruk.antlrquery.languagefeatures.semantics.SemanticTestsBase;
 import com.github.akruk.antlrquery.typesystem.types.AntlrQuerySequenceType;
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.AntlrQueryItemType;
 
-import javax.smartcardio.Card;
-
 public class LookupExpressionSemanticTests extends SemanticTestsBase {
     @Test
     public void lookupOnEmptyRecord() {

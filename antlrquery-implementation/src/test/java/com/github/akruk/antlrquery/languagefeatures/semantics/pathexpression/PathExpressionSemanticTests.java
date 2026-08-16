@@ -5,7 +5,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrquery.languagefeatures.semantics.SemanticTestsBase;
-import com.github.akruk.antlrquery.namespaceresolver.NamespaceResolver.QualifiedName;;
+import com.github.akruk.antlrquery.namespaceresolver.NamespaceResolver.QualifiedName;
 
 public class PathExpressionSemanticTests extends SemanticTestsBase {
     private final Set<QualifiedName> xSet = Set.of(new QualifiedName("", "x"));

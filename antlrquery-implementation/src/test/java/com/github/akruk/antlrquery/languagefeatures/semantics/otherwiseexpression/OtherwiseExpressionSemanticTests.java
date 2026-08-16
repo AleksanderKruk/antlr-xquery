@@ -1,6 +1,5 @@
 package com.github.akruk.antlrquery.languagefeatures.semantics.otherwiseexpression;
 
-import java.math.BigInteger;
 import java.util.Set;
 
 import com.github.akruk.antlrquery.typesystem.types.NumericRange;

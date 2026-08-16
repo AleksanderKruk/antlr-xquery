@@ -27,18 +27,11 @@
 
     <dependencies>
 
-        <!-- Visitor annotation API -->
         <dependency>
             <groupId>com.github.akruk</groupId>
             <artifactId>visitor</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
-
-<!--        <dependency>-->
-<!--            <groupId>com.github.akruk</groupId>-->
-<!--            <artifactId>visitor-processor</artifactId>-->
-<!--            <version>0.0.1-SNAPSHOT</version>-->
-<!--        </dependency>-->
 
         <dependency>
             <groupId>org.eclipse.lsp4j</groupId>
@@ -46,7 +39,6 @@
             <version>0.24.0</version>
         </dependency>
 
-        <!-- ANTLR -->
         <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>antlr4-runtime</artifactId>
@@ -250,7 +242,33 @@
 
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>copy-server-and-extension</id>
+                        <phase>package</phase>
+                        <configuration>
+                            <target>
+                                <mkdir dir="antlrqueryextension/antlrquery/server"/>
+                                <copy file="${project.build.directory}/antlrquery-language-server.jar"
+                                      tofile="${maven.multiModuleProjectDirectory}/antlrquery-vscode-extension/server/antlrquery-language-server.jar"
+                                      overwrite="true"/>
 
+                                <mkdir dir="${user.home}/.vscode/extensions/antlrquery"/>
+                                <copy todir="${user.home}/.vscode/extensions/antlrquery" overwrite="true">
+                                    <fileset dir="${maven.multiModuleProjectDirectory}/antlrquery-vscode-extension"/>
+                                </copy>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
 
     </build>

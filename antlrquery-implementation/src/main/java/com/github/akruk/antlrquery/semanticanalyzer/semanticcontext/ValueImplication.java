@@ -4,7 +4,7 @@ import com.github.akruk.antlrquery.typesystem.types.TypeInContext;
 
 public abstract class ValueImplication<T> implements Implication
 {
-    private Assumption matchingAssumption;
+    private final Assumption matchingAssumption;
 
     public ValueImplication(TypeInContext target, T value) {
         this.matchingAssumption = new Assumption(target, value);

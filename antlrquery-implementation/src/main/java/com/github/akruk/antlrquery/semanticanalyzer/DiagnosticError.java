@@ -67,4 +67,4 @@ public record DiagnosticError(
           : length - lastNewlineIndex;
       return new LineEndCharPosEnd(lineEnd, charPositionInLineEnd);
   }
-};
+}

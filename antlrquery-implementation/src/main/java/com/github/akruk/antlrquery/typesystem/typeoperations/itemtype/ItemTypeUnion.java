@@ -15,7 +15,6 @@ import com.github.akruk.antlrquery.typesystem.types.ItemTypes;
 import com.github.akruk.antlrquery.typesystem.typeoperations.Types;
 import com.github.akruk.antlrquery.typesystem.types.NumericRange;
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.*;
-import com.github.akruk.antlrquery.typesystem.types.itemtypes.BooleanType;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.com.google.common.collect.Streams;

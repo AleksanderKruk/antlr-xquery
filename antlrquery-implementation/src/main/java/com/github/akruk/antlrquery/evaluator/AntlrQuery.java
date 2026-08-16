@@ -2,7 +2,6 @@ package com.github.akruk.antlrquery.evaluator;
 
 import com.github.akruk.antlrquery.languageserver.DiagnosticMessageCreator;
 import com.github.akruk.antlrquery.namespaceresolver.NamespaceResolver;
-import com.github.akruk.antlrquery.semanticanalyzer.DiagnosticError;
 import com.github.akruk.antlrquery.semanticanalyzer.visitors.*;
 import com.github.akruk.antlrquery.typesystem.factories.CardinalityFactory;
 import com.github.akruk.antlrquery.typesystem.factories.defaults.MemoizedCardinalityFactory;

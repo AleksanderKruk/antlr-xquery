@@ -50,7 +50,6 @@ public class EffectiveBooleanValueTrue extends ValueImplication<Boolean> {
             }
             changedType.type = typeFactory.sequence(changedType.type.itemType(), newCardinality);
         }
-        return;
     }
 
 }

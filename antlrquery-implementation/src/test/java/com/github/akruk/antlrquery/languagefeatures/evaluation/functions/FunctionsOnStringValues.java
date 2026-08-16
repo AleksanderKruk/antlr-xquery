@@ -28,7 +28,7 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
     public void charFromNamedEntity() {
         assertResult("fn:char('amp')", valueFactory.string("&"));
         assertResult("fn:char('quot')", valueFactory.string("\""));
-        assertResult("fn:char('NotEqualTilde')", valueFactory.string("\u2242\u0338"));
+        assertResult("fn:char('NotEqualTilde')", valueFactory.string("≂\u0338"));
     }
 
     @Test
@@ -146,7 +146,7 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
     @Test
     public void graphemes_complexDevanagariCluster() {
         // क (U+0915), ◌़ (U+093C), ZWJ, ◌् (U+094D), त (U+0924)
-        String cluster = "क\u093C\u200D\u094Dत";
+        String cluster = "क़\u200D्त";
         assertResult("graphemes('क' || fn:char(0x93C) || fn:char(0x200D) "
                    + "|| fn:char(0x94D) || 'त')",
             List.of(valueFactory.string(cluster))
@@ -157,11 +157,6 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
     public void concat() {
         assertResult("concat(('a', 'b', 'c'))", valueFactory.string("abc"));
     }
-
-//    @Test
-//    public void concatVariadic() {
-//        assertResult("concat('a', 'b', 'c')", valueFactory.string("abc"));
-//    }
 
     @Test
     public void stringJoin() {
@@ -298,14 +293,6 @@ public class FunctionsOnStringValues extends EvaluationTestsBase {
             valueFactory.number(1)
         );
     }
-
-    // @Test
-    // public void combiningCharactersIncreaseLength() {
-    //     assertResult(
-    //         "\"ᾧ\" => normalize-unicode(\"NFD\") => string-length()",
-    //         baseFactory.number(4)
-    //     );
-    // }
 
     @Test
     public void stringLengthEmptySequence() {

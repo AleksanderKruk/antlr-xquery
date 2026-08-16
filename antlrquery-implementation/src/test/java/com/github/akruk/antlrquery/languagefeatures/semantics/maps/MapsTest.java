@@ -1,6 +1,5 @@
 package com.github.akruk.antlrquery.languagefeatures.semantics.maps;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 

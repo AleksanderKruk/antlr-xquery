@@ -12,5 +12,4 @@ public enum AntlrQueryValues {
     MAP,
     SEQUENCE,
     EMPTY_SEQUENCE,
-    ;
 }

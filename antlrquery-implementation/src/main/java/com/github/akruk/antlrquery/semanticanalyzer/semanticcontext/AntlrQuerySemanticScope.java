@@ -31,7 +31,7 @@ public class AntlrQuerySemanticScope {
     private final Map<TypeInContext, List<Implication>> scopedImplications;
     private final AntlrQuerySemanticContext context;
     private final Map<TypeInContext, TypeInContext> typeMapping;
-    private final Map<TypeInContext, TypeInContext> ebvs;
+    private final Map<TypeInContext, TypeInContext> effectiveBooleanValues;
     private final AntlrQueryTypeFactory typeFactory;
 
     public AntlrQuerySemanticScope(
@@ -46,7 +46,7 @@ public class AntlrQuerySemanticScope {
         scopedAssumptions = new HashMap<>(previousScope.scopedAssumptions.size() * 2);
         scopedImplications = new HashMap<>(previousScope.scopedImplications.size() * 2);
         variables = new HashMap<>(previousScope.variables.size() * 2);
-        ebvs = new HashMap<>(previousScope.ebvs.size()*2);
+        effectiveBooleanValues = new HashMap<>(previousScope.effectiveBooleanValues.size()*2);
 
         typeMapping = new HashMap<>(previousScope.scopedTypes.size()*2);
         for (var type : previousScope.scopedTypes) {
@@ -55,14 +55,14 @@ public class AntlrQuerySemanticScope {
             }
             var copiedType = typeInContext(type.type);
             typeMapping.put(type, copiedType);
-            var ebv = previousScope.ebvs.get(type);
+            var ebv = previousScope.effectiveBooleanValues.get(type);
             if (ebv != null) {
                 if (typeMapping.containsKey(ebv)) {
                     continue;
                 }
                 var copiedEbv = typeInContext(ebv.type);
                 typeMapping.put(ebv, copiedEbv);
-                ebvs.put(copiedType, copiedEbv);
+                effectiveBooleanValues.put(copiedType, copiedEbv);
             }
         }
 
@@ -104,7 +104,7 @@ public class AntlrQuerySemanticScope {
         this.scopedImplications = new HashMap<>();
         this.typeMapping = new HashMap<>();
         this.context = context;
-        this.ebvs = new HashMap<>();
+        this.effectiveBooleanValues = new HashMap<>();
         this.typeFactory = typeFactory;
     }
 
@@ -119,14 +119,14 @@ public class AntlrQuerySemanticScope {
      */
     public EntypingResult entypeVariable(
         String variableName,
-        AntlrQueryParser.VarNameContext variableDefinition,
-        Location variableLocation,
+        AntlrQueryParser.@Nullable VarNameContext variableDefinition,
+        @Nullable Location variableLocation,
         TypeInContext assignedType)
     {
         if (assignedType.context != context)
         {
             final TypeInContext copiedType = typeMapping.computeIfAbsent(assignedType, t->typeInContext(t.type));
-            ebvs.put(copiedType, assignedType.scope.ebvs.get(assignedType));
+            effectiveBooleanValues.put(copiedType, assignedType.scope.effectiveBooleanValues.get(assignedType));
             for (var implication : assignedType.scope.scopedImplications.getOrDefault(assignedType, List.of()))
             {
                 var remappedImplication = implication.remapTypes(typeMapping);
@@ -142,7 +142,7 @@ public class AntlrQuerySemanticScope {
                 if (variableInfo == null) { // new variable
                     VariableInfo newVariable = new VariableInfo(variableName, copiedType, null, null);
                     variables.put(variableName, newVariable);
-                    return new EntypingResult(variableInfo, newVariable);
+                    return new EntypingResult(null, newVariable);
                 } else { // redeclaration
                     VariableInfo newVariable = new VariableInfo(variableName, copiedType, variableInfo.definition, variableInfo.location);
                     variables.put(variableName, newVariable);
@@ -159,7 +159,7 @@ public class AntlrQuerySemanticScope {
                 if (variableInfo == null) { // new variable
                     VariableInfo newVariable = new VariableInfo(variableName, assignedType, null, null);
                     variables.put(variableName, newVariable);
-                    return new EntypingResult(variableInfo, newVariable);
+                    return new EntypingResult(null, newVariable);
                 } else { // redeclaration
                     VariableInfo newVariable = new VariableInfo(variableName, assignedType, variableInfo.definition, variableInfo.location);
                     variables.put(variableName, newVariable);
@@ -174,13 +174,8 @@ public class AntlrQuerySemanticScope {
     }
 
 
-    public VariableInfo getVariable(String variableName) {
-        var variableInfo = variables.get(variableName);
-        if (variableInfo == null) {
-            return null;
-        } else {
-            return variableInfo;
-        }
+    public @Nullable VariableInfo getVariable(String variableName) {
+        return variables.get(variableName);
     }
 
     public void assume(TypeInContext type, Assumption assumption) {
@@ -211,8 +206,8 @@ public class AntlrQuerySemanticScope {
     public List<Implication> resolveImplicationsForType(TypeInContext type)
     {
         var resolvedType = resolveType(type);
-        var inscope = scopedImplications.get(resolvedType);
-        return inscope != null? inscope : List.of();
+        var inScope = scopedImplications.get(resolvedType);
+        return inScope != null? inScope : List.of();
     }
 
     public List<Assumption> resolveAssumptionsForType(TypeInContext type)
@@ -220,11 +215,6 @@ public class AntlrQuerySemanticScope {
         var resolvedType = resolveType(type);
         var inScope = this.scopedAssumptions.get(resolvedType);
         return inScope != null? inScope : List.of();
-    }
-
-    public boolean hasVariable(String variableName)
-    {
-        return variables.containsKey(variableName);
     }
 
     public TypeInContext typeInContext(AntlrQuerySequenceType type)
@@ -256,12 +246,12 @@ public class AntlrQuerySemanticScope {
         var resolvedType = resolveType(typeInContext);
         return switch (ebvType) {
             case ALWAYS_FALSE__EMPTY_SEQUENCE, ALWAYS_TRUE__NODE, NODE, NO_EBV ->
-                    ebvs.computeIfAbsent(resolvedType, (_) -> typeInContext(typeFactory.boolean_()));
+                    effectiveBooleanValues.computeIfAbsent(resolvedType, (_) -> typeInContext(typeFactory.boolean_()));
             case ALWAYS_TRUE__NUMBER_STRING_BOOLEAN, NUMBER_STRING_BOOLEAN-> {
                 if (typeInContext.type.equals(typeFactory.boolean_())) {
                     yield resolvedType;
                 }
-                yield ebvs.computeIfAbsent(resolvedType, (_) -> typeInContext(typeFactory.boolean_()));
+                yield effectiveBooleanValues.computeIfAbsent(resolvedType, (_) -> typeInContext(typeFactory.boolean_()));
             }
         };
     }

@@ -6,6 +6,7 @@ import java.util.Map;
 
 import com.github.akruk.antlrquery.AntlrQueryParser;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.DefaultQualifier;
 import org.eclipse.lsp4j.Location;
 
@@ -42,7 +43,7 @@ public class AntlrQuerySemanticContext {
         return scopes.getLast();
     }
 
-    public VariableInfo getVariable(String variableName) {
+    public @Nullable VariableInfo getVariable(String variableName) {
         return currentScope().getVariable(variableName);
     }
 
@@ -63,8 +64,8 @@ public class AntlrQuerySemanticContext {
 
     public EntypingResult entypeVariable(
         final String variableName,
-        final AntlrQueryParser.VarNameContext variableLocationCtx,
-        final Location variableLocation,
+        final AntlrQueryParser.@Nullable VarNameContext variableLocationCtx,
+        final @Nullable Location variableLocation,
         final TypeInContext assignedType)
     {
         return currentScope().entypeVariable(

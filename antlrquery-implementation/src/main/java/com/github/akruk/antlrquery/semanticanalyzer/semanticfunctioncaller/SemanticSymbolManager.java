@@ -6,14 +6,11 @@ import java.util.stream.Stream;
 
 
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.DefaultQualifier;
 import org.eclipse.lsp4j.Location;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.Range;
 
 import com.github.akruk.antlrquery.AntlrQueryParser.FunctionDeclContext;
 import com.github.akruk.antlrquery.AntlrQueryParser.ModuleDeclContext;
@@ -55,8 +52,8 @@ public class SemanticSymbolManager {
 
     public record UsedArg(
         TypeInContext type,
-        AntlrQueryValue value,
-        ParseTree tree
+        @Nullable AntlrQueryValue value,
+        @Nullable ParseTree tree
         ) {}
 
     public interface GrainedAnalysis {
@@ -69,39 +66,33 @@ public class SemanticSymbolManager {
 
     }
 
-    public static record FunctionSpecification(
+    public record FunctionSpecification(
         long minArity,
         long maxArity,
         List<ArgumentSpecification> args,
         AntlrQuerySequenceType returnedType,
-        AntlrQuerySequenceType requiredContextValueType,
+        @Nullable AntlrQuerySequenceType requiredContextValueType,
         boolean requiresPosition,
         boolean requiresSize,
-        ParseTree body,
-        GrainedAnalysis grainedAnalysis)
+        @Nullable ParseTree body,
+        @Nullable GrainedAnalysis grainedAnalysis)
     { }
 
-    public static record SimplifiedFunctionSpecification(
+    public record SimplifiedFunctionSpecification(
         QualifiedName qname,
         List<ArgumentSpecification> args,
         AntlrQuerySequenceType returnedType,
-        AntlrQuerySequenceType requiredContextValueType,
+        @Nullable AntlrQuerySequenceType requiredContextValueType,
         boolean requiresPosition,
         boolean requiresSize,
-        ParseTree body,
-        GrainedAnalysis grainedAnalysis)
+        @Nullable ParseTree body,
+        @Nullable GrainedAnalysis grainedAnalysis)
     { }
 
-    public interface XQuerySemanticFunction {
-        public AnalysisResult call(final AntlrQueryTypeFactory typeFactory,
-                final VisitingSemanticContext context,
-                final List<AntlrQuerySequenceType> types);
-    }
-
-    public static record NamespaceInfo(String name, QnameContext declaration) {}
-    public static record ModuleInfo(String name, ModuleDeclContext declaration) {}
-    public static record FunctionInfo(String name, FunctionDeclContext declaration) {}
-    public static record RecordInfo(String name, NamedRecordTypeDeclContext declaration) {}
+    public record NamespaceInfo(String name, QnameContext declaration) {}
+    public record ModuleInfo(String name, ModuleDeclContext declaration) {}
+    public record FunctionInfo(String name, FunctionDeclContext declaration) {}
+    public record RecordInfo(String name, NamedRecordTypeDeclContext declaration) {}
 
 
     public enum DeclarationStatus {
@@ -113,50 +104,20 @@ public class SemanticSymbolManager {
         List<ParserRuleContext> collisions
     ) {}
 
-    record SpecAndErrors(FunctionSpecification spec, List<DiagnosticError> errors) {
+    record SpecAndErrors(@Nullable FunctionSpecification spec, List<DiagnosticError> errors) {
     }
 
     private final AntlrQueryTypeFactory typeFactory;
 
-    private AntlrQuerySemanticAnalyzer analyzer;
+    private @Nullable AntlrQuerySemanticAnalyzer analyzer = null;
 
     private final Map<String, Map<String, List<FunctionSpecification>>> functionNamespaces;
-
-    private final Map<String, NamespaceInfo> namespaces;
 
     private final Map<String, QualifiedGrammarAnalysisResult> grammars;
     private final AntlrQuerySemanticContextManager contextManager;
     private final AntlrQuerySequenceType zeroOrMoreItems;
 
-    Map<QualifiedName, List<UnresolvedFunctionSpecification>> functionDeclarations;
-
-
-    // String -> Module ->
-    // record Module(
-    //     String name,
-    //     Map<String, Map<String, List<Symbol>>> symbols
-
-    // ) {}
-
-
-    // enum SymbolType {
-    //     MODULE,
-    //     GRAMMAR,
-    //     RECORD,
-    //     FIELD,
-    //     NAMESPACE,
-    //     FUNCTION,
-    //     ITEMTYPE,
-    // }
-    // record Symbol(
-    //     SymbolType type,
-    //     QualifiedName qualifiedName,
-    //     ParserRuleContext location
-    // ) {}
-
-    // record ModuleSymbolInfo(String moduleName, URI uri) {}
-    // private final Map<String, ModuleSymbolInfo> modules;
-    // private final Map<String, Map<String, List<Symbol>>> symbols;
+    final Map<QualifiedName, List<UnresolvedFunctionSpecification>> functionDeclarations;
 
     public SemanticSymbolManager(
         final AntlrQueryTypeFactory typeFactory,
@@ -166,12 +127,12 @@ public class SemanticSymbolManager {
     {
         this.typeFactory = typeFactory;
         this.functionNamespaces = new HashMap<>(10);
-        for (final var fset : functionSets) {
-            for (final var f : fset) {
-                final var functionname = f.qname();
+        for (final var functionSet : functionSets) {
+            for (final var f : functionSet) {
+                final var functionName = f.qname();
                 uncheckedRegisterFunction(
-                    functionname.namespace(),
-                    functionname.name(),
+                    functionName.namespace(),
+                    functionName.name(),
                     f.args,
                     f.returnedType,
                     f.requiredContextValueType,
@@ -183,7 +144,6 @@ public class SemanticSymbolManager {
         }
         this.grammars = new HashMap<>();
         this.functionDeclarations = new HashMap<>();
-        this.namespaces = new HashMap<>();
         this.contextManager = contextManager;
         this.zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
     }
@@ -210,8 +170,8 @@ public class SemanticSymbolManager {
 
     public EntypingResult entypeVariable(
         final String variableName,
-        final VarNameContext locationCtx,
-        final Location location,
+        final @Nullable VarNameContext locationCtx,
+        final @Nullable Location location,
         final TypeInContext assignedType
         )
     {
@@ -223,20 +183,8 @@ public class SemanticSymbolManager {
             );
     }
 
-    Range getContextRange(final ParserRuleContext ctx) {
-        final Token startToken = ctx.getStart();
-        final Token stopToken = ctx.getStop();
 
-        final Position start = new Position(startToken.getLine() - 1, startToken.getCharPositionInLine());
-        final Position end = new Position(stopToken.getLine() - 1,
-                stopToken.getCharPositionInLine() + stopToken.getText().length());
-
-        return new Range(start, end);
-    }
-
-
-
-    public VariableInfo getVariable(final String variableName) {
+    public @Nullable VariableInfo getVariable(final String variableName) {
         return contextManager.getVariable(variableName);
     }
 
@@ -252,9 +200,7 @@ public class SemanticSymbolManager {
         return contextManager.resolveEffectiveBooleanValue(type, ebvType);
     }
 
-    public void setAnalyzer(
-        final AntlrQuerySemanticAnalyzer analyzer
-        )
+    public void setAnalyzer(final AntlrQuerySemanticAnalyzer analyzer)
     {
         this.analyzer = analyzer;
     }
@@ -273,8 +219,7 @@ public class SemanticSymbolManager {
         final var name = qName.name();
         if (!functionNamespaces.containsKey(qName.namespace())) {
             final DiagnosticError error = DiagnosticError.of(location, ErrorType.FUNCTION__UNKNOWN_NAMESPACE, List.of(qName.namespace()));
-            final DiagnosticError errorMessageSupplier = error;
-            final List<DiagnosticError> errors = List.of(errorMessageSupplier);
+            final List<DiagnosticError> errors = List.of(error);
             return new AnalysisResult(anyItems, errors);
         }
 
@@ -286,15 +231,6 @@ public class SemanticSymbolManager {
             final DiagnosticError error = DiagnosticError.of(location, ErrorType.FUNCTION__UNKNOWN_FUNCTION, List.of(qName.namespace(), qName.name()));
             return handleUnknownFunction(error, anyItems);
         } else if (noFunctions) {
-            // final int positionalArgsCount = positionalargs.size();
-            // final var requiredArity = positionalArgsCount + keywordArgs.size();
-            // for (var decl : declarations ) {
-            //     if (decl.maxArity() >= requiredArity && decl.minArity() <= requiredArity) {
-            //         if (decl.name().equals(qName)) {
-
-            //         }
-            //     }
-            // }
 
         }
 
@@ -354,7 +290,8 @@ public class SemanticSymbolManager {
         final Map<ArgumentSpecification, TypeInContext> defaultArgTypes = new HashMap<>();
         for (final ArgumentSpecification defaultArg : defaultArgs.toList()) {
             final var expectedType = defaultArg.type();
-            final var receivedType = defaultArg.defaultArgument().accept(analyzer);
+            assert defaultArg.defaultArgument() != null;
+            final var receivedType = Objects.requireNonNull(defaultArg.defaultArgument().accept(analyzer));
             if (!Types.isSubtype(typeFactory, receivedType.type, expectedType)) {
                 mismatchReasons.add(String.format(
                     "Type mismatch for default argument '%s': expected '%s', but got '%s'.",
@@ -515,45 +452,6 @@ public class SemanticSymbolManager {
             final String functionName,
             final List<ArgumentSpecification> args,
             final AntlrQuerySequenceType returnedType,
-            final ParseTree body,
-            final GrainedAnalysis analysis) {
-        return registerFunction(namespace, functionName, args, returnedType, null, false, false, body, analysis);
-    }
-
-    public AntlrQuerySemanticError uncheckedRegisterFunction(
-            final String namespace,
-            final String functionName,
-            final List<ArgumentSpecification> args,
-            final AntlrQuerySequenceType returnedType) {
-        return uncheckedRegisterFunction(namespace, functionName, args, returnedType, null, false, false, null,
-            ((_, _, _, ctx) -> ctx.currentScope().typeInContext(returnedType)));
-    }
-
-    public AntlrQuerySemanticError uncheckedRegisterFunction(
-            final String namespace,
-            final String functionName,
-            final List<ArgumentSpecification> args,
-            final AntlrQuerySequenceType returnedType,
-            final ParseTree body,
-            final GrainedAnalysis analysis) {
-        return uncheckedRegisterFunction(
-            namespace,
-            functionName,
-            args,
-            returnedType,
-            null,
-            false,
-            false,
-            body,
-            analysis
-            );
-    }
-
-    public AntlrQuerySemanticError registerFunction(
-            final String namespace,
-            final String functionName,
-            final List<ArgumentSpecification> args,
-            final AntlrQuerySequenceType returnedType,
             final AntlrQuerySequenceType requiredContextValueType,
             final boolean requiresPosition,
             final boolean requiresLength,
@@ -624,10 +522,6 @@ public class SemanticSymbolManager {
 
     public QualifiedGrammarAnalysisResult getGrammar(final String grammar) {
         return grammars.get(grammar);
-	}
-
-    public NamespaceInfo getNamespace(final String namespace) {
-        return namespaces.get(namespace);
 	}
 
 
@@ -800,16 +694,16 @@ public class SemanticSymbolManager {
         return body.accept(analyzer);
     }
 
-	private AntlrQuerySemanticError uncheckedRegisterFunction(
+    private @Nullable AntlrQuerySemanticError uncheckedRegisterFunction(
             final String namespace,
             final String functionName,
             final List<ArgumentSpecification> args,
             final AntlrQuerySequenceType returnedType,
-            final AntlrQuerySequenceType requiredContextValueType,
+            final @Nullable AntlrQuerySequenceType requiredContextValueType,
             final boolean requiresPosition,
             final boolean requiresLength,
-            final ParseTree body,
-            final GrainedAnalysis analysis)
+            final @Nullable ParseTree body,
+            final @Nullable GrainedAnalysis analysis)
     {
         final long minArity = args.stream().filter(arg -> arg.defaultArgument() == null).count();
         final long maxArity = args.size();

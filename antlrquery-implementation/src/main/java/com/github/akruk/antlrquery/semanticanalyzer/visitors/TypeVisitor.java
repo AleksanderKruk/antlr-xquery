@@ -11,8 +11,6 @@ import com.github.akruk.antlrquery.typesystem.types.itemtypes.AntlrQueryItemType
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
 
-import java.util.ArrayList;
-
 
 @DefaultQualifier(NonNull.class)
 public class TypeVisitor

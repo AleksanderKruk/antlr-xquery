@@ -36,11 +36,6 @@ public class ErrorsAndDiagnosticsTest extends SemanticTestsBase {
         assertErrors("fn:trace()");
     }
 
-    // @Test
-    // public void trace_onlyInput() {
-    //     assertType("fn:trace(,))"),typeFactory.zeroOrMore(typeFactory.itemAnyItem());
-    // }
-
     @Test
     public void trace_withLabel() {
         assertNoErrors(analyze("fn:trace(1, 'lbl')"));

@@ -26,6 +26,7 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.framework.qual.DefaultQualifier;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionParams;
@@ -93,6 +94,7 @@ import com.github.akruk.antlrquery.typesystem.factories.defaults.AntlrQueryNamed
 import com.github.akruk.antlrquery.typesystem.types.TypeInContext;
 import com.google.gson.JsonPrimitive;
 
+@DefaultQualifier(NonNull.class)
 public class BasicTextDocumentService implements TextDocumentService {
     private LanguageClient client;
     private final Map<String, List<Token>> tokenStore;
@@ -843,10 +845,6 @@ public class BasicTextDocumentService implements TextDocumentService {
         )
     {
         final List<TextEdit> fileEdits = edits.computeIfAbsent(uri, (_) -> new ArrayList<>());
-        // final String x = """
-        //     ./preceding::varName[1]
-
-        //     """;
 
 
         for (final VarRefContext variable : variableReferences.getOrDefault(uri, List.of())) {
@@ -1314,23 +1312,8 @@ public class BasicTextDocumentService implements TextDocumentService {
     final TreeEvaluator innermostFlworQuery = AntlrQuery
             .compile("/ancestor::(initialClause|intermediateClause|returnClause)", "", _parser);
     final TreeEvaluator outermostExpr = AntlrQuery.compile("/ancestor::expr", "",  _parser);
-    final String x = """
-                let $expr := .
-                let $dependentVariables := .//varRef except .//varNameAndType/varRef
-                let $dependentVariableStrings := $dependentVariables =!> string()
-                let $dependentDeclaration := ./ancestor::varNameAndType/varRef[string() = $dependentVariableStrings][last()]
-                let $clauses := ./ancestor::(initialClause|intermediateClause|returnClause)[. follows $dependentDeclaration]
-                let $exprs := ./ancestor::expr[. follows $dependentDeclaration]
-                return (
-                    array { $clauses, $exprs },
-                    array {
-                        $clauses ! `let ${$variableText} := {$variableText}\n`,
-                        $exprs ! `let ${$variableText} := ({$variableText}) return\n`
-                    }
-                )
-            """;
 
-    Map<ParserRuleContext, ExtractLocationInfo> extractVariableLocationsCache = new HashMap<>();
+    final Map<ParserRuleContext, ExtractLocationInfo> extractVariableLocationsCache = new HashMap<>();
 
     public CompletableFuture<ExtractLocationInfo> extractVariableLocations(
             final ExtractVariableLocationsParams params)

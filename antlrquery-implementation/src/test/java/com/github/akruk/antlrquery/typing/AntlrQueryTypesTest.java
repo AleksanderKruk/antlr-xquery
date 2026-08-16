@@ -36,10 +36,6 @@ public class AntlrQueryTypesTest {
     final AntlrQuerySequenceType zeroOrMoreItems = typeFactory.zeroOrMore(typeFactory.itemAnyItem());
 
 
-    // final RecordField requiredNumber =
-    //     new RecordField(new TypeOrReference.Type(typeFactory.number()), true);
-
-
     final AntlrQueryItemType itemError = typeFactory.itemError();
     final AntlrQueryItemType itemAnyFunction = typeFactory.itemAnyFunction();
     final AntlrQueryItemType itemAnyItem = typeFactory.itemAnyItem();

@@ -28,11 +28,6 @@ public class ConvertingElementsToMapsTest extends SemanticTestsBase {
         assertErrors("fn:element-to-map-plan(1)");
     }
 
-    // @Test
-    // public void elementToMapPlan_namedArgNotAllowed() {
-    //     assertErrors("fn:element-to-map-plan(input := <a/>)");
-    // }
-
 
     // fn:element-to-map($element as element()?, $options as map(*)? := {}) as map(xs:string, item()?)?
     @Test
@@ -67,14 +62,4 @@ public class ConvertingElementsToMapsTest extends SemanticTestsBase {
         );
     }
 
-    // @Test
-    // public void elementToMap_wrongTypes() {
-    //     assertErrors("fn:element-to-map(1)");
-    //     assertErrors("fn:element-to-map(<x/>, 'notMap')");
-    // }
-
-    // @Test
-    // public void elementToMap_tooManyArgs() {
-    //     assertErrors("fn:element-to-map(<x/>, map{}, <y/>)");
-    // }
 }

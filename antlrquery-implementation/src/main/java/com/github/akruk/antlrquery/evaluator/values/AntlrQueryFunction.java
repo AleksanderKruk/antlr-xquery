@@ -6,6 +6,6 @@ import com.github.akruk.antlrquery.evaluator.AntlrQueryVisitingContext;
 
 
 public interface AntlrQueryFunction {
-    public AntlrQueryValue call(final AntlrQueryVisitingContext context,
-                                final List<AntlrQueryValue> positionalArguments);
+    AntlrQueryValue call(final AntlrQueryVisitingContext context,
+                         final List<AntlrQueryValue> positionalArguments);
 }

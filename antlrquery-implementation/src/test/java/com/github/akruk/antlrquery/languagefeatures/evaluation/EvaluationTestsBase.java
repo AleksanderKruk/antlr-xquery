@@ -114,7 +114,7 @@ public class EvaluationTestsBase {
         assertTrue(result.error == value.error);
     }
 
-    protected record ValueParserAndTree(AntlrQueryValue value, Parser parser, ParseTree tree) {};
+    public record ValueParserAndTree(AntlrQueryValue value, Parser parser, ParseTree tree) {}
 
     /**
      * Generates grammar and parser/lexer classes in a dedicated directory structure.
@@ -262,7 +262,7 @@ public class EvaluationTestsBase {
             xquery,
             uri
             );
-        assertNotNull(value);;
+        assertNotNull(value);
         assertResult(value, expected);
     }
 

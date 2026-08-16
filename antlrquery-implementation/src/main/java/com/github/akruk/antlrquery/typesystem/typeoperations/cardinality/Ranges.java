@@ -1,6 +1,7 @@
 package com.github.akruk.antlrquery.typesystem.typeoperations.cardinality;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 
 import com.github.akruk.antlrquery.typesystem.types.NumericRange;
@@ -21,7 +22,7 @@ public final class Ranges {
     private Ranges() {}
 
     private static final Comparator<Event> CMP =
-            Comparator.<Event, BoundValue>comparing(Event::value)
+            Comparator.comparing(Event::value)
                     .thenComparing(e -> e.type() == Type.START ? 0 : 1)
                     .thenComparing(e -> e.value().inclusive() ? 0 : 1);
 
@@ -319,9 +320,9 @@ public final class Ranges {
             BoundValue R = ev[i + 1].value();
 
             BigDecimal lo = L instanceof FiniteBound fb ? fb.value() : BigDecimal.ZERO;
-            BigDecimal hi = R instanceof FiniteBound fb ? fb.value() : null;
+            @Nullable BigDecimal hi = R instanceof FiniteBound fb ? fb.value() : null;
 
-            BigDecimal start = lo.setScale(0, BigDecimal.ROUND_CEILING);
+            BigDecimal start = lo.setScale(0, RoundingMode.CEILING);
             if (!L.inclusive() && start.compareTo(lo) == 0) start = start.add(BigDecimal.ONE);
             if (start.signum() < 0) start = BigDecimal.ZERO;
 
@@ -331,7 +332,7 @@ public final class Ranges {
                 continue;
             }
 
-            BigDecimal end = hi.setScale(0, BigDecimal.ROUND_FLOOR);
+            BigDecimal end = hi.setScale(0, RoundingMode.FLOOR);
             if (!R.inclusive() && end.compareTo(hi) == 0) end = end.subtract(BigDecimal.ONE);
 
             if (start.compareTo(end) > 0) continue;

@@ -13,7 +13,7 @@ import org.checkerframework.framework.qual.DefaultQualifier;
 @Visitor(name = "ArrayVisitor", classes= {ArrayLikeType.class, ArrayLikeType.class})
 @DefaultQualifier(NonNull.class)
 public class ArrayTypeIsSubtype implements  ArrayVisitor<Boolean>{
-    private AntlrQueryTypeFactory typeFactory;
+    private final AntlrQueryTypeFactory typeFactory;
 
     public ArrayTypeIsSubtype(AntlrQueryTypeFactory typeFactory) {
         this.typeFactory = typeFactory;

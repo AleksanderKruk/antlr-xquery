@@ -2,7 +2,6 @@ package com.github.akruk.antlrquery.languagefeatures.evaluation.functions;
 
 import org.junit.jupiter.api.Test;
 
-import com.github.akruk.antlrquery.evaluator.values.AntlrQueryError;
 import com.github.akruk.antlrquery.languagefeatures.evaluation.EvaluationTestsBase;
 
 public class ProcessingBooleansTests extends EvaluationTestsBase {

@@ -118,12 +118,6 @@ public class ComparisonFunctionsTest extends SemanticTestsBase {
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
     }
 
-    // @Test
-    // public void distinctValues_wrongType()
-    // {
-    //     assertErrors("fn:distinct-values(<x/>)");
-    // }
-
     // fn:duplicate-values($values as xs:anyAtomicType*, $collation as xs:string? :=
     // default) as xs:anyAtomicType*
     @Test
@@ -139,12 +133,6 @@ public class ComparisonFunctionsTest extends SemanticTestsBase {
         assertType("fn:duplicate-values(('x','x','y'))",
             typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
     }
-
-    // @Test
-    // public void duplicateValues_wrongType()
-    // {
-    //     assertErrors("fn:duplicate-values(<x/>)");
-    // }
 
     // fn:index-of($in as xs:anyAtomicType*, $target as xs:anyAtomicType, $collation
     // as xs:string? := default) as xs:integer*
@@ -169,13 +157,6 @@ public class ComparisonFunctionsTest extends SemanticTestsBase {
         assertErrors("fn:index-of()");
         assertErrors("fn:index-of(1,2,'x','y')");
     }
-
-    // @Test
-    // public void indexOf_wrongTypes()
-    // {
-    //     assertErrors("fn:index-of(<a/>,1)");
-    //     assertErrors("fn:index-of(1,<b/>)");
-    // }
 
     // fn:starts-with-subsequence($in as item()*, $sub as item()*, $cmp as
     // fn(item(),item())? := fn:deep-equal#2) as xs:boolean

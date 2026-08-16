@@ -6,7 +6,6 @@ import com.github.akruk.antlrquery.typesystem.types.Cardinality;
 import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrquery.languagefeatures.semantics.SemanticTestsBase;
-import com.github.akruk.antlrquery.typesystem.types.AntlrQuerySequenceType;
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.AntlrQueryItemType;
 
 public class FilterExpressionSemanticTests extends SemanticTestsBase {

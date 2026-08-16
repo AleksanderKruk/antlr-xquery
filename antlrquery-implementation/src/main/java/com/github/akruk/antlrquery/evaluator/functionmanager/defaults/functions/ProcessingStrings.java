@@ -158,8 +158,7 @@ public class ProcessingStrings {
                 case "primary": case "1": coll.setStrength(Collator.PRIMARY); break;
                 case "secondary": case "2": coll.setStrength(Collator.SECONDARY); break;
                 case "tertiary": case "3": coll.setStrength(Collator.TERTIARY); break;
-                case "quaternary": case "4": coll.setStrength(Collator.IDENTICAL); break;
-                case "identical": case "5": coll.setStrength(Collator.IDENTICAL); break;
+                case "quaternary": case "4", "identical", "5": coll.setStrength(Collator.IDENTICAL); break;
                 default: break;
             }
         }

@@ -76,4 +76,4 @@ public record DiagnosticWarning(
     }
 
 
-};
+}

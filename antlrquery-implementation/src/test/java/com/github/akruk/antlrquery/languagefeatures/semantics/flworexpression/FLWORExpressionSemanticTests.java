@@ -7,7 +7,6 @@ import com.github.akruk.antlrquery.typesystem.types.NumericRange;
 import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrquery.languagefeatures.semantics.SemanticTestsBase;
-import com.github.akruk.antlrquery.typesystem.types.AntlrQuerySequenceType;
 
 public class FLWORExpressionSemanticTests extends SemanticTestsBase {
     @Test

@@ -10,12 +10,6 @@ public class AccessorFunctionsSemanticTest extends SemanticTestsBase {
         assertType("fn:node-name()", typeFactory.zeroOrOne(typeFactory.itemString()));
     }
 
-    // @Test
-    // public void nodeName_explicitNode() {
-    //     assertNoErrors(analyze("fn:node-name(<a/>)"));
-    //     assertTrue(typeFactory.zeroOrOne(typeFactory.itemString()).equals(analyze("fn:node-name(<a/>))").type()));
-    // }
-
     @Test
     public void nodeName_wrongType() {
         assertErrors("fn:node-name(1)");
@@ -25,11 +19,6 @@ public class AccessorFunctionsSemanticTest extends SemanticTestsBase {
     public void nilled_default() {
         assertType("fn:nilled()", typeFactory.zeroOrOne(typeFactory.itemBoolean()));
     }
-
-    // @Test
-    // public void nilled_onNode() {
-    //     assertNoErrors(analyze("fn:nilled(<a nilled='true'/>)"));
-    // }
 
     @Test
     public void nilled_bad() {
@@ -61,30 +50,10 @@ public class AccessorFunctionsSemanticTest extends SemanticTestsBase {
         assertType("fn:data((1,'x'))",typeFactory.zeroOrMore(typeFactory.itemAnyItem()));
     }
 
-    // @Test
-    // public void baseUri_default() {
-    //     assertType("fn:base-uri()", typeFactory.zeroOrOne(typeFactory.itemString()));
-    // }
-
-    // @Test
-    // public void baseUri_node() {
-    //     assertNoErrors(analyze("fn:base-uri(<a xml:base='u'/>)"));
-    // }
-
-    // @Test
-    // public void baseUri_wrong() {
-    //     assertErrors("fn:base-uri(1)");
-    // }
-
     @Test
     public void documentUri_default() {
         assertType("fn:document-uri()", typeFactory.zeroOrOne(typeFactory.itemString()));
     }
-
-    // @Test
-    // public void documentUri_node() {
-    //     assertNoErrors(analyze("fn:document-uri(<a/> )"));
-    // }
 
     @Test
     public void documentUri_bad() {

@@ -6,7 +6,7 @@ import com.github.akruk.antlrquery.typesystem.types.TypeInContext;
 
 public class Assumption
 {
-    public TypeInContext type;
+    public final TypeInContext type;
 
     @Override
     public boolean equals(Object obj)
@@ -21,7 +21,7 @@ public class Assumption
         return type == other.type && value.equals(other.value);
     }
 
-    public Object value;
+    public final Object value;
 
     public Assumption(TypeInContext type, Object value) {
         this.type = type;

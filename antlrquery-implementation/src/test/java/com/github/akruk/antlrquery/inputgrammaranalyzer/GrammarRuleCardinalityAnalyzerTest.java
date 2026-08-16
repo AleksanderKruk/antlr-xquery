@@ -13,10 +13,10 @@ import com.github.akruk.antlrquery.typesystem.types.Cardinality;
 
 public class GrammarRuleCardinalityAnalyzerTest {
 
-    QualifiedName x = new QualifiedName("", "x");
-    QualifiedName a = new QualifiedName("", "a");
-    QualifiedName b = new QualifiedName("", "b");
-    QualifiedName c = new QualifiedName("", "c");
+    final QualifiedName x = new QualifiedName("", "x");
+    final QualifiedName a = new QualifiedName("", "a");
+    final QualifiedName b = new QualifiedName("", "b");
+    final QualifiedName c = new QualifiedName("", "c");
 
     @Test
     void a() {

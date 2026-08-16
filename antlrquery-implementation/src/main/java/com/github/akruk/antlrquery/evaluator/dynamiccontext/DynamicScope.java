@@ -6,7 +6,7 @@ import java.util.Map;
 import com.github.akruk.antlrquery.evaluator.values.AntlrQueryValue;
 
 public class DynamicScope {
-    Map<String, AntlrQueryValue> variables = new HashMap<>();
+    final Map<String, AntlrQueryValue> variables = new HashMap<>();
 
     public boolean provideVariable(String variableName, AntlrQueryValue assignedValue) {
         boolean addedVariable = variables.containsKey(variableName);

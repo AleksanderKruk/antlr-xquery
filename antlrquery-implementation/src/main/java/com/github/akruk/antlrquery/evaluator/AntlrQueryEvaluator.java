@@ -51,7 +51,6 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     private final NodeOperator nodeOperator;
     private final EffectiveBooleanValue effectiveBooleanValue;
     private final ValueAtomizer atomizer;
-    private final Stringifier stringifier;
     private final Caster caster;
     private final NodeGetter nodeGetter;
     // private final StreamNodeGetter streamNodeGetter;
@@ -114,7 +113,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         this.valueFactory = valueFactory;
         // this.typeFactory = typeFactory;
         this.effectiveBooleanValue = new EffectiveBooleanValue(valueFactory);
-        this.stringifier = new Stringifier(valueFactory, effectiveBooleanValue);
+        Stringifier stringifier = new Stringifier(valueFactory, effectiveBooleanValue);
         this.valueComparisonOperator = new ValueComparisonOperator(valueFactory);
         this.atomizer = new ValueAtomizer();
         this.nodeGetter = new NodeGetter();
@@ -187,7 +186,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     }
 
     @Override
-    public AntlrQueryValue visitOrderByClause(final AntlrQueryParser.OrderByClauseContext ctx)
+    public @Nullable AntlrQueryValue visitOrderByClause(final AntlrQueryParser.OrderByClauseContext ctx)
     {
         final int sortingExprCount = ctx.orderSpecList().orderSpec().size();
         final var orderSpecs = ctx.orderSpecList().orderSpec();
@@ -200,6 +199,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
                 return mask;
             })
             .toArray();
+        assert visitedTupleStream != null;
         visitedTupleStream = visitedTupleStream.sorted((tuple1, tuple2) -> {
             var comparator = comparatorFromNthOrderSpec(orderSpecs, modifierMaskArray, 0);
             for (int i = 1; i < sortingExprCount; i++) {
@@ -207,10 +207,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
                 comparator = comparator.thenComparing(nextComparator);
             }
             return comparator.compare(tuple1, tuple2);
-        }).map(tuple -> {
-            provideVariables(tuple);
-            return tuple;
-        });
+        }).peek(this::provideVariables);
         return null;
     }
 
@@ -247,7 +244,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
 
 
     @Override
-    public AntlrQueryValue visitForClause(final AntlrQueryParser.ForClauseContext ctx)
+    public @Nullable AntlrQueryValue visitForClause(final AntlrQueryParser.ForClauseContext ctx)
     {
         final int numberOfVariables = ctx.forBinding().size();
         visitedTupleStream = visitedTupleStream.flatMap(tuple -> {
@@ -260,10 +257,9 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
             }
 
             return cartesianProduct(newTupleLike);
-        }).map(tuple -> {
+        }).peek(tuple -> {
             final List<VariableCoupling> addedVariables = tuple.subList(tuple.size() - numberOfVariables, tuple.size());
             provideVariables(addedVariables);
-            return tuple;
         });
         return null;
     }
@@ -638,13 +634,11 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         return switch (ctx.nodeComp().getText()) {
             case "is" -> nodeComparisonOperator.is(visitedLeft, visitedRight);
             case "is-not" -> nodeComparisonOperator.isNot(visitedLeft, visitedRight);
-            case "precedes" -> nodeComparisonOperator.precedes(visitedLeft, visitedRight);
+            case "precedes", "<<" -> nodeComparisonOperator.precedes(visitedLeft, visitedRight);
             case "precedes-or-is" -> nodeComparisonOperator.precedesOrIs(visitedLeft, visitedRight);
-            case "<<" -> nodeComparisonOperator.precedes(visitedLeft, visitedRight);
-            case "follows" -> nodeComparisonOperator.follows(visitedLeft, visitedRight);
+            case "follows", ">>" -> nodeComparisonOperator.follows(visitedLeft, visitedRight);
             case "follows-or-is" -> nodeComparisonOperator.followsOrIs(visitedLeft, visitedRight);
-            case ">>" -> nodeComparisonOperator.follows(visitedLeft, visitedRight);
-            default -> null; // shouldn't be reachable
+            default -> throw new IllegalStateException("unhandled node comparison operator");
         };
     }
 
@@ -983,7 +977,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         return context.getValue();
     }
 
-    AxisVisitor axisVisitor = new AxisVisitor();
+    final AxisVisitor axisVisitor = new AxisVisitor();
 
     @Override
     public AntlrQueryValue visitForwardStep(final AntlrQueryParser.ForwardStepContext ctx)
@@ -1326,11 +1320,10 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
             case ">" -> generalComparisonOperator.generalGreaterThan(value, visitedExpression);
             // Operators such as < and > can use the full-width forms ＜ and ＞ to avoid the need for XML escaping.
             case "＞" -> generalComparisonOperator.generalGreaterThan(value, visitedExpression);
-            case "＜" -> generalComparisonOperator.generalLessThan(value, visitedExpression);
-            case "<" -> generalComparisonOperator.generalLessThan(value, visitedExpression);
+            case "＜", "<" -> generalComparisonOperator.generalLessThan(value, visitedExpression);
             case "<=" -> generalComparisonOperator.generalLessEqual(value, visitedExpression);
             case ">=" -> generalComparisonOperator.generalGreaterEqual(value, visitedExpression);
-            default -> null;
+            default -> throw new IllegalStateException("unhandled general comparison operator");
         };
     }
 
@@ -1381,13 +1374,11 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         for (int i = 1; i <= orCount; i++) {
             final var visitedExpression = ctx.unionExpr(i).accept(this);
             value = switch (ctx.multiplicativeOperator(i - 1).getText()) {
-                case "*" -> multiplication.call(context, List.of(value, visitedExpression));
-                case "x" -> multiplication.call(context, List.of(value, visitedExpression));
-                case "div" -> division.call(context, List.of(value, visitedExpression));
-                case "÷" -> division.call(context, List.of(value, visitedExpression));
+                case "*", "x" -> multiplication.call(context, List.of(value, visitedExpression));
+                case "div", "÷" -> division.call(context, List.of(value, visitedExpression));
                 case "idiv" -> integerDivision.call(context, List.of(value, visitedExpression));
                 case "mod" -> modulus.call(context, List.of(value, visitedExpression));
-                default -> null;
+                default -> throw new IllegalStateException("unhandled multiplicative operator");
             };
         }
         return value;
@@ -1542,7 +1533,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
             }
             return compareValues(value1, value2);
         };
-    };
+    }
 
     private Comparator<List<VariableCoupling>> ascendingEmptyLeast(final ParseTree expr)
     {
@@ -1559,7 +1550,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
             }
             return compareValues(value1, value2);
         };
-    };
+    }
 
     private Comparator<List<VariableCoupling>> descendingEmptyGreatest(final ParseTree expr)
     {
@@ -1576,7 +1567,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
             }
             return -compareValues(value1, value2);
         };
-    };
+    }
 
     private Comparator<List<VariableCoupling>> descendingEmptyLeast(final ParseTree expr)
     {
@@ -1593,7 +1584,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
             }
             return -compareValues(value1, value2);
         };
-    };
+    }
 
     private Comparator<List<VariableCoupling>> comparatorFromNthOrderSpec(final List<AntlrQueryParser.OrderSpecContext> orderSpecs,
         final int[] modifierMaskArray, final int i)
@@ -2007,7 +1998,6 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
             if (valueComparisonOperator.valueLessThan(value1, value2).booleanValue) {
                 return -1;
             }
-            ;
             return 1;
         }
     }

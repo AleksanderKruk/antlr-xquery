@@ -56,7 +56,6 @@ public class AntlrQueryValue {
             case ARRAY -> arrayMembers.hashCode();
             case MAP -> mapEntries.hashCode();
             case EMPTY_SEQUENCE, SEQUENCE -> sequence.hashCode();
-            default -> throw new IllegalArgumentException("Unexpected value: " + valueType);
         };
     }
 
@@ -165,7 +164,7 @@ public class AntlrQueryValue {
     }
 
     public static AntlrQueryValue sequence(List<AntlrQueryValue> sequence, AntlrQuerySequenceType type) {
-        if (sequence.size() == 0) {
+        if (sequence.isEmpty()) {
             return emptySequence(type);
         }
         if (sequence.size() == 1) {
@@ -310,17 +309,15 @@ public class AntlrQueryValue {
             case BOOLEAN -> "<Boolean:" + booleanValue + "/>";
             case ELEMENT -> {
                 final Interval sourceInterval = node.getSourceInterval();
-                final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("<Node:");
-                stringBuilder.append(node.getClass().getSimpleName());
-                stringBuilder.append(":");
-                stringBuilder.append(sourceInterval.a);
-                stringBuilder.append(",");
-                stringBuilder.append(sourceInterval.b);
-                stringBuilder.append(":");
-                stringBuilder.append(node.getText());
-                stringBuilder.append("/>");
-                yield stringBuilder.toString();
+                yield "<Node:" +
+                        node.getClass().getSimpleName() +
+                        ":" +
+                        sourceInterval.a +
+                        "," +
+                        sourceInterval.b +
+                        ":" +
+                        node.getText() +
+                        "/>";
             }
             case SEQUENCE -> "<Sequence:" + sequence + "/>";
             case EMPTY_SEQUENCE -> "<EmptySequence/>";
@@ -328,11 +325,10 @@ public class AntlrQueryValue {
             case MAP -> "<Map:" + mapEntries + "/>";
             case NUMBER -> "<Number:" + numericValue.toPlainString() + "/>";
             case STRING -> "<String:\"" + stringValue + "\"/>";
-            default -> throw new IllegalArgumentException("Unexpected value: " + valueType);
         };
     }
 
-    ValueEquality equality = new ValueEquality();
+    final ValueEquality equality = new ValueEquality();
 
     @Override
     public boolean equals(Object obj) {

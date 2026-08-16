@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.lsp4j.Location;
 
 import com.github.akruk.antlrquery.AntlrQueryParser.VarNameContext;
@@ -57,9 +58,6 @@ public class AntlrQuerySemanticContextManager {
     /**
      * Either creates variable with required type
      * or overrides existing variable
-     * @param variableName
-     * @param variableDefinition
-     * @param assignedType
      * @return EntypingResult {
      *      VariableInfo? oldVariable;
      *      VariableInfo  newVariable;
@@ -74,7 +72,7 @@ public class AntlrQuerySemanticContextManager {
         return currentContext().entypeVariable(variableName, locationCtx, location, assignedType);
     }
 
-    public VariableInfo getVariable(String variableName) {
+    public @Nullable VariableInfo getVariable(String variableName) {
         return currentContext().getVariable(variableName);
     }
 

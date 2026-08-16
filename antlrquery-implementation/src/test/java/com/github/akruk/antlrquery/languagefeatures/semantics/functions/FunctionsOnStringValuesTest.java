@@ -235,23 +235,6 @@ public class FunctionsOnStringValuesTest extends SemanticTestsBase {
     // fn:hash($value as xs:string|xs:hexBinary|xs:base64Binary?,
     // $algorithm as xs:string? := 'MD5',
     // $options as map(*)? := {}) as xs:hexBinary?
-    // @Test
-    // public void hash_defaultAll() {
-    //     assertType("fn:hash()",
-    //             typeFactory.zeroOrOne(typeFactory.itemHexBinary()));
-    // }
-
-    // @Test
-    // public void hash_withValue() {
-    //     assertType("fn:hash('data')",
-    //             typeFactory.zeroOrOne(typeFactory.itemHexBinary()));
-    // }
-
-    // @Test
-    // public void hash_allNamed() {
-    //     assertType("fn:hash(value := 'x', algorithm := 'SHA-1', options := map{})",
-    //             typeFactory.zeroOrOne(typeFactory.itemHexBinary()));
-    // }
 
     @Test
     public void hash_badAlgorithm() {

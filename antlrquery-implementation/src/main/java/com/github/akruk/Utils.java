@@ -4,7 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class Utils {
-    private Utils(){};
+    private Utils(){}
 
     @SafeVarargs
     public static <K, V> LinkedHashMap<K, V> linkedHashMap(

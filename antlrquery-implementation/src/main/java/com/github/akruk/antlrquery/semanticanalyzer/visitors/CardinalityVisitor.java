@@ -15,7 +15,7 @@ import com.github.akruk.antlrquery.typesystem.types.Cardinality;
 public class CardinalityVisitor 
     extends AntlrQueryParserBaseVisitor<Cardinality>
 {
-    private CardinalityFactory cardinalityFactory;
+    private final CardinalityFactory cardinalityFactory;
 
     public CardinalityVisitor(CardinalityFactory factory) {
         this.cardinalityFactory = factory;

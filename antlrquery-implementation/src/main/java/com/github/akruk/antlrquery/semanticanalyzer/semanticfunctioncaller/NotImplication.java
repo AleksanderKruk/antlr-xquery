@@ -9,9 +9,9 @@ import com.github.akruk.antlrquery.semanticanalyzer.semanticcontext.AntlrQuerySe
 import com.github.akruk.antlrquery.typesystem.types.TypeInContext;
 
 class NotImplication extends ValueImplication<Boolean> {
-    private Boolean value;
-    private TypeInContext resultBoolean;
-    private TypeInContext argumentBoolean;
+    private final Boolean value;
+    private final TypeInContext resultBoolean;
+    private final TypeInContext argumentBoolean;
 
     public NotImplication(TypeInContext resultBoolean, TypeInContext argumentBoolean, Boolean value) {
         super(resultBoolean, value);

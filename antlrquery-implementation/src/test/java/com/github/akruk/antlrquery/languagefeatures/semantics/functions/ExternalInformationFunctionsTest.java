@@ -35,12 +35,6 @@ public class ExternalInformationFunctionsTest extends SemanticTestsBase {
                 typeFactory.zeroOrOne(typeFactory.itemAnyNode()));
     }
 
-    // @Test
-    // public void doc_wrongTypes() {
-    //     assertErrors("fn:doc(<a/>)");
-    //     assertErrors("fn:doc('u', 'notMap')");
-    // }
-
     @Test
     public void doc_tooManyArgs() {
         assertErrors("fn:doc('u', map{}, 1)");
@@ -89,18 +83,6 @@ public class ExternalInformationFunctionsTest extends SemanticTestsBase {
     }
 
     // fn:uri-collection($source as xs:string? := ()) as xs:anyURI*
-    // @Test public void uriCollection_noArgs() {
-    // assertType(
-    // "fn:uri-collection()",
-    // typeFactory.zeroOrMore(typeFactory.anyURI_())
-    // );
-    // }
-    // @Test public void uriCollection_withSource() {
-    // assertType(
-    // "fn:uri-collection('u')",
-    // typeFactory.zeroOrMore(typeFactory.anyURI_())
-    // );
-    // }
     @Test
     public void uriCollection_wrong() {
         assertErrors("fn:uri-collection(1)");
@@ -178,18 +160,6 @@ public class ExternalInformationFunctionsTest extends SemanticTestsBase {
     }
 
     // fn:unparsed-binary($source as xs:string?) as xs:base64Binary?
-    // @Test public void unparsedBinary_defaults() {
-    // assertType(
-    // "fn:unparsed-binary()",
-    // typeFactory.zeroOrOne(typeFactory.itemBase64Binary())
-    // );
-    // }
-    // @Test public void unparsedBinary_withSource() {
-    // assertType(
-    // "fn:unparsed-binary('u')",
-    // typeFactory.zeroOrOne(typeFactory.itemBase64Binary())
-    // );
-    // }
     @Test
     public void unparsedBinary_wrong() {
         assertErrors("fn:unparsed-binary(1)");

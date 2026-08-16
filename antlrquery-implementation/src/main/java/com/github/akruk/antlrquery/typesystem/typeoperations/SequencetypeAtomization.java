@@ -38,12 +38,9 @@ public class SequencetypeAtomization {
                     }
                     yield result;
                 }
-                case MapLikeType.MapType _ -> anyItems;
-                case MapLikeType.RecordType _ -> anyItems;
-                case MapLikeType.ExtensibleRecordType _ -> anyItems;
-                case FunctionType _ -> anyItems;
-                case GrammarEntityType _ -> anyItems;
-                case TreeLike _ -> anyItems;
+                case MapLikeType.MapType _, MapLikeType.RecordType _ -> anyItems;
+                case MapLikeType.ExtensibleRecordType _, FunctionType _ -> anyItems;
+                case GrammarEntityType _, TreeLike _ -> anyItems;
             };
             case ChoiceItemType c -> {
                 AntlrQuerySequenceType result = typeFactory.emptySequence();
@@ -54,8 +51,7 @@ public class SequencetypeAtomization {
                 yield result;
             }
             case AnyItemType() -> anyItems;
-            case NothingType() -> input;
-            case NeverType() -> input;
+            case NothingType(), NeverType() -> input;
             case NamedItemType namedItemType ->
                     typeFactory.sequence(typeFactory.guaranteedItemNamedType(namedItemType.reference(), new IllegalStateException()), cardinality);
         };

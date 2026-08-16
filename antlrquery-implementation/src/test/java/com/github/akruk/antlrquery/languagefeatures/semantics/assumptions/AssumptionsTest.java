@@ -1,14 +1,9 @@
 package com.github.akruk.antlrquery.languagefeatures.semantics.assumptions;
 
-import com.github.akruk.Utils;
 import com.github.akruk.antlrquery.languagefeatures.semantics.SemanticTestsBase;
-import com.github.akruk.antlrquery.typesystem.RecordField;
-import com.github.akruk.antlrquery.typesystem.RecordField.TypeOrReference;
 import com.github.akruk.antlrquery.typesystem.types.Cardinality;
 import com.github.akruk.antlrquery.typesystem.types.NumericRange;
 import org.junit.jupiter.api.Test;
-
-import java.util.Map;
 
 public class AssumptionsTest extends SemanticTestsBase {
     @Test

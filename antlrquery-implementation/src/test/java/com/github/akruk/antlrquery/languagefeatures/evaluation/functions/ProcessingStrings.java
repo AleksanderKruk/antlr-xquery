@@ -37,7 +37,7 @@ public class ProcessingStrings extends EvaluationTestsBase {
     @Test public void testCodepointEqualNoNormalization() {
         // "e" + combining acute vs. precomposed "é"
         String combined = "e\u0301";
-        String single   = "\u00E9";
+        String single   = "é";
         assertResult("codepoint-equal('" + combined + "','" + single + "')",
             valueFactory.bool(false)
         );

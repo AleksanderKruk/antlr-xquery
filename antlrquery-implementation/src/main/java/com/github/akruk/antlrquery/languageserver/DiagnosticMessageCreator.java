@@ -135,14 +135,12 @@ public class DiagnosticMessageCreator {
                 final var namespace = error.data().get(0);
                 final var name = error.data().get(1);
                 final var arity = error.data().get(2);
-                final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("Unknown function reference: ");
-                stringBuilder.append(namespace);
-                stringBuilder.append(":");
-                stringBuilder.append(name);
-                stringBuilder.append("#");
-                stringBuilder.append(arity);
-                return stringBuilder.toString();
+                return "Unknown function reference: " +
+                        namespace +
+                        ":" +
+                        name +
+                        "#" +
+                        arity;
             }
             case GENERAL_COMP__INVALID -> {
                 final var leftHandSide = error.data().get(0);
@@ -468,15 +466,11 @@ public class DiagnosticMessageCreator {
             case RECORD_DECLARATION__ALREADY_REGISTERED_BY_NAME -> {
                 // TODO: add location with file tracking
                 var name = error.data().get(0);
-                // var r1 = error.data().get(1);
-                // var r2 = error.data().get(2);
                 return "Record '"+name+"' already exists";
             }
 
             case RECORD_DECLARATION__DUPLICATE_FIELD_NAME -> {
                 var name = error.data().get(0);
-                // var r1 = error.data().get(1);
-                // var r2 = error.data().get(2);
                 return "Field name '"+name+"' used multiple times";
             }
 
@@ -515,16 +509,12 @@ public class DiagnosticMessageCreator {
             case ITEM_DECLARATION__ALREADY_REGISTERED_BY_NAME -> {
                 // TODO: add location with file tracking
                 var name = error.data().get(0);
-                // var r1 = error.data().get(1);
-                // var r2 = error.data().get(2);
                 return "Item type '"+name+"' already exists";
             }
 
             case NAMED_TYPES__RECORD_ITEM_TYPE_CROSS_REFERENCE -> {
                 // TODO: add location with file tracking
                 var name = error.data().get(0);
-                // var r1 = error.data().get(1);
-                // var r2 = error.data().get(2);
                 return "Type '"+name+"' is declared both as a record and as a type";
             }
 

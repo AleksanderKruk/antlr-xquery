@@ -92,7 +92,7 @@ public class SemanticTestsBase {
         }
     }
 
-    protected DiagnosticMessageCreator messageCreator = new DiagnosticMessageCreator();
+    protected final DiagnosticMessageCreator messageCreator = new DiagnosticMessageCreator();
     protected void assertNoErrors(final AnalysisResult analyzer) {
         boolean noErrors = analyzer.analyzer.getErrors().isEmpty();
         String concatenatedInNewlinesMessages = analyzer.analyzer.getErrors().stream()

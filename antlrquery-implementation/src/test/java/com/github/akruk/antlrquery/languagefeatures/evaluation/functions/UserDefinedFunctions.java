@@ -8,7 +8,7 @@ import com.github.akruk.antlrquery.languagefeatures.evaluation.EvaluationTestsBa
 
 public class UserDefinedFunctions extends EvaluationTestsBase {
     @Test
-    public void nodeName() throws Exception {
+    public void nodeName() {
         String query = """
             declare function x($arg as number) as number+ {
                 1, 2, 3, $arg

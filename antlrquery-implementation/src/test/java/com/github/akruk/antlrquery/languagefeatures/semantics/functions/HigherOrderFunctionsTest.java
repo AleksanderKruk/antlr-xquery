@@ -290,18 +290,6 @@ public class HigherOrderFunctionsTest extends SemanticTestsBase {
         assertErrors("fn:sort((1), 1)");
     }
 
-    // // fn:sort-by($input as item()*, $keys as record(...)*) as item()*
-    // @Test public void sortBy_valid() {
-    //     assertType(
-    //         "fn:sort-by((1,2), record{key: function($v){ $v }, order: 'descending'})",
-    //         typeFactory.zeroOrMore(typeFactory.itemAnyItem())
-    //     );
-    // }
-    // @Test public void sortBy_errors() {
-    //     assertErrors("fn:sort-by()");
-    //     assertErrors("fn:sort-by((1), 'x')");
-    // }
-
     // fn:sort-with($input as item()*, $comparators as fn(item(),item()) as xs:integer *) as item()*
     @Test public void sortWith_valid() {
         assertType(
@@ -353,10 +341,6 @@ public class HigherOrderFunctionsTest extends SemanticTestsBase {
             typeFactory.zeroOrMore(typeFactory.itemAnyNode())
         );
     }
-    // @Test public void transitiveClosure_errors() {
-    //     assertErrors("fn:transitive-closure()");
-    //     assertErrors("fn:transitive-closure(<a/>, 1)");
-    // }
 
     // fn:while-do($input as item()*, $predicate as fn(item()*,xs:integer) as xs:boolean?,
     //            $action as fn(item()*,xs:integer) as item()*) as item()*

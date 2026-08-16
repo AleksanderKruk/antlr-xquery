@@ -4,8 +4,8 @@ import com.github.akruk.antlrquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrquery.typesystem.types.Cardinality;
 
 public final class RuleEdge {
-    NamespaceResolver.QualifiedName from;
-    NamespaceResolver.QualifiedName to;
+    final NamespaceResolver.QualifiedName from;
+    final NamespaceResolver.QualifiedName to;
     Cardinality operator;
 
     RuleEdge(NamespaceResolver.QualifiedName from, NamespaceResolver.QualifiedName to, Cardinality operator) {

@@ -70,7 +70,7 @@ public final class Cardinality {
     }
 
     public static Cardinality inclusiveRange(@NonNegative int i, @NonNegative int i1) {
-        assert i < i1;
+        assert i <= i1;
         return Cardinality.skipNormalization(new Event[]{ new Event(new FiniteBound(BigInteger.valueOf(i)), Type.START),
                 new Event(new FiniteBound(BigInteger.valueOf(i1)), Type.END) });
     }

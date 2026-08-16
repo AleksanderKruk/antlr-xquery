@@ -87,7 +87,7 @@ public class AntlrFunctions {
             return input;
         if (!input.isNode)
             return valueFactory.error(AntlrQueryError.InvalidArgumentType,
-                "fn:pos($node as node()? := .) as number? argument must be a 'node()?', found: " + input);
+                "antlr:pos($node as node()? := .) as number? argument must be a 'node()?', found: " + input);
         var node = input.node;
         Token token = null;
         if (node instanceof TerminalNode terminal) {

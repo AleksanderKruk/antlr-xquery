@@ -117,87 +117,200 @@ public final class Cardinalities {
     public static @Nullable Cardinality subtract(
             final Cardinality left,
             final Cardinality... right) {
+
         final Cardinality rhs = union(right);
 
         final Event[] a = left.events();
         final Event[] b = rhs.events();
 
-        if (a.length == 0) return null;
-        if (b.length == 0) return left;
+        if (a.length == 0)
+            return null;
+
+        if (b.length == 0)
+            return left;
 
         final List<Event> out = new ArrayList<>();
-        int ia = 0, ib = 0;
-        int leftActive = 0, rightActive = 0;
+
+        int ia = 0;
+        int ib = 0;
+
+        int leftActive = 0;
+        int rightActive = 0;
+
         Event segmentStart = null;
 
         while (ia < a.length || ib < b.length) {
+
             final CardinalityValue value;
+
             if (ia == a.length) {
                 value = b[ib].value();
             } else if (ib == b.length) {
                 value = a[ia].value();
             } else {
-                value = a[ia].value().compareTo(b[ib].value()) <= 0 ? a[ia].value() : b[ib].value();
+                value = a[ia].value().compareTo(b[ib].value()) <= 0
+                        ? a[ia].value()
+                        : b[ib].value();
             }
 
-            int leftStarts = 0, leftEnds = 0;
-            int rightStarts = 0, rightEnds = 0;
+            int leftStarts = 0;
+            int leftEnds = 0;
+            int rightStarts = 0;
+            int rightEnds = 0;
 
             while (ia < a.length && a[ia].value().compareTo(value) == 0) {
-                if (a[ia].type() == Cardinality.Type.START) leftStarts++;
-                else leftEnds++;
+                if (a[ia].type() == Cardinality.Type.START)
+                    leftStarts++;
+                else
+                    leftEnds++;
                 ia++;
             }
 
             while (ib < b.length && b[ib].value().compareTo(value) == 0) {
-                if (b[ib].type() == Cardinality.Type.START) rightStarts++;
-                else rightEnds++;
+                if (b[ib].type() == Cardinality.Type.START)
+                    rightStarts++;
+                else
+                    rightEnds++;
                 ib++;
             }
 
-            boolean wasInResult = leftActive > 0 && rightActive == 0;
+            /*
+             * State before 'value'.
+             */
+            final boolean beforeResult =
+                    leftActive > 0 && rightActive == 0;
 
-            leftActive += leftStarts - leftEnds;
-            rightActive += rightStarts - rightEnds;
+            /*
+             * START(value) is already active at 'value'.
+             *
+             * END(value), however, is also still active at 'value'
+             * because intervals are inclusive.
+             */
+            final int leftAt = leftActive + leftStarts;
+            final int rightAt = rightActive + rightStarts;
 
-            boolean isInResult = leftActive > 0 && rightActive == 0;
-            boolean leftPoint = (leftStarts > 0 && leftEnds > 0 && leftStarts == leftEnds);
-            boolean rightPoint = (rightStarts > 0 && rightEnds > 0 && rightStarts == rightEnds);
+            final boolean atResult =
+                    leftAt > 0 && rightAt == 0;
 
-            if (rightPoint && isInResult) {
-                if (segmentStart != null) {
-                    out.add(segmentStart);
-                    out.add(new Event(value, Cardinality.Type.END));
-                    segmentStart = null;
-                }
-                if (value instanceof FiniteBound f) {
-                    CardinalityValue nextValue = next(f);
-                    segmentStart = new Event(nextValue, Cardinality.Type.START);
-                }
-            }
+            /*
+             * END(value) becomes inactive only AFTER 'value'.
+             */
+            final int leftAfter = leftAt - leftEnds;
+            final int rightAfter = rightAt - rightEnds;
 
-            if (leftPoint && !rightPoint && rightActive == 0 && rightStarts == 0 && rightEnds == 0) {
-                out.add(new Event(value, Cardinality.Type.START));
-                out.add(new Event(value, Cardinality.Type.END));
-            }
+            final boolean afterResult =
+                    leftAfter > 0 && rightAfter == 0;
 
-            if (!wasInResult && isInResult && segmentStart == null) {
+            /*
+             * Transition:
+             *
+             * OUT -> IN at 'value'
+             */
+            if (!beforeResult && atResult) {
                 segmentStart = new Event(value, Cardinality.Type.START);
             }
 
-            if (wasInResult && !isInResult && segmentStart != null) {
+            /*
+             * Transition:
+             *
+             * IN -> OUT at 'value'
+             *
+             * The current value is NOT part of the result, so the
+             * previous value is the END of the resulting interval.
+             *
+             * This happens e.g.:
+             *
+             * [1,10] - [4,10] = [1,3]
+             */
+            if (beforeResult && !atResult) {
+                if (segmentStart != null) {
+                    if (value instanceof Cardinality.FiniteBound f) {
+                        out.add(segmentStart);
+                        out.add(new Event(
+                                new Cardinality.FiniteBound(
+                                        f.value().subtract(BigInteger.ONE)),
+                                Cardinality.Type.END));
+                        segmentStart = null;
+                    }
+                }
+            }
+
+            /*
+             * Transition:
+             *
+             * IN at 'value' -> OUT after 'value'
+             *
+             * This is the important case for inclusive END:
+             *
+             * [1,10] - [1,4]
+             *
+             * At 4:
+             *     atResult   = false
+             *     afterResult = true
+             *
+             * therefore handled below by OUT -> IN after 'value'.
+             *
+             * For:
+             *
+             * [1,4] - [10,...]
+             *
+             * atResult = true
+             * afterResult = false
+             *
+             * so 4 belongs to the result and must be the END.
+             */
+            if (atResult && !afterResult) {
+                if (segmentStart == null) {
+                    segmentStart = new Event(value, Cardinality.Type.START);
+                }
+
                 out.add(segmentStart);
                 out.add(new Event(value, Cardinality.Type.END));
                 segmentStart = null;
             }
+
+            /*
+             * Transition:
+             *
+             * OUT at 'value' -> IN after 'value'
+             *
+             * Since 'value' itself is excluded, the new segment starts
+             * at value + 1.
+             *
+             * This is the case:
+             *
+             * [1,10] - [1,4]
+             *
+             * at 4:
+             *     atResult    = false
+             *     afterResult = true
+             *
+             * => result starts at 5.
+             */
+            if (!atResult && afterResult) {
+                if (value instanceof Cardinality.FiniteBound f) {
+                    segmentStart = new Event(
+                            new Cardinality.FiniteBound(
+                                    f.value().add(BigInteger.ONE)),
+                            Cardinality.Type.START);
+                }
+            }
+
+            leftActive = leftAfter;
+            rightActive = rightAfter;
         }
 
         if (segmentStart != null) {
             out.add(segmentStart);
-            out.add(new Event(CardinalityValue.POSITIVE_INFINITY, Cardinality.Type.END));
+            out.add(new Event(
+                    Cardinality.CardinalityValue.POSITIVE_INFINITY,
+                    Cardinality.Type.END));
         }
 
-        return out.isEmpty() ? null : Cardinality.skipNormalization(out.toArray(Event[]::new));
+        return out.isEmpty()
+                ? null
+                : Cardinality.skipNormalization(
+                out.toArray(Event[]::new));
     }
 
     public static CardinalityValue next(FiniteBound f) {
@@ -270,6 +383,7 @@ public final class Cardinalities {
             };
         };
     }
+
     /**
      * Returns true if every value in subset is contained in superset.
      */

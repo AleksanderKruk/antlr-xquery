@@ -29,11 +29,11 @@ public class NodeOperator {
             if (operand.isError)
                 return operand;
         }
-        if (operands.size() == 0)
+        if (operands.isEmpty())
             return valueFactory.emptySequence();
         final var result = new ArrayList<>(operands.get(0).sequence);
         for (final var operand: operands.subList(1, operands.size())) {
-            if (result.size() == 0)
+            if (result.isEmpty())
                 break;
             result.retainAll(operand.sequence);
         }
@@ -45,11 +45,11 @@ public class NodeOperator {
             if (operand.isError)
                 return operand;
         }
-        if (operands.size() == 0)
+        if (operands.isEmpty())
             return valueFactory.emptySequence();
         final var result = new ArrayList<>(operands.get(0).sequence);
         for (final var operand: operands.subList(1, operands.size())) {
-            if (result.size() == 0)
+            if (result.isEmpty())
                 break;
             result.removeAll(operand.sequence);
         }

@@ -17,7 +17,7 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import com.github.akruk.antlrquery.charescaper.AntlrQueryCharEscaper;
-import com.github.akruk.antlrquery.evaluator.functionmanager.defaults.EvaluatingFunctionManager;
+import com.github.akruk.antlrquery.evaluator.functionmanager.EvaluatingFunctionManager;
 import com.github.akruk.antlrquery.evaluator.values.*;
 import com.github.akruk.antlrquery.evaluator.values.factories.AntlrQueryValueFactory;
 import com.github.akruk.antlrquery.evaluator.values.operations.*;
@@ -195,8 +195,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
             .mapToInt(m -> {
                 final int isDescending = m.DESCENDING() != null ? 1 : 0;
                 final int isEmptyLeast = m.LEAST() != null ? 1 : 0;
-                final int mask = (isDescending << 1) | isEmptyLeast;
-                return mask;
+                return (isDescending << 1) | isEmptyLeast;
             })
             .toArray();
         assert visitedTupleStream != null;
@@ -421,12 +420,10 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     {
         final List<AntlrQueryValue> results = visitedTupleStream.map((tupleStream) -> {
             provideVariables(tupleStream);
-            final AntlrQueryValue value = visitExprSingle(ctx.exprSingle());
-            return value;
+            return visitExprSingle(ctx.exprSingle());
         }).toList();
         if (results.size() == 1) {
-            final var value = results.get(0);
-            return value;
+            return results.get(0);
         }
         return valueFactory.sequence(results);
     }
@@ -446,8 +443,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     public AntlrQueryValue visitVarRef(final AntlrQueryParser.VarRefContext ctx)
     {
         final String variableName = ctx.qname().getText();
-        final AntlrQueryValue variableValue = contextManager.getVariable(variableName);
-        return variableValue;
+        return contextManager.getVariable(variableName);
     }
 
     @Override
@@ -560,8 +556,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         final String[] parts = resolveNamespace(qname);
         final String namespace = parts.length == 2 ? parts[0] : "fn";
         final String functionName = parts.length == 2 ? parts[1] : parts[0];
-        final var value = functionManager.call(namespace, functionName, context, args, kwargs);
-        return value;
+        return functionManager.call(namespace, functionName, context, args, kwargs);
     }
 
     private Map<String, AntlrQueryValue> saveVisitedKeywordArguments()
@@ -722,9 +717,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
                     context.setValue(descendantsOrSelfAsNodes);
                     yield ctx.stepExpr(i).accept(this);
                 }
-                case "/" ->  {
-                    yield ctx.stepExpr(i).accept(this);
-                }
+                case "/" -> ctx.stepExpr(i).accept(this);
                 default -> null;
             };
             context.setValue(visitedNodeSequence);
@@ -881,8 +874,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         // TODO: verify logic
         final var contextItem = context.getValue();
         final var function = contextItem.functionValue;
-        final var value = function.call(context, visitedPositionalArguments);
-        return value;
+        return function.call(context, visitedPositionalArguments);
     }
 
     @Override
@@ -1123,7 +1115,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
             grouped.computeIfAbsent(key, _ -> new ArrayList<>()).add(tuple);
         });
 
-        final Stream<List<VariableCoupling>> result = grouped.entrySet()
+        visitedTupleStream = grouped.entrySet()
             .stream()
             .map(
                 (final Map.Entry<List<AntlrQueryValue>, List<List<VariableCoupling>>> entry) -> {
@@ -1165,8 +1157,6 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
 
                     return resultTuple;
                 });
-
-        visitedTupleStream = result;
         return null;
     }
 
@@ -1194,8 +1184,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         if (ctx.CONCATENATION().isEmpty())
             return firstValue;
         final List<AntlrQueryValue> arguments = ctx.rangeExpr().stream().map(this::visit).toList();
-        final var concatenated = concat.call(context, arguments);
-        return concatenated;
+        return concat.call(context, arguments);
     }
 
     @Override
@@ -1259,8 +1248,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
 
     private String[] resolveNamespace(final String functionName)
     {
-        final String[] parts = functionName.split(":", 2);
-        return parts;
+        return functionName.split(":", 2);
     }
 
     @Override
@@ -1928,7 +1916,8 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         return endIndex;
     }
 
-    private boolean isOnlyEnd(final AntlrQueryParser.WindowEndConditionContext ctx)
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+    private boolean isOnlyEnd(final AntlrQueryParser.@Nullable WindowEndConditionContext ctx)
     {
         return ctx != null && ctx.ONLY() != null;
     }
@@ -2383,8 +2372,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
             return visitPipelineExpr(ctx.pipelineExpr());
         final AntlrQuerySequenceType targetType = semanticAnalyzer.visitCastTarget(ctx.castTarget()).type;
         final AntlrQueryValue testedValue = visitPipelineExpr(ctx.pipelineExpr());
-        final AntlrQueryValue cast = caster.cast(targetType, testedValue);
-        return cast;
+        return caster.cast(targetType, testedValue);
     }
 
     private String stringContents(final TerminalNode ctx)
@@ -2433,16 +2421,14 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
                     var caseVarName = cases.varName().qname().getText();
                     contextManager.provideVariable(caseVarName, switched);
                 }
-                var evaluatedCase = visitExprSingle(typeswitchCase.exprSingle());
-                return evaluatedCase;
+                return visitExprSingle(typeswitchCase.exprSingle());
             }
         }
         if (cases.varName() != null) {
             var defaultName = cases.varName().qname().getText();
             contextManager.provideVariable(defaultName, switched);
         }
-        final var defaultValue = visitExprSingle(cases.exprSingle());
-        return defaultValue;
+        return visitExprSingle(cases.exprSingle());
     }
 }
 

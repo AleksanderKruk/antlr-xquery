@@ -417,7 +417,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         } catch (final Exception e) {
             System.err.println("[parseAndAnalyze] Exception: " + e.getClass().getName() + " - " + e.getMessage());
             for (final StackTraceElement el : e.getStackTrace()) {
-                System.err.println("    at " + el.toString());
+                System.err.println("    at " + el);
             }
         }
     }
@@ -923,11 +923,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         }
 
         final int stopTokenEndChar = stopToken.getCharPositionInLine() + stopToken.getText().length();
-        if (cursorLine == stopToken.getLine() && cursorChar > stopTokenEndChar) {
-            return false;
-        }
-
-        return true;
+        return cursorLine != stopToken.getLine() || cursorChar <= stopTokenEndChar;
     }
 
     Range getContextRange(final ParserRuleContext ctx) {

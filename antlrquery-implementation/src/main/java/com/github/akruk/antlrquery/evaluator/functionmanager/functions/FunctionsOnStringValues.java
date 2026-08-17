@@ -1,4 +1,4 @@
-package com.github.akruk.antlrquery.evaluator.functionmanager.defaults.functions;
+package com.github.akruk.antlrquery.evaluator.functionmanager.functions;
 
 import java.math.BigDecimal;
 import java.text.BreakIterator;
@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.github.akruk.antlrquery.evaluator.AntlrQueryVisitingContext;
-import com.github.akruk.antlrquery.evaluator.functionmanager.defaults.functions.htmlentities.HTMLEntities;
+import com.github.akruk.antlrquery.evaluator.functionmanager.functions.htmlentities.HTMLEntities;
 import com.github.akruk.antlrquery.evaluator.values.AntlrQueryError;
 import com.github.akruk.antlrquery.evaluator.values.AntlrQueryValue;
 import com.github.akruk.antlrquery.evaluator.values.factories.AntlrQueryValueFactory;

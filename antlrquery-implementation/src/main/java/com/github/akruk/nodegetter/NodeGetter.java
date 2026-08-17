@@ -211,7 +211,7 @@ public class NodeGetter {
     public List<ParseTree> getDescendants(final ParseTree treenode) {
         final List<ParseTree> allDescendants = new ArrayList<>();
         final List<ParseTree> children = getChildren(treenode);
-        while (children.size() != 0) {
+        while (!children.isEmpty()) {
             final var child = children.removeFirst();
             allDescendants.add(child);
             final var descendants = getChildren(child);

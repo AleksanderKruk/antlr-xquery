@@ -1,4 +1,4 @@
-package com.github.akruk.antlrquery.evaluator.functionmanager.defaults.functions;
+package com.github.akruk.antlrquery.evaluator.functionmanager.functions;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -155,7 +155,7 @@ public class FunctionsOnNumericValues {
             final List<AntlrQueryValue> args) {
 
         // arity check
-        if (args.size() < 1 || args.size() > 2) {
+        if (args.isEmpty() || args.size() > 2) {
             return valueFactory.error(AntlrQueryError.WrongNumberOfArguments, "");
         }
 

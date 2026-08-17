@@ -637,8 +637,9 @@ public class ItemTypeSubtract {
             if (grammarTypes == null) {
                 results.add((AntlrQueryItemType) remainingAnyGrammar);
             }
-            var types = new HashSet<>(getTokenTypeFromGrammar.apply(remainingAnyGrammar.grammar()));
-            types.removeAll(grammarTypes);
+            HashSet<NamespaceResolver.QualifiedName> types = new HashSet<>(getTokenTypeFromGrammar.apply(remainingAnyGrammar.grammar()));
+            assert grammarTypes != null;
+            grammarTypes.stream().map(NamesConstrained::elementNames).flatMap(Collection::stream).toList().forEach(types::remove);
             if (!types.isEmpty()) {
                 results.add(getItemTokenFromGrammar.apply(remainingAnyGrammar.grammar(), types));
             }
@@ -649,7 +650,8 @@ public class ItemTypeSubtract {
                 results.add((AntlrQueryItemType) remainingToken);
             }
             var types = new HashSet<>(remainingToken.elementNames());
-            types.removeAll(grammarTypes);
+            assert grammarTypes != null;
+            grammarTypes.stream().map(NamesConstrained::elementNames).flatMap(Collection::stream).toList().forEach(types::remove);
             if (!types.isEmpty()) {
                 results.add(getItemTokenFromGrammar.apply(remainingToken.grammar(), types));
             }

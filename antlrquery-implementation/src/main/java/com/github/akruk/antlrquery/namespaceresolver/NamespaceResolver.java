@@ -73,15 +73,16 @@ public class NamespaceResolver {
     private QualifiedName resolve(final String fullName, final String substituteNamespace) {
         final String[] parts = splitter.split(fullName, 2);
         final boolean hasNamespace = parts.length == 2;
+        final String namespace;
+        final String name;
         if (hasNamespace) {
-            final String namespace = parts[0];
-            final String name = parts[1];
-            return new QualifiedName(namespace, name);
+            namespace = parts[0];
+            name = parts[1];
         } else {
-            final String namespace = substituteNamespace;
-            final String name = parts[0];
-            return new QualifiedName(namespace, name);
+            namespace = substituteNamespace;
+            name = parts[0];
         }
+        return new QualifiedName(namespace, name);
     }
 
     public QualifiedName resolveFunction(final String fullName) {

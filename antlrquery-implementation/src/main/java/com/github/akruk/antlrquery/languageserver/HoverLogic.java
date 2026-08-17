@@ -30,9 +30,7 @@ public class HoverLogic {
                         && token.getCharPositionInLine() <= charPosition
                         && token.getCharPositionInLine() + token.getText().length() > charPosition)
                     {
-                        switch(token.getType()) {
-
-                        }
+                        token.getType();
                         token.getType();
                         return null;
                     }

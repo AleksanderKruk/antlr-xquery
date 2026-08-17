@@ -30,7 +30,7 @@ public class AccessorsTest extends EvaluationTestsBase {
             grammar Grammar;
             x: 'x';
 
-                """;
+               \s""";
         String startRuleName = "x";
         String textualTree = "x";
         String xquery = "fn:node-name(())";

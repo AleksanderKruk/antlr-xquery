@@ -1,4 +1,4 @@
-package com.github.akruk.antlrquery.evaluator.functionmanager.defaults;
+package com.github.akruk.antlrquery.evaluator.functionmanager;
 
 import static com.github.akruk.antlrquery.evaluator.values.AntlrQueryValue.error;
 
@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.github.akruk.antlrquery.evaluator.functionmanager.functions.*;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.tree.ParseTree;
 
@@ -22,7 +23,6 @@ import com.github.akruk.antlrquery.HelperTrees;
 import com.github.akruk.antlrquery.evaluator.AntlrQueryEvaluator;
 import com.github.akruk.antlrquery.evaluator.AntlrQueryVisitingContext;
 import com.github.akruk.antlrquery.evaluator.collations.Collations;
-import com.github.akruk.antlrquery.evaluator.functionmanager.defaults.functions.*;
 import com.github.akruk.antlrquery.evaluator.values.AntlrQueryError;
 import com.github.akruk.antlrquery.evaluator.values.AntlrQueryFunction;
 import com.github.akruk.antlrquery.evaluator.values.AntlrQueryValue;
@@ -356,6 +356,40 @@ public class EvaluatingFunctionManager {
         registerFunction("antlr", "index", antlrFunctions::index, nodearg, nodeargdefault);
         registerFunction("antlr", "line", antlrFunctions::line, nodearg, nodeargdefault);
 
+
+        ArrayFunctions arrayFunctions = new ArrayFunctions(valueFactory, this);
+
+        registerFunction("array", "append", arrayFunctions::append, List.of("array", "member"), Map.of());
+        registerFunction("array", "build", arrayFunctions::build, List.of("input", "action"), Map.of("action", helperTrees.IDENTITY$1));
+        registerFunction("array", "empty", arrayFunctions::empty, List.of("array"), Map.of());
+        registerFunction("array", "filter", arrayFunctions::filter, List.of("array", "predicate"), Map.of());
+        registerFunction("array", "flatten", arrayFunctions::flatten, List.of("input"), Map.of());
+        registerFunction("array", "fold-left", arrayFunctions::foldLeft, List.of("array", "initial", "action"), Map.of());
+        registerFunction("array", "fold-right", arrayFunctions::foldRight, List.of("array", "initial", "action"), Map.of());
+        registerFunction("array", "foot", arrayFunctions::foot, List.of("array"), Map.of());
+        registerFunction("array", "for-each", arrayFunctions::forEach, List.of("array", "action"), Map.of());
+        registerFunction("array", "for-each-pair", arrayFunctions::forEachPair, List.of("array1", "array2", "action"), Map.of());
+        registerFunction("array", "get", arrayFunctions::get, List.of("array", "position"), Map.of());
+        registerFunction("array", "head", arrayFunctions::head, List.of("array"), Map.of());
+        registerFunction("array", "index-of", arrayFunctions::indexOf, List.of("array", "target"), Map.of());
+        registerFunction("array", "index-where", arrayFunctions::indexWhere, List.of("array", "predicate"), Map.of());
+        registerFunction("array", "insert-before", arrayFunctions::insertBefore, List.of("array", "position", "member"), Map.of());
+        registerFunction("array", "items", arrayFunctions::items, List.of("array"), Map.of());
+        registerFunction("array", "join", arrayFunctions::join, List.of("arrays"), Map.of());
+        registerFunction("array", "members", arrayFunctions::members, List.of("array"), Map.of());
+        registerFunction("array", "of-members", arrayFunctions::ofMembers, List.of("input"), Map.of());
+        registerFunction("array", "put", arrayFunctions::put, List.of("array", "position", "member"), Map.of());
+        registerFunction("array", "remove", arrayFunctions::remove, List.of("array", "positions"), Map.of());
+        registerFunction("array", "reverse", arrayFunctions::reverse, List.of("array"), Map.of());
+        registerFunction("array", "size", arrayFunctions::size, List.of("array"), Map.of());
+        registerFunction("array", "slice", arrayFunctions::slice, List.of("array", "start", "end", "step"), Map.of("start", helperTrees.EMPTY_SEQUENCE, "end", helperTrees.EMPTY_SEQUENCE, "step", helperTrees.EMPTY_SEQUENCE));
+        registerFunction("array", "sort", arrayFunctions::sort, List.of("array", "collation", "key"), Map.of("collation", helperTrees.DEFAULT_COLLATION, "key", helperTrees.DATA$1));
+        registerFunction("array", "sort-by", arrayFunctions::sortBy, List.of("array", "keys"), Map.of());
+        registerFunction("array", "sort-with", arrayFunctions::sortWith, List.of("array", "comparators"), Map.of());
+        registerFunction("array", "split", arrayFunctions::split, List.of("array"), Map.of());
+        registerFunction("array", "subarray", arrayFunctions::subarray, List.of("array", "start", "length"), Map.of());
+        registerFunction("array", "tail", arrayFunctions::tail, List.of("array"), Map.of());
+        registerFunction("array", "trunk", arrayFunctions::trunk, List.of("array"), Map.of());
     }
 
     /**

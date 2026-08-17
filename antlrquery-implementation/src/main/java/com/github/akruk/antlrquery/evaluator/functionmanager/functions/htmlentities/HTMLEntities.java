@@ -1,4 +1,4 @@
-package com.github.akruk.antlrquery.evaluator.functionmanager.defaults.functions.htmlentities;
+package com.github.akruk.antlrquery.evaluator.functionmanager.functions.htmlentities;
 
 
 import java.util.Map;

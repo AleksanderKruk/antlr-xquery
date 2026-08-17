@@ -1,5 +1,5 @@
 
-package com.github.akruk.antlrquery.evaluator.functionmanager.defaults.functions;
+package com.github.akruk.antlrquery.evaluator.functionmanager.functions;
 
 import java.util.List;
 

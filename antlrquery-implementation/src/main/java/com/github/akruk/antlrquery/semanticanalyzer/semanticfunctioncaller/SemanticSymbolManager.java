@@ -230,8 +230,6 @@ public class SemanticSymbolManager {
         if (noFunctions && (declarations == null || declarations.isEmpty())) {
             final DiagnosticError error = DiagnosticError.of(location, ErrorType.FUNCTION__UNKNOWN_FUNCTION, List.of(qName.namespace(), qName.name()));
             return handleUnknownFunction(error, anyItems);
-        } else if (noFunctions) {
-
         }
 
 

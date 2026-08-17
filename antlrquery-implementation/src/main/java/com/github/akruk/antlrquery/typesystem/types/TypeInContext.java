@@ -22,6 +22,7 @@ public class TypeInContext {
         this.context = context;
     }
 
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public boolean isSubtypeOf(TypeInContext other)
     {
         return Types.isSubtype(typeFactory, type, other.type);

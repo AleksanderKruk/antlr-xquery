@@ -35,7 +35,7 @@ public class GeneralComparisonOperator {
                     return comparison;
             }
         }
-        return valueFactory.bool(atomized1.size() == 0 && atomized2.size() == 0);
+        return valueFactory.bool(atomized1.isEmpty() && atomized2.isEmpty());
     }
 
     public AntlrQueryValue generalUnequals(
@@ -52,7 +52,7 @@ public class GeneralComparisonOperator {
                     return comparison;
             }
         }
-        return valueFactory.bool(atomized1.size() == 0 && atomized2.size() == 0);
+        return valueFactory.bool(atomized1.isEmpty() && atomized2.isEmpty());
     }
 
 
@@ -71,7 +71,7 @@ public class GeneralComparisonOperator {
                     return comparison;
             }
         }
-        return valueFactory.bool(atomized1.size() == 0 && atomized2.size() == 0);
+        return valueFactory.bool(atomized1.isEmpty() && atomized2.isEmpty());
     }
 
 
@@ -89,7 +89,7 @@ public class GeneralComparisonOperator {
                     return comparison;
             }
         }
-        return valueFactory.bool(atomized1.size() == 0 && atomized2.size() == 0);
+        return valueFactory.bool(atomized1.isEmpty() && atomized2.isEmpty());
     }
 
 
@@ -107,7 +107,7 @@ public class GeneralComparisonOperator {
                     return comparison;
             }
         }
-        return valueFactory.bool(atomized1.size() == 0 && atomized2.size() == 0);
+        return valueFactory.bool(atomized1.isEmpty() && atomized2.isEmpty());
     }
 
 
@@ -125,7 +125,7 @@ public class GeneralComparisonOperator {
                     return comparison;
             }
         }
-        return valueFactory.bool(atomized1.size() == 0 && atomized2.size() == 0);
+        return valueFactory.bool(atomized1.isEmpty() && atomized2.isEmpty());
     }
 }
 

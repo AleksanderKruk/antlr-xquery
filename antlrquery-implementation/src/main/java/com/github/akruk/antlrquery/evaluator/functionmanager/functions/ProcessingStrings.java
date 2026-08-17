@@ -1,4 +1,4 @@
-package com.github.akruk.antlrquery.evaluator.functionmanager.defaults.functions;
+package com.github.akruk.antlrquery.evaluator.functionmanager.functions;
 
 import java.text.Collator;
 import java.text.RuleBasedCollator;
@@ -165,12 +165,10 @@ public class ProcessingStrings {
 
         if (coll instanceof RuleBasedCollator rbc) {
             final AntlrQueryValue backwards = valueFactory.string("backwards");
-            if (map.containsKey(backwards)
-                    && ebv.effectiveBooleanValue(map.get(backwards)).booleanValue)
-            {
-                // TODO: ...
-                // rbc.getAlternateHandlingShifted(true);
-            }
+            if (map.containsKey(backwards)) {
+                ebv.effectiveBooleanValue(map.get(backwards));
+            }// TODO: ...
+// rbc.getAlternateHandlingShifted(true);
 
             final AntlrQueryValue normalization = map.get(valueFactory.string("normalization"));
             if (map.containsKey(valueFactory.string("normalization"))
@@ -180,25 +178,18 @@ public class ProcessingStrings {
             }
 
             final AntlrQueryValue caseLevel = valueFactory.string("caseLevel");
-            if (map.containsKey(caseLevel))
-            {
-                // TODO: ...
-                // rbc.setCaseLevel(map.get(caseLevel).effectiveBooleanValue());
-            }
+            // TODO: ...
+            // rbc.setCaseLevel(map.get(caseLevel).effectiveBooleanValue());
 
             final AntlrQueryValue numeric = valueFactory.string("numeric");
-            if (map.containsKey(numeric)
-                    && ebv.effectiveBooleanValue(map.get(numeric)).booleanValue)
-            {
-                // TODO: ...
-            }
+            if (map.containsKey(numeric)) {
+                ebv.effectiveBooleanValue(map.get(numeric));
+            }// TODO: ...
 
             final AntlrQueryValue caseFirst = valueFactory.string("caseFirst");
-            if (map.containsKey(caseFirst)) {
-                // String cf = map.get(caseFirst).stringValue;
-                // TODO: ...
-                // rbc.setUpperCaseFirst("upper".equals(cf));
-            }
+            // String cf = map.get(caseFirst).stringValue;
+            // TODO: ...
+            // rbc.setUpperCaseFirst("upper".equals(cf));
         }
 
         collationUriToCollator.put(uri, coll);

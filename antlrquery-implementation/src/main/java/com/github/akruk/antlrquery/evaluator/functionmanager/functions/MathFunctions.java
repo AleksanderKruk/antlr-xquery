@@ -1,4 +1,4 @@
-package com.github.akruk.antlrquery.evaluator.functionmanager.defaults.functions;
+package com.github.akruk.antlrquery.evaluator.functionmanager.functions;
 
 import java.math.BigDecimal;
 import java.util.List;

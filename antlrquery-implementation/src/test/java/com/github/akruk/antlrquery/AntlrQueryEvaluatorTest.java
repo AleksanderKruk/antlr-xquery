@@ -110,7 +110,7 @@ public class AntlrQueryEvaluatorTest extends EvaluationTestsBase {
         assertResult("'abc' || 'def' || 'ghi'", valueFactory.string("abcdefghi"));
         assertResult("""
                 () || "con" || ("cat", "enate")
-                    """, valueFactory.string("concatenate"));
+                   \s""", valueFactory.string("concatenate"));
     }
 
 
@@ -124,7 +124,7 @@ public class AntlrQueryEvaluatorTest extends EvaluationTestsBase {
         C: 'c';
         D: 'd';
         WS: [\\p{White_Space}]+ -> skip;
-            """;
+           \s""";
 
 
 

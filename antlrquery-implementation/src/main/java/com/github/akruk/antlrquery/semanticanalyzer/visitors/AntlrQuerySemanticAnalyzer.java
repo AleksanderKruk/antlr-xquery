@@ -619,9 +619,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
             case 0 -> moduleConstructionNamespace;
             case 1 -> {
                 final var defaultNamespace = ConstructionDecls.getFirst().qname().getText();
-                if (symbolManager.grammarExists(defaultNamespace)) {
-
-                }
+                symbolManager.grammarExists(defaultNamespace);
                 yield defaultNamespace;
             }
             default -> {
@@ -2009,15 +2007,9 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
             final IsCastable result)
     {
         switch (result) {
-            case IsCastable.AlwaysPossible.CastingToSame ignore -> {
-                warn(ctx, WarningType.CAST__SELFCAST, List.of(tested, type));
-            }
-            case IsCastable.AlwaysPossible.TestedTypeIsSubtypeOfTargetType ignore -> {
-                warn(ctx, WarningType.CAST__SUBTYPE_CAST, List.of(tested, type));
-            }
-            case IsCastable.AlwaysPossible.TypeCanAlwaysBeCastToTarget ignore -> {
-                warn(ctx, WarningType.CAST__TARGET_CAST, List.of(tested, type));
-            }
+            case IsCastable.AlwaysPossible.CastingToSame ignore -> warn(ctx, WarningType.CAST__SELFCAST, List.of(tested, type));
+            case IsCastable.AlwaysPossible.TestedTypeIsSubtypeOfTargetType ignore -> warn(ctx, WarningType.CAST__SUBTYPE_CAST, List.of(tested, type));
+            case IsCastable.AlwaysPossible.TypeCanAlwaysBeCastToTarget ignore -> warn(ctx, WarningType.CAST__TARGET_CAST, List.of(tested, type));
             case IsCastable.AlwaysPossible.ManyItemTypes many -> {
                 warn(ctx, WarningType.CAST__POSSIBLE_MANY_ITEMTYPES, List.of(tested, type));
                 final AntlrQueryItemType[] wrongItemTypes = many.wrongItemTypes();
@@ -2025,25 +2017,13 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
                     verifyCastability(ctx, wrongItemTypes[i], tested, many.problems()[i]);
                 }
             }
-            case IsCastable.AlwaysPossible.ManySequenceTypes ignore -> {
-                warn(ctx, WarningType.CAST__POSSIBLE_MANY_SEQUENCETYPES, List.of(tested, type));
-            }
-            case IsCastable.Impossible impossible -> {
-                error(ctx, ErrorType.CAST__IMPOSSIBLE, List.of(tested, type));
-            }
+            case IsCastable.AlwaysPossible.ManySequenceTypes ignore -> warn(ctx, WarningType.CAST__POSSIBLE_MANY_SEQUENCETYPES, List.of(tested, type));
+            case IsCastable.Impossible impossible -> error(ctx, ErrorType.CAST__IMPOSSIBLE, List.of(tested, type));
             case IsCastable.Possible possible -> {}
-            case IsCastable.TestedExpressionCanBeEmptySequenceWithoutFlag ignore -> {
-                error(ctx, ErrorType.CAST__EMPTY_WITHOUT_FLAG, List.of(tested));
-            }
-            case IsCastable.TestedExpressionIsEmptySequence ignore -> {
-                error(ctx, ErrorType.CAST__EMPTY_SEQUENCE, List.of());
-            }
-            case IsCastable.TestedExpressionIsZeroOrMore ignore -> {
-                error(ctx, ErrorType.CAST__ZERO_OR_MORE, List.of(tested));
-            }
-            case IsCastable.WrongTargetType ignore -> {
-                error(ctx, ErrorType.CAST__WRONG_TARGET_TYPE, List.of(type));
-            }
+            case IsCastable.TestedExpressionCanBeEmptySequenceWithoutFlag ignore -> error(ctx, ErrorType.CAST__EMPTY_WITHOUT_FLAG, List.of(tested));
+            case IsCastable.TestedExpressionIsEmptySequence ignore -> error(ctx, ErrorType.CAST__EMPTY_SEQUENCE, List.of());
+            case IsCastable.TestedExpressionIsZeroOrMore ignore -> error(ctx, ErrorType.CAST__ZERO_OR_MORE, List.of(tested));
+            case IsCastable.WrongTargetType ignore -> error(ctx, ErrorType.CAST__WRONG_TARGET_TYPE, List.of(type));
         }
     }
 
@@ -2158,12 +2138,8 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
                                 }
                                 foundErrors.add(caughtErrorType);
                             }
-                            case NamedItemAccessingResult.UnknownName() -> {
-                                error(c, ErrorType.TRY_CATCH__ERROR__UNKNOWN_NAMESPACE, List.of(errorText));
-                            }
-                            case NamedItemAccessingResult.UnknownNamespace unknownNamespace -> {
-                                error(c, ErrorType.TRY_CATCH__ERROR__UNKNOWN_NAME, List.of(errorText));
-                            }
+                            case NamedItemAccessingResult.UnknownName() -> error(c, ErrorType.TRY_CATCH__ERROR__UNKNOWN_NAMESPACE, List.of(errorText));
+                            case NamedItemAccessingResult.UnknownNamespace unknownNamespace -> error(c, ErrorType.TRY_CATCH__ERROR__UNKNOWN_NAME, List.of(errorText));
                         }
                     }
                     choicedErrors = typeFactory.choice(foundErrors.toArray(AntlrQueryItemType[]::new));
@@ -2638,7 +2614,8 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
     @Override
     public TypeInContext visitArgument(final ArgumentContext ctx)
     {
-        final var value = super.visitArgument(ctx);
+        final var value = Objects.requireNonNull(super.visitArgument(ctx));
+        assert visitedPositionalArguments != null;
         visitedPositionalArguments.add(value);
         return value;
     }
@@ -2998,9 +2975,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
                     ErrorType.ITEM_DECLARATION__ALREADY_REGISTERED_DIFFERENT,
                     List.of(qName, expected));
             }
-            case ALREADY_REGISTERED_SAME ->  {
-                error(ctx, ErrorType.ITEM_DECLARATION__ALREADY_REGISTERED_SAME, List.of(qName));
-            }
+            case ALREADY_REGISTERED_SAME -> error(ctx, ErrorType.ITEM_DECLARATION__ALREADY_REGISTERED_SAME, List.of(qName));
             case OK -> { }
         }
         return null;
@@ -3280,7 +3255,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
                 // DECLARE CONTEXT VALUE EXTERNAL (EQ_OP varDefaultValue)?
                 if (ctx.varDefaultValue() != null) {
                     // DECLARE CONTEXT VALUE EXTERNAL EQ_OP varDefaultValue
-                    final var defaultValueType = Objects.requireNonNull(visitVarDefaultValue(ctx.varDefaultValue()));
+                    final var defaultValueType = Objects.requireNonNull(visitExprSingle(ctx.varDefaultValue().exprSingle()));
                     context.setType(defaultValueType);
                 } else { // TODO: DECLARE CONTEXT VALUE EXTERNAL
                 }
@@ -3304,8 +3279,4 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         }
         return null;
     }
-
-
-
-
 }

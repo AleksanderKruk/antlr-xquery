@@ -80,7 +80,7 @@ public abstract class LexerAdaptor extends Lexer {
 
     protected void handleEndArgument() {
         popMode();
-        if (_modeStack.size() > 0) {
+        if (!_modeStack.isEmpty()) {
             setType(ANTLRv4Lexer.ARGUMENT_CONTENT);
         }
     }

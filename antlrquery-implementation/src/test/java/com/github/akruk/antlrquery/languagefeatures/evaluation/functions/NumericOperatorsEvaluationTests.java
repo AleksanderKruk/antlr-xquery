@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrquery.languagefeatures.evaluation.EvaluationTestsBase;
 
-public class NumericOperators extends EvaluationTestsBase {
+public class NumericOperatorsEvaluationTests extends EvaluationTestsBase {
     @Test
     public void numericAdd() {
         assertResult("op:numeric-add(3, 5)", BigDecimal.valueOf(8));

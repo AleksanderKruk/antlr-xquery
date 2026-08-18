@@ -22,36 +22,36 @@ public class ProcessingSequencesFunctions {
     }
 
 
-    public AntlrQueryValue empty(final AntlrQueryVisitingContext ctx, final List<AntlrQueryValue> args) {
+    public AntlrQueryValue empty(final AntlrQueryVisitingContext ignoredCtx, final List<AntlrQueryValue> args) {
         final var input = args.getFirst();
 
         return valueFactory.bool(input.isEmptySequence);
     }
 
-    public AntlrQueryValue exists(final AntlrQueryVisitingContext ctx, final List<AntlrQueryValue> args) {
+    public AntlrQueryValue exists(final AntlrQueryVisitingContext ignoredCtx, final List<AntlrQueryValue> args) {
         final var input = args.getFirst();
 
         return valueFactory.bool(!input.isEmptySequence);
     }
 
-    public AntlrQueryValue foot(final AntlrQueryVisitingContext context, final List<AntlrQueryValue> args) {
+    public AntlrQueryValue foot(final AntlrQueryVisitingContext ignoredContext, final List<AntlrQueryValue> args) {
         final var input = args.getFirst();
 
         final var sequence = atomizer.atomize(input);
         return sequence.isEmpty() ? valueFactory.emptySequence() : sequence.getLast();
     }
 
-    public AntlrQueryValue head(final AntlrQueryVisitingContext ctx, final List<AntlrQueryValue> args) {
+    public AntlrQueryValue head(final AntlrQueryVisitingContext ignoredCtx, final List<AntlrQueryValue> args) {
         final var input = args.getFirst();
         final var sequence = input.sequence;
         return sequence.isEmpty() ? valueFactory.emptySequence() : sequence.getFirst();
     }
 
-    public AntlrQueryValue identity(final AntlrQueryVisitingContext context, final List<AntlrQueryValue> args) {
+    public AntlrQueryValue identity(final AntlrQueryVisitingContext ignoredContext, final List<AntlrQueryValue> args) {
         return args.getFirst();
     }
 
-    public AntlrQueryValue insertBefore(final AntlrQueryVisitingContext ctx, final List<AntlrQueryValue> args) {
+    public AntlrQueryValue insertBefore(final AntlrQueryVisitingContext ignoredCtx, final List<AntlrQueryValue> args) {
         final var input = args.get(0);
         final var positionArg = args.get(1);
         final var insertArg = args.get(2);
@@ -99,7 +99,7 @@ public class ProcessingSequencesFunctions {
         return valueFactory.sequence(result);
     }
 
-    public AntlrQueryValue remove(final AntlrQueryVisitingContext ctx, final List<AntlrQueryValue> args) {
+    public AntlrQueryValue remove(final AntlrQueryVisitingContext ignoredCtx, final List<AntlrQueryValue> args) {
         if (args.size() != 2) return valueFactory.error(AntlrQueryError.WrongNumberOfArguments, "");
         final var input = args.get(0);
         final var positionsArg = args.get(1);
@@ -143,7 +143,7 @@ public class ProcessingSequencesFunctions {
         return valueFactory.sequence(result);
     }
 
-    public AntlrQueryValue reverse(final AntlrQueryVisitingContext ctx, final List<AntlrQueryValue> args) {
+    public AntlrQueryValue reverse(final AntlrQueryVisitingContext ignoredCtx, final List<AntlrQueryValue> args) {
         final var input = args.getFirst();
 
         final var sequence = input.sequence;
@@ -250,7 +250,7 @@ public class ProcessingSequencesFunctions {
         return valueFactory.sequence(result);
     }
 
-    public AntlrQueryValue subsequence(final AntlrQueryVisitingContext ctx, final List<AntlrQueryValue> args) {
+    public AntlrQueryValue subsequence(final AntlrQueryVisitingContext ignoredCtx, final List<AntlrQueryValue> args) {
         final var input = args.get(0);
         final var startArg = args.get(1);
         final var lengthArg = args.get(2);
@@ -278,7 +278,7 @@ public class ProcessingSequencesFunctions {
         return valueFactory.sequence(sequence.subList(start, end));
     }
 
-    public AntlrQueryValue tail(final AntlrQueryVisitingContext ctx, final List<AntlrQueryValue> args) {
+    public AntlrQueryValue tail(final AntlrQueryVisitingContext ignoredCtx, final List<AntlrQueryValue> args) {
         final var input = args.getFirst();
 
         final var sequence = input.sequence;

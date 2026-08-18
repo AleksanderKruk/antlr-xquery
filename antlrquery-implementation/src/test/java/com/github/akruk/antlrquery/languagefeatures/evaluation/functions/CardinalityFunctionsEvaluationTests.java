@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import com.github.akruk.antlrquery.evaluator.values.AntlrQueryError;
 import com.github.akruk.antlrquery.languagefeatures.evaluation.EvaluationTestsBase;
 
-public class CardinalityFunctions extends EvaluationTestsBase {
+public class CardinalityFunctionsEvaluationTests extends EvaluationTestsBase {
 
     @Test
     public void exactlyOne() {

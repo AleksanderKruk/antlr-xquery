@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import com.github.akruk.antlrquery.evaluator.values.AntlrQueryError;
 import com.github.akruk.antlrquery.languagefeatures.evaluation.EvaluationTestsBase;
 
-public class FunctionsOnNumericValues extends EvaluationTestsBase {
+public class FunctionsOnNumericValuesEvaluationTests extends EvaluationTestsBase {
     @Test
     public void abs() {
         assertResult("abs(3)", BigDecimal.valueOf(3));

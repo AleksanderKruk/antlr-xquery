@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrquery.languagefeatures.evaluation.EvaluationTestsBase;
 
-public class ProcessingStrings extends EvaluationTestsBase {
+public class ProcessingStringsEvaluationTests extends EvaluationTestsBase {
 
     @Test public void testEmptyOutOfBoundsFilter() {
         assertResult("empty((1, 2, 3)[10])", valueFactory.bool(true));

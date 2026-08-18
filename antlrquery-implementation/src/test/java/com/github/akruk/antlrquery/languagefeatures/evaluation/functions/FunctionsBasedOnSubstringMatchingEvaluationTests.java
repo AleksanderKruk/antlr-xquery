@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrquery.languagefeatures.evaluation.EvaluationTestsBase;
 
-public class FunctionsBasedOnSubstringMatching extends EvaluationTestsBase {
+public class FunctionsBasedOnSubstringMatchingEvaluationTests extends EvaluationTestsBase {
 
     @Test
     public void contains() {

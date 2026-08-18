@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import com.github.akruk.antlrquery.evaluator.values.*;
 import com.github.akruk.antlrquery.languagefeatures.evaluation.EvaluationTestsBase;
 
-public class FunctionsOnStringValues extends EvaluationTestsBase {
+public class FunctionsOnStringValuesEvaluationTests extends EvaluationTestsBase {
     @Test
     public void charFromInteger() {
         assertResult("fn:char(65)", valueFactory.string("A"));

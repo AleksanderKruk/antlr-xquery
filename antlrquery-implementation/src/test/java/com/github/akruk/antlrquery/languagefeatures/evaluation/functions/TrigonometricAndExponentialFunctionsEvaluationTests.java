@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrquery.languagefeatures.evaluation.EvaluationTestsBase;
 
-public class TrigonometricAndExponentialFunctions extends EvaluationTestsBase  {
+public class TrigonometricAndExponentialFunctionsEvaluationTests extends EvaluationTestsBase  {
 
     @Test
     public void containsToken() {

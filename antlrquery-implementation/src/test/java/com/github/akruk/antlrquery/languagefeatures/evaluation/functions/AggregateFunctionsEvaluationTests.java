@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrquery.languagefeatures.evaluation.EvaluationTestsBase;
 
-public class AggregateFunctions extends EvaluationTestsBase {
+public class AggregateFunctionsEvaluationTests extends EvaluationTestsBase {
 
     @Test
     public void count() {

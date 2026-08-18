@@ -478,7 +478,7 @@ public class ArrayFunctions {
 
         if (position < 1 || position > size) {
             return valueFactory.error(
-                    AntlrQueryError.InvalidArgumentType,
+                    AntlrQueryError.ArrayIndexOutOfBounds,
                     "array:put position out of bounds"
             );
         }

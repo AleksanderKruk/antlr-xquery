@@ -5251,7 +5251,7 @@ public class SemanticFunctionSets {
         return typeFactory.itemChoice(
                 Arrays.stream(choice.itemTypes())
                         .map(item -> arrayRemove(item, positionsType))
-                        .toArray(ConcreteItemType[]::new));
+                        .toArray(AntlrQueryItemType[]::new));
     }
 
     private AntlrQueryItemType arrayRemove(

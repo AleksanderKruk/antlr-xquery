@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrquery.languagefeatures.evaluation.EvaluationTestsBase;
 
-public class ProcessingBooleansTests extends EvaluationTestsBase {
+public class ProcessingBooleansEvaluationTests extends EvaluationTestsBase {
     @Test
     public void true_() {
         assertResult("true()", valueFactory.bool(true));

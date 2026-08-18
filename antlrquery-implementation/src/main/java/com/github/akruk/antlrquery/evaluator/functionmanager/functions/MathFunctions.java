@@ -28,21 +28,21 @@ public class MathFunctions {
 
     public AntlrQueryValue exp(final AntlrQueryVisitingContext context, final List<AntlrQueryValue> args) {
         if (args.size() != 1) return valueFactory.error(AntlrQueryError.WrongNumberOfArguments, "");
-        final var arg = args.get(0);
+        final var arg = args.getFirst();
         if (!arg.isNumeric) return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
         return valueFactory.number(BigDecimal.valueOf(Math.exp(arg.numericValue.doubleValue())));
     }
 
     public AntlrQueryValue exp10(final AntlrQueryVisitingContext context, final List<AntlrQueryValue> args) {
         if (args.size() != 1) return valueFactory.error(AntlrQueryError.WrongNumberOfArguments, "");
-        final var arg = args.get(0);
+        final var arg = args.getFirst();
         if (!arg.isNumeric) return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
         return valueFactory.number(BigDecimal.valueOf(Math.pow(10, arg.numericValue.doubleValue())));
     }
 
     public AntlrQueryValue log(final AntlrQueryVisitingContext context, final List<AntlrQueryValue> args) {
         if (args.size() != 1) return valueFactory.error(AntlrQueryError.WrongNumberOfArguments, "");
-        final var arg = args.get(0);
+        final var arg = args.getFirst();
         if (!arg.isNumeric) return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
         final double v = arg.numericValue.doubleValue();
         if (v <= 0 || Double.isNaN(v)) return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
@@ -51,7 +51,7 @@ public class MathFunctions {
 
     public AntlrQueryValue log10(final AntlrQueryVisitingContext context, final List<AntlrQueryValue> args) {
         if (args.size() != 1) return valueFactory.error(AntlrQueryError.WrongNumberOfArguments, "");
-        final var arg = args.get(0);
+        final var arg = args.getFirst();
         if (!arg.isNumeric) return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
         final double v = arg.numericValue.doubleValue();
         if (v <= 0 || Double.isNaN(v)) return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
@@ -68,7 +68,7 @@ public class MathFunctions {
 
     public AntlrQueryValue sqrt(final AntlrQueryVisitingContext context, final List<AntlrQueryValue> args) {
         if (args.size() != 1) return valueFactory.error(AntlrQueryError.WrongNumberOfArguments, "");
-        final var arg = args.get(0);
+        final var arg = args.getFirst();
         if (!arg.isNumeric) return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
         final double v = arg.numericValue.doubleValue();
         if (v < 0) return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
@@ -77,28 +77,28 @@ public class MathFunctions {
 
     public AntlrQueryValue sin(final AntlrQueryVisitingContext context, final List<AntlrQueryValue> args) {
         if (args.size() != 1) return valueFactory.error(AntlrQueryError.WrongNumberOfArguments, "");
-        final var arg = args.get(0);
+        final var arg = args.getFirst();
         if (!arg.isNumeric) return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
         return valueFactory.number(BigDecimal.valueOf(Math.sin(arg.numericValue.doubleValue())));
     }
 
     public AntlrQueryValue cos(final AntlrQueryVisitingContext context, final List<AntlrQueryValue> args) {
         if (args.size() != 1) return valueFactory.error(AntlrQueryError.WrongNumberOfArguments, "");
-        final var arg = args.get(0);
+        final var arg = args.getFirst();
         if (!arg.isNumeric) return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
         return valueFactory.number(BigDecimal.valueOf(Math.cos(arg.numericValue.doubleValue())));
     }
 
     public AntlrQueryValue tan(final AntlrQueryVisitingContext context, final List<AntlrQueryValue> args) {
         if (args.size() != 1) return valueFactory.error(AntlrQueryError.WrongNumberOfArguments, "");
-        final var arg = args.get(0);
+        final var arg = args.getFirst();
         if (!arg.isNumeric) return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
         return valueFactory.number(BigDecimal.valueOf(Math.tan(arg.numericValue.doubleValue())));
     }
 
     public AntlrQueryValue asin(final AntlrQueryVisitingContext context, final List<AntlrQueryValue> args) {
         if (args.size() != 1) return valueFactory.error(AntlrQueryError.WrongNumberOfArguments, "");
-        final var arg = args.get(0);
+        final var arg = args.getFirst();
         if (!arg.isNumeric) return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
         final double v = arg.numericValue.doubleValue();
         if (v < -1 || v > 1) return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
@@ -107,7 +107,7 @@ public class MathFunctions {
 
     public AntlrQueryValue acos(final AntlrQueryVisitingContext context, final List<AntlrQueryValue> args) {
         if (args.size() != 1) return valueFactory.error(AntlrQueryError.WrongNumberOfArguments, "");
-        final var arg = args.get(0);
+        final var arg = args.getFirst();
         if (!arg.isNumeric) return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
         final double v = arg.numericValue.doubleValue();
         if (v < -1 || v > 1) return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
@@ -116,7 +116,7 @@ public class MathFunctions {
 
     public AntlrQueryValue atan(final AntlrQueryVisitingContext context, final List<AntlrQueryValue> args) {
         if (args.size() != 1) return valueFactory.error(AntlrQueryError.WrongNumberOfArguments, "");
-        final var arg = args.get(0);
+        final var arg = args.getFirst();
         if (!arg.isNumeric) return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
         return valueFactory.number(BigDecimal.valueOf(Math.atan(arg.numericValue.doubleValue())));
     }
@@ -132,7 +132,7 @@ public class MathFunctions {
         if (args.size() != 1) {
             return valueFactory.error(AntlrQueryError.WrongNumberOfArguments, "");
         }
-        final var arg = args.get(0);
+        final var arg = args.getFirst();
         if (!arg.isNumeric) {
             return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
         }
@@ -144,7 +144,7 @@ public class MathFunctions {
         if (args.size() != 1) {
             return valueFactory.error(AntlrQueryError.WrongNumberOfArguments, "");
         }
-        final var arg = args.get(0);
+        final var arg = args.getFirst();
         if (!arg.isNumeric) {
             return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
         }
@@ -156,7 +156,7 @@ public class MathFunctions {
         if (args.size() != 1) {
             return valueFactory.error(AntlrQueryError.WrongNumberOfArguments, "");
         }
-        final var arg = args.get(0);
+        final var arg = args.getFirst();
         if (!arg.isNumeric) {
             return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
         }

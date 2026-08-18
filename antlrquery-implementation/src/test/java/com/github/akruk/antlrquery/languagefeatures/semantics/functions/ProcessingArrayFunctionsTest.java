@@ -1,8 +1,11 @@
 package com.github.akruk.antlrquery.languagefeatures.semantics.functions;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
+import com.github.akruk.antlrquery.semanticanalyzer.ErrorType;
+import com.github.akruk.antlrquery.typesystem.types.Cardinality;
 import com.github.akruk.antlrquery.typesystem.types.NumericRange;
 import org.junit.jupiter.api.Test;
 
@@ -46,20 +49,8 @@ public class ProcessingArrayFunctionsTest extends SemanticTestsBase {
         assertErrors("array:build((1),1)");
     }
 
-    // array:empty($array as array(*)) as xs:boolean
-    @Test
-    public void arrayEmpty_valid() {
-        assertType("array:empty(array{})", typeFactory.boolean_());
-    }
 
-    @Test
-    public void arrayEmpty_errors() {
-        assertErrors("array:empty()");
-        assertErrors("array:empty(1)");
-    }
-
-    // array:filter($array as array(*), $predicate as fn(item()*,xs:integer) as
-    // xs:boolean?) as array(*)
+    // array:filter($array as array(*), $predicate as fn(item()*,xs:integer) as xs:boolean?) as array(*)
     @Test
     public void filterArray_valid() {
         assertType(

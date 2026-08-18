@@ -22,7 +22,7 @@ public class EffectiveBooleanValue {
         if (value.isEmptySequence) {
             return false_;
         }
-        if (value.sequence.get(0).isNode)
+        if (value.sequence.getFirst().isNode)
             return true_;
         if (value.size != 1)
             return valueFactory.error(

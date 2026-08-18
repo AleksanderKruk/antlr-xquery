@@ -56,6 +56,7 @@ public class SemanticSymbolManager {
         @Nullable ParseTree tree
         ) {}
 
+    @FunctionalInterface
     public interface GrainedAnalysis {
         TypeInContext analyze(
             List<UsedArg> args,
@@ -362,7 +363,7 @@ public class SemanticSymbolManager {
         }
         final TypeInContext returnedType = context.typeInContext(specAndErrors.spec.returnedType);
         final List<AntlrQuerySequenceType> argTypes = specAndErrors.spec.args.stream()
-            .map(arg->arg.type())
+            .map(ArgumentSpecification::type)
             .toList()
             .subList(0, arity);
         final var functionItem = typeFactory.function(returnedType.type, argTypes);
@@ -394,7 +395,7 @@ public class SemanticSymbolManager {
         final var minArity = function.minArity();
         final var maxArity = function.maxArity();
         final var alreadyDeclared = functionDeclarations.computeIfAbsent(
-            function.name(), _ -> new ArrayList<UnresolvedFunctionSpecification>());
+            function.name(), _ -> new ArrayList<>());
         final var overlapping = alreadyDeclared.stream().filter(f ->
             minArity <= f.maxArity() && f.minArity() <= maxArity
         ).map(UnresolvedFunctionSpecification::location).toList();

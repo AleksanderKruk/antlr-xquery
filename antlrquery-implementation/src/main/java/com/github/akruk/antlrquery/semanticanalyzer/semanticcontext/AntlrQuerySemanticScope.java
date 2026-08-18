@@ -78,7 +78,7 @@ public class AntlrQuerySemanticScope {
             var assumptionsForType = entry.getValue();
             var copiedType = typeMapping.getOrDefault(originalType, originalType);
             for (var assumption : assumptionsForType) {
-                var copiedAssumption = new Assumption(copiedType, assumption.value);
+                var copiedAssumption = new Assumption(copiedType, assumption.value());
                 scopedAssumptions.computeIfAbsent(copiedType, _ -> new ArrayList<>()).add(copiedAssumption);
             }
         }
@@ -134,7 +134,7 @@ public class AntlrQuerySemanticScope {
             }
             for (var assumption : assignedType.scope.scopedAssumptions.getOrDefault(assignedType, List.of()))
             {
-                var copiedAssumption = new Assumption(copiedType, assumption.value);
+                var copiedAssumption = new Assumption(copiedType, assumption.value());
                 scopedAssumptions.computeIfAbsent(copiedType, _ -> new ArrayList<>()).add(copiedAssumption);
             }
             if (variableDefinition == null) { // called by redeclaration or undeclared external variable
@@ -233,9 +233,9 @@ public class AntlrQuerySemanticScope {
 
     public boolean existsAssumption(Assumption matchingAssumption)
     {
-        var assumptions = resolveAssumptionsForType(matchingAssumption.type);
+        var assumptions = resolveAssumptionsForType(matchingAssumption.type());
         for (var assumption : assumptions) {
-            if (assumption.value.equals(matchingAssumption.value)) {
+            if (assumption.value().equals(matchingAssumption.value())) {
                 return true;
             }
         }

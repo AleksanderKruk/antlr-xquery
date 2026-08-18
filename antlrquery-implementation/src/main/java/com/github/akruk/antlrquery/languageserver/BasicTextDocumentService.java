@@ -255,7 +255,9 @@ public class BasicTextDocumentService implements TextDocumentService {
                     null,
                     typeFactory,
                     new AntlrQueryMemoizedValueFactory(typeFactory),
-                    new SemanticSymbolManager(typeFactory, contextManager, SemanticFunctionSets.ALL(typeFactory)),
+                    new SemanticSymbolManager(typeFactory, contextManager,
+                            new SemanticFunctionSets(typeFactory).ALL()
+                    ),
                     null,
                     new ModuleManager(paths),
                     new GrammarManager(paths),
@@ -345,7 +347,7 @@ public class BasicTextDocumentService implements TextDocumentService {
                         .map(x -> (VarNameAndTypeContext) x.node).toList();
 
                 final Stream<VarNameContext> declarationWithoutTypeContexts = declarationContexts.stream()
-                        .filter(x -> x.typeDeclaration() == null).map(x -> x.varName());
+                        .filter(x -> x.typeDeclaration() == null).map(VarNameAndTypeContext::varName);
                 variableDeclarations.put(uri, declarationContexts);
 
                 final List<AntlrQueryValue> windowVars = AntlrQuery.evaluateWithMockRoot(
@@ -783,9 +785,6 @@ public class BasicTextDocumentService implements TextDocumentService {
      *     <li> variable declaration in prolog</li>
      *   </ul>
      * </ul>
-     * @param newName
-     * @param uri
-     * @param edits
     */
     private void fillVarDeclRenamingFileEdits(final String uri, final String newName, final Map<String,List<TextEdit>> edits) {
 //        TODO:

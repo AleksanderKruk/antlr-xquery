@@ -173,7 +173,7 @@ public class FunctionsOnStringValues {
     {
 
         // Determine the sequence of values to join
-        List<AntlrQueryValue> atomized = atomizer.atomize(args.get(0));
+        List<AntlrQueryValue> atomized = atomizer.atomize(args.getFirst());
 
         // If the sequence is empty, return the zero‐cardinality string
         if (atomized.isEmpty()) {
@@ -225,9 +225,9 @@ public class FunctionsOnStringValues {
             if (atoms.size() != 1) {
                 return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
             }
-            input = atoms.get(0).stringValue;
+            input = atoms.getFirst().stringValue;
         } else {
-            AntlrQueryValue arg = args.get(0);
+            AntlrQueryValue arg = args.getFirst();
             if (arg.isEmptySequence) {
                 return valueFactory.string("");
             }
@@ -247,7 +247,7 @@ public class FunctionsOnStringValues {
             AntlrQueryVisitingContext context,
             List<AntlrQueryValue> args) {
 
-        final AntlrQueryValue input = args.get(0);
+        final AntlrQueryValue input = args.getFirst();
         if (input.isEmptySequence) {
             return valueFactory.emptyString();
         }
@@ -264,7 +264,7 @@ public class FunctionsOnStringValues {
             AntlrQueryVisitingContext context,
             List<AntlrQueryValue> args) {
 
-        final AntlrQueryValue input = args.get(0);
+        final AntlrQueryValue input = args.getFirst();
         if (input.isEmptySequence) {
             return valueFactory.emptyString();
         }
@@ -295,7 +295,7 @@ public class FunctionsOnStringValues {
     public AntlrQueryValue char_(
             final AntlrQueryVisitingContext context,
             final List<AntlrQueryValue> args) {
-        final AntlrQueryValue arg = args.get(0);
+        final AntlrQueryValue arg = args.getFirst();
         // A Unicode codepoint, supplied as an integer. For example fn:char(9) returns
         // the tab character.
         if (arg.isNumeric) {
@@ -358,7 +358,7 @@ public class FunctionsOnStringValues {
     {
 
         // obtain the string: either argument or context item
-        final AntlrQueryValue inputValue = args.get(0);
+        final AntlrQueryValue inputValue = args.getFirst();
         // empty‐string or empty‐sequence -> empty sequence
         if (inputValue.isEmptySequence) {
             return valueFactory.emptySequence();
@@ -392,7 +392,7 @@ public class FunctionsOnStringValues {
         if (args.isEmpty()) {
             inputValue = context.getValue();
         } else {
-            inputValue = args.get(0);
+            inputValue = args.getFirst();
         }
         if (inputValue.isEmptySequence)
             return valueFactory.emptySequence();
@@ -439,7 +439,7 @@ public class FunctionsOnStringValues {
             }
             input = ctxItem.stringValue;
         } else {
-            AntlrQueryValue arg0 = args.get(0);
+            AntlrQueryValue arg0 = args.getFirst();
             if (arg0.isEmptySequence) {
                 // empty-sequence => zero-cardinality string
                 input = "";
@@ -513,7 +513,7 @@ public class FunctionsOnStringValues {
             AntlrQueryVisitingContext context,
             List<AntlrQueryValue> args) {
 
-        AntlrQueryValue valArg = args.get(0);
+        AntlrQueryValue valArg = args.getFirst();
 
         // If $value is the empty sequence, the function returns the zero-cardinality string.
         if (valArg.isEmptySequence)
@@ -580,10 +580,10 @@ public class FunctionsOnStringValues {
             if (atoms.size() != 1) {
                 return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
             }
-            input = atoms.get(0).stringValue;
+            input = atoms.getFirst().stringValue;
         } else {
             // one‐arg form
-            AntlrQueryValue arg = args.get(0);
+            AntlrQueryValue arg = args.getFirst();
             // empty‐sequence => cardinality 0
             if (arg.isEmptySequence) {
                 return valueFactory.number(0);
@@ -619,10 +619,10 @@ public class FunctionsOnStringValues {
             if (atoms.size() != 1) {
                 return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
             }
-            input = atoms.get(0).stringValue;
+            input = atoms.getFirst().stringValue;
         } else {
             // one‐arg form
-            AntlrQueryValue arg = args.get(0);
+            AntlrQueryValue arg = args.getFirst();
             return valueFactory.bool(arg.stringValue.isEmpty());
         }
 

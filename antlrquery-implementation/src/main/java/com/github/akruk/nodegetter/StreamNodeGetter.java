@@ -2,6 +2,7 @@ package com.github.akruk.nodegetter;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 
+import java.util.Objects;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -142,7 +143,7 @@ public class StreamNodeGetter {
     }
 
     public Stream<ParseTree> getAllParents(final Stream<ParseTree> nodes) {
-        return nodes.map(ParseTree::getParent).filter(p -> p != null);
+        return nodes.map(ParseTree::getParent).filter(Objects::nonNull);
     }
 
     public Stream<ParseTree> getAllAncestorsOrSelf(final Stream<ParseTree> nodes) {

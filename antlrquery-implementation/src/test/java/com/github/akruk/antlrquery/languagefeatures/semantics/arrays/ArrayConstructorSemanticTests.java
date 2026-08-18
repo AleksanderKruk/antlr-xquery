@@ -9,12 +9,13 @@ import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrquery.languagefeatures.semantics.SemanticTestsBase;
 
-public class ArraysTest extends SemanticTestsBase {
+public class ArrayConstructorSemanticTests extends SemanticTestsBase {
 
     @Test
     public void emptyArrays() {
         assertType("[]", typeFactory.one(typeFactory.itemTuple(List.of())));
         assertType("array {}", typeFactory.one(typeFactory.itemTuple(List.of())));
+        assertType("array {()}", typeFactory.one(typeFactory.itemTuple(List.of())));
     }
 
     @Test

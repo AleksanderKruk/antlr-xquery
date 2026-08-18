@@ -32,7 +32,7 @@ public class OtherFunctionsOnNodes {
             }
             node = context.getValue();
         } else {
-            node = args.get(0);
+            node = args.getFirst();
             if (node.isEmptySequence) {
                 return valueFactory.emptyString();
             }

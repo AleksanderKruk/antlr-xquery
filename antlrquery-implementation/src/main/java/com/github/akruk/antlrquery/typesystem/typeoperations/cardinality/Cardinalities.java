@@ -224,11 +224,11 @@ public final class Cardinalities {
              */
             if (beforeResult && !atResult) {
                 if (segmentStart != null) {
-                    if (value instanceof Cardinality.FiniteBound f) {
+                    if (value instanceof FiniteBound(BigInteger value1)) {
                         out.add(segmentStart);
                         out.add(new Event(
                                 new Cardinality.FiniteBound(
-                                        f.value().subtract(BigInteger.ONE)),
+                                        value1.subtract(BigInteger.ONE)),
                                 Cardinality.Type.END));
                         segmentStart = null;
                     }
@@ -288,10 +288,10 @@ public final class Cardinalities {
              * => result starts at 5.
              */
             if (!atResult && afterResult) {
-                if (value instanceof Cardinality.FiniteBound f) {
+                if (value instanceof FiniteBound(BigInteger value1)) {
                     segmentStart = new Event(
                             new Cardinality.FiniteBound(
-                                    f.value().add(BigInteger.ONE)),
+                                    value1.add(BigInteger.ONE)),
                             Cardinality.Type.START);
                 }
             }
@@ -323,7 +323,7 @@ public final class Cardinalities {
      * Equivalent to removing union(right) from left that is:
      * 10 remove 7 = 'from 10 elements remove exactly 7' = 3 elements remaining
      * 10 remove 0..7 = 'from 10 elements remove at most 7 elements' = 3..10 elements remaining
-     * */
+     */
     public static @Nullable Cardinality remove(
             final Cardinality left,
             final Cardinality... right)

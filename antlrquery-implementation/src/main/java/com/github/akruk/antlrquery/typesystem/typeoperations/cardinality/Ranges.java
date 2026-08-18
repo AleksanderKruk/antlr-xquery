@@ -254,9 +254,9 @@ public final class Ranges {
     }
 
     private static BoundValue add(BoundValue a, BoundValue b) {
-        if (a instanceof FiniteBound fa) {
-            if (b instanceof FiniteBound fb)
-                return new FiniteBound(fa.value().add(fb.value()), fa.inclusive() && fb.inclusive());
+        if (a instanceof FiniteBound(BigDecimal value1, boolean inclusive1)) {
+            if (b instanceof FiniteBound(BigDecimal value, boolean inclusive))
+                return new FiniteBound(value1.add(value), inclusive1 && inclusive);
             return b instanceof PositiveInfinity ? BoundValue.POSITIVE_INFINITY : BoundValue.NEGATIVE_INFINITY;
         }
         return a instanceof PositiveInfinity ? BoundValue.POSITIVE_INFINITY : BoundValue.NEGATIVE_INFINITY;

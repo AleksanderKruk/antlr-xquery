@@ -31,7 +31,7 @@ public class NodeOperator {
         }
         if (operands.isEmpty())
             return valueFactory.emptySequence();
-        final var result = new ArrayList<>(operands.get(0).sequence);
+        final var result = new ArrayList<>(operands.getFirst().sequence);
         for (final var operand: operands.subList(1, operands.size())) {
             if (result.isEmpty())
                 break;
@@ -47,7 +47,7 @@ public class NodeOperator {
         }
         if (operands.isEmpty())
             return valueFactory.emptySequence();
-        final var result = new ArrayList<>(operands.get(0).sequence);
+        final var result = new ArrayList<>(operands.getFirst().sequence);
         for (final var operand: operands.subList(1, operands.size())) {
             if (result.isEmpty())
                 break;

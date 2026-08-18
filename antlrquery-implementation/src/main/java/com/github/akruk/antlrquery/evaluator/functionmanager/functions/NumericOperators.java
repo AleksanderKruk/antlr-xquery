@@ -175,7 +175,7 @@ public class NumericOperators {
             List<AntlrQueryValue> args) {
 
         if (args.size() != 1) return valueFactory.error(AntlrQueryError.WrongNumberOfArguments, "");
-        AntlrQueryValue v = args.get(0);
+        AntlrQueryValue v = args.getFirst();
 
         if (!v.isNumeric) {
             return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
@@ -192,7 +192,7 @@ public class NumericOperators {
             List<AntlrQueryValue> args) {
 
         if (args.size() != 1) return valueFactory.error(AntlrQueryError.WrongNumberOfArguments, "");
-        AntlrQueryValue v = args.get(0);
+        AntlrQueryValue v = args.getFirst();
 
         if (!v.isNumeric) {
             return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");

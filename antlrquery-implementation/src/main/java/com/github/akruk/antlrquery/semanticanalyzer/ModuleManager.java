@@ -71,7 +71,7 @@ public class ModuleManager {
 
             final Set<Path> validFiles = IntStream.range(0, statuses.size())
                 .filter(i->statuses.get(i) == ResolvingStatus.OK)
-                .mapToObj(i->resolvedPaths.get(i))
+                .mapToObj(resolvedPaths::get)
                 .collect(Collectors.toSet());
             if (validFiles.size() == 1) {
                 final Path validFile = validFiles.stream().findFirst().orElse(null);

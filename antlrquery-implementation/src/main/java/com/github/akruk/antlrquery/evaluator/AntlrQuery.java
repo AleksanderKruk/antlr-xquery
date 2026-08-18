@@ -104,7 +104,7 @@ public final class AntlrQuery {
             new SemanticSymbolManager(
                 typeFactory,
                 contextManager,
-                SemanticFunctionSets.ALL(typeFactory)
+                new SemanticFunctionSets(typeFactory).ALL()
             ),
             null,
             moduleManager,
@@ -188,7 +188,7 @@ public final class AntlrQuery {
             new SemanticSymbolManager(
                 typeFactory,
                 contextManager,
-                SemanticFunctionSets.ALL(typeFactory)
+                new SemanticFunctionSets(typeFactory).ALL()
             ),
             null,
             moduleManager,

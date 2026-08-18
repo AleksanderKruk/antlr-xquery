@@ -30,14 +30,14 @@ public class ProcessingBooleans {
 
 
     public AntlrQueryValue not(final AntlrQueryVisitingContext context, final List<AntlrQueryValue> args) {
-        AntlrQueryValue effectiveBooleanValue = ebv.effectiveBooleanValue(args.get(0));
+        AntlrQueryValue effectiveBooleanValue = ebv.effectiveBooleanValue(args.getFirst());
         if (effectiveBooleanValue == null)
             return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
         return valueFactory.bool(!effectiveBooleanValue.booleanValue);
     }
 
     public AntlrQueryValue boolean_(final AntlrQueryVisitingContext context, final List<AntlrQueryValue> args) {
-        AntlrQueryValue effectiveBooleanValue = ebv.effectiveBooleanValue(args.get(0));
+        AntlrQueryValue effectiveBooleanValue = ebv.effectiveBooleanValue(args.getFirst());
         if (effectiveBooleanValue.isError)
             return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
 

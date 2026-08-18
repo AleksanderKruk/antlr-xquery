@@ -25,7 +25,7 @@ public class FunctionsOnNumericValues {
             final AntlrQueryVisitingContext context,
             final List<AntlrQueryValue> args) {
 
-        final AntlrQueryValue v = args.get(0);
+        final AntlrQueryValue v = args.getFirst();
         // empty‐sequence → empty‐sequence
         if (v.isEmptySequence) {
             return valueFactory.emptySequence();
@@ -86,7 +86,7 @@ public class FunctionsOnNumericValues {
             final AntlrQueryVisitingContext context,
             final List<AntlrQueryValue> args) {
 
-        final AntlrQueryValue v = args.get(0);
+        final AntlrQueryValue v = args.getFirst();
         if (v.isEmptySequence) {
             return valueFactory.emptySequence();
         }
@@ -159,7 +159,7 @@ public class FunctionsOnNumericValues {
             return valueFactory.error(AntlrQueryError.WrongNumberOfArguments, "");
         }
 
-        final AntlrQueryValue v = args.get(0);
+        final AntlrQueryValue v = args.getFirst();
         // empty-sequence → empty-sequence
         if (v.isEmptySequence) {
             return valueFactory.emptySequence();

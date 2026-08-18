@@ -45,7 +45,7 @@ public class ProcessingStrings {
             AntlrQueryVisitingContext context,
             List<AntlrQueryValue> args) {
 
-        AntlrQueryValue values = args.get(0);
+        AntlrQueryValue values = args.getFirst();
 
         if (values.isEmptySequence) {
             return valueFactory.string("");
@@ -71,7 +71,7 @@ public class ProcessingStrings {
             AntlrQueryVisitingContext context,
             List<AntlrQueryValue> args) {
 
-        AntlrQueryValue value = args.get(0);
+        AntlrQueryValue value = args.getFirst();
 
         if (value.isEmptySequence) {
             return value;
@@ -115,7 +115,7 @@ public class ProcessingStrings {
             List<AntlrQueryValue> args)
     {
 
-        AntlrQueryValue optionsArg = args.get(0);
+        AntlrQueryValue optionsArg = args.getFirst();
         Map<AntlrQueryValue, AntlrQueryValue> map = optionsArg.mapEntries;
 
         String baseUri = Collations.CODEPOINT_URI;
@@ -201,7 +201,7 @@ public class ProcessingStrings {
             List<AntlrQueryValue> args)
     {
 
-        final AntlrQueryValue collation = args.get(0);
+        final AntlrQueryValue collation = args.getFirst();
         // final XQueryValue usage = args.get(1);
         String collationStr = collation.stringValue;
         boolean available = this.collationUriToCollator.containsKey(collationStr);

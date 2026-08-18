@@ -225,7 +225,7 @@ public class NodeGetter {
 
     public List<ParseTree> getChildren(final ParseTree treenode) {
         final List<ParseTree> children = IntStream.range(0, treenode.getChildCount())
-            .mapToObj(i->treenode.getChild(i))
+            .mapToObj(treenode::getChild)
             .collect(Collectors.toList());
         return children;
     }
@@ -251,7 +251,7 @@ public class NodeGetter {
     }
 
     public List<ParseTree> getAncestors(final ParseTree node) {
-        final List<ParseTree> newMatched = new ArrayList<ParseTree>();
+        final List<ParseTree> newMatched = new ArrayList<>();
         ParseTree parent = node.getParent();
         while (parent != null) {
             newMatched.add(parent);

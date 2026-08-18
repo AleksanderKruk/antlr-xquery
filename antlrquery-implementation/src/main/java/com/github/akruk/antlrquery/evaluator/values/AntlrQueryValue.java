@@ -168,7 +168,7 @@ public class AntlrQueryValue {
             return emptySequence(type);
         }
         if (sequence.size() == 1) {
-            return sequence.get(0);
+            return sequence.getFirst();
         }
         return new AntlrQueryValue(
             AntlrQueryValues.SEQUENCE,

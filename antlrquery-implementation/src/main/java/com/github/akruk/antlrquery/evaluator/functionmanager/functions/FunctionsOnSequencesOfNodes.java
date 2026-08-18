@@ -33,7 +33,7 @@ public class FunctionsOnSequencesOfNodes {
             }
             node = context.getValue();
         } else {
-            node = args.get(0);
+            node = args.getFirst();
             if (node.isEmptySequence) {
                 return valueFactory.emptyString();
             }
@@ -64,7 +64,7 @@ public class FunctionsOnSequencesOfNodes {
             }
             target = context.getValue();
         } else {
-            target = args.get(0);
+            target = args.getFirst();
             if (target.isEmptySequence) {
                 return valueFactory.emptyString();
             }

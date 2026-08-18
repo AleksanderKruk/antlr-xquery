@@ -60,7 +60,7 @@ public class SemanticTestsBase {
         });
         final ParseTree xqueryTree = antlrQueryParser.xquery();
         final var contextManager = new AntlrQuerySemanticContextManager(typeFactory);
-        final SemanticSymbolManager caller = new SemanticSymbolManager(typeFactory, contextManager, SemanticFunctionSets.ALL(typeFactory));
+        final SemanticSymbolManager caller = new SemanticSymbolManager(typeFactory, contextManager, new SemanticFunctionSets(typeFactory).ALL());
         final var memoizedFactory = new MemoizedCardinalityFactory();
         final NumericRangeVisitor numericRangeVisitor = new NumericRangeVisitor();
         final CardinalityVisitor cardinalityVisitor = new CardinalityVisitor(memoizedFactory);
@@ -96,7 +96,7 @@ public class SemanticTestsBase {
     protected void assertNoErrors(final AnalysisResult analyzer) {
         boolean noErrors = analyzer.analyzer.getErrors().isEmpty();
         String concatenatedInNewlinesMessages = analyzer.analyzer.getErrors().stream()
-            .map(e->messageCreator.create(e))
+            .map(messageCreator::create)
             .collect(Collectors.joining(System.lineSeparator()));
         assertTrue(noErrors, concatenatedInNewlinesMessages);
     }

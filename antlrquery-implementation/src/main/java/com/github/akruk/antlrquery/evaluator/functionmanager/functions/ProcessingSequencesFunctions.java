@@ -23,32 +23,32 @@ public class ProcessingSequencesFunctions {
 
 
     public AntlrQueryValue empty(final AntlrQueryVisitingContext ctx, final List<AntlrQueryValue> args) {
-        final var input = args.get(0);
+        final var input = args.getFirst();
 
         return valueFactory.bool(input.isEmptySequence);
     }
 
     public AntlrQueryValue exists(final AntlrQueryVisitingContext ctx, final List<AntlrQueryValue> args) {
-        final var input = args.get(0);
+        final var input = args.getFirst();
 
         return valueFactory.bool(!input.isEmptySequence);
     }
 
     public AntlrQueryValue foot(final AntlrQueryVisitingContext context, final List<AntlrQueryValue> args) {
-        final var input = args.get(0);
+        final var input = args.getFirst();
 
         final var sequence = atomizer.atomize(input);
-        return sequence.isEmpty() ? valueFactory.emptySequence() : sequence.get(sequence.size() - 1);
+        return sequence.isEmpty() ? valueFactory.emptySequence() : sequence.getLast();
     }
 
     public AntlrQueryValue head(final AntlrQueryVisitingContext ctx, final List<AntlrQueryValue> args) {
-        final var input = args.get(0);
+        final var input = args.getFirst();
         final var sequence = input.sequence;
-        return sequence.isEmpty() ? valueFactory.emptySequence() : sequence.get(0);
+        return sequence.isEmpty() ? valueFactory.emptySequence() : sequence.getFirst();
     }
 
     public AntlrQueryValue identity(final AntlrQueryVisitingContext context, final List<AntlrQueryValue> args) {
-        return args.get(0);
+        return args.getFirst();
     }
 
     public AntlrQueryValue insertBefore(final AntlrQueryVisitingContext ctx, final List<AntlrQueryValue> args) {
@@ -144,7 +144,7 @@ public class ProcessingSequencesFunctions {
     }
 
     public AntlrQueryValue reverse(final AntlrQueryVisitingContext ctx, final List<AntlrQueryValue> args) {
-        final var input = args.get(0);
+        final var input = args.getFirst();
 
         final var sequence = input.sequence;
         return valueFactory.sequence(sequence.reversed());
@@ -156,7 +156,7 @@ public class ProcessingSequencesFunctions {
 
         final var sequence = input.sequence;
         if (sequence.isEmpty()) return valueFactory.emptySequence();
-        if (sequence.size() == 1) return sequence.get(0);
+        if (sequence.size() == 1) return sequence.getFirst();
 
         final var result = new ArrayList<AntlrQueryValue>();
         for (int i = 0; i < sequence.size(); i++) {
@@ -279,7 +279,7 @@ public class ProcessingSequencesFunctions {
     }
 
     public AntlrQueryValue tail(final AntlrQueryVisitingContext ctx, final List<AntlrQueryValue> args) {
-        final var input = args.get(0);
+        final var input = args.getFirst();
 
         final var sequence = input.sequence;
         if (sequence.isEmpty()) return valueFactory.emptySequence();
@@ -288,7 +288,7 @@ public class ProcessingSequencesFunctions {
     }
 
     public AntlrQueryValue trunk(final AntlrQueryVisitingContext context, final List<AntlrQueryValue> args) {
-        final var input = args.get(0);
+        final var input = args.getFirst();
 
         final var sequence = input.sequence;
         if (sequence.isEmpty()) return valueFactory.emptySequence();

@@ -2083,13 +2083,16 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         }
 
         final AntlrQuerySequenceType arrayType = expressions.exprSingle().stream()
-                .map(expr -> expr.accept(this).type)
+                .map(expr -> Objects.requireNonNull(visitExprSingle(expr)).type)
                 .collect(Collectors.teeing(
                         Collectors.mapping(AntlrQuerySequenceType::itemType, Collectors.toList()),
                         Collectors.mapping(AntlrQuerySequenceType::cardinality, Collectors.toList()),
                         (antlrQueryItemTypes, cardinalities) -> {
                             var itemType = ItemTypes.union(typeFactory, antlrQueryItemTypes.toArray(AntlrQueryItemType[]::new));
                             var cardinality = Cardinalities.add(cardinalities.toArray(Cardinality[]::new));
+                            if (itemType instanceof NothingType) {
+                                return typeFactory.one(typeFactory.itemTuple(List.of()));
+                            }
                             return typeFactory.array(typeFactory.one(itemType), cardinality);
                         }
                 ));
@@ -2231,7 +2234,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
                     .map(e -> Objects.requireNonNull(e.mapKeyExpr().accept(this)).type.itemType())
                     .map(e -> ((StringType.StringEnum) e).members().stream().findFirst().get())
                     .toList();
-            final List<Entry<String, RecordField>> recordEntries = new ArrayList<Entry<String, RecordField>>(fieldNames.size());
+            final List<Entry<String, RecordField>> recordEntries = new ArrayList<>(fieldNames.size());
             int i = 0;
             for (final var enumMember : fieldNames) {
                 final var valueType = Objects.requireNonNull(entries.get(i).mapValueExpr().accept(this));

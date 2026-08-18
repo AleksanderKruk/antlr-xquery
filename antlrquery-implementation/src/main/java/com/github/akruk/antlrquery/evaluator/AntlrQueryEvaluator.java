@@ -247,7 +247,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     {
         final int numberOfVariables = ctx.forBinding().size();
         visitedTupleStream = visitedTupleStream.flatMap(tuple -> {
-            final List<List<VariableCoupling>> newTupleLike = tuple.stream().map(e -> List.of(e))
+            final List<List<VariableCoupling>> newTupleLike = tuple.stream().map(List::of)
                 .collect(Collectors.toList());
 
             for (final AntlrQueryParser.ForBindingContext forBinding : ctx.forBinding()) {
@@ -382,7 +382,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         return tupleElements;
     }
 
-    private class MutableInt {
+    private static class MutableInt {
         public int i = 0;
     }
 
@@ -392,11 +392,13 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         final String countVariableName = ctx.varName().qname().getText();
         final MutableInt index = new MutableInt();
         index.i = 1;
+        assert visitedTupleStream != null;
         visitedTupleStream = visitedTupleStream.map(tuple -> {
             final var newTuple = new ArrayList<VariableCoupling>(tuple.size() + 1);
             newTuple.addAll(tuple);
             final var element = new VariableCoupling(new Variable(countVariableName, valueFactory.number(index.i++)),
                 null, null, null);
+            assert element.item != null;
             contextManager.provideVariable(element.item.name, element.item.value);
             newTuple.add(element);
             return newTuple;
@@ -423,7 +425,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
             return visitExprSingle(ctx.exprSingle());
         }).toList();
         if (results.size() == 1) {
-            return results.get(0);
+            return results.getFirst();
         }
         return valueFactory.sequence(results);
     }
@@ -518,7 +520,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
             if (expressionValue.isError)
                 return expressionValue;
             if (expressionValue.size == 1) {
-                result.add(expressionValue.sequence.get(0));
+                result.add(expressionValue.sequence.getFirst());
                 continue;
             }
             // If the result is not atomic we atomize it
@@ -573,7 +575,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         }
 
         final int size = lists.size();
-        return lists.get(0).stream()
+        return lists.getFirst().stream()
             .flatMap(firstElement -> cartesianProduct(lists.subList(1, size))
                 .map(rest -> {
                     final List<T> combination = new ArrayList<>(size);
@@ -661,7 +663,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         if (fromInt > toInt)
             return emptySequence;
         final List<AntlrQueryValue> values = IntStream.rangeClosed(fromInt, toInt)
-            .mapToObj(i -> valueFactory.number(i))
+            .mapToObj(valueFactory::number)
             .collect(Collectors.toList());
         return valueFactory.sequence(values);
     }
@@ -886,7 +888,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         final String qname = ctx.qname().getText();
         final QualifiedName resolved = namespaceResolver.resolveFunction(qname);
         final var argNames = new ArrayList<String>();
-        final Map<String, ParseTree> defaults = new HashMap<String, ParseTree>();
+        final Map<String, ParseTree> defaults = new HashMap<>();
         contextManager.enterScope();
         if (ctx.paramListWithDefaults() != null) {
             final var params = ctx.paramListWithDefaults().paramWithDefault();
@@ -1100,6 +1102,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
 
         final Map<List<AntlrQueryValue>, List<List<VariableCoupling>>> grouped = new LinkedHashMap<>();
 
+        assert visitedTupleStream != null;
         visitedTupleStream.forEach((final List<VariableCoupling> tuple) -> {
             final List<AntlrQueryValue> key = new ArrayList<>(groupingCount);
 
@@ -1163,18 +1166,13 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     private AntlrQueryValue getVariableValue(final List<VariableCoupling> tuple, final String name)
     {
         for (final VariableCoupling coupling : tuple) {
-            final List<Variable> vars = new ArrayList<>(4);
-            vars.add(coupling.item);
-            vars.add(coupling.key);
-            vars.add(coupling.value);
-            vars.add(coupling.position);
-            for (final Variable var : vars) {
+            for (final Variable var : List.of( coupling.item, coupling.key, coupling.value, coupling.position)) {
                 if (var != null && var.name().equals(name)) {
                     return var.value;
                 }
             }
         }
-        return null;
+        throw new IllegalStateException(name + " variable is missing");
     }
 
     @Override
@@ -1215,7 +1213,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     @Override
     public AntlrQueryValue visitMappingArrowTarget(final AntlrQueryParser.MappingArrowTargetContext ctx)
     {
-        final AntlrQueryValue mappedSequence = visitedPositionalArguments.get(visitedPositionalArguments.size() - 1);
+        final AntlrQueryValue mappedSequence = visitedPositionalArguments.getLast();
         final ArrayList<AntlrQueryValue> resultingSequence = new ArrayList<>(mappedSequence.size);
         for (final AntlrQueryValue el : mappedSequence.sequence) {
             visitedPositionalArguments = new ArrayList<>();
@@ -1231,7 +1229,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     @Override
     public AntlrQueryValue visitRestrictedDynamicCall(final AntlrQueryParser.RestrictedDynamicCallContext ctx)
     {
-        final var function = ctx.children.get(0).accept(this);
+        final var function = ctx.children.getFirst().accept(this);
         if (function.isError)
             return function;
         ctx.positionalArgumentList().accept(this);
@@ -1406,11 +1404,11 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         final List<AntlrQueryParser.PathExprContext> terms = ctx.pathExpr();
         // if there's only one term, no mapping needed
         if (terms.size() == 1) {
-            return terms.get(0).accept(this);
+            return terms.getFirst().accept(this);
         }
 
         // start with the initial sequence
-        final AntlrQueryValue current = terms.get(0).accept(this);
+        final AntlrQueryValue current = terms.getFirst().accept(this);
         List<AntlrQueryValue> sequence = atomizer.atomize(current);
 
         // for each subsequent “! expr”
@@ -1577,7 +1575,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     private Comparator<List<VariableCoupling>> comparatorFromNthOrderSpec(final List<AntlrQueryParser.OrderSpecContext> orderSpecs,
         final int[] modifierMaskArray, final int i)
     {
-        final AntlrQueryParser.OrderSpecContext orderSpec = orderSpecs.get(0);
+        final AntlrQueryParser.OrderSpecContext orderSpec = orderSpecs.getFirst();
         final AntlrQueryParser.ExprSingleContext expr = orderSpec.exprSingle();
         final int modifierMask = modifierMaskArray[i];
         return switch (modifierMask) {
@@ -1833,12 +1831,14 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
 
     private void addStartVariables(final List<VariableCoupling> windowTupleElements,
                                    final List<AntlrQueryValue> subSequence, final int startIndex,
-                                   final String startVarName, final String startPosVarName, final String startPrevVarName,
-                                   final String startNextVarName)
+                                   final @Nullable String startVarName,
+                                   final @Nullable String startPosVarName,
+                                   final @Nullable String startPrevVarName,
+                                   final @Nullable String startNextVarName)
     {
 
         if (startVarName != null) {
-            final Variable startVar = new Variable(startVarName, subSequence.get(0));
+            final Variable startVar = new Variable(startVarName, subSequence.getFirst());
             windowTupleElements.add(new VariableCoupling(startVar, null, null, null));
         }
         if (startPosVarName != null) {
@@ -1846,7 +1846,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
             windowTupleElements.add(new VariableCoupling(startPosVar, null, null, null));
         }
         if (startPrevVarName != null) {
-            final AntlrQueryValue startPrevValue = startIndex > 0 ? subSequence.get(0) : emptySequence;
+            final AntlrQueryValue startPrevValue = startIndex > 0 ? subSequence.getFirst() : emptySequence;
             final Variable startPrevVar = new Variable(startPrevVarName, startPrevValue);
             windowTupleElements.add(new VariableCoupling(startPrevVar, null, null, null));
         }
@@ -1857,13 +1857,17 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         }
     }
 
-    private void addEndVariables(final List<VariableCoupling> windowTupleElements, final List<AntlrQueryValue> subSequence,
-        final int endIndex,
-        final String endVarName, final String endPosVarName, final String endPrevVarName, final String endNextVarName)
+    private void addEndVariables(final List<VariableCoupling> windowTupleElements,
+                                 final List<AntlrQueryValue> subSequence,
+                                 final int endIndex,
+                                 final @Nullable String endVarName,
+                                 final @Nullable String endPosVarName,
+                                 final @Nullable String endPrevVarName,
+                                 final @Nullable String endNextVarName)
     {
 
         if (endVarName != null) {
-            final Variable endVar = new Variable(endVarName, subSequence.get(subSequence.size() - 1));
+            final Variable endVar = new Variable(endVarName, subSequence.getLast());
             windowTupleElements.add(new VariableCoupling(endVar, null, null, null));
         }
         if (endPosVarName != null) {
@@ -1893,7 +1897,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     }
 
     private int findEndIndex(final AntlrQueryParser.WindowStartConditionContext startCtx,
-        final AntlrQueryParser.WindowEndConditionContext ctx,
+        final AntlrQueryParser.@Nullable WindowEndConditionContext ctx,
         final int startIndex,
         final List<AntlrQueryValue> sequenceList)
     {
@@ -2179,8 +2183,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     public AntlrQueryValue visitCurlyArrayConstructor(final AntlrQueryParser.CurlyArrayConstructorContext ctx)
     {
         final AntlrQueryValue enclosedValue = visitEnclosedExpr(ctx.enclosedExpr());
-        final List<AntlrQueryValue> atomized = atomizer.atomize(enclosedValue);
-        return valueFactory.array(atomized);
+        return valueFactory.array(enclosedValue.sequence);
     }
 
     @Override

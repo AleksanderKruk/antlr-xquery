@@ -7,11 +7,7 @@ import java.util.*;
 import com.github.akruk.Utils;
 import com.github.akruk.antlrquery.semanticanalyzer.VisitingSemanticContext;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticcontext.AntlrQuerySemanticContext;
-import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.granularanalysis.ArrayHeadGranularAnalysis;
-import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.granularanalysis.ArrayItemsGranularAnalysis;
-import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.granularanalysis.ArrayPutGranularAnalysis;
-import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.granularanalysis.ArraySizeGranularAnalysis;
-import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.granularanalysis.ArrayFootGranularAnalysis;
+import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.granularanalysis.*;
 import com.github.akruk.antlrquery.typesystem.typeoperations.Types;
 import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Cardinalities;
 import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Ranges;
@@ -3872,15 +3868,19 @@ public class SemanticFunctionSets {
             )
         );
 
-        // array:trunk($array as array(*)) as array(*)
+        // array:trunk($array as T[+]) as T
         array.add(
             new SimplifiedFunctionSpecification(
-            new QualifiedName("array", "trunk"),
-            List.of(
-                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
-            ),
-            typeFactory.one(typeFactory.itemAnyArray()),
-            null, false, false, null, null
+                new QualifiedName("array", "trunk"),
+                List.of(
+                    new ArgumentSpecification("array", nonEmptyArray, null)
+                ),
+                typeFactory.one(typeFactory.itemAnyArray()),
+                    null,
+                    false,
+                    false,
+                    null,
+                    new ArrayTrunkGranularAnalysis(typeFactory)
             )
         );
         return array;

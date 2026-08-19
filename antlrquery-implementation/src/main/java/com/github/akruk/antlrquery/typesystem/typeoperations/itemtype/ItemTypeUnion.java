@@ -379,13 +379,13 @@ public class ItemTypeUnion
 
 
     private List<AntlrQueryItemType> numberTypeUnion(Map<? extends Class<?>, Set<AntlrQueryItemType>> classToItems) {
-        var numbers = classToItems.getOrDefault(AtomicType.NumberType.class, Set.of());
+        var numbers = classToItems.getOrDefault(NumberType.class, Set.of());
         if (!numbers.isEmpty()) {
             return List.of(typeFactory.itemNumber(
                     Ranges.union(
                             numbers.stream()
-                                    .map(AtomicType.NumberType.class::cast)
-                                    .map(AtomicType.NumberType::range)
+                                    .map(NumberType.class::cast)
+                                    .map(NumberType::range)
                                     .toArray(NumericRange[]::new)
                     )
             ));

@@ -31,6 +31,12 @@ public sealed interface ArrayLikeType
             return ItemTypes.stringify(this);
         }
 
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof ArrayType(AntlrQuerySequenceType type, Cardinality cardinality1)
+                    && type.equals(this.memberType)
+                    && cardinality1.equals(this.cardinality);
+        }
     }
 
     record TupleType(

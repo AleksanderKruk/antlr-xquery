@@ -64,6 +64,7 @@ public interface AntlrQueryTypeFactory {
     AntlrQueryItemType itemArray(AntlrQuerySequenceType itemType, Cardinality c);
 
     AntlrQueryItemType itemTuple(List<AntlrQuerySequenceType> mergedElements);
+    AntlrQueryItemType itemTuple(AntlrQuerySequenceType... mergedElements);
 
     Set<QualifiedName> grammarTokens(String grammar);
     Set<QualifiedName> grammarNodes(String grammar);

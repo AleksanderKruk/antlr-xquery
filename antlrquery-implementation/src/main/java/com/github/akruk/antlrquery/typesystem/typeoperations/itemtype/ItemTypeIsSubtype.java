@@ -49,10 +49,10 @@ public class ItemTypeIsSubtype {
             case ArrayLikeType arrayLikeType ->
                     t1 instanceof final ArrayLikeType a1
                         && this.arrayVisitor.visit(a1, arrayLikeType);
-            case AtomicType.NumberType(NumericRange r2) ->
-                    t1 instanceof AtomicType.NumberType(NumericRange r1) && Ranges.isSubSet(r1, r2);
-            case AtomicType.RegexType(Pattern p2) ->
-                    t1 instanceof AtomicType.RegexType(Pattern p1) && p1.equals(p2);
+            case NumberType(NumericRange r2) ->
+                    t1 instanceof NumberType(NumericRange r1) && Ranges.isSubSet(r1, r2);
+            case RegexType(Pattern p2) ->
+                    t1 instanceof RegexType(Pattern p1) && p1.equals(p2);
             case BooleanType.Boolean _ -> t1 instanceof BooleanType;
             case BooleanType.False _ -> t1 instanceof BooleanType.False;
             case BooleanType.True _ -> t1 instanceof BooleanType.True;

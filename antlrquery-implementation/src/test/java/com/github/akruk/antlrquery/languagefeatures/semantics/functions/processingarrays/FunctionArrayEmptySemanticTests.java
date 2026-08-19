@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class FunctionEmptySemanticTests extends SemanticTestsBase {
+public class FunctionArrayEmptySemanticTests extends SemanticTestsBase {
     // array:empty($array as array(*)) as xs:boolean
     @Test
     public void arrayEmpty_valid() {

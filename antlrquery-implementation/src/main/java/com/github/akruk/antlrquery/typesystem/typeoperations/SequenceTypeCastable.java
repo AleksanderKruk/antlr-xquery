@@ -8,7 +8,7 @@ import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Cardina
 import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Ranges;
 import com.github.akruk.antlrquery.typesystem.types.*;
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.*;
-import com.github.akruk.antlrquery.typesystem.types.itemtypes.AtomicType.NumberType;
+import com.github.akruk.antlrquery.typesystem.types.itemtypes.NumberType;
 import com.github.akruk.visitorannotations.Visitor;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -224,7 +224,7 @@ public class SequenceTypeCastable
     }
 
     @Override
-    public IsCastable visit(TreeRuleType.RuleType ruleType, AtomicType.RegexType regexType) {
+    public IsCastable visit(TreeRuleType.RuleType ruleType, RegexType regexType) {
         return impossible;
     }
 
@@ -402,7 +402,7 @@ public class SequenceTypeCastable
     }
 
     @Override
-    public IsCastable visit(TreeRuleType.AnyRule anyRule, AtomicType.RegexType regexType) {
+    public IsCastable visit(TreeRuleType.AnyRule anyRule, RegexType regexType) {
         return impossible;
     }
 
@@ -538,7 +538,7 @@ public class SequenceTypeCastable
     }
 
     @Override
-    public IsCastable visit(TreeRuleType.AnyRuleFromGrammar anyRuleFromGrammar, AtomicType.RegexType regexType) {
+    public IsCastable visit(TreeRuleType.AnyRuleFromGrammar anyRuleFromGrammar, RegexType regexType) {
         return impossible;
     }
 
@@ -667,7 +667,7 @@ public class SequenceTypeCastable
     }
 
     @Override
-    public IsCastable visit(TreeTokenType.AnyToken anyToken, AtomicType.RegexType regexType) {
+    public IsCastable visit(TreeTokenType.AnyToken anyToken, RegexType regexType) {
         return impossible;
     }
 
@@ -899,7 +899,7 @@ public class SequenceTypeCastable
     }
 
     @Override
-    public IsCastable visit(MapLikeType.RecordType recordType, AtomicType.RegexType regexType) {
+    public IsCastable visit(MapLikeType.RecordType recordType, RegexType regexType) {
         return impossible;
     }
 
@@ -982,7 +982,7 @@ public class SequenceTypeCastable
     }
 
     @Override
-    public IsCastable visit(MapLikeType.MapType mapType, AtomicType.RegexType regexType) {
+    public IsCastable visit(MapLikeType.MapType mapType, RegexType regexType) {
         return impossible;
     }
 
@@ -1077,82 +1077,82 @@ public class SequenceTypeCastable
     }
 
     @Override
-    public IsCastable visit(AtomicType.RegexType regexType, GrammarEntityType.GrammarRuleType grammarRuleType) {
+    public IsCastable visit(RegexType regexType, GrammarEntityType.GrammarRuleType grammarRuleType) {
         return impossible;
     }
 
     @Override
-    public IsCastable visit(AtomicType.RegexType regexType, GrammarEntityType.GrammarType grammarType) {
+    public IsCastable visit(RegexType regexType, GrammarEntityType.GrammarType grammarType) {
         return impossible;
     }
 
     @Override
-    public IsCastable visit(AtomicType.RegexType regexType, GrammarEntityType.GrammarTokenType grammarTokenType) {
+    public IsCastable visit(RegexType regexType, GrammarEntityType.GrammarTokenType grammarTokenType) {
         return impossible;
     }
 
     @Override
-    public IsCastable visit(AtomicType.RegexType regexType, FunctionType.ConstrainedFunction constrainedFunction) {
+    public IsCastable visit(RegexType regexType, FunctionType.ConstrainedFunction constrainedFunction) {
         return impossible;
     }
 
     @Override
-    public IsCastable visit(AtomicType.RegexType regexType, FunctionType.AnyFunction anyFunction) {
+    public IsCastable visit(RegexType regexType, FunctionType.AnyFunction anyFunction) {
         return impossible;
     }
 
     @Override
-    public IsCastable visit(AtomicType.RegexType regexType, TreeRuleType.RuleType ruleType) {
+    public IsCastable visit(RegexType regexType, TreeRuleType.RuleType ruleType) {
         return impossible;
     }
 
     @Override
-    public IsCastable visit(AtomicType.RegexType regexType, TreeRuleType.AnyRule anyRule) {
+    public IsCastable visit(RegexType regexType, TreeRuleType.AnyRule anyRule) {
         return impossible;
     }
 
     @Override
-    public IsCastable visit(AtomicType.RegexType regexType, TreeRuleType.AnyRuleFromGrammar anyRuleFromGrammar) {
+    public IsCastable visit(RegexType regexType, TreeRuleType.AnyRuleFromGrammar anyRuleFromGrammar) {
         return impossible;
     }
 
     @Override
-    public IsCastable visit(AtomicType.RegexType regexType, TreeTokenType.AnyToken anyToken) {
+    public IsCastable visit(RegexType regexType, TreeTokenType.AnyToken anyToken) {
         return impossible;
     }
 
     @Override
-    public IsCastable visit(AtomicType.RegexType regexType, TreeTokenType.TokenType tokenType) {
+    public IsCastable visit(RegexType regexType, TreeTokenType.TokenType tokenType) {
         return impossible;
     }
 
     @Override
-    public IsCastable visit(AtomicType.RegexType regexType, TreeTokenType.AnyTokenFromGrammar anyTokenFromGrammar) {
+    public IsCastable visit(RegexType regexType, TreeTokenType.AnyTokenFromGrammar anyTokenFromGrammar) {
         return impossible;
     }
 
     @Override
-    public IsCastable visit(AtomicType.RegexType regexType, TreeNodeType.AnyNode anyNode) {
+    public IsCastable visit(RegexType regexType, TreeNodeType.AnyNode anyNode) {
         return impossible;
     }
 
     @Override
-    public IsCastable visit(AtomicType.RegexType regexType, TreeNodeType.AnyNodeFromGrammar anyNodeFromGrammar) {
+    public IsCastable visit(RegexType regexType, TreeNodeType.AnyNodeFromGrammar anyNodeFromGrammar) {
         return impossible;
     }
 
     @Override
-    public IsCastable visit(AtomicType.RegexType regexType, TreeNodeType.NodeType nodeType) {
+    public IsCastable visit(RegexType regexType, TreeNodeType.NodeType nodeType) {
         return impossible;
     }
 
     @Override
-    public IsCastable visit(AtomicType.RegexType regexType, AtomicType.RegexType regexType2) {
+    public IsCastable visit(RegexType regexType, RegexType regexType2) {
         return testedTypeIsSubtypeOfTargetType;
     }
 
     @Override
-    public IsCastable visit(AtomicType.RegexType regexType, NumberType numberType) {
+    public IsCastable visit(RegexType regexType, NumberType numberType) {
         return impossible;
     }
 
@@ -1172,7 +1172,7 @@ public class SequenceTypeCastable
     }
 
     @Override
-    public IsCastable visit(TreeNodeType.NodeType elementType, AtomicType.RegexType regexType) {
+    public IsCastable visit(TreeNodeType.NodeType elementType, RegexType regexType) {
         return impossible;
     }
 
@@ -1362,7 +1362,7 @@ public class SequenceTypeCastable
     }
 
     @Override
-    public IsCastable visit(TreeTokenType.AnyTokenFromGrammar anyTokenFromGrammar, AtomicType.RegexType regexType) {
+    public IsCastable visit(TreeTokenType.AnyTokenFromGrammar anyTokenFromGrammar, RegexType regexType) {
         return impossible;
     }
 
@@ -1492,7 +1492,7 @@ public class SequenceTypeCastable
     }
 
     @Override
-    public IsCastable visit(TreeNodeType.AnyNode anyNode, AtomicType.RegexType regexType) {
+    public IsCastable visit(TreeNodeType.AnyNode anyNode, RegexType regexType) {
         return impossible;
     }
 
@@ -1622,7 +1622,7 @@ public class SequenceTypeCastable
     }
 
     @Override
-    public IsCastable visit(TreeNodeType.AnyNodeFromGrammar anyNodeFromGrammar, AtomicType.RegexType regexType) {
+    public IsCastable visit(TreeNodeType.AnyNodeFromGrammar anyNodeFromGrammar, RegexType regexType) {
         return impossible;
     }
 
@@ -1844,7 +1844,7 @@ public class SequenceTypeCastable
     }
 
     @Override
-    public IsCastable visit(MapLikeType.ExtensibleRecordType extensibleRecordType, AtomicType.RegexType regexType) {
+    public IsCastable visit(MapLikeType.ExtensibleRecordType extensibleRecordType, RegexType regexType) {
         return impossible;
     }
 
@@ -1935,7 +1935,7 @@ public class SequenceTypeCastable
     }
 
     @Override
-    public IsCastable visit(TreeTokenType.TokenType tokenType, AtomicType.RegexType regexType) {
+    public IsCastable visit(TreeTokenType.TokenType tokenType, RegexType regexType) {
         return impossible;
     }
 
@@ -2090,7 +2090,7 @@ public class SequenceTypeCastable
     }
 
     @Override
-    public IsCastable visit(GrammarEntityType.GrammarType grammarType, AtomicType.RegexType regexType) {
+    public IsCastable visit(GrammarEntityType.GrammarType grammarType, RegexType regexType) {
         return impossible;
     }
 
@@ -2230,7 +2230,7 @@ public class SequenceTypeCastable
     }
 
     @Override
-    public IsCastable visit(GrammarEntityType.GrammarRuleType grammarRuleType, AtomicType.RegexType regexType) {
+    public IsCastable visit(GrammarEntityType.GrammarRuleType grammarRuleType, RegexType regexType) {
         return impossible;
     }
 
@@ -2355,7 +2355,7 @@ public class SequenceTypeCastable
     }
 
     @Override
-    public IsCastable visit(GrammarEntityType.GrammarTokenType grammarTokenType, AtomicType.RegexType regexType) {
+    public IsCastable visit(GrammarEntityType.GrammarTokenType grammarTokenType, RegexType regexType) {
         return impossible;
     }
 
@@ -2508,7 +2508,7 @@ public class SequenceTypeCastable
     }
 
     @Override
-    public IsCastable visit(FunctionType.ConstrainedFunction constrainedFunction, AtomicType.RegexType regexType) {
+    public IsCastable visit(FunctionType.ConstrainedFunction constrainedFunction, RegexType regexType) {
         return impossible;
     }
 
@@ -2638,7 +2638,7 @@ public class SequenceTypeCastable
     }
 
     @Override
-    public IsCastable visit(FunctionType.AnyFunction anyFunction, AtomicType.RegexType regexType) {
+    public IsCastable visit(FunctionType.AnyFunction anyFunction, RegexType regexType) {
         return impossible;
     }
 
@@ -2922,7 +2922,7 @@ public class SequenceTypeCastable
     }
 
     @Override
-    public IsCastable visit(ArrayLikeType.TupleType tupleType, AtomicType.RegexType regexType) {
+    public IsCastable visit(ArrayLikeType.TupleType tupleType, RegexType regexType) {
         return impossible;
     }
 
@@ -2987,7 +2987,7 @@ public class SequenceTypeCastable
     }
 
     @Override
-    public IsCastable visit(ArrayLikeType.ArrayType arrayType, AtomicType.RegexType regexType) {
+    public IsCastable visit(ArrayLikeType.ArrayType arrayType, RegexType regexType) {
         return impossible;
     }
 
@@ -3043,7 +3043,7 @@ public class SequenceTypeCastable
     }
 
     @Override
-    public IsCastable visit(StringType.StringEnum stringEnum, AtomicType.RegexType regexType) {
+    public IsCastable visit(StringType.StringEnum stringEnum, RegexType regexType) {
         return possible;
     }
 
@@ -3270,7 +3270,7 @@ public class SequenceTypeCastable
     }
 
     @Override
-    public IsCastable visit(BooleanType.True true_, AtomicType.RegexType regexType) {
+    public IsCastable visit(BooleanType.True true_, RegexType regexType) {
         return impossible;
     }
 
@@ -3294,7 +3294,7 @@ public class SequenceTypeCastable
     }
 
     @Override
-    public IsCastable visit(StringType.StringNonEnum stringNonEnum, AtomicType.RegexType regexType) {
+    public IsCastable visit(StringType.StringNonEnum stringNonEnum, RegexType regexType) {
         return new IsCastable.Possible( );
     }
 
@@ -3461,7 +3461,7 @@ public class SequenceTypeCastable
     }
 
     @Override
-    public IsCastable visit(BooleanType.False false_, AtomicType.RegexType regexType) {
+    public IsCastable visit(BooleanType.False false_, RegexType regexType) {
         return impossible;
     }
 
@@ -3581,7 +3581,7 @@ public class SequenceTypeCastable
     }
 
     @Override
-    public IsCastable visit(BooleanType.Boolean boolean_, AtomicType.RegexType regexType) {
+    public IsCastable visit(BooleanType.Boolean boolean_, RegexType regexType) {
         return impossible;
     }
 
@@ -3693,52 +3693,52 @@ public class SequenceTypeCastable
     }
 
     @Override
-    public IsCastable visit(AtomicType.RegexType regexType, StringType.StringEnum stringEnum) {
+    public IsCastable visit(RegexType regexType, StringType.StringEnum stringEnum) {
         return new IsCastable.Possible();
     }
 
     @Override
-    public IsCastable visit(AtomicType.RegexType regexType, StringType.StringNonEnum stringNonEnum) {
+    public IsCastable visit(RegexType regexType, StringType.StringNonEnum stringNonEnum) {
         return new IsCastable.Possible();
     }
 
     @Override
-    public IsCastable visit(AtomicType.RegexType regexType, BooleanType.True true_) {
+    public IsCastable visit(RegexType regexType, BooleanType.True true_) {
         return impossible;
     }
 
     @Override
-    public IsCastable visit(AtomicType.RegexType regexType, BooleanType.Boolean boolean_) {
+    public IsCastable visit(RegexType regexType, BooleanType.Boolean boolean_) {
         return impossible;
     }
 
     @Override
-    public IsCastable visit(AtomicType.RegexType regexType, BooleanType.False false_) {
+    public IsCastable visit(RegexType regexType, BooleanType.False false_) {
         return impossible;
     }
 
     @Override
-    public IsCastable visit(AtomicType.RegexType regexType, ArrayLikeType.ArrayType arrayType) {
+    public IsCastable visit(RegexType regexType, ArrayLikeType.ArrayType arrayType) {
         return impossible;
     }
 
     @Override
-    public IsCastable visit(AtomicType.RegexType regexType, ArrayLikeType.TupleType tupleType) {
+    public IsCastable visit(RegexType regexType, ArrayLikeType.TupleType tupleType) {
         return impossible;
     }
 
     @Override
-    public IsCastable visit(AtomicType.RegexType regexType, MapLikeType.MapType mapType) {
+    public IsCastable visit(RegexType regexType, MapLikeType.MapType mapType) {
         return impossible;
     }
 
     @Override
-    public IsCastable visit(AtomicType.RegexType regexType, MapLikeType.RecordType recordType) {
+    public IsCastable visit(RegexType regexType, MapLikeType.RecordType recordType) {
         return impossible;
     }
 
     @Override
-    public IsCastable visit(AtomicType.RegexType regexType, MapLikeType.ExtensibleRecordType extensibleRecordType) {
+    public IsCastable visit(RegexType regexType, MapLikeType.ExtensibleRecordType extensibleRecordType) {
         return impossible;
     }
 
@@ -3884,7 +3884,7 @@ public class SequenceTypeCastable
     }
 
     @Override
-    public IsCastable visit(NumberType numberType, AtomicType.RegexType regexType) {
+    public IsCastable visit(NumberType numberType, RegexType regexType) {
         return impossible;
     }
 

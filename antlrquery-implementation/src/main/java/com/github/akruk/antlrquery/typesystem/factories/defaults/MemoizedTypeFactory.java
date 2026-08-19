@@ -21,14 +21,14 @@ public class MemoizedTypeFactory implements AntlrQueryTypeFactory {
     private static final AntlrQueryItemType ITEM_NOTHING = new NothingType();
     private static final AntlrQueryItemType ITEM_ERROR = new NothingType();
     private static final AntlrQueryItemType ITEM_STRING = new StringType.StringNonEnum(Cardinality.ZERO_OR_MORE);
-    private static final AntlrQueryItemType ITEM_NUMBER = new AtomicType.NumberType(NumericRange.FULL);
+    private static final AntlrQueryItemType ITEM_NUMBER = new NumberType(NumericRange.FULL);
     private static final AntlrQueryItemType ITEM_BOOLEAN = new BooleanType.Boolean();
     private static final AntlrQueryItemType ITEM_TRUE = new BooleanType.True();
     private static final AntlrQueryItemType ITEM_FALSE = new BooleanType.False();
     private static final AntlrQueryItemType ITEM_ANY_ITEM = new AnyItemType();
 
     private static final AntlrQuerySequenceType EMPTY_SEQUENCE = new AntlrQuerySequenceType.EmptySequence();
-    private static final AntlrQuerySequenceType NEVER_TYPE = EMPTY_SEQUENCE;
+    private static final AntlrQuerySequenceType NEVER_TYPE = new AntlrQuerySequenceType.NonEmptySequence(AntlrQueryItemType.NEVER, Cardinality.ONE);
 
     private static final AntlrQuerySequenceType SEQ_ERROR = new AntlrQuerySequenceType.NonEmptySequence(ITEM_ERROR, Cardinality.ONE);
     private static final AntlrQuerySequenceType SEQ_STRING = new AntlrQuerySequenceType.NonEmptySequence(ITEM_STRING, Cardinality.ONE);
@@ -178,7 +178,7 @@ public class MemoizedTypeFactory implements AntlrQueryTypeFactory {
 
     @Override
     public AntlrQueryItemType itemNumber(NumericRange numericRange) {
-        return numberRangeCache.computeIfAbsent(numericRange, AtomicType.NumberType::new);
+        return numberRangeCache.computeIfAbsent(numericRange, NumberType::new);
     }
 
     @Override
@@ -275,6 +275,11 @@ public class MemoizedTypeFactory implements AntlrQueryTypeFactory {
     }
 
     @Override
+    public AntlrQueryItemType itemTuple(AntlrQuerySequenceType... mergedElements) {
+        return new ArrayLikeType.TupleType(mergedElements);
+    }
+
+    @Override
     public Set<NamespaceResolver.QualifiedName> grammarTokens(String grammar) {
         return grammarTokens.get(grammar);
     }
@@ -291,7 +296,7 @@ public class MemoizedTypeFactory implements AntlrQueryTypeFactory {
 
     @Override
     public AntlrQueryItemType itemRegex() {
-        return new AtomicType.RegexType(Pattern.compile("\\w+"));
+        return new RegexType(Pattern.compile("\\w+"));
     }
 
     @Override
@@ -340,7 +345,6 @@ public class MemoizedTypeFactory implements AntlrQueryTypeFactory {
 
         if (flattened.isEmpty()) return ITEM_NOTHING;
         if (flattened.size() == 1) return flattened.iterator().next();
-
         return choiceCache.computeIfAbsent(flattened, set->new ChoiceItemType(set.toArray(ConcreteItemType[]::new)));
     }
 

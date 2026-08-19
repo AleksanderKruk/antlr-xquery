@@ -225,7 +225,7 @@ public final class Ranges {
         return i != null && i.events().length > 0;
     }
 
-    public static NumericRange sequenceMerge(NumericRange a, NumericRange b) {
+    public static NumericRange add(NumericRange a, NumericRange b) {
         Event[] A = a.events();
         Event[] B = b.events();
         if (A.length == 0 || B.length == 0) return NumericRange.ZERO;

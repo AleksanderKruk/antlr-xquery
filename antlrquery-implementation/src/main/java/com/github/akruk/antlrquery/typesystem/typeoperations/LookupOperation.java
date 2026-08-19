@@ -273,7 +273,7 @@ public class LookupOperation {
         final AntlrQuerySequenceType expectedKeyItemType = typeFactory.zeroOrMore(typeFactory.itemNumber(numericRange));
 
         if (!Types.isSubtype(typeFactory, keyTypeSequence, expectedKeyItemType)) {
-            if (keyTypeSequence.itemType() instanceof AtomicType.NumberType) {
+            if (keyTypeSequence.itemType() instanceof NumberType) {
                 return new LookupSemanticResult.LookupError.InvalidArrayIndex(
                         zeroOrMoreItems, keyTypeSequence.itemType(), expectedKeyItemType.itemType());
             }
@@ -299,7 +299,7 @@ public class LookupOperation {
         final AntlrQuerySequenceType expectedKeyItemType = typeFactory.zeroOrMore(typeFactory.itemNumber(numericRange));
 
         if (!Types.isSubtype(typeFactory, keyTypeSequence, expectedKeyItemType)) {
-            if (keyTypeSequence.itemType() instanceof AtomicType.NumberType) {
+            if (keyTypeSequence.itemType() instanceof NumberType) {
                 return new LookupSemanticResult.LookupError.InvalidArrayIndex(
                         zeroOrMoreItems, keyTypeSequence.itemType(), expectedKeyItemType.itemType());
             }
@@ -315,7 +315,7 @@ public class LookupOperation {
         final AntlrQuerySequenceType matchedType;
         final AntlrQueryItemType keyItemType = keyTypeSequence.itemType();
 
-        if (keyItemType instanceof AtomicType.NumberType(NumericRange range)) {
+        if (keyItemType instanceof NumberType(NumericRange range)) {
 
             int lowest = -1;
             for (int i = tupleSize - 1; i >= 0; i--) {

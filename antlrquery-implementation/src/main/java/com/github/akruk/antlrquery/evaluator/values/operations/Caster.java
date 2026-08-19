@@ -26,7 +26,6 @@ import com.github.akruk.antlrquery.typesystem.types.AntlrQuerySequenceType;
 import com.github.akruk.antlrquery.typesystem.types.Cardinality;
 import com.github.akruk.antlrquery.typesystem.types.NumericRange;
 import com.github.akruk.antlrquery.typesystem.typeoperations.Types;
-import com.github.akruk.antlrquery.typesystem.types.itemtypes.AtomicType.*;
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.StringType.StringEnum;
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.StringType.StringNonEnum;
 import org.checkerframework.framework.qual.DefaultQualifier;

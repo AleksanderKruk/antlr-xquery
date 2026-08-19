@@ -91,7 +91,7 @@ public class ItemTypeIntersection
 
         // Intersect numbers
         {
-            List<AntlrQueryItemType> numbers = itemTypeToInstances.getOrDefault(AtomicType.NumberType.class, List.of());
+            List<AntlrQueryItemType> numbers = itemTypeToInstances.getOrDefault(NumberType.class, List.of());
             if (numbers.size() == types.length) {
                 @Nullable AntlrQueryItemType numberResult = numberIntersectionType(typeFactory, numbers);
                 if (numberResult != null) {
@@ -102,7 +102,7 @@ public class ItemTypeIntersection
 
         // Intersect regexes
         {
-            List<AntlrQueryItemType> regexes = itemTypeToInstances.getOrDefault(AtomicType.RegexType.class, List.of());
+            List<AntlrQueryItemType> regexes = itemTypeToInstances.getOrDefault(RegexType.class, List.of());
             if (regexes.size() == types.length) {
                 @Nullable AntlrQueryItemType regexResult = regexIntersectionType(regexes);
                 if (regexResult != null) {
@@ -224,17 +224,17 @@ public class ItemTypeIntersection
             return null;
         }
 
-        Pattern firstPattern = ((AtomicType.RegexType) regexes.getFirst()).pattern();
+        Pattern firstPattern = ((RegexType) regexes.getFirst()).pattern();
         String patternStr = firstPattern.pattern();
 
         // Exact pattern match constraint. Differentiated Regex types yield an empty set.
         for (int i = 1; i < regexes.size(); i++) {
-            if (!((AtomicType.RegexType) regexes.get(i)).pattern().pattern().equals(patternStr)) {
+            if (!((RegexType) regexes.get(i)).pattern().pattern().equals(patternStr)) {
                 return null;
             }
         }
 
-        return new AtomicType.RegexType(firstPattern);
+        return new RegexType(firstPattern);
     }
 
     private static @Nullable AntlrQueryItemType treeNodesIntersectionType(
@@ -467,7 +467,7 @@ public class ItemTypeIntersection
         }
 
         NumericRange[] allRanges = numbers.stream()
-                .map(i -> ((AtomicType.NumberType) i).range())
+                .map(i -> ((NumberType) i).range())
                 .toArray(NumericRange[]::new);
 
         @Nullable NumericRange mergedRange = Ranges.intersection(allRanges);

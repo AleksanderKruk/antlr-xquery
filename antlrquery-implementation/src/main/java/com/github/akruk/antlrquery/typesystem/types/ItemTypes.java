@@ -145,7 +145,7 @@ public final class ItemTypes {
     }
     public static String stringify(AtomicType c) {
         return switch(c) {
-            case AtomicType.NumberType n -> stringify(n);
+            case NumberType n -> stringify(n);
             case StringType s -> switch(s) {
                 case StringType.StringEnum(Set<String> enumValues, Cardinality _) when enumValues.size() == 1 ->
                         enumValues.stream().findFirst().get();
@@ -164,12 +164,12 @@ public final class ItemTypes {
                 case BooleanType.False _ -> "false";
                 case BooleanType.Boolean _ -> "boolean";
             };
-            case AtomicType.RegexType(Pattern pattern) ->
+            case RegexType(Pattern pattern) ->
                 "regex("+pattern.pattern()+")";
         };
     }
 
-    private static String stringify(AtomicType.NumberType t) {
+    private static String stringify(NumberType t) {
         if (t.range().equals(NumericRange.FULL)) {
             return "number";
         }
@@ -226,10 +226,10 @@ public final class ItemTypes {
             return false;
         }
         return switch (a1) {
-            case AtomicType.NumberType numberType when a2 instanceof AtomicType.NumberType -> true;
+            case NumberType numberType when a2 instanceof NumberType -> true;
             case StringType stringType when a2 instanceof StringType -> true;
             case BooleanType.Boolean aBoolean when a2 instanceof BooleanType.Boolean -> true;
-            case AtomicType.RegexType r when a2 instanceof AtomicType.RegexType -> true;
+            case RegexType r when a2 instanceof RegexType -> true;
             default -> false;
         };
     }

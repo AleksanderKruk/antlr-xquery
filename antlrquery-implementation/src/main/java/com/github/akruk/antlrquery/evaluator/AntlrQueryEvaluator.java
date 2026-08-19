@@ -283,8 +283,8 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         final List<AntlrQueryValue> sequence = visitExprSingle(ctx.exprSingle()).sequence;
         final AntlrQueryParser.PositionalVarContext positional = ctx.positionalVar();
         final boolean allowingEmpty = ctx.allowingEmpty() != null;
-        String positionalName = null;
-        Variable positionalVar = null;
+        @Nullable String positionalName = null;
+        @Nullable Variable positionalVar = null;
         if (positional != null) {
             positionalName = positional.varName().qname().getText();
             positionalVar = new Variable(positionalName, valueFactory.number(0));
@@ -1166,8 +1166,13 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     private AntlrQueryValue getVariableValue(final List<VariableCoupling> tuple, final String name)
     {
         for (final VariableCoupling coupling : tuple) {
-            for (final Variable var : List.of( coupling.item, coupling.key, coupling.value, coupling.position)) {
-                if (var != null && var.name().equals(name)) {
+            List<@Nullable Variable> variables = new ArrayList<>(4);
+            variables.add(coupling.item);
+            variables.add(coupling.key);
+            variables.add(coupling.value);
+            variables.add(coupling.position);
+            for (final Variable var : variables) {
+                if (var.name().equals(name)) {
                     return var.value;
                 }
             }

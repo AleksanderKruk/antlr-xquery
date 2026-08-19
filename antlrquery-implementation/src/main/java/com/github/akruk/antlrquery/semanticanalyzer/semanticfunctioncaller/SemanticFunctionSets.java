@@ -5,10 +5,13 @@ import java.math.BigInteger;
 import java.util.*;
 
 import com.github.akruk.Utils;
+import com.github.akruk.antlrquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrquery.semanticanalyzer.VisitingSemanticContext;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticcontext.AntlrQuerySemanticContext;
+import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.granularanalysis.ArrayPutGranularAnalysis;
 import com.github.akruk.antlrquery.typesystem.typeoperations.Types;
 import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Cardinalities;
+import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Ranges;
 import com.github.akruk.antlrquery.typesystem.types.Cardinality;
 import com.github.akruk.antlrquery.typesystem.types.NumericRange;
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.*;
@@ -3741,16 +3744,18 @@ public class SemanticFunctionSets {
         );
 
         // array:put($array as array(*), $position as xs:integer, $member as item()*) as array(*)
+        final AntlrQueryItemType indexNumber = typeFactory.itemNumber(Ranges.add(NumericRange.NON_NEGATIVE, NumericRange.of(1)));
+        ArrayPutGranularAnalysis arrayPutGranularAnalysis = new ArrayPutGranularAnalysis(typeFactory);
         array.add(
             new SimplifiedFunctionSpecification(
             new QualifiedName("array", "put"),
             List.of(
                 new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
-                new ArgumentSpecification("position", typeFactory.one(typeFactory.itemNumber()), null),
+                new ArgumentSpecification("position", typeFactory.one(indexNumber), null),
                 new ArgumentSpecification("member", zeroOrMoreItems, null)
             ),
             typeFactory.one(typeFactory.itemAnyArray()),
-            null, false, false, null, null
+            null, false, false, null, arrayPutGranularAnalysis
             )
         );
 
@@ -5326,4 +5331,193 @@ public class SemanticFunctionSets {
                 cardinality,
                 positionsType.cardinality());
     }
+
+    private TypeInContext arrayPut(
+            final List<UsedArg> args,
+            final VisitingSemanticContext context,
+            final ParseTree functionBody,
+            final AntlrQuerySemanticContext typeContext) {
+
+        final UsedArg arrayArg = args.get(0);
+        final UsedArg positionArg = args.get(1);
+        final UsedArg memberArg = args.get(2);
+
+        final AntlrQueryItemType arrayItemType = arrayArg.type().type.itemType();
+        final AntlrQuerySequenceType positionType = positionArg.type().type;
+        final AntlrQuerySequenceType memberType = memberArg.type().type;
+
+        final AntlrQueryItemType resultItemType =
+                arrayPut(arrayItemType, positionType, memberType);
+
+        final AntlrQuerySequenceType result = typeFactory.sequence(
+                resultItemType,
+                arrayArg.type().type.cardinality());
+
+        return typeContext.typeInContext(result);
+    }
+
+    private AntlrQueryItemType arrayPut(
+            final AntlrQueryItemType array,
+            final AntlrQuerySequenceType position,
+            final AntlrQuerySequenceType member) {
+
+        return switch (array) {
+            case ChoiceItemType choice ->
+                    arrayPut(choice, position, member);
+
+            case ConcreteItemType concrete ->
+                    arrayPut(concrete, position, member);
+
+            case NamedItemType(NamespaceResolver.QualifiedName reference) ->
+                    arrayPut(
+                            typeFactory.guaranteedItemNamedType(
+                                    reference,
+                                    new IllegalStateException()),
+                            position,
+                            member);
+
+            case NeverType _, NothingType _, AnyItemType _ ->
+                    throw new IllegalStateException(
+                            "Analysis should have prevented type: " + array +
+                                    " from reaching analysis");
+        };
+    }
+
+    private AntlrQueryItemType arrayPut(
+            final ChoiceItemType choice,
+            final AntlrQuerySequenceType position,
+            final AntlrQuerySequenceType member) {
+
+        final ConcreteItemType[] itemTypes = choice.itemTypes();
+
+        final ConcreteItemType[] result = new ConcreteItemType[itemTypes.length];
+
+        for (int i = 0; i < itemTypes.length; i++) {
+            result[i] = arrayPut(itemTypes[i], position, member);
+        }
+
+        return typeFactory.itemChoice(result);
+    }
+
+    private ConcreteItemType arrayPut(
+            final ConcreteItemType array,
+            final AntlrQuerySequenceType position,
+            final AntlrQuerySequenceType member) {
+
+        return switch (array) {
+            case ArrayLikeType arrayLike ->
+                    arrayPut(arrayLike, position, member);
+
+            default ->
+                    throw new IllegalStateException(
+                            "Expected array type, got: " + array);
+        };
+    }
+
+    private ConcreteItemType arrayPut(
+            final ArrayLikeType array,
+            final AntlrQuerySequenceType position,
+            final AntlrQuerySequenceType member) {
+
+        return switch (array) {
+            case ArrayLikeType.ArrayType arrayType ->
+                    arrayPut(arrayType, position, member);
+
+            case ArrayLikeType.TupleType tupleType ->
+                    arrayPut(tupleType, position, member);
+        };
+    }
+
+    private ConcreteItemType arrayPut(
+            final ArrayLikeType.ArrayType array,
+            final AntlrQuerySequenceType position,
+            final AntlrQuerySequenceType member) {
+
+        final AntlrQuerySequenceType newMemberType =
+                Types.union(typeFactory, array.memberType(), member);
+
+        return (ConcreteItemType) typeFactory.itemArray(
+                newMemberType,
+                array.cardinality());
+    }
+
+    private ConcreteItemType arrayPut(
+            final ArrayLikeType.TupleType tuple,
+            final AntlrQuerySequenceType position,
+            final AntlrQuerySequenceType member) {
+
+        final Optional<BigInteger> knownPosition = getKnownInteger(position);
+
+        return knownPosition.map(bigInteger -> arrayPut(
+                tuple,
+                bigInteger,
+                member)).orElseGet(() -> arrayPutUnknownPosition(
+                tuple,
+                member));
+
+    }
+
+    private ConcreteItemType arrayPut(
+            final ArrayLikeType.TupleType tuple,
+            final BigInteger position,
+            final AntlrQuerySequenceType member) {
+
+        final AntlrQuerySequenceType[] members = tuple.members();
+
+        if (position.signum() <= 0 ||
+                position.compareTo(BigInteger.valueOf(members.length)) > 0) {
+
+            return (ConcreteItemType) typeFactory.itemTuple(Arrays.asList(members));
+        }
+
+        final int index = position.intValueExact() - 1;
+
+        final AntlrQuerySequenceType[] result =
+                members.clone();
+
+        result[index] = member;
+
+        return (ConcreteItemType) typeFactory.itemTuple(Arrays.asList(result));
+    }
+
+    private ConcreteItemType arrayPutUnknownPosition(
+            final ArrayLikeType.TupleType tuple,
+            final AntlrQuerySequenceType member) {
+
+        final AntlrQuerySequenceType[] members = tuple.members();
+
+        final AntlrQuerySequenceType[] result =
+                new AntlrQuerySequenceType[members.length];
+
+        for (int i = 0; i < members.length; i++) {
+            result[i] = Types.union(
+                    typeFactory,
+                    members[i],
+                    member);
+        }
+
+        return (ConcreteItemType) typeFactory.itemTuple(Arrays.asList(result));
+    }
+
+    private Optional<BigInteger> getKnownInteger(
+            final AntlrQuerySequenceType position) {
+
+        if (!Cardinalities.contains(
+                position.cardinality(),
+                BigInteger.ONE))
+        {
+            return Optional.empty();
+        }
+
+        if (!(position.itemType() instanceof NumberType(NumericRange range)))
+        {
+            return Optional.empty();
+        }
+
+        NumericRange.Event min = Ranges.min(range);
+        assert min != null;
+        var vls = (NumericRange.FiniteBound) min.value();
+        return Optional.of(new BigInteger(String.valueOf(vls.value())));
+    }
+
 }

@@ -206,18 +206,18 @@ public class ItemTypeSubtract {
                         default -> b;
                     };
                 }
-                case AtomicType.NumberType numberType -> {
-                    var subtractedNumbers = groupedSubtracted.getOrDefault(AtomicType.NumberType.class, List.of());
+                case NumberType numberType -> {
+                    var subtractedNumbers = groupedSubtracted.getOrDefault(NumberType.class, List.of());
                     @Nullable NumericRange result = numberType.range();
                     for (AntlrQueryItemType i : subtractedNumbers) {
-                        NumericRange sn = ((AtomicType.NumberType) i).range();
+                        NumericRange sn = ((NumberType) i).range();
                         if (result == null) break;
                         result = Ranges.subtract(result, sn);
                     }
                     resultingItem = result == null ? typeFactory.itemNothing() : typeFactory.itemNumber(result);
                 }
-                case AtomicType.RegexType regexType -> {
-                    var subtractedRegexes = groupedSubtracted.getOrDefault(AtomicType.RegexType.class, List.of());
+                case RegexType regexType -> {
+                    var subtractedRegexes = groupedSubtracted.getOrDefault(RegexType.class, List.of());
                     boolean matched = false;
                     for (var r : subtractedRegexes) {
                         if (regexType.equals(r)) {

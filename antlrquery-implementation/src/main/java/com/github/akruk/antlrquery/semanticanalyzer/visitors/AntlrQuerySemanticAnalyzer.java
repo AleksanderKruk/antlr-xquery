@@ -1457,8 +1457,8 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
             warn(toExprCtx, WarningType.RANGE__EMPTY_TO, List.of());
             return symbolManager.typeInContext(emptySequence);
         }
-        if (!(fromValue.type.itemType() instanceof AtomicType.NumberType(NumericRange r1)
-                && toValue.type.itemType() instanceof AtomicType.NumberType(NumericRange r2))
+        if (!(fromValue.type.itemType() instanceof NumberType(NumericRange r1)
+                && toValue.type.itemType() instanceof NumberType(NumericRange r2))
             )
         {
             throw new IllegalStateException("All other variants should have already been excluded");

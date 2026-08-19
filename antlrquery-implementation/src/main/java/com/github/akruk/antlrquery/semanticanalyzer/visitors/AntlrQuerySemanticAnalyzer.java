@@ -934,7 +934,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
     }
 
     private void handleWindowStartClause(
-        final WindowStartConditionContext windowStartCondition,
+        final @Nullable WindowStartConditionContext windowStartCondition,
         final TypeInContext iterator,
         final TypeInContext optionalIterator)
     {

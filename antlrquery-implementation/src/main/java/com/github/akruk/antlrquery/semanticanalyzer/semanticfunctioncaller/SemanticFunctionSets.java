@@ -11,6 +11,7 @@ import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.granu
 import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.granularanalysis.ArrayItemsGranularAnalysis;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.granularanalysis.ArrayPutGranularAnalysis;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.granularanalysis.ArraySizeGranularAnalysis;
+import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.granularanalysis.ArrayFootGranularAnalysis;
 import com.github.akruk.antlrquery.typesystem.typeoperations.Types;
 import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Cardinalities;
 import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Ranges;
@@ -3490,20 +3491,21 @@ public class SemanticFunctionSets {
             null, false, false, null, null
             )
         );
+        final AntlrQuerySequenceType nonEmptyArray = typeFactory.one(typeFactory.itemArray(typeFactory.any(), Cardinality.ONE_OR_MORE));
 
-        // array:foot($array as array(*)) as item()*
+        // array:foot($array as T[+]) as T
         array.add(
             new SimplifiedFunctionSpecification(
             new QualifiedName("array", "foot"),
             List.of(
                 new ArgumentSpecification(
                 "array",
-                typeFactory.one(typeFactory.itemAnyArray()),
+                nonEmptyArray,
                 null
                 )
             ),
             zeroOrMoreItems,
-            null, false, false, null, this::arrayFoot
+            null, false, false, null, new ArrayFootGranularAnalysis(typeFactory)
             )
         );
 
@@ -3633,7 +3635,7 @@ public class SemanticFunctionSets {
             new SimplifiedFunctionSpecification(
             new QualifiedName("array", "head"),
             List.of(
-                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemArray(typeFactory.any(), Cardinality.ONE_OR_MORE)), null)
+                new ArgumentSpecification("array", nonEmptyArray, null)
             ),
             zeroOrMoreItems,
             null, false, false, null, arrayHeadGranularAnalysis
@@ -4578,94 +4580,6 @@ public class SemanticFunctionSets {
 
         return Types.union(typeFactory, members);
     }
-    TypeInContext arrayFoot(
-            final List<UsedArg> args,
-            final VisitingSemanticContext context,
-            final ParseTree functionBody,
-            final AntlrQuerySemanticContext typeContext) {
-
-        final AntlrQuerySequenceType arrayType = args.getFirst().type().type;
-
-        final AntlrQuerySequenceType result =
-                arrayFoot(arrayType.itemType());
-
-        return typeContext.typeInContext(result);
-    }
-
-    private AntlrQuerySequenceType arrayFoot(
-            final AntlrQueryItemType itemType) {
-
-        return switch (itemType) {
-            case ChoiceItemType choice ->
-                    arrayFoot(choice);
-
-            case ConcreteItemType concrete ->
-                    arrayFoot(concrete);
-
-            case NamedItemType named ->
-                    arrayFoot(
-                            typeFactory.guaranteedItemNamedType(
-                                    named.reference(),
-                                    new IllegalStateException()));
-
-            case NeverType _, NothingType _, AnyItemType _ ->
-                    throw new IllegalStateException(
-                            "Analysis should have prevented type: " + itemType);
-        };
-    }
-
-    private AntlrQuerySequenceType arrayFoot(
-            final ChoiceItemType choice) {
-
-        final AntlrQuerySequenceType[] types =
-                Arrays.stream(choice.itemTypes())
-                        .map(this::arrayFoot)
-                        .toArray(AntlrQuerySequenceType[]::new);
-
-        return Types.union(typeFactory, types);
-    }
-
-    private AntlrQuerySequenceType arrayFoot(
-            final ConcreteItemType concrete) {
-
-        return switch (concrete) {
-            case ArrayLikeType array ->
-                    arrayFoot(array);
-
-            default ->
-                    throw new IllegalStateException(
-                            "Expected array-like type, got: " + concrete);
-        };
-    }
-
-    private AntlrQuerySequenceType arrayFoot(
-            final ArrayLikeType array) {
-
-        return switch (array) {
-            case ArrayLikeType.ArrayType(
-                    AntlrQuerySequenceType memberType,
-                    _
-            ) ->
-
-                    memberType;
-
-            case ArrayLikeType.TupleType tuple ->
-                    arrayFoot(tuple);
-        };
-    }
-
-    private AntlrQuerySequenceType arrayFoot(
-            final ArrayLikeType.TupleType tuple) {
-
-        final AntlrQuerySequenceType[] members = tuple.members();
-
-        if (members.length == 0) {
-            throw new IllegalStateException(
-                    "Analysis should have prevented empty tuple from reaching array:foot");
-        }
-
-        return members[members.length - 1];
-    }
 
     TypeInContext arrayGet(
             final List<UsedArg> args,
@@ -4791,92 +4705,6 @@ public class SemanticFunctionSets {
 
         throw new IllegalStateException(
                 "array:get position is statically known to be out of bounds");
-    }
-
-    TypeInContext arrayHead(
-            final List<UsedArg> args,
-            final VisitingSemanticContext context,
-            final ParseTree functionBody,
-            final AntlrQuerySemanticContext typeContext) {
-
-        final AntlrQuerySequenceType arrayType = args.getFirst().type().type;
-
-        final AntlrQuerySequenceType result =
-                arrayHead(arrayType.itemType());
-
-        return typeContext.typeInContext(result);
-    }
-
-    private AntlrQuerySequenceType arrayHead(
-            final AntlrQueryItemType itemType) {
-
-        return switch (itemType) {
-            case ChoiceItemType choice ->
-                    arrayHead(choice);
-
-            case ConcreteItemType concrete ->
-                    arrayHead(concrete);
-
-            case NamedItemType named ->
-                    arrayHead(
-                            typeFactory.guaranteedItemNamedType(
-                                    named.reference(),
-                                    new IllegalStateException()));
-
-            case NeverType _, NothingType _, AnyItemType _ ->
-                    throw new IllegalStateException(
-                            "Analysis should have prevented type: " + itemType);
-        };
-    }
-
-    private AntlrQuerySequenceType arrayHead(
-            final ChoiceItemType choice) {
-
-        return Types.union(
-                typeFactory,
-                Arrays.stream(choice.itemTypes())
-                        .map(this::arrayHead)
-                        .toArray(AntlrQuerySequenceType[]::new));
-    }
-
-    private AntlrQuerySequenceType arrayHead(
-            final ConcreteItemType concrete) {
-
-        return switch (concrete) {
-            case ArrayLikeType array ->
-                    arrayHead(array);
-
-            default ->
-                    throw new IllegalStateException(
-                            "Expected array-like type, got: " + concrete);
-        };
-    }
-
-    private AntlrQuerySequenceType arrayHead(
-            final ArrayLikeType array) {
-
-        return switch (array) {
-            case ArrayLikeType.ArrayType(
-                    AntlrQuerySequenceType memberType,
-                    _
-            ) -> memberType;
-
-            case ArrayLikeType.TupleType tuple ->
-                    arrayHead(tuple);
-        };
-    }
-
-    private AntlrQuerySequenceType arrayHead(
-            final ArrayLikeType.TupleType tuple) {
-
-        final AntlrQuerySequenceType[] members = tuple.members();
-
-        if (members.length == 0) {
-            throw new IllegalStateException(
-                    "Analysis should have prevented empty tuple from reaching array:head");
-        }
-
-        return members[0];
     }
 
     TypeInContext arrayJoin(

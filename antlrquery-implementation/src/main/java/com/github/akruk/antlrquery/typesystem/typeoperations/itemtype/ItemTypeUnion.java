@@ -69,11 +69,11 @@ public class ItemTypeUnion
             return typeFactory.itemChoice(itemTypes.toArray(AntlrQueryItemType[]::new));
         }
         Set<AntlrQueryItemType> nothings = classToItems.getOrDefault(NothingType.class, Set.of());
-        Set<AntlrQueryItemType> nevers = classToItems.getOrDefault(NeverType.class, Set.of());
+        Set<AntlrQueryItemType> neverTypes = classToItems.getOrDefault(NeverType.class, Set.of());
         if (!nothings.isEmpty()) {
             return typeFactory.itemNothing();
         }
-        assert !nevers.isEmpty() : "Missed type mapping  " + classToItems;
+        assert !neverTypes.isEmpty() : "Missed type mapping  " + classToItems;
         return typeFactory.neverType().itemType();
     }
 
@@ -434,57 +434,5 @@ public class ItemTypeUnion
         this.typeFactory = Objects.requireNonNull(typeFactory);
     }
 
-
-    public AntlrQueryItemType recordUnion(MapLikeType.RecordType x, MapLikeType.RecordType y) {
-        final var xFields = x.fields();
-        final var yFields = y.fields();
-
-        final Set<String> commonKeys = new HashSet<>(xFields.keySet());
-        commonKeys.retainAll(yFields.keySet());
-        if (commonKeys.isEmpty()) {
-            return typeFactory.itemChoice(x, y);
-        }
-
-        final LinkedHashMap<String, RecordField> newFields = new LinkedHashMap<>();
-
-        for (Map.Entry<String, RecordField> entry : xFields.entrySet()) {
-            final String key = entry.getKey();
-            final RecordField xField = entry.getValue();
-            final RecordField yField = yFields.get(key);
-
-            if (yField != null) {
-                final AntlrQuerySequenceType resolvedX = xField.resolveFieldType(typeFactory);
-                final AntlrQuerySequenceType resolvedY = yField.resolveFieldType(typeFactory);
-                final boolean required = xField.isRequired() && yField.isRequired();
-
-                newFields.put(key, new RecordField(
-                        key,
-                        new RecordField.TypeOrReference.Type(Types.addition(typeFactory, resolvedX, resolvedY)
-                        ),
-                        required
-                ));
-            } else {
-                newFields.put(key, new RecordField(
-                        key,
-                        xField.typeOrReference(),
-                        false
-                ));
-            }
-        }
-
-        for (Map.Entry<String, RecordField> entry : yFields.entrySet()) {
-            final String key = entry.getKey();
-            if (!newFields.containsKey(key)) {
-                final RecordField yField = entry.getValue();
-                newFields.put(key, new RecordField(
-                        key,
-                        yField.typeOrReference(),
-                        false
-                ));
-            }
-        }
-
-        return new MapLikeType.RecordType(newFields);
-    }
 
 }

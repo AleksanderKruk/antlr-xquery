@@ -78,7 +78,7 @@ public class EvaluationTestsBase {
     public void assertResult(final String xquery, final BigDecimal result) {
         final var value = AntlrQuery.evaluateWithMockRoot(null, xquery, "", null);
         assertNotNull(value);
-        assertTrue(result.compareTo(value.numericValue) == 0);
+        assertEquals(0, result.compareTo(value.numericValue));
     }
 
     public void assertResult(final String xquery, final List<AntlrQueryValue> result) {
@@ -108,14 +108,10 @@ public class EvaluationTestsBase {
         assertResult(value, result);
     }
 
-    public void assertValue(final String xquery, final AntlrQueryValue result) {
-        assertResult(xquery, result);
-    }
-
     public void assertError(final String xquery, final AntlrQueryValue result) {
         final AntlrQueryValue value = AntlrQuery.evaluateWithMockRoot(null, xquery, "", null);
         assertNotNull(value);
-        assertTrue(result.error == value.error);
+        assertSame(result.error, value.error);
     }
 
     public record ValueParserAndTree(AntlrQueryValue value, Parser parser, ParseTree tree) {}
@@ -272,17 +268,17 @@ public class EvaluationTestsBase {
 
 
     public void assertSameResultsAsAntlrXPath(
-        final String grammarname,
-        final String grammar,
-        final String startingRuleName,
-        final String textualTree,
-        final String xquery,
-        final String uri
+            final String grammarName,
+            final String grammar,
+            final String startingRuleName,
+            final String textualTree,
+            final String xquery,
+            final String uri
         )
         throws Exception
     {
         final ValueParserAndTree results = executeDynamicGrammarQueryWithTree(
-            grammarname,
+            grammarName,
             grammar,
             startingRuleName,
             textualTree,

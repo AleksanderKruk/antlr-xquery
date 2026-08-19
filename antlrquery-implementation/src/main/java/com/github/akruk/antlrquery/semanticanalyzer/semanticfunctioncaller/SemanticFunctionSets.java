@@ -7,6 +7,7 @@ import java.util.*;
 import com.github.akruk.Utils;
 import com.github.akruk.antlrquery.semanticanalyzer.VisitingSemanticContext;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticcontext.AntlrQuerySemanticContext;
+import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.granularanalysis.ArrayHeadGranularAnalysis;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.granularanalysis.ArrayItemsGranularAnalysis;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.granularanalysis.ArrayPutGranularAnalysis;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.granularanalysis.ArraySizeGranularAnalysis;
@@ -3627,14 +3628,15 @@ public class SemanticFunctionSets {
         );
 
         // array:head($array as array(*)) as item()*
+        final ArrayHeadGranularAnalysis arrayHeadGranularAnalysis = new ArrayHeadGranularAnalysis(typeFactory);
         array.add(
             new SimplifiedFunctionSpecification(
             new QualifiedName("array", "head"),
             List.of(
-                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
+                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemArray(typeFactory.any(), Cardinality.ONE_OR_MORE)), null)
             ),
             zeroOrMoreItems,
-            null, false, false, null, this::arrayHead
+            null, false, false, null, arrayHeadGranularAnalysis
             )
         );
 

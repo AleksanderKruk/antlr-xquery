@@ -3,10 +3,7 @@ package com.github.akruk.antlrquery.evaluator.values.factories.defaults;
 import static com.github.akruk.antlrquery.evaluator.values.AntlrQueryValue.boolean_;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.github.akruk.antlrquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrquery.typesystem.types.NumericRange;
@@ -100,6 +97,11 @@ public class AntlrQueryMemoizedValueFactory implements AntlrQueryValueFactory {
     }
 
     @Override
+    public AntlrQueryValue sequence(AntlrQueryValue... v) {
+        return sequence(Arrays.asList(v));
+    }
+
+    @Override
     public AntlrQueryValue string(String s) {
         return createdStrings.computeIfAbsent(s, _ -> AntlrQueryValue.string(s, typeFactory.string()));
     }
@@ -131,6 +133,11 @@ public class AntlrQueryMemoizedValueFactory implements AntlrQueryValueFactory {
     @Override
     public AntlrQueryValue array(List<AntlrQueryValue> value) {
         return AntlrQueryValue.array(value, typeFactory.anyArray());
+    }
+
+    @Override
+    public AntlrQueryValue array(AntlrQueryValue... value) {
+        return array(Arrays.asList(value));
     }
 
 

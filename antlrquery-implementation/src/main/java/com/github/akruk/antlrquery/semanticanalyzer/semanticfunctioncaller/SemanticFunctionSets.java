@@ -7,6 +7,7 @@ import java.util.*;
 import com.github.akruk.Utils;
 import com.github.akruk.antlrquery.semanticanalyzer.VisitingSemanticContext;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticcontext.AntlrQuerySemanticContext;
+import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.granularanalysis.ArrayItemsGranularAnalysis;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.granularanalysis.ArrayPutGranularAnalysis;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.granularanalysis.ArraySizeGranularAnalysis;
 import com.github.akruk.antlrquery.typesystem.typeoperations.Types;
@@ -3680,6 +3681,7 @@ public class SemanticFunctionSets {
         );
 
         // array:items($array as array(*)) as item()*
+        var arrayItems = new ArrayItemsGranularAnalysis(typeFactory);
         array.add(
             new SimplifiedFunctionSpecification(
             new QualifiedName("array", "items"),
@@ -3687,7 +3689,7 @@ public class SemanticFunctionSets {
                 new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
             ),
             zeroOrMoreItems,
-            null, false, false, null, this::arrayItems
+            null, false, false, null, arrayItems
             )
         );
 
@@ -4873,112 +4875,6 @@ public class SemanticFunctionSets {
         }
 
         return members[0];
-    }
-
-    TypeInContext arrayItems(
-            final List<UsedArg> args,
-            final VisitingSemanticContext context,
-            final ParseTree functionBody,
-            final AntlrQuerySemanticContext typeContext) {
-
-        final AntlrQuerySequenceType arrayType = args.getFirst().type().type;
-
-        final AntlrQuerySequenceType result =
-                arrayItems(arrayType.itemType(), arrayType.cardinality());
-
-        return typeContext.typeInContext(result);
-    }
-
-    private AntlrQuerySequenceType arrayItems(
-            final AntlrQueryItemType itemType,
-            final Cardinality cardinality) {
-
-        return switch (itemType) {
-            case ChoiceItemType choice ->
-                    arrayItems(choice, cardinality);
-
-            case ConcreteItemType concrete ->
-                    arrayItems(concrete, cardinality);
-
-            case NamedItemType named ->
-                    arrayItems(
-                            typeFactory.guaranteedItemNamedType(
-                                    named.reference(),
-                                    new IllegalStateException()),
-                            cardinality);
-
-            case NeverType _, NothingType _, AnyItemType _ ->
-                    throw new IllegalStateException(
-                            "Analysis should have prevented type: " + itemType);
-        };
-    }
-
-    private AntlrQuerySequenceType arrayItems(
-            final ChoiceItemType choice,
-            final Cardinality cardinality) {
-
-        return Types.union(
-                typeFactory,
-                Arrays.stream(choice.itemTypes())
-                        .map(item -> arrayItems(item, cardinality))
-                        .toArray(AntlrQuerySequenceType[]::new));
-    }
-
-    private AntlrQuerySequenceType arrayItems(
-            final ConcreteItemType concrete,
-            final Cardinality cardinality) {
-
-        return switch (concrete) {
-            case ArrayLikeType array ->
-                    arrayItems(array, cardinality);
-
-            default ->
-                    throw new IllegalStateException(
-                            "Expected array-like type, got: " + concrete);
-        };
-    }
-
-    private AntlrQuerySequenceType arrayItems(
-            final ArrayLikeType array,
-            final Cardinality cardinality) {
-
-        return switch (array) {
-            case ArrayLikeType.ArrayType(
-                    AntlrQuerySequenceType memberType,
-                    Cardinality memberCardinality) ->
-
-                    typeFactory.sequence(
-                            memberType.itemType(),
-                            Cardinalities.multiply(
-                                    cardinality,
-                                    memberCardinality));
-
-            case ArrayLikeType.TupleType tuple ->
-                    arrayItems(tuple, cardinality);
-        };
-    }
-
-    private AntlrQuerySequenceType arrayItems(
-            final ArrayLikeType.TupleType tuple,
-            final Cardinality cardinality) {
-
-        if (tuple.members().length == 0) {
-            return typeFactory.emptySequence();
-        }
-
-        final AntlrQuerySequenceType[] members = tuple.members();
-
-        final AntlrQuerySequenceType[] result =
-                Arrays.stream(members)
-                        .map(member ->
-                                typeFactory.sequence(
-                                        member.itemType(),
-                                        Cardinalities.multiply(
-                                                cardinality,
-                                                member.cardinality())))
-                        .toArray(AntlrQuerySequenceType[]::new);
-
-        return Types.addition(typeFactory, result);
     }
 
     TypeInContext arrayJoin(

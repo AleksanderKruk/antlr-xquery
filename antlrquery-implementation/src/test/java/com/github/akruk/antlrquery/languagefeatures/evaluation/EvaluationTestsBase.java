@@ -108,6 +108,10 @@ public class EvaluationTestsBase {
         assertResult(value, result);
     }
 
+    public void assertValue(final String xquery, final AntlrQueryValue result) {
+        assertResult(xquery, result);
+    }
+
     public void assertError(final String xquery, final AntlrQueryValue result) {
         final AntlrQueryValue value = AntlrQuery.evaluateWithMockRoot(null, xquery, "", null);
         assertNotNull(value);

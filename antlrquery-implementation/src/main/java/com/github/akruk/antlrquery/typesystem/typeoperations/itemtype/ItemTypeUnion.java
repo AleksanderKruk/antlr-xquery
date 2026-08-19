@@ -206,7 +206,7 @@ public class ItemTypeUnion
                 var mergedMembers = new AntlrQuerySequenceType[len];
                 for (int i = 0; i < len; i++) {
                     final int finalI = i;
-                    mergedMembers[i] = Types.addition(
+                    mergedMembers[i] = Types.union(
                             typeFactory,
                             sameLengthTuples.stream()
                                     .map(tupleType -> tupleType.members()[finalI])

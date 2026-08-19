@@ -22,9 +22,11 @@ public interface AntlrQueryValueFactory {
     AntlrQueryValue string(String s);
     AntlrQueryValue emptyString();
     AntlrQueryValue sequence(List<AntlrQueryValue> v);
+    AntlrQueryValue sequence(AntlrQueryValue... v);
     AntlrQueryValue emptySequence();
     AntlrQueryValue functionReference(AntlrQueryFunction f, AntlrQuerySequenceType type);
     AntlrQueryValue array(List<AntlrQueryValue> value);
+    AntlrQueryValue array(AntlrQueryValue... value);
     AntlrQueryValue map(Map<AntlrQueryValue, AntlrQueryValue> value);
     AntlrQueryValue record(Map<String, AntlrQueryValue> value);
 }

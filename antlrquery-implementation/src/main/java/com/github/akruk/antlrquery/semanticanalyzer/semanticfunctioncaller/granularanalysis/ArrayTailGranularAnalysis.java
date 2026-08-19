@@ -10,26 +10,27 @@ import com.github.akruk.antlrquery.semanticanalyzer.semanticcontext.AntlrQuerySe
 import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.SemanticSymbolManager;
 import com.github.akruk.antlrquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Cardinalities;
-import com.github.akruk.antlrquery.typesystem.types.AntlrQuerySequenceType;
 import com.github.akruk.antlrquery.typesystem.types.Cardinality;
 import com.github.akruk.antlrquery.typesystem.types.TypeInContext;
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.*;
-import com.github.akruk.antlrquery.typesystem.types.itemtypes.ArrayLikeType.ArrayType;
-import com.github.akruk.antlrquery.typesystem.types.itemtypes.ArrayLikeType.TupleType;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+
+import com.github.akruk.antlrquery.typesystem.types.AntlrQuerySequenceType;
+import com.github.akruk.antlrquery.typesystem.types.itemtypes.ArrayLikeType.ArrayType;
+import com.github.akruk.antlrquery.typesystem.types.itemtypes.ArrayLikeType.TupleType;
 import org.checkerframework.framework.qual.DefaultQualifier;
 
+
 @DefaultQualifier(NonNull.class)
-public class ArrayTrunkGranularAnalysis
+public class ArrayTailGranularAnalysis
         implements SemanticSymbolManager.GrainedAnalysis {
 
     private final AntlrQueryTypeFactory typeFactory;
 
-    public ArrayTrunkGranularAnalysis(
+    public ArrayTailGranularAnalysis(
             final AntlrQueryTypeFactory typeFactory) {
-
         this.typeFactory = typeFactory;
     }
 
@@ -51,22 +52,22 @@ public class ArrayTrunkGranularAnalysis
             final AntlrQuerySequenceType array) {
 
         return typeFactory.one(
-                arrayTrunk(array.itemType()));
+                arrayTail(array.itemType()));
     }
 
-    private AntlrQueryItemType arrayTrunk(
+    private AntlrQueryItemType arrayTail(
             final AntlrQueryItemType array) {
 
         return switch (array) {
             case ChoiceItemType choice ->
-                    arrayTrunk(choice);
+                    arrayTail(choice);
 
             case ConcreteItemType concrete ->
-                    arrayTrunk(concrete);
+                    arrayTail(concrete);
 
             case NamedItemType(
                     NamespaceResolver.QualifiedName reference) ->
-                    arrayTrunk(
+                    arrayTail(
                             typeFactory.guaranteedItemNamedType(
                                     reference,
                                     new IllegalStateException()));
@@ -74,12 +75,11 @@ public class ArrayTrunkGranularAnalysis
             case NeverType _, NothingType _, AnyItemType _ ->
                     throw new IllegalStateException(
                             "Analysis should have prevented type: " +
-                                    array +
-                                    " from reaching analysis");
+                                    array);
         };
     }
 
-    private AntlrQueryItemType arrayTrunk(
+    private AntlrQueryItemType arrayTail(
             final ChoiceItemType choice) {
 
         final ConcreteItemType[] itemTypes =
@@ -89,25 +89,18 @@ public class ArrayTrunkGranularAnalysis
                 new ConcreteItemType[itemTypes.length];
 
         for (int i = 0; i < itemTypes.length; i++) {
-            final AntlrQueryItemType trunk =
-                    arrayTrunk(itemTypes[i]);
-
-            if (trunk instanceof NeverType) {
-                return trunk;
-            }
-
-            result[i] = (ConcreteItemType) trunk;
+            result[i] = arrayTail(itemTypes[i]);
         }
 
         return typeFactory.itemChoice(result);
     }
 
-    private AntlrQueryItemType arrayTrunk(
+    private ConcreteItemType arrayTail(
             final ConcreteItemType array) {
 
         return switch (array) {
             case ArrayLikeType arrayLike ->
-                    arrayTrunk(arrayLike);
+                    arrayTail(arrayLike);
 
             default ->
                     throw new IllegalStateException(
@@ -115,59 +108,53 @@ public class ArrayTrunkGranularAnalysis
         };
     }
 
-    private AntlrQueryItemType arrayTrunk(
+    private ConcreteItemType arrayTail(
             final ArrayLikeType array) {
 
         return switch (array) {
             case ArrayType arrayType ->
-                    arrayTrunk(arrayType);
+                    arrayTail(arrayType);
 
             case TupleType tupleType ->
-                    arrayTrunk(tupleType);
+                    arrayTail(tupleType);
         };
     }
 
-    private AntlrQueryItemType arrayTrunk(
+    private ConcreteItemType arrayTail(
             final ArrayType array) {
 
         /*
-         * The array contains at least one member.
+         * tail() removes exactly one member.
          *
-         * Removing the last member therefore decreases the
-         * cardinality by exactly one while preserving the
-         * member type.
-         *
-         * For example:
-         *
-         *   array(number, 1..∞)
-         *
-         * becomes:
-         *
-         *   array(number, 0..∞)
+         * The member type remains unchanged, while the
+         * cardinality is reduced by one.
          */
-        return typeFactory.itemArray(
+        final Cardinality cardinality =
+                Objects.requireNonNull(Cardinalities.subtract(
+                        array.cardinality(),
+                        Cardinality.ONE));
+
+        return (ConcreteItemType) typeFactory.itemArray(
                 array.memberType(),
-                Objects.requireNonNull(Cardinalities.remove(array.cardinality(), Cardinality.ONE)));
+                cardinality);
     }
 
-    private AntlrQueryItemType arrayTrunk(
+    private ConcreteItemType arrayTail(
             final TupleType tuple) {
 
         final AntlrQuerySequenceType[] members =
                 tuple.members();
 
         /*
-         * A one-member tuple becomes an empty array.
+         * The argument is guaranteed to be non-empty by the
+         * basic semantic analysis, so there is no empty-tuple
+         * case to handle here.
          */
-        if (members.length == 1) {
-            return typeFactory.itemTuple(
-                    List.of());
-        }
-
-        return typeFactory.itemTuple(
+        return (ConcreteItemType) typeFactory.itemTuple(
                 Arrays.asList(
-                        Arrays.copyOf(
+                        Arrays.copyOfRange(
                                 members,
-                                members.length - 1)));
+                                1,
+                                members.length)));
     }
 }

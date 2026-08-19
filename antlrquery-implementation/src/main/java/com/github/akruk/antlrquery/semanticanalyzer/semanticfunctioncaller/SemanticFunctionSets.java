@@ -3856,15 +3856,19 @@ public class SemanticFunctionSets {
             )
         );
 
-        // array:tail($array as array(*)) as array(*)
+        // array:tail($array as T[+]) as T[*]
         array.add(
             new SimplifiedFunctionSpecification(
             new QualifiedName("array", "tail"),
             List.of(
-                new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null)
+                new ArgumentSpecification("array", nonEmptyArray, null)
             ),
             typeFactory.one(typeFactory.itemAnyArray()),
-            null, false, false, null, null
+            null,
+                    false,
+                    false,
+                    null,
+                    new ArrayTailGranularAnalysis(typeFactory)
             )
         );
 

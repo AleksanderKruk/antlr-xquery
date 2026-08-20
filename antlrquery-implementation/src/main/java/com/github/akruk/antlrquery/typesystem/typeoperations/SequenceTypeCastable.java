@@ -45,15 +45,15 @@ public class SequenceTypeCastable
             if (!emptyAllowed) {
                 return new IsCastable.TestedExpressionCanBeEmptySequenceWithoutFlag();
             }
-            return isCastable_(tested, targetType);
+            return isCastable(tested, targetType);
         }
         if (tested.cardinality().isOne()) {
-            return isCastable_(tested, targetType);
+            return isCastable(tested, targetType);
         }
         return new IsCastable.TestedExpressionIsZeroOrMore();
     }
 
-    IsCastable isCastable_(
+    private IsCastable isCastable(
             final AntlrQuerySequenceType tested,
             final AntlrQuerySequenceType target)
     {
@@ -160,7 +160,7 @@ public class SequenceTypeCastable
                  IsCastable.TestedExpressionIsEmptySequence _, IsCastable.TestedExpressionIsZeroOrMore _,
                  IsCastable.WrongTargetType _ -> throw new IllegalStateException();
         }
-        final IsCastable valueCasting = isCastable_(testedValueType, valueCastTarget);
+        final IsCastable valueCasting = isCastable(testedValueType, valueCastTarget);
         boolean valueAlwaysPossible = false;
         switch (valueCasting) {
             case IsCastable.Possible _ -> { }
@@ -1695,7 +1695,7 @@ public class SequenceTypeCastable
             AntlrQuerySequenceType sourceType = sourceEntry.getValue().resolveFieldType(typeFactory);
             AntlrQuerySequenceType targetSeqType = targetField.resolveFieldType(typeFactory);
 
-            IsCastable fieldCastable = isCastable_(sourceType, targetSeqType);
+            IsCastable fieldCastable = isCastable(sourceType, targetSeqType);
             if (fieldCastable instanceof IsCastable.Impossible) {
                 return impossible;
             }
@@ -1715,7 +1715,7 @@ public class SequenceTypeCastable
 
             if (source.fields().containsKey(fieldName)) {
                 AntlrQuerySequenceType sourceType = source.fields().get(fieldName).resolveFieldType(typeFactory);
-                IsCastable fieldCastable = isCastable_(sourceType, targetSeqType);
+                IsCastable fieldCastable = isCastable(sourceType, targetSeqType);
 
                 if (fieldCastable instanceof IsCastable.Impossible) {
                     return impossible;
@@ -1725,7 +1725,7 @@ public class SequenceTypeCastable
             } else {
                 alwaysPossible = false;
 
-                IsCastable addCastable = isCastable_(source.additionalFieldType(), targetSeqType);
+                IsCastable addCastable = isCastable(source.additionalFieldType(), targetSeqType);
                 if (targetField.isRequired() && addCastable instanceof IsCastable.Impossible) {
                     return impossible;
                 }
@@ -1736,7 +1736,7 @@ public class SequenceTypeCastable
             String fieldName = sourceEntry.getKey();
             if (!target.fields().containsKey(fieldName)) {
                 AntlrQuerySequenceType sourceType = sourceEntry.getValue().resolveFieldType(typeFactory);
-                IsCastable fieldCastable = isCastable_(sourceType, target.additionalFieldType());
+                IsCastable fieldCastable = isCastable(sourceType, target.additionalFieldType());
 
                 if (fieldCastable instanceof IsCastable.Impossible) {
                     return impossible;
@@ -1746,7 +1746,7 @@ public class SequenceTypeCastable
             }
         }
 
-        IsCastable additionalCastable = isCastable_(source.additionalFieldType(), target.additionalFieldType());
+        IsCastable additionalCastable = isCastable(source.additionalFieldType(), target.additionalFieldType());
         if (additionalCastable instanceof IsCastable.Impossible) {
             alwaysPossible = false;
         } else if (additionalCastable instanceof IsCastable.Possible) {
@@ -1769,7 +1769,7 @@ public class SequenceTypeCastable
 
         for (RecordField field : source.fields().values()) {
             AntlrQuerySequenceType fieldType = field.resolveFieldType(typeFactory);
-            IsCastable valCastable = isCastable_(fieldType, target.valueType());
+            IsCastable valCastable = isCastable(fieldType, target.valueType());
             if (valCastable instanceof IsCastable.Impossible) {
                 return impossible;
             } else if (valCastable instanceof IsCastable.Possible) {
@@ -1777,7 +1777,7 @@ public class SequenceTypeCastable
             }
         }
 
-        IsCastable additionalCastable = isCastable_(source.additionalFieldType(), target.valueType());
+        IsCastable additionalCastable = isCastable(source.additionalFieldType(), target.valueType());
         if (additionalCastable instanceof IsCastable.Impossible) {
             alwaysPossible = false;
         } else if (additionalCastable instanceof IsCastable.Possible) {
@@ -1964,7 +1964,7 @@ public class SequenceTypeCastable
             AntlrQuerySequenceType sourceType = sourceEntry.getValue().resolveFieldType(typeFactory);
             AntlrQuerySequenceType targetSeqType = targetField.resolveFieldType(typeFactory);
 
-            IsCastable fieldCastable = isCastable_(sourceType, targetSeqType);
+            IsCastable fieldCastable = isCastable(sourceType, targetSeqType);
 
             switch (fieldCastable) {
                 case IsCastable.Possible _ -> alwaysPossible = false;
@@ -1998,7 +1998,7 @@ public class SequenceTypeCastable
             if (targetField != null) {
                 AntlrQuerySequenceType targetSeqType = targetField.resolveFieldType(typeFactory);
 
-                IsCastable fieldCastable = isCastable_(sourceType, targetSeqType);
+                IsCastable fieldCastable = isCastable(sourceType, targetSeqType);
 
                 switch (fieldCastable) {
                     case IsCastable.Possible _ -> alwaysPossible = false;
@@ -2010,7 +2010,7 @@ public class SequenceTypeCastable
                          IsCastable.WrongTargetType _ -> throw new IllegalStateException();
                 }
             } else {
-                switch(isCastable_(sourceType, target.additionalFieldType())) {
+                switch(isCastable(sourceType, target.additionalFieldType())) {
                     case IsCastable.AlwaysPossible _ -> alwaysPossible = false;
                     case IsCastable.Impossible _ -> { return impossible; }
                     case IsCastable.Possible _, IsCastable.TestedExpressionCanBeEmptySequenceWithoutFlag _,
@@ -2437,7 +2437,7 @@ public class SequenceTypeCastable
 
         boolean alwaysPossible = true;
 
-        IsCastable returnCastable = isCastable_(source.returnType(), target.returnType());
+        IsCastable returnCastable = isCastable(source.returnType(), target.returnType());
         if (returnCastable instanceof IsCastable.Impossible) {
             return impossible;
         } else if (returnCastable instanceof IsCastable.Possible) {
@@ -2446,7 +2446,7 @@ public class SequenceTypeCastable
 
         for (int i = 0; i < source.argumentTypes().size(); i++) {
             // Function parameters are contravariant
-            IsCastable paramCastable = isCastable_(target.argumentTypes().get(i), source.argumentTypes().get(i));
+            IsCastable paramCastable = isCastable(target.argumentTypes().get(i), source.argumentTypes().get(i));
             if (paramCastable instanceof IsCastable.Impossible) {
                 return impossible;
             } else if (paramCastable instanceof IsCastable.Possible) {
@@ -2781,7 +2781,7 @@ public class SequenceTypeCastable
 
         boolean alwaysPossible = true;
         for (int i = 0; i < source.members().length; i++) {
-            IsCastable castable = isCastable_(source.members()[i], target.members()[i]);
+            IsCastable castable = isCastable(source.members()[i], target.members()[i]);
             if (castable instanceof IsCastable.Impossible) {
                 return impossible;
             }
@@ -2810,7 +2810,7 @@ public class SequenceTypeCastable
     @Override
     public IsCastable visit(ArrayLikeType.ArrayType source, ArrayLikeType.TupleType target) {
         for (AntlrQuerySequenceType targetElementType : target.members()) {
-            IsCastable elementCastable = isCastable_(source.memberType(), targetElementType);
+            IsCastable elementCastable = isCastable(source.memberType(), targetElementType);
             if (elementCastable instanceof IsCastable.Impossible) {
                 return impossible;
             }
@@ -2821,7 +2821,7 @@ public class SequenceTypeCastable
 
     @Override
     public IsCastable visit(ArrayLikeType.ArrayType source, ArrayLikeType.ArrayType target) {
-        IsCastable itemCastable = isCastable_(source.memberType(), target.memberType());
+        IsCastable itemCastable = isCastable(source.memberType(), target.memberType());
 
         if (itemCastable instanceof IsCastable.Impossible) {
             return impossible;
@@ -2841,7 +2841,7 @@ public class SequenceTypeCastable
     public IsCastable visit(ArrayLikeType.TupleType source, ArrayLikeType.ArrayType target) {
         boolean alwaysPossible = true;
         for (AntlrQuerySequenceType memberType : source.members()) {
-            IsCastable castable = isCastable_(memberType, target.memberType());
+            IsCastable castable = isCastable(memberType, target.memberType());
             if (castable instanceof IsCastable.Impossible) {
                 return impossible;
             }

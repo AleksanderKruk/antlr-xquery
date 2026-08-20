@@ -2,7 +2,7 @@ package com.github.akruk.antlrquery.typesystem.types;
 
 
 
-import com.github.akruk.antlrquery.typesystem.typeoperations.Types;
+import com.github.akruk.antlrquery.typesystem.typeoperations.stringify.Stringify;
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.AntlrQueryItemType;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -31,7 +31,7 @@ public sealed interface AntlrQuerySequenceType
 
         @Override
         public String toString() {
-            return Types.stringify(this);
+            return Stringify.stringify(this);
         }
     }
     record NonEmptySequence(AntlrQueryItemType itemType, Cardinality cardinality)
@@ -39,7 +39,7 @@ public sealed interface AntlrQuerySequenceType
     {
         @Override
         public String toString() {
-            return Types.stringify(this);
+            return Stringify.stringify(this);
         }
 
         @Override

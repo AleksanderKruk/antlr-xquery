@@ -22,7 +22,7 @@ public class FunctionsOnNumericValues {
      * fn:abs($value as xs:numeric?) as xs:numeric?
      */
     public AntlrQueryValue abs(
-            final AntlrQueryVisitingContext context,
+            final AntlrQueryVisitingContext ignoredContext,
             final List<AntlrQueryValue> args) {
 
         final AntlrQueryValue v = args.getFirst();
@@ -97,9 +97,7 @@ public class FunctionsOnNumericValues {
         int precision = 0;
         if (args.size() >= 2) {
             final AntlrQueryValue p = args.get(1);
-            if (p.isEmptySequence) {
-                precision = 0;
-            } else if (!p.isNumeric) {
+            if (!p.isNumeric) {
                 return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
             } else {
                 precision = p.numericValue.intValue();
@@ -172,9 +170,7 @@ public class FunctionsOnNumericValues {
         int precision = 0;
         if (args.size() == 2) {
             final AntlrQueryValue p = args.get(1);
-            if (p.isEmptySequence) {
-                precision = 0;
-            } else if (!p.isNumeric) {
+            if (!p.isNumeric) {
                 return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
             } else {
                 precision = p.numericValue.intValue();
@@ -222,9 +218,7 @@ public class FunctionsOnNumericValues {
         int precision = 0;
         if (args.size() == 3) {
             final AntlrQueryValue p = args.get(2);
-            if (p.isEmptySequence) {
-                precision = 0;
-            } else if (!p.isNumeric) {
+            if (!p.isNumeric) {
                 return valueFactory.error(AntlrQueryError.InvalidArgumentType, "");
             } else {
                 precision = p.numericValue.intValue();

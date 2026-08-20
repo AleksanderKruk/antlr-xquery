@@ -357,7 +357,7 @@ public class EvaluatingFunctionManager {
         registerFunction("antlr", "line", antlrFunctions::line, nodearg, nodeargdefault);
 
 
-        ArrayFunctions arrayFunctions = new ArrayFunctions(valueFactory, this);
+        ArrayFunctions arrayFunctions = new ArrayFunctions(valueFactory, this, stringifier, valueComparisonOperator);
 
         registerFunction("array", "append", arrayFunctions::append, List.of("array", "member"), Map.of());
         registerFunction("array", "build", arrayFunctions::build, List.of("input", "action"), Map.of("action", helperTrees.IDENTITY$1));

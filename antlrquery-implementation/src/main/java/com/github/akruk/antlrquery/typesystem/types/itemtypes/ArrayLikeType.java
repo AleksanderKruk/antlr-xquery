@@ -2,7 +2,7 @@ package com.github.akruk.antlrquery.typesystem.types.itemtypes;
 
 import com.github.akruk.antlrquery.typesystem.types.AntlrQuerySequenceType;
 import com.github.akruk.antlrquery.typesystem.types.Cardinality;
-import com.github.akruk.antlrquery.typesystem.types.ItemTypes;
+import com.github.akruk.antlrquery.typesystem.typeoperations.stringify.Stringify;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
 
@@ -28,7 +28,7 @@ public sealed interface ArrayLikeType
     {
         @Override
         public String toString() {
-            return ItemTypes.stringify(this);
+            return Stringify.stringify(this);
         }
 
         @Override
@@ -45,7 +45,7 @@ public sealed interface ArrayLikeType
     {
         @Override
         public String toString() {
-            return ItemTypes.stringify(this);
+            return Stringify.stringify(this);
         }
 
         @Override

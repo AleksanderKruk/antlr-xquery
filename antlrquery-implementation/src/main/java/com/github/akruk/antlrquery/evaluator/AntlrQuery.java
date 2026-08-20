@@ -101,7 +101,7 @@ public final class AntlrQuery {
             parser,
             typeFactory,
             valueFactory,
-            new SemanticSymbolManager(
+            new SemanticSymbolManager.ProtoSemanticSymbolManager(
                 typeFactory,
                 contextManager,
                 new SemanticFunctionSets(typeFactory).ALL()
@@ -185,7 +185,7 @@ public final class AntlrQuery {
             parser,
             typeFactory,
             valueFactory,
-            new SemanticSymbolManager(
+            new SemanticSymbolManager.ProtoSemanticSymbolManager(
                 typeFactory,
                 contextManager,
                 new SemanticFunctionSets(typeFactory).ALL()

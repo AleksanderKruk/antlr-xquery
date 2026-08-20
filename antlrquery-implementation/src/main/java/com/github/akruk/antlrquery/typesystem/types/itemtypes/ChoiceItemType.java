@@ -1,6 +1,6 @@
 package com.github.akruk.antlrquery.typesystem.types.itemtypes;
 
-import com.github.akruk.antlrquery.typesystem.types.ItemTypes;
+import com.github.akruk.antlrquery.typesystem.typeoperations.stringify.Stringify;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.Arrays;
@@ -14,7 +14,7 @@ public record ChoiceItemType(ConcreteItemType[] itemTypes)
 {
     @Override
     public @NonNull String toString() {
-        return ItemTypes.stringify(this);
+        return Stringify.stringify(this);
     }
 
     @Override

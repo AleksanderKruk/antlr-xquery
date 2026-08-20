@@ -122,7 +122,7 @@ public class AntlrQueryRunner {
                     parserAndTree.parser,
                     typeFactory,
                     new AntlrQueryMemoizedValueFactory(typeFactory),
-                    new SemanticSymbolManager(typeFactory, contextManager, new SemanticFunctionSets(typeFactory).ALL()),
+                    new SemanticSymbolManager.ProtoSemanticSymbolManager(typeFactory, contextManager, new SemanticFunctionSets(typeFactory).ALL()),
                     // // TODO:
                     Map.of(),
                     new ModuleManager(modulePaths),
@@ -208,7 +208,7 @@ public class AntlrQueryRunner {
                     parserAndTree.parser,
                     typeFactory,
                     valueFactory,
-                    new SemanticSymbolManager(
+                    new SemanticSymbolManager.ProtoSemanticSymbolManager(
                         typeFactory,
                         contextManager,
                         new SemanticFunctionSets(typeFactory).ALL()

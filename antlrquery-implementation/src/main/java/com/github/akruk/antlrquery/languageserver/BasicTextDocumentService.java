@@ -255,7 +255,7 @@ public class BasicTextDocumentService implements TextDocumentService {
                     null,
                     typeFactory,
                     new AntlrQueryMemoizedValueFactory(typeFactory),
-                    new SemanticSymbolManager(typeFactory, contextManager,
+                    new SemanticSymbolManager.ProtoSemanticSymbolManager(typeFactory, contextManager,
                             new SemanticFunctionSets(typeFactory).ALL()
                     ),
                     null,

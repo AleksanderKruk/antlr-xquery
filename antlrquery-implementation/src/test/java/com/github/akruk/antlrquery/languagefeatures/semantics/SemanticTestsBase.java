@@ -60,7 +60,9 @@ public class SemanticTestsBase {
         });
         final ParseTree xqueryTree = antlrQueryParser.xquery();
         final var contextManager = new AntlrQuerySemanticContextManager(typeFactory);
-        final SemanticSymbolManager caller = new SemanticSymbolManager(typeFactory, contextManager, new SemanticFunctionSets(typeFactory).ALL());
+        final SemanticSymbolManager.ProtoSemanticSymbolManager caller
+                = new SemanticSymbolManager.ProtoSemanticSymbolManager(
+                        typeFactory, contextManager, new SemanticFunctionSets(typeFactory).ALL());
         final var memoizedFactory = new MemoizedCardinalityFactory();
         final NumericRangeVisitor numericRangeVisitor = new NumericRangeVisitor();
         final CardinalityVisitor cardinalityVisitor = new CardinalityVisitor(memoizedFactory);

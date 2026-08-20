@@ -550,6 +550,13 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         return callResult;
     }
 
+    @Override
+    public AntlrQueryValue visitNamedFunctionRef(AntlrQueryParser.NamedFunctionRefContext ctx) {
+        var qname = namespaceResolver.resolveFunction(ctx.qname().getText());
+        var arity = Long.parseLong(ctx.IntegerLiteral().getText());
+        return functionManager.getFunctionReference(qname.namespace(), qname.name(), arity);
+    }
+
     private AntlrQueryValue callFunction(
         final String qname,
         final List<AntlrQueryValue> args,

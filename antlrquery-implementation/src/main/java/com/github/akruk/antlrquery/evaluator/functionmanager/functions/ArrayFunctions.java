@@ -5,18 +5,22 @@ import com.github.akruk.antlrquery.evaluator.functionmanager.EvaluatingFunctionM
 import com.github.akruk.antlrquery.evaluator.values.AntlrQueryError;
 import com.github.akruk.antlrquery.evaluator.values.AntlrQueryValue;
 import com.github.akruk.antlrquery.evaluator.values.factories.AntlrQueryValueFactory;
+import com.github.akruk.antlrquery.evaluator.values.operations.Stringifier;
+import com.github.akruk.antlrquery.evaluator.values.operations.ValueComparisonOperator;
 
 import java.util.*;
 
 public class ArrayFunctions {
     private final AntlrQueryValueFactory valueFactory;
     private final EvaluatingFunctionManager functionManager;
+    private final ValueComparisonOperator valueComparisonOperator;
 
     public ArrayFunctions(
-            final AntlrQueryValueFactory valueFactory, EvaluatingFunctionManager functionManager)
+            final AntlrQueryValueFactory valueFactory, EvaluatingFunctionManager functionManager, Stringifier stringifier, ValueComparisonOperator valueComparisonOperator)
     {
         this.valueFactory = valueFactory;
         this.functionManager = functionManager;
+        this.valueComparisonOperator = valueComparisonOperator;
     }
 
 
@@ -682,18 +686,26 @@ public class ArrayFunctions {
         for (int i = 0; i < size; i++) idx.add(i);
 
         idx.sort((i, j) -> {
-            AntlrQueryValue ki = keys.get(i);
-            AntlrQueryValue kj = keys.get(j);
+            final var ki = keys.get(i).sequence;
+            final var kj = keys.get(j).sequence;
 
-            if (ki.sequence.isEmpty() && kj.sequence.isEmpty()) {
-                return 0;
+            final int commonLength = Math.min(ki.size(), kj.size());
+
+            for (int k = 0; k < commonLength; k++) {
+                final var comparison =
+                        valueComparisonOperator.valueCompare(
+                                ki.get(k),
+                                kj.get(k));
+
+                // TODO: error handling
+                final int result = comparison.numericValue.intValue();
+
+                if (result != 0)
+                    return result;
             }
 
-            AntlrQueryValue ai = ki.sequence.getFirst();
-            AntlrQueryValue aj = kj.sequence.getFirst();
-
-//            TODO: take collation into account
-            return ai.stringValue.compareTo(aj.stringValue);
+            // Equal prefix -> shorter sequence comes first.
+            return Integer.compare(ki.size(), kj.size());
         });
 
         List<AntlrQueryValue> result = new ArrayList<>(size);

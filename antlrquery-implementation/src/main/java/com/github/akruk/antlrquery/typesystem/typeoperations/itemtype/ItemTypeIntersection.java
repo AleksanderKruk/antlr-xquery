@@ -53,6 +53,8 @@ public class ItemTypeIntersection
                         })
                         .collect(Collectors.groupingBy(AntlrQueryItemType::getClass));
 
+        final int effectiveTypeLength = types.length - itemTypeToInstances.getOrDefault(AnyItemType.class, List.of()).size();
+
         if (!itemTypeToInstances.getOrDefault(NeverType.class, List.of()).isEmpty()) {
             return null;
         }
@@ -63,25 +65,31 @@ public class ItemTypeIntersection
         List<AntlrQueryItemType> results = new ArrayList<>(allNonChoiceItems);
 
         // Intersect booleans
-        List<AntlrQueryItemType> falses = itemTypeToInstances.getOrDefault(BooleanType.False.class, List.of());
-        List<AntlrQueryItemType> trues = itemTypeToInstances.getOrDefault(BooleanType.True.class, List.of());
-        List<AntlrQueryItemType> booleans = itemTypeToInstances.getOrDefault(BooleanType.Boolean.class, List.of());
+        {
+            List<AntlrQueryItemType> falses = itemTypeToInstances.getOrDefault(BooleanType.False.class, List.of());
+            List<AntlrQueryItemType> trues = itemTypeToInstances.getOrDefault(BooleanType.True.class, List.of());
+            List<AntlrQueryItemType> booleans = itemTypeToInstances.getOrDefault(BooleanType.Boolean.class, List.of());
 
-        if (falses.isEmpty() || trues.isEmpty()) {
-            if (!falses.isEmpty()) {
-                results.add(typeFactory.itemFalse());
-            } else if (!trues.isEmpty()) {
-                results.add(typeFactory.itemTrue());
-            } else if (!booleans.isEmpty()) {
-                results.add(typeFactory.itemBoolean());
+            if (falses.size() + trues.size() + booleans.size() == effectiveTypeLength) {
+                if (falses.isEmpty() || trues.isEmpty()) {
+                    if (!falses.isEmpty()) {
+                        results.add(typeFactory.itemFalse());
+                    } else if (!trues.isEmpty()) {
+                        results.add(typeFactory.itemTrue());
+                    } else if (!booleans.isEmpty()) {
+                        results.add(typeFactory.itemBoolean());
+                    }
+                } // else False ^^ True = empty set
+
             }
-        } // else False ^^ True = empty set
+
+        }
 
         // Intersect strings
         {
             List<AntlrQueryItemType> strings = itemTypeToInstances.getOrDefault(StringType.StringNonEnum.class, List.of());
             List<AntlrQueryItemType> enums = itemTypeToInstances.getOrDefault(StringType.StringEnum.class, List.of());
-            if (strings.size() + enums.size() == types.length) {
+            if (strings.size() + enums.size() == effectiveTypeLength) {
                 @Nullable AntlrQueryItemType stringResult = stringIntersectionType(typeFactory, strings, enums);
                 if (stringResult != null) {
                     results.add(stringResult);
@@ -92,7 +100,7 @@ public class ItemTypeIntersection
         // Intersect numbers
         {
             List<AntlrQueryItemType> numbers = itemTypeToInstances.getOrDefault(NumberType.class, List.of());
-            if (numbers.size() == types.length) {
+            if (numbers.size() == effectiveTypeLength) {
                 @Nullable AntlrQueryItemType numberResult = numberIntersectionType(typeFactory, numbers);
                 if (numberResult != null) {
                     results.add(numberResult);
@@ -103,7 +111,7 @@ public class ItemTypeIntersection
         // Intersect regexes
         {
             List<AntlrQueryItemType> regexes = itemTypeToInstances.getOrDefault(RegexType.class, List.of());
-            if (regexes.size() == types.length) {
+            if (regexes.size() == effectiveTypeLength) {
                 @Nullable AntlrQueryItemType regexResult = regexIntersectionType(regexes);
                 if (regexResult != null) {
                     results.add(regexResult);
@@ -117,7 +125,7 @@ public class ItemTypeIntersection
             List<AntlrQueryItemType> records = itemTypeToInstances.getOrDefault(MapLikeType.RecordType.class, List.of());
             List<AntlrQueryItemType> extRecords = itemTypeToInstances.getOrDefault(MapLikeType.ExtensibleRecordType.class, List.of());
             List<AntlrQueryItemType> maps = itemTypeToInstances.getOrDefault(MapLikeType.MapType.class, List.of());
-            if (records.size() + extRecords.size() + maps.size() == types.length) {
+            if (records.size() + extRecords.size() + maps.size() == effectiveTypeLength) {
                 @Nullable AntlrQueryItemType recordOrMapResult = recordAndMapIntersectionType(typeFactory, records, extRecords, maps);
                 if (recordOrMapResult != null) {
                     results.add(recordOrMapResult);
@@ -129,7 +137,7 @@ public class ItemTypeIntersection
         {
             List<AntlrQueryItemType> arrays = itemTypeToInstances.getOrDefault(ArrayLikeType.ArrayType.class, List.of());
             List<AntlrQueryItemType> tuples = itemTypeToInstances.getOrDefault(ArrayLikeType.TupleType.class, List.of());
-            if (arrays.size() + tuples.size() == types.length) {
+            if (arrays.size() + tuples.size() == effectiveTypeLength) {
                 @Nullable AntlrQueryItemType arrayResult = arrayAndTupleIntersectionType(typeFactory, arrays, tuples);
                 if (arrayResult != null) {
                     results.add(arrayResult);
@@ -160,7 +168,7 @@ public class ItemTypeIntersection
                     + tokensFromGrammar.size()
                     + anyTokens.size()
                     + anyTokensFromGrammar.size();
-            if (sum == types.length) {
+            if (sum == effectiveTypeLength) {
                 @Nullable AntlrQueryItemType treeNodeResult = treeNodesIntersectionType(
                         typeFactory,
                         nodesFromGrammar,
@@ -186,7 +194,7 @@ public class ItemTypeIntersection
         {
             List<AntlrQueryItemType> anyFunctions = itemTypeToInstances.getOrDefault(FunctionType.AnyFunction.class, List.of());
             List<AntlrQueryItemType> functions = itemTypeToInstances.getOrDefault(FunctionType.ConstrainedFunction.class, List.of());
-            if (anyFunctions.size() + functions.size() == types.length) {
+            if (anyFunctions.size() + functions.size() == effectiveTypeLength) {
                 @Nullable AntlrQueryItemType functionResult = functionIntersectionType(typeFactory, anyFunctions, functions);
                 if (functionResult != null) {
                     results.add(functionResult);
@@ -195,24 +203,24 @@ public class ItemTypeIntersection
         }
 
         // Intersect Grammar Entities (Since they have no constraints, intersecting identical instances yields the same instance)
-        if (itemTypeToInstances.getOrDefault(GrammarEntityType.GrammarType.class, List.of()).size() == types.length) {
+        if (itemTypeToInstances.getOrDefault(GrammarEntityType.GrammarType.class, List.of()).size() == effectiveTypeLength) {
             results.add(new GrammarEntityType.GrammarType());
         }
-        if (itemTypeToInstances.getOrDefault(GrammarEntityType.GrammarRuleType.class, List.of()).size() == types.length) {
+        if (itemTypeToInstances.getOrDefault(GrammarEntityType.GrammarRuleType.class, List.of()).size() == effectiveTypeLength) {
             results.add(new GrammarEntityType.GrammarRuleType());
         }
-        if (itemTypeToInstances.getOrDefault(GrammarEntityType.GrammarTokenType.class, List.of()).size() == types.length) {
+        if (itemTypeToInstances.getOrDefault(GrammarEntityType.GrammarTokenType.class, List.of()).size() == effectiveTypeLength) {
             results.add(new GrammarEntityType.GrammarTokenType());
         }
 
         // Fallback: If no explicit constraints were collected, but AnyItemType was present, return AnyType.
         // AnyType intersected with another constraint simply vanishes since the other constraint is strictly narrower.
-        if (results.isEmpty() && itemTypeToInstances.getOrDefault(AnyItemType.class, List.of()).size() == types.length) {
+        if (results.isEmpty() && itemTypeToInstances.getOrDefault(AnyItemType.class, List.of()).size() == effectiveTypeLength) {
             return AnyItemType.ANY_TYPE;
         }
 
         return switch (results.size()) {
-            case 0 -> typeFactory.itemNothing();
+            case 0 -> null;
             case 1 -> results.getFirst();
             default -> typeFactory.itemChoice(results.toArray(AntlrQueryItemType[]::new));
         };

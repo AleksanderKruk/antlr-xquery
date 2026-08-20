@@ -2,7 +2,7 @@ package com.github.akruk.antlrquery.typesystem.types.itemtypes;
 
 import java.util.Set;
 
-import com.github.akruk.antlrquery.typesystem.types.ItemTypes;
+import com.github.akruk.antlrquery.typesystem.typeoperations.stringify.Stringify;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Cardinalities;
@@ -26,7 +26,7 @@ public sealed interface StringType
         }
         @Override
         public @NonNull String toString() {
-            return ItemTypes.stringify(this);
+            return Stringify.stringify(this);
         }
 
         public Set<String> members() {
@@ -45,7 +45,7 @@ public sealed interface StringType
     record StringNonEnum(Cardinality cardinality) implements StringType{
         @Override
         public @NonNull String toString() {
-            return ItemTypes.stringify(this);
+            return Stringify.stringify(this);
         }
 
         @Override

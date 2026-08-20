@@ -1,7 +1,7 @@
 package com.github.akruk.antlrquery.typesystem.types.itemtypes;
 
 import com.github.akruk.antlrquery.namespaceresolver.NamespaceResolver;
-import com.github.akruk.antlrquery.typesystem.types.ItemTypes;
+import com.github.akruk.antlrquery.typesystem.typeoperations.stringify.Stringify;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.Set;
@@ -17,7 +17,7 @@ public sealed interface TreeRuleType
     {
         @Override
         public @NonNull String toString() {
-            return ItemTypes.stringify(this);
+            return Stringify.stringify(this);
         }
 
         @Override
@@ -31,7 +31,7 @@ public sealed interface TreeRuleType
     {
         @Override
         public @NonNull String toString() {
-            return ItemTypes.stringify(this);
+            return Stringify.stringify(this);
         }
 
         @Override
@@ -48,7 +48,7 @@ public sealed interface TreeRuleType
     {
         @Override
         public @NonNull String toString() {
-            return ItemTypes.stringify(this);
+            return Stringify.stringify(this);
         }
 
         @Override

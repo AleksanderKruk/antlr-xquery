@@ -292,35 +292,34 @@ public final class Types {
             AntlrQuerySequenceType assignedType,
             AntlrQuerySequenceType desiredType)
     {
+        // https://qt4cg.org/specifications/xquery-40/xquery-40.html#id-coercion-rules
         if (Types.isSubtype(typeFactory, assignedType, desiredType)) {
             return RelativeCoercibility.ALWAYS;
         }
-        final boolean emptySequenceRequired = Types.isSubtype(typeFactory, desiredType, typeFactory.emptySequence());
-        if (emptySequenceRequired) {
+        // If the required type is empty-sequence(), no coercion takes place
+        // (the supplied value must be the empty sequence, or a type error occurs).
+        if (desiredType.equals(typeFactory.emptySequence())) {
+            // case when assignedType == empty sequence has already been covered by isSubtype
+            return RelativeCoercibility.NEVER;
+        }
+
+        if (Types.intersect(typeFactory, assignedType, desiredType).itemType() instanceof NeverType) {
             return RelativeCoercibility.NEVER;
         }
         return RelativeCoercibility.POSSIBLE;
+
+
+
     }
 
-    public static String stringify(final AntlrQuerySequenceType type) {
-        return switch(type) {
-            case AntlrQuerySequenceType.EmptySequence() -> "empty-sequence()";
-            case AntlrQuerySequenceType.NonEmptySequence(AntlrQueryItemType itemType, Cardinality cardinality) -> {
-                String cardinalityRepr = Cardinalities.stringifyWithPrefix(cardinality);
-                if (cardinalityRepr.isEmpty()) {
-                    yield ItemTypes.stringifyWithoutParentheses(itemType);
-                }
-                if (itemType instanceof final FunctionType.ConstrainedFunction cf) {
-                    if (!(cf.returnType().itemType() instanceof AnyItemType
-                            && cf.returnType().cardinality().equals(Cardinality.ZERO_OR_MORE)))
-                    {
-                        yield "(" + ItemTypes.stringify(cf) + ")" + cardinalityRepr;
-                    }
-                }
-                yield ItemTypes.stringify(itemType) + cardinalityRepr;
-            }
-        };
+    public static boolean notCoercible(
+            AntlrQueryTypeFactory typeFactory,
+            AntlrQuerySequenceType assignedType,
+            AntlrQuerySequenceType desiredType)
+    {
+        return Types.coercibility(typeFactory, assignedType, desiredType) == RelativeCoercibility.NEVER;
     }
+
 
     public static AntlrQuerySequenceType intersect(
             AntlrQueryTypeFactory typeFactory,
@@ -329,7 +328,7 @@ public final class Types {
         assert types.length > 0 : "There were no types given to intersect";
         if (types.length == 1) return types[0];
 
-        // Collect and intersect cardinalities of all sequence types
+        // Collect cardinalities of all sequence types
         Cardinality[] cardinalities = Arrays.stream(types)
                 .map(AntlrQuerySequenceType::cardinality)
                 .toArray(Cardinality[]::new);
@@ -339,8 +338,6 @@ public final class Types {
         if (mergedCardinality == null) {
             return typeFactory.emptySequence();
         }
-        // Each element of intersection could be optional
-        final @Nullable Cardinality optionalized = Cardinalities.optionalize(mergedCardinality);
 
         // Intersect item types
         AntlrQueryItemType[] itemTypes = Arrays.stream(types)
@@ -357,10 +354,7 @@ public final class Types {
             return typeFactory.emptySequence();
         }
 
-        if (optionalized == null) {
-            return typeFactory.neverType();
-        }
-        return typeFactory.sequence(mergedItemType, optionalized);
+        return typeFactory.sequence(mergedItemType, mergedCardinality);
     }
 
 

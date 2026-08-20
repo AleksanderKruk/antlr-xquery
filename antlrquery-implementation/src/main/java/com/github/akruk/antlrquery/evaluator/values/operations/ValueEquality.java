@@ -663,7 +663,7 @@ public class ValueEquality extends ValueBinaryOperationPredicate {
         for (int i = 0; i < x.sequence.size(); i++) {
             final AntlrQueryValue v1 = x.sequence.get(i);
             final AntlrQueryValue v2 = y.sequence.get(i);
-            if (!v1.equals(v2.sequence.get(i))) {
+            if (!v1.equals(v2)) {
                 return false;
             }
         }

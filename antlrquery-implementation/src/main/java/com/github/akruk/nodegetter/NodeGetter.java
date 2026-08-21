@@ -152,8 +152,7 @@ public class NodeGetter {
             return List.of();
         final var parentsChildren = getChildren(parent);
         final var nodeIndex = parentsChildren.indexOf(node);
-        final var followingSibling = parentsChildren.subList(nodeIndex+1, parentsChildren.size());
-        return followingSibling;
+        return parentsChildren.subList(nodeIndex+1, parentsChildren.size());
     }
 
 
@@ -174,8 +173,7 @@ public class NodeGetter {
             return List.of();
         final var parentsChildren = getChildren(parent);
         final var nodeIndex = parentsChildren.indexOf(node);
-        final var precedingSibling = parentsChildren.subList(0, nodeIndex);
-        return precedingSibling;
+        return parentsChildren.subList(0, nodeIndex);
     }
 
 
@@ -224,10 +222,9 @@ public class NodeGetter {
 
 
     public List<ParseTree> getChildren(final ParseTree treenode) {
-        final List<ParseTree> children = IntStream.range(0, treenode.getChildCount())
+        return IntStream.range(0, treenode.getChildCount())
             .mapToObj(treenode::getChild)
             .collect(Collectors.toList());
-        return children;
     }
 
 
@@ -261,10 +258,9 @@ public class NodeGetter {
     }
 
     public List<ParseTree> getAllParents(final List<ParseTree> nodes) {
-        final List<ParseTree> newMatched = nodes.stream()
+        return nodes.stream()
             .map(ParseTree::getParent)
             .toList();
-        return newMatched;
     }
 
     public List<ParseTree> getAllAncestorsOrSelf(final List<ParseTree> nodes) {

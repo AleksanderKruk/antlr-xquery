@@ -241,6 +241,15 @@ public class FunctionArrayPutSemanticTests extends SemanticTestsBase {
         );
     }
 
+
+    @Test
+    public void negativeNumber() {
+        assertType(
+                "-1",
+                typeFactory.number(NumericRange.of(-1))
+        );
+    }
+
     @Test
     public void arrayPut_errors() {
         assertDiagnostics(

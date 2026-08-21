@@ -334,7 +334,7 @@ public class AntlrQueryValue {
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if (obj == null || !(obj instanceof final AntlrQueryValue other))
+        if (!(obj instanceof final AntlrQueryValue other))
             return false;
         if (this.hashCode == other.hashCode)
             return true;

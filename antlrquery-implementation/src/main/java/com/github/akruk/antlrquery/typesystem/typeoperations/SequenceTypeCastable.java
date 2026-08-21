@@ -8,7 +8,6 @@ import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Cardina
 import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Ranges;
 import com.github.akruk.antlrquery.typesystem.types.*;
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.*;
-import com.github.akruk.antlrquery.typesystem.types.itemtypes.NumberType;
 import com.github.akruk.visitorannotations.Visitor;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;

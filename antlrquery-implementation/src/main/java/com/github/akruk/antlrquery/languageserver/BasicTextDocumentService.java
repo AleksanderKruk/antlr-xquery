@@ -26,6 +26,7 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.DefaultQualifier;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionKind;
@@ -96,7 +97,7 @@ import com.google.gson.JsonPrimitive;
 
 @DefaultQualifier(NonNull.class)
 public class BasicTextDocumentService implements TextDocumentService {
-    private LanguageClient client;
+    private @Nullable LanguageClient client = null;
     private final Map<String, List<Token>> tokenStore;
     private final Map<String, ParseTree> parseTreeStore;
     private final Map<String, AntlrQuerySemanticAnalyzer> semanticAnalyzers;
@@ -280,23 +281,23 @@ public class BasicTextDocumentService implements TextDocumentService {
             // final TreeEvaluator defGetter = XQuery.compile("./preceding::varName[string() = $variableNameWithDollar][last()]", parser);
             analyzer.addListener(new AnalysisListener() {
                 @Override
-                public void onVariableDeclaration(final @NonNull VariableInfo variableInfo) {
+                public void onVariableDeclaration(final VariableInfo variableInfo) {
                     varNamesMappedToTypes_.put(variableInfo.definition(), variableInfo.type());
                 }
 
                 @Override
-                public void onVariableReference(final @NonNull VarRefContext varRef, final @NonNull VariableInfo variableInfo) {
+                public void onVariableReference(final VarRefContext varRef, final VariableInfo variableInfo) {
                     varRefsMappedToTypes_.put(varRef, variableInfo.type());
                     varRefsMappedToDeclarations.put(varRef, variableInfo.definition());
                 }
 
                 @Override
-                public void onModuleDeclaration(final @NonNull ModuleInfo moduleInfo) {
+                public void onModuleDeclaration(final ModuleInfo moduleInfo) {
                     moduleDeclarations.put(moduleInfo.declaration(), moduleInfo);
                 }
 
                 @Override
-                public void onModuleReference(@NonNull QnameContext reference, @NonNull ModuleInfo moduleInfo) {
+                public void onModuleReference(QnameContext reference, ModuleInfo moduleInfo) {
                     moduleReferences.put(reference, moduleInfo);
                 }
 
@@ -528,8 +529,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         final int startline = start.getLine() - 1;
         final int charPos = start.getCharPositionInLine();
         final int length = stop.getStopIndex() - start.getStartIndex() + 1;
-        final SemanticToken token = new SemanticToken(startline, charPos, length, tokenTypeIndex, 0);
-        return token;
+        return new SemanticToken(startline, charPos, length, tokenTypeIndex, 0);
     }
 
     private SemanticToken getSemanticToken(final TerminalNode ctx, final int tokenTypeIndex) {
@@ -537,8 +537,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         final int line = start.getLine() - 1;
         final int charPos = start.getCharPositionInLine();
         final int length = start.getStopIndex() - start.getStartIndex() + 1;
-        final SemanticToken token = new SemanticToken(line, charPos, length, tokenTypeIndex, 0);
-        return token;
+        return new SemanticToken(line, charPos, length, tokenTypeIndex, 0);
     }
 
     @Override
@@ -549,7 +548,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         final ParseTree tree = parseTreeStore.get(uri);
         final AntlrQuerySemanticAnalyzer analyzer = semanticAnalyzers.get(uri);
 
-        if (tree == null || analyzer == null) {
+        if (analyzer == null) {
             return CompletableFuture.completedFuture(null);
         }
 
@@ -618,8 +617,7 @@ public class BasicTextDocumentService implements TextDocumentService {
         final int positionalArgCount = positionalArguments == null ? 0 : positionalArguments.argument().size();
         final KeywordArgumentsContext keywordArguments = functionCall.argumentList().keywordArguments();
         final int kewordArgCount = keywordArguments == null ? 0 : keywordArguments.keywordArgument().size();
-        final int arity = positionalArgCount + kewordArgCount + (isArrowCall ? 1 : 0);
-        return arity;
+        return positionalArgCount + kewordArgCount + (isArrowCall ? 1 : 0);
     }
 
     private boolean isArrowCall(final FunctionCallContext functionCall) {
@@ -1077,6 +1075,7 @@ public class BasicTextDocumentService implements TextDocumentService {
     record RecordDeclData(String uri, NamedRecordTypeDeclContext context) {
     }
 
+    @Nullable
     RecordDeclData getRecordDeclaration(final QualifiedName qname, final AntlrQuerySemanticAnalyzer analyzer) {
         for (final var recordUrl : recordDeclarations.keySet()) {
             for (final var record : recordDeclarations.get(recordUrl)) {
@@ -1095,8 +1094,8 @@ public class BasicTextDocumentService implements TextDocumentService {
         final int arity = getArity(functionName);
         final var analyzer = semanticAnalyzers.get(document);
         final var qname = resolver.resolveFunction(functionName.getText());
-        final FunctionSpecification spec = analyzer.getSymbolManager().getNamedFunctionSpecification(functionName,
-                qname, arity);
+        final FunctionSpecification spec = analyzer.getSymbolManager().getNamedFunctionSpecification(
+                functionName, qname, arity);
         if (spec == null) {
             return CompletableFuture.completedFuture(Either.forLeft(List.of()));
         }

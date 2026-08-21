@@ -55,7 +55,7 @@ public class ProcessingStrings {
 
         final var atomized = atomizer.atomize(values);
         for (AntlrQueryValue value : atomized) {
-            Integer codepoint = value.numericValue.intValue();
+            int codepoint = value.numericValue.intValue();
             if (codepoint < 0 || codepoint > 0x10FFFF ||
                 (codepoint >= 0xD800 && codepoint <= 0xDFFF)) {
                 return valueFactory.error(AntlrQueryError.InvalidCodepoint, "");

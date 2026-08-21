@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import com.github.akruk.antlrquery.evaluator.values.AntlrQueryValue;
 import com.github.akruk.antlrquery.languagefeatures.evaluation.EvaluationTestsBase;
 
-public class T extends EvaluationTestsBase {
+public class FullDebugTest extends EvaluationTestsBase {
 
     @Test
     void t() throws Exception

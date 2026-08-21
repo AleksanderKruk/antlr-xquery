@@ -43,7 +43,7 @@ public class FunctionsOnSequencesOfNodes {
         }
 
         ParseTree nodeTree = node.node;
-        if (nodeTree == null || !(nodeTree instanceof ParserRuleContext ctx)) {
+        if (!(nodeTree instanceof ParserRuleContext ctx)) {
             return valueFactory.emptyString();
         }
 

@@ -597,7 +597,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         final String moduleConstructionNamespace,
         final List<DefaultNamespaceDeclContext> ConstructionDecls)
     {
-        final String defaultConstructionNamespace = switch(ConstructionDecls.size())
+        return switch(ConstructionDecls.size())
         {
             case 0 -> moduleConstructionNamespace;
             case 1 -> {
@@ -612,7 +612,6 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
                 yield moduleConstructionNamespace;
             }
         };
-        return defaultConstructionNamespace;
     }
 
     private String validateDefaultElementNamespace(
@@ -2552,11 +2551,16 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
         if (ctx.MINUS() == null && ctx.PLUS() == null) {
             return visitSimpleMapExpr(ctx.simpleMapExpr());
         }
-        final var type = visitSimpleMapExpr(ctx.simpleMapExpr());
+        final TypeInContext type = visitSimpleMapExpr(ctx.simpleMapExpr());
         if (!type.isSubtypeOf(anyNumber)) {
             error(ctx, ErrorType.UNARY__INVALID, List.of(type));
         }
-        return symbolManager.typeInContext(anyNumber);
+        if (ctx.PLUS() != null) {
+            return type;
+        }
+        var number = (NumberType) type.type.itemType();
+        var range = Ranges.negate(number.range());
+        return symbolManager.typeInContext(typeFactory.number(range));
     }
 
     @Override
@@ -2806,7 +2810,7 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
     boolean validateUnresolvedFunction(final UnresolvedFunctionSpecification function) {
         final Set<String> uniqueNames = new HashSet<>();
         boolean valid = true;
-        int i = 0;
+        int i;
         for (i = 0; i < function.args.size(); i++) {
             final UnresolvedArgumentSpecification fArg = function.args.get(i);
             if (fArg.defaultValue != null)

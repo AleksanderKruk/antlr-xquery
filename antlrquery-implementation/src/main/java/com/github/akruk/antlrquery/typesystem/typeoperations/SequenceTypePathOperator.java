@@ -407,8 +407,8 @@ public class SequenceTypePathOperator {
     ) {}
 
     private ValidateNamesResult resolveAndValidateNames(
-        final @NonNull List<String> axisElementNames,
-        final @NonNull NamespaceResolver namespaceResolver
+        final List<String> axisElementNames,
+        final NamespaceResolver namespaceResolver
     ) {
         final Set<QualifiedName> qualifiedNames = new HashSet<>(axisElementNames.size());
         final Set<QualifiedName> validNames = new HashSet<>(axisElementNames.size());

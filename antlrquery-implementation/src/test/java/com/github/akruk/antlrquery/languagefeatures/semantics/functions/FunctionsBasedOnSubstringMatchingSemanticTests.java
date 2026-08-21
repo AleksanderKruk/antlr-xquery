@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import com.github.akruk.antlrquery.languagefeatures.semantics.SemanticTestsBase;
 
-public class FunctionsBasedOnSubstringMatching extends SemanticTestsBase {
+public class FunctionsBasedOnSubstringMatchingSemanticTests extends SemanticTestsBase {
 
     // fn:contains($value as xs:string?, $substring as xs:string?, $collation as
     // xs:string? := default) as xs:boolean

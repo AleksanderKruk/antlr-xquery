@@ -4,7 +4,6 @@ import com.github.akruk.antlrquery.namespaceresolver.NamespaceResolver;
 import com.github.akruk.antlrquery.typesystem.typeoperations.Types;
 import com.github.akruk.antlrquery.typesystem.types.AntlrQuerySequenceType;
 import com.github.akruk.antlrquery.typesystem.types.ItemTypes;
-import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -68,10 +67,10 @@ public class TypeIntersectionTests extends TypesTestBase {
         var nodeOneOrMore = typeFactory.oneOrMore(typeFactory.itemAnyNode());
 
         assertIntersectionBothOrders(empty, empty, empty);
-        assertIntersectionBothOrders(empty, empty, node);
+        assertIntersectionBothOrders(null, empty, node);
         assertIntersectionBothOrders(empty, empty, nodeZeroOrOne);
         assertIntersectionBothOrders(empty, empty, nodeZeroOrMore);
-        assertIntersectionBothOrders(empty, empty, nodeOneOrMore);
+        assertIntersectionBothOrders(null, empty, nodeOneOrMore);
     }
 
     @Test
@@ -82,7 +81,7 @@ public class TypeIntersectionTests extends TypesTestBase {
         var nodeZeroOrMore = typeFactory.zeroOrMore(typeFactory.itemAnyNode());
         var nodeOneOrMore = typeFactory.oneOrMore(typeFactory.itemAnyNode());
 
-        assertIntersectionBothOrders(empty, node, empty);
+        assertIntersectionBothOrders(null, node, empty);
 
         assertIntersectionBothOrders(node, node, node);
 

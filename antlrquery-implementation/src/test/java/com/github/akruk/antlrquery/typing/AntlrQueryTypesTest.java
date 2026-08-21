@@ -792,26 +792,24 @@ public class AntlrQueryTypesTest extends TypesTestBase {
 
         final var merged$elements = Types.remove(typeFactory, elementFoo, elementBar);
         assertEquals(
-            merged$elements,
-            typeFactory.zeroOrOne(
-                typeFactory.itemNodesFromGrammar("", Set.of(foo))
-            )
+            typeFactory.one(
+                    typeFactory.itemNodesFromGrammar("", Set.of(foo))
+            ),
+            merged$elements
         );
 
         final var merged$any = Types.remove(typeFactory, elementFoo, anyNode);
         assertEquals(
-            merged$any,
             typeFactory.zeroOrOne(
-                typeFactory.itemNodesFromGrammar("", Set.of(foo))
-            )
+                    typeFactory.itemNodesFromGrammar("", Set.of(foo))
+            ),
+            merged$any
         );
 
         final var merged$any2 = Types.remove(typeFactory, anyNode, elementFoo);
         assertEquals(
-            merged$any2,
-            typeFactory.zeroOrOne(
-                typeFactory.itemAnyNode()
-            )
+            typeFactory.zeroOrOne(typeFactory.itemAnyNode()),
+            merged$any2
         );
 
     }

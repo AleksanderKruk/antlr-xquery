@@ -42,7 +42,7 @@ public class ArithmeticExpressionEvaluatingTests extends EvaluationTestsBase {
 
     @Test
     public void division() {
-        assertResult("5 div 2.0", new BigDecimal(2.5, MathContext.UNLIMITED));
+        assertResult("5 div 2.0", new BigDecimal("2.5", MathContext.UNLIMITED));
     }
 
     @Test

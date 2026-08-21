@@ -1,7 +1,5 @@
 package com.github.akruk.antlrquery.typesystem.types;
 
-import java.util.*;
-
 import com.github.akruk.antlrquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrquery.typesystem.typeoperations.itemtype.ItemTypeIntersection;
 import com.github.akruk.antlrquery.typesystem.typeoperations.itemtype.ItemTypeIsSubtype;

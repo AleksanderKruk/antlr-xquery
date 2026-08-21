@@ -3,7 +3,6 @@ package com.github.akruk.antlrquery.languagefeatures.semantics.functions.process
 import com.github.akruk.antlrquery.languagefeatures.semantics.SemanticTestsBase;
 import com.github.akruk.antlrquery.semanticanalyzer.ErrorType;
 import com.github.akruk.antlrquery.typesystem.types.*;
-import com.github.akruk.antlrquery.typesystem.types.itemtypes.*;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

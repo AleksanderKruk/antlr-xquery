@@ -167,9 +167,10 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     }
 
     @Override
-    public AntlrQueryValue visitLetClause(final AntlrQueryParser.LetClauseContext ctx)
+    public @Nullable AntlrQueryValue visitLetClause(final AntlrQueryParser.LetClauseContext ctx)
     {
         final int newVariableCount = ctx.letBinding().size();
+        assert visitedTupleStream != null;
         visitedTupleStream = visitedTupleStream.map(tuple -> {
             final var newTuple = new ArrayList<VariableCoupling>(tuple.size() + newVariableCount);
             newTuple.addAll(tuple);
@@ -211,7 +212,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     }
 
     @Override
-    public AntlrQueryValue visitNamedRecordTypeDecl(AntlrQueryParser.NamedRecordTypeDeclContext ctx)
+    public @Nullable AntlrQueryValue visitNamedRecordTypeDecl(AntlrQueryParser.NamedRecordTypeDeclContext ctx)
     {
         final var qName = namespaceResolver.resolveType(ctx.qname().getText());
         final var defaultArgs = new HashMap<String, ParseTree>();
@@ -387,7 +388,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     }
 
     @Override
-    public AntlrQueryValue visitCountClause(final AntlrQueryParser.CountClauseContext ctx)
+    public @Nullable AntlrQueryValue visitCountClause(final AntlrQueryParser.CountClauseContext ctx)
     {
         final String countVariableName = ctx.varName().qname().getText();
         final MutableInt index = new MutableInt();
@@ -407,7 +408,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     }
 
     @Override
-    public AntlrQueryValue visitWhereClause(final AntlrQueryParser.WhereClauseContext ctx)
+    public @Nullable AntlrQueryValue visitWhereClause(final AntlrQueryParser.WhereClauseContext ctx)
     {
         final var filteringExpression = ctx.exprSingle();
         visitedTupleStream = visitedTupleStream.filter(_ -> {
@@ -431,7 +432,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     }
 
     @Override
-    public AntlrQueryValue visitWhileClause(final AntlrQueryParser.WhileClauseContext ctx)
+    public @Nullable AntlrQueryValue visitWhileClause(final AntlrQueryParser.WhileClauseContext ctx)
     {
         final var filteringExpression = ctx.exprSingle();
         visitedTupleStream = visitedTupleStream.takeWhile(_ -> {
@@ -544,6 +545,8 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         final Map<String, AntlrQueryValue> savedKwargs = saveVisitedKeywordArguments();
         ctx.argumentList().accept(this);
         final String functionQname = ctx.functionName().getText();
+        assert visitedKeywordArguments != null;
+        assert visitedPositionalArguments != null;
         final AntlrQueryValue callResult = callFunction(functionQname, visitedPositionalArguments, visitedKeywordArguments);
         visitedPositionalArguments = savedArgs;
         visitedKeywordArguments = savedKwargs;
@@ -931,7 +934,6 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
             }
             final var result = visitEnclosedExpr(body);
             contextManager.leaveContext();
-            context = saved;
             return result;
         };
     }
@@ -1659,7 +1661,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         return null;
     }
 
-    public AntlrQueryValue visitSlidingWindowClause(final AntlrQueryParser.SlidingWindowClauseContext ctx)
+    public @Nullable AntlrQueryValue visitSlidingWindowClause(final AntlrQueryParser.SlidingWindowClauseContext ctx)
     {
         final String windowVarName = ctx.varNameAndType().varName().qname().getText();
         final AntlrQueryValue sequence = visitExprSingle(ctx.exprSingle());
@@ -1683,56 +1685,56 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         return null;
     }
 
-    private String getStartCurrentVarName(final AntlrQueryParser.WindowStartConditionContext condition)
+    private @Nullable String getStartCurrentVarName(final AntlrQueryParser.WindowStartConditionContext condition)
     {
         return condition != null && condition.windowVars() != null && condition.windowVars().currentVar() != null
             ? condition.windowVars().currentVar().varName().qname().getText()
             : null;
     }
 
-    private String getStartPositionalVarName(final AntlrQueryParser.WindowStartConditionContext condition)
+    private @Nullable String getStartPositionalVarName(final AntlrQueryParser.WindowStartConditionContext condition)
     {
         return condition != null && condition.windowVars() != null && condition.windowVars().positionalVar() != null
             ? condition.windowVars().positionalVar().varName().qname().getText()
             : null;
     }
 
-    private String getStartPreviousVarName(final AntlrQueryParser.WindowStartConditionContext condition)
+    private @Nullable String getStartPreviousVarName(final AntlrQueryParser.WindowStartConditionContext condition)
     {
         return condition != null && condition.windowVars() != null && condition.windowVars().previousVar() != null
             ? condition.windowVars().previousVar().varName().qname().getText()
             : null;
     }
 
-    private String getStartNextVarName(final AntlrQueryParser.WindowStartConditionContext condition)
+    private @Nullable String getStartNextVarName(final AntlrQueryParser.WindowStartConditionContext condition)
     {
         return condition != null && condition.windowVars() != null && condition.windowVars().nextVar() != null
             ? condition.windowVars().nextVar().varName().qname().getText()
             : null;
     }
 
-    private String getEndCurrentVarName(final AntlrQueryParser.WindowEndConditionContext condition)
+    private @Nullable String getEndCurrentVarName(final AntlrQueryParser.WindowEndConditionContext condition)
     {
         return condition != null && condition.windowVars() != null && condition.windowVars().currentVar() != null
             ? condition.windowVars().currentVar().varName().qname().getText()
             : null;
     }
 
-    private String getEndPositionalVarName(final AntlrQueryParser.WindowEndConditionContext condition)
+    private @Nullable String getEndPositionalVarName(final AntlrQueryParser.WindowEndConditionContext condition)
     {
         return condition != null && condition.windowVars() != null && condition.windowVars().positionalVar() != null
             ? condition.windowVars().positionalVar().varName().qname().getText()
             : null;
     }
 
-    private String getEndPreviousVarName(final AntlrQueryParser.WindowEndConditionContext condition)
+    private @Nullable String getEndPreviousVarName(final AntlrQueryParser.WindowEndConditionContext condition)
     {
         return condition != null && condition.windowVars() != null && condition.windowVars().previousVar() != null
             ? condition.windowVars().previousVar().varName().qname().getText()
             : null;
     }
 
-    private String getEndNextVarName(final AntlrQueryParser.WindowEndConditionContext condition)
+    private @Nullable String getEndNextVarName(final AntlrQueryParser.WindowEndConditionContext condition)
     {
         return condition != null && condition.windowVars() != null && condition.windowVars().nextVar() != null
             ? condition.windowVars().nextVar().varName().qname().getText()
@@ -2397,7 +2399,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     }
 
     @Override
-    public AntlrQueryValue visitPathModuleImport(final AntlrQueryParser.PathModuleImportContext ctx)
+    public @Nullable AntlrQueryValue visitPathModuleImport(final AntlrQueryParser.PathModuleImportContext ctx)
     {
         final var result = moduleManager.pathModuleImport(stringContents(ctx.STRING()));
         this.visit(result.tree());
@@ -2413,7 +2415,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     }
 
     @Override
-    public AntlrQueryValue visitNamespaceModuleImport(final AntlrQueryParser.NamespaceModuleImportContext ctx)
+    public @Nullable AntlrQueryValue visitNamespaceModuleImport(final AntlrQueryParser.NamespaceModuleImportContext ctx)
     {
         final var result = moduleManager.pathModuleImport(stringContents(ctx.STRING()));
         this.visit(result.tree());

@@ -397,12 +397,12 @@ public class ItemTypeIntersection
                 argCandidates.add(((FunctionType.ConstrainedFunction) f).argumentTypes().get(i));
             }
 
-            AntlrQuerySequenceType mergedArgSeq = Types.intersect(
+            @Nullable AntlrQuerySequenceType mergedArgSeq = Types.intersect(
                     typeFactory,
                     argCandidates.toArray(AntlrQuerySequenceType[]::new)
             );
 
-            if (mergedArgSeq.itemType() instanceof NeverType) {
+            if (mergedArgSeq == null || mergedArgSeq.itemType() instanceof NeverType) {
                 return null;
             }
             mergedArgs.add(mergedArgSeq);
@@ -414,12 +414,12 @@ public class ItemTypeIntersection
             retCandidates.add(((FunctionType.ConstrainedFunction) f).returnType());
         }
 
-        AntlrQuerySequenceType mergedRetSeq = Types.intersect(
+        @Nullable AntlrQuerySequenceType mergedRetSeq = Types.intersect(
                 typeFactory,
                 retCandidates.toArray(AntlrQuerySequenceType[]::new)
         );
 
-        if (mergedRetSeq.itemType() instanceof NeverType) {
+        if (mergedRetSeq == null || mergedRetSeq.itemType() instanceof NeverType) {
             return null;
         }
 
@@ -436,6 +436,21 @@ public class ItemTypeIntersection
             return null;
         }
 
+        if (!enums.isEmpty() && strings.isEmpty()) {
+            Set<String> intersection = enums.stream()
+                    .map(StringType.StringEnum.class::cast)
+                    .map(StringType.StringEnum::members)
+                    .reduce((strings1, strings2) -> {
+                        var result = new HashSet<>(strings1);
+                        result.retainAll(strings2);
+                        return result;
+                    }).get();
+            if (intersection.isEmpty()) {
+                return null;
+            }
+            return typeFactory.itemEnum(intersection);
+        }
+
         Cardinality[] allCardinalities = Stream.of(strings, enums)
                 .flatMap(List::stream)
                 .map(i -> ((StringType) i).cardinality())
@@ -448,16 +463,17 @@ public class ItemTypeIntersection
         if (enums.isEmpty()) {
             return typeFactory.itemString(mergedStringCardinality);
         }
-        // Enums
 
-        Set<String> validEnumMembers = enums.stream()
-                .flatMap(i->((StringType.StringEnum) i).members().stream())
-                .filter(enumMember->
-                        (Cardinalities.isSubSet(Cardinality.of(enumMember.length()), mergedStringCardinality))
-                )
-                .collect(Collectors.toSet());
-
-        Set<String> finalMembers = validEnumMembers.stream()
+        // enums + strings
+        Set<String> intersection = enums.stream()
+                .map(StringType.StringEnum.class::cast)
+                .map(StringType.StringEnum::members)
+                .reduce((strings1, strings2) -> {
+                    var result = new HashSet<>(strings1);
+                    result.retainAll(strings2);
+                    return result;
+                }).get();
+        Set<String> finalMembers = intersection.stream()
                 .filter(enumMember -> Cardinalities.isSubSet(
                         Cardinality.of(enumMember.length()),
                         mergedStringCardinality))
@@ -615,12 +631,12 @@ public class ItemTypeIntersection
         }
         Collections.addAll(additionalCandidates, mapValueTypes);
 
-        AntlrQuerySequenceType mergedAdditional = Types.intersect(
+        @Nullable AntlrQuerySequenceType mergedAdditional = Types.intersect(
                 typeFactory,
                 additionalCandidates.toArray(AntlrQuerySequenceType[]::new)
         );
 
-        if (mergedAdditional.itemType() instanceof NothingType || mergedAdditional.itemType() instanceof NeverType) {
+        if (mergedAdditional == null || mergedAdditional.itemType() instanceof NothingType || mergedAdditional.itemType() instanceof NeverType) {
             return new MapLikeType.RecordType(mergedFields);
         }
 
@@ -637,16 +653,16 @@ public class ItemTypeIntersection
         }
 
         // Pure arrays (no structural tuples provided)
-        if (tuples.isEmpty()) {
+        if (!arrays.isEmpty() && tuples.isEmpty()) {
             return arrays.stream()
                     .map(ArrayLikeType.ArrayType.class::cast)
                     .collect(Collectors.teeing(
                             Collectors.mapping(ArrayLikeType.ArrayType::memberType, Collectors.toList()),
                             Collectors.mapping(ArrayLikeType.ArrayType::cardinality, Collectors.toList()),
                             (antlrQuerySequenceTypes, cardinalities) -> {
-                                var type = Types.intersect(typeFactory, antlrQuerySequenceTypes.toArray(AntlrQuerySequenceType[]::new));
-                                if (type.itemType() instanceof  NeverType) {
-                                    return type.itemType();
+                                @Nullable AntlrQuerySequenceType type = Types.intersect(typeFactory, antlrQuerySequenceTypes.toArray(AntlrQuerySequenceType[]::new));
+                                if (type==null || type.itemType() instanceof  NeverType) {
+                                    return AntlrQueryItemType.NEVER;
                                 }
                                 @Nullable Cardinality card = Cardinalities.intersection(cardinalities.toArray(Cardinality[]::new));
                                 if (card == null) {
@@ -656,7 +672,6 @@ public class ItemTypeIntersection
                             }
                     ));
         }
-
         // Tuple and Array unification
         // Tuples can only be intersected if they share the exact same length
         int expectedSize = ((ArrayLikeType.TupleType) tuples.getFirst()).members().length;
@@ -665,6 +680,18 @@ public class ItemTypeIntersection
                 return null; // Size mismatch implies an empty intersection
             }
         }
+
+        Cardinality[] arrayCardinalities = arrays.stream()
+                .map(a -> ((ArrayLikeType.ArrayType) a).cardinality())
+                .toArray(Cardinality[]::new);
+        @Nullable Cardinality mergedCardinality = Cardinalities.intersection(arrayCardinalities);
+        if (mergedCardinality == null) {
+            return null;
+        }
+        if(!Cardinalities.contains(mergedCardinality, expectedSize)) {
+            return null;
+        }
+
 
         // Collect all array element constraints
         AntlrQuerySequenceType[] arrayElementTypes = arrays.stream()
@@ -685,12 +712,12 @@ public class ItemTypeIntersection
             Collections.addAll(elementCandidates, arrayElementTypes);
 
             // Bulk intersect all collected candidates for the current index
-            AntlrQuerySequenceType mergedElementSeq = Types.intersect(
+            @Nullable AntlrQuerySequenceType mergedElementSeq = Types.intersect(
                     typeFactory,
                     elementCandidates.toArray(AntlrQuerySequenceType[]::new)
             );
 
-            if (mergedElementSeq.itemType() instanceof NeverType) {
+            if (mergedElementSeq ==null  || mergedElementSeq.itemType() instanceof NeverType) {
                 return null;
             }
 

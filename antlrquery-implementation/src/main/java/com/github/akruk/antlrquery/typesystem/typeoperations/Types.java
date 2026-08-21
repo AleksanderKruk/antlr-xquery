@@ -303,7 +303,7 @@ public final class Types {
             return RelativeCoercibility.NEVER;
         }
 
-        if (Types.intersect(typeFactory, assignedType, desiredType).itemType() instanceof NeverType) {
+        if (Types.intersect(typeFactory, assignedType, desiredType) == null) {
             return RelativeCoercibility.NEVER;
         }
         return RelativeCoercibility.POSSIBLE;
@@ -321,7 +321,7 @@ public final class Types {
     }
 
 
-    public static AntlrQuerySequenceType intersect(
+    public static @Nullable AntlrQuerySequenceType intersect(
             AntlrQueryTypeFactory typeFactory,
             AntlrQuerySequenceType@ArrayLenRange(from = 1)... types)
     {
@@ -336,7 +336,7 @@ public final class Types {
         final @Nullable Cardinality mergedCardinality = Cardinalities.intersection(cardinalities);
         // If the intersected cardinality allows no elements (e.g. range is empty / size 0)
         if (mergedCardinality == null) {
-            return typeFactory.emptySequence();
+            return null;
         }
 
         // Intersect item types
@@ -348,7 +348,7 @@ public final class Types {
 
         // If item types are completely disjoint (NeverType), return empty sequence or never sequence based on type factory rules
         if (mergedItemType == null) {
-            return typeFactory.neverType();
+            return null;
         }
         if (mergedItemType instanceof NothingType) {
             return typeFactory.emptySequence();

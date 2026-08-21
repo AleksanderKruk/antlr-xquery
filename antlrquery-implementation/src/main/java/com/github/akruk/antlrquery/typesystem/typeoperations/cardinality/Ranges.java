@@ -39,7 +39,7 @@ public final class Ranges {
 
         List<Event> out = new ArrayList<>();
         int active = 0;
-        BoundValue start = null;
+        @Nullable BoundValue start = null;
 
         for (Event e : ev) {
             if (e.type() == Type.START) {
@@ -48,6 +48,7 @@ public final class Ranges {
             } else {
                 active--;
                 if (active == 0) {
+                    assert start != null;
                     out.add(new Event(start, Type.START));
                     out.add(new Event(e.value(), Type.END));
                 }
@@ -64,7 +65,7 @@ public final class Ranges {
 
         long need = ranges.length;
         int active = 0;
-        BoundValue start = null;
+        @Nullable BoundValue start = null;
         List<Event> out = new ArrayList<>();
 
         for (Event e : ev) {
@@ -73,6 +74,7 @@ public final class Ranges {
                 if (active == need) start = e.value();
             } else {
                 if (active == need) {
+                    assert start != null;
                     out.add(new Event(start, Type.START));
                     out.add(new Event(e.value(), Type.END));
                 }
@@ -186,7 +188,7 @@ public final class Ranges {
                 continue;
             }
 
-            if (resultBefore && resultAfter && !resultAt) {
+            if (resultBefore && !resultAt) {
                 assert segmentStart != null;
                 out.add(new Event(segmentStart, Type.START));
                 out.add(new Event(adjustInclusive(value, false), Type.END));
@@ -194,7 +196,7 @@ public final class Ranges {
                 continue;
             }
 
-            if (!resultBefore && resultAt && !resultAfter) {
+            if (!resultBefore && resultAt) {
                 BoundValue p = adjustInclusive(value, true);
                 out.add(new Event(p, Type.START));
                 out.add(new Event(p, Type.END));
@@ -221,7 +223,7 @@ public final class Ranges {
     }
 
     public static boolean overlaps(NumericRange a, NumericRange b) {
-        NumericRange i = intersection(a, b);
+        @Nullable NumericRange i = intersection(a, b);
         return i != null && i.events().length > 0;
     }
 
@@ -371,5 +373,39 @@ public final class Ranges {
     public static @Nullable Event max(NumericRange r) {
         Event[] ev = r.events();
         return ev.length == 0 ? null : ev[ev.length - 1];
+    }
+
+    public static NumericRange negate(final NumericRange range) {
+        Event[] events = range.events();
+
+        if (events.length == 0) {
+            return NumericRange.ZERO;
+        }
+
+        Event[] out = new Event[events.length];
+
+        for (int i = 0; i < events.length; i++) {
+            Event e = events[events.length - 1 - i];
+
+            out[i] = new Event(
+                    negate(e.value()),
+                    e.type() == Type.START ? Type.END : Type.START
+            );
+        }
+
+        return NumericRange.skipNormalization(out);
+    }
+
+    private static BoundValue negate(final BoundValue value) {
+        return switch (value) {
+            case FiniteBound(BigDecimal v, boolean inclusive) ->
+                    new FiniteBound(v.negate(), inclusive);
+
+            case NegativeInfinity _ ->
+                    BoundValue.POSITIVE_INFINITY;
+
+            case PositiveInfinity _ ->
+                    BoundValue.NEGATIVE_INFINITY;
+        };
     }
 }

@@ -3586,7 +3586,7 @@ public class SemanticFunctionSets {
                                 )
                         ),
                         typeFactory.anyArray(),
-                        null, false, false, null, null
+                        null, false, false, null, new ArraySortGranularAnalysis(typeFactory)
                 )
         );
 
@@ -3814,7 +3814,11 @@ public class SemanticFunctionSets {
             )
         );
 
-        // array:sort($array as array(*), $collation as xs:string? := fn:default-collation(), $key as function(item()*) as xs:anyAtomicType* := fn:data#1) as array(*)
+        // array:sort(
+        //      $array as I[IC],
+        //      $collation as xs:string? := fn:default-collation(),
+        //      $key as function(I) as * := fn:data#1
+        // ) as I[IC]
         array.add(
             new SimplifiedFunctionSpecification(
             new QualifiedName("array", "sort"),
@@ -3822,11 +3826,12 @@ public class SemanticFunctionSets {
                 new ArgumentSpecification("array", typeFactory.one(typeFactory.itemAnyArray()), null),
                 new ArgumentSpecification("collation", typeFactory.zeroOrOne(typeFactory.itemString()), DEFAULT_COLLATION),
                 new ArgumentSpecification("key",
-                typeFactory.zeroOrOne(typeFactory.itemFunction(zeroOrMoreItems, List.of(zeroOrMoreItems))),
+                typeFactory.zeroOrOne(typeFactory.itemFunction(zeroOrMoreItems, List.of(typeFactory.anyItem()))),
                 DATA$1)
             ),
-            typeFactory.one(typeFactory.itemAnyArray()),
-            null, false, false, null, null
+                typeFactory.one(typeFactory.itemAnyArray()),
+                null, false, false, null,
+                    new ArraySortGranularAnalysis(typeFactory)
             )
         );
 

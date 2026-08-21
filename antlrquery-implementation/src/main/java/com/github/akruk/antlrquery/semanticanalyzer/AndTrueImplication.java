@@ -30,8 +30,9 @@ public final class AndTrueImplication extends ValueImplication<Boolean> {
         final var errors = analyzer.getErrors();
         final var preerrorcount = errors.size();
         for (final var andExpr : andEffectiveBooleanValues) {
-            final var andEbv = andExpr.accept(analyzer);
-            final var ebv = context.resolveEffectiveBooleanValue(andEbv);
+            final TypeInContext andEbv = andExpr.accept(analyzer);
+            assert andEbv != null;
+            final TypeInContext ebv = context.resolveEffectiveBooleanValue(andEbv);
             context.currentScope().assume(ebv, new Assumption(ebv, true));
         }
         while (errors.size() != preerrorcount) {

@@ -495,6 +495,16 @@ public class MemoizedTypeFactory implements AntlrQueryTypeFactory {
     }
 
     @Override
+    public AntlrQuerySequenceType tuple(List<AntlrQuerySequenceType> mergedElements) {
+        return one(itemTuple(mergedElements));
+    }
+
+    @Override
+    public AntlrQuerySequenceType tuple(AntlrQuerySequenceType... mergedElements) {
+        return one(itemTuple(mergedElements));
+    }
+
+    @Override
     public AntlrQuerySequenceType map(AntlrQueryItemType mapKeyType, AntlrQuerySequenceType mapValueType) {
         return one(itemMap(mapKeyType, mapValueType));
     }

@@ -99,6 +99,8 @@ public interface AntlrQueryTypeFactory {
     AntlrQuerySequenceType anyArray();
     AntlrQuerySequenceType anyMap();
     AntlrQuerySequenceType array(AntlrQuerySequenceType itemType, Cardinality c);
+    AntlrQuerySequenceType tuple(List<AntlrQuerySequenceType> mergedElements);
+    AntlrQuerySequenceType tuple(AntlrQuerySequenceType... mergedElements);
     AntlrQuerySequenceType map(AntlrQueryItemType mapKeyType, AntlrQuerySequenceType mapValueType);
     AntlrQuerySequenceType record(LinkedHashMap<String, RecordField> fields);
     AntlrQuerySequenceType extensibleRecord(LinkedHashMap<String, RecordField> fields);

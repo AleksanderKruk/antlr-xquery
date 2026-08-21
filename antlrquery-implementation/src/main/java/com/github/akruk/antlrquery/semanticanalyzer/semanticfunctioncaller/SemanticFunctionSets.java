@@ -3702,7 +3702,7 @@ public class SemanticFunctionSets {
                 new ArgumentSpecification("separator", typeFactory.zeroOrOne(typeFactory.itemAnyArray()), EMPTY_SEQUENCE)
             ),
             typeFactory.one(typeFactory.itemAnyArray()),
-            null, false, false, null, this::arrayJoin
+            null, false, false, null, new ArrayJoinGranularAnalysis(typeFactory)
             )
         );
 
@@ -4487,20 +4487,6 @@ public class SemanticFunctionSets {
         };
     }
 
-    TypeInContext arrayFlatten(
-            final List<UsedArg> args,
-            final VisitingSemanticContext context,
-            final ParseTree functionBody,
-            final AntlrQuerySemanticContext typeContext) {
-
-        final AntlrQuerySequenceType input = args.getFirst().type().type;
-
-        final AntlrQuerySequenceType result =
-                arrayFlatten(input.itemType(), input.cardinality());
-
-        return typeContext.typeInContext(result);
-    }
-
     private AntlrQuerySequenceType arrayFlatten(
             final AntlrQueryItemType itemType,
             final Cardinality cardinality) {
@@ -4714,90 +4700,6 @@ public class SemanticFunctionSets {
 
         throw new IllegalStateException(
                 "array:get position is statically known to be out of bounds");
-    }
-
-    TypeInContext arrayJoin(
-            final List<UsedArg> args,
-            final VisitingSemanticContext context,
-            final ParseTree functionBody,
-            final AntlrQuerySemanticContext typeContext) {
-
-        final AntlrQuerySequenceType arrays = args.getFirst().type().type;
-
-        final AntlrQuerySequenceType result =
-                arrayJoin(arrays.itemType(), arrays.cardinality());
-
-        return typeContext.typeInContext(result);
-    }
-
-    private AntlrQuerySequenceType arrayJoin(
-            final AntlrQueryItemType itemType,
-            final Cardinality cardinality) {
-
-        return switch (itemType) {
-            case ChoiceItemType choice ->
-                    arrayJoin(choice, cardinality);
-
-            case ConcreteItemType concrete ->
-                    arrayJoin(concrete, cardinality);
-
-            case NamedItemType named ->
-                    arrayJoin(
-                            typeFactory.guaranteedItemNamedType(
-                                    named.reference(),
-                                    new IllegalStateException()),
-                            cardinality);
-
-            case NeverType _, NothingType _, AnyItemType _ ->
-                    throw new IllegalStateException(
-                            "Analysis should have prevented type: " + itemType);
-        };
-    }
-
-    private AntlrQuerySequenceType arrayJoin(
-            final ChoiceItemType choice,
-            final Cardinality cardinality) {
-
-        final AntlrQuerySequenceType[] types =
-                Arrays.stream(choice.itemTypes())
-                        .map(item -> arrayJoin(item, cardinality))
-                        .toArray(AntlrQuerySequenceType[]::new);
-
-        return Types.union(typeFactory, types);
-    }
-
-    private AntlrQuerySequenceType arrayJoin(
-            final ConcreteItemType concrete,
-            final Cardinality cardinality) {
-
-        return switch (concrete) {
-            case ArrayLikeType array ->
-                    arrayJoin(array, cardinality);
-
-            default ->
-                    throw new IllegalStateException(
-                            "Expected array-like type, got: " + concrete);
-        };
-    }
-
-    private AntlrQuerySequenceType arrayJoin(
-            final ArrayLikeType array,
-            final Cardinality cardinality) {
-
-        return switch (array) {
-            case ArrayLikeType.ArrayType(
-                    AntlrQuerySequenceType memberType,
-                    Cardinality memberCardinality) ->
-
-                    typeFactory.sequence(
-                            memberType.itemType(),
-                            Cardinalities.multiply(
-                                    cardinality,
-                                    memberCardinality));
-
-            case ArrayLikeType.TupleType tuple ->
-                    arrayJoin(tuple, cardinality);
-        };
     }
 
     private AntlrQuerySequenceType arrayJoin(

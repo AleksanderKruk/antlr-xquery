@@ -292,7 +292,7 @@ public final class Cardinality {
     }
     
     public boolean isZero() {
-        return this == Cardinality.ZERO;
+        return this.equals(Cardinality.ZERO);
     }
 
     public boolean isOne() { // TODO: simplify

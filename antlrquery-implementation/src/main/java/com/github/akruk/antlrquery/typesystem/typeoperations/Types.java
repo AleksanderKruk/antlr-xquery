@@ -90,6 +90,7 @@ public final class Types {
         };
     }
     public static AntlrQuerySequenceType getMemberType(AntlrQueryTypeFactory typeFactory, ArrayLikeType.TupleType type) {
+        if (type.members().length == 0) return typeFactory.neverType();
         return Types.union(typeFactory, type.members());
     }
 

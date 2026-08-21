@@ -151,7 +151,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     @Override
     public AntlrQueryValue visitFLWORExpr(final AntlrQueryParser.FLWORExprContext ctx)
     {
-        final var savedTupleStream = saveVisitedTupleStream();
+        final @Nullable Stream<List<VariableCoupling>> savedTupleStream = saveVisitedTupleStream();
         contextManager.enterScope();
         // visitedTupleStream will be manipulated to prepare result stream
         visitInitialClause(ctx.initialClause());
@@ -246,6 +246,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     @Override
     public @Nullable AntlrQueryValue visitForClause(final AntlrQueryParser.ForClauseContext ctx)
     {
+        assert visitedTupleStream != null;
         final int numberOfVariables = ctx.forBinding().size();
         visitedTupleStream = visitedTupleStream.flatMap(tuple -> {
             final List<List<VariableCoupling>> newTupleLike = tuple.stream().map(List::of)
@@ -421,6 +422,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     @Override
     public AntlrQueryValue visitReturnClause(final AntlrQueryParser.ReturnClauseContext ctx)
     {
+        assert visitedTupleStream != null;
         final List<AntlrQueryValue> results = visitedTupleStream.map((tupleStream) -> {
             provideVariables(tupleStream);
             return visitExprSingle(ctx.exprSingle());
@@ -435,6 +437,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     public @Nullable AntlrQueryValue visitWhileClause(final AntlrQueryParser.WhileClauseContext ctx)
     {
         final var filteringExpression = ctx.exprSingle();
+        assert visitedTupleStream != null;
         visitedTupleStream = visitedTupleStream.takeWhile(_ -> {
             final AntlrQueryValue filter = filteringExpression.accept(this);
             return effectiveBooleanValue.effectiveBooleanValue(filter).booleanValue;
@@ -571,9 +574,9 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         return functionManager.call(namespace, functionName, context, args, kwargs);
     }
 
-    private Map<String, AntlrQueryValue> saveVisitedKeywordArguments()
+    private @Nullable Map<String, AntlrQueryValue> saveVisitedKeywordArguments()
     {
-        final var saved = visitedKeywordArguments;
+        final @Nullable Map<String, AntlrQueryValue> saved = visitedKeywordArguments;
         visitedKeywordArguments = new HashMap<>();
         return saved;
     }
@@ -596,7 +599,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     }
 
     @Override
-    public AntlrQueryValue visitQuantifiedExpr(final AntlrQueryParser.QuantifiedExprContext ctx)
+    public @Nullable AntlrQueryValue visitQuantifiedExpr(final AntlrQueryParser.QuantifiedExprContext ctx)
     {
         final List<AntlrQueryParser.QuantifierBindingContext> quantifierBindings = ctx.quantifierBinding();
 
@@ -685,6 +688,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         if (pathExpressionFromRoot) {
             final var savedContext = saveContext();
             final var savedAxis = saveAxis();
+            assert context != null;
             context.setValue(root); // TODO: use root of context value
             context.setPosition(1);
             context.setSize(1);
@@ -698,6 +702,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         if (useDescendantOrSelfAxis) {
             final var savedContext = saveContext();
             final var savedAxis = saveAxis();
+            assert context != null;
             context.setValue(root); // TODO: use root of context value
             // var x = nodeGetter.getAllAncestors(valueToNodeList(savedContext.getValue())).get(1);
             context.setPosition(1);
@@ -712,18 +717,20 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     }
 
     @Override
-    public AntlrQueryValue visitRelativePathExpr(final AntlrQueryParser.RelativePathExprContext ctx)
+    public @Nullable AntlrQueryValue visitRelativePathExpr(final AntlrQueryParser.RelativePathExprContext ctx)
     {
         if (ctx.pathOperator().isEmpty()) {
             return ctx.stepExpr(0).accept(this);
         }
         var savedContext = saveContext();
         AntlrQueryValue visitedNodeSequence = ctx.stepExpr(0).accept(this);
+        assert context != null;
         context.setValue(visitedNodeSequence);
         final var operationCount = ctx.pathOperator().size();
         for (int i = 1; i <= operationCount; i++) {
             visitedNodeSequence = switch (ctx.pathOperator(i - 1).getText()) {
                 case "//" -> {
+                    assert visitedNodeSequence != null;
                     final List<ParseTree> descendantsOrSelf = nodeGetter.getAllDescendantsOrSelf(valueToNodeList(visitedNodeSequence));
                     final AntlrQueryValue descendantsOrSelfAsNodes = nodeSequence(descendantsOrSelf);
                     context.setValue(descendantsOrSelfAsNodes);
@@ -800,10 +807,14 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         else if (ctx.forwardStep() != null)
             stepResult = visitForwardStep(ctx.forwardStep());
         if (ctx.predicateList().predicate().isEmpty()) {
-            return stepResult;
+            return Objects.requireNonNull(stepResult);
         }
         final var savedContext = saveContext();
         final var savedArgs = saveVisitedArguments();
+
+        assert context != null;
+        assert stepResult != null;
+
         int index = 1;
         context.setSize(stepResult.sequence.size());
         for (final var predicate : ctx.predicateList().predicate()) {
@@ -928,9 +939,9 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
             contextManager.enterContext();
             this.context = context;
             for (int i = 0; i < positionalArguments.size(); i++) {
-                final var arg = positionalArguments.get(i);
-                final var argname = argNames.get(i);
-                contextManager.provideVariable(argname, arg);
+                final AntlrQueryValue arg = positionalArguments.get(i);
+                final String argName = argNames.get(i);
+                contextManager.provideVariable(argName, arg);
             }
             final var result = visitEnclosedExpr(body);
             contextManager.leaveContext();
@@ -940,7 +951,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
 
     private AntlrQueryFunction constructorFunction(final ArrayList<String> argNames)
     {
-        return (context, positionalArguments) -> {
+        return (_, positionalArguments) -> {
             var map = new HashMap<AntlrQueryValue, AntlrQueryValue>();
             for (int i = 0; i < positionalArguments.size(); i++) {
                 final var arg = positionalArguments.get(i);
@@ -1018,6 +1029,8 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     @Override
     public AntlrQueryValue visitNodeTest(final AntlrQueryParser.NodeTestContext ctx)
     {
+        assert context != null;
+        assert currentAxis != null;
         var matchedTreeNodes = valueToNodeList(context.getValue());
         final Function<NodeGetter, Function<List<ParseTree>, List<ParseTree>>> axisFunctionSelector
             = AXIS_DISPATCH_TABLE[currentAxis.ordinal()];
@@ -1494,9 +1507,9 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         return saved;
     }
 
-    private Stream<List<VariableCoupling>> saveVisitedTupleStream()
+    private @Nullable Stream<List<VariableCoupling>> saveVisitedTupleStream()
     {
-        final Stream<List<VariableCoupling>> saved = visitedTupleStream;
+        final @Nullable Stream<List<VariableCoupling>> saved = visitedTupleStream;
         visitedTupleStream = Stream.of(List.of());
         return saved;
     }
@@ -1601,7 +1614,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
             case 0b10 -> descendingEmptyGreatest(expr);
             // descending, empty least
             case 0b11 -> descendingEmptyLeast(expr);
-            default -> null;
+            default -> throw new IllegalStateException();
         };
     }
 
@@ -1666,16 +1679,17 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         final String windowVarName = ctx.varNameAndType().varName().qname().getText();
         final AntlrQueryValue sequence = visitExprSingle(ctx.exprSingle());
 
-        final String startVarName = getStartCurrentVarName(ctx.windowStartCondition());
-        final String startPosVarName = getStartPositionalVarName(ctx.windowStartCondition());
-        final String startPrevVarName = getStartPreviousVarName(ctx.windowStartCondition());
-        final String startNextVarName = getStartNextVarName(ctx.windowStartCondition());
+        final @Nullable String startVarName = getStartCurrentVarName(ctx.windowStartCondition());
+        final @Nullable String startPosVarName = getStartPositionalVarName(ctx.windowStartCondition());
+        final @Nullable String startPrevVarName = getStartPreviousVarName(ctx.windowStartCondition());
+        final @Nullable String startNextVarName = getStartNextVarName(ctx.windowStartCondition());
 
-        final String endVarName = getEndCurrentVarName(ctx.windowEndCondition());
-        final String endPosVarName = getEndPositionalVarName(ctx.windowEndCondition());
-        final String endPrevVarName = getEndPreviousVarName(ctx.windowEndCondition());
-        final String endNextVarName = getEndNextVarName(ctx.windowEndCondition());
+        final @Nullable String endVarName = getEndCurrentVarName(ctx.windowEndCondition());
+        final @Nullable String endPosVarName = getEndPositionalVarName(ctx.windowEndCondition());
+        final @Nullable String endPrevVarName = getEndPreviousVarName(ctx.windowEndCondition());
+        final @Nullable String endNextVarName = getEndNextVarName(ctx.windowEndCondition());
 
+        assert visitedTupleStream != null;
         visitedTupleStream = visitedTupleStream
             .flatMap(tuple -> processSlidingWindowSubSequences(sequence, ctx, windowVarName,
                 startVarName, startPosVarName, startPrevVarName, startNextVarName,
@@ -1685,56 +1699,56 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         return null;
     }
 
-    private @Nullable String getStartCurrentVarName(final AntlrQueryParser.WindowStartConditionContext condition)
+    private @Nullable String getStartCurrentVarName(final AntlrQueryParser.@Nullable WindowStartConditionContext condition)
     {
         return condition != null && condition.windowVars() != null && condition.windowVars().currentVar() != null
             ? condition.windowVars().currentVar().varName().qname().getText()
             : null;
     }
 
-    private @Nullable String getStartPositionalVarName(final AntlrQueryParser.WindowStartConditionContext condition)
+    private @Nullable String getStartPositionalVarName(final AntlrQueryParser.@Nullable WindowStartConditionContext condition)
     {
         return condition != null && condition.windowVars() != null && condition.windowVars().positionalVar() != null
             ? condition.windowVars().positionalVar().varName().qname().getText()
             : null;
     }
 
-    private @Nullable String getStartPreviousVarName(final AntlrQueryParser.WindowStartConditionContext condition)
+    private @Nullable String getStartPreviousVarName(final AntlrQueryParser.@Nullable WindowStartConditionContext condition)
     {
         return condition != null && condition.windowVars() != null && condition.windowVars().previousVar() != null
             ? condition.windowVars().previousVar().varName().qname().getText()
             : null;
     }
 
-    private @Nullable String getStartNextVarName(final AntlrQueryParser.WindowStartConditionContext condition)
+    private @Nullable String getStartNextVarName(final AntlrQueryParser.@Nullable WindowStartConditionContext condition)
     {
         return condition != null && condition.windowVars() != null && condition.windowVars().nextVar() != null
             ? condition.windowVars().nextVar().varName().qname().getText()
             : null;
     }
 
-    private @Nullable String getEndCurrentVarName(final AntlrQueryParser.WindowEndConditionContext condition)
+    private @Nullable String getEndCurrentVarName(final AntlrQueryParser.@Nullable WindowEndConditionContext condition)
     {
         return condition != null && condition.windowVars() != null && condition.windowVars().currentVar() != null
             ? condition.windowVars().currentVar().varName().qname().getText()
             : null;
     }
 
-    private @Nullable String getEndPositionalVarName(final AntlrQueryParser.WindowEndConditionContext condition)
+    private @Nullable String getEndPositionalVarName(final AntlrQueryParser.@Nullable WindowEndConditionContext condition)
     {
         return condition != null && condition.windowVars() != null && condition.windowVars().positionalVar() != null
             ? condition.windowVars().positionalVar().varName().qname().getText()
             : null;
     }
 
-    private @Nullable String getEndPreviousVarName(final AntlrQueryParser.WindowEndConditionContext condition)
+    private @Nullable String getEndPreviousVarName(final AntlrQueryParser.@Nullable WindowEndConditionContext condition)
     {
         return condition != null && condition.windowVars() != null && condition.windowVars().previousVar() != null
             ? condition.windowVars().previousVar().varName().qname().getText()
             : null;
     }
 
-    private @Nullable String getEndNextVarName(final AntlrQueryParser.WindowEndConditionContext condition)
+    private @Nullable String getEndNextVarName(final AntlrQueryParser.@Nullable WindowEndConditionContext condition)
     {
         return condition != null && condition.windowVars() != null && condition.windowVars().nextVar() != null
             ? condition.windowVars().nextVar().varName().qname().getText()
@@ -2054,9 +2068,8 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
                         // { expr } -> expr.stringValue
                         final AntlrQueryValue exprValue = visitExpr(interpolationCtx.expr());
                         result.append(processInterpolationValue(exprValue));
-                    } else {
-                        // {} -> empty string
                     }
+                    // {} -> empty string
                 }
             }
         }
@@ -2094,9 +2107,8 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
                         // { expr } -> expr.stringValue
                         final AntlrQueryValue exprValue = visitExpr(interpolationCtx.expr());
                         result.append(processInterpolationValue(exprValue));
-                    } else {
-                        // {} -> empty string
                     }
+                    // {} -> empty string
                 }
             }
         }
@@ -2105,7 +2117,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
 
     private String unescapeConstructorChars(final String str)
     {
-        if (str == null || str.isEmpty()) {
+        if (str.isEmpty()) {
             return str;
         }
 
@@ -2230,6 +2242,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
         AntlrQueryValue contextValue = ctx.arrowExpr(0).accept(this);
         for (var i = 1; i < size; i++) {
             final var contextualizedExpr = ctx.arrowExpr(i);
+            assert context != null;
             context.setValue(contextValue);
             contextValue = contextualizedExpr.accept(this);
         }
@@ -2246,7 +2259,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
 
     }
 
-    private AntlrQueryValue evaluateLookup(final AntlrQueryValue target, final AntlrQueryValue keySpecifier)
+    private AntlrQueryValue evaluateLookup(final AntlrQueryValue target, final @Nullable AntlrQueryValue keySpecifier)
     {
         if (keySpecifier == null) {
             return evaluateWildcardLookup(target);
@@ -2312,6 +2325,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     @Override
     public AntlrQueryValue visitUnaryLookup(final AntlrQueryParser.UnaryLookupContext ctx)
     {
+        assert context != null;
         final var target = context.getValue();
         final var keySpecifier = ctx.lookup().keySpecifier().accept(this);
         return evaluateLookup(target, keySpecifier);
@@ -2407,7 +2421,7 @@ public class AntlrQueryEvaluator extends AntlrQueryParserBaseVisitor<AntlrQueryV
     }
 
     @Override
-    public AntlrQueryValue visitDefaultPathModuleImport(final AntlrQueryParser.DefaultPathModuleImportContext ctx)
+    public @Nullable AntlrQueryValue visitDefaultPathModuleImport(final AntlrQueryParser.DefaultPathModuleImportContext ctx)
     {
         final var result = moduleManager.defaultPathModuleImport(ctx.getText().replace(":", "/"));
         this.visit(result.tree());

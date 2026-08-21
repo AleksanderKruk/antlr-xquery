@@ -280,7 +280,7 @@ public final class Types {
     public static boolean isValueComparableWith(AntlrQuerySequenceType type, AntlrQuerySequenceType type2)
     {
         return Cardinalities.areValueComparable(type.cardinality(), type2.cardinality())
-                && ItemTypes.areValueComparable(type.itemType(), type2.itemType());
+               && ItemTypes.areValueComparable(type.itemType(), type2.itemType());
     }
 
     public static AntlrQuerySequenceType iteratorType(AntlrQueryTypeFactory typeFactory, AntlrQuerySequenceType expr) {

@@ -11,8 +11,14 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class TypeIntersectionTests extends TypesTestBase {
+
+    @Test
+    void anyArray_number_item_intersection() {
+        assertNull(ItemTypes.intersect(typeFactory, itemAnyArray, itemNumber));
+    }
 
     @Test
     void intersectionOfSuperAndSubTypeInRegardsToItemType() {

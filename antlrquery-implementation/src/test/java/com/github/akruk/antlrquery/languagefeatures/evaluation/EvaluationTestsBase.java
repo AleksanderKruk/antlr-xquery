@@ -92,15 +92,15 @@ public class EvaluationTestsBase {
         }
     }
 
-    public void assertResult(final AntlrQueryValue value, final AntlrQueryValue result) {
-        assertNotNull(value);
-        assertFalse(value.isError, () -> "Value is error: " + value.error.getDescription());
-        if (result.size != 1)
-            assertTrue(deepEquals(result, value));
+    public void assertResult(final AntlrQueryValue received, final AntlrQueryValue expected) {
+        assertNotNull(received);
+        assertFalse(received.isError, () -> "Value is error: " + received.error.getDescription());
+        if (expected.size != 1)
+            assertTrue(deepEquals(expected, received), expected + " != " + received);
         else
-            if (result == value)
+            if (expected == received)
                 return;
-            assertEquals(result, value);
+            assertEquals(expected, received);
     }
 
     public void assertResult(final String xquery, final AntlrQueryValue result) {

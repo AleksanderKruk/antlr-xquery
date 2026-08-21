@@ -1298,11 +1298,12 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
     @Override
     public TypeInContext visitFunctionCall(final FunctionCallContext ctx)
     {
-        final var savedArgs = saveVisitedArguments();
-        final var savedKwargs = saveVisitedKeywordArguments();
+        final @Nullable List<TypeInContext> savedArgs = saveVisitedArguments();
+        final @Nullable Map<String, TypeInContext> savedKwargs = saveVisitedKeywordArguments();
 
         ctx.argumentList().accept(this);
-
+        assert visitedPositionalArguments != null;
+        assert visitedKeywordArguments != null;
         final TypeInContext callAnalysisResult = callFunction(
             ctx,
             ctx.functionName().getText(),
@@ -2404,10 +2405,10 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
 
     private TypeInContext handleValueComparison(final ComparisonExprContext ctx)
     {
-        final var leftHandSide = Objects.requireNonNull(ctx.otherwiseExpr(0).accept(this));
-        final var rightHandSide = Objects.requireNonNull(ctx.otherwiseExpr(1).accept(this));
+        final TypeInContext leftHandSide = Objects.requireNonNull(ctx.otherwiseExpr(0).accept(this));
+        final TypeInContext rightHandSide = Objects.requireNonNull(ctx.otherwiseExpr(1).accept(this));
 
-        final var optionalItem = typeFactory.zeroOrOne(typeFactory.itemAnyItem());
+        final AntlrQuerySequenceType optionalItem = typeFactory.zeroOrOne(typeFactory.itemAnyItem());
         final boolean invalidLeft = !leftHandSide.isSubtypeOf(optionalItem);
         final boolean invalidRight = !rightHandSide.isSubtypeOf(optionalItem);
         if (invalidLeft && invalidRight) {

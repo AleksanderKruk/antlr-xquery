@@ -57,7 +57,7 @@ public class FunctionArrayItemsSemanticTests extends SemanticTestsBase {
                                 typeFactory.itemEnum(
                                         Set.of("x")
                                 ),
-                                typeFactory.itemBoolean()
+                                typeFactory.itemTrue()
                         ),
                         Cardinality.of(3)
                 )

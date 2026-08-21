@@ -1,36 +1,38 @@
 package com.github.akruk.antlrquery.evaluator.values.operations;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 
 import com.github.akruk.antlrquery.evaluator.values.AntlrQueryValue;
 
 public class ValueAtomizer {
 
-    public List<AntlrQueryValue> atomize(final AntlrQueryValue value) {
+    public List<AntlrQueryValue> atomize(
+            final AntlrQueryValue value) {
+
         final List<AntlrQueryValue> result = new ArrayList<>();
-        final Queue<AntlrQueryValue> queue = new LinkedList<>();
+        final LinkedList<AntlrQueryValue> queue = new LinkedList<>();
         queue.add(value);
 
         while (!queue.isEmpty()) {
             final AntlrQueryValue current = queue.poll();
 
-            if (current.isEmptySequence) continue;
+            if (current.isEmptySequence) {
+                continue;
+            }
 
             if (current.isArray) {
-                queue.addAll(current.arrayMembers);
-            } else if (current.isMap) {
-                queue.addAll(current.mapEntries.values());
+                for (int i = current.arrayMembers.size() - 1; i >= 0; i--) {
+                    queue.addFirst(current.arrayMembers.get(i));
+                }
             } else if (current.size == 1) {
                 result.add(current.sequence.getFirst());
             } else {
-                queue.addAll(current.sequence);
+                for (int i = current.sequence.size() - 1; i >= 0; i--) {
+                    queue.addFirst(current.sequence.get(i));
+                }
             }
         }
 
         return result;
     }
-
 }

@@ -1183,12 +1183,12 @@ public class SemanticFunctionSets {
             )
         );
 
-        // fn:true() as xs:boolean
+        // fn:true() as true
         fn.add(
             new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "true"),
             List.of(),
-            typeFactory.boolean_(),
+            typeFactory.one(typeFactory.itemTrue()),
             null,
             false,
             false,
@@ -1197,12 +1197,12 @@ public class SemanticFunctionSets {
             )
         );
 
-        // fn:false() as xs:boolean
+        // fn:false() as false
         fn.add(
             new SimplifiedFunctionSpecification(
             new QualifiedName("fn", "false"),
             List.of(),
-            typeFactory.boolean_(),
+            typeFactory.one(typeFactory.itemFalse()),
             null,
             false,
             false,
@@ -3431,7 +3431,7 @@ public class SemanticFunctionSets {
                 )
             ),
             zeroOrMoreItems,
-            null, false, false, null, this::arrayFlatten
+            null, false, false, null, new ArrayFlattenGranularAnalysis(typeFactory)
             )
         );
 

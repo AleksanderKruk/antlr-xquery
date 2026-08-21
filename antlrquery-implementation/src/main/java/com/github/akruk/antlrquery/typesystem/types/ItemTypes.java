@@ -45,7 +45,7 @@ public final class ItemTypes {
         return switch (a1) {
             case NumberType _ when a2 instanceof NumberType -> true;
             case StringType _ when a2 instanceof StringType -> true;
-            case BooleanType.Boolean _ when a2 instanceof BooleanType.Boolean -> true;
+            case BooleanType _ when a2 instanceof BooleanType -> true;
             case RegexType _ when a2 instanceof RegexType -> true;
             default -> false;
         };

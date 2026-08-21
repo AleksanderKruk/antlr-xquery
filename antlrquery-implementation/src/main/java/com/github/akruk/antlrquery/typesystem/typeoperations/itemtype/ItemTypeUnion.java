@@ -414,8 +414,8 @@ public class ItemTypeUnion
 
     private List<AntlrQueryItemType> booleanUnion(Map<? extends Class<?>, Set<AntlrQueryItemType>> classToItems) {
         var booleans = classToItems.getOrDefault(BooleanType.Boolean.class, Set.of());
-        var trues = classToItems.getOrDefault(BooleanType.False.class, Set.of());
-        var falses = classToItems.getOrDefault(BooleanType.True.class, Set.of());
+        var trues = classToItems.getOrDefault(BooleanType.True.class, Set.of());
+        var falses = classToItems.getOrDefault(BooleanType.False.class, Set.of());
         if (!booleans.isEmpty()) {
             return List.of(typeFactory.itemBoolean());
         } else if (!trues.isEmpty() && !falses.isEmpty()) {

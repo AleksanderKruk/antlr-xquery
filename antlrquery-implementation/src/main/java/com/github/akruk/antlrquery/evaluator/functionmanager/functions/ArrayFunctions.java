@@ -6,6 +6,7 @@ import com.github.akruk.antlrquery.evaluator.values.AntlrQueryError;
 import com.github.akruk.antlrquery.evaluator.values.AntlrQueryValue;
 import com.github.akruk.antlrquery.evaluator.values.factories.AntlrQueryValueFactory;
 import com.github.akruk.antlrquery.evaluator.values.operations.Stringifier;
+import com.github.akruk.antlrquery.evaluator.values.operations.ValueAtomizer;
 import com.github.akruk.antlrquery.evaluator.values.operations.ValueComparisonOperator;
 
 import java.util.*;
@@ -120,32 +121,9 @@ public class ArrayFunctions {
 
     public AntlrQueryValue flatten(
             final AntlrQueryVisitingContext ignoredContext,
-            final List<AntlrQueryValue> args)
-    {
-        var input = args.getFirst();
-
-        List<AntlrQueryValue> work = input.sequence;
-        List<AntlrQueryValue> out = new ArrayList<>(work.size());
-
-        boolean hasArray = true;
-
-        while (hasArray) {
-            hasArray = false;
-            out.clear();
-
-            for (AntlrQueryValue item : work) {
-                if (item.isArray) {
-                    hasArray = true;
-                    out.addAll(item.arrayMembers);
-                } else {
-                    out.add(item);
-                }
-            }
-
-            work = out;
-        }
-
-        return valueFactory.sequence(work);
+            final List<AntlrQueryValue> args) {
+        var atomized = new ValueAtomizer().atomize(args.getFirst());
+        return valueFactory.sequence(atomized);
     }
 
 

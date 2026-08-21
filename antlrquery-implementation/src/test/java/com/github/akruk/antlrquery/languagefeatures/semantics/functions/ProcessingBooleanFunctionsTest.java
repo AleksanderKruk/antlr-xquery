@@ -12,7 +12,7 @@ public class ProcessingBooleanFunctionsTest extends SemanticTestsBase {
     {
         assertType(
             "fn:true()",
-            typeFactory.one(typeFactory.itemBoolean()));
+            typeFactory.one(typeFactory.itemTrue()));
     }
 
     @Test
@@ -27,7 +27,7 @@ public class ProcessingBooleanFunctionsTest extends SemanticTestsBase {
     {
         assertType(
             "fn:false()",
-            typeFactory.one(typeFactory.itemBoolean()));
+            typeFactory.one(typeFactory.itemFalse()));
     }
 
     @Test

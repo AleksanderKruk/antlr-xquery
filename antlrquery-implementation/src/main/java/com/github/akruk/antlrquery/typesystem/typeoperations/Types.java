@@ -43,9 +43,7 @@ public final class Types {
             }
             case ConcreteItemType concreteItemType -> switch(concreteItemType) {
                 case ArrayLikeType.ArrayType arrayType -> arrayType.memberType();
-                case AtomicType _, MapLikeType.ExtensibleRecordType _ -> null;
                 case FunctionType functionType -> functionType.returnType();
-                case GrammarEntityType _ -> null;
                 case MapLikeType.MapType mapType -> mapType.valueType();
                 case MapLikeType.RecordType recordType -> {
                     AntlrQuerySequenceType[] merged =
@@ -56,8 +54,8 @@ public final class Types {
                     yield Types.union(typeFactory, merged);
 
                 }
-                case TreeLike treeLike -> null;
-                case ArrayLikeType.TupleType tupleType -> null;
+                case AtomicType _, MapLikeType.ExtensibleRecordType _, GrammarEntityType _, TreeLike _,
+                     ArrayLikeType.TupleType _ -> null;
             };
             case NeverType _, NothingType _ -> null;
             case NamedItemType(NamespaceResolver.QualifiedName reference) ->
@@ -80,10 +78,8 @@ public final class Types {
             }
             case ArrayLikeType.ArrayType a -> a.memberType();
             case ArrayLikeType.TupleType t -> getMemberType(typeFactory, t);
-            case AnyItemType anyItemType -> null;
-            case AtomicType _, MapLikeType.ExtensibleRecordType _, FunctionType _,
-                 GrammarEntityType _, MapLikeType.MapType _, MapLikeType.RecordType _,
-                 TreeLike _, NeverType _, NothingType _ -> null;
+            case AnyItemType _, AtomicType _, MapLikeType.ExtensibleRecordType _, FunctionType _, GrammarEntityType _,
+                 MapLikeType.MapType _, MapLikeType.RecordType _, TreeLike _, NeverType _, NothingType _ -> null;
             case NamedItemType(NamespaceResolver.QualifiedName reference) -> getMemberType(
                     typeFactory, typeFactory.guaranteedItemNamedType(reference, new IllegalStateException())
             );
@@ -117,7 +113,7 @@ public final class Types {
 
     }
 
-    public static AntlrQueryItemType getMapKey(AntlrQueryTypeFactory typeFactory, MapLikeType.MapType antlrQueryItemType) {
+    public static AntlrQueryItemType getMapKey(AntlrQueryTypeFactory ignoredTypeFactory, MapLikeType.MapType antlrQueryItemType) {
         return antlrQueryItemType.keyType();
     }
     public static AntlrQueryItemType getMapKey(AntlrQueryTypeFactory typeFactory, MapLikeType.ExtensibleRecordType antlrQueryItemType) {

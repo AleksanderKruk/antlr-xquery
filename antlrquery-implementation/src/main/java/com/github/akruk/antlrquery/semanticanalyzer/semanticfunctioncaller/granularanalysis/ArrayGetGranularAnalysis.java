@@ -16,7 +16,6 @@ import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Ranges;
 import com.github.akruk.antlrquery.typesystem.types.AntlrQuerySequenceType;
 import com.github.akruk.antlrquery.typesystem.types.Cardinality;
 import com.github.akruk.antlrquery.typesystem.types.NumericRange;
-import com.github.akruk.antlrquery.typesystem.types.TypeInContext;
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.*;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
@@ -26,7 +25,7 @@ import org.checkerframework.framework.qual.DefaultQualifier;
 
 @DefaultQualifier(NonNull.class)
 public final class ArrayGetGranularAnalysis
-        implements SemanticSymbolManager.GrainedAnalysis {
+        implements SemanticSymbolManager.GrainedFunctionCallAnalysis {
 
     private final AntlrQueryTypeFactory typeFactory;
 
@@ -37,7 +36,7 @@ public final class ArrayGetGranularAnalysis
     }
 
     @Override
-    public TypeInContext analyze(
+    public SemanticSymbolManager.FunctionCallAnalysis analyze(
             final List<SemanticSymbolManager.UsedArg> args,
             final @Nullable VisitingSemanticContext context,
             final @Nullable ParseTree functionBody,
@@ -62,7 +61,7 @@ public final class ArrayGetGranularAnalysis
                                 .toArray(Cardinality[]::new));
 
         if (!isPositionRangeCompatibleWithArrayLength(positionArg, arrayCardinality)) {
-            return typeContext.typeInContext(typeFactory.neverType());
+            return SemanticSymbolManager.FunctionCallAnalysis.typeOnly(typeContext.typeInContext(typeFactory.neverType()));
         }
 
         final AntlrQuerySequenceType memberType =
@@ -71,7 +70,7 @@ public final class ArrayGetGranularAnalysis
                                 typeFactory,
                                 input.itemType()));
 
-        return typeContext.typeInContext(memberType);
+        return SemanticSymbolManager.FunctionCallAnalysis.typeOnly(typeContext.typeInContext(memberType));
     }
 
     private static boolean isPositionRangeCompatibleWithArrayLength(

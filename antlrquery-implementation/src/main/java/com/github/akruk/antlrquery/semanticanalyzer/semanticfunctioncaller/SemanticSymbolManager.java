@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
+import com.github.akruk.antlrquery.semanticanalyzer.DiagnosticWarning;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -49,13 +50,6 @@ public class SemanticSymbolManager {
         }
     }
 
-
-    public record AnalysisResult(
-        TypeInContext result,
-        List<DiagnosticError> errors
-        )
-    {}
-
     public record ArgumentSpecification(
         String name,
         AntlrQuerySequenceType type,
@@ -67,9 +61,21 @@ public class SemanticSymbolManager {
         @Nullable ParseTree tree
         ) {}
 
+
+    public record FunctionCallAnalysis(
+            TypeInContext returnedType,
+            List<DiagnosticError> errors,
+            List<DiagnosticWarning> warnings
+    ){
+        public static FunctionCallAnalysis typeOnly(TypeInContext returnedType) {
+            return new FunctionCallAnalysis(returnedType, List.of(), List.of());
+        }
+
+    }
+
     @FunctionalInterface
-    public interface GrainedAnalysis {
-        TypeInContext analyze(
+    public interface GrainedFunctionCallAnalysis {
+        FunctionCallAnalysis analyze(
             List<UsedArg> args,
             VisitingSemanticContext context,
             ParseTree functionBody,
@@ -87,7 +93,7 @@ public class SemanticSymbolManager {
         boolean requiresPosition,
         boolean requiresSize,
         @Nullable ParseTree body,
-        @Nullable GrainedAnalysis grainedAnalysis)
+        SemanticSymbolManager.@Nullable GrainedFunctionCallAnalysis grainedAnalysis)
     { }
 
     public record SimplifiedFunctionSpecification(
@@ -98,7 +104,7 @@ public class SemanticSymbolManager {
         boolean requiresPosition,
         boolean requiresSize,
         @Nullable ParseTree body,
-        @Nullable GrainedAnalysis grainedAnalysis)
+        SemanticSymbolManager.@Nullable GrainedFunctionCallAnalysis grainedAnalysis)
     { }
 
     public record NamespaceInfo(String name, QnameContext declaration) {}
@@ -212,7 +218,7 @@ public class SemanticSymbolManager {
         return contextManager.resolveEffectiveBooleanValue(type, ebvType);
     }
 
-    public AnalysisResult call(
+    public FunctionCallAnalysis call(
         final ParserRuleContext location,
         final QualifiedName qName,
         final List<TypeInContext> positionalArgs,
@@ -227,7 +233,7 @@ public class SemanticSymbolManager {
         if (!functionNamespaces.containsKey(qName.namespace())) {
             final DiagnosticError error = DiagnosticError.of(location, ErrorType.FUNCTION__UNKNOWN_NAMESPACE, List.of(qName.namespace()));
             final List<DiagnosticError> errors = List.of(error);
-            return new AnalysisResult(anyItems, errors);
+            return new FunctionCallAnalysis(anyItems, errors, List.of());
         }
 
         final var namespaceFunctions = functionNamespaces.get(qName.namespace());
@@ -250,7 +256,7 @@ public class SemanticSymbolManager {
             namedFunctions,
             requiredArity);
         if (specAndErrors.spec == null) {
-            return new AnalysisResult(anyItems, specAndErrors.errors);
+            return new FunctionCallAnalysis(anyItems, specAndErrors.errors, List.of());
         }
         final var spec = specAndErrors.spec;
         // used positional arguments need to have matching types
@@ -310,7 +316,7 @@ public class SemanticSymbolManager {
 
         if (mismatchReasons.isEmpty()) {
             if (spec.grainedAnalysis==null) {
-                return new AnalysisResult(typeContext.typeInContext(spec.returnedType), List.of());
+                return new FunctionCallAnalysis(typeContext.typeInContext(spec.returnedType), List.of(), List.of());
             } else {
                 final List<UsedArg> args = new ArrayList<>(positionalArgs.size() + keywordArgs.size());
                 for (final TypeInContext positional : positionalArgs) {
@@ -326,9 +332,10 @@ public class SemanticSymbolManager {
                     }
                 }
 
-                final TypeInContext granularType = spec.grainedAnalysis.analyze(
+                final FunctionCallAnalysis granularAnalysis = spec.grainedAnalysis.analyze(
                     args, context, location, typeContext);
-                return new AnalysisResult(granularType, List.of());
+
+                return new FunctionCallAnalysis(granularAnalysis.returnedType, granularAnalysis.errors, granularAnalysis.warnings);
             }
         } else {
             final DiagnosticError error = DiagnosticError.of(
@@ -341,7 +348,7 @@ public class SemanticSymbolManager {
         }
     }
 
-    public AnalysisResult getFunctionReference(final ParserRuleContext location,
+    public FunctionCallAnalysis getFunctionReference(final ParserRuleContext location,
                                                 final QualifiedName qName,
                                                 final int arity,
                                                 final AntlrQuerySemanticContext context)
@@ -366,7 +373,7 @@ public class SemanticSymbolManager {
         if (specAndErrors.spec == null) {
             final DiagnosticError error = DiagnosticError.of(
                 location, ErrorType.FUNCTION_REFERENCE__UNKNOWN, List.of(namespace, functionName, arity));
-            return new AnalysisResult(fallback, List.of(error));
+            return new FunctionCallAnalysis(fallback, List.of(error), List.of());
         }
         final TypeInContext returnedType = context.typeInContext(specAndErrors.spec.returnedType);
         final List<AntlrQuerySequenceType> argTypes = specAndErrors.spec.args.stream()
@@ -374,7 +381,7 @@ public class SemanticSymbolManager {
             .toList()
             .subList(0, arity);
         final var functionItem = typeFactory.function(returnedType.type, argTypes);
-        return new AnalysisResult(context.currentScope().typeInContext(functionItem), specAndErrors.errors);
+        return new FunctionCallAnalysis(context.currentScope().typeInContext(functionItem), specAndErrors.errors, List.of());
 
     }
 
@@ -419,7 +426,9 @@ public class SemanticSymbolManager {
             final List<ArgumentSpecification> args,
             final AntlrQuerySequenceType returnedType) {
         registerFunction(namespace, functionName, args, returnedType, null, false, false, null,
-                (_, _, _, ctx) -> ctx.currentScope().typeInContext(returnedType));
+                (_, _, _, ctx)
+                        -> new FunctionCallAnalysis(ctx.currentScope().typeInContext(returnedType), List.of(), List.of())
+        );
     }
 
     public void registerFunction(
@@ -454,7 +463,7 @@ public class SemanticSymbolManager {
             final boolean requiresPosition,
             final boolean requiresLength,
             final @Nullable ParseTree body,
-            final GrainedAnalysis analysis)
+            final GrainedFunctionCallAnalysis analysis)
     {
         final long minArity = args.stream()
                 .filter(arg -> arg.defaultArgument() == null)
@@ -540,28 +549,28 @@ public class SemanticSymbolManager {
         return new SpecAndErrors(null, List.of(error));
     }
 
-    private AnalysisResult handleUnknownNamespace(
+    private FunctionCallAnalysis handleUnknownNamespace(
         final DiagnosticError error,
         final TypeInContext fallbackType
         )
     {
         final List<DiagnosticError> errors = List.of(error);
-        return new AnalysisResult(fallbackType, errors);
+        return new FunctionCallAnalysis(fallbackType, errors, List.of());
     }
 
-    private AnalysisResult handleUnknownFunction(final DiagnosticError errorMessageSupplier, final TypeInContext fallbackType)
+    private FunctionCallAnalysis handleUnknownFunction(final DiagnosticError errorMessageSupplier, final TypeInContext fallbackType)
     {
         final List<DiagnosticError> errors = List.of(errorMessageSupplier);
-        return new AnalysisResult(fallbackType, errors);
+        return new FunctionCallAnalysis(fallbackType, errors, List.of());
     }
 
-    private AnalysisResult handleNoMatchingFunction(
+    private FunctionCallAnalysis handleNoMatchingFunction(
         final DiagnosticError errorMessageSupplier,
         final TypeInContext fallbackType
         )
     {
         final List<DiagnosticError> errors = List.of(errorMessageSupplier);
-        return new AnalysisResult(fallbackType, errors);
+        return new FunctionCallAnalysis(fallbackType, errors, List.of());
     }
 
     private void checkIfCorrectContext(final FunctionSpecification spec, final VisitingSemanticContext context, final List<String> mismatchReasons)
@@ -671,14 +680,15 @@ public class SemanticSymbolManager {
         return positionalTypeMismatch;
     }
 
-    private TypeInContext defaultGrainedFunctionAnalysis(final List<ArgumentSpecification> args, final ParseTree body,
+    private FunctionCallAnalysis defaultGrainedFunctionAnalysis(final List<ArgumentSpecification> args, final ParseTree body,
             final List<UsedArg> arguments, final AntlrQuerySemanticContext typeCtx) {
         for (int i = 0 ; i < args.size(); i++) {
             final ArgumentSpecification argSpec = args.get(i);
             final UsedArg usedArg = arguments.get(i);
             typeCtx.entypeVariable(argSpec.name, (VarNameContext) usedArg.tree, null, usedArg.type);
         }
-        return Objects.requireNonNull(body.accept(analyzer));
+        var returnedType = Objects.requireNonNull(body.accept(analyzer));
+        return new FunctionCallAnalysis(returnedType, List.of(), List.of());
     }
 
     private void uncheckedRegisterFunction(
@@ -690,7 +700,7 @@ public class SemanticSymbolManager {
             final boolean requiresPosition,
             final boolean requiresLength,
             final @Nullable ParseTree body,
-            final @Nullable GrainedAnalysis analysis)
+            final SemanticSymbolManager.@Nullable GrainedFunctionCallAnalysis analysis)
     {
         final long minArity = args.stream().filter(arg -> arg.defaultArgument() == null).count();
         final long maxArity = args.size();

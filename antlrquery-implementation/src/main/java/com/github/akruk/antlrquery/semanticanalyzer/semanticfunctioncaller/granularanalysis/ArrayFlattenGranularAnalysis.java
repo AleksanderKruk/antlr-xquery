@@ -1,5 +1,6 @@
 package com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.granularanalysis;
 
+import java.util.Arrays;
 import java.util.List;
 
 import com.github.akruk.antlrquery.namespaceresolver.NamespaceResolver;
@@ -10,7 +11,6 @@ import com.github.akruk.antlrquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrquery.typesystem.typeoperations.Types;
 import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Cardinalities;
 import com.github.akruk.antlrquery.typesystem.types.AntlrQuerySequenceType;
-import com.github.akruk.antlrquery.typesystem.types.TypeInContext;
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.*;
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.ArrayLikeType.ArrayType;
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.ArrayLikeType.TupleType;
@@ -21,7 +21,7 @@ import org.checkerframework.framework.qual.DefaultQualifier;
 
 @DefaultQualifier(NonNull.class)
 public final class ArrayFlattenGranularAnalysis
-        implements SemanticSymbolManager.GrainedAnalysis {
+        implements SemanticSymbolManager.GrainedFunctionCallAnalysis {
 
     private final AntlrQueryTypeFactory typeFactory;
 
@@ -32,7 +32,7 @@ public final class ArrayFlattenGranularAnalysis
     }
 
     @Override
-    public TypeInContext analyze(
+    public SemanticSymbolManager.FunctionCallAnalysis analyze(
             final List<SemanticSymbolManager.UsedArg> args,
             final @Nullable VisitingSemanticContext context,
             final @Nullable ParseTree functionBody,
@@ -41,8 +41,8 @@ public final class ArrayFlattenGranularAnalysis
         final AntlrQuerySequenceType input =
                 args.getFirst().type().type;
 
-        return typeContext.typeInContext(
-                flatten(input));
+        var type = typeContext.typeInContext(flatten(input));
+        return SemanticSymbolManager.FunctionCallAnalysis.typeOnly(type);
     }
 
     /*
@@ -97,24 +97,17 @@ public final class ArrayFlattenGranularAnalysis
     }
 
     /*
-     * A choice is flattened branch by branch and then unioned.
+     * A choice is flattened branch by branch and then unionized.
      */
     private AntlrQuerySequenceType flatten(
             final ChoiceItemType choice) {
 
-        AntlrQuerySequenceType result =
-                typeFactory.emptySequence();
 
-        for (final AntlrQueryItemType itemType :
-                choice.itemTypes()) {
+        AntlrQuerySequenceType[] flattenedTypes = Arrays.stream(choice.itemTypes())
+                .map(this::flatten)
+                .toArray(AntlrQuerySequenceType[]::new);
 
-            result = Types.union(
-                    typeFactory,
-                    result,
-                    flatten(itemType));
-        }
-
-        return result;
+        return Types.union(typeFactory, flattenedTypes);
     }
 
     /*
@@ -122,27 +115,17 @@ public final class ArrayFlattenGranularAnalysis
      * for array-like types. Ordinary atomic/item types contribute
      * exactly one item.
      */
-    private AntlrQuerySequenceType flatten(
-            final ConcreteItemType item) {
-
+    private AntlrQuerySequenceType flatten(final ConcreteItemType item) {
         return switch (item) {
-            case ArrayLikeType arrayLike ->
-                    flatten(arrayLike);
-
-            default ->
-                    typeFactory.one(item);
+            case ArrayLikeType arrayLike -> flatten(arrayLike);
+            default -> typeFactory.one(item);
         };
     }
 
-    private AntlrQuerySequenceType flatten(
-            final ArrayLikeType array) {
-
+    private AntlrQuerySequenceType flatten(final ArrayLikeType array) {
         return switch (array) {
-            case ArrayType arrayType ->
-                    flatten(arrayType);
-
-            case TupleType tupleType ->
-                    flatten(tupleType);
+            case ArrayType arrayType -> flatten(arrayType);
+            case TupleType tupleType -> flatten(tupleType);
         };
     }
 
@@ -153,17 +136,11 @@ public final class ArrayFlattenGranularAnalysis
      * member of the array. Its cardinality therefore has to be
      * multiplied by the cardinality of the array itself.
      */
-    private AntlrQuerySequenceType flatten(
-            final ArrayType array) {
-
-        final AntlrQuerySequenceType member =
-                flatten(array.memberType());
-
+    private AntlrQuerySequenceType flatten(final ArrayType array) {
+        final AntlrQuerySequenceType member = flatten(array.memberType());
         return typeFactory.sequence(
                 member.itemType(),
-                Cardinalities.multiply(
-                        member.cardinality(),
-                        array.cardinality()));
+                Cardinalities.multiply(member.cardinality(), array.cardinality()));
     }
 
     /*
@@ -172,24 +149,13 @@ public final class ArrayFlattenGranularAnalysis
      * Every member must itself be flattened. In particular,
      * tuple members may contain nested arrays or tuples.
      */
-    private AntlrQuerySequenceType flatten(
-            final TupleType tuple) {
-
+    private AntlrQuerySequenceType flatten(final TupleType tuple) {
         if (tuple.members().length == 0) {
             return typeFactory.emptySequence();
         }
-
-        AntlrQuerySequenceType result =
-                typeFactory.emptySequence();
-
-        for (final AntlrQuerySequenceType member : tuple.members()) {
-
-            result = Types.addition(
-                    typeFactory,
-                    result,
-                    flatten(member));
-        }
-
-        return result;
+        AntlrQuerySequenceType[] flattenedTypes = Arrays.stream(tuple.members())
+                .map(this::flatten)
+                .toArray(AntlrQuerySequenceType[]::new);
+        return Types.addition(typeFactory, flattenedTypes);
     }
 }

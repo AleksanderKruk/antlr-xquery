@@ -11,7 +11,6 @@ import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.Seman
 import com.github.akruk.antlrquery.typesystem.factories.AntlrQueryTypeFactory;
 import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Cardinalities;
 import com.github.akruk.antlrquery.typesystem.types.Cardinality;
-import com.github.akruk.antlrquery.typesystem.types.TypeInContext;
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.*;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -25,7 +24,7 @@ import org.checkerframework.framework.qual.DefaultQualifier;
 
 @DefaultQualifier(NonNull.class)
 public class ArrayTailGranularAnalysis
-        implements SemanticSymbolManager.GrainedAnalysis {
+        implements SemanticSymbolManager.GrainedFunctionCallAnalysis {
 
     private final AntlrQueryTypeFactory typeFactory;
 
@@ -35,7 +34,7 @@ public class ArrayTailGranularAnalysis
     }
 
     @Override
-    public TypeInContext analyze(
+    public SemanticSymbolManager.FunctionCallAnalysis analyze(
             final List<SemanticSymbolManager.UsedArg> args,
             final @Nullable VisitingSemanticContext context,
             final @Nullable ParseTree functionBody,
@@ -44,8 +43,7 @@ public class ArrayTailGranularAnalysis
         final AntlrQuerySequenceType array =
                 args.getFirst().type().type;
 
-        return typeContext.typeInContext(
-                analyze(array));
+        return SemanticSymbolManager.FunctionCallAnalysis.typeOnly(typeContext.typeInContext(analyze(array)));
     }
 
     private AntlrQuerySequenceType analyze(

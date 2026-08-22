@@ -1,14 +1,10 @@
 package com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.*;
 
 import com.github.akruk.Utils;
-import com.github.akruk.antlrquery.semanticanalyzer.VisitingSemanticContext;
-import com.github.akruk.antlrquery.semanticanalyzer.semanticcontext.AntlrQuerySemanticContext;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.granularanalysis.*;
-import com.github.akruk.antlrquery.typesystem.typeoperations.Types;
 import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Cardinalities;
 import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Ranges;
 import com.github.akruk.antlrquery.typesystem.types.Cardinality;
@@ -20,7 +16,7 @@ import com.github.akruk.antlrquery.AntlrQueryParser.ParenthesizedExprContext;
 import com.github.akruk.antlrquery.HelperTrees;
 import com.github.akruk.antlrquery.namespaceresolver.NamespaceResolver.QualifiedName;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.SemanticSymbolManager.ArgumentSpecification;
-import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.SemanticSymbolManager.GrainedAnalysis;
+import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.SemanticSymbolManager.GrainedFunctionCallAnalysis;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.SemanticSymbolManager.SimplifiedFunctionSpecification;
 import com.github.akruk.antlrquery.semanticanalyzer.semanticfunctioncaller.SemanticSymbolManager.UsedArg;
 import com.github.akruk.antlrquery.typesystem.RecordField;
@@ -222,13 +218,13 @@ public class SemanticFunctionSets {
         //  as item()*
         // ) as item()?
         final ArgumentSpecification anyItemsRequiredInput = new ArgumentSpecification("input", zeroOrMoreItems, null);
-        final GrainedAnalysis zeroOrOneAnalysis = (args, _, _, ctx) -> {
+        final GrainedFunctionCallAnalysis zeroOrOneAnalysis = (args, _, _, ctx) -> {
             final TypeInContext unrefinedType = args.getFirst().type();
             final var refinedType = typeFactory.zeroOrOne(unrefinedType.type.itemType());
             if (unrefinedType.isSubtypeOf(refinedType)) {
-                return unrefinedType;
+                return SemanticSymbolManager.FunctionCallAnalysis.typeOnly(unrefinedType);
             }
-            return ctx.currentScope().typeInContext(refinedType);
+            return SemanticSymbolManager.FunctionCallAnalysis.typeOnly(ctx.currentScope().typeInContext(refinedType));
         };
         fn.add(
             new SimplifiedFunctionSpecification(
@@ -246,13 +242,13 @@ public class SemanticFunctionSets {
         // fn:one-or-more(
         //  as item()*
         // ) as item()+
-        final GrainedAnalysis oneOrMoreAnalysis = (args, _, _, ctx) -> {
+        final GrainedFunctionCallAnalysis oneOrMoreAnalysis = (args, _, _, ctx) -> {
             final TypeInContext unrefinedType = args.getFirst().type();
             final var refinedType = typeFactory.oneOrMore(unrefinedType.type.itemType());
             if (unrefinedType.isSubtypeOf(refinedType)) {
-            return unrefinedType;
+                return SemanticSymbolManager.FunctionCallAnalysis.typeOnly(unrefinedType);
             }
-            return ctx.currentScope().typeInContext(refinedType);
+            return SemanticSymbolManager.FunctionCallAnalysis.typeOnly(ctx.currentScope().typeInContext(refinedType));
         };
         fn.add(
             new SimplifiedFunctionSpecification(
@@ -270,13 +266,13 @@ public class SemanticFunctionSets {
         // fn:exactly-one(
         //  as item()*
         // ) as item()
-        final GrainedAnalysis exactlyOneAnalysis = (args, _, _, ctx) -> {
+        final GrainedFunctionCallAnalysis exactlyOneAnalysis = (args, _, _, ctx) -> {
             final TypeInContext unrefinedType = args.getFirst().type();
             final var refinedType = typeFactory.one(unrefinedType.type.itemType());
             if (unrefinedType.isSubtypeOf(refinedType)) {
-            return unrefinedType;
+                return SemanticSymbolManager.FunctionCallAnalysis.typeOnly(unrefinedType);
             }
-            return ctx.currentScope().typeInContext(refinedType);
+            return SemanticSymbolManager.FunctionCallAnalysis.typeOnly(ctx.currentScope().typeInContext(refinedType));
         };
         fn.add(
             new SimplifiedFunctionSpecification(
@@ -884,16 +880,16 @@ public class SemanticFunctionSets {
                 var argType = args.getFirst().type();
                 AntlrQuerySequenceType empty = typeFactory.emptySequence();
                 if (argType.type.equals(empty)) {
-                    return argType;
+                    return SemanticSymbolManager.FunctionCallAnalysis.typeOnly(argType);
                 }
                 if (argType.type.itemType() instanceof StringType string) {
                     var number = typeFactory.itemNumber(Cardinalities.toNumericRange(string.cardinality()));
-                    return typeContext.typeInContext(typeFactory.sequence(number, argType.type.cardinality()));
+                    return SemanticSymbolManager.FunctionCallAnalysis.typeOnly(typeContext.typeInContext(typeFactory.sequence(number, argType.type.cardinality())));
                 }
-                return typeContext.typeInContext(
+                return SemanticSymbolManager.FunctionCallAnalysis.typeOnly(typeContext.typeInContext(
                         typeFactory.sequence(
                                 typeFactory.itemNumber(NumericRange.NON_NEGATIVE),
-                                argType.type.cardinality()));
+                                argType.type.cardinality())));
             }
             )
         );
@@ -1225,13 +1221,13 @@ public class SemanticFunctionSets {
             )
         );
         // fn:not( as item()*) as xs:boolean
-        final GrainedAnalysis notAnalysis =
+        final GrainedFunctionCallAnalysis notAnalysis =
             (args, _, _, typeContext) -> {
                 final var scope = typeContext.currentScope();
                 final var returned = typeContext.typeInContext(typeFactory.boolean_());
                 scope.imply(returned, new NotImplication(returned, args.getFirst().type(), false));
                 scope.imply(returned, new NotImplication(returned, args.getFirst().type(), true));
-                return returned;
+                return SemanticSymbolManager.FunctionCallAnalysis.typeOnly(returned);
             };
         fn.add(
             new SimplifiedFunctionSpecification(
@@ -1332,11 +1328,11 @@ public class SemanticFunctionSets {
             null, false, false, null, null
         ));
 
-        final GrainedAnalysis sameCardinalityAsArg = (args, _, _, typeContext) -> {
+        final GrainedFunctionCallAnalysis sameCardinalityAsArg = (args, _, _, typeContext) -> {
             final UsedArg node = args.getFirst();
             final AntlrQuerySequenceType typeItself = node.type().type;
             final AntlrQuerySequenceType t = typeFactory.sequence(typeItself.itemType(), typeItself.cardinality());
-            return typeContext.typeInContext(t);
+            return SemanticSymbolManager.FunctionCallAnalysis.typeOnly(typeContext.typeInContext(t));
         };
 
         // fn:reverse(
@@ -3219,20 +3215,20 @@ public class SemanticFunctionSets {
             typeFactory.zeroOrOne(typeFactory.itemAnyNode()),
             CONTEXT_VALUE
         );
-        final GrainedAnalysis ifNodePresentThenNumber = (args, _, _, typeContext) -> {
+        final GrainedFunctionCallAnalysis ifNodePresentThenNumber = (args, _, _, typeContext) -> {
             final UsedArg node = args.getFirst();
             if (node.type().type.cardinality().isOne()) {
-                return typeContext.typeInContext(number);
+                return SemanticSymbolManager.FunctionCallAnalysis.typeOnly(typeContext.typeInContext(number));
             }
-            return node.type();
+            return SemanticSymbolManager.FunctionCallAnalysis.typeOnly(node.type());
         };
 
-        final GrainedAnalysis ifNodePresentThenBoolean = (args, _, _, typeContext) -> {
+        final GrainedFunctionCallAnalysis ifNodePresentThenBoolean = (args, _, _, typeContext) -> {
             final UsedArg node = args.getFirst();
             if (node.type().type.cardinality().isOne()) {
-                return typeContext.typeInContext(boolean_);
+                return SemanticSymbolManager.FunctionCallAnalysis.typeOnly(typeContext.typeInContext(boolean_));
             }
-            return node.type();
+            return SemanticSymbolManager.FunctionCallAnalysis.typeOnly(node.type());
         };
 
         // antlr:start
@@ -3360,7 +3356,7 @@ public class SemanticFunctionSets {
                 )
             ),
             typeFactory.one(typeFactory.itemAnyArray()),
-            null, false, false, null, this::arrayAppend
+            null, false, false, null, new ArrayAppendGranularAnalysis(typeFactory)
             )
         );
 
@@ -3393,7 +3389,7 @@ public class SemanticFunctionSets {
                 )
             ),
             typeFactory.boolean_(),
-            null, false, false, null, this::arrayEmpty
+            null, false, false, null, new ArrayEmptyGranularAnalysis(typeFactory)
             )
         );
 
@@ -3721,7 +3717,7 @@ public class SemanticFunctionSets {
                         new RecordField("value", new TypeOrReference.Type(typeFactory.anyItem()), true
                     ))))
             ),
-            null, false, false, null, this::arrayMembers
+            null, false, false, null,new ArrayMembersGranularAnalysis(typeFactory)
             )
         );
 
@@ -3771,7 +3767,7 @@ public class SemanticFunctionSets {
                 new ArgumentSpecification("positions", typeFactory.zeroOrMore(typeFactory.itemNumber()), null)
             ),
             typeFactory.one(typeFactory.itemAnyArray()),
-            null, false, false, null, this::arrayRemove
+            null, false, false, null, new ArrayRemoveGranularAnalysis(typeFactory)
             )
         );
 
@@ -4270,556 +4266,5 @@ public class SemanticFunctionSets {
         return map;
     }
 
-    TypeInContext arrayAppend(
-            final List<UsedArg> args,
-            final VisitingSemanticContext context,
-            final ParseTree functionBody,
-            final AntlrQuerySemanticContext typeContext) {
-
-        final UsedArg arrayArg = args.get(0);
-        final UsedArg memberArg = args.get(1);
-
-        final AntlrQuerySequenceType arrayType = arrayArg.type().type;
-        final AntlrQuerySequenceType appendedType = memberArg.type().type;
-
-        final AntlrQueryItemType itemType =
-                arrayAppend(arrayType.itemType(), appendedType);
-
-        final AntlrQuerySequenceType type =
-                typeFactory.sequence(itemType, arrayType.cardinality());
-
-        return typeContext.typeInContext(type);
-    }
-
-    private AntlrQueryItemType arrayAppend(
-            final AntlrQueryItemType array,
-            final AntlrQuerySequenceType appended) {
-
-        return switch (array) {
-            case ChoiceItemType choice ->
-                    arrayAppend(choice, appended);
-
-            case ConcreteItemType concrete ->
-                    arrayAppend(concrete, appended);
-
-            case NamedItemType named ->
-                    arrayAppend(
-                            typeFactory.guaranteedItemNamedType(
-                                    named.reference(),
-                                    new IllegalStateException()),
-                            appended);
-
-            case NeverType _, NothingType _, AnyItemType _ ->
-                    throw new IllegalStateException(
-                            "Analysis should have prevented type: " + array);
-        };
-    }
-
-    private AntlrQueryItemType arrayAppend(
-            final ChoiceItemType choice,
-            final AntlrQuerySequenceType appended) {
-
-        final ConcreteItemType[] itemTypes = choice.itemTypes();
-        final ConcreteItemType[] newItemTypes =
-                new ConcreteItemType[itemTypes.length];
-
-        for (int i = 0; i < itemTypes.length; i++) {
-            newItemTypes[i] = arrayAppend(itemTypes[i], appended);
-        }
-
-        return typeFactory.itemChoice(newItemTypes);
-    }
-
-    private ConcreteItemType arrayAppend(
-            final ConcreteItemType array,
-            final AntlrQuerySequenceType appended) {
-
-        return switch (array) {
-            case ArrayLikeType arrayLike ->
-                    arrayAppend(arrayLike, appended);
-            default ->
-                    throw new IllegalStateException(
-                            "Expected array-like type, got: " + array);
-        };
-    }
-
-    private ConcreteItemType arrayAppend(
-            final ArrayLikeType array,
-            final AntlrQuerySequenceType appended) {
-
-        return switch (array) {
-            case ArrayLikeType.ArrayType(
-                    AntlrQuerySequenceType memberType,
-                    Cardinality cardinality) ->
-                    arrayAppend(memberType, cardinality, appended);
-
-            case ArrayLikeType.TupleType(
-                    AntlrQuerySequenceType[] members) ->
-                    arrayAppend(members, appended);
-        };
-    }
-
-    private ConcreteItemType arrayAppend(
-            final AntlrQuerySequenceType memberType,
-            final Cardinality cardinality,
-            final AntlrQuerySequenceType appended) {
-
-        return (ConcreteItemType) typeFactory.itemArray(
-                Types.addition(typeFactory, memberType, appended),
-                Cardinalities.add(cardinality, Cardinality.ONE)
-        );
-    }
-
-    private ConcreteItemType arrayAppend(
-            final AntlrQuerySequenceType[] members,
-            final AntlrQuerySequenceType appended) {
-
-        final List<AntlrQuerySequenceType> newMembers =
-                new ArrayList<>(members.length + 1);
-
-        Collections.addAll(newMembers, members);
-        newMembers.add(appended);
-
-        return (ConcreteItemType) typeFactory.itemTuple(newMembers);
-    }
-
-    TypeInContext arrayEmpty(
-            final List<UsedArg> args,
-            final VisitingSemanticContext context,
-            final ParseTree functionBody,
-            final AntlrQuerySemanticContext typeContext) {
-
-        final AntlrQuerySequenceType arrayType = args.getFirst().type().type;
-
-        final AntlrQueryItemType result =
-                arrayEmpty(arrayType.itemType());
-
-        return typeContext.typeInContext(
-                typeFactory.sequence(result, Cardinality.ONE));
-    }
-    private AntlrQueryItemType arrayEmpty(
-            final AntlrQueryItemType itemType) {
-
-        return switch (itemType) {
-            case ChoiceItemType choice ->
-                    arrayEmpty(choice);
-
-            case ConcreteItemType concrete ->
-                    arrayEmpty(concrete);
-
-            case NamedItemType named ->
-                    arrayEmpty(
-                            typeFactory.guaranteedItemNamedType(
-                                    named.reference(),
-                                    new IllegalStateException()));
-
-            case NeverType _, NothingType _, AnyItemType _ ->
-                    throw new IllegalStateException(
-                            "Analysis should have prevented type: " + itemType);
-        };
-    }
-
-    private AntlrQueryItemType arrayEmpty(
-            final ChoiceItemType choice) {
-
-        boolean canBeTrue = false;
-        boolean canBeFalse = false;
-
-        for (final ConcreteItemType itemType : choice.itemTypes()) {
-            final AntlrQueryItemType result = arrayEmpty(itemType);
-
-            switch (result) {
-                case BooleanType.True _ ->
-                        canBeTrue = true;
-
-                case BooleanType.False _ ->
-                        canBeFalse = true;
-
-                case BooleanType.Boolean _ -> {
-                    canBeTrue = true;
-                    canBeFalse = true;
-                }
-
-                default ->
-                        throw new IllegalStateException(
-                                "Expected boolean type, got: " + result);
-            }
-
-            if (canBeTrue && canBeFalse)
-                return typeFactory.itemBoolean();
-        }
-
-        return canBeTrue
-                ? typeFactory.itemTrue()
-                : typeFactory.itemFalse();
-    }
-
-    private AntlrQueryItemType arrayEmpty(
-            final ConcreteItemType itemType) {
-
-        return switch (itemType) {
-            case ArrayLikeType array ->
-                    arrayEmpty(array);
-
-            default ->
-                    throw new IllegalStateException(
-                            "Expected array-like type, got: " + itemType);
-        };
-    }
-
-    private AntlrQueryItemType arrayEmpty(
-            final ArrayLikeType array) {
-
-        return switch (array) {
-            case ArrayLikeType.ArrayType(
-                    _,
-                    Cardinality cardinality) ->
-
-                    Cardinalities.contains(cardinality, BigInteger.ZERO)
-                            ? typeFactory.itemTrue()
-                            : typeFactory.itemFalse();
-
-            case ArrayLikeType.TupleType(
-                    AntlrQuerySequenceType[] members) ->
-
-                    members.length == 0
-                            ? typeFactory.itemTrue()
-                            : typeFactory.itemFalse();
-        };
-    }
-
-    private AntlrQuerySequenceType arrayFlatten(
-            final AntlrQueryItemType itemType,
-            final Cardinality cardinality) {
-
-        return switch (itemType) {
-            case ChoiceItemType choice ->
-                    arrayFlatten(choice, cardinality);
-
-            case AtomicType _, MapLikeType.ExtensibleRecordType _,
-                 FunctionType _, GrammarEntityType _,
-                 MapLikeType.MapType _, MapLikeType.RecordType _,
-                 TreeLike _, AnyItemType _, NeverType _, NothingType _ ->
-
-                    typeFactory.sequence(itemType, cardinality);
-            case ConcreteItemType concrete ->
-                    arrayFlatten(concrete, cardinality);
-
-            case NamedItemType named ->
-                    arrayFlatten(
-                            typeFactory.guaranteedItemNamedType(
-                                    named.reference(),
-                                    new IllegalStateException()),
-                            cardinality);
-
-        };
-    }
-
-    private AntlrQuerySequenceType arrayFlatten(
-            final ChoiceItemType choice,
-            final Cardinality cardinality) {
-
-        final AntlrQuerySequenceType[] types =
-                Arrays.stream(choice.itemTypes())
-                        .map(item -> arrayFlatten(item, cardinality))
-                        .toArray(AntlrQuerySequenceType[]::new);
-
-        return Types.union(typeFactory, types);
-    }
-
-    private AntlrQuerySequenceType arrayFlatten(
-            final ConcreteItemType concrete,
-            final Cardinality cardinality) {
-
-        return switch (concrete) {
-            case ArrayLikeType array ->
-                    arrayFlatten(array, cardinality);
-
-            default ->
-                    typeFactory.sequence(concrete, cardinality);
-        };
-    }
-
-    private AntlrQuerySequenceType arrayFlatten(
-            final ArrayLikeType array,
-            final Cardinality cardinality) {
-
-        return switch (array) {
-            case ArrayLikeType.ArrayType(
-                    AntlrQuerySequenceType memberType,
-                    Cardinality arrayCardinality) ->
-
-                    arrayFlatten(
-                            memberType.itemType(),
-                            Cardinalities.multiply(
-                                    cardinality,
-                                    arrayCardinality));
-
-            case ArrayLikeType.TupleType tuple ->
-                    arrayFlatten(tuple, cardinality);
-        };
-    }
-
-    private AntlrQuerySequenceType arrayFlatten(
-            final ArrayLikeType.TupleType tuple,
-            final Cardinality cardinality) {
-
-        final AntlrQuerySequenceType[] members =
-                Arrays.stream(tuple.members())
-                        .map(member ->
-                                arrayFlatten(
-                                        member.itemType(),
-                                        Cardinalities.multiply(
-                                                cardinality,
-                                                member.cardinality())))
-                        .toArray(AntlrQuerySequenceType[]::new);
-
-        return Types.union(typeFactory, members);
-    }
-
-
-    TypeInContext arrayMembers(
-            final List<UsedArg> args,
-            final VisitingSemanticContext context,
-            final ParseTree functionBody,
-            final AntlrQuerySemanticContext typeContext) {
-
-        final AntlrQuerySequenceType arrayType = args.getFirst().type().type;
-
-        final AntlrQuerySequenceType result =
-                arrayMembers(arrayType.itemType(), arrayType.cardinality());
-
-        return typeContext.typeInContext(result);
-    }
-
-    private AntlrQuerySequenceType arrayMembers(
-            final AntlrQueryItemType itemType,
-            final Cardinality cardinality) {
-
-        return switch (itemType) {
-            case ChoiceItemType choice ->
-                    arrayMembers(choice, cardinality);
-
-            case ConcreteItemType concrete ->
-                    arrayMembers(concrete, cardinality);
-
-            case NamedItemType named ->
-                    arrayMembers(
-                            typeFactory.guaranteedItemNamedType(
-                                    named.reference(),
-                                    new IllegalStateException()),
-                            cardinality);
-
-            case NeverType _, NothingType _, AnyItemType _ ->
-                    throw new IllegalStateException(
-                            "Analysis should have prevented type: " + itemType);
-        };
-    }
-
-    private AntlrQuerySequenceType arrayMembers(
-            final ChoiceItemType choice,
-            final Cardinality cardinality) {
-
-        return Types.union(
-                typeFactory,
-                Arrays.stream(choice.itemTypes())
-                        .map(item -> arrayMembers(item, cardinality))
-                        .toArray(AntlrQuerySequenceType[]::new));
-    }
-
-    private AntlrQuerySequenceType arrayMembers(
-            final ConcreteItemType concrete,
-            final Cardinality cardinality) {
-
-        return switch (concrete) {
-            case ArrayLikeType array ->
-                    arrayMembers(array, cardinality);
-
-            default ->
-                    throw new IllegalStateException(
-                            "Expected array-like type, got: " + concrete);
-        };
-    }
-
-    private AntlrQuerySequenceType arrayMembers(
-            final ArrayLikeType array,
-            final Cardinality cardinality) {
-
-        return switch (array) {
-            case ArrayLikeType.ArrayType(
-                    AntlrQuerySequenceType memberType,
-                    Cardinality _) -> {
-
-                final AntlrQuerySequenceType valueType =
-                        arrayMembers(memberType);
-
-                yield typeFactory.sequence(
-                        valueType.itemType(),
-                        Cardinalities.multiply(
-                                cardinality,
-                                valueType.cardinality()));
-            }
-
-            case ArrayLikeType.TupleType tuple ->
-                    arrayMembers(tuple, cardinality);
-        };
-    }
-
-    private AntlrQuerySequenceType arrayMembers(
-            final ArrayLikeType.TupleType tuple,
-            final Cardinality cardinality) {
-
-        final AntlrQuerySequenceType[] members = tuple.members();
-
-        if (members.length == 0) {
-            return typeFactory.emptySequence();
-        }
-
-        final AntlrQuerySequenceType memberType =
-                Types.union(typeFactory, members);
-
-        return typeFactory.sequence(
-                typeFactory.itemRecord(Utils.linkedHashMap(
-                        Map.entry("value", new RecordField("value", new TypeOrReference.Type(memberType), true)))
-                ),
-                cardinality);
-    }
-
-    private AntlrQuerySequenceType arrayMembers(
-            final AntlrQuerySequenceType memberType) {
-
-        return typeFactory.sequence(
-                typeFactory.itemRecord(Utils.linkedHashMap(
-                        Map.entry("value", new RecordField("value", new TypeOrReference.Type(memberType), true)))
-                ),
-                Cardinality.ONE);
-    }
-
-    TypeInContext arrayRemove(
-            final List<UsedArg> args,
-            final VisitingSemanticContext context,
-            final ParseTree functionBody,
-            final AntlrQuerySemanticContext typeContext) {
-
-        final AntlrQuerySequenceType arrayType = args.get(0).type().type;
-        final AntlrQuerySequenceType positionsType = args.get(1).type().type;
-
-        final AntlrQueryItemType itemType =
-                arrayRemove(arrayType.itemType(), positionsType);
-
-        return typeContext.typeInContext(
-                typeFactory.sequence(
-                        itemType,
-                        Objects.requireNonNull(Cardinalities.remove(
-                                arrayType.cardinality(),
-                                positionsType.cardinality()))));
-    }
-
-    private AntlrQueryItemType arrayRemove(
-            final AntlrQueryItemType itemType,
-            final AntlrQuerySequenceType positionsType) {
-
-        return switch (itemType) {
-            case ChoiceItemType choice ->
-                    arrayRemove(choice, positionsType);
-
-            case ConcreteItemType concrete ->
-                    arrayRemove(concrete, positionsType);
-
-            case NamedItemType named ->
-                    arrayRemove(
-                            typeFactory.guaranteedItemNamedType(
-                                    named.reference(),
-                                    new IllegalStateException()),
-                            positionsType);
-
-            case NeverType _, NothingType _, AnyItemType _ ->
-                    throw new IllegalStateException(
-                            "Analysis should have prevented type: " + itemType);
-        };
-    }
-
-    private AntlrQueryItemType arrayRemove(
-            final ChoiceItemType choice,
-            final AntlrQuerySequenceType positionsType) {
-
-        return typeFactory.itemChoice(
-                Arrays.stream(choice.itemTypes())
-                        .map(item -> arrayRemove(item, positionsType))
-                        .toArray(AntlrQueryItemType[]::new));
-    }
-
-    private AntlrQueryItemType arrayRemove(
-            final ConcreteItemType concrete,
-            final AntlrQuerySequenceType positionsType) {
-
-        return switch (concrete) {
-            case ArrayLikeType array ->
-                    arrayRemove(array, positionsType);
-
-            default ->
-                    throw new IllegalStateException(
-                            "Expected array-like type, got: " + concrete);
-        };
-    }
-
-    private AntlrQueryItemType arrayRemove(
-            final ArrayLikeType array,
-            final AntlrQuerySequenceType positionsType) {
-
-        return switch (array) {
-            case ArrayLikeType.ArrayType(
-                    AntlrQuerySequenceType memberType,
-                    Cardinality cardinality) ->
-
-                    typeFactory.itemArray(
-                            memberType,
-                            arrayRemove(cardinality, positionsType));
-
-            case ArrayLikeType.TupleType tuple ->
-                    arrayRemove(tuple, positionsType);
-        };
-    }
-
-    private AntlrQueryItemType arrayRemove(
-            final ArrayLikeType.TupleType tuple,
-            final AntlrQuerySequenceType positionsType) {
-
-        final AntlrQuerySequenceType[] members = tuple.members();
-
-        if (members.length == 0)
-            return tuple;
-
-        final List<AntlrQuerySequenceType> result =
-                new ArrayList<>(members.length);
-
-        for (int i = 0; i < members.length; i++) {
-            final BigInteger position = BigInteger.valueOf(i + 1);
-
-            if (!isRemovedPosition(position, positionsType))
-                result.add(members[i]);
-        }
-
-        return typeFactory.itemTuple(result);
-    }
-
-    private boolean isRemovedPosition(
-            final BigInteger position,
-            final AntlrQuerySequenceType positionsType) {
-
-        return positionsType.itemType() instanceof AtomicType
-                && Cardinalities.contains(
-                positionsType.cardinality(),
-                position);
-    }
-
-    private Cardinality arrayRemove(
-            final Cardinality cardinality,
-            final AntlrQuerySequenceType positionsType) {
-
-        return Cardinalities.subtract(
-                cardinality,
-                positionsType.cardinality());
-    }
 
 }

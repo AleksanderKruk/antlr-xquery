@@ -13,7 +13,6 @@ import com.github.akruk.antlrquery.typesystem.typeoperations.Types;
 import com.github.akruk.antlrquery.typesystem.typeoperations.cardinality.Cardinalities;
 import com.github.akruk.antlrquery.typesystem.types.AntlrQuerySequenceType;
 import com.github.akruk.antlrquery.typesystem.types.Cardinality;
-import com.github.akruk.antlrquery.typesystem.types.TypeInContext;
 import com.github.akruk.antlrquery.typesystem.types.itemtypes.*;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -22,7 +21,7 @@ import org.checkerframework.framework.qual.DefaultQualifier;
 
 @DefaultQualifier(NonNull.class)
 public final class ArrayJoinGranularAnalysis
-        implements SemanticSymbolManager.GrainedAnalysis {
+        implements SemanticSymbolManager.GrainedFunctionCallAnalysis {
 
     private final AntlrQueryTypeFactory typeFactory;
 
@@ -33,7 +32,7 @@ public final class ArrayJoinGranularAnalysis
     }
 
     @Override
-    public TypeInContext analyze(
+    public SemanticSymbolManager.FunctionCallAnalysis analyze(
             final List<SemanticSymbolManager.UsedArg> args,
             final @Nullable VisitingSemanticContext context,
             final @Nullable ParseTree functionBody,
@@ -42,9 +41,9 @@ public final class ArrayJoinGranularAnalysis
         final AntlrQuerySequenceType input = args.getFirst().type().type;
 
         if (input.itemType().equals(AntlrQueryItemType.NOTHING)) {
-            return typeContext.typeInContext(
+            return SemanticSymbolManager.FunctionCallAnalysis.typeOnly(typeContext.typeInContext(
                     typeFactory.one(
-                            typeFactory.itemTuple(List.of())));
+                            typeFactory.itemTuple(List.of()))));
         }
 
         final List<AntlrQueryItemType> arrays = new ArrayList<>();
@@ -75,13 +74,14 @@ public final class ArrayJoinGranularAnalysis
                         input.cardinality());
 
         if (resultCardinality.isZero()) {
-            return typeContext.typeInContext(typeFactory.tuple());
+            return SemanticSymbolManager.FunctionCallAnalysis.typeOnly(typeContext.typeInContext(typeFactory.tuple()));
         }
 
-        return typeContext.typeInContext(
-                typeFactory.one(
-                        typeFactory.itemArray(
-                                memberType,
-                                resultCardinality)));
+        return SemanticSymbolManager.FunctionCallAnalysis.typeOnly(
+                typeContext.typeInContext(
+                    typeFactory.one(
+                            typeFactory.itemArray(
+                                    memberType,
+                                    resultCardinality))));
     }
 }

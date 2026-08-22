@@ -274,7 +274,7 @@ public class ArrayFunctions {
         if (args.size() == 2) {
             if (pos < 1 || pos > array.arrayMembers.size()) {
                 return valueFactory.error(
-                        AntlrQueryError.InvalidArgumentType,
+                        AntlrQueryError.ArrayIndexOutOfBounds,
                         "array:get position out of bounds"
                 );
             }

@@ -3590,14 +3590,14 @@ public class SemanticFunctionSets {
                 )
         );
 
-        // array:get($array as array(*), $position as xs:integer) as item()*
+        // array:get($array as array(+), $position as xs:integer) as item()*
         array.add(
             new SimplifiedFunctionSpecification(
             new QualifiedName("array", "get"),
             List.of(
                 new ArgumentSpecification(
                 "array",
-                typeFactory.one(typeFactory.itemAnyArray()),
+                nonEmptyArray,
                 null
                 ),
                 new ArgumentSpecification(
@@ -3607,7 +3607,8 @@ public class SemanticFunctionSets {
                 )
             ),
             zeroOrMoreItems,
-            null, false, false, null, this::arrayGet
+            null, false, false,
+                null, new ArrayGetGranularAnalysis(typeFactory)
             )
         );
 
@@ -4574,155 +4575,6 @@ public class SemanticFunctionSets {
                         .toArray(AntlrQuerySequenceType[]::new);
 
         return Types.union(typeFactory, members);
-    }
-
-    TypeInContext arrayGet(
-            final List<UsedArg> args,
-            final VisitingSemanticContext context,
-            final ParseTree functionBody,
-            final AntlrQuerySemanticContext typeContext) {
-
-        final UsedArg arrayArg = args.get(0);
-        final UsedArg positionArg = args.get(1);
-
-        final AntlrQuerySequenceType arrayType = arrayArg.type().type;
-        final AntlrQuerySequenceType positionType = positionArg.type().type;
-
-        final AntlrQuerySequenceType result =
-                arrayGet(
-                        arrayType.itemType(),
-                        positionType,
-                        args.size() == 3
-                                ? args.get(2).type().type
-                                : null);
-
-        return typeContext.typeInContext(result);
-    }
-
-    private AntlrQuerySequenceType arrayGet(
-            final AntlrQueryItemType itemType,
-            final AntlrQuerySequenceType positionType,
-            final AntlrQuerySequenceType defaultType) {
-
-        return switch (itemType) {
-            case ChoiceItemType choice ->
-                    arrayGet(choice, positionType, defaultType);
-
-            case ConcreteItemType concrete ->
-                    arrayGet(concrete, positionType, defaultType);
-
-            case NamedItemType named ->
-                    arrayGet(
-                            typeFactory.guaranteedItemNamedType(
-                                    named.reference(),
-                                    new IllegalStateException()),
-                            positionType,
-                            defaultType);
-
-            case NeverType _, NothingType _, AnyItemType _ ->
-                    throw new IllegalStateException(
-                            "Analysis should have prevented type: " + itemType);
-        };
-    }
-
-    private AntlrQuerySequenceType arrayGet(
-            final ChoiceItemType choice,
-            final AntlrQuerySequenceType positionType,
-            final AntlrQuerySequenceType defaultType) {
-
-        final AntlrQuerySequenceType[] types =
-                Arrays.stream(choice.itemTypes())
-                        .map(item ->
-                                arrayGet(item, positionType, defaultType))
-                        .toArray(AntlrQuerySequenceType[]::new);
-
-        return Types.union(typeFactory, types);
-    }
-
-    private AntlrQuerySequenceType arrayGet(
-            final ConcreteItemType concrete,
-            final AntlrQuerySequenceType positionType,
-            final AntlrQuerySequenceType defaultType) {
-
-        return switch (concrete) {
-            case ArrayLikeType array ->
-                    arrayGet(array, positionType, defaultType);
-
-            default ->
-                    throw new IllegalStateException(
-                            "Expected array-like type, got: " + concrete);
-        };
-    }
-
-    private AntlrQuerySequenceType arrayGet(
-            final ArrayLikeType array,
-            final AntlrQuerySequenceType positionType,
-            final AntlrQuerySequenceType defaultType) {
-
-        return switch (array) {
-            case ArrayLikeType.ArrayType(
-                    AntlrQuerySequenceType memberType,
-                    Cardinality ignoredCardinality) ->
-
-                    arrayGet(memberType, positionType, defaultType);
-
-            case ArrayLikeType.TupleType tuple ->
-                    arrayGet(tuple, defaultType);
-        };
-    }
-
-    private AntlrQuerySequenceType arrayGet(
-            final AntlrQuerySequenceType memberType,
-            final AntlrQuerySequenceType ignoredPositionType,
-            final AntlrQuerySequenceType ignoredDefaultType)
-    {
-        return memberType;
-    }
-
-    private AntlrQuerySequenceType arrayGet(
-            final ArrayLikeType.TupleType tuple,
-            final AntlrQuerySequenceType defaultType) {
-
-        final AntlrQuerySequenceType[] members = tuple.members();
-
-        if (members.length == 0) {
-            return arrayGetOutOfBounds(defaultType);
-        }
-
-        return Types.union(typeFactory, members);
-    }
-
-    private AntlrQuerySequenceType arrayGetOutOfBounds(
-            final AntlrQuerySequenceType defaultType) {
-
-        if (defaultType != null)
-            return defaultType;
-
-        throw new IllegalStateException(
-                "array:get position is statically known to be out of bounds");
-    }
-
-    private AntlrQuerySequenceType arrayJoin(
-            final ArrayLikeType.TupleType tuple,
-            final Cardinality cardinality) {
-
-        final AntlrQuerySequenceType[] members = tuple.members();
-
-        if (members.length == 0) {
-            return typeFactory.emptySequence();
-        }
-
-        final AntlrQuerySequenceType[] memberTypes =
-                Arrays.stream(members)
-                        .map(member ->
-                                typeFactory.sequence(
-                                        member.itemType(),
-                                        Cardinalities.multiply(
-                                                cardinality,
-                                                member.cardinality())))
-                        .toArray(AntlrQuerySequenceType[]::new);
-
-        return Types.addition(typeFactory, memberTypes);
     }
 
 

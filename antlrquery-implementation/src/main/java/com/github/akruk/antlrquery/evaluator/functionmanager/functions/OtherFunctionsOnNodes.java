@@ -61,14 +61,6 @@ public class OtherFunctionsOnNodes {
         return valueFactory.node("", ancestors.getFirst());
     }
 
-    // public XQueryValue path(
-    //         XQueryVisitingContext context,
-    //         List<XQueryValue> args,
-    //         Map<String, XQueryValue> kwargs)
-    // {
-
-    // }
-
     public AntlrQueryValue hasChildren(AntlrQueryVisitingContext context, List<AntlrQueryValue> args)
     {
         AntlrQueryValue node = getNode(context, args);

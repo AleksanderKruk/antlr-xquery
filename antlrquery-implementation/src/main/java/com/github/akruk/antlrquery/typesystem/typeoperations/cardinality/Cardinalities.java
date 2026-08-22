@@ -426,8 +426,8 @@ public final class Cardinalities {
     private static void buildSums(
             final Cardinality[] cardinalities,
             final int index,
-            final CardinalityValue currentLower,
-            final CardinalityValue currentUpper,
+            final @Nullable CardinalityValue currentLower,
+            final @Nullable CardinalityValue currentUpper,
             final List<Event> result) {
 
         if (index == cardinalities.length) {
@@ -618,7 +618,6 @@ public final class Cardinalities {
         }
 
         if (hasPositiveInfinity) {
-            assert minLower != null;
             return Cardinality.of(new Event(minLower, Type.START), new Event(CardinalityValue.POSITIVE_INFINITY, Type.END));
         }
 

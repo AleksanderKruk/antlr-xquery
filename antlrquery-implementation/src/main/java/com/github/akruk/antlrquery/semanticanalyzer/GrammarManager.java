@@ -225,7 +225,7 @@ public class GrammarManager {
                 statuses,
                 ImportStatus.NO_PATH_FOUND__NO_LEXER
             );
-        } else if (resolvedPathsResult.foundLexer && !resolvedPathsResult.foundParser) {
+        } else if (resolvedPathsResult.foundLexer) {
             return new GrammarImportResult(
                 validPaths,
                 resolvedPaths,

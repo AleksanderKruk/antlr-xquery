@@ -968,15 +968,16 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
             } else {
                 final VarNameContext varName2 = gs.varNameAndType().varName();
                 final String varname = varName2.qname().getText();
-                final VariableInfo variable = symbolManager.getVariable(varname);
-                TypeInContext variableType = variable.type();
-                if (variableType == null) {
+                final @Nullable VariableInfo variable = symbolManager.getVariable(varname);
+                TypeInContext variableType = variable != null
+                        ? variable.type()
+                        : symbolManager.typeInContext(zeroOrMoreItems);
+                if (variable == null) {
                     error(
                         varName2,
                         ErrorType.GROUP_BY__UNDEFINED_GROUPING_VARIABLE,
                         List.of(varname)
                         );
-                    variableType = symbolManager.typeInContext(zeroOrMoreItems);
                 }
                 final AntlrQuerySequenceType atomizedType = atomizer.atomize(variableType.type);
                 if (!Types.isSubtype(typeFactory, atomizedType, zeroOrOneItem)) {
@@ -1161,16 +1162,15 @@ public class AntlrQuerySemanticAnalyzer extends AntlrQueryParserBaseVisitor<@Nul
     public TypeInContext visitVarRef(final VarRefContext ctx)
     {
         final String variableName = ctx.qname().getText();
-        final VariableInfo variable = symbolManager.getVariable(variableName);
-        final TypeInContext variableType = variable.type();
-        if (variableType == null) {
+        final @Nullable VariableInfo variable = symbolManager.getVariable(variableName);
+        if (variable == null) {
             error(ctx.qname(), ErrorType.VAR_REF__UNDECLARED, List.of(variableName));
             return symbolManager.typeInContext(zeroOrMoreItems);
         } else {
             for (final var l : listeners) {
                 l.onVariableReference(ctx, variable);
             }
-            return variableType;
+            return variable.type();
         }
     }
     

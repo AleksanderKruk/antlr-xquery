@@ -16,7 +16,7 @@ import com.github.akruk.antlrquery.typesystem.types.Cardinality.Type;
 
 /**
  * Interning factory for canonical Cardinality instances.
- *
+ * <p>
  * Cache levels:
  * - FiniteBound cache
  * - Event cache

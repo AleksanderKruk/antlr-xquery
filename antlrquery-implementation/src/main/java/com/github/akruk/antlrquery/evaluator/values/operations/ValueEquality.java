@@ -134,7 +134,7 @@ public class ValueEquality extends ValueBinaryOperationPredicate {
         if (x.mapEntries.size() != y.mapEntries.size()) return false;
         for (final Map.Entry<AntlrQueryValue, AntlrQueryValue> entry : x.mapEntries.entrySet()) {
             final AntlrQueryValue yValue = y.mapEntries.get(entry.getKey());
-            if (yValue == null || !entry.getValue().equals(yValue)) {
+            if (!entry.getValue().equals(yValue)) {
                 return false;
             }
         }

@@ -33,8 +33,6 @@ public class ProcessingStrings {
                             final ValueAtomizer atomizer, EffectiveBooleanValue ebv)
     {
         this.valueFactory = valueFactory;
-        // this.targetParser = targetParser;
-        // this.defaultCollation = defaultCollation;
         this.collationUriToCollator = collationUriToCollator;
         this.defaultLocale = defaultLocale;
         this.ebv = ebv;

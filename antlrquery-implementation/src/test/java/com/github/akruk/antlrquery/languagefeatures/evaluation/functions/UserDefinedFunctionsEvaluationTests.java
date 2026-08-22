@@ -12,7 +12,7 @@ public class UserDefinedFunctionsEvaluationTests extends EvaluationTestsBase {
         String query = """
             declare function x($arg as number) as number+ {
                 1, 2, 3, $arg
-            }
+            };
 
             x(4)
         """;

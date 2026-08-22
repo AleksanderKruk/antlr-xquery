@@ -36,74 +36,6 @@ public class AntlrQueryEvaluatorTest extends EvaluationTestsBase {
     }
 
     // TODO: rewrite
-    // @Test
-    // public void sequenceUnion() {
-    //     String xquery = """
-    //                 (1, 2, 3) | (4, 5, 6)
-    //             """;
-    //     var value = XQuery.evaluate(null, xquery, null);
-    //     final var expected = List.of(
-    //             valueFactory.number(1),
-    //             valueFactory.number(2),
-    //             valueFactory.number(3),
-    //             valueFactory.number(4),
-    //             valueFactory.number(5),
-    //             valueFactory.number(6));
-    //     assertEquals(expected.size(), value.sequence.size());
-    //     var sequence = value.sequence;
-    //     for (int i = 0; i < expected.size(); i++) {
-    //         final var element = expected.get(i);
-    //         final var received = sequence.get(i);
-    //         assertEquals(element.numericValue, received.numericValue);
-    //     }
-    //     xquery = """
-    //                 (1, 2, 3) union (4, 5, 6)
-    //             """;
-    //     value = XQuery.evaluate(null, xquery, null);
-    //     assertEquals(expected.size(), value.sequence.size());
-    //     sequence = value.sequence;
-    //     for (int i = 0; i < expected.size(); i++) {
-    //         final var element = expected.get(i);
-    //         final var received = sequence.get(i);
-    //         assertEquals(element.numericValue, received.numericValue);
-    //     }
-    // }
-
-    // // TODO: rewrite
-    // @Test
-    // public void sequenceIntersection() {
-    //     final String xquery = """
-    //                 (1, 2, 3, 4) intersect (0, 2, 4, 8)
-    //             """;
-    //     final var value = XQuery.evaluate(null, xquery, null);
-    //     final BigDecimal[] expected = {
-    //             (BigDecimal.valueOf(2)),
-    //             (BigDecimal.valueOf(4)),
-    //     };
-    //     final BigDecimal[] numbersFromSequence = value.sequence
-    //             .stream()
-    //             .map(v->v.numericValue)
-    //             .toArray(BigDecimal[]::new);
-    //     assertArrayEquals(expected, numbersFromSequence);
-    // }
-
-    // // TODO: rewrite
-    // @Test
-    // public void sequenceSubtraction() {
-    //     final String xquery = """
-    //                 (1, 2, 3, 4) except (2, 4)
-    //             """;
-    //     final var value = XQuery.evaluate(null, xquery, null);
-    //     final BigDecimal[] expected = {
-    //             BigDecimal.valueOf(1),
-    //             BigDecimal.valueOf(3),
-    //     };
-    //     final BigDecimal[] numbersFromSequence = value.sequence
-    //             .stream()
-    //             .map(v->v.numericValue)
-    //             .toArray(BigDecimal[]::new);
-    //     assertArrayEquals(expected, numbersFromSequence);
-    // }
 
     @Test
     public void concatenationExpressions() {
@@ -303,18 +235,6 @@ public class AntlrQueryEvaluatorTest extends EvaluationTestsBase {
         }
     }
 
-    // @Test
-    // public void distinctValues() {
-    //     var i1 = valueFactory.string("1", baseFactory);
-    //     var i2 = valueFactory.string("2", baseFactory);
-    //     assertResult("""
-    //                 distinct-values((1, "1", 1, "1", "2", false(), false(), true(), true()))
-    //             """, List.of(baseFactory.number(1), i1, i2, baseFactory.bool(false), baseFactory.bool(true)));
-    //     assertResult("""
-    //                 distinct-values(())
-    //             """, List.of());
-    // }
-
     @Test
     public void rangeExpression() {
         final var i1 = valueFactory.number(1);
@@ -333,9 +253,6 @@ public class AntlrQueryEvaluatorTest extends EvaluationTestsBase {
 
     @Test
     public void predicateExpression() {
-        // var i1 = valueFactory.number(1);
-        // var i2 = valueFactory.number(2);
-        // var i3 = valueFactory.number(3);
         final var i4 = valueFactory.number(4);
         final var i5 = valueFactory.number(5);
         assertResult("(1, 2, 3, 4, 5)[. gt 3]", List.of(i4, i5));

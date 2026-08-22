@@ -439,8 +439,6 @@ public class ProcessingSequencesEvaluationTests extends EvaluationTestsBase {
 
     @Test
     public void subsequence() {
-        // var i1 = new XQueryString("item1");
-        // var i2 = new XQueryString("item2");
         var i3 = valueFactory.string("item3");
         var i4 = valueFactory.string("item4");
         var i5 = valueFactory.string("item5");

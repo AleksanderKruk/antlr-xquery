@@ -63,9 +63,9 @@ public class ProcessingBooleansEvaluationTests extends EvaluationTestsBase {
 
     @Test
     public void booleanLessThan() {
-        assertResult("op:boolean-less-than(false(), boolean(true()))", valueFactory.bool(true));
-        assertResult("op:boolean-less-than(true(), false()))", valueFactory.bool(false));
-        assertResult("op:boolean-less-than(false(), false()))", valueFactory.bool(false));
+        assertResult("op:boolean-less-than( false(), boolean(true()) )", valueFactory.bool(true));
+        assertResult("op:boolean-less-than(true(), false())", valueFactory.bool(false));
+        assertResult("op:boolean-less-than(false(), false())", valueFactory.bool(false));
         assertResult("op:boolean-less-than(true(), true())", valueFactory.bool(false));
     }
 

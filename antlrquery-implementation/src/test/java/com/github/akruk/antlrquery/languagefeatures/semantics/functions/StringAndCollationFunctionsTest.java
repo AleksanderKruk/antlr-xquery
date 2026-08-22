@@ -132,21 +132,6 @@ public class StringAndCollationFunctionsTest extends SemanticTestsBase {
     }
 
     // fn:collation-key($value as xs:string, $collation as xs:string? := fn:default-collation()) as xs:base64Binary
-    // @Test
-    // public void collationKey_requiredValue() {
-    //     assertType(
-    //         "fn:collation-key('abc')",
-    //         typeFactory.one(typeFactory.itemBase64Binary())
-    //     );
-    // }
-
-    // @Test
-    // public void collationKey_withCollation() {
-    //     assertType(
-    //         "fn:collation-key('x','uci')",
-    //         typeFactory.one(typeFactory.itemBase64Binary())
-    //     );
-    // }
 
     @Test
     public void collationKey_missingValue() {

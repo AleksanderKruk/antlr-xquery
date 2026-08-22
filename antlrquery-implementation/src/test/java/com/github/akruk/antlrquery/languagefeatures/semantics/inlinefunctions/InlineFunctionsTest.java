@@ -58,25 +58,6 @@ public class InlineFunctionsTest extends SemanticTestsBase {
         );
     }
 
-    // @Test
-    // public void methodAnnotationIsAccepted() {
-    //     assertType(
-    //         "%method function($s as xs:string) as xs:string { $s }",
-    //         typeFactory.function(
-    //             typeFactory.one(typeFactory.itemString()),
-    //             List.of(typeFactory.one(typeFactory.itemString()))
-    //         )
-    //     );
-    // }
-
-    // @Test
-    // public void invalidAnnotationRaisesError() {
-    //     assertError(
-    //         "%private function($x) { $x }",
-    //         XQuerySemanticError.InvalidInlineFunctionAnnotation
-    //     );
-    // }
-
     @Test
     public void duplicateParameterRaisesError() {
         assertErrors(

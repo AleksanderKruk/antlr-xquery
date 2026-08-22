@@ -108,10 +108,6 @@ public class NumericOperatorsFunctionsTests extends SemanticTestsBase {
     }
 
     // op:numeric-equal($arg1 as xs:numeric, $arg2 as xs:numeric) as xs:boolean
-    // @Test
-    // public void numericEqual_valid() {
-    //     assertType("op:numeric-equal(1, 2)", typeFactory.boolean_());
-    // }
 
     @Test
     public void numericEqual_wrongType() {

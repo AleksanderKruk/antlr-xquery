@@ -3,13 +3,7 @@ package com.github.akruk.antlrquery.evaluator.functionmanager;
 import static com.github.akruk.antlrquery.evaluator.values.AntlrQueryValue.error;
 
 import java.text.Collator;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -401,8 +395,8 @@ public class EvaluatingFunctionManager {
     }
 
     public AntlrQueryValue distinctValues(final AntlrQueryVisitingContext ctx, final List<AntlrQueryValue> args) {
-        return null;
-        // return args.get(0).distinctValues();
+        List<AntlrQueryValue> unique = args.getFirst().sequence.stream().distinct().toList();
+        return valueFactory.sequence(unique);
     }
 
     public AntlrQueryValue position(final AntlrQueryVisitingContext context, final List<AntlrQueryValue> args) {

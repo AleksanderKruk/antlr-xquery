@@ -209,7 +209,7 @@ public class AntlrQueryEvaluatorTest extends EvaluationTestsBase {
             "",
             tree.parser()
             );
-        assertEquals(result.size, 3);
+        assertEquals(3, result.size);
 
     }
 

@@ -57,7 +57,9 @@ public sealed interface AntlrQuerySequenceType
     }
 
 
+    @SuppressWarnings("SameReturnValue")
     Cardinality cardinality();
+    @SuppressWarnings("SameReturnValue")
     AntlrQueryItemType itemType();
 
 

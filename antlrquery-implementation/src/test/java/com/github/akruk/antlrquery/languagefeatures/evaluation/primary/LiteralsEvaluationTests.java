@@ -184,9 +184,9 @@ public class LiteralsEvaluationTests extends EvaluationTestsBase {
         assertNotNull(value.sequence);
         var sequence = value.sequence;
         assertEquals(expected.size(), sequence.size());
-        assertTrue(expected.get(0).numericValue.equals(sequence.get(0).numericValue));
-        assertTrue(expected.get(1).numericValue.equals(sequence.get(1).numericValue));
-        assertTrue(expected.get(2).numericValue.equals(sequence.get(2).numericValue));
+        assertEquals(expected.get(0).numericValue, sequence.get(0).numericValue);
+        assertEquals(expected.get(1).numericValue, sequence.get(1).numericValue);
+        assertEquals(expected.get(2).numericValue, sequence.get(2).numericValue);
     }
 
 

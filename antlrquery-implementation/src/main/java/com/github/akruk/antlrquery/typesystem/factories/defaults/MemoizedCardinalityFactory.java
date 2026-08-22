@@ -87,7 +87,7 @@ public final class MemoizedCardinalityFactory implements CardinalityFactory {
 
         return eventCache.computeIfAbsent(
                 new EventKey(value, type),
-                k -> new Event(value, type)
+                _ -> new Event(value, type)
         );
     }
 

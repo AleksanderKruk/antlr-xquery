@@ -304,7 +304,7 @@ public class BasicTextDocumentService implements TextDocumentService {
             });
             try {
                 analyzer.visit(tree);
-            } catch (final Exception e) {
+            } catch (final Exception _) {
 
             }
             semanticAnalyzers.put(uri, analyzer);

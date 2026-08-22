@@ -38,9 +38,8 @@ public class SequencetypeAtomization {
                     }
                     yield result;
                 }
-                case MapLikeType.MapType _, MapLikeType.RecordType _ -> anyItems;
-                case MapLikeType.ExtensibleRecordType _, FunctionType _ -> anyItems;
-                case GrammarEntityType _, TreeLike _ -> anyItems;
+                case MapLikeType.MapType _, MapLikeType.RecordType _, MapLikeType.ExtensibleRecordType _,
+                     FunctionType _, GrammarEntityType _, TreeLike _ -> anyItems;
             };
             case ChoiceItemType c -> {
                 AntlrQuerySequenceType result = typeFactory.emptySequence();
